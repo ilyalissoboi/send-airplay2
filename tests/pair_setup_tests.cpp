@@ -186,7 +186,7 @@ void credential_round_trip(const std::string& directory) {
 
 void malformed_srp(const std::string& directory) {
     active_group = "PIN and SRP bounds";
-    for (const std::string pin :
+    for (const std::string& pin :
          {std::string{}, std::string{"123"}, std::string{"123456789"}, std::string{"12a3"},
           std::string{"12\0"
                       "3",
