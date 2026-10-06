@@ -707,6 +707,12 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   responsibility; check it at the PR head.
 - Receiver fetch from the Apple TV, firewall reachability and pyatv playback
   remain NOT RUN (user action).
+- First CI run at `f821570ccc528a45151c988b2b6f9c5de922b0e6`: Linux/macOS
+  static/shared, the sanitizer job and the runner contracts passed, including
+  `file_source_tests` and `cli_serve` with the pinned dependencies. Both Windows
+  builds failed: MSVC error C3493 rejected an uncaptured function-local
+  `constexpr` used inside a test lambda. The constants moved to namespace scope.
+  Check CI at the corrected head.
 
 ## 6. Screenbox integration findings
 

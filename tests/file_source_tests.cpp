@@ -41,6 +41,9 @@ std::uint8_t pattern(std::uint64_t offset) {
 
 constexpr std::uint64_t patterned_size = 200000; // Spans several 64-KiB server chunks.
 constexpr std::size_t server_chunk = 65536;
+// Namespace scope: MSVC rejects uncaptured function-local constants in lambdas.
+constexpr int reader_count = 4; // Default MediaServer worker count.
+constexpr int reads_per_reader = 500;
 
 /// Owns a uniquely named temporary file and removes it on scope exit.
 class TemporaryFile {
@@ -177,8 +180,6 @@ void concurrency_tests() {
     TemporaryFile file;
     file.write_patterned(patterned_size);
     auto source = open_file_media_source(file.path(), std::make_shared<FileReadStats>());
-    constexpr int reader_count = 4; // Default MediaServer worker count.
-    constexpr int reads_per_reader = 500;
     std::atomic_int mismatches{0};
     std::vector<std::thread> readers;
     for (int reader = 0; reader < reader_count; ++reader) {
