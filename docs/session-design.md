@@ -225,7 +225,9 @@ administered one per session.
    `encode_event_response`, `EventChannel` and
    `ReceiverOperation::until_cancelled`, tested with a scripted stream.
 3. Timing packet codec and responder: Python fixtures; source filtering;
-   malformed packets.
+   malformed packets. **Done:** `ntp_timing.*`, with literal-byte known answers
+   (conversion values computed with Python `datetime` and pyatv's fraction
+   formula) and real IPv4/IPv6 UDP loopback tests.
 4. Session message builders and parsers, with plistlib fixtures for SETUP and
    `/command` bodies. Field names must match the sanitized reference sequence.
 5. `UrlPlaybackSession` against a scripted fake receiver: the full sequence,

@@ -117,6 +117,31 @@ Tests use a scripted stream and literal request and reply bytes; see
 `event_channel_tests.cpp`. Event-channel interoperability with a receiver is
 not yet tested.
 
+## NTP timing responder
+
+A base SETUP with `timingProtocol` `NTP` announces a sender UDP port. The
+receiver sends timing requests there and stalls the SETUP until they are
+answered (observed on tvOS 26.6). `TimingResponder` (`ntp_timing.*`) does this:
+
+- **Socket:** binds a numeric local address (normally the local end of the
+  control connection) on an ephemeral port; `port()` supplies `timingPort`.
+- **Requests:** exactly 32 bytes, big-endian, type `0xd2`. Only datagrams from
+  the receiver's address are answered, from any source port. Anything else is
+  dropped and counted, and never ends the responder. That includes Windows
+  oversized-datagram and ICMP-reset errors.
+- **Reply:** the request's protocol byte, type `0xd3`, sequence 7, zero
+  padding. The reference time is the request's send time; receive and send
+  times come from the wall clock, at microsecond resolution (NTP seconds =
+  Unix seconds + 2,208,988,800, modulo 2^32).
+- **Lifecycle:** `serve()` runs on one thread until the operation is cancelled
+  (`ReceiverOperation::until_cancelled`), then throws that category. Socket
+  failures are terminal and close the socket.
+
+The native socket helpers (Winsock runtime, socket owner, numeric addresses,
+nonblocking setup, readiness polling) moved unchanged from `receiver_stream.cpp`
+into the private `native_socket.*`, so TCP and UDP share one deadline and
+cancellation model.
+
 ## Evidence and provenance
 
 No new dependency or external implementation source was added. The in-tree TCP

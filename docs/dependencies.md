@@ -116,6 +116,25 @@ gives the `(salt, output_info, input_info)` order, from which the reversed
 event-channel direction follows. Only these label strings are used, as
 protocol constants.
 
+The session's event-channel reply and NTP timing responder follow the same
+revision:
+
+- `pyatv/protocols/airplay/channels.py` (blob
+  `a5730293f53e62df54df5c5a4c7f713d3a49d917`): the event reply fields
+  (`200 OK`, `Content-Length: 0`, `Audio-Latency: 0`, with `Server` and `CSeq`
+  echoed).
+- `pyatv/protocols/raop/packets.py` (blob
+  `2ff08f27917ee326a767aa0dae65d3cd5d02d88b`): the 32-byte big-endian timing
+  packet layout.
+- `pyatv/protocols/raop/protocols/__init__.py` (blob
+  `fbaefd44609807200fd2ef367bfd0df01b443b7e`): the reply fields (type 0xd3,
+  sequence 7, the reference time echoing the request's send time).
+- `pyatv/protocols/raop/timing.py` (blob
+  `91516688de86d263ef873743a91f692f2edd830c`): the NTP epoch offset and
+  microsecond fraction.
+
+Only these layouts and constants are used.
+
 pyatv is MIT licensed. It is a reference only; no implementation source was
 copied or linked. Tests use independently generated, synthetic inputs; no receiver
 credentials or captured private transcripts are committed. These references

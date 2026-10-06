@@ -20,10 +20,11 @@ Snapshot: 2026-10-06, ~14:30 UTC.
   for the session implementation in [session-design.md](session-design.md).
   CI runs only for pull requests, so keep a draft PR open for this branch.
   Before writing, verify the actual head and checks.
-- **Done on this branch:** step 1, channel key derivation, and step 2, the
-  event channel (section 5).
-- **Next:** step 3 of session-design.md section 8: the NTP timing packet codec
-  and UDP responder.
+- **Done on this branch:** steps 1-3: channel key derivation, the event
+  channel and the NTP timing responder (section 5).
+- **Next:** step 4 of session-design.md section 8: session message builders
+  and parsers (SETUP and `/command` bodies) on the plist codec, with plistlib
+  fixtures.
 - **Still true:** the library cannot cast yet. The first hardware gate (G1) is
   step 6.
 
@@ -959,6 +960,34 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   - CI for step 1 (`c5a2734`) passed all checks.
 - **Not yet exercised:** no Apple TV traffic. Event-channel interoperability is
   untested.
+
+### NTP timing responder (step 3): 2026-10-06
+
+- **Codec** (`ntp_timing.*`): `ntp_from_system_time`, `parse_timing_request`
+  (exactly 32 bytes, type `0xd2`) and `encode_timing_response`, matching the
+  reference reply (type `0xd3`, sequence 7, reference = request send time).
+- **`TimingResponder`:** binds a numeric local address on an ephemeral port and
+  answers only the receiver's host. Foreign or malformed datagrams are dropped
+  and counted, never fatal. `serve()` runs on one thread until cancelled.
+- **Refactor:** the native socket helpers moved unchanged from
+  `receiver_stream.cpp` to the private `native_socket.*`. Two additions: a
+  port-0 address parser and the shared poll-slice calculation.
+  `NativeReceiverStream` is unchanged in behavior; the existing native loopback
+  receiver tests pass.
+- **Tests** (`ntp_timing_tests`):
+  - Conversion known answers: epoch, 2026-10-06, fractions, and before 1970.
+  - Literal request and reply bytes, and size and type rejections.
+  - Real UDP loopback over IPv4 and IPv6: garbage ignored and counted; the
+    reply equals the codec output; a foreign host is ignored; cancellation and
+    serving after close; construction errors.
+- **Evidence:**
+  - Windows MSVC static/shared Release passed all 18 CTest targets.
+  - clang++ 22 strict-warning syntax checks passed for the Windows branches.
+  - Making the reply echo the wrong reference time failed the literal check.
+  - CI for steps 1 and 2 passed all checks.
+- **Not yet verified:** the POSIX socket branches first compile and run in
+  Linux/macOS CI (WSL is not available on this host). No Apple TV traffic yet;
+  timing interoperability is untested.
 
 ## 6. Screenbox integration findings
 
