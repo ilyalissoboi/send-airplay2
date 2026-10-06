@@ -63,8 +63,8 @@ reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UT
   1. Native session layer: the proposal is in
      [session-design.md](session-design.md). It separates validated facts from
      hypotheses H1-H4. The user decided D28 (threads), D29 (MRP controls now)
-     and D30 (identity). D31, the protobuf implementation, is open; then follow
-     the staged plan.
+     and D30 (identity), then D31 (in-tree protobuf wire codec). Next: follow
+     the staged plan, starting with channel key derivation.
      Note: the seek, pause and status controls validated with the fork used
      pyatv's MRP data stream, not `/command`. The plist codec (D27) is in
      place. Use the fork's observed sequence as protocol
@@ -277,6 +277,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D28 | Session threading: synchronous components with dedicated reader, feedback and timing threads | User decision 2026-10-06 over Boost.Asio async; reuses the deadline/cancellation transport. See session-design.md |
 | D29 | Control path: implement MRP (remote-control session, data stream, protobuf messages) now | User decision 2026-10-06 over `/command`-only controls. The seek, pause and status validated with the fork used this path; `/command` still starts playback |
 | D30 | Sender identity: reference SETUP values first, configurable, then a hardware test of neutral values; random per-session device ID, never the host MAC | User decision 2026-10-06 |
+| D31 | MRP protobuf: in-tree bounded wire codec (varint, length-delimited, fixed32/64, unknown fields skipped) plus hand-written mapping of about 10 messages | User decision 2026-10-06 over protozero and Google protobuf/protoc. Apache-2.0, no dependency. Field numbers from pyatv's MIT `.proto` files, with provenance recorded before use; fixtures from Python `protobuf` with pyatv's compiled messages |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,

@@ -11,7 +11,8 @@ User decisions on 2026-10-06:
 - **D30:** reference sender-identity values first, configurable, then a
   hardware test of neutral values (section 6).
 
-**Still open:** D31, the protobuf implementation for MRP (section 5a).
+- **D31:** an in-tree bounded protobuf wire codec with hand-written message
+  mapping (section 5a).
 
 The goal is the first native vertical slice: `airplay2-cli cast` plays one local
 H.264/AAC MP4 on "Living Room" (Apple TV 4K, tvOS 26.6), served by this
@@ -179,7 +180,7 @@ heartbeat. Field numbers come from pyatv's `.proto` definitions (MIT, derived
 from reverse engineering); record that provenance in dependencies.md before
 use.
 
-**D31 (open): protobuf implementation.**
+**D31 (decided 2026-10-06): in-tree wire codec.** The options considered:
 
 | Option | Licence and footprint | Notes |
 |---|---|---|
