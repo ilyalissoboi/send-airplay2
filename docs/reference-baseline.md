@@ -7,6 +7,9 @@ tvOS 26.6, and the receiver never fetches the URL, even a public Apple URL. This
 is a known upstream incompatibility; see
 [the observation](receiver-validation.md#pyatv-reference-playback-2026-10-06).
 Repeating step 4 with pyatv 0.18.0 will not produce a baseline on tvOS 26.
+Step 4 PASSED with the unmerged fix `robkochman/pyatv@8144c77c`, installed by the
+user in a separate venv. Video and audio played, fetched from `airplay2-cli serve`; see
+[the fork result](receiver-validation.md#reference-playback-with-unmerged-pyatv-fix-2026-10-06).
 These steps require the user's Windows host on the same LAN as "Living Room".
 A cloud session cannot reach that LAN.
 

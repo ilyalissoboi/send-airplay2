@@ -2,7 +2,8 @@
 
 Status: DISCOVERY AND PAIRING OBSERVED; built-in fresh-socket and separate-process
 verification passed; pyatv 0.18.0 reference playback FAILED (known upstream
-tvOS 26 incompatibility); native playback NOT IMPLEMENTED. Fill out one record per
+tvOS 26 incompatibility); reference playback PASSED with an unmerged pyatv fix
+fetching from `airplay2-cli serve`; native playback NOT IMPLEMENTED. Fill out one record per
 receiver firmware and sender platform.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
@@ -10,9 +11,12 @@ static/shared builds; see [media-server.md](media-server.md). Actual Apple TV HT
 fetch, real-file >4-GiB seek and firewall reachability remain NOT RUN. No receiver
 or credential operation occurred in the media-server slice. The development
 `airplay2-cli serve` command now exposes that server for the pyatv reference
-playback step. In that step the receiver never connected to `serve`; see
-[pyatv reference playback](#pyatv-reference-playback-2026-10-06). Receiver fetch
-therefore remains NOT RUN.
+playback step. With pyatv 0.18.0 the receiver never connected to `serve`. With
+an unmerged pyatv fix it fetched the whole file from `serve` while video and
+audio played. See
+[pyatv reference playback](#pyatv-reference-playback-2026-10-06) and
+[the fork result](#reference-playback-with-unmerged-pyatv-fix-2026-10-06).
+Real-file >4-GiB seek remains NOT RUN.
 
 The environment below was supplied by the user on 2026-10-06 (Asia/Tokyo).
 It identifies the intended test setup. A Windows discovery run subsequently
@@ -30,8 +34,8 @@ Playback results remain pending.
 - Host: CLI / packaged Windows C# / Android:
 - Network: host on Wi-Fi, same subnet as the receiver. Windows network category **Public** (the runbook expected Private; the user chose to proceed). Existing inbound Allow rules (Public profile) for the `airplay2-cli.exe` builds; pyatv timing needed a temporary user-created inbound UDP rule for the Python interpreter, LocalSubnet, Public profile. See the playback observation.
 - Media SHA-256, container, codecs, duration, dimensions and bitrate: user-owned clip, 53,953,926 bytes, SHA-256 `a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65`; MP4 (`isom`, `moov` before `mdat`), H.264 Main profile level 4.2 1280x720, AAC (`mp4a`) stereo 44.1 kHz, 131.6 s. Read with a standard-library box parser; ffprobe was unavailable. Bitrate not measured.
-- Negotiated protocol/authentication path:
-- Reference sender/version and baseline result: pyatv 0.18.0 AirPlay pairing PASS (user-reported); reference URL playback FAIL: `/play` 200, then `/playback-info` 500 and no media fetch, also with a public Apple HLS URL. Matches open upstream issues. See [reference-baseline.md](reference-baseline.md) and the observation below.
+- Negotiated protocol/authentication path (reference sender): HAP pair-verify with stored credentials, encrypted RTSP control, NTP timing (sender UDP), event channel, type-130 control stream, `POST /command` queue commands; receiver fetches the URL over plain HTTP from the sender.
+- Reference sender/version and baseline result: pyatv 0.18.0 AirPlay pairing PASS (user-reported); reference URL playback FAIL: `/play` 200, then `/playback-info` 500 and no media fetch, also with a public Apple HLS URL. Matches open upstream issues. Unmerged pyatv fix `robkochman/pyatv@8144c77c` (`/command` queue flow): playback PASS, video and audio (user-observed), served by `airplay2-cli serve`. See [reference-baseline.md](reference-baseline.md) and the observation below.
 
 ## Required observations
 
@@ -44,7 +48,7 @@ Playback results remain pending.
 | Repeated verification | Independent processes reuse stored pairing | PASS, baseline plus three reconnects and three fault-recovery verifications per static/shared run |
 | Profile/input guards | Existing/missing profiles and redirected PIN input are refused | PASS, automated native CLI static/shared runs |
 | Local forget | Local deletion and idempotence | Absent-profile no-op PASS; real disposable deletion SKIPPED (no opt-in) |
-| Start MP4 | Both audio and video play | pyatv 0.18.0 reference: FAIL, no fetch (see observation); native NOT RUN |
+| Start MP4 | Both audio and video play | Reference: pyatv 0.18.0 FAIL (no fetch); unmerged pyatv fix PASS, video and audio from `serve` (user-observed). Native NOT RUN |
 | Pause/resume | Receiver and host state agree | NOT RUN |
 | Seek forward/back | Playback moves to requested position | NOT RUN |
 | Position/duration | Values follow receiver playback | NOT RUN |
@@ -284,6 +288,62 @@ Interpretation:
 
 Seek, pause/resume, position and stop results remain NOT RUN for any working
 playback. Remove the temporary Python firewall rule after testing.
+
+## Reference playback with unmerged pyatv fix: 2026-10-06
+
+Same host, receiver, firmware, network, media and `serve` build as the previous
+section, and the same temporary Python UDP rule. After that failure, the user
+chose to try an unmerged upstream fix as the reference sender.
+
+- **Sender:** `robkochman/pyatv` commit
+  `8144c77c6cecbed4f9ba2adb5a350ad86a8f6604` ("Fix AirPlay URL playback on
+  modern tvOS"). It is one commit on top of the maintainer's `Release 0.18.0`
+  commit `b277a4c82`, linked from
+  [pyatv#2846](https://github.com/postlund/pyatv/pull/2846). It is MIT like
+  pyatv. It is not merged or maintainer-reviewed, and it reports its version
+  as 0.18.0.
+- **Review:** the agent read the four changed source files before the user
+  installed it. Changes are confined to the AirPlay URL stream and
+  event-channel code: no new hosts, processes, file access or dependencies.
+  The user installed it from that commit's archive into a separate venv and
+  ran the filtered diagnostic driver. The agent did not execute the fork.
+  It is an external test tool only: not a dependency, and no code was copied
+  into this repository.
+
+Sanitized sequence, filtered as in the previous section:
+
+| Phase | Requests and results |
+|---|---|
+| Remote-control session | pair-verify 200 x2; base SETUP (no timing) 200; RECORD 200; type-130 SETUP 200 |
+| Stream session | pair-verify 200 x2; base SETUP with `timingProtocol=NTP` and `sessionCorrelationUUID` 200; `GET /info` 200; `RECORD` 200; type-130 SETUP (`controlType` 1) 200 with `streamID` |
+| Start | four `POST /command` (`insertPlayQueueItem`, two `setProperty`, `setRate`), each 200 with an empty body |
+| Events | `playbackState` `loading` x3, then `playing`; many `notification` and `updateInfo` events; `/feedback` 200 about every 2 s |
+
+`serve` results:
+
+- **TCP connections from the receiver:** 17. The first arrived about 3.7 s after
+  `play_url` started.
+- **Stop summary:** `reads=1466 bytes=95888702 failed_reads=0
+  span=[0,53953926)`. The receiver requested the whole file range, and about
+  1.8 times the file size in total within 60 s, so ranges overlap or repeat.
+  Individual range requests were not logged.
+- **Firewall:** fetch worked on the Public network with the existing inbound
+  Allow rules for `airplay2-cli.exe`; no new rule was needed for `serve`.
+
+The user reported that video and audio played without issues. `play_url`
+blocks while media plays, so the driver ended it after 60 s. End-of-file,
+sender stop, seek, pause/resume and position were not exercised in this run.
+
+This result establishes:
+
+- the receiver plays this H.264/AAC MP4 when it is fetched from this project's
+  `MediaServer` through `serve`;
+- the receiver can reach that server through the Windows firewall on this host;
+- the `/command` flow works on tvOS 26.6 with this sender.
+
+It is reference-sender evidence, attributed to unmerged third-party code. It
+does not show that this library can cast: native session code does not exist
+yet.
 
 ## Automated CLI E2E observation: 2026-10-06
 

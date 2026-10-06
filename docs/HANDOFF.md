@@ -40,20 +40,29 @@ reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UT
      inbound UDP rule for pyatv's NTP timing server, created by the user.
      Details and sanitized sequence:
      [receiver-validation.md](receiver-validation.md#pyatv-reference-playback-2026-10-06).
-  3. Recorded the result there and in section 5. No C++ changed.
-- **Next actions (awaiting the user's decision):** pyatv 0.18.0 cannot provide
-  a working baseline on tvOS 26.6. Options:
-  - try the unmerged upstream proposal
-    ([pyatv#2846](https://github.com/postlund/pyatv/pull/2846)) or the reworked
-    fork linked from it as a reference. These are unreviewed third-party code
-    that would load the stored pyatv credentials; the user must choose to run them;
-  - proceed to the native session layer using the modern flow observed in that
-    proposal: type-130 stream SETUP, then `POST /command` with queue commands,
-    with state from the event channel. This makes this library's own session the
-    first sender tested on this firmware. It needs the plist decision (section 7);
-  - or find another reference sender, for example an Apple device, to show the
-    receiver plays the MP4 from `serve` at all. That would also test fetch and
-    firewall reachability independently of session code.
+  3. The user chose to try the unmerged fix `robkochman/pyatv@8144c77c`, linked
+     from [pyatv#2846](https://github.com/postlund/pyatv/pull/2846). The agent
+     reviewed its source diff; the user installed it into a separate venv
+     (`%USERPROFILE%\pyatv-fork8144`) and ran the filtered driver. **Result:
+     PASS.** Video and audio played (user-observed). The receiver opened 17
+     connections to `serve` and read the whole file (`reads=1466
+     bytes=95888702 failed_reads=0`). Flow: type-130 control stream, then
+     `POST /command` queue commands, with `loading` then `playing` events.
+     Details:
+     [receiver-validation.md](receiver-validation.md#reference-playback-with-unmerged-pyatv-fix-2026-10-06).
+  4. Recorded both results there and in section 5. No C++ changed.
+- **Next actions:**
+  1. Control pass with the fork, run by the user, since the agent does not
+     execute the fork: seek, pause/resume, position and stop, using the same
+     driver approach (`device_state position total_time`, `set_position=30`,
+     `pause`, `play`, `stop`). The fork changed only URL start and state;
+     controls go through pyatv's unchanged remote-control channel.
+  2. Then the native session layer, designed for the `/command` flow (section
+     7, item 5): binary-plist decision first, then the session and threading
+     model, then `cast`. Use the fork's observed sequence as protocol
+     reference, not as copied code.
+  3. Small `serve` diagnostic: count connections and requests in the stop
+     summary.
   Ask the user before marking the PR ready or merging. Merge commits have been
   the convention.
 - **Local-session rules that matter here:**
@@ -127,7 +136,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
 | Actual casting support | None yet |
-| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); native playback not implemented |
+| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native playback not implemented |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
 PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is open (section 0). Verify current GitHub and
@@ -153,7 +162,8 @@ User-provided on 2026-10-06 (Asia/Tokyo):
 
 The host is on Wi-Fi classified by Windows as a Public network; see
 receiver-validation.md for firewall details. The pyatv 0.18.0 reference playback
-attempt failed on this firmware, and no sender has yet made the receiver fetch media.
+attempt failed on this firmware. An unmerged pyatv fix then played the MP4 from
+`airplay2-cli serve`; see section 5.
 See [receiver-validation.md](receiver-validation.md) for the test record.
 
 ## 3. Feasibility findings and evidence levels
@@ -817,6 +827,15 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   without external polling.
 - No receiver setting, credential or pairing changed. No C++ changed.
 
+- The user then chose the unmerged fix `robkochman/pyatv@8144c77c`, one
+  commit on the maintainer's 0.18.0 release. The agent reviewed the source
+  diff; the user installed and ran it. Playback PASSED: video and audio played
+  (user-observed), and the receiver opened 17 connections to `serve` and read
+  the full file range. This is the first evidence that the receiver fetches from
+  this project's `MediaServer` through the Windows firewall, which needed no
+  new rule for `serve`. It does not show native casting. Controls (seek,
+  pause, stop) were not yet exercised with the fork.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -857,9 +876,10 @@ while arranging the hardware baseline in parallel with that work.
    Follow [reference-baseline.md](reference-baseline.md): pyatv AirPlay pairing
    first (passed), then `play_url` of one test MP4 served by
    `airplay2-cli serve` (FAILED on tvOS 26.6: pyatv 0.18.0 uses the legacy
-   `/play` flow, which this firmware accepts but does not act on). A working
-   reference sender is still needed (section 0 options). Cloud sessions cannot
-   reach the LAN, so these steps run on the user's host.
+   `/play` flow, which this firmware accepts but does not act on). The
+   unmerged pyatv fix (`/command` flow) then PASSED with video and audio
+   fetched from `serve`. Controls with that fork remain to be run. Cloud
+   sessions cannot reach the LAN, so these steps run on the user's host.
 2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
    departure/interface-change checks and other platform/Android host coverage.
    The Windows Apple TV discovery gate has passed; see discovery.md for limits.
@@ -873,8 +893,10 @@ while arranging the hardware baseline in parallel with that work.
    wrong PIN, authentication failure,
    counters/replay, timeouts and revocation before claiming interoperability.
 4. **HTTP media server:** bounded Boost callback server is implemented and loopback
-   tested on the current branch. Complete real host/file adapters, receiver fetch,
-   firewall reachability and network-change checks. Virtual >4-GiB source tests
+   tested on the current branch. The file adapter and `serve` now have
+   receiver-fetch evidence: the Apple TV read the full MP4 through the Windows
+   firewall on a Public network. Network-change checks and packaged/brokered
+   adapters remain. Virtual >4-GiB source tests
    establish arithmetic, not real-file or Apple TV seeking interoperability.
 5. **Session/playback:** implement authenticated setup, event/timing/feedback
    lifecycle, URL start, status, pause/resume, seek and stop. Treat receiver status
