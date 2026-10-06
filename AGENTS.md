@@ -4,7 +4,7 @@ Start with [docs/HANDOFF.md](docs/HANDOFF.md), then read
 [docs/design.md](docs/design.md) and [docs/receiver-validation.md](docs/receiver-validation.md).
 They preserve the user scope, decisions, evidence, current status and next steps.
 
-- Continue on the current PR branch while PR #1 is open; inspect its actual head
+- Continue on the current PR branch while it is open; inspect its actual head
   before writing. The initial API is experimental and the library cannot cast yet.
 - Keep user requirements, engineering proposals and tested behavior distinct.
   Update the handoff when making a material decision or reaching a validation gate.

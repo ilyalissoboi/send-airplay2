@@ -2,6 +2,8 @@ name: Build and test
 on: [push, pull_request]
 permissions:
   contents: read
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/build-vcpkg-cache
 jobs:
   native:
     strategy:
@@ -12,8 +14,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Cache dependency binaries
+        uses: actions/cache@v4
+        with:
+          path: build-vcpkg-cache
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json') }}
+      - name: Bootstrap pinned vcpkg
+        shell: bash
+        run: |
+          mkdir -p build-vcpkg-cache
+          git clone https://github.com/microsoft/vcpkg.git build-tools/vcpkg
+          git -C build-tools/vcpkg checkout 434307da09bc05b2c86996dccc8b2351fc0d5d37
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            MSYS_NO_PATHCONV=1 cmd.exe /c 'build-tools\vcpkg\bootstrap-vcpkg.bat' -disableMetrics
+          else
+            build-tools/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+          fi
       - name: Configure
-        run: cmake -S . -B build -DBUILD_TESTING=ON -DBUILD_SHARED_LIBS=${{ matrix.shared }} -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DBUILD_TESTING=ON -DBUILD_SHARED_LIBS=${{ matrix.shared }} -DCMAKE_BUILD_TYPE=Release "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake"
       - name: Build
         run: cmake --build build --config Release
       - name: Test
@@ -22,8 +40,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache dependency binaries
+        uses: actions/cache@v4
+        with:
+          path: build-vcpkg-cache
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json') }}
+      - name: Bootstrap pinned vcpkg
+        run: |
+          mkdir -p build-vcpkg-cache
+          git clone https://github.com/microsoft/vcpkg.git build-tools/vcpkg
+          git -C build-tools/vcpkg checkout 434307da09bc05b2c86996dccc8b2351fc0d5d37
+          build-tools/vcpkg/bootstrap-vcpkg.sh -disableMetrics
       - name: Configure with AddressSanitizer and UndefinedBehaviorSanitizer
-        run: cmake -S . -B build -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+        run: cmake -S . -B build -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
       - name: Build
         run: cmake --build build --parallel 2
       - name: Test
