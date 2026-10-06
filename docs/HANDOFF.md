@@ -1077,6 +1077,11 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   - One test bug was found and fixed during development: a pointer into a
     temporary decoded plist.
   - CI passed for `2f46e34` (step 3 fix) and `f2cfd23` (step 4).
+- **CI:** `5104f18`, `1630b61` and `ad6626b` failed on Linux, macOS and the
+  sanitizer job. The new test's local `native::NetworkRuntime` is an empty
+  struct on POSIX, so `-Wunused-variable` under `-Werror` rejected it; Windows
+  and local MSVC builds passed. Fixed in `6c61433` with `[[maybe_unused]]`,
+  matching the other runtime owners.
 - **Not yet exercised:** no Apple TV traffic. The first hardware run is gate G1
   in step 6.
 
