@@ -1,7 +1,8 @@
 # Design and implementation sequence
 
 Research snapshot: 2026-10-06. This document distinguishes proposed architecture
-from implemented behavior. Only HTTP single-byte-range resolution is implemented.
+from implemented behavior. HTTP single-byte-range resolution and bounded
+mDNS/DNS-SD discovery with a diagnostic CLI are implemented.
 
 ## Scope and architecture
 
@@ -18,7 +19,7 @@ Proposed components:
 
 | Component | Responsibility | State |
 |---|---|---|
-| Discovery | mDNS/DNS-SD, service merging, TXT capability and identity parsing | Pending |
+| Discovery | mDNS/DNS-SD, service merging, TXT capability and identity parsing | Implemented bounded IPv4 scan; see discovery.md for limits and evidence |
 | Pairing | PIN flow, authenticated peer verification, credential reuse | Pending |
 | Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Pending |
 | Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Pending |
@@ -100,6 +101,13 @@ brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
 
+Discovery and diagnostic CLI are now implemented. Windows discovery resolved
+the user's "Living Room" (`AppleTV14,1`, advertised OS 26.6); pairing/playback and
+real departure/interface-change checks remain pending. See
+[discovery.md](discovery.md) for the adapter choice, provenance, API and test limits.
+The next implementation slice is pairing and authenticated transport, while
+establishing the pyatv playback baseline on this receiver.
+
 1. Establish receiver baseline with an existing sender (pyatv) on the user's LAN.
    Record model, exact firmware/build and PIN/access settings. Test the same
    unprotected MP4 and document the actual session path. Keep credentials private.
@@ -117,5 +125,6 @@ brokered file access and inbound network serving in a packaged UWP host early.
    individual tested combinations; publish CI results separately from device results.
 7. Integrate Screenbox in a dedicated fork with Chromecast regression coverage.
 
-No receiver test has run in this cloud workspace. The user's LAN is not reachable
-through GitHub access. Hardware sign-off requires a local run and returned results.
+The original cloud workspace did not run receiver tests. Local Windows LAN
+discovery was observed on 2026-10-06. GitHub access is separate from LAN access;
+hardware playback sign-off still requires reference and native sender results.
