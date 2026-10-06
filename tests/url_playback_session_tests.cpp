@@ -538,7 +538,8 @@ std::string command_type(const ParsedRequest& request) {
 
 /// Sends one timing request from loopback and returns whether a reply came.
 bool timing_replies(std::uint16_t port) {
-    native::NetworkRuntime runtime;
+    // Empty on POSIX; on Windows it holds the Winsock reference for this socket.
+    [[maybe_unused]] native::NetworkRuntime runtime;
     native::SocketOwner socket;
     const auto local = native::numeric_socket_address("127.0.0.1", 0, 0);
     socket.value = ::socket(local.family, SOCK_DGRAM, IPPROTO_UDP);
