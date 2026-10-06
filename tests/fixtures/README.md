@@ -85,3 +85,29 @@ two type-17 values with the signature field. `bad-signature-metadata-m6` is
 validly encrypted but tampered in the accessory signature. All other fixtures
 remain byte-for-byte unchanged. Acceptance must retain the original identity/key
 and the independent credential-reload/peer-verification/control-key oracle.
+
+## Binary plist
+
+`plist/*.hex` comes from `generate_plist.py`, using only CPython's standard
+`plistlib` binary writer with `sort_keys=False`. That writer is independent of
+this project's codec; the generator imports nothing from the repository. The
+C++ test checks both directions: decoding each fixture yields the literal
+expected value written in the test, and encoding that value reproduces the
+fixture byte for byte.
+
+- `scalars` covers every supported type, each integer width boundary, a date,
+  UTF-16 text with a surrogate pair, and empty containers.
+- `shared-scalars` covers object sharing: equal strings share one object, while
+  `True`, `1` and `1.0` stay distinct.
+- `wide-tables` has more than 255 objects, a 300-byte string and 70,000 bytes of
+  data, forcing 2-byte references, 4-byte offsets and longer length markers.
+- `command-insert*` and `event-playback-state*` are public synthetic stand-ins
+  for the `/command` queue body and a playback-state event. Each nests an inner
+  plist as `params.data`. The shape follows the sanitized tvOS 26.6 reference
+  sequence in receiver-validation.md. The UUID is synthetic and the URL uses an
+  RFC 5737 documentation address; neither is a capture.
+
+Malformed and literal-layout documents are assembled in `plist_tests.cpp` from
+the published bplist00 layout, not from the encoder. Regenerate with
+`python tests/fixtures/generate_plist.py`; the initial generation used
+Python 3.11.9.

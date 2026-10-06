@@ -57,10 +57,12 @@ reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UT
      reported `Paused` and the sender's session stayed open until its
      connections closed. See the control table in
      receiver-validation.md.
+  6. Implemented the bounded in-tree `bplist00` codec (D27) with plistlib
+     fixtures; see section 5. Not yet used by the library.
 - **Next actions:**
   1. Native session layer, designed for the `/command` flow (section 7,
-     item 5): the bounded in-tree `bplist00` codec (D27) first, then the
-     session and threading model, then `cast`. Use the fork's observed sequence as protocol
+     item 5): the session and threading model, then `cast`. The plist codec
+     (D27) is in place. Use the fork's observed sequence as protocol
      reference, not as copied code. Define stop as explicit teardown verified
      by receiver state.
   2. Small `serve` diagnostic: count connections and requests in the stop
@@ -302,6 +304,7 @@ cancellation and errors before publishing production bindings.
 | `tests/receiver_tests.cpp` / `docs/receiver-transport.md` | Fragmented fake receiver transcripts, dynamic authenticated peers, native loopback and lifecycle/framing contracts |
 | `src/credential_*`, `src/auth_*` / `tests/credential_tests.cpp` / `docs/credential-storage.md` | Private bounded credential codec, native Windows store, hidden-PIN CLI, enrollment/save/reload/reconnect orchestration and synthetic/OS persistence tests |
 | `src/file_media_source.*`, `src/serve_cli.*` / `tests/file_source_tests.cpp`, `tests/cli_serve.cmake` | Private file-backed `MediaSource` and development `serve` command; adapter, loopback and real-CLI tests |
+| `src/binary_plist.*` / `tests/plist_tests.cpp`, `tests/fixtures/plist` | Private bounded `bplist00` subset codec (D27); plistlib byte-exact fixtures, literal layouts, malformed/budget cases and mutation sweeps. Compiled into its test only until the session layer uses it |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -841,6 +844,39 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   position passed. `stop` returned the TV to the home screen, but the receiver
   reported `Paused` and the sender's session stayed open.
 
+### Binary plist codec (D27): 2026-10-06
+
+- The user chose a bounded in-tree codec over libplist (LGPL-2.1) or another
+  library. Original Apache-2.0 code; no third-party source or new dependency.
+  The format layout follows Apple's CFBinaryPList as documented by CPython
+  `plistlib`.
+- `PlistValue` covers booleans, signed 64-bit integers, reals, dates, UTF-8
+  strings, data, arrays and ordered dictionaries. The encoder matches
+  plistlib's binary writer byte for byte (`sort_keys=False`): depth-first
+  numbering, shared equal scalars, and minimal 1/2/4/8-byte widths. One
+  documented difference: reals are shared by bit pattern, so -0.0 stays
+  distinct.
+- The decoder accepts that subset plus 4-byte reals and any 1-8-byte table
+  width. It rejects null/fill/UID/set/16-byte integers, malformed or misplaced
+  tables, out-of-range references, cycles, duplicate or non-string keys, and
+  invalid ASCII/UTF-16. Limits: 1 MiB document, 16,384 objects, depth 32, and
+  65,536 decoded values / 4 MiB decoded payload, because shared references can
+  otherwise expand exponentially.
+- Tests: 7 plistlib fixtures (all types and boundaries, sharing, wide tables,
+  the `/command` and event envelopes) checked in both directions; hand-built
+  literal layouts; 30+ malformed and budget cases; encoder UTF-8, duplicate-key,
+  depth, object and size limits; every single-byte XOR, every truncation and
+  2,000 seeded random mutations per fixture.
+- Evidence: Windows MSVC static/shared Release passed all 16 CTest targets
+  (`plist_tests` about 0.1 s). clang++ 22 with `-Wall -Wextra -Wpedantic
+  -Werror` built and passed; clang AddressSanitizer passed. That clang check
+  caught a C++20-only structured-binding lambda capture before CI. A
+  fault-injected fixture produced `root.ascii` and byte-offset diagnostics.
+  MSVC caught an unspecified-evaluation-order bug: length reads now happen
+  before the payload cursor is passed on.
+- This is a building block only. No receiver message is encoded or decoded
+  by library code yet.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -912,6 +948,8 @@ while arranging the hardware baseline in parallel with that work.
    playback (section 5, reference playback attempt). Design for the
    `/command` queue flow on a type-130 stream, with playback state from the event
    channel. The unmerged pyatv fix confirmed the start path on this receiver.
+   The `bplist00` codec (D27) is implemented; the session and threading model
+   remain.
    Native stop must tear down the session and verify receiver state; after
    the fork's `stop`, the TV left playback but reported `Paused` with the
    session still open.
