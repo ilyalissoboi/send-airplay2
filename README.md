@@ -3,15 +3,16 @@
 Experimental native sender library for supported, unprotected media on tested
 AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
 
-**Status: experimental discovery and HTTP range resolution, with private
+**Status: experimental discovery and bounded HTTP media serving, with private
 authentication/receiver transport and Windows desktop credential storage/CLI
 pairing. The CLI cannot cast yet. Live PIN enrollment and fresh-socket verification
 were observed on Apple TV 4K / tvOS 26.6 / Windows 11 x64; playback is untested.**
 
 The C++17 core includes a byte-range resolver with a C interface
 and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
-CLI. The range resolver will support local-file serving and seeking; an HTTP
-server is not implemented. The pre-1.0 API is not frozen.
+CLI. A Boost.Beast/Asio media server now streams immutable byte-source callbacks
+with GET/HEAD and byte ranges; playback integration is pending. The pre-1.0 API is not frozen.
+See [media serving contracts and validation](docs/media-server.md).
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
 verification and first-time PIN/SRP message processing are also implemented.
@@ -28,7 +29,8 @@ See [receiver transport](docs/receiver-transport.md) for framing, I/O and owners
 ## Build and test
 
 Requires CMake 3.20+, a C++17 compiler, OpenSSL 3.5+ and Botan 3.12+ development
-libraries (Botan modules: ffi, srp6, sha2_64, system_rng, ed25519). Building Botan itself
+libraries (Botan modules: ffi, srp6, sha2_64, system_rng, ed25519), and Boost 1.92+
+Beast/Asio development headers and CMake package configs. Building Botan itself
 requires C++20. With maintained packages installed (set `OPENSSL_ROOT_DIR` and
 `Botan_DIR` if needed):
 

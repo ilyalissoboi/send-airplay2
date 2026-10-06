@@ -31,7 +31,7 @@ Proposed components:
 | Pairing | PIN flow, authenticated peer verification, credential reuse | Private TLV8, PIN/SRP, peer verification, receiver I/O and Windows storage/CLI implemented; live enrollment/fresh socket passed, broader gates pending |
 | Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Private HTTP/RTSP/TCP and record integration implemented; see receiver-transport.md |
 | Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Pending |
-| Media server | GET/HEAD, byte sources, range responses, bounded streaming | Range resolver only |
+| Media server | GET/HEAD, byte sources, range responses, bounded streaming | Experimental Boost.Beast/Asio server implemented; loopback tested, receiver fetch pending; see media-server.md |
 | Playback | URL start, pause/resume, seek, status, stop | Pending |
 | Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; other stores, packaged hosts and media access pending |
 | Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
@@ -123,8 +123,11 @@ built-in fresh-socket verification were subsequently observed. Playback and real
 departure/interface-change checks remain pending. See
 [discovery.md](discovery.md) for the adapter choice, provenance, API and test limits.
 Pairing, authenticated transport and Windows desktop storage/CLI are implemented
-with synthetic tests and observed live pairing/credential reload. Next assess restart reconnect,
-then add bounded media serving while establishing the pyatv playback baseline.
+with synthetic tests and observed live pairing/credential reload. Bounded
+[media serving](media-server.md) is now implemented with callback ownership,
+range handling and cancellation tests. Next add authenticated playback/session
+integration while establishing the pyatv playback baseline. Restart reconnect
+and actual receiver fetch/firewall behavior remain hardware gates.
 The [noninteractive E2E runner](e2e-runner.md) now checks repeated verification,
 profile guards, discovery consistency and loopback faults with live recovery.
 Real reboot/revocation/interface-change tests remain separate gates.

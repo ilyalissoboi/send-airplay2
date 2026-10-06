@@ -16,14 +16,17 @@ OpenSSL 3 is Apache-2.0: [upstream license](https://openssl-library.org/source/l
 Redistributors must retain its license/notices alongside the native library.
 No OpenSSL source is copied into the tracked repository.
 
-The private codecs are not yet called by public discovery/range APIs. A local
+The private codecs are not called by public discovery/range APIs. A historical local
 Windows Release `dumpbin /dependents` check showed that unused crypto sections
 were removed from `send_airplay2.dll`, while `control_tests.exe` imports
 `libcrypto-3-x64.dll`. The peer-verification tests also exercise libcrypto and
 Botan key validation.
 Thus these slices require OpenSSL at build time and exercise
 it in the codec test executable; runtime packaging for a public authenticated
-session still needs proof once that path calls these codecs.
+session still needs proof once that path calls these codecs. The public media
+server now calls OpenSSL's RNG for bearer URLs, so a shared build using that API
+does require the libcrypto runtime; the media tests exercise this DLL loading on
+Windows. This does not establish packaged/UWP runtime loading.
 
 The Windows reproducible package manifest pins vcpkg at
 `434307da09bc05b2c86996dccc8b2351fc0d5d37`, whose OpenSSL port resolves 3.6.5.
@@ -65,6 +68,25 @@ was inspected at `fa0f79190142bc309307967c058f89c1b36eb6b8`, not copied or linke
 Windows UWP/Android packaging and hardware interoperability remain validation
 gates; vcpkg's Botan port excludes the UWP triplet, so a packaged-host proof must
 resolve that integration constraint before Screenbox work.
+
+## Boost HTTP media serving
+
+The media-server slice uses Boost.Beast for HTTP/1 parsing/serialization and
+Boost.Asio for socket operations, timers and bounded worker execution. The user
+explicitly selected Boost instead of an in-tree HTTP implementation. Boost 1.92.0
+is selected by the existing vcpkg baseline; the `boost-beast` and `boost-asio`
+ports record upstream `boost-1.92.0` archive hashes. Header-only `Boost::beast` and
+`Boost::asio` targets are private: Boost types do not appear in the public API.
+The core remains C++17.
+
+Boost uses the [Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt).
+Keep applicable license/copyright notices when redistributing dependency sources.
+The project retains Apache-2.0. No upstream example or implementation source is
+copied into tracked project code. Consulted upstream parser/header-limit,
+HTTP serialization and Asio asynchronous I/O interfaces; media callbacks, range
+policy and lifecycle logic are original project code. The vcpkg ports may install
+additional Boost modules; no stackful coroutine, TLS or Boost filesystem API is
+used. Android/UWP builds and hardware media serving remain separate gates.
 
 ## Protocol research
 
