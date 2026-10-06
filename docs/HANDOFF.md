@@ -41,6 +41,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
+| Hardened PIN-pairing source commit | `4c7dcc4f6af6f5ebc391097dcc0998262436f761`; all platform/static/shared and sanitizer checks passed; subsequent documentation commits record evidence |
 | Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; later commits add documentation and a C++ readability/ownership pass |
 | C++ readability commit | `23f8ff08a12431fc0aba95a21aaf881aa7458674`; all platform/sanitizer CI jobs passed, subsequent commits record evidence only |
 | Final foundation PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
@@ -161,7 +162,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D17 | Experimental C++ discovery API plus CLI before versioned C discovery ABI/event API | Implemented; shared users require compatible C++ runtime, production bindings still pending |
 | D18 | OpenSSL 3.5+ EVP primitives, private bounded pairing/control codecs before receiver handshake | Engineering choice, implemented; no homegrown cryptography, public pairing API deferred until peer authentication and ownership contracts are complete |
 | D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Engineering choice, implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 schema and one-time control-key release. Credential storage and network correlation/deadlines remain gates |
-| D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP provisioning | Engineering choice, implemented privately; C++17 core, maintained SRP arithmetic, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
+| D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP and Ed25519 key validation | Engineering choice, implemented privately; C++17 core, maintained SRP/subgroup checks, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -359,12 +360,16 @@ PIN pairing, 2026-10-06:
   peer-verification oracle and derive the expected control keys.
 - Windows 11 x64 / MSVC 19.51 static/shared Release builds pass all nine CTest
   targets with OpenSSL 3.6.5 and Botan 3.12.0. clang-format dry-run and
-  `git diff --check` pass; fixture regeneration is reproducible. CI evidence
-  for the published PR head is recorded after checks complete.
-- The full Windows Debug pair-setup suite also passes (about 91 seconds).
+  `git diff --check` pass; fixture regeneration is reproducible.
+- At hardened source commit `4c7dcc4f6af6f5ebc391097dcc0998262436f761`, all six
+  Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed in both the
+  [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37436323914)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37436328684).
+  Inspect checks for the actual final PR #5 head, including documentation commits.
+- The full hardened Windows Debug pair-setup suite also passes (94.70 seconds).
   Its CTest limit is five minutes to accommodate repeated 3072-bit SRP with
   unoptimized backends; corruption coverage is retained. Release suite time
-  is about 3.4 seconds. GCC/Clang warnings-as-errors exposed a test-loop string
+  is about three seconds. GCC/Clang warnings-as-errors exposed a test-loop string
   copy, fixed with a const reference; final-head CI must be rechecked.
 - No receiver connection, PIN-display request, actual PIN entry, credential save
   or playback operation was attempted. Hardware authentication remains NOT RUN.

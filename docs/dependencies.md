@@ -19,7 +19,8 @@ No OpenSSL source is copied into the tracked repository.
 The private codecs are not yet called by public discovery/range APIs. A local
 Windows Release `dumpbin /dependents` check showed that unused crypto sections
 were removed from `send_airplay2.dll`, while `control_tests.exe` imports
-`libcrypto-3-x64.dll`. The peer-verification tests also exercise libcrypto.
+`libcrypto-3-x64.dll`. The peer-verification tests also exercise libcrypto and
+Botan key validation.
 Thus these slices require OpenSSL at build time and exercise
 it in the codec test executable; runtime packaging for a public authenticated
 session still needs proof once that path calls these codecs.

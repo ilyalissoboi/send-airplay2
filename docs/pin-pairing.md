@@ -62,6 +62,13 @@ complete the existing peer-verification oracle and derive expected control keys.
 Deterministic randomness injection is test-only; no production seed API exists.
 See [fixtures](../tests/fixtures/README.md) and [dependency provenance](dependencies.md).
 
+Windows 11 x64 / MSVC 19.51 static/shared Release passes all nine CTest targets;
+the full hardened Debug PIN suite passes in 94.70 seconds. At source commit
+`4c7dcc4f6af6f5ebc391097dcc0998262436f761`, all six platform/static/shared jobs
+and Linux ASan/UBSan passed in the
+[PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37436328684).
+Check the actual final PR head as documentation updates also trigger CI.
+
 Next: define trusted host credential storage, bounded HTTP/socket correlation,
 partial writes, deadlines and cancellation, then perform explicit receiver
 PIN/reconnect/revocation tests. UWP support is a packaging gate because the
