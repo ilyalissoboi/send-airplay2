@@ -41,6 +41,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), merged; verified merge `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` |
 | Current E2E PR | [#9: test: add noninteractive CLI e2e runner](https://github.com/ilyalissoboi/send-airplay2/pull/9), open |
 | E2E source commit | `2bf31dd8f61d17e4475ec36c78f81bcac21f0009`; subsequent documentation commits record checks |
+| Portable E2E source commit | `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`; closed-port correction and refreshed live artifacts |
 | Compatibility source commit | `f61698fa930893c139efcb5f5d2b0a40a93d0cae`; subsequent documentation commits record checks |
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
@@ -567,7 +568,12 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   precise evidence distinctions are recorded in receiver-validation.md.
 - Existing Release static/shared CTest suites each pass all 12 tests (6.22/6.34 s).
   Native binaries were already built from the unchanged merged C++ sources;
-  native/runner CI for the current head is pending. `git diff --check` passes.
+  `git diff --check` passes. At portable source commit
+  `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`, all 20 checks passed in the
+  [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37454270222)
+  and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37454265231):
+  Windows/Linux/macOS native static/shared, Linux ASan/UBSan, and the three
+  offline runner jobs. Check the actual final PR head after documentation updates.
 - CI caught a refusal-fixture portability issue: a bound/non-listening macOS
   socket produced a timeout. The runner now selects/releases a closed loopback
   port before connecting; unexpected results fail the case. Windows live reports

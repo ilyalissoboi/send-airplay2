@@ -116,3 +116,10 @@ physical-console cancellation/echo restoration, host/receiver reboot, receiver
 revocation, real departure/interface changes and live IPv6 require separate
 validation. Playback, media serving and packaged-host proofs still need
 implementation; this runner cannot claim them as tested.
+
+At portable source commit `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`, all native/
+sanitizer/offline runner jobs passed in the
+[PR CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37454270222)
+and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37454265231).
+Verify the actual final PR head after documentation updates. The committed live
+reports identify the tested Windows binaries and runner bytes separately.

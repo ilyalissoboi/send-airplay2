@@ -169,7 +169,8 @@ wrong PIN, cancellation/timeout and host/receiver restart checks remain pending.
 The agent ran the [noninteractive runner](e2e-runner.md) from
 [PR #9](https://github.com/ilyalissoboi/send-airplay2/pull/9), initially introduced
 at `2bf31dd8f61d17e4475ec36c78f81bcac21f0009` and then hardened for closed-port
-refusal portability. The report fingerprints identify the tested runner bytes.
+refusal portability at `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`.
+The report fingerprints identify the tested runner bytes.
 The runs used Windows 11 x64,
 observed Windows build `10.0.26200` / AMD64, using the existing user-paired profile
 and the known Living Room Apple TV 4K / advertised `AppleTV14,1` / user-reported
