@@ -107,3 +107,9 @@ The receiver-transport slice adds no dependency or copied implementation source.
 Its native sockets, framing and lifecycle are in-tree Apache-2.0 code. Updated
 pyatv reference blob/license provenance and RFC framing inputs are recorded in
 [receiver-transport.md](receiver-transport.md).
+
+The credential-storage/CLI slice adds original Apache-2.0 host code and Windows
+OS `Advapi32` credential/token APIs, without a new third-party implementation or
+runtime dependency. The existing RFC 8032 public-key vector is reused in synthetic
+storage tests. Primary Windows API contracts and the trusted-store boundary are
+recorded in [credential-storage.md](credential-storage.md).

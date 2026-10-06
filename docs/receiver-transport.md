@@ -116,6 +116,7 @@ Windows static/shared Release CMake/CTest results are recorded in HANDOFF.md.
 Linux/macOS/sanitizer CI must be verified at the actual PR head. No receiver
 connection, PIN display/entry, credential change/save or playback was attempted.
 
-Next: define trusted credential serialization and host secret storage, add CLI
-pairing/reconnect, then validate the Apple TV 4K / tvOS 26.6 / Windows 11 x64 path.
+Subsequent [credential storage/CLI authentication](credential-storage.md) adds
+the private credential codec, Windows desktop store and hidden PIN/reconnect
+commands. Next validate the Apple TV 4K / tvOS 26.6 / Windows 11 x64 path.
 Resolve the Botan UWP packaging constraint before Screenbox integration.

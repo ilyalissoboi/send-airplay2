@@ -107,6 +107,13 @@ used in these tests. The Ed25519 public-key literal is from
 [RFC 8032 section 7.1, test 1](https://www.rfc-editor.org/rfc/rfc8032#section-7.1);
 other host-record fixture bytes are original public synthetic values.
 
+At source commit `37f5e3fe90136be25d89ede9c150bcd0f582969b`, Windows/Linux/macOS
+static/shared and Linux ASan/UBSan passed in the
+[PR CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37444942542).
+Check the actual final PR head after documentation updates too. CI validates
+portable workflow/codec behavior and Windows synthetic storage, not hardware
+interoperability or other OS store adapters.
+
 Actual interactive PIN entry, console echo/mode restoration on a physical
 terminal, Apple TV first pairing, restart reconnect, wrong PIN and revocation
 remain NOT RUN. Complete these on Living Room / Apple TV 4K / tvOS 26.6 and record

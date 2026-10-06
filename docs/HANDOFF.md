@@ -37,7 +37,8 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), merged on 2026-10-06 |
 | PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), merged on 2026-10-06; verified merge `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
 | Receiver-transport PR | [#6: feat: add bounded authenticated receiver transport](https://github.com/ilyalissoboi/send-airplay2/pull/6), merged on 2026-10-06; verified merge `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
-| Current development slice | Windows desktop credential storage and CLI pairing/reconnect; next PR publication/check evidence below |
+| Current credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), open |
+| Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
 | Current local branch | `codex/credential-cli`, based on verified PR #6 merge at `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
@@ -446,32 +447,6 @@ Receiver-transport slice on `codex/receiver-transport`, 2026-10-06:
   loading remain untested. Next: trusted credential serialization/host storage
   and CLI pairing/reconnect, followed by explicit hardware validation.
 
-## 6. Screenbox integration findings
-
-At the inspected Screenbox commit:
-
-- `CastService.CreateRendererWatcher` accepts only `VlcMediaPlayer` and returns
-  a concrete `RendererWatcher`.
-- `CastService.SetActiveRenderer` calls `VlcPlayer.SetRenderer`.
-- `ICastService` exposes that watcher and the current concrete renderer model.
-- `Renderer` owns a LibVLC `RendererItem`; it is not a general AirPlay device model.
-- `Package.appxmanifest` already includes `privateNetworkClientServer`, but that
-  does not prove inbound serving, discovery or native loading in a packaged app.
-
-The working design is to wrap the existing LibVLC behavior with a Chromecast
-adapter and add an AirPlay provider/session behind a common boundary. Do not try
-to pass an AirPlay device to LibVLC's existing renderer setter. AirPlay should own
-its remote session and media server. Controls and displayed position must follow
-the active remote session, with local playback handoff/recovery defined.
-
-Before touching Screenbox, read its current `AGENTS.md`, `.github/copilot-instructions.md`
-and applicable C#/XAML instructions. The inspected instructions require Visual
-Studio 2026 MSBuild for UWP builds, not `dotnet build`. They also distinguish
-stateless services from stateful resource managers. Inspect RendererWatcher,
-CastContext, CastControlViewModel and playback coordination before choosing where
-to own a session. Follow current repository instructions rather than assuming
-the recorded source snapshot is still current.
-
 Credential-storage/CLI slice on `codex/credential-cli`, 2026-10-06:
 
 - Verified PR #6 is merged at `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99`
@@ -499,6 +474,14 @@ Credential-storage/CLI slice on `codex/credential-cli`, 2026-10-06:
   PIN arguments without echo and redirected input before receiver contact.
   The independent PIN-to-peer-verification oracle now passes through the codec
   and checks exact transcript/control keys after reloading.
+- At source commit `37f5e3fe90136be25d89ede9c150bcd0f582969b`, all 14 push/PR
+  checks passed: Windows/Linux/macOS static/shared and Linux ASan/UBSan, in the
+  [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37444942542)
+  and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37444929031).
+  Native Windows synthetic storage/redirection tests ran in CI too; Linux/macOS
+  exercise portable code plus the explicit unsupported-store path. Touched C++
+  passes clang-format dry-run and `git diff --check`. Documentation updates
+  retrigger CI; verify the actual final PR #7 head before merging.
 - No new third-party source/runtime dependency: original Apache-2.0 code uses
   Windows OS APIs (`Advapi32`); OpenSSL/Botan remain the crypto dependencies.
   Readability/RAII contracts, formatting and applicable checks are part of this PR.
@@ -508,6 +491,32 @@ Credential-storage/CLI slice on `codex/credential-cli`, 2026-10-06:
   with the exact firmware build/access settings, then add bounded GET/HEAD media
   serving with size/read-at callbacks, >4-GiB ranges and lifecycle/cancellation.
   OS storage adapters, packaged Windows/UWP and Android loading remain pending.
+
+## 6. Screenbox integration findings
+
+At the inspected Screenbox commit:
+
+- `CastService.CreateRendererWatcher` accepts only `VlcMediaPlayer` and returns
+  a concrete `RendererWatcher`.
+- `CastService.SetActiveRenderer` calls `VlcPlayer.SetRenderer`.
+- `ICastService` exposes that watcher and the current concrete renderer model.
+- `Renderer` owns a LibVLC `RendererItem`; it is not a general AirPlay device model.
+- `Package.appxmanifest` already includes `privateNetworkClientServer`, but that
+  does not prove inbound serving, discovery or native loading in a packaged app.
+
+The working design is to wrap the existing LibVLC behavior with a Chromecast
+adapter and add an AirPlay provider/session behind a common boundary. Do not try
+to pass an AirPlay device to LibVLC's existing renderer setter. AirPlay should own
+its remote session and media server. Controls and displayed position must follow
+the active remote session, with local playback handoff/recovery defined.
+
+Before touching Screenbox, read its current `AGENTS.md`, `.github/copilot-instructions.md`
+and applicable C#/XAML instructions. The inspected instructions require Visual
+Studio 2026 MSBuild for UWP builds, not `dotnet build`. They also distinguish
+stateless services from stateful resource managers. Inspect RendererWatcher,
+CastContext, CastControlViewModel and playback coordination before choosing where
+to own a session. Follow current repository instructions rather than assuming
+the recorded source snapshot is still current.
 
 ## 7. What is missing and what to do next
 
