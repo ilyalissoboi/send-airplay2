@@ -208,7 +208,8 @@ bool TimingResponder::handle_datagram() {
     const auto sent = ::sendto(native_->socket.value, reinterpret_cast<const char*>(reply.data()),
                                static_cast<int>(reply.size()), 0,
                                reinterpret_cast<const sockaddr*>(&source), source_size);
-    if (sent != static_cast<decltype(sent)>(reply.size())) {
+    // sendto returns int on Windows and ssize_t elsewhere; compare as a size.
+    if (sent < 0 || static_cast<std::size_t>(sent) != reply.size()) {
         if (sent < 0 && native::retryable(native::socket_error())) {
             ++ignored_; // A full send buffer drops this reply; the receiver retries.
             return true;
