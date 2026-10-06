@@ -69,3 +69,11 @@ The next slice adds private TLV8 and authenticated control-record codecs with
 synthetic test coverage; see [pairing-transport.md](pairing-transport.md). It does
 not perform a handshake or receiver I/O. No PIN, credential or playback operation
 was attempted; all corresponding hardware results above remain NOT RUN.
+
+## Peer-verification slice: 2026-10-06
+
+Private verification of existing, pinned identity credentials is implemented with
+synthetic RFC/transcript/failure tests; see [peer-verification.md](peer-verification.md).
+No receiver HTTP/socket connection, PIN enrollment, credential change or playback
+operation was attempted. Synthetic peer-rejection tests are not evidence of actual
+Apple TV revocation behavior; all hardware authentication results remain NOT RUN.

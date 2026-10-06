@@ -8,6 +8,9 @@ incorporating external code or adding dependencies.
 The pairing/transport foundation links `OpenSSL::Crypto` (OpenSSL 3.5 or newer)
 through CMake's `FindOpenSSL`; TLS/`libssl` is not used. ChaCha20-Poly1305 and
 HKDF-SHA512 use OpenSSL EVP APIs; the project does not implement these primitives.
+The peer-verification slice also uses EVP X25519 key agreement and pure Ed25519
+signatures, with fresh ephemeral seeds from `RAND_priv_bytes`. No new dependency
+or copied cryptographic implementation is introduced.
 OpenSSL 3 is Apache-2.0: [upstream license](https://openssl-library.org/source/license/).
 Redistributors must retain its license/notices alongside the native library.
 No OpenSSL source is copied into the tracked repository.
@@ -15,7 +18,8 @@ No OpenSSL source is copied into the tracked repository.
 The private codecs are not yet called by public discovery/range APIs. A local
 Windows Release `dumpbin /dependents` check showed that unused crypto sections
 were removed from `send_airplay2.dll`, while `control_tests.exe` imports
-`libcrypto-3-x64.dll`. Thus this slice requires OpenSSL at build time and exercises
+`libcrypto-3-x64.dll`. The peer-verification tests also exercise libcrypto.
+Thus these slices require OpenSSL at build time and exercise
 it in the codec test executable; runtime packaging for a public authenticated
 session still needs proof once that path calls these codecs.
 
@@ -35,7 +39,14 @@ Inspected pyatv revision `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`:
 - `pyatv/auth/hap_session.py`: control record shape and incremental framing.
 - `pyatv/support/chacha20.py`: independent directional counters and nonce layout.
 - `pyatv/auth/hap_tlv8.py`: pairing tags and fragment encoding.
-- `pyatv/auth/hap_srp.py`: later PIN/verification investigation, not implemented here.
+- `pyatv/auth/hap_srp.py`: pair-verification transcript order, HKDF labels and
+  named nonces, reinspected for the peer-verification slice.
+- `pyatv/protocols/airplay/auth/hap.py`: AirPlay pair-verify message sequence.
+  Its unchecked final response is not adopted: this project requires HTTP 200,
+  state M4 and no error before releasing connection keys.
+- `pyatv/protocols/airplay/server_auth.py`: candidate M4 state acknowledgement
+  and sender/receiver control-key direction. Its omitted controller verification
+  is not used as a cryptographic test oracle.
 
 pyatv is MIT licensed. It is a reference only; no implementation source was
 copied or linked. Tests use independently generated, synthetic inputs; no receiver
@@ -50,3 +61,8 @@ using public synthetic keys, with generation instructions recorded
 in `tests/fixtures/README.md`.
 The Python AEAD API can share an OpenSSL backend; independence here refers to the
 framing/fixture generator. The RFC known answer independently checks AEAD bytes.
+
+Peer-verification primitive vectors use [RFC 7748 section 6.1](https://www.rfc-editor.org/rfc/rfc7748.html#section-6.1)
+and [RFC 8032 section 7.1](https://www.rfc-editor.org/rfc/rfc8032.html#section-7.1).
+OpenSSL API contracts were checked against its [X25519](https://docs.openssl.org/3.5/man7/EVP_KEYEXCH-X25519/)
+and [Ed25519](https://docs.openssl.org/3.5/man7/EVP_SIGNATURE-ED25519/) documentation.

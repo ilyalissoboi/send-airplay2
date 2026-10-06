@@ -33,10 +33,12 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Foundation PR | [#1: feat: establish portable AirPlay sender foundation](https://github.com/ilyalissoboi/send-airplay2/pull/1) |
 | Foundation PR state | Merged on 2026-10-06; verified through GitHub CLI |
 | Discovery PR | [#2: feat: add receiver discovery and diagnostic CLI](https://github.com/ilyalissoboi/send-airplay2/pull/2), merged on 2026-10-06 |
-| Current pairing/transport PR | [#3: feat: add pairing TLV8 and authenticated control record codecs](https://github.com/ilyalissoboi/send-airplay2/pull/3), open |
+| Pairing/transport PR | [#3: feat: add pairing TLV8 and authenticated control record codecs](https://github.com/ilyalissoboi/send-airplay2/pull/3), merged on 2026-10-06 |
+| Current peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), open |
 | Target | `main` |
-| Current local branch | `codex/pairing-transport`, based on merged `main` at `02c953a22c9503f1bf17bc14d6814e797cb04a1b` |
+| Current local branch | `codex/peer-verification`, based on verified PR #3 merge at `360d74661e7cc703a82b7852f425215189217ad3` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
+| Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; later commits add documentation and a C++ readability/ownership pass |
 | C++ readability commit | `23f8ff08a12431fc0aba95a21aaf881aa7458674`; all platform/sanitizer CI jobs passed, subsequent commits record evidence only |
 | Final foundation PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
@@ -47,7 +49,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver validation | Windows LAN discovery observed for `AppleTV14,1` advertising OS 26.6 and `Mac14,2`; pairing/playback not run, no compatibility certification |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 and #2 are merged and `main` contains the foundation/discovery. Verify current GitHub and
+PRs #1, #2 and #3 are merged and `main` contains the foundation/discovery/control codecs. Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -156,6 +158,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D16 | Keep protocol-specific records and merge only by matching normalized advertised device identity | Implemented; hostname/friendly name alone is insufficient, advertisements remain unauthenticated |
 | D17 | Experimental C++ discovery API plus CLI before versioned C discovery ABI/event API | Implemented; shared users require compatible C++ runtime, production bindings still pending |
 | D18 | OpenSSL 3.5+ EVP primitives, private bounded pairing/control codecs before receiver handshake | Engineering choice, implemented; no homegrown cryptography, public pairing API deferred until peer authentication and ownership contracts are complete |
+| D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Engineering choice, implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 schema and one-time control-key release. SRP backend selection, credential storage and network correlation/deadlines are still gates |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -182,6 +185,8 @@ cancellation and errors before publishing production bindings.
 | `src/control_crypto.*` / `src/control_records.*` | OpenSSL AEAD/HKDF, incremental authenticated records, directional counters and terminal failure |
 | `tests/control_tests.cpp` / `tests/fixtures` | Independent synthetic wire/key fixtures and malformed/replay/fragmentation tests |
 | `docs/pairing-transport.md` / `docs/dependencies.md` / `vcpkg.json` | Transport contracts, gates, dependency/license provenance and pinned package manifest |
+| `src/identity_crypto.*` / `src/pair_verify.*` | OpenSSL X25519/Ed25519, secret ownership and bounded existing-credential verification state machine |
+| `tests/pair_verify_tests.cpp` / `tests/fixtures/pair-verify` / `docs/peer-verification.md` | RFC vectors, independent synthetic transcripts, failure/cleanup/record-handoff tests and trust contracts |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -293,13 +298,42 @@ Readability pass on PR #3, 2026-10-06:
 - Protocol behavior, public API and receiver validation status remain unchanged.
   No new hardware pairing/playback result is claimed.
 
+Peer verification, 2026-10-06:
+
+- Verified PR #3 merged at `360d74661e7cc703a82b7852f425215189217ad3`; started
+  `codex/peer-verification` from that main commit. Existing-credential verification
+  is the next bounded slice before first-time PIN enrollment, not a public pairing API.
+- Added EVP X25519/Ed25519 and erasing secret/credential owners. Receiver identity
+  is pinned to trusted credentials; no discovery-derived trust or TOFU. M2 must
+  authenticate before the sender signs M3. HTTP 200/state M4/no error is required
+  before deriving/releasing write/read keys once. Failures permanently close and
+  clear owned handshake/control keys. See peer-verification.md for complete limits.
+- Windows 11 x64 / MSVC 19.51 static/shared Release builds pass all eight CTest
+  targets. Added RFC 7748/8032 vectors, independent Python wire/HMAC transcript
+  fixtures, identity/signature/schema/replay/rejection cases, directional record
+  handoff at every split, phase cancellation and 1,000 deterministic M2 mutations.
+  Fixture regeneration reproduced committed bytes; clang-format dry-run and
+  `git diff --check` passed. Existing control fixtures and Apache-2.0 LICENSE are unchanged.
+- At implementation commit `7b572a7b24d7242200e0cb1321c366a83932b3da`, all six
+  Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed in the
+  [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37427502668)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37427549046).
+  Inspect final PR #4 head checks, including documentation-only commits, before merging.
+- Continued the AGENTS.md readability requirements: named scenario groups,
+  diagnostic context, explicit non-copyable ownership and Doxygen contracts.
+  OpenSSL remains the only crypto dependency; no third-party source was copied.
+- No receiver I/O, PIN entry, credential change or playback operation was attempted.
+  Wrong PIN, actual revocation/reconnect, firmware interoperability and packaged/
+  Android loading remain untested. Next: vetted PIN/SRP provisioning with verified
+  server proofs/signatures, trusted credential storage, bounded HTTP/socket I/O.
+
 Reproduction from a fresh checkout (requires OpenSSL 3.5+; see README for the
 pinned vcpkg build when the host package is unavailable):
 
 ```sh
 git clone https://github.com/ilyalissoboi/send-airplay2.git
 cd send-airplay2
-git switch codex/pairing-transport
+git switch codex/peer-verification
 cmake -S . -B build-static -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build-static --config Release
 ctest --test-dir build-static -C Release --output-on-failure
@@ -359,7 +393,7 @@ while arranging the hardware baseline in parallel with that work.
    departure/interface-change checks and other platform/Android host coverage.
    The Windows Apple TV discovery gate has passed; see discovery.md for limits.
 3. **Pairing + secure transport:** private TLV8, AEAD/HKDF and record framing are
-   implemented. Next implement authenticated PIN/SRP and peer verification, the
+   implemented, along with existing-credential peer verification. Next implement authenticated PIN/SRP, the
    socket/deadline layer, and specify persistent credentials
    and host storage, and test fragmentation, wrong PIN, authentication failure,
    counters/replay, timeouts and revocation before claiming interoperability.
@@ -378,7 +412,7 @@ while arranging the hardware baseline in parallel with that work.
    regression and local/remote handoff.
 
 Remaining design choices: production OS discovery fallback/IPv6-only backend,
-SRP/signature/key-agreement adapters, plist libraries, session socket/event
+SRP backend, plist libraries, session socket/event
 model, credential format/storage adapters, asynchronous C API and bindings,
 timeouts/cancellation, capability policy, media-server access policy, unsupported
 codec handling, Android packaging and audio transport. These choices remain open;
