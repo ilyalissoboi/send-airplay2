@@ -243,7 +243,8 @@ administered one per session.
      failure marks the session failed.
    - An unreadable event body is answered and counted, and does not end the
      session.
-6. `airplay2-cli cast`, start and stop only. Then MRP, after D31: wire codec
+6. `airplay2-cli cast`, start and stop only. **Implemented** (`cast_cli.*`);
+   hardware gate G1 pending. Then MRP, after D31: wire codec
    and message mapping with fixtures; data-stream framing; the
    remote-control session against a fake receiver; then status and
    controls. **Hardware gate G1:** the user

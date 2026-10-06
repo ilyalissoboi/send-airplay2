@@ -23,10 +23,10 @@ Snapshot: 2026-10-06, ~14:30 UTC.
 - **Done on this branch:** steps 1-5. Channel key derivation, the event
   channel, the NTP timing responder, the session messages, and the
   `UrlPlaybackSession` orchestrator (section 5).
-- **Next:** step 6 of session-design.md section 8: `airplay2-cli cast` (start
-  and stop only), then **hardware gate G1** on Living Room. The user observes
-  video and audio; the `serve`-style read counts are recorded; stop must return
-  the TV to idle (hypothesis H4).
+- **Implemented, awaiting hardware:** step 6, `airplay2-cli cast --address
+  IP --profile NAME --file PATH`.
+- **Next: hardware gate G1** on Living Room. The user observes video and audio;
+  the read counts are recorded; stop must return the TV to idle (H4).
 - **Still true:** the library cannot cast yet. The first hardware gate (G1) is
   step 6.
 
@@ -1071,6 +1071,30 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   - CI passed for `2f46e34` (step 3 fix) and `f2cfd23` (step 4).
 - **Not yet exercised:** no Apple TV traffic. The first hardware run is gate G1
   in step 6.
+
+### `airplay2-cli cast` (step 6): 2026-10-07
+
+- **New:** `cast_cli.*`. Steps, in order:
+  1. Open the media file (a bad path is exit 2).
+  2. Load the stored credential profile (absent: exit 1, before any network
+     work).
+  3. Start `MediaServer` for that receiver only, using the media server's
+     maximum per-request budget.
+  4. Run `UrlPlaybackSession::start`.
+  5. Print `State: <state>` lines from a reporter thread until Enter or
+     end-of-file.
+  6. Stop the session, then the server, and print a sanitized summary: state,
+     events, feedback, timing answers, whether the session failed, and the read
+     counts and span.
+- **Never printed:** the private URL, the receiver address, identifiers or
+  payloads. Session failures print a category and, if rejected, the status.
+- **Supporting change:** the credential error wording from the auth CLI is
+  shared (`describe_credential_error`). The usage text lists `cast`; the
+  `verify` success message the E2E runner pins is unchanged.
+- **Tests** (`cli_cast`): six argument refusals with exit 2; an absent profile
+  exits 1 with a `Credentials:` message; no output ever contains a URL.
+- **Evidence:** Windows MSVC static/shared Release passed all 21 CTest targets;
+  clang strict syntax checks and clang-format passed.
 
 ## 6. Screenbox integration findings
 

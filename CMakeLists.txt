@@ -39,7 +39,7 @@ function(sap2_warnings target)
 endfunction()
 sap2_warnings(send_airplay2)
 # Host auth is private C++; compile it directly, without exporting secrets through the DLL ABI.
-add_executable(airplay2-cli src/cli.cpp src/auth_cli.cpp src/serve_cli.cpp src/file_media_source.cpp ${sap2_auth_sources})
+add_executable(airplay2-cli src/cli.cpp src/auth_cli.cpp src/serve_cli.cpp src/cast_cli.cpp src/file_media_source.cpp ${sap2_auth_sources} ${sap2_session_sources})
 target_include_directories(airplay2-cli PRIVATE src)
 target_link_libraries(airplay2-cli PRIVATE send_airplay2 OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS})
 if(WIN32)
@@ -174,6 +174,10 @@ if(BUILD_TESTING)
     -DCLI=$<TARGET_FILE:airplay2-cli> -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_serve.cmake)
   set_tests_properties(cli_serve PROPERTIES TIMEOUT 30)
+  add_test(NAME cli_cast COMMAND ${CMAKE_COMMAND}
+    -DCLI=$<TARGET_FILE:airplay2-cli> -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_cast.cmake)
+  set_tests_properties(cli_cast PROPERTIES TIMEOUT 30)
   add_test(NAME cli_invalid_timeout COMMAND airplay2-cli discover --timeout-ms 0)
   set_tests_properties(cli_invalid_timeout PROPERTIES WILL_FAIL TRUE)
   add_executable(cli_fixture_tests src/cli.cpp tests/cli_fixture.cpp)
