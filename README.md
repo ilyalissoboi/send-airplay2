@@ -35,6 +35,8 @@ builds on Windows, Linux and macOS. Android build/device validation is pending.
 Initial exclusions: DRM, screen mirroring, system-audio capture, synchronized
 multiroom, automatic transcoding, and universal receiver/codec compatibility.
 
+Start with the [developer/model handoff](docs/HANDOFF.md) for project history,
+decisions, verified state and continuation instructions.
 See [design and implementation sequence](docs/design.md) and
 [receiver validation checklist](docs/receiver-validation.md).
 
