@@ -634,6 +634,13 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   OpenSSL/Botan packages. Both native and sanitizer cache lookups now restore a
   previous OS/architecture cache on an exact-key miss; vcpkg still checks package
   ABI hashes and builds missing/changed packages. The PR-only trigger is preserved.
+- At validated head `130a71c490dde25699301915a7a509b72b95b5dc`, all ten checks
+  passed in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37461159947):
+  Windows/Linux/macOS static/shared native CTest, Linux ASan/UBSan and offline
+  runner contracts on all three platforms. Both macOS configurations passed the
+  corrected IP fixture and the rest of the media suite. Inspect checks for the
+  final documentation head before merging. No receiver media interoperability
+  result is added by this gate.
 
 ## 6. Screenbox integration findings
 

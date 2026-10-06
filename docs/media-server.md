@@ -119,7 +119,12 @@ IPv6 loopback is tested when an independent host probe supports it; an unavailab
 IPv6 host is an explicit skip. No private profiles/media or Apple TV are accessed.
 
 Windows 11 x64 / MSVC Release static and shared builds each pass all 13 CTest
-targets. Cross-platform/sanitizer evidence belongs to the actual PR head.
+targets. At head `130a71c490dde25699301915a7a509b72b95b5dc`, all ten
+[PR CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37461159947)
+passed: native static/shared CTest on Windows/Linux/macOS, Linux ASan/UBSan and
+offline runner contracts on all three platforms. The macOS IP-restriction fixture
+uses an ordinary loopback client with a different allowed peer IP, rather than
+binding an unconfigured loopback alias. Check the actual final PR head separately.
 Virtual >4-GiB sources verify offset/length arithmetic without claiming a real
 large-file adapter or Apple TV seek result. Reference pyatv playback of an owned
 H.264/AAC MP4, real receiver HTTP fetch/ranges, firewall reachability and native
