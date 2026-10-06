@@ -65,6 +65,10 @@ PRs #1 through #8 are merged and `main` contains the foundation/discovery/contro
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
+At the user's request, CI now triggers only on `pull_request`, removing duplicate
+push and PR runs. Opening, updating or reopening a PR runs the existing ten jobs
+once; a branch push without an open PR does not trigger this workflow.
+
 ### Local testing environment
 
 User-provided on 2026-10-06 (Asia/Tokyo):
