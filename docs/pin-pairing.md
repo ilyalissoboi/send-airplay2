@@ -81,17 +81,27 @@ each phase, malformed/over-limit bodies and payload/PIN suppression.
 Deterministic randomness injection is test-only; no production seed API exists.
 See [fixtures](../tests/fixtures/README.md) and [dependency provenance](dependencies.md).
 
-Windows 11 x64 / MSVC 19.51 static/shared Release passes all nine CTest targets;
-the full hardened Debug PIN suite passes in 94.70 seconds. At source commit
+The original PIN slice passed all nine then-existing CTest targets in Windows
+11 x64 / MSVC 19.51 static/shared Release; its full hardened Debug PIN suite
+passed in 94.70 seconds. At source commit
 `4c7dcc4f6af6f5ebc391097dcc0998262436f761`, all six platform/static/shared jobs
 and Linux ASan/UBSan passed in the
 [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37436328684).
 Check the actual final PR head as documentation updates also trigger CI.
 
+For the M6 metadata fix at source commit
+`f61698fa930893c139efcb5f5d2b0a40a93d0cae`, Windows Release static/shared each
+passed all 12 CTests. Windows/Linux/macOS static/shared and Linux ASan/UBSan
+passed in the [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37450506346)
+and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37450491552).
+CI is codec/workflow evidence; live receiver results are recorded separately.
+
 Subsequent [receiver transport](receiver-transport.md) implements bounded
 HTTP/socket correlation, partial writes, deadlines and cancellation privately.
 Subsequent [credential storage/CLI authentication](credential-storage.md) implements
 the private codec and Windows desktop store plus hidden PIN/reconnect commands.
-Next perform explicit receiver PIN/reconnect/revocation tests. UWP support is a packaging gate because the
+Live PIN enrollment and separate-process verification passed after the M6
+metadata fix; see the receiver record. Next assess restart, wrong PIN and revocation.
+UWP support is a packaging gate because the
 current vcpkg Botan port excludes that triplet. Public API, packaged Windows and
 Android loading, reference playback and native playback remain pending.

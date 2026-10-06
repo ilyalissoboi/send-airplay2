@@ -38,7 +38,8 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), merged on 2026-10-06; verified merge `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
 | Receiver-transport PR | [#6: feat: add bounded authenticated receiver transport](https://github.com/ilyalissoboi/send-airplay2/pull/6), merged on 2026-10-06; verified merge `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
 | Credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), merged; verified merge `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
-| Current compatibility work | M6 optional receiver metadata and sanitized diagnostics on `codex/pairing-diagnostics`; PR publication pending |
+| Current compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), open |
+| Compatibility source commit | `f61698fa930893c139efcb5f5d2b0a40a93d0cae`; subsequent documentation commits record checks |
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
@@ -516,8 +517,13 @@ M6 compatibility slice on `codex/pairing-diagnostics`, 2026-10-06:
 - Final Windows Release static/shared each passed all 12 CTest targets
   (6.59/6.39 s), including the empty-metadata boundary fixture. Touched C++ passes
   clang-format dry-run; `git diff --check` passes.
-  Cross-platform/sanitizer CI awaits publication. No new dependency or copied
-  implementation; re-inspected MIT pyatv reference provenance is in dependencies.md.
+  At source commit `f61698fa930893c139efcb5f5d2b0a40a93d0cae`, all six platform/
+  static/shared jobs and Linux ASan/UBSan passed in both the
+  [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37450506346)
+  and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37450491552)
+  (14 successful checks). Verify the actual final PR head after documentation
+  updates. No new dependency or copied implementation; re-inspected MIT pyatv
+  reference provenance is in dependencies.md.
 - User reran the rebuilt static CLI and reported authenticated enrollment,
   credential save/reload and built-in fresh-socket peer verification with encrypted
   control transport established. Separate-process `verify` also passed with exit

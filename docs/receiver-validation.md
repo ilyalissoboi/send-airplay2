@@ -134,7 +134,9 @@ An agent-operated no-PIN/no-save LAN probe independently observed
 `/pair-pin-start` HTTP 200 with an empty body, and M2 HTTP 200 (409 bytes): state
 2, 16-byte salt and 384-byte SRP public value. This probe did not complete pairing.
 
-The fix on `codex/pairing-diagnostics`, based on PR #7 merge
+The fix in [PR #8](https://github.com/ilyalissoboi/send-airplay2/pull/8), source
+commit `f61698fa930893c139efcb5f5d2b0a40a93d0cae` on `codex/pairing-diagnostics`,
+based on PR #7 merge
 `6e83badfc5146371ee0c886e3f75fba492f9ab61`, accepts one optional opaque M6
 type-17 value up to 256 bytes and discards it. Mandatory ID/key/signature checks,
 server proof, duplicate rejection and rejection of other unknown tags remain.
