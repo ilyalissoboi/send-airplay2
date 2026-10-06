@@ -159,11 +159,11 @@ void srp_vectors(const std::string& directory) {
         PairSetupError::unexpected_state);
 }
 
-void credential_round_trip(const std::string& directory) {
-    active_group = "PIN enrollment to peer verification";
+void credential_round_trip(const std::string& directory, const char* response_name) {
+    active_group = response_name;
     Exchange exchange(directory);
     exchange.advance(directory, 3);
-    auto credentials = exchange.setup.finish(200, fixture(directory, "m6"));
+    auto credentials = exchange.setup.finish(200, fixture(directory, response_name));
     check(credentials != nullptr && PairSetupTestAccess::wiped(exchange.setup),
           "authenticated credential release and setup erasure");
     CredentialBlob stored;
@@ -308,8 +308,8 @@ void state_and_schema(const std::string& directory) {
 
 void accessory_authentication(const std::string& directory) {
     active_group = "accessory identity authentication";
-    for (const char* name :
-         {"bad-signature-m6", "wrong-id-m6", "wrong-key-m6", "weak-identity-m6"}) {
+    for (const char* name : {"bad-signature-m6", "bad-signature-metadata-m6", "wrong-id-m6",
+                             "wrong-key-m6", "weak-identity-m6"}) {
         Exchange exchange(directory);
         exchange.advance(directory, 3);
         reject(
@@ -319,7 +319,8 @@ void accessory_authentication(const std::string& directory) {
     }
     for (const char* name :
          {"duplicate-id-m6", "missing-id-m6", "empty-id-m6", "long-id-m6", "short-key-m6",
-          "short-signature-m6", "unknown-inner-m6", "malformed-inner-m6"}) {
+          "short-signature-m6", "unknown-inner-m6", "malformed-inner-m6", "oversized-metadata-m6",
+          "duplicate-metadata-m6"}) {
         Exchange exchange(directory);
         exchange.advance(directory, 3);
         reject(
@@ -371,6 +372,90 @@ void weak_identity_keys() {
               "weak/noncanonical key " + std::to_string(index++));
     }
 }
+
+void response_diagnostics(const std::string& directory) {
+    active_group = "sanitized response diagnostics";
+    const auto metadata_only = [](const PairSetupException& error, PairSetupPhase phase,
+                                  const char* expected) {
+        check(error.phase() == phase, "correlated response phase");
+        check(std::string(error.what()) == expected, "literal bounded diagnostic");
+    };
+    Exchange m2(directory);
+    m2.advance(directory, 1);
+    const auto private_marker = text("private-payload-0123");
+    try {
+        (void)m2.setup.respond("0123", 200, encode_tlv({{6, {2}}, {100, private_marker}}));
+        check(false, "M2 unknown field accepted");
+    } catch (const PairSetupException& error) {
+        metadata_only(error, PairSetupPhase::m2,
+                      "Invalid pair-setup message [phase=M2 HTTP=200 body_bytes=25 "
+                      "TLV=[6:1(state=2),100:20]]");
+        check(std::string(error.what()).find("private-payload") == std::string::npos &&
+                  std::string(error.what()).find("0123") == std::string::npos,
+              "payload/PIN marker never appears in diagnostics");
+    }
+    check(PairSetupTestAccess::wiped(m2.setup), "M2 diagnostics preserve terminal cleanup");
+    Exchange m4(directory);
+    m4.advance(directory, 2);
+    try {
+        (void)m4.setup.confirm(200, encode_tlv({{6, {4}}}));
+        check(false, "missing M4 proof accepted");
+    } catch (const PairSetupException& error) {
+        metadata_only(
+            error, PairSetupPhase::m4,
+            "Invalid pair-setup message [phase=M4 HTTP=200 body_bytes=3 TLV=[6:1(state=4)]]");
+    }
+    check(PairSetupTestAccess::wiped(m4.setup), "M4 diagnostics preserve terminal cleanup");
+    Exchange m6(directory);
+    m6.advance(directory, 3);
+    try {
+        (void)m6.setup.finish(403, encode_tlv({{6, {6}}, {7, {2}}}));
+        check(false, "M6 peer rejection accepted");
+    } catch (const PairSetupException& error) {
+        metadata_only(error, PairSetupPhase::m6,
+                      "Peer rejected pair setup [phase=M6 HTTP=403 body_bytes=6 "
+                      "TLV=[6:1(state=6),7:1(error=2)]]");
+    }
+    check(PairSetupTestAccess::wiped(m6.setup), "M6 diagnostics preserve terminal cleanup");
+    Exchange inner(directory);
+    inner.advance(directory, 3);
+    try {
+        (void)inner.setup.finish(200, fixture(directory, "unknown-inner-m6"));
+        check(false, "unknown M6 identity field accepted");
+    } catch (const PairSetupException& error) {
+        check(error.phase() == PairSetupPhase::m6 &&
+                  std::string(error.what()).find("source=identity") != std::string::npos &&
+                  std::string(error.what()).find("100:1") != std::string::npos,
+              "M6 identity-schema context is retained through outer cleanup");
+        check(std::string(error.what()).find("synthetic-receiver") == std::string::npos,
+              "decrypted receiver identity is never logged");
+    }
+    check(PairSetupTestAccess::wiped(inner.setup), "inner diagnostics preserve terminal cleanup");
+    const PairSetupException identity(PairSetupError::invalid_message, PairSetupPhase::m6, 200,
+                                      Bytes{6, 1, 6}, PairSetupRegion::identity);
+    check(std::string(identity.what()).find("state=") == std::string::npos,
+          "inner payload values are never interpreted as outer protocol codes");
+    const PairSetupException header(PairSetupError::invalid_message, PairSetupPhase::m2, 200,
+                                    Bytes{6});
+    check(std::string(header.what()).find("truncated-header") != std::string::npos,
+          "truncated header metadata is bounded");
+    const PairSetupException value(PairSetupError::invalid_message, PairSetupPhase::m2, 200,
+                                   Bytes{6, 2, 2});
+    check(std::string(value.what()).find("truncated-value") != std::string::npos,
+          "truncated value metadata is bounded");
+    const PairSetupException oversized(PairSetupError::invalid_message, PairSetupPhase::m2, 200,
+                                       Bytes(2049, 'X'));
+    check(std::string(oversized.what()).find("TLV=over-limit") != std::string::npos,
+          "oversized bodies are not inspected");
+    Bytes empty_fields;
+    for (unsigned index = 0; index < 65; ++index) {
+        empty_fields.insert(empty_fields.end(), {100, 0});
+    }
+    const PairSetupException many(PairSetupError::invalid_message, PairSetupPhase::m2, 200,
+                                  empty_fields);
+    check(std::string(many.what()).find("summary-limit") != std::string::npos,
+          "diagnostic fragment count is bounded independently of acceptance");
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -386,8 +471,12 @@ int main(int argc, char** argv) {
         }
         const std::string directory = argv[1];
         weak_identity_keys();
+        response_diagnostics(directory);
         srp_vectors(directory);
-        credential_round_trip(directory);
+        for (const auto* response_name :
+             {"m6", "empty-metadata-m6", "metadata-m6", "max-metadata-m6"}) {
+            credential_round_trip(directory, response_name);
+        }
         malformed_srp(directory);
         state_and_schema(directory);
         accessory_authentication(directory);

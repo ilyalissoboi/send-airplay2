@@ -19,15 +19,30 @@ enum class PairSetupError {
     unexpected_state,
     backend
 };
+enum class PairSetupPhase { none, m2, m4, m6 };
+enum class PairSetupRegion { response, identity };
+/** Sanitized failure category and optional correlated response context.
+ * Context reports phase, HTTP status, body size and bounded wire TLV types/lengths;
+ * only valid protocol state/error codes may be shown. PINs, keys, salts, proofs,
+ * identities, signatures, ciphertext and decrypted values are never retained/logged.
+ * Identity-region context describes only M6 TLV headers after successful decryption.
+ */
 class PairSetupException : public std::runtime_error {
 public:
     explicit PairSetupException(PairSetupError reason);
+    /// Borrowed response/identity is inspected for metadata only, never copied/retained.
+    PairSetupException(PairSetupError reason, PairSetupPhase phase, unsigned http_status,
+                       const Bytes& response, PairSetupRegion region = PairSetupRegion::response);
     [[nodiscard]] PairSetupError reason() const noexcept {
         return reason_;
+    }
+    [[nodiscard]] PairSetupPhase phase() const noexcept {
+        return phase_;
     }
 
 private:
     PairSetupError reason_;
+    PairSetupPhase phase_ = PairSetupPhase::none;
 };
 /// Erasing owner for the SHA512 SRP session key and expected proof; serial use only.
 struct Secret64 {

@@ -29,7 +29,8 @@ constexpr std::size_t max_fields = 64;
  * A 255-byte fragment can continue only into an immediately adjacent equal type.
  * Separate equal types require a separator/different type. Separators must be empty.
  * Throws std::invalid_argument on malformed/over-limit input; no partial result.
- * Returned fields own their bytes. Pairing state/schema validation is a later layer.
+ * Partially decoded values are erased on failure. Returned fields own their bytes;
+ * callers erase successful results when needed. State/schema validation is a later layer.
  */
 [[nodiscard]] std::vector<TlvField> decode_tlv(const Bytes& body);
 

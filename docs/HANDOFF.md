@@ -37,11 +37,13 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), merged on 2026-10-06 |
 | PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), merged on 2026-10-06; verified merge `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
 | Receiver-transport PR | [#6: feat: add bounded authenticated receiver transport](https://github.com/ilyalissoboi/send-airplay2/pull/6), merged on 2026-10-06; verified merge `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
-| Current credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), open |
+| Credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), merged; verified merge `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
+| Current compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), open |
+| Compatibility source commit | `f61698fa930893c139efcb5f5d2b0a40a93d0cae`; subsequent documentation commits record checks |
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
-| Current local branch | `codex/credential-cli`, based on verified PR #6 merge at `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
+| Current local branch | `codex/pairing-diagnostics`, based on verified PR #7 merge at `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -53,10 +55,10 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
 | Actual casting support | None yet |
-| Receiver validation | Windows LAN discovery observed for `AppleTV14,1` advertising OS 26.6 and `Mac14,2`; pairing/playback not run, no compatibility certification |
+| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); playback unimplemented |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #6 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup and bounded receiver transport. Verify current GitHub and
+PRs #1 through #7 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI. Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -169,6 +171,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP and Ed25519 key validation | Engineering choice, implemented privately; C++17 core, maintained SRP/subgroup checks, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
 | D21 | Private synchronous native TCP with one outstanding request and a strict bounded HTTP/RTSP profile | Engineering choice, merged in PR #6; absolute deadlines/cancellation, terminal cleanup, HTTP ordered correlation with optional validated CSeq, mandatory RTSP CSeq, verified record transition. Hardware remains a gate |
 | D22 | Private versioned credential envelope, trusted host store and Windows desktop CLI before a public auth ABI | Engineering choice, implemented on credential-cli branch; current-user/same-computer Credential Manager, create-only profile semantics for cooperating writers, no plaintext fallback or automatic re-pair. Other OS stores and packaged hosts remain gates |
+| D23 | Accept one optional opaque M6 type-17 metadata field, bounded to 0..256 bytes; discard and erase it | Live Apple TV M6 headers showed `17:159`. Required ID/key/signature, server proof, AEAD, duplicate and other unknown-field rejection remain enforced; metadata never influences trust, naming or storage. Sanitized phase/HTTP/TLV-header diagnostics retain no payloads |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -185,7 +188,7 @@ cancellation and errors before publishing production bindings.
 | `CMakeLists.txt` | C++17 static/shared library and CTest targets |
 | `.github/workflows/build.yml` | Windows/Linux/macOS static/shared build-and-test matrix |
 | `docs/design.md` | Architecture, range contract, integration audit and implementation gates |
-| `docs/receiver-validation.md` | Per-platform/per-firmware hardware test record; discovery observed, pairing/playback not run |
+| `docs/receiver-validation.md` | Per-platform/per-firmware hardware record; discovery, PIN enrollment and fresh-socket verification observed; remaining gates explicit |
 | `include/send_airplay2/discovery.h` | Experimental synchronous C++ discovery records/options/result API |
 | `src/discovery*.cpp` / internal headers | Bounded DNS-SD parser/cache, scan scheduler and native socket adapter |
 | `src/cli.cpp` | `airplay2-cli discover`, readable and JSON diagnostics |
@@ -492,6 +495,49 @@ Credential-storage/CLI slice on `codex/credential-cli`, 2026-10-06:
   serving with size/read-at callbacks, >4-GiB ranges and lifecycle/cancellation.
   OS storage adapters, packaged Windows/UWP and Android loading remain pending.
 
+M6 compatibility slice on `codex/pairing-diagnostics`, 2026-10-06:
+
+- PR #7 merged at `6e83badfc5146371ee0c886e3f75fba492f9ab61`; its actual final
+  head `e9057069ab6ce0199868ae92f1972198bf9f1c9b` passed all 14 push/PR CI checks.
+- User observed TV PIN display and entered the PIN at the CLI prompt. Initial
+  enrollment failed in M6. Sanitized inner headers were
+  `source=identity TLV=[1:36,3:32,10:64,17:159]`, confirming an extra type-17
+  receiver metadata field rejected by the original strict schema. M4 server proof
+  and M6 AEAD had passed; accessory signature had not yet been checked.
+- An agent no-PIN/no-save probe independently observed HTTP 200 PIN display and
+  M2 (409 bytes, state 2, salt 16 bytes, public value 384 bytes). No raw receiver
+  identifiers, secrets, ciphertext or metadata contents were retained.
+- The fix accepts only the bounded opaque metadata field, without parsing it or
+  altering the signed identity transcript. RAII erases decrypted bytes and field
+  copies on success/schema failure, including partial generic TLV decoding.
+- Original synthetic fixtures cover absent/empty/159-byte/fragmented 256-byte
+  metadata, 257-byte rejection, duplicates and invalid signatures. Successful
+  variants retain the independent serialized-credential/peer-verification/control
+  key oracle. Diagnostics tests cover all phases and bounded header-only output.
+- Final Windows Release static/shared each passed all 12 CTest targets
+  (6.59/6.39 s), including the empty-metadata boundary fixture. Touched C++ passes
+  clang-format dry-run; `git diff --check` passes.
+  At source commit `f61698fa930893c139efcb5f5d2b0a40a93d0cae`, all six platform/
+  static/shared jobs and Linux ASan/UBSan passed in both the
+  [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37450506346)
+  and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37450491552)
+  (14 successful checks). Verify the actual final PR head after documentation
+  updates. No new dependency or copied implementation; re-inspected MIT pyatv
+  reference provenance is in dependencies.md.
+- User reran the rebuilt static CLI and reported authenticated enrollment,
+  credential save/reload and built-in fresh-socket peer verification with encrypted
+  control transport established. Separate-process `verify` also passed with exit
+  code 0. The pair exit code was not supplied; its reported success checkpoints
+  are recorded in receiver-validation.md.
+- Host/receiver restart, wrong PIN, revocation, physical console echo/mode
+  restoration and playback remain untested. Earlier M6 failures saved no local
+  profile, but receiver-side provisioning may already have occurred during M5;
+  no receiver revocation was performed. Playback remains unimplemented.
+- Assess the restart/revocation authentication gates, then implement bounded
+  GET/HEAD media serving with size/read-at callbacks and >4-GiB/lifecycle tests
+  while arranging reference playback. Public auth ABI, other stores and packaged
+  Windows/UWP/Android proofs remain pending.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -537,7 +583,9 @@ while arranging the hardware baseline in parallel with that work.
    processing. Private bounded socket/deadline and framing integration is now
    implemented. Private persistent credential format, Windows desktop trusted
    storage and CLI pairing/reconnect are now implemented on the current branch.
-   Next validate actual enrollment/restart reconnect, wrong PIN, authentication failure,
+   Live enrollment and fresh-socket reconnect passed after the M6 metadata fix.
+   Separate-process `verify` passed with exit 0. Next validate restart reconnect,
+   wrong PIN, authentication failure,
    counters/replay, timeouts and revocation before claiming interoperability.
 4. **HTTP media server:** define size/read-at callbacks and cancellation/lifetime;
    integrate the existing resolver into bounded GET/HEAD serving. Select the LAN

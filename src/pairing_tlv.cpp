@@ -1,13 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "pairing_tlv.h"
+#include "control_crypto.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace send_airplay2::detail {
 namespace {
+/// Discard partially decoded secret/metadata values on malformed input/allocation
+/// failure. Complete successful results transfer ownership to the caller.
+struct DecodedFields {
+    std::vector<TlvField> values;
+    DecodedFields() = default;
+    ~DecodedFields() {
+        for (auto& field : values) {
+            cleanse(field.value.data(), field.value.size());
+        }
+    }
+    DecodedFields(const DecodedFields&) = delete;
+    DecodedFields& operator=(const DecodedFields&) = delete;
+    DecodedFields(DecodedFields&&) = delete;
+    DecodedFields& operator=(DecodedFields&&) = delete;
+};
 void validate_value(std::uint8_t type, std::size_t size) {
     if (size > pairing_tlv::max_value_size || (type == pairing_tlv::separator && size != 0)) {
         throw std::invalid_argument("Invalid pairing TLV value length");
@@ -19,7 +36,8 @@ std::vector<TlvField> decode_tlv(const Bytes& body) {
     if (body.size() > pairing_tlv::max_message_size) {
         throw std::invalid_argument("Pairing TLV body exceeds limit");
     }
-    std::vector<TlvField> fields;
+    DecodedFields owner;
+    auto& fields = owner.values;
     std::size_t cursor = 0;
     std::size_t previous_fragment_length = 0;
     while (cursor < body.size()) {
@@ -49,7 +67,7 @@ std::vector<TlvField> decode_tlv(const Bytes& body) {
         previous_fragment_length = length;
         cursor += length;
     }
-    return fields;
+    return std::move(fields);
 }
 
 Bytes encode_tlv(const std::vector<TlvField>& fields) {

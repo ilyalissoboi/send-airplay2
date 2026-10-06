@@ -6,8 +6,11 @@ mDNS/DNS-SD discovery with a diagnostic CLI are implemented. Private pairing TLV
 HKDF-SHA512 and authenticated control-record codecs are implemented, along with
 private peer verification and PIN/SRP provisioning message processing. Bounded
 HTTP/RTSP framing and native TCP now connect these flows privately; authentication
-is tested with synthetic receivers and loopback I/O. Credential storage and CLI
-authentication are pending, and no real receiver authentication has been tested.
+is tested with synthetic receivers and loopback I/O. Windows desktop credential
+storage and CLI authentication are implemented. The user confirmed live PIN
+pairing, built-in fresh-socket verification and separate-process credential reload
+on Apple TV 4K / tvOS 26.6 after
+the M6 metadata compatibility fix; broader authentication and playback gates remain.
 
 ## Scope and architecture
 
@@ -25,12 +28,12 @@ Proposed components:
 | Component | Responsibility | State |
 |---|---|---|
 | Discovery | mDNS/DNS-SD, service merging, TXT capability and identity parsing | Implemented bounded IPv4 scan; see discovery.md for limits and evidence |
-| Pairing | PIN flow, authenticated peer verification, credential reuse | Private TLV8, PIN/SRP, peer verification and receiver I/O implemented; storage/CLI/hardware pending |
+| Pairing | PIN flow, authenticated peer verification, credential reuse | Private TLV8, PIN/SRP, peer verification, receiver I/O and Windows storage/CLI implemented; live enrollment/fresh socket passed, broader gates pending |
 | Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Private HTTP/RTSP/TCP and record integration implemented; see receiver-transport.md |
 | Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Pending |
 | Media server | GET/HEAD, byte sources, range responses, bounded streaming | Range resolver only |
 | Playback | URL start, pause/resume, seek, status, stop | Pending |
-| Platform adapters | Networking, credentials, file access, host lifecycle | Pending |
+| Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; other stores, packaged hosts and media access pending |
 | Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
 
 An AirPlay 2-capable receiver accepting an older protocol path is not proof of
@@ -67,7 +70,7 @@ using EVP X25519/Ed25519 and pinned identity credentials. Private
 [PIN pairing](pin-pairing.md) uses Botan SRP through its C FFI, preserving C++17.
 Private [receiver I/O](receiver-transport.md) and Windows desktop
 [credential storage/CLI authentication](credential-storage.md) are implemented.
-Hardware authentication, other OS store adapters and UWP packaging remain gates.
+Broader hardware authentication, other OS store adapters and UWP packaging remain gates.
 
 ## HTTP range contract
 
@@ -115,11 +118,12 @@ brokered file access and inbound network serving in a packaged UWP host early.
 ## Ordered next changes and acceptance gates
 
 Discovery and diagnostic CLI are now implemented. Windows discovery resolved
-the user's "Living Room" (`AppleTV14,1`, advertised OS 26.6); pairing/playback and
-real departure/interface-change checks remain pending. See
+the user's "Living Room" (`AppleTV14,1`, advertised OS 26.6); PIN pairing and
+built-in fresh-socket verification were subsequently observed. Playback and real
+departure/interface-change checks remain pending. See
 [discovery.md](discovery.md) for the adapter choice, provenance, API and test limits.
 Pairing, authenticated transport and Windows desktop storage/CLI are implemented
-with synthetic tests. Next validate actual PIN enrollment and restart reconnect,
+with synthetic tests and observed live pairing/credential reload. Next assess restart reconnect,
 then add bounded media serving while establishing the pyatv playback baseline.
 
 1. Establish receiver baseline with an existing sender (pyatv) on the user's LAN.

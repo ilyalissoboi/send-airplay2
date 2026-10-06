@@ -90,8 +90,10 @@ pairing can remain; recovery may require the receiver's access settings. The
 current CLI does not manage receiver-side revocation.
 
 Exit status is 0 on success, 2 for arguments/input errors, and 1 for runtime
-failure. Authentication diagnostics use sanitized categories; no PIN, keys,
-credential envelope or raw transcript is printed.
+failure. Authentication diagnostics use sanitized categories; PIN-enrollment
+response/schema failures also report phase, HTTP status, body size and bounded TLV
+types/lengths. Decrypted identity diagnostics contain headers only. No PIN, keys,
+metadata contents, credential envelope or raw transcript is printed.
 
 ## Evidence and next gate
 
@@ -114,10 +116,14 @@ Check the actual final PR head after documentation updates too. CI validates
 portable workflow/codec behavior and Windows synthetic storage, not hardware
 interoperability or other OS store adapters.
 
-Actual interactive PIN entry, console echo/mode restoration on a physical
-terminal, Apple TV first pairing, restart reconnect, wrong PIN and revocation
-remain NOT RUN. Complete these on Living Room / Apple TV 4K / tvOS 26.6 and record
-the exact build/access policy in [receiver-validation.md](receiver-validation.md).
+Actual PIN display/entry, authenticated enrollment, Windows application credential
+save/reload and built-in fresh-socket verification passed on Living Room / Apple
+TV 4K / tvOS 26.6 / Windows 11 x64 after the M6 type-17 metadata fix, as reported
+by the user. Separate-process `verify` also passed with exit code 0.
+Physical-console echo/mode restoration, host/receiver restart, wrong PIN and
+revocation remain pending. Record the exact
+build/access policy and additional results in
+[receiver-validation.md](receiver-validation.md).
 The next implementation slice is bounded media serving once the authentication
 gate is assessed; authenticated playback/session setup remains a separate step.
 

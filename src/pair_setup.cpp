@@ -6,7 +6,9 @@
 #include <cstdint>
 #include <initializer_list>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -21,7 +23,96 @@ constexpr std::uint8_t encrypted_tag = 5;
 constexpr std::uint8_t state_tag = 6;
 constexpr std::uint8_t error_tag = 7;
 constexpr std::uint8_t signature_tag = 10;
+constexpr std::uint8_t receiver_metadata_tag = 17;
 
+const char* phase_name(PairSetupPhase phase) noexcept {
+    switch (phase) {
+    case PairSetupPhase::m2:
+        return "M2";
+    case PairSetupPhase::m4:
+        return "M4";
+    case PairSetupPhase::m6:
+        return "M6";
+    case PairSetupPhase::none:
+        return "unspecified";
+    }
+    return "unspecified";
+}
+/** Inspect only wire TLV headers, independently of semantic validation.
+ * Never decode/copy payload values: even rejected bodies can contain secrets.
+ * A malformed suffix or excess field count is described, not accepted/repaired.
+ */
+std::string response_context(PairSetupPhase phase, unsigned status, const Bytes& body,
+                             PairSetupRegion region) {
+    std::ostringstream output;
+    output << " [phase=" << phase_name(phase) << " HTTP=" << status
+           << " body_bytes=" << body.size();
+    if (region == PairSetupRegion::identity) {
+        output << " source=identity";
+    }
+    if (body.size() > pair_setup::max_body_size) {
+        output << " TLV=over-limit]";
+        return output.str();
+    }
+    output << " TLV=[";
+    std::size_t cursor = 0, fragments = 0;
+    while (cursor < body.size()) {
+        if (fragments) {
+            output << ',';
+        }
+        if (body.size() - cursor < pairing_tlv::header_size) {
+            output << "truncated-header";
+            break;
+        }
+        if (fragments == pairing_tlv::max_fields) {
+            output << "summary-limit";
+            break;
+        }
+        const auto tag = body[cursor++];
+        const auto length = body[cursor++];
+        output << static_cast<unsigned>(tag) << ':' << static_cast<unsigned>(length);
+        if (length > body.size() - cursor) {
+            output << "(truncated-value)";
+            break;
+        }
+        if (region == PairSetupRegion::response && length == 1) {
+            const auto code = body[cursor];
+            if (tag == state_tag && code >= 1 && code <= 6) {
+                output << "(state=" << static_cast<unsigned>(code) << ')';
+            } else if (tag == error_tag && code >= 1 && code <= 7) {
+                output << "(error=" << static_cast<unsigned>(code) << ')';
+            }
+        }
+        cursor += length;
+        ++fragments;
+    }
+    output << "]]";
+    return output.str();
+}
+
+/// Own transient bytes/TLV values, including uninterpreted receiver metadata.
+template <class Buffer> struct Erased {
+    Buffer value;
+    Erased() = default;
+    explicit Erased(Buffer&& input) : value(std::move(input)) {}
+    ~Erased() {
+        wipe(value);
+    }
+    Erased(const Erased&) = delete;
+    Erased& operator=(const Erased&) = delete;
+    Erased(Erased&&) = delete;
+    Erased& operator=(Erased&&) = delete;
+
+private:
+    static void wipe(Bytes& bytes) {
+        cleanse(bytes.data(), bytes.size());
+    }
+    static void wipe(std::vector<TlvField>& fields) {
+        for (auto& field : fields) {
+            wipe(field.value);
+        }
+    }
+};
 void validate_identifier(const Bytes& value) {
     if (value.empty() || value.size() > pair_setup::max_identifier_size) {
         throw PairSetupException(PairSetupError::invalid_message);
@@ -31,21 +122,21 @@ std::vector<TlvField> parse_schema(const Bytes& body, std::initializer_list<std:
     if (body.size() > pair_setup::max_body_size) {
         throw PairSetupException(PairSetupError::invalid_message);
     }
-    std::vector<TlvField> fields;
+    Erased<std::vector<TlvField>> fields;
     try {
-        fields = decode_tlv(body);
+        fields.value = decode_tlv(body);
     } catch (const std::invalid_argument&) {
         throw PairSetupException(PairSetupError::invalid_message);
     }
     std::array<bool, 256> seen{};
-    for (const auto& field : fields) {
+    for (const auto& field : fields.value) {
         if (seen[field.type] ||
             std::find(allowed.begin(), allowed.end(), field.type) == allowed.end()) {
             throw PairSetupException(PairSetupError::invalid_message);
         }
         seen[field.type] = true;
     }
-    return fields;
+    return std::move(fields.value);
 }
 const Bytes& required_field(const std::vector<TlvField>& fields, std::uint8_t tag) {
     const auto found = std::find_if(fields.begin(), fields.end(),
@@ -120,6 +211,13 @@ struct SigningInput {
 }
 } // namespace
 
+PairSetupException::PairSetupException(PairSetupError reason, PairSetupPhase phase,
+                                       unsigned http_status, const Bytes& response,
+                                       PairSetupRegion region)
+    : std::runtime_error(std::string(PairSetupException(reason).what()) +
+                         response_context(phase, http_status, response, region)),
+      reason_(reason), phase_(phase) {}
+
 PairSetup::PairSetup(Bytes controller_id) : controller_id_(std::move(controller_id)) {
     validate_identifier(controller_id_);
     try {
@@ -159,6 +257,9 @@ Bytes PairSetup::respond(std::string_view pin, unsigned http_status, const Bytes
                               {proof_tag, wire_bytes(response.proof)}});
         state_ = State::waiting_m4;
         return m3;
+    } catch (const PairSetupException& error) {
+        close();
+        throw PairSetupException(error.reason(), PairSetupPhase::m2, http_status, m2);
     } catch (...) {
         close();
         throw;
@@ -186,6 +287,9 @@ Bytes PairSetup::confirm(unsigned http_status, const Bytes& m4) {
         auto m5 = encode_tlv({{state_tag, {5}}, {encrypted_tag, encrypted}});
         state_ = State::waiting_m6;
         return m5;
+    } catch (const PairSetupException& error) {
+        close();
+        throw PairSetupException(error.reason(), PairSetupPhase::m4, http_status, m4);
     } catch (const ControlException& error) {
         close();
         rethrow_crypto(error);
@@ -203,25 +307,47 @@ std::unique_ptr<PairCredentials> PairSetup::finish(unsigned http_status, const B
         if (encrypted.size() < auth_tag_size || encrypted.size() > pair_setup::max_encrypted_size) {
             throw PairSetupException(PairSetupError::invalid_message);
         }
-        const auto plaintext =
-            open_record(encryption_key_.bytes, setup_nonce("PS-Msg06"), {}, encrypted);
-        const auto identity =
-            parse_schema(plaintext, {identifier_tag, public_key_tag, signature_tag});
-        const auto& receiver_id = required_field(identity, identifier_tag);
-        validate_identifier(receiver_id);
-        const auto receiver_key = fixed_field<32>(required_field(identity, public_key_tag));
-        const auto signature = fixed_field<64>(required_field(identity, signature_tag));
-        Secret32 accessory_sign;
-        derive_setup_key(session_secret_, "Pair-Setup-Accessory-Sign-Salt",
-                         "Pair-Setup-Accessory-Sign-Info", accessory_sign);
-        const SigningInput transcript(accessory_sign, receiver_id, receiver_key);
-        if (!ed25519_verify(receiver_key, transcript.bytes, signature)) {
-            throw PairSetupException(PairSetupError::authentication);
+        Erased<Bytes> plaintext{
+            open_record(encryption_key_.bytes, setup_nonce("PS-Msg06"), {}, encrypted)};
+        try {
+            Erased<std::vector<TlvField>> identity{
+                parse_schema(plaintext.value, {identifier_tag, public_key_tag, signature_tag,
+                                               receiver_metadata_tag})};
+            // Apple TV also sends device information (type 17) in M6. It is not
+            // part of the signed ID/key transcript and must not influence trust,
+            // profile naming or stored credentials. Bound it and erase/discard it.
+            for (const auto& field : identity.value) {
+                if (field.type == receiver_metadata_tag &&
+                    field.value.size() > pair_setup::max_receiver_metadata_size) {
+                    throw PairSetupException(PairSetupError::invalid_message);
+                }
+            }
+            const auto& receiver_id = required_field(identity.value, identifier_tag);
+            validate_identifier(receiver_id);
+            const auto receiver_key =
+                fixed_field<32>(required_field(identity.value, public_key_tag));
+            const auto signature = fixed_field<64>(required_field(identity.value, signature_tag));
+            Secret32 accessory_sign;
+            derive_setup_key(session_secret_, "Pair-Setup-Accessory-Sign-Salt",
+                             "Pair-Setup-Accessory-Sign-Info", accessory_sign);
+            const SigningInput transcript(accessory_sign, receiver_id, receiver_key);
+            if (!ed25519_verify(receiver_key, transcript.bytes, signature)) {
+                throw PairSetupException(PairSetupError::authentication);
+            }
+            auto credentials = std::make_unique<PairCredentials>(receiver_id, receiver_key,
+                                                                 controller_id_, controller_seed_);
+            close();
+            return credentials;
+        } catch (const PairSetupException& error) {
+            throw PairSetupException(error.reason(), PairSetupPhase::m6, http_status,
+                                     plaintext.value, PairSetupRegion::identity);
         }
-        auto credentials = std::make_unique<PairCredentials>(receiver_id, receiver_key,
-                                                             controller_id_, controller_seed_);
+    } catch (const PairSetupException& error) {
         close();
-        return credentials;
+        if (error.phase() != PairSetupPhase::none) {
+            throw;
+        }
+        throw PairSetupException(error.reason(), PairSetupPhase::m6, http_status, m6);
     } catch (const ControlException& error) {
         close();
         rethrow_crypto(error);
