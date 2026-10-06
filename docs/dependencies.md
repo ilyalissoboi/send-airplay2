@@ -132,3 +132,9 @@ The project does not adopt the reference's skipped authentication checks. Server
 SRP proof, AEAD, strong accessory key and Ed25519 signature remain mandatory.
 Metadata is ignored and erased; no OPACK decoder or general extension tolerance
 is introduced. See [synthetic fixture provenance](../tests/fixtures/README.md).
+
+The noninteractive E2E runner uses Python 3.10+ standard-library subprocess,
+threading, sockets, JSON and hashing APIs as a developer tool. It adds no native
+runtime/build dependency or copied implementation. Offline tests use original
+public synthetic fixtures; live reports contain constructed sanitized facts only.
+See [runner contracts](e2e-runner.md) and [hardware evidence](receiver-validation.md).

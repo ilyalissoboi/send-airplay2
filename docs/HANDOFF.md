@@ -38,12 +38,13 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), merged on 2026-10-06; verified merge `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
 | Receiver-transport PR | [#6: feat: add bounded authenticated receiver transport](https://github.com/ilyalissoboi/send-airplay2/pull/6), merged on 2026-10-06; verified merge `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
 | Credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), merged; verified merge `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
-| Current compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), open |
+| Compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), merged; verified merge `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` |
+| Current E2E work | Noninteractive CLI runner on `codex/e2e-runner`; publication pending |
 | Compatibility source commit | `f61698fa930893c139efcb5f5d2b0a40a93d0cae`; subsequent documentation commits record checks |
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
-| Current local branch | `codex/pairing-diagnostics`, based on verified PR #7 merge at `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
+| Current local branch | `codex/e2e-runner`, based on verified PR #8 merge at `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -58,7 +59,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); playback unimplemented |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #7 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI. Verify current GitHub and
+PRs #1 through #8 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility. Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -172,6 +173,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D21 | Private synchronous native TCP with one outstanding request and a strict bounded HTTP/RTSP profile | Engineering choice, merged in PR #6; absolute deadlines/cancellation, terminal cleanup, HTTP ordered correlation with optional validated CSeq, mandatory RTSP CSeq, verified record transition. Hardware remains a gate |
 | D22 | Private versioned credential envelope, trusted host store and Windows desktop CLI before a public auth ABI | Engineering choice, implemented on credential-cli branch; current-user/same-computer Credential Manager, create-only profile semantics for cooperating writers, no plaintext fallback or automatic re-pair. Other OS stores and packaged hosts remain gates |
 | D23 | Accept one optional opaque M6 type-17 metadata field, bounded to 0..256 bytes; discard and erase it | Live Apple TV M6 headers showed `17:159`. Required ID/key/signature, server proof, AEAD, duplicate and other unknown-field rejection remain enforced; metadata never influences trust, naming or storage. Sanitized phase/HTTP/TLV-header diagnostics retain no payloads |
+| D24 | Standard-library Python CLI E2E runner using an existing paired profile; explicit evidence kinds and opt-in disposable deletion | User requested unattended actions available now. No PIN collection/enrollment, credential export/clone, receiver changes or primary-profile deletion; ephemeral loopback fault peers and fresh live verification distinguish synthetic failures from hardware evidence |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -537,6 +539,44 @@ M6 compatibility slice on `codex/pairing-diagnostics`, 2026-10-06:
   GET/HEAD media serving with size/read-at callbacks and >4-GiB/lifecycle tests
   while arranging reference playback. Public auth ABI, other stores and packaged
   Windows/UWP/Android proofs remain pending.
+
+Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
+
+- Verified PR #8 merge `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` and started
+  from `origin/main`. No C++ or authentication protocol behavior changed.
+- `scripts/run_e2e.py` uses Python 3.10+ standard library as a development tool.
+  It runs CLI processes with null stdin, bounded wall-clock/output capture and
+  exact checkpoint/exit-code assertions. It writes exclusive new sanitized JSON
+  reports with executable/runner fingerprints, case results and timings; no PIN,
+  identities, IPs, profiles, TXT/public keys or raw child/exception data is stored.
+- Default actions: two discovery snapshots, baseline/repeated verification,
+  existing/missing-profile guards, redirected PIN refusal, absent-profile forget,
+  refused/silent/disconnected loopback peers and live verification after each
+  fault. Primary credentials remain intact. A distinct previously paired
+  disposable profile can be explicitly selected for deletion/idempotence tests;
+  no credential is copied and no receiver revocation occurs.
+- Offline contracts exercise independent subprocess fixtures, real loopback
+  faults, false success, absent-profile collision, deletion boundaries, process/
+  output bounds, report redaction, exclusive file creation and partial reports.
+  All 10 tests pass locally. CI adds Windows/Linux/macOS offline runner jobs;
+  these jobs have no hardware or application-credential access.
+- Live default static/shared runs each pass 16 checks; disposable deletion is
+  skipped. Receiver remains Living Room / Apple TV 4K, advertised `AppleTV14,1`,
+  user-reported tvOS 26.6. Windows reports build `10.0.26200`, AMD64. Artifacts and
+  precise evidence distinctions are recorded in receiver-validation.md.
+- Existing Release static/shared CTest suites each pass all 12 tests (6.22/6.34 s).
+  Native binaries were already built from the unchanged merged C++ sources;
+  native/runner CI for this branch is pending publication. `git diff --check` passes.
+- No third-party source or dependency added; Python is not a native runtime/build
+  requirement. Generated caches are ignored. See e2e-runner.md for invocation,
+  deadlines, skips, report schema and opt-in deletion behavior.
+- Host/receiver reboot, wrong PIN, receiver revocation, physical-console cancel/
+  mode restoration, real departure/interface changes, actual receiver network
+  outages and live IPv6 remain separate gates. Loopback failure/recovery does not
+  prove those or encrypted application exchange. Playback remains unimplemented.
+- Next implement bounded GET/HEAD media serving with size/read-at callbacks and
+  >4-GiB/lifecycle tests while completing the manual authentication/reference
+  playback gates. Public auth ABI, other stores and packaged hosts remain pending.
 
 ## 6. Screenbox integration findings
 
