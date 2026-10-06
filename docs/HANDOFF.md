@@ -40,7 +40,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), merged; verified merge `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
 | Compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), merged; verified merge `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` |
 | E2E PR | [#9: test: add noninteractive CLI e2e runner](https://github.com/ilyalissoboi/send-airplay2/pull/9), merged; verified merge `d70a143a97f06b30c8b5bd266c03c36d8ed07ec9` |
-| Current media-server PR | [#10: feat: add bounded Boost HTTP media server](https://github.com/ilyalissoboi/send-airplay2/pull/10), open; verify actual head/check state through GitHub |
+| Media-server PR | [#10: feat: add bounded Boost HTTP media server](https://github.com/ilyalissoboi/send-airplay2/pull/10), merged; verified merge `6b9680237184741100415aeb21d440825662ba37` on `main`. Final head `f55b9db1a95f0c0c66084b05c1b3ca345b607270` passed all ten checks in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37461887701) |
 | Media-server source commit | `c4e73156bffadacac3860a72df328c46a5fe5986`; subsequent documentation commits record PR/check evidence |
 | E2E source commit | `2bf31dd8f61d17e4475ec36c78f81bcac21f0009`; subsequent documentation commits record checks |
 | Portable E2E source commit | `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`; closed-port correction and refreshed live artifacts |
@@ -48,7 +48,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
-| Current local branch | `codex/media-server`, based on verified PR #9 merge at `d70a143a97f06b30c8b5bd266c03c36d8ed07ec9` |
+| Current branch | `claude/modest-cannon-xa79s5` (cloud session), based on verified PR #10 merge `6b9680237184741100415aeb21d440825662ba37` on `main`; documentation/baseline preparation only |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -63,7 +63,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); playback unimplemented |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #9 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility and the noninteractive E2E runner. Verify current GitHub and
+PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -641,6 +641,35 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   corrected IP fixture and the rest of the media suite. Inspect checks for the
   final documentation head before merging. No receiver media interoperability
   result is added by this gate.
+- PR #10 merged into `main` as `6b9680237184741100415aeb21d440825662ba37`. Its final documentation head
+  `f55b9db1a95f0c0c66084b05c1b3ca345b607270` passed all ten checks in
+  [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37461887701).
+
+### Continuation assessment and reference-baseline preparation: 2026-10-06
+
+- Cloud session on `claude/modest-cannon-xa79s5`, started from `main` at `6b9680237184741100415aeb21d440825662ba37`.
+  GitHub showed no open PRs; PRs #1-#10 are merged. No C++ source changed.
+- Status at this point: discovery, private pairing/verification, encrypted
+  receiver transport, Windows credential CLI and the media server exist. Nothing
+  calls `ReceiverConnection::request` yet; no plist codec, RTSP session/event/
+  feedback lifecycle, playback commands, file-backed `MediaSource` or `cast`
+  CLI exists. The library still cannot cast.
+- Checks run in the Linux cloud container (Python 3.13): all ten offline E2E
+  runner tests pass. The native build and CTest were not run, because the
+  container lacks Boost 1.92 and Botan 3.12 and the pinned vcpkg build is slow.
+  clang-format 18 `--dry-run --Werror` reports violations only in four foundation
+  files that predate `.clang-format`: `src/http_range.cpp`,
+  `include/send_airplay2/http_range.h`, `tests/range_tests.cpp` and
+  `tests/c_abi_smoke.c`. Reformat them only in a change that touches them, and
+  check the result against CI's formatter version.
+- The user requested pyatv pairing with "Living Room" as the reference-baseline
+  first step. The cloud container cannot reach the user's LAN: it has one
+  interface on an isolated documentation-range subnet, and a pyatv 0.18.0
+  (MIT) `atvremote scan` found no devices. The pairing must run on the user's
+  Windows host. The procedure, privacy rules and the sanitized facts to report
+  back are in [reference-baseline.md](reference-baseline.md). pyatv remains an
+  external reference tool; it is not a dependency and no source was copied.
+- Reference pairing and playback: NOT RUN (user action pending).
 
 ## 6. Screenbox integration findings
 
@@ -679,6 +708,12 @@ while arranging the hardware baseline in parallel with that work.
    tvOS build and AirPlay access settings without collecting secrets. Establish
    reference playback with pyatv on that LAN and record the real session path.
    Local discovery succeeded; reference and native playback have not been checked.
+   Follow [reference-baseline.md](reference-baseline.md): pyatv AirPlay pairing
+   first, then `play_url` of one test MP4. Serve the MP4 from a range-capable HTTP
+   server. A small `airplay2-cli serve <file>` command over the existing
+   `MediaServer` would also test the receiver's fetch and firewall reachability
+   independently of session code. Cloud sessions cannot reach the LAN, so these
+   steps run on the user's host.
 2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
    departure/interface-change checks and other platform/Android host coverage.
    The Windows Apple TV discovery gate has passed; see discovery.md for limits.
@@ -698,6 +733,13 @@ while arranging the hardware baseline in parallel with that work.
 5. **Session/playback:** implement authenticated setup, event/timing/feedback
    lifecycle, URL start, status, pause/resume, seek and stop. Treat receiver status
    and disconnects explicitly. Use the same MP4 as the reference baseline.
+   Prerequisite decisions: a binary-plist codec, and the session threading model.
+   For plist, a bounded in-tree `bplist00` subset tested against Python `plistlib`
+   fixtures is the proposed option; libplist is LGPL-2.1, so check licensing and
+   static linking before choosing it. For threading, `ReceiverConnection` is
+   serial with one request in flight, while the reference sequence needs a second
+   encrypted event connection and periodic `/feedback`. Re-inspect the pyatv event
+   channel key derivation before implementing it.
 6. **Host proofs:** implement the CLI and packaged Windows C# sample; test native
    loading, brokered media access and inbound networking. Add macOS/Linux/Android
    device coverage and bindings. Record failures separately from build success.
@@ -736,6 +778,13 @@ commit is `dbd654b1d92057b3208953226186c5c2b206ccff` because it was created thro
 the connector. In a carried-over workspace, inspect local versus remote history
 before attempting a push. A clean checkout of the PR branch avoids that divergence.
 Do not force-push over unfamiliar remote changes.
+
+Claude Code cloud sessions (2026-10-06): the repository is cloned fresh into an
+isolated container. Pushes use the session's Git proxy; GitHub reads and PR
+operations use the GitHub MCP connector, because the `gh` CLI is not available
+there. The container has no route to the user's LAN, so discovery, pairing and
+playback against "Living Room" must run on the user's host. Native dependencies
+(Boost/Botan) are not preinstalled.
 
 No background implementation task was scheduled. CI is asynchronous; further
 coding resumes when a developer/model actively continues the project.

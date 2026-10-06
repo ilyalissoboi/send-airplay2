@@ -26,7 +26,7 @@ Playback results remain pending.
 - Network: Ethernet/Wi-Fi; same subnet; firewall configuration:
 - Media SHA-256, container, codecs, duration, dimensions and bitrate:
 - Negotiated protocol/authentication path:
-- Reference sender/version and baseline result:
+- Reference sender/version and baseline result: pyatv 0.18.0 selected; pairing and playback NOT RUN (user action pending, see [reference-baseline.md](reference-baseline.md)).
 
 ## Required observations
 

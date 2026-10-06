@@ -118,7 +118,8 @@ multiroom, automatic transcoding, and universal receiver/codec compatibility.
 
 Start with the [developer/model handoff](docs/HANDOFF.md) for project history,
 decisions, verified state and continuation instructions.
-See [design and implementation sequence](docs/design.md) and
+See [design and implementation sequence](docs/design.md),
+[reference sender baseline](docs/reference-baseline.md) and
 [receiver validation checklist](docs/receiver-validation.md).
 
 License: Apache-2.0, as established by the repository's original LICENSE.
