@@ -86,6 +86,9 @@ context, names wire-size/fixture-offset calculations, and makes plaintext-guard
 ownership explicit. Golden fixtures and protocol behavior are unchanged. Future
 C++ changes must follow the readability requirements in AGENTS.md and verify
 checks for the actual modified head, including refactors.
+At final readability source commit `85e2b8d48a4bf993ba4581f539f1103ed601ba4a`,
+all six platform/static/shared jobs and Linux ASan/UBSan passed in the
+[PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37425248739).
 
 Next: implement the PIN pairing/peer-verification state machine using vetted
 SRP/signature/key-agreement primitives, credential ownership/storage adapters and

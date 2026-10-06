@@ -285,7 +285,11 @@ Readability pass on PR #3, 2026-10-06:
 - Windows static/shared Release builds passed all seven CTest targets; clang-format
   dry-run and `git diff --check` passed. An intentional missing-fixture invocation
   confirmed the diagnostic includes the active scenario and fixture filename.
-  Verify platform/sanitizer CI for the published readability head separately.
+- At final readability source commit `85e2b8d48a4bf993ba4581f539f1103ed601ba4a`,
+  all six Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed in
+  the [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37425244505)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37425248739).
+  Inspect checks for the final PR head, including documentation-only updates.
 - Protocol behavior, public API and receiver validation status remain unchanged.
   No new hardware pairing/playback result is claimed.
 
