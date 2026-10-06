@@ -39,14 +39,16 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver-transport PR | [#6: feat: add bounded authenticated receiver transport](https://github.com/ilyalissoboi/send-airplay2/pull/6), merged on 2026-10-06; verified merge `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
 | Credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), merged; verified merge `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
 | Compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), merged; verified merge `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` |
-| Current E2E PR | [#9: test: add noninteractive CLI e2e runner](https://github.com/ilyalissoboi/send-airplay2/pull/9), open |
+| E2E PR | [#9: test: add noninteractive CLI e2e runner](https://github.com/ilyalissoboi/send-airplay2/pull/9), merged; verified merge `d70a143a97f06b30c8b5bd266c03c36d8ed07ec9` |
+| Current media-server PR | [#10: feat: add bounded Boost HTTP media server](https://github.com/ilyalissoboi/send-airplay2/pull/10), open; verify actual head/check state through GitHub |
+| Media-server source commit | `c4e73156bffadacac3860a72df328c46a5fe5986`; subsequent documentation commits record PR/check evidence |
 | E2E source commit | `2bf31dd8f61d17e4475ec36c78f81bcac21f0009`; subsequent documentation commits record checks |
 | Portable E2E source commit | `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`; closed-port correction and refreshed live artifacts |
 | Compatibility source commit | `f61698fa930893c139efcb5f5d2b0a40a93d0cae`; subsequent documentation commits record checks |
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
-| Current local branch | `codex/e2e-runner`, based on verified PR #8 merge at `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` |
+| Current local branch | `codex/media-server`, based on verified PR #9 merge at `d70a143a97f06b30c8b5bd266c03c36d8ed07ec9` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -61,7 +63,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); playback unimplemented |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #8 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility. Verify current GitHub and
+PRs #1 through #9 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility and the noninteractive E2E runner. Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -180,6 +182,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D22 | Private versioned credential envelope, trusted host store and Windows desktop CLI before a public auth ABI | Engineering choice, implemented on credential-cli branch; current-user/same-computer Credential Manager, create-only profile semantics for cooperating writers, no plaintext fallback or automatic re-pair. Other OS stores and packaged hosts remain gates |
 | D23 | Accept one optional opaque M6 type-17 metadata field, bounded to 0..256 bytes; discard and erase it | Live Apple TV M6 headers showed `17:159`. Required ID/key/signature, server proof, AEAD, duplicate and other unknown-field rejection remain enforced; metadata never influences trust, naming or storage. Sanitized phase/HTTP/TLV-header diagnostics retain no payloads |
 | D24 | Standard-library Python CLI E2E runner using an existing paired profile; explicit evidence kinds and opt-in disposable deletion | User requested unattended actions available now. No PIN collection/enrollment, credential export/clone, receiver changes or primary-profile deletion; ephemeral loopback fault peers and fresh live verification distinguish synthetic failures from hardware evidence |
+| D25 | Use Boost.Beast/Asio 1.92 for HTTP media serving behind an experimental C++ callback API | User explicitly selected Boost. Private Boost types, one concrete route-selected bind address, receiver-IP filtering, random per-session bearer URLs, bounded accepted connections/workers/buffers and absolute deadlines. No wildcard listener, scoped/link-local IPv6 URLs, firewall changes or playback commands; callbacks must cooperate with cancellation |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -593,6 +596,52 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   >4-GiB/lifecycle tests while completing the manual authentication/reference
   playback gates. Public auth ABI, other stores and packaged hosts remain pending.
 
+### Bounded HTTP media server: 2026-10-06
+
+- Continued from verified PR #9 merge on `codex/media-server`. Boost.Beast/Asio
+  replace an in-tree HTTP implementation at the user's explicit request. Boost
+  1.92.0 is pinned through the existing vcpkg baseline, with source/license
+  provenance in dependencies.md before adoption; Apache-2.0 remains unchanged.
+- Added experimental `MediaServer`/`MediaSource` C++ API, immutable 64-bit size
+  snapshot/read-at callbacks, route-selected numeric bind, receiver-IP restriction,
+  random bearer paths, GET/HEAD/ranges, fixed streaming buffers and absolute
+  request deadlines. Network and source execution are separate and bounded;
+  cancellation retains source admission slots until callbacks finish. Shutdown
+  joins all callbacks, which must cooperate. See media-server.md for contracts.
+- Independent literal HTTP loopback tests cover exact lengths/binary bodies,
+  >4-GiB offsets, uint64 upper boundary, partial reads, request limits, IP/path
+  guards, source failures/truncation/recovery, concurrent reads, silent headers,
+  blocked source/writes and idempotent shutdown. IPv6 loopback is tested when the
+  host supports it; this does not validate actual receiver IPv6 fetching.
+- Windows 11 x64 / MSVC Release static/shared builds each passed all 13 CTest
+  targets (9.51/9.45 s), including shared-DLL media calls and existing auth tests.
+  All ten offline E2E runner contract tests also passed. C++ format dry-run and
+  whitespace checks passed. CI must be checked at the
+  actual PR head; no LAN media fetch, private media or Apple TV operation occurred.
+- This adds media-serving building blocks only. Reference pyatv playback, an
+  actual file/brokered media adapter, receiver fetch/firewall reachability,
+  authenticated session/playback and packaged hosts remain pending.
+- Initial macOS CI exposed a test-only alias assumption: binding a client to
+  unconfigured `127.0.0.2` fails there. The IP-filter fixture now uses the ordinary
+  `127.0.0.1` client against an allowed peer of `127.0.0.2`, whose route still
+  selects the configured loopback listener. No interface alias is created; the
+  production server is unchanged. Check CI at the corrected PR head.
+- At head `7b227a3aeae9b95d1ac7c0b79ba8f4948f84624b`, Linux static/shared
+  and ASan/UBSan checks passed; macOS exposed the alias fixture failure above.
+  The corrected media tests subsequently passed on Windows static/shared
+  (2.73/2.74 s). This is partial historical evidence, not final-head CI approval.
+- Adding Boost changed the manifest cache key and forced CI to rebuild unchanged
+  OpenSSL/Botan packages. Both native and sanitizer cache lookups now restore a
+  previous OS/architecture cache on an exact-key miss; vcpkg still checks package
+  ABI hashes and builds missing/changed packages. The PR-only trigger is preserved.
+- At validated head `130a71c490dde25699301915a7a509b72b95b5dc`, all ten checks
+  passed in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37461159947):
+  Windows/Linux/macOS static/shared native CTest, Linux ASan/UBSan and offline
+  runner contracts on all three platforms. Both macOS configurations passed the
+  corrected IP fixture and the rest of the media suite. Inspect checks for the
+  final documentation head before merging. No receiver media interoperability
+  result is added by this gate.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -642,10 +691,10 @@ while arranging the hardware baseline in parallel with that work.
    Separate-process `verify` passed with exit 0. Next validate restart reconnect,
    wrong PIN, authentication failure,
    counters/replay, timeouts and revocation before claiming interoperability.
-4. **HTTP media server:** define size/read-at callbacks and cancellation/lifetime;
-   integrate the existing resolver into bounded GET/HEAD serving. Select the LAN
-   address reachable by the receiver, use per-session URLs, and test concurrent
-   reads, >4-GiB positions, exact lengths, shutdown and unreachable callbacks.
+4. **HTTP media server:** bounded Boost callback server is implemented and loopback
+   tested on the current branch. Complete real host/file adapters, receiver fetch,
+   firewall reachability and network-change checks. Virtual >4-GiB source tests
+   establish arithmetic, not real-file or Apple TV seeking interoperability.
 5. **Session/playback:** implement authenticated setup, event/timing/feedback
    lifecycle, URL start, status, pause/resume, seek and stop. Treat receiver status
    and disconnects explicitly. Use the same MP4 as the reference baseline.

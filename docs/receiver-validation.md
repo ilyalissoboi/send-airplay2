@@ -4,6 +4,11 @@ Status: DISCOVERY AND PAIRING OBSERVED; built-in fresh-socket and separate-proce
 verification passed; playback NOT IMPLEMENTED. Fill out one record per
 receiver firmware and sender platform.
 
+The Boost HTTP media server is implemented with loopback tests on Windows
+static/shared builds; see [media-server.md](media-server.md). Actual Apple TV HTTP
+fetch, real-file >4-GiB seek and firewall reachability remain NOT RUN. No receiver
+or credential operation occurred in the media-server slice.
+
 The environment below was supplied by the user on 2026-10-06 (Asia/Tokyo).
 It identifies the intended test setup. A Windows discovery run subsequently
 resolved this receiver. The user subsequently confirmed authenticated PIN pairing,

@@ -1,0 +1,493 @@
+// SPDX-License-Identifier: Apache-2.0
+#include "send_airplay2/media_server.h"
+#include <boost/asio.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <openssl/rand.h>
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <future>
+#include <memory>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <utility>
+
+namespace send_airplay2 {
+namespace {
+namespace asio = boost::asio;
+namespace beast = boost::beast;
+namespace http = beast::http;
+using Tcp = asio::ip::tcp;
+using ErrorCode = boost::system::error_code;
+constexpr std::size_t header_limit = 8192;
+constexpr std::size_t field_limit = 64;
+constexpr std::size_t field_value_limit = 2048;
+constexpr std::size_t body_chunk_size = 64 * 1024;
+constexpr std::size_t token_bytes = 16;
+constexpr std::uint32_t max_connections_limit = 16;
+constexpr std::uint32_t max_request_timeout_ms = 600000;
+constexpr std::size_t max_numeric_address_length = 64;
+constexpr std::size_t max_content_type_length = 128;
+
+[[noreturn]] void invalid_options() {
+    throw std::invalid_argument("Invalid media server options");
+}
+[[noreturn]] void setup_failed() {
+    throw std::runtime_error("Media server setup failed");
+}
+bool mime_character(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' ||
+           c == '+' || c == '.';
+}
+asio::ip::address receiver_address(const MediaServerOptions& options) {
+    if (!options.receiver_port || !options.max_connections ||
+        options.max_connections > max_connections_limit || !options.request_timeout_ms ||
+        options.request_timeout_ms > max_request_timeout_ms ||
+        options.receiver_address.size() > max_numeric_address_length ||
+        options.receiver_address.find('\0') != std::string::npos) {
+        invalid_options();
+    }
+    const auto slash = options.content_type.find('/');
+    if (options.content_type.size() > max_content_type_length || slash == 0 ||
+        slash == std::string::npos || slash + 1 == options.content_type.size()) {
+        invalid_options();
+    }
+    for (std::size_t i = 0; i < options.content_type.size(); ++i) {
+        if (i != slash && !mime_character(options.content_type[i])) {
+            invalid_options();
+        }
+    }
+    ErrorCode error;
+    const auto address = asio::ip::make_address(options.receiver_address, error);
+    if (error || address.is_unspecified() || address.is_multicast() ||
+        (address.is_v4() && address.to_v4().to_uint() == 0xffffffffU) ||
+        (address.is_v6() && (address.to_v6().is_link_local() || address.to_v6().scope_id() ||
+                             address.to_v6().is_v4_mapped()))) {
+        invalid_options();
+    }
+    return address;
+}
+std::string random_path() {
+    std::array<unsigned char, token_bytes> token{};
+    if (RAND_bytes(token.data(), static_cast<int>(token.size())) != 1) {
+        setup_failed();
+    }
+    constexpr char hex[] = "0123456789abcdef";
+    std::string path = "/media/";
+    for (const auto byte : token) {
+        path += hex[byte >> 4];
+        path += hex[byte & 15];
+    }
+    return path;
+}
+} // namespace
+
+struct MediaServer::Impl {
+    struct Session;
+    MediaSource source;
+    MediaServerOptions options;
+    std::uint64_t representation_size;
+    asio::ip::address receiver;
+    std::string path;
+    std::string authority;
+    std::string media_url;
+    std::atomic_bool stopped{false};
+    asio::io_context network;
+    asio::executor_work_guard<asio::io_context::executor_type> work{network.get_executor()};
+    Tcp::acceptor listener{network};
+    std::unique_ptr<asio::thread_pool> readers;
+    std::thread network_thread;
+    // Only the network thread mutates sessions; pending source work retains its slot.
+    std::set<std::shared_ptr<Session>> sessions;
+
+    Impl(MediaSource input, MediaServerOptions config)
+        : source(std::move(input)), options(std::move(config)), representation_size(0),
+          receiver(receiver_address(options)), path(random_path()) {
+        if (!source.size || !source.read_at) {
+            invalid_options();
+        }
+        representation_size = source.size();
+        ErrorCode error;
+        // UDP connect selects a route without sending anything to the receiver.
+        asio::ip::udp::socket route(network);
+        route.open(receiver.is_v4() ? asio::ip::udp::v4() : asio::ip::udp::v6(), error);
+        if (error) {
+            setup_failed();
+        }
+        route.connect({receiver, options.receiver_port}, error);
+        if (error) {
+            setup_failed();
+        }
+        const auto local = route.local_endpoint(error).address();
+        if (error || local.is_unspecified() ||
+            (local.is_v6() && (local.to_v6().is_link_local() || local.to_v6().scope_id()))) {
+            setup_failed();
+        }
+        listener.open(local.is_v4() ? Tcp::v4() : Tcp::v6(), error);
+        if (error) {
+            setup_failed();
+        }
+        if (local.is_v6()) {
+            listener.set_option(asio::ip::v6_only(true), error);
+            if (error) {
+                setup_failed();
+            }
+        }
+        listener.bind({local, options.listen_port}, error);
+        if (error) {
+            setup_failed();
+        }
+        listener.listen(static_cast<int>(options.max_connections), error);
+        if (error) {
+            setup_failed();
+        }
+        const auto endpoint = listener.local_endpoint(error);
+        if (error) {
+            setup_failed();
+        }
+        authority = (local.is_v6() ? "[" + local.to_string() + "]" : local.to_string()) + ":" +
+                    std::to_string(endpoint.port());
+        media_url = "http://" + authority + path;
+        readers = std::make_unique<asio::thread_pool>(options.max_connections);
+    }
+    ~Impl() {
+        stop();
+    }
+    void start();
+    void accept();
+    void remove(const std::shared_ptr<Session>& session);
+    void close_network();
+    void stop();
+};
+
+struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
+    Impl& server;
+    Tcp::socket socket;
+    asio::steady_timer deadline_timer;
+    const std::chrono::steady_clock::time_point deadline;
+    beast::flat_static_buffer<header_limit> input;
+    http::request_parser<http::empty_body> parser;
+    http::response<http::empty_body> response{http::status::ok, 11};
+    std::unique_ptr<http::response_serializer<http::empty_body>> serializer;
+    std::array<std::uint8_t, body_chunk_size> chunk{};
+    std::atomic_bool cancelled{false};
+    std::uint64_t offset = 0;
+    std::uint64_t remaining = 0;
+    std::size_t chunk_length = 0;
+    bool reading_source = false;
+    bool closed = false;
+    bool header_sent = false;
+
+    Session(Impl& owner, Tcp::socket accepted)
+        : server(owner), socket(std::move(accepted)), deadline_timer(server.network),
+          deadline(std::chrono::steady_clock::now() +
+                   std::chrono::milliseconds(server.options.request_timeout_ms)) {
+        parser.header_limit(static_cast<std::uint32_t>(header_limit));
+        parser.body_limit(0);
+    }
+    void close() {
+        closed = true;
+        cancelled.store(true, std::memory_order_relaxed);
+        ErrorCode ignored;
+        deadline_timer.cancel();
+        socket.close(ignored);
+        if (!reading_source) {
+            server.remove(shared_from_this());
+        }
+    }
+    void start() {
+        deadline_timer.expires_at(deadline);
+        deadline_timer.async_wait([self = shared_from_this()](ErrorCode error) {
+            if (!error) {
+                self->close();
+            }
+        });
+        http::async_read_header(
+            socket, input, parser, [self = shared_from_this()](ErrorCode error, std::size_t) {
+                if (self->closed) {
+                    return;
+                }
+                try {
+                    if (error) {
+                        self->send_error(error == http::error::header_limit ||
+                                                 error == http::error::buffer_overflow
+                                             ? http::status::request_header_fields_too_large
+                                             : http::status::bad_request);
+                    } else {
+                        self->prepare_response();
+                    }
+                } catch (...) {
+                    self->close();
+                }
+            });
+    }
+    void send_error(http::status status) {
+        remaining = 0;
+        response.result(status);
+        response.erase(http::field::content_range);
+        response.content_length(0);
+        if (status == http::status::method_not_allowed) {
+            response.set(http::field::allow, "GET, HEAD");
+        }
+        send_header();
+    }
+    bool valid_headers() const {
+        const auto& request = parser.get();
+        if ((request.version() != 10 && request.version() != 11) || input.size() ||
+            request.target().size() > field_value_limit ||
+            request.count(http::field::transfer_encoding) || request.count(http::field::expect) ||
+            parser.content_length().value_or(0) != 0) {
+            return false;
+        }
+        std::size_t count = 0;
+        std::set<std::string> names;
+        for (const auto& field : request) {
+            std::string name(field.name_string());
+            std::transform(name.begin(), name.end(), name.begin(), [](char c) {
+                return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : c;
+            });
+            if (++count > field_limit || field.value().size() > field_value_limit ||
+                !names.insert(std::move(name)).second) {
+                return false;
+            }
+        }
+        const auto host = request[http::field::host];
+        if ((request.version() == 11 && host.empty()) ||
+            (!host.empty() && host != server.authority)) {
+            return false;
+        }
+        // No validators are exposed yet. Decline unsupported preconditions instead
+        // of serving content after silently discarding a client's condition.
+        return !request.count(http::field::if_match) &&
+               !request.count(http::field::if_none_match) &&
+               !request.count(http::field::if_modified_since) &&
+               !request.count(http::field::if_unmodified_since);
+    }
+    void prepare_response() {
+        const auto& request = parser.get();
+        if (!valid_headers()) {
+            send_error(http::status::bad_request);
+            return;
+        }
+        response.version(request.version());
+        if (request.target() != server.path) {
+            send_error(http::status::not_found);
+            return;
+        }
+        const bool head = request.method() == http::verb::head;
+        if (!head && request.method() != http::verb::get) {
+            send_error(http::status::method_not_allowed);
+            return;
+        }
+        // Range applies only to GET. Without a representation validator, If-Range
+        // cannot match, so ignore Range and send the full representation.
+        const auto range = head || request.count(http::field::if_range)
+                               ? beast::string_view{}
+                               : request[http::field::range];
+        sap2_byte_range selection{};
+        const auto result = sap2_resolve_http_range(range.data(), range.size(),
+                                                    server.representation_size, &selection);
+        response.set(http::field::accept_ranges, "bytes");
+        response.set(http::field::content_type, server.options.content_type);
+        if (result == SAP2_RANGE_UNSATISFIABLE) {
+            response.set(http::field::content_range,
+                         "bytes */" + std::to_string(server.representation_size));
+            response.result(http::status::range_not_satisfiable);
+            response.content_length(0);
+            send_header();
+            return;
+        }
+        if (result == SAP2_RANGE_PARTIAL) {
+            response.result(http::status::partial_content);
+            response.set(http::field::content_range,
+                         "bytes " + std::to_string(selection.offset) + "-" +
+                             std::to_string(selection.offset + selection.length - 1) + "/" +
+                             std::to_string(server.representation_size));
+        }
+        response.content_length(selection.length);
+        offset = selection.offset;
+        remaining = head ? 0 : selection.length;
+        if (remaining) {
+            read_chunk(); // Detect initial source failure before committing a success header.
+        } else {
+            send_header();
+        }
+    }
+    void send_header() {
+        if (closed || server.stopped.load(std::memory_order_relaxed)) {
+            close();
+            return;
+        }
+        response.keep_alive(false);
+        response.set(http::field::cache_control, "no-store");
+        serializer = std::make_unique<http::response_serializer<http::empty_body>>(response);
+        http::async_write_header(socket, *serializer,
+                                 [self = shared_from_this()](ErrorCode error, std::size_t) {
+                                     if (self->closed) {
+                                         return;
+                                     }
+                                     if (error || !self->remaining) {
+                                         self->close();
+                                     } else {
+                                         self->header_sent = true;
+                                         self->write_chunk();
+                                     }
+                                 });
+    }
+    void read_chunk() {
+        if (closed || server.stopped.load(std::memory_order_relaxed)) {
+            close();
+            return;
+        }
+        reading_source = true;
+        const auto capacity =
+            static_cast<std::size_t>(std::min<std::uint64_t>(remaining, body_chunk_size));
+        asio::post(*server.readers, [self = shared_from_this(), capacity] {
+            std::size_t count = 0;
+            const MediaReadContext context{&self->server.stopped, &self->cancelled, self->deadline};
+            try {
+                if (!context.should_stop()) {
+                    count = self->server.source.read_at(self->offset, self->chunk.data(), capacity,
+                                                        context);
+                }
+            } catch (...) {
+                // Exception text may contain host paths or secrets; never log it.
+            }
+            asio::post(self->server.network, [self, capacity, count] {
+                self->reading_source = false;
+                if (self->closed || self->server.stopped.load(std::memory_order_relaxed) ||
+                    std::chrono::steady_clock::now() >= self->deadline) {
+                    self->close();
+                } else if (!count || count > capacity) {
+                    if (self->header_sent) {
+                        self->close(); // A short body must remain visibly incomplete.
+                    } else {
+                        self->send_error(http::status::internal_server_error);
+                    }
+                } else {
+                    self->chunk_length = count;
+                    if (self->header_sent) {
+                        self->write_chunk();
+                    } else {
+                        self->send_header();
+                    }
+                }
+            });
+        });
+    }
+    void write_chunk() {
+        asio::async_write(socket, asio::buffer(chunk.data(), chunk_length),
+                          [self = shared_from_this()](ErrorCode error, std::size_t) {
+                              if (self->closed) {
+                                  return;
+                              }
+                              if (error) {
+                                  self->close();
+                                  return;
+                              }
+                              self->offset += self->chunk_length;
+                              self->remaining -= self->chunk_length;
+                              if (!self->remaining) {
+                                  self->close();
+                              } else {
+                                  self->read_chunk();
+                              }
+                          });
+    }
+};
+
+void MediaServer::Impl::start() {
+    accept();
+    network_thread = std::thread([this] {
+        for (;;) {
+            try {
+                network.run();
+                return;
+            } catch (...) {
+                // An internal handler failure ends serving. Keep draining the
+                // executor so stop() can still close/join without a lost barrier.
+                stopped.store(true, std::memory_order_relaxed);
+                close_network();
+            }
+        }
+    });
+}
+void MediaServer::Impl::accept() {
+    if (stopped.load(std::memory_order_relaxed) || sessions.size() >= options.max_connections) {
+        return;
+    }
+    listener.async_accept([this](ErrorCode error, Tcp::socket socket) {
+        if (stopped.load(std::memory_order_relaxed)) {
+            return;
+        }
+        if (error) {
+            if (error == asio::error::connection_aborted ||
+                error == asio::error::connection_reset) {
+                accept(); // A client abort must not terminate the listening session.
+                return;
+            }
+            stopped.store(true, std::memory_order_relaxed);
+            close_network();
+            return;
+        }
+        const auto peer = socket.remote_endpoint(error).address();
+        if (!error && peer == receiver) {
+            auto session = std::make_shared<Session>(*this, std::move(socket));
+            sessions.insert(session);
+            session->start();
+        }
+        accept();
+    });
+}
+void MediaServer::Impl::remove(const std::shared_ptr<Session>& session) {
+    const bool was_full = sessions.size() == options.max_connections;
+    const auto removed = sessions.erase(session);
+    if (removed && was_full && !stopped.load(std::memory_order_relaxed)) {
+        accept();
+    }
+}
+void MediaServer::Impl::close_network() {
+    ErrorCode ignored;
+    listener.close(ignored);
+    // close() can remove a session, so advance before calling it.
+    for (auto iterator = sessions.begin(); iterator != sessions.end();) {
+        auto session = *iterator++;
+        session->close();
+    }
+}
+void MediaServer::Impl::stop() {
+    stopped.store(true, std::memory_order_relaxed);
+    if (!network_thread.joinable()) {
+        return;
+    }
+    // First prevent new callback work, then join callbacks, then drain cancelled
+    // handlers. The owner/source stay alive until every posted completion drains.
+    std::promise<void> closed;
+    auto completion = closed.get_future();
+    asio::post(network, [this, &closed] {
+        close_network();
+        closed.set_value();
+    });
+    completion.get();
+    readers->join();
+    work.reset();
+    network_thread.join();
+}
+MediaServer::MediaServer(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+MediaServer::~MediaServer() = default;
+std::unique_ptr<MediaServer> MediaServer::start(MediaSource source, MediaServerOptions options) {
+    auto impl = std::make_unique<Impl>(std::move(source), std::move(options));
+    auto server = std::unique_ptr<MediaServer>(new MediaServer(std::move(impl)));
+    server->impl_->start();
+    return server;
+}
+std::string MediaServer::url() const {
+    return impl_->media_url;
+}
+void MediaServer::stop() {
+    impl_->stop();
+}
+} // namespace send_airplay2
