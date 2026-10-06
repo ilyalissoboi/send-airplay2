@@ -12,6 +12,10 @@ shares a LAN with "Living Room". A cloud session cannot reach that LAN.
 Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
 Reviewed baseline head: `66b8a94cb85fe4397df7b478ee9aec1537ba0ccc`, all ten checks
 passed in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37487008800).
+Latest implementation commit: `cd2c983279c81b43462815ba6ab81ec85825be8b` (native
+minimum session and G1 pass). Its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37491750382)
+was started after publishing; inspect PR #12 for the actual current head/checks,
+including subsequent documentation-only commits.
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
 
@@ -1154,6 +1158,8 @@ starts the URL session. It retains remote control until URL teardown. No remote
 RECORD, feedback, type-130 data stream, MRP or pyatv process was used.
 
 - Windows MSVC static Release, based on `66b8a94` with this native minimum change.
+  Implementation subsequently committed as `cd2c983`; source blobs in the record
+  identify the tested code independently of later documentation changes.
   Tested CLI SHA-256 and sanitized output are in the
   [machine-readable record](validation/native-minimum-session-windows-static-2026-10-07.json).
 - The agent ran native `cast` using the existing paired profile. Receiver address

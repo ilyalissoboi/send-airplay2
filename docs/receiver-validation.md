@@ -451,6 +451,8 @@ starts the URL session. It retains remote control until URL teardown. No remote
 RECORD, feedback, type-130 data stream, MRP or pyatv process was used.
 
 - Windows MSVC static Release, based on `66b8a94` with this native minimum change.
+  Implementation subsequently committed as `cd2c983`; source blobs in the record
+  identify the tested code independently of later documentation changes.
   Tested CLI SHA-256 and sanitized output are in the
   [machine-readable record](validation/native-minimum-session-windows-static-2026-10-07.json).
 - The agent ran native `cast` using the existing paired profile. Receiver address

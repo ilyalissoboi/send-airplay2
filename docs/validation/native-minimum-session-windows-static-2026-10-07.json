@@ -11,6 +11,7 @@
   "date": "2026-10-07",
   "timezone": "Asia/Tokyo",
   "base_revision": "66b8a94cb85fe4397df7b478ee9aec1537ba0ccc",
+  "implementation_revision": "cd2c983279c81b43462815ba6ab81ec85825be8b",
   "tested_source_blobs": {
     "src/url_playback_session.cpp": "dab66bea23d36ec91dcfb3c08b657ca6404a1e92",
     "src/cast_cli.cpp": "090bc5e8cc62fd839e040b578a161ecd9a5861b0"
