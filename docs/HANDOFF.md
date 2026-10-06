@@ -630,6 +630,10 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   and ASan/UBSan checks passed; macOS exposed the alias fixture failure above.
   The corrected media tests subsequently passed on Windows static/shared
   (2.73/2.74 s). This is partial historical evidence, not final-head CI approval.
+- Adding Boost changed the manifest cache key and forced CI to rebuild unchanged
+  OpenSSL/Botan packages. Both native and sanitizer cache lookups now restore a
+  previous OS/architecture cache on an exact-key miss; vcpkg still checks package
+  ABI hashes and builds missing/changed packages. The PR-only trigger is preserved.
 
 ## 6. Screenbox integration findings
 

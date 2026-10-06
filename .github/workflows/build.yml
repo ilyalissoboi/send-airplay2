@@ -31,6 +31,8 @@ jobs:
         with:
           path: build-vcpkg-cache
           key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json') }}
+          # vcpkg checks package ABI hashes; reuse unchanged binaries across manifest updates.
+          restore-keys: vcpkg-${{ runner.os }}-${{ runner.arch }}-
       - name: Bootstrap pinned vcpkg
         shell: bash
         run: |
@@ -57,6 +59,7 @@ jobs:
         with:
           path: build-vcpkg-cache
           key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-${{ runner.os }}-${{ runner.arch }}-
       - name: Bootstrap pinned vcpkg
         run: |
           mkdir -p build-vcpkg-cache
