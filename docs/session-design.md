@@ -1,8 +1,17 @@
 # URL playback session: design proposal
 
 Status: **PROPOSAL, not implemented.** Written 2026-10-06 for PR #11. Nothing
-here is receiver-tested unless the evidence column says so. Decisions marked
-*open* need the user's choice before implementation.
+here is receiver-tested unless the evidence column says so.
+
+User decisions on 2026-10-06:
+
+- **D28:** synchronous threads (section 4).
+- **D29:** implement the MRP control path now, rather than `/command`-only
+  controls (sections 5 and 5a).
+- **D30:** reference sender-identity values first, configurable, then a
+  hardware test of neutral values (section 6).
+
+**Still open:** D31, the protobuf implementation for MRP (section 5a).
 
 The goal is the first native vertical slice: `airplay2-cli cast` plays one local
 H.264/AAC MP4 on "Living Room" (Apple TV 4K, tvOS 26.6), served by this
@@ -80,9 +89,11 @@ reconnect or re-pair.
 | `UrlPlaybackSession` | Private orchestrator: start, state, controls, teardown | **New** |
 | `airplay2-cli cast` | Development command: `--address --profile --file`; interactive stdin controls; sanitized state lines | **New**; the private URL, identifiers and payloads are never printed |
 
-## 4. Threading model (decision 1)
+## 4. Threading model (D28)
 
-**Proposed: synchronous components with three session threads.** This matches
+**Decision D28: synchronous components with session threads.** With D29, the
+remote-control session adds one more reader thread for its data stream and
+reuses the same pattern; its event channel needs a reader too. This matches
 the existing transport, which is synchronous with absolute deadlines and
 cancellation polling.
 
@@ -108,7 +119,7 @@ cancellation polling.
 but it needs an asynchronous rewrite of the record and framing layers, and two
 I/O models in one session. Not recommended for the first slice.
 
-## 5. Controls and status (decision 2)
+## 5. Controls and status (D29)
 
 - **Proposed: `/command` only for this slice.** Start, state events and, once
   H1/H2 pass, pause/resume and status. Seek and stop ship only after H3/H4 are
@@ -119,18 +130,71 @@ I/O models in one session. Not recommended for the first slice.
   pyatv's remote-control session. That is a large surface; defer it unless
   H1-H3 fail.
 
-Hypotheses get tested with this library's own `cast` command, not with further
-runs of the unmerged fork. Each test prints only the command type, the status
+**Decision D29: MRP now.** `/command` is still used to start playback
+(validated). H1-H3 remain useful fallbacks but are no longer on the critical
+path. Hypotheses get tested with this library's own `cast` command, not with
+further runs of the unmerged fork. Each test prints only the command type, the status
 code, the event `type`, allowlisted state fields and the event key names.
 
-## 6. Sender identity (decision 3)
+## 5a. MRP control path (D29)
+
+These are the reference facts, from the pyatv 0.18.0 source (MIT) and the
+filtered fork log.
+
+- **Separate session.** pyatv opens a second AirPlay connection for remote
+  control: its own pair-verify, then a base `SETUP` with
+  `isRemoteControlOnly: true` and `timingProtocol` `None`, then its own event
+  channel. The fork log shows both sessions (two pair-verifies, two base
+  SETUPs). Whether one session can carry both is unknown; start with two, as
+  the reference does.
+- **Data stream.** A type-130 `SETUP` with `controlType` 2,
+  `wantsDedicatedSocket: true`, a random 64-bit `seed` and a fixed
+  `clientTypeUUID`. The response gives `dataPort`; the sender connects to it.
+  Keys use salt `DataStream-Salt` with the decimal seed appended, and infos
+  `DataStream-Output-Encryption-Key` (sender writes) and
+  `DataStream-Input-Encryption-Key` (sender reads). Framing is HAP records
+  again.
+- **Messages.** Each data-stream message is a 32-byte header (total size,
+  12-byte type such as `sync` or `rply`, 4-byte command, 8-byte sequence
+  number, 4-byte padding) followed by a plist `{"params": {"data": ...}}`.
+  `data` holds varint-length-prefixed protobuf `ProtocolMessage` values. Each
+  `sync` from the receiver needs an empty `rply` with the same sequence
+  number.
+- **Handshake.** `DEVICE_INFO` must be first and gets a reply. Then
+  `SET_CONNECTION_STATE`, then `CLIENT_UPDATES_CONFIG` to subscribe to state
+  updates (pyatv also requests a keyboard session; check whether that is
+  needed). A heartbeat runs every 30 s.
+- **Controls and status.** `SEND_COMMAND` with Play, Pause, Stop or
+  SeekToPlaybackPosition (option `playbackPosition`), each answered by a
+  command result. State and position come from receiver-sent state messages
+  (`SET_STATE` and now-playing content metadata: playback state, rate, elapsed
+  time with a timestamp, duration). pyatv tracks clients, players and content
+  items; this slice tracks only the client that owns our URL playback.
+
+Message set for this slice, about 10 messages plus their nested types:
+`ProtocolMessage` (type, identifier, error code), device info, connection
+state, client updates config, send command, command options, command result,
+set state, now-playing client/player, content item metadata, and the
+heartbeat. Field numbers come from pyatv's `.proto` definitions (MIT, derived
+from reverse engineering); record that provenance in dependencies.md before
+use.
+
+**D31 (open): protobuf implementation.**
+
+| Option | Licence and footprint | Notes |
+|---|---|---|
+| In-tree bounded wire codec (varint, length-delimited, fixed32/64; unknown fields skipped) plus hand-written mapping for the message set | Apache-2.0; no dependency | Same reasoning as D27. Fixtures generated in Python with the `protobuf` package and pyatv's compiled MRP messages, an independent oracle. Recommended |
+| protozero (header-only wire reader and writer) plus hand-written mapping | BSD-2-Clause; vcpkg | Removes the wire-codec work; mapping and bounds stay ours |
+| Google protobuf runtime with `protoc` code generation from pyatv's `.proto` files | BSD-3-Clause runtime; build-time `protoc`; vendored MIT `.proto` | Complete and generated, but adds a heavy runtime and code generation to the Windows, Android and UWP builds, and generated parsers need their own size limits |
+
+## 6. Sender identity (D30)
 
 The reference sends `model` `iPhone14,3`, iOS-like `osName`, `osVersion` and
 `osBuildVersion`, `sourceVersion`, a `User-Agent` of `AirPlay/870.14.1`, and a
 random locally administered `deviceID`/`macAddress`.
 
-**Proposed:** start with the reference values, which are the only ones known to
-work, and make them configurable. Then test neutral values (for example
+**Decision D30:** start with the reference values, which are the only ones
+known to work, and make them configurable. Then test neutral values (for example
 `model` `send-airplay2`) on hardware, and keep them if playback still works.
 Never send the host's real MAC address; generate a random locally
 administered one per session.
@@ -161,10 +225,14 @@ administered one per session.
    `/command` bodies. Field names must match the sanitized reference sequence.
 5. `UrlPlaybackSession` against a scripted fake receiver: the full sequence,
    each step failing, start timeout, teardown order, and secret cleanup.
-6. `airplay2-cli cast`, start and stop only. **Hardware gate G1:** the user
+6. `airplay2-cli cast`, start and stop only. Then MRP, after D31: wire codec
+   and message mapping with fixtures; data-stream framing; the
+   remote-control session against a fake receiver; then status and
+   controls. **Hardware gate G1:** the user
    observes video and audio; `serve`-style read counts; teardown returns the
    TV to idle (H4).
-7. Controls: H1 and H2, then H3. **Hardware gate G2.** Record each result in
+7. Controls over MRP: status, pause/resume, seek, stop. **Hardware gate
+   G2.** Record each result in
    receiver-validation.md, including failures.
 8. Robustness: 10 start/stop cycles, receiver sleep/wake, network loss
    mid-play. **Gate G3.**

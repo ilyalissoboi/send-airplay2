@@ -62,8 +62,9 @@ reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UT
 - **Next actions:**
   1. Native session layer: the proposal is in
      [session-design.md](session-design.md). It separates validated facts from
-     hypotheses H1-H4 and lists three open decisions (threading, control path,
-     sender identity). Get the user's choices, then follow its staged plan.
+     hypotheses H1-H4. The user decided D28 (threads), D29 (MRP controls now)
+     and D30 (identity). D31, the protobuf implementation, is open; then follow
+     the staged plan.
      Note: the seek, pause and status controls validated with the fork used
      pyatv's MRP data stream, not `/command`. The plist codec (D27) is in
      place. Use the fork's observed sequence as protocol
@@ -273,6 +274,9 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D25 | Use Boost.Beast/Asio 1.92 for HTTP media serving behind an experimental C++ callback API | User explicitly selected Boost. Private Boost types, one concrete route-selected bind address, receiver-IP filtering, random per-session bearer URLs, bounded accepted connections/workers/buffers and absolute deadlines. No wildcard listener, scoped/link-local IPv6 URLs, firewall changes or playback commands; callbacks must cooperate with cancellation |
 | D26 | Development `airplay2-cli serve` with a private file adapter that serializes reads of one `std::ifstream` | User chose option 1: serve the reference-baseline MP4 with this project's server rather than a third-party one, so receiver fetch/firewall reachability is tested too. Portable standard-library I/O over parallel positional reads; size snapshot, receiver-only access, private URL printed once, stdin-driven stop with aggregate read counts. Not a playback API |
 | D27 | In-tree bounded `bplist00` subset codec for the session layer | User chose this on 2026-10-06 over libplist (LGPL-2.1) and other libraries. Apache-2.0, no new dependency. Covers only the types the `/command` flow needs, with strict bounds, tested against independent Python `plistlib` fixtures |
+| D28 | Session threading: synchronous components with dedicated reader, feedback and timing threads | User decision 2026-10-06 over Boost.Asio async; reuses the deadline/cancellation transport. See session-design.md |
+| D29 | Control path: implement MRP (remote-control session, data stream, protobuf messages) now | User decision 2026-10-06 over `/command`-only controls. The seek, pause and status validated with the fork used this path; `/command` still starts playback |
+| D30 | Sender identity: reference SETUP values first, configurable, then a hardware test of neutral values; random per-session device ID, never the host MAC | User decision 2026-10-06 |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
