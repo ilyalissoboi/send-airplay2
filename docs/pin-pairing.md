@@ -69,8 +69,9 @@ and Linux ASan/UBSan passed in the
 [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37436328684).
 Check the actual final PR head as documentation updates also trigger CI.
 
-Next: define trusted host credential storage, bounded HTTP/socket correlation,
-partial writes, deadlines and cancellation, then perform explicit receiver
+Subsequent [receiver transport](receiver-transport.md) implements bounded
+HTTP/socket correlation, partial writes, deadlines and cancellation privately.
+Next: define trusted host credential storage and CLI pairing/reconnect, then perform explicit receiver
 PIN/reconnect/revocation tests. UWP support is a packaging gate because the
 current vcpkg Botan port excludes that triplet. Public API, packaged Windows and
 Android loading, reference playback and native playback remain pending.

@@ -3,8 +3,9 @@
 Experimental native sender library for supported, unprotected media on tested
 AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
 
-**Status: experimental discovery and HTTP range resolution. This code cannot
-pair with or cast to a receiver yet. No playback compatibility has been established.**
+**Status: experimental discovery and HTTP range resolution, with private
+authentication/receiver transport. The CLI cannot pair or cast yet. No receiver
+authentication or playback compatibility has been established.**
 
 The C++17 core includes a byte-range resolver with a C interface
 and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
@@ -13,10 +14,13 @@ server is not implemented. The pre-1.0 API is not frozen.
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
 verification and first-time PIN/SRP message processing are also implemented.
-Receiver transport and credential storage are still pending.
+Private bounded HTTP/RTSP framing and native receiver TCP transport now connect
+these flows, with deadlines, cancellation and the encrypted-record transition.
+Credential storage and a CLI pairing/reconnect flow are still pending.
 See [pairing transport foundation](docs/pairing-transport.md).
 See [peer verification](docs/peer-verification.md) for trust and state contracts.
 See [PIN pairing](docs/pin-pairing.md) for the private provisioning contract.
+See [receiver transport](docs/receiver-transport.md) for framing, I/O and ownership.
 
 ## Build and test
 

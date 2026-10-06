@@ -100,6 +100,7 @@ pyatv playback baseline on the Apple TV 4K / tvOS 26.6 / Windows 11 x64 setup.
 No receiver pairing or playback was attempted in this foundation slice.
 
 Subsequent development adds private [peer verification](peer-verification.md)
-and [PIN/SRP setup](pin-pairing.md). Trusted credential storage and bounded
-request/response socket transport remain the next implementation gates; hardware
-authentication and playback remain untested.
+and [PIN/SRP setup](pin-pairing.md). Bounded
+[request/response socket transport](receiver-transport.md) now integrates these
+flows privately. Trusted credential storage and CLI pairing/reconnect are the
+next implementation gates; hardware authentication and playback remain untested.

@@ -61,6 +61,11 @@ public:
     [[nodiscard]] Bytes feed(const Bytes& wire);
     /// Signal EOF. Reject any truncated header/ciphertext/tag; close on clean EOF too.
     void finish();
+    /// True only while open with no incomplete record. The connection checks this
+    /// at response boundaries so trailing partial unsolicited records cannot linger.
+    [[nodiscard]] bool at_boundary() const noexcept {
+        return !closed_ && pending_size_ == 0;
+    }
     void close() noexcept;
 
 private:

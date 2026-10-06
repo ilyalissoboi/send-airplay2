@@ -4,8 +4,10 @@ Research snapshot: 2026-10-06. This document distinguishes proposed architecture
 from implemented behavior. HTTP single-byte-range resolution and bounded
 mDNS/DNS-SD discovery with a diagnostic CLI are implemented. Private pairing TLV8,
 HKDF-SHA512 and authenticated control-record codecs are implemented, along with
-private peer verification and PIN/SRP provisioning message processing. No
-authenticated receiver connection or persistent credential store is available yet.
+private peer verification and PIN/SRP provisioning message processing. Bounded
+HTTP/RTSP framing and native TCP now connect these flows privately; authentication
+is tested with synthetic receivers and loopback I/O. Credential storage and CLI
+authentication are pending, and no real receiver authentication has been tested.
 
 ## Scope and architecture
 
@@ -23,8 +25,8 @@ Proposed components:
 | Component | Responsibility | State |
 |---|---|---|
 | Discovery | mDNS/DNS-SD, service merging, TXT capability and identity parsing | Implemented bounded IPv4 scan; see discovery.md for limits and evidence |
-| Pairing | PIN flow, authenticated peer verification, credential reuse | Private TLV8, PIN/SRP and peer verification implemented; receiver I/O/storage pending |
-| Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Private record codec and OpenSSL crypto adapter implemented; socket/deadlines pending |
+| Pairing | PIN flow, authenticated peer verification, credential reuse | Private TLV8, PIN/SRP, peer verification and receiver I/O implemented; storage/CLI/hardware pending |
+| Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Private HTTP/RTSP/TCP and record integration implemented; see receiver-transport.md |
 | Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Pending |
 | Media server | GET/HEAD, byte sources, range responses, bounded streaming | Range resolver only |
 | Playback | URL start, pause/resume, seek, status, stop | Pending |
@@ -63,7 +65,8 @@ OpenSSL is now selected for the private control crypto adapter; see
 The private authentication slice now implements [peer verification](peer-verification.md)
 using EVP X25519/Ed25519 and pinned identity credentials. Private
 [PIN pairing](pin-pairing.md) uses Botan SRP through its C FFI, preserving C++17.
-Bounded receiver I/O, trusted storage and the UWP packaging constraint remain gates.
+Private [receiver I/O](receiver-transport.md) is now implemented. Trusted storage,
+CLI/hardware authentication and the UWP packaging constraint remain gates.
 
 ## HTTP range contract
 
