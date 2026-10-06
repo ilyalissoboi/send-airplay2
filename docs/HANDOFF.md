@@ -1,15 +1,19 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-06 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-07 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
 
 ## 0. Resume here: native playback session on `claude/url-playback-session`
 
-Work continues from a local Claude Code session on the Windows 11 host that
+Work continues in a local Codex session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
-Snapshot: 2026-10-06, ~14:30 UTC.
+Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
+Reviewed baseline head: `66b8a94cb85fe4397df7b478ee9aec1537ba0ccc`, all ten checks
+passed in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37487008800).
+The user confirmed the Claude session is stopped; development continues in the
+Codex checkout on the same branch. Its former checkout is detached, with no changes.
 
 - **PR #11 is merged** into `main` as `2b0e57c9d3ee44c5afc66418c23084ffada01d59`.
   Its final head `105a7b0ad8cbd179c3f06562e7ef9d2be3c126d8` passed all ten
@@ -20,25 +24,36 @@ Snapshot: 2026-10-06, ~14:30 UTC.
   for the session implementation in [session-design.md](session-design.md).
   CI runs only for pull requests, so keep a draft PR open for this branch.
   Before writing, verify the actual head and checks.
-- **Done on this branch:** steps 1-5. Channel key derivation, the event
+- **Done on this branch:** steps 1-6 and the minimum native remote session.
+  Channel key derivation, the event
   channel, the NTP timing responder, the session messages, and the
   `UrlPlaybackSession` orchestrator (section 5).
-- **Step 6 implemented, G1 FAIL on its own:** `airplay2-cli cast` runs the
-  whole native sequence on Living Room. The receiver fetches the full file and
-  reports `playing`, but shows nothing. With pyatv 0.18.0's remote-control
+- **Initial step-6 G1 failure (superseded by the pass below):** `cast` ran the
+  URL sequence on Living Room. The receiver fetched the full file and
+  reported `playing`, but showed nothing. With pyatv 0.18.0's remote-control
   session held open (`atvremote push_updates`), the same native cast played
   video and audio correctly (user-observed). That supports H5: the
   remote-control session is required for presentation. See
   receiver-validation.md, "Native cast, hardware gate G1".
-- **Next:** implement the remote-control session natively. Test the minimum
-  first, the `isRemoteControlOnly` SETUP and event channel without MRP. If that
-  is not enough, add the data stream and MRP handshake (D29/D31). Then rerun G1
-  without pyatv. The credential profile for `cast` is `living-room-test`. The
-  temporary pyatv Python firewall rule is still in place.
-- **Still true:** the library cannot cast yet. The first hardware gate (G1) is
-  step 6.
+- **Native minimum now PASSED G1 (2026-10-07):** `cast` opens a separately
+  verified remote-control-only SETUP/event session before URL start, with its own
+  keys/counters/UUID. No remote RECORD, feedback, data stream, MRP or pyatv.
+  The user observed normal video/audio and return home after the 45-second run
+  was stopped by Enter. Full-file fetch, no failed reads, exit 0. See the new
+  receiver record and sanitized artifact for exact counts and executable hash.
+- **Next:** implement D29/D31 MRP framing, protobuf messages, handshake and
+  controls. Keep the minimal remote session until URL teardown. Verify EOF,
+  receiver-side stop, protocol idle and G2/G3 separately. Reuse the existing
+  credential profile; the temporary Python firewall rule is still in place and
+  should be removed when reference testing ends.
+- **Current support:** private native-only URL casting passed one G1 run on
+  Apple TV 4K / tvOS 26.6 (23L773) / Windows 11 x64. No public playback API or
+  native pause/seek/status controls exist. This is not the complete milestone.
 
-### PR #11 record (merged)
+### PR #11 record (merged; historical)
+
+The following dated actions and next-step notes describe the state at that merge.
+Section 0 and section 7 supersede them for current implementation work.
 
 - **Local session, 2026-10-06 (this update):** the branch was continued from a
   local Claude Code session on the Windows host. The user confirmed the cloud
@@ -159,11 +174,11 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
-| Actual casting support | None yet |
-| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native playback not implemented |
+| Actual casting support | Private native URL start/CLI implemented in PR #12; native-only video/audio and sender stop/home-screen G1 PASS; native MRP/controls and public API pending |
+| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native-only URL playback with minimum native remote SETUP/event session G1 PASS, user-observed video/audio and return home after sender stop |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is open (section 0). Verify current GitHub and
+PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is merged; draft PR #12 contains the private session implementation (section 0). Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -182,7 +197,7 @@ User-provided on 2026-10-06 (Asia/Tokyo):
   with advertised `osvers`/`ov`. AirPlay `srcvers` is not a tvOS build identifier.
 - AirPlay access: limited to the same network (user-reported); no password;
   pairing mandatory per pyatv scan.
-- Intended testing host: **Windows 11 x64**; exact OS build not yet supplied.
+- Intended testing host: **Windows 11 x64**; observed build `10.0.26200`, AMD64.
 
 The host is on Wi-Fi classified by Windows as a Public network; see
 receiver-validation.md for firewall details. The pyatv 0.18.0 reference playback
@@ -266,10 +281,10 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D02 | Standalone library before Screenbox integration | User milestone order |
 | D03 | Portable C++ core, eventual stable/versioned C ABI | Proposed architecture; C++17 foundation and experimental C API implemented |
 | D04 | C# wrapper for Screenbox; JNI for Android | Planned; neither wrapper implemented |
-| D05 | Begin with local H.264/AAC MP4 on one specified Apple TV model/firmware | Proposed first vertical slice; user supplied Apple TV 4K / tvOS 26.6 / Windows 11 x64; generation and exact builds pending |
+| D05 | Begin with local H.264/AAC MP4 on one specified Apple TV model/firmware | Proposed first vertical slice; user supplied Apple TV 4K / tvOS 26.6 / Windows 11 x64; generation from pyatv model mapping; firmware build 23L773, host build 10.0.26200 recorded |
 | D06 | CLI plus minimal packaged Windows C# host before Screenbox changes | Planned validation gate; packaged networking/file/native-loading risks must be tested early |
-| D07 | Receiver-side URL playback with local HTTP serving | Planned first media path; current code only resolves ranges |
-| D08 | Media source size/read-at callbacks, not filesystem paths alone | Planned for Windows StorageFile and Android content URI access; callback ABI unfinished |
+| D07 | Receiver-side URL playback with local HTTP serving | Implemented private URL session and server; native-only presentation G1 passed |
+| D08 | Media source size/read-at callbacks, not filesystem paths alone | Experimental C++ callback contract and file adapter implemented; StorageFile/content URI adapters and public C ABI pending |
 | D09 | Keep standalone audio transport separate from first MP4 proof | Planned; audio backend pending |
 | D10 | AirPlay beside Chromecast through a provider-neutral boundary | Planned Screenbox integration; retain existing Chromecast behavior behind its adapter |
 | D11 | No initial DRM, mirroring, system-audio capture, synchronized multiroom, auto-transcoding or universal codec/receiver support | Initial scope limits from assessment; unsupported media should fail explicitly |
@@ -280,10 +295,10 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D16 | Keep protocol-specific records and merge only by matching normalized advertised device identity | Implemented; hostname/friendly name alone is insufficient, advertisements remain unauthenticated |
 | D17 | Experimental C++ discovery API plus CLI before versioned C discovery ABI/event API | Implemented; shared users require compatible C++ runtime, production bindings still pending |
 | D18 | OpenSSL 3.5+ EVP primitives, private bounded pairing/control codecs before receiver handshake | Engineering choice, implemented; no homegrown cryptography, public pairing API deferred until peer authentication and ownership contracts are complete |
-| D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Engineering choice, implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 schema and one-time control-key release. Credential storage and network correlation/deadlines remain gates |
+| D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 and one-time key release. Storage and bounded network transport are integrated; broader hardware authentication remains a gate |
 | D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP and Ed25519 key validation | Engineering choice, implemented privately; C++17 core, maintained SRP/subgroup checks, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
 | D21 | Private synchronous native TCP with one outstanding request and a strict bounded HTTP/RTSP profile | Engineering choice, merged in PR #6; absolute deadlines/cancellation, terminal cleanup, HTTP ordered correlation with optional validated CSeq, mandatory RTSP CSeq, verified record transition. Hardware remains a gate |
-| D22 | Private versioned credential envelope, trusted host store and Windows desktop CLI before a public auth ABI | Engineering choice, implemented on credential-cli branch; current-user/same-computer Credential Manager, create-only profile semantics for cooperating writers, no plaintext fallback or automatic re-pair. Other OS stores and packaged hosts remain gates |
+| D22 | Private versioned credential envelope, trusted host store and Windows desktop CLI before a public auth ABI | Implemented and merged in PR #7; current-user/same-computer Credential Manager, create-only profiles, no plaintext fallback or automatic re-pair. Other OS stores and packaged hosts remain gates |
 | D23 | Accept one optional opaque M6 type-17 metadata field, bounded to 0..256 bytes; discard and erase it | Live Apple TV M6 headers showed `17:159`. Required ID/key/signature, server proof, AEAD, duplicate and other unknown-field rejection remain enforced; metadata never influences trust, naming or storage. Sanitized phase/HTTP/TLV-header diagnostics retain no payloads |
 | D24 | Standard-library Python CLI E2E runner using an existing paired profile; explicit evidence kinds and opt-in disposable deletion | User requested unattended actions available now. No PIN collection/enrollment, credential export/clone, receiver changes or primary-profile deletion; ephemeral loopback fault peers and fresh live verification distinguish synthetic failures from hardware evidence |
 | D25 | Use Boost.Beast/Asio 1.92 for HTTP media serving behind an experimental C++ callback API | User explicitly selected Boost. Private Boost types, one concrete route-selected bind address, receiver-IP filtering, random per-session bearer URLs, bounded accepted connections/workers/buffers and absolute deadlines. No wildcard listener, scoped/link-local IPv6 URLs, firewall changes or playback commands; callbacks must cooperate with cancellation |
@@ -300,6 +315,10 @@ cancellation and errors before publishing production bindings.
 
 ## 5. Implemented code and verification
 
+The table and section 0 summarize current components. Dated subsections preserve
+the exact evidence at each historical slice; their future-work notes are not the
+current task list. Current next steps are in section 7.
+
 | File | Purpose |
 |---|---|
 | `include/send_airplay2/http_range.h` | Experimental length-delimited C interface, fixed-width status values, offset/length result |
@@ -312,7 +331,7 @@ cancellation and errors before publishing production bindings.
 | `docs/receiver-validation.md` | Per-platform/per-firmware hardware record; discovery, PIN enrollment and fresh-socket verification observed; remaining gates explicit |
 | `include/send_airplay2/discovery.h` | Experimental synchronous C++ discovery records/options/result API |
 | `src/discovery*.cpp` / internal headers | Bounded DNS-SD parser/cache, scan scheduler and native socket adapter |
-| `src/cli.cpp` | `airplay2-cli discover`, readable and JSON diagnostics |
+| `src/cli.cpp` | Dispatch for discover, auth, serve and cast; readable/JSON discovery diagnostics |
 | `tests/discovery_tests.cpp` / CLI fixtures | Synthetic parser/lifecycle/query tests, mutation corpus and CLI output validation |
 | `docs/discovery.md` | Discovery contract, adapter limits, source provenance and local LAN observations |
 | `src/pairing_tlv.*` | Bounded ordered TLV8 codec with strict fragment/separator handling |
@@ -328,7 +347,9 @@ cancellation and errors before publishing production bindings.
 | `tests/receiver_tests.cpp` / `docs/receiver-transport.md` | Fragmented fake receiver transcripts, dynamic authenticated peers, native loopback and lifecycle/framing contracts |
 | `src/credential_*`, `src/auth_*` / `tests/credential_tests.cpp` / `docs/credential-storage.md` | Private bounded credential codec, native Windows store, hidden-PIN CLI, enrollment/save/reload/reconnect orchestration and synthetic/OS persistence tests |
 | `src/file_media_source.*`, `src/serve_cli.*` / `tests/file_source_tests.cpp`, `tests/cli_serve.cmake` | Private file-backed `MediaSource` and development `serve` command; adapter, loopback and real-CLI tests |
-| `src/binary_plist.*` / `tests/plist_tests.cpp`, `tests/fixtures/plist` | Private bounded `bplist00` subset codec (D27); plistlib byte-exact fixtures, literal layouts, malformed/budget cases and mutation sweeps. Compiled into its test only until the session layer uses it |
+| `src/binary_plist.*` / `tests/plist_tests.cpp`, `tests/fixtures/plist` | Private bounded `bplist00` subset codec (D27); plistlib byte-exact fixtures, literal layouts, malformed/budget cases and mutation sweeps. Integrated into private session code and compiled into its fixture test |
+| `src/channel_keys.*`, `src/event_channel.*`, `src/ntp_timing.*` | Private session keys, receiver event requests and UDP timing, with fixture/stream/loopback tests |
+| `src/session_messages.*`, `src/url_playback_session.*`, `src/cast_cli.*` | Private URL start, state, local teardown and CLI; scripted receiver tests; native-only G1 PASS; MRP controls pending |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -345,7 +366,7 @@ Verified at foundation commit `dbd654b1d92057b3208953226186c5c2b206ccff`:
 - AddressSanitizer and UndefinedBehaviorSanitizer: pass with
   `ASAN_OPTIONS=detect_leaks=0`. Default LeakSanitizer failed to inspect processes
   in the execution environment; leak detection was not validated.
-- GitHub CI: all six Windows/Linux/macOS × static/shared jobs pass, confirmed
+- GitHub CI: all six Windows/Linux/macOS x static/shared jobs pass, confirmed
   2026-10-06. [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37409502023)
   and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37409476906).
 - Android NDK build/device, packaged Windows host and receiver tests: not run.
@@ -1123,6 +1144,57 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
 - **Hardware:** see receiver-validation.md. The native protocol sequence works;
   presentation needs the remote-control session (H5).
 
+
+### Native minimum remote-control session: G1 PASS, 2026-10-07
+
+Same receiver, firmware, host and MP4 as the previous native runs. The new native
+session opens its own stored-credential pair-verify and `isRemoteControlOnly`
+SETUP (`timingProtocol=None`), connects the separately keyed event channel, then
+starts the URL session. It retains remote control until URL teardown. No remote
+RECORD, feedback, type-130 data stream, MRP or pyatv process was used.
+
+- Windows MSVC static Release, based on `66b8a94` with this native minimum change.
+  Tested CLI SHA-256 and sanitized output are in the
+  [machine-readable record](validation/native-minimum-session-windows-static-2026-10-07.json).
+- The agent ran native `cast` using the existing paired profile. Receiver address
+  and discovery output remained in driver memory; no credential file was read.
+- The user reported: video and audio played normally, and the device returned
+  to the home screen after playback finished.
+- The driver sent Enter after 45 seconds. Exit 0; summary:
+  `state=playing events=49 remote_events=0 feedback=22 timing=21 failed=no
+  reads=1317 bytes=86184608 failed_reads=0 span=[0,53953926)`.
+- Existing firewall rules were reused by temporarily staging the tested executable
+  in the stopped session's allowed build location. Its original executable was
+  restored; no firewall rule was added or changed.
+
+**G1 PASS for this run:** native-only visible video/audio, full-file fetch and
+user-observed home-screen return after sender shutdown. The minimum SETUP/event
+connection was sufficient on this receiver; an idle remote event channel is not
+an error. MRP remains the selected controls path (D29/D31). The printed final
+state is the last URL event, not proof of protocol idle. This was not EOF or a
+receiver-side stop test. Native controls, repeated casting, extended session
+lifetime and other firmware/hosts remain unvalidated.
+
+### Minimum remote-session implementation and automated validation: 2026-10-07
+
+- `UrlPlaybackSession` owns independent remote and URL control/event connections.
+  Remote SETUP is authenticated first. Its event reader answers requests without
+  overwriting URL state; event loss marks the composite session failed.
+- Remote keys/UUID/CSeq/counters are separate. The connection remains until URL
+  teardown, then the reader is cancelled/joined and remote secrets are erased.
+  This experiment deliberately omits remote RECORD/feedback/data stream/MRP.
+- Regression tests use distinct ephemeral secrets for the two fake sessions:
+  independent encrypted replies, SETUP fields/order, lifetime, state isolation,
+  remote SETUP rejection, event-connect failure, event loss during/after URL
+  start, URL failure cleanup, and URL-before-remote close order.
+- Windows MSVC 19.51 static/shared Release: 21/21 CTest targets passed in each
+  final build. Existing offline E2E runner: 10/10 tests passed. Touched C++ passes
+  clang-format dry-run/Werror and git diff --check. Native CI must be checked at
+  the newly published head; baseline CI is not evidence for this change.
+- No dependency, copied implementation, pairing change or firewall change.
+  Reference provenance is recorded in dependencies.md. Historical test records
+  are preserved; current summaries and the PR continuation instructions are updated.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -1151,76 +1223,34 @@ the recorded source snapshot is still current.
 
 ## 7. What is missing and what to do next
 
-The milestone is unfinished. **Do not interpret missing hardware access as a
-reason to stop all implementation.** Build and mock/unit-test independent pieces
-while arranging the hardware baseline in parallel with that work.
+1. **Native presentation (G1):** minimum native remote-control-only SETUP/event
+   session implemented and PASS without pyatv. Keep its independently verified
+   connection until URL teardown. Expand lifetime/firmware and stop coverage;
+   a single video/audio/home-screen observation does not establish G2/G3.
+2. **MRP controls (D29/D31, G2):** implement bounded protobuf wire/message codecs,
+   data-stream framing, handshake, response correlation, heartbeat and ownership
+   tracking. Add native status, pause/resume, forward/backward seek and stop.
+   Record schema provenance before use; keep independent synthetic fixtures.
+3. **Lifecycle (G3):** complete EOF, receiver-side stop and bounded failure cleanup;
+   test ten start/stop cycles, sleep/wake and network loss/recovery. Investigate
+   the buffering pause and renewed loading seen in the mixed native/pyatv run.
+4. **Other hardware gates:** restart authentication, wrong PIN/revocation,
+   disposable-profile deletion only when opted in, departure/interface changes,
+   real-file >4-GiB seeking and neutral sender identities. Discovery, pairing/reuse,
+   reference playback and server fetch already have selected-combination evidence.
+5. **Library/hosts:** public versioned session ABI, bindings, other credential
+   stores, packaged Windows C# loading/brokered files/inbound networking and
+   Linux/macOS/Android device proofs. Botan UWP packaging remains unresolved.
+6. **Screenbox:** after the standalone gate, read current repository instructions,
+   introduce the provider/session boundary, and test Chromecast and local handoff.
+7. **Small diagnostic:** add aggregate connections/requests to `serve`'s summary.
 
-1. **Hardware baseline:** use the user-provided Apple TV 4K / tvOS 26.6 /
-   Windows 11 x64 setup (discovery model `AppleTV14,1`). Obtain the exact
-   tvOS build and AirPlay access settings without collecting secrets. Establish
-   reference playback with pyatv on that LAN and record the real session path.
-   Local discovery succeeded; reference and native playback have not been checked.
-   Follow [reference-baseline.md](reference-baseline.md): pyatv AirPlay pairing
-   first (passed), then `play_url` of one test MP4 served by
-   `airplay2-cli serve` (FAILED on tvOS 26.6: pyatv 0.18.0 uses the legacy
-   `/play` flow, which this firmware accepts but does not act on). The
-   unmerged pyatv fix (`/command` flow) then PASSED with video and audio
-   fetched from `serve`. Seek, pause/resume and position also passed with it;
-   `stop` closed playback on the TV, but the receiver reported `Paused` and
-   the sender's session stayed open. Cloud
-   sessions cannot reach the LAN, so these steps run on the user's host.
-2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
-   departure/interface-change checks and other platform/Android host coverage.
-   The Windows Apple TV discovery gate has passed; see discovery.md for limits.
-3. **Pairing + secure transport:** private TLV8, AEAD/HKDF and record framing are
-   implemented, along with existing-credential peer verification and PIN/SRP message
-   processing. Private bounded socket/deadline and framing integration is now
-   implemented. Private persistent credential format, Windows desktop trusted
-   storage and CLI pairing/reconnect are now implemented on the current branch.
-   Live enrollment and fresh-socket reconnect passed after the M6 metadata fix.
-   Separate-process `verify` passed with exit 0. Next validate restart reconnect,
-   wrong PIN, authentication failure,
-   counters/replay, timeouts and revocation before claiming interoperability.
-4. **HTTP media server:** bounded Boost callback server is implemented and loopback
-   tested on the current branch. The file adapter and `serve` now have
-   receiver-fetch evidence: the Apple TV read the full MP4 through the Windows
-   firewall on a Public network. Network-change checks and packaged/brokered
-   adapters remain. Virtual >4-GiB source tests
-   establish arithmetic, not real-file or Apple TV seeking interoperability.
-5. **Session/playback:** implement authenticated setup, event/timing/feedback
-   lifecycle, URL start, status, pause/resume, seek and stop. Treat receiver status
-   and disconnects explicitly. Use the same MP4 as the reference baseline.
-   On tvOS 26.6, legacy `/play` plus `/playback-info` polling does not start
-   playback (section 5, reference playback attempt). Design for the
-   `/command` queue flow on a type-130 stream, with playback state from the event
-   channel. The unmerged pyatv fix confirmed the start path on this receiver.
-   The `bplist00` codec (D27) is implemented. The session and threading
-   proposal is in [session-design.md](session-design.md), with decisions
-   pending.
-   Native stop must tear down the session and verify receiver state; after
-   the fork's `stop`, the TV left playback but reported `Paused` with the
-   session still open.
-   Prerequisite decisions: a binary-plist codec, and the session threading model.
-   For plist, a bounded in-tree `bplist00` subset tested against Python `plistlib`
-   fixtures is the proposed option; libplist is LGPL-2.1, so check licensing and
-   static linking before choosing it. For threading, `ReceiverConnection` is
-   serial with one request in flight, while the reference sequence needs a second
-   encrypted event connection and periodic `/feedback`. Re-inspect the pyatv event
-   channel key derivation before implementing it.
-6. **Host proofs:** implement the CLI and packaged Windows C# sample; test native
-   loading, brokered media access and inbound networking. Add macOS/Linux/Android
-   device coverage and bindings. Record failures separately from build success.
-7. **Screenbox:** after the standalone gate, create/use a dedicated fork, introduce
-   the casting adapter boundary, route active-session controls, and test Chromecast
-   regression and local/remote handoff.
-
-Remaining design choices: production OS discovery fallback/IPv6-only backend,
-plist libraries, session socket/event
-model, additional OS credential-storage adapters, asynchronous C API and bindings,
-timeouts/cancellation, capability policy, media-server access policy, unsupported
-codec handling, Android packaging and audio transport. These choices remain open;
-OpenSSL covers AEAD/HKDF/identity primitives and Botan covers SRP arithmetic. Keep decisions explicit
-in future updates to this record.
+D27-D31 are settled: in-tree plist, synchronous session threads, MRP controls,
+configurable reference identity and in-tree protobuf. Remaining choices concern
+the minimum remote-control sequence, stop semantics, public ABI/cancellation,
+other OS storage/discovery backends, capability/codec policy and packaging.
+Standalone audio, DRM, mirroring, multiroom and transcoding remain outside the
+first MP4 slice. Missing hardware access does not prevent independent implementation.
 
 ## 8. Continuation mechanics and known obstacles
 
@@ -1246,12 +1276,13 @@ the connector. In a carried-over workspace, inspect local versus remote history
 before attempting a push. A clean checkout of the PR branch avoids that divergence.
 Do not force-push over unfamiliar remote changes.
 
-Local continuation (planned): the user will continue PR #11 from a local Claude
-Code session on the Windows host (Claude Desktop app or `claude remote-control`
-in the local checkout). It can reach the LAN and, per section 2, the
-authenticated GitHub CLI. Start with section 0 and AGENTS.md. Check out the
-existing branch rather than creating one:
-`git fetch origin` then `git switch claude/modest-cannon-xa79s5`.
+Local continuation: keep using draft PR #12's branch
+`claude/url-playback-session`. Inspect its actual head/checks before writing.
+The stopped Claude checkout was detached on 2026-10-07 so the branch could be
+checked out in the Codex worktree. Do not start another branch/PR or force-push.
+Ask the user before marking ready or merging. The Windows host can reach the LAN;
+hardware observations still need someone watching the receiver. Never read raw
+credential files or expose the address, identifiers, PIN or private URL.
 
 Claude Code cloud sessions (2026-10-06): the repository is cloned fresh into an
 isolated container. Pushes use the session's Git proxy; GitHub reads and PR

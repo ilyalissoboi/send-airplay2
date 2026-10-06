@@ -3,15 +3,19 @@
 Experimental native sender library for supported, unprotected media on tested
 AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
 
-**Status: experimental discovery and bounded HTTP media serving, with private
-authentication/receiver transport and Windows desktop credential storage/CLI
-pairing. The CLI cannot cast yet. Live PIN enrollment and fresh-socket verification
-were observed on Apple TV 4K / tvOS 26.6 / Windows 11 x64; playback is untested.**
+**Status: experimental discovery, authentication, HTTP media serving and private
+URL playback sessions with a development `cast` CLI. Native-only G1 passed on
+Apple TV 4K / tvOS 26.6 (23L773) / Windows 11 x64: video/audio played and the TV
+returned home after sender shutdown. The session retains a separate native
+remote-control-only SETUP/event connection. MRP controls and the public playback
+API remain pending; this is one tested combination, not universal support.**
 
 The C++17 core includes a byte-range resolver with a C interface
 and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
 CLI. A Boost.Beast/Asio media server now streams immutable byte-source callbacks
-with GET/HEAD and byte ranges; playback integration is pending. The pre-1.0 API is not frozen.
+with GET/HEAD and byte ranges. Private session integration uses authenticated
+SETUP, encrypted events, NTP timing, feedback and `/command` queue messages.
+The pre-1.0 API is not frozen; playback has no public API yet.
 See [media serving contracts and validation](docs/media-server.md).
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
@@ -114,9 +118,25 @@ build/Release/airplay2-cli.exe serve --address 192.0.2.10 --file C:\media\clip.m
 fetch it, for example during the [pyatv reference baseline](docs/reference-baseline.md).
 Only the given receiver address may fetch from it. It prints a private URL once,
 serves until Enter or end-of-file on standard input, then prints aggregate read
-counts. It sends no playback commands; this library cannot cast yet. See the
+counts. It sends no playback commands. See the
 [media server CLI notes](docs/media-server.md#development-cli-serve) for options
 and limits.
+
+## Native playback experiment (Windows desktop)
+
+```powershell
+build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room --file C:\media\clip.mp4
+```
+
+`cast` reuses a stored profile, starts the receiver-restricted media server and
+an authenticated URL session, and reports state until Enter or stdin EOF. It
+prints no private URL or receiver address. `--event-log` enables bounded event
+outlines for diagnostics. A `playing` event does not prove visible playback:
+G1 passed for the recorded native-only run, with user-observed video/audio and
+return to the home screen after sender stop. EOF, receiver-side stop, repeat casts
+and native controls still need validation.
+See [session design and gates](docs/session-design.md) and
+[receiver results](docs/receiver-validation.md).
 
 ## Milestones
 

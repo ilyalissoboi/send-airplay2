@@ -135,6 +135,14 @@ revision:
 
 Only these layouts and constants are used.
 
+The minimal native remote-control session reuses the existing original
+authentication, event and SETUP code. The pinned MIT `ap2_session.py` reference
+above was reinspected on 2026-10-07 before implementation. It orders remote
+SETUP/event, RECORD and data-stream SETUP; the first native H5 experiment omits
+the latter two to test the SETUP/event contribution. No source was copied or
+dependency added. That minimum is an engineering experiment, not a validated
+replacement for the reference's complete remote-control/MRP sequence.
+
 Session message shapes (`session_messages.*`) follow these sources; only body
 keys, fixed identifiers, header names and version strings are used:
 

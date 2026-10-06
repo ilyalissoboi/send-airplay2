@@ -61,7 +61,7 @@ These codecs do not provide sockets, HTTP/RTSP parsing, deadlines, cancellation,
 PIN/SRP proof validation, credential persistence or a public pairing API.
 Peer-verification identity/signature/key agreement and protocol error handling
 are now implemented separately; real receiver revocation remains untested.
-The pending socket layer must send
+The implemented receiver socket layer sends
 each encrypted byte exactly once in order, retaining bytes after partial writes.
 
 ## Verification and next gate
@@ -81,8 +81,8 @@ At implementation commit `ee4afa80172d38300078fad0b5a2332898e95cd5`, all six
 Windows/Linux/macOS static/shared CI jobs and Linux ASan/UBSan passed in the
 [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37422659514).
 Verify checks for the final [PR #3](https://github.com/ilyalissoboi/send-airplay2/pull/3)
-head before merging. Sanitizers instrument the in-tree code; packaged/Android
-hosts and receiver authentication remain untested.
+head before merging. At that slice, packaged/Android hosts and receiver
+authentication were untested. Later hardware evidence is linked below.
 
 The PR #3 readability pass gives the existing cases named groups and failure
 context, names wire-size/fixture-offset calculations, and makes plaintext-guard
@@ -93,14 +93,7 @@ At final readability source commit `85e2b8d48a4bf993ba4581f539f1103ed601ba4a`,
 all six platform/static/shared jobs and Linux ASan/UBSan passed in the
 [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37425248739).
 
-Next: implement PIN pairing with vetted SRP primitives, credential storage adapters and
-bounded request/response transport. Add independent handshake transcripts and
-wrong-PIN/signature/revocation tests, then validate the exact receiver path and a
-pyatv playback baseline on the Apple TV 4K / tvOS 26.6 / Windows 11 x64 setup.
-No receiver pairing or playback was attempted in this foundation slice.
-
-Subsequent development adds private [peer verification](peer-verification.md)
-and [PIN/SRP setup](pin-pairing.md). Bounded
-[request/response socket transport](receiver-transport.md) now integrates these
-flows privately. Trusted credential storage and CLI pairing/reconnect are the
-next implementation gates; hardware authentication and playback remain untested.
+The foundation slice did not contact a receiver. Subsequent development implements
+peer verification, PIN/SRP, receiver I/O and Windows credential storage/CLI.
+Live pairing/reuse and URL-session traffic are recorded in receiver-validation.md;
+native-only G1 passed; broader authentication, controls and packaged hosts remain gates.

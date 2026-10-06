@@ -96,6 +96,7 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
                                    const std::atomic_bool* cancelled) {
     const auto local_address = native::route_local_address(options_.receiver);
     rtsp_uri_ = rtsp_uri(local_address);
+    open_remote_control(credentials, cancelled);
     control_ = std::make_unique<ReceiverConnection>(
         options_.connect(options_.receiver, operation(cancelled)), options_.receiver.authority());
     control_->verify(credentials, operation(cancelled));
@@ -135,6 +136,54 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
         (void)control_request(std::move(request), cancelled, true);
     }
     wait_until_playing(cancelled);
+}
+
+void UrlPlaybackSession::open_remote_control(const PairCredentials& credentials,
+                                             const std::atomic_bool* cancelled) {
+    remote_control_ = std::make_unique<ReceiverConnection>(
+        options_.connect(options_.receiver, operation(cancelled)), options_.receiver.authority());
+    remote_control_->verify(credentials, operation(cancelled));
+
+    // This connection has its own UUID, CSeq, pair-verify secret and record counters.
+    // Reusing URL keys here would authenticate against the wrong session.
+    ReceiverRequest request;
+    request.method = "SETUP";
+    request.target = rtsp_uri_;
+    request.protocol = ReceiverProtocol::rtsp;
+    request.headers = SessionHeaders::random().rtsp(true);
+    request.body = remote_control_setup_body(options_.identity, random_uuid());
+    const ErasedRequest owned(std::move(request));
+    const auto response =
+        remote_control_->request(owned.request, receiver_http::max_body, operation(cancelled));
+    if (response.status < 200 || response.status > 299) {
+        throw SessionException(SessionError::rejected, response.status);
+    }
+
+    Secret32 sender_write;
+    Secret32 sender_read;
+    remote_control_->derive_channel_keys(event_channel_labels(), sender_write, sender_read);
+    auto endpoint = options_.receiver;
+    endpoint.port = parse_event_port(response.body);
+    remote_events_ = std::make_unique<EventChannel>(
+        options_.connect(endpoint, operation(cancelled)), sender_write, sender_read);
+    remote_event_thread_ = std::thread([this] { remote_event_loop(); });
+}
+
+void UrlPlaybackSession::remote_event_loop() {
+    const auto operation = ReceiverOperation::until_cancelled(&remote_event_stop_);
+    try {
+        for (;;) {
+            auto request = remote_events_->receive(operation); // Answers before returning.
+            // Remote notifications are not the URL session's playback state.
+            cleanse(request.body.data(), request.body.size());
+            std::lock_guard<std::mutex> lock(state_mutex_);
+            ++status_.remote_events;
+        }
+    } catch (...) {
+        if (!remote_event_stop_) {
+            mark_failed();
+        }
+    }
 }
 
 ReceiverRequest UrlPlaybackSession::rtsp_request(std::string method, std::string target,
@@ -276,12 +325,13 @@ void UrlPlaybackSession::wait_until_playing(const std::atomic_bool* cancelled) {
     const auto deadline = std::chrono::steady_clock::now() + options_.start_timeout;
     std::unique_lock<std::mutex> lock(state_mutex_);
     for (;;) {
-        // "loading" is not success: only "playing" completes the start.
-        if (status_.playback_state == playing_state) {
-            return;
-        }
         if (status_.failed) {
             throw SessionException(SessionError::connection_lost);
+        }
+        // Both sessions must remain healthy; a URL event alone cannot hide a
+        // concurrent remote-control failure. "loading" is never success.
+        if (status_.playback_state == playing_state) {
+            return;
         }
         if (cancelled != nullptr && cancelled->load()) {
             throw TransportException(TransportError::cancelled);
@@ -359,6 +409,17 @@ void UrlPlaybackSession::stop() noexcept {
     }
     if (timing_) {
         timing_->close();
+    }
+    // Retain remote control until the entire URL transport has stopped.
+    remote_event_stop_ = true;
+    if (remote_event_thread_.joinable()) {
+        remote_event_thread_.join();
+    }
+    if (remote_events_) {
+        remote_events_->close();
+    }
+    if (remote_control_) {
+        remote_control_->close();
     }
     state_changed_.notify_all();
 }

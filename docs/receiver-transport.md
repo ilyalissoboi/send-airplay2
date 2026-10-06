@@ -3,8 +3,10 @@
 This private C++17 slice connects the existing PIN setup, peer verification and
 control-record processors to synchronous native TCP I/O. It is not a public ABI,
 CLI pairing command, credential store, media server or playback implementation.
-Apple TV interoperability remains untested; loopback/fake receivers are the test
-gate for this PR.
+Loopback/fake receivers validate the transport contract. Later Windows desktop
+PIN/reconnect and native URL-session traffic were observed on Apple TV 4K / tvOS
+26.6. The minimum native remote-control SETUP/event session then passed G1.
+See receiver-validation.md for exact results and remaining gates.
 
 ## Connection and authentication lifecycle
 
@@ -59,7 +61,7 @@ Transfer-Encoding, upgrades/trailers, HEAD/CONNECT and close-delimited framing.
 Responses advertising Connection other than keep-alive are rejected. Extra bytes
 coalesced after a final response, queued input before a new request/key transition,
 or trailing partial encrypted records are terminal correlation failures. Event
-channels/server-initiated requests are future separate connections.
+channels/server-initiated requests use the separate EventChannel described below.
 
 HTTP peers need not echo CSeq. Ordering cannot cryptographically correlate an
 unlabelled plaintext HTTP response or eliminate a race with delayed unsolicited
@@ -114,8 +116,8 @@ owns that stream and HAP records keyed with `event_channel_labels()` (see
   cancellation flag ends that wait; the native stream polls it in short slices.
 
 Tests use a scripted stream and literal request and reply bytes; see
-`event_channel_tests.cpp`. Event-channel interoperability with a receiver is
-not yet tested.
+`event_channel_tests.cpp`. Later native G1 runs exercised encrypted event traffic
+on Apple TV 4K / tvOS 26.6; the minimal native remote session later passed standalone G1.
 
 ## NTP timing responder
 
@@ -176,5 +178,6 @@ connection, PIN display/entry, credential change/save or playback was attempted.
 
 Subsequent [credential storage/CLI authentication](credential-storage.md) adds
 the private credential codec, Windows desktop store and hidden PIN/reconnect
-commands. Next validate the Apple TV 4K / tvOS 26.6 / Windows 11 x64 path.
+commands. Later receiver results include PIN/reuse, encrypted URL-session
+traffic and media fetch; the minimum native remote session subsequently passed presentation G1.
 Resolve the Botan UWP packaging constraint before Screenbox integration.

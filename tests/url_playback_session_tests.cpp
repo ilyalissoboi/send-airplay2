@@ -202,11 +202,21 @@ struct Behavior {
     int reject_command = -1;    // Index 0..3 of the /command to answer with 400.
     bool report_playing = true; // After setRate: "Loading", then "Playing".
     bool end_events_on_rate = false;
+    bool remote_control_only = false;
+    unsigned remote_setup_status = 200;
+    bool reject_remote_event_connect = false;
+    bool end_remote_events_on_rate = false;
 };
 
 constexpr std::uint16_t control_port = 7000;
 constexpr std::uint16_t event_port = 49213;
+constexpr std::uint16_t remote_event_port = 49214;
 constexpr std::int64_t stream_id = 1;
+
+struct ControlCloseOrder {
+    std::mutex mutex;
+    std::vector<std::string> sessions;
+};
 
 class FakeReceiver;
 
@@ -240,6 +250,42 @@ public:
                                text("synthetic-controller"), client_seed_);
     }
     StreamConnector connector() {
+        Behavior remote_behavior;
+        remote_behavior.remote_control_only = true;
+        remote_behavior.base_setup_status = behavior_.remote_setup_status;
+        remote_receiver_ = std::make_unique<FakeReceiver>(remote_behavior);
+        remote_receiver_->close_order_ = close_order_;
+        // Different ephemeral secrets make accidental key sharing fail authentication.
+        remote_receiver_->server_ephemeral_.bytes[0] ^= 0x40;
+        remote_receiver_->server_public_ = x25519_public(remote_receiver_->server_ephemeral_);
+        auto url_connector = direct_connector();
+        auto remote_connector = remote_receiver_->direct_connector();
+        return [this, url_connector, remote_connector, remote_connected = false](
+                   const ReceiverEndpoint& endpoint,
+                   const ReceiverOperation& operation) mutable -> std::unique_ptr<ReceiverStream> {
+            if (endpoint.port == control_port && !remote_connected) {
+                remote_connected = true;
+                return remote_connector(endpoint, operation);
+            }
+            if (endpoint.port == remote_event_port) {
+                if (behavior_.reject_remote_event_connect) {
+                    throw TransportException(TransportError::network);
+                }
+                return remote_connector(endpoint, operation);
+            }
+            return url_connector(endpoint, operation);
+        };
+    }
+    FakeReceiver& remote_control() {
+        return *remote_receiver_;
+    }
+    std::vector<std::string> control_close_order() const {
+        std::lock_guard<std::mutex> lock(close_order_->mutex);
+        return close_order_->sessions;
+    }
+
+private:
+    StreamConnector direct_connector() {
         return [this](const ReceiverEndpoint& endpoint,
                       const ReceiverOperation& operation) -> std::unique_ptr<ReceiverStream> {
             operation.check();
@@ -247,7 +293,9 @@ public:
             if (endpoint.port == control_port) {
                 return std::make_unique<FakeControlStream>(*this);
             }
-            if (endpoint.port == event_port && verified_) {
+            const auto session_event_port =
+                behavior_.remote_control_only ? remote_event_port : event_port;
+            if (endpoint.port == session_event_port && verified_) {
                 // The receiver writes with the key the sender reads, and so on.
                 const auto secret = bytes(shared_.bytes);
                 event_writer_ = std::make_unique<ControlWriter>(
@@ -261,6 +309,7 @@ public:
         };
     }
 
+public:
     // Called by FakeControlStream under the session's control mutex.
     void on_control_bytes(const std::uint8_t* data, std::size_t size) {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -289,6 +338,10 @@ public:
     }
     void control_closed() {
         std::lock_guard<std::mutex> lock(mutex_);
+        if (!control_closed_) {
+            std::lock_guard<std::mutex> order_lock(close_order_->mutex);
+            close_order_->sessions.push_back(behavior_.remote_control_only ? "remote" : "URL");
+        }
         control_closed_ = true;
     }
 
@@ -365,12 +418,16 @@ private:
                                     {"streams", PlistArray{PlistDictionary{
                                                     {"type", 130}, {"streamID", stream_id}}}}}));
             }
-            timing_port_ = static_cast<std::uint16_t>(body.find("timingPort")->as_integer());
+            if (const auto* timing_port = body.find("timingPort")) {
+                timing_port_ = static_cast<std::uint16_t>(timing_port->as_integer());
+            }
             if (behavior_.base_setup_status != 200) {
                 return response(request, behavior_.base_setup_status);
             }
             return response(request, 200,
-                            encode_binary_plist(PlistDictionary{{"eventPort", event_port}}));
+                            encode_binary_plist(PlistDictionary{
+                                {"eventPort",
+                                 behavior_.remote_control_only ? remote_event_port : event_port}}));
         }
         if (request.method == "GET" && request.target == "/info") {
             return response(request, 200, encode_binary_plist(PlistDictionary{{"name", "fake"}}));
@@ -391,6 +448,9 @@ private:
             const auto command =
                 decode_binary_plist(envelope.find("params")->find("data")->as_data());
             if (command.find("type")->as_string() == "setRate") {
+                if (behavior_.end_remote_events_on_rate) {
+                    remote_receiver_->end_event_channel();
+                }
                 if (behavior_.end_events_on_rate) {
                     end_events_locked();
                 } else if (behavior_.report_playing) {
@@ -461,6 +521,8 @@ private:
     }
 
     Behavior behavior_;
+    std::unique_ptr<FakeReceiver> remote_receiver_;
+    std::shared_ptr<ControlCloseOrder> close_order_ = std::make_shared<ControlCloseOrder>();
     mutable std::mutex mutex_;
     Secret32 receiver_seed_;
     Secret32 server_ephemeral_;
@@ -590,6 +652,27 @@ void happy_path_tests() {
     const auto base_body = decode_binary_plist(base.body);
     const auto session_uuid = base_body.find("sessionUUID")->as_string();
     check(base_body.find("timingProtocol")->as_string() == "NTP", "base SETUP asks for NTP");
+    const auto remote_requests = receiver.remote_control().requests();
+    check(sequence_without_feedback(remote_requests) ==
+              std::vector<std::string>{"SETUP <uri> RTSP/1.0"},
+          "minimum remote session has only SETUP, without RECORD or data stream");
+    const auto remote_body = decode_binary_plist(remote_requests.front().body);
+    check(remote_body.find("isRemoteControlOnly")->as_boolean() &&
+              remote_body.find("timingProtocol")->as_string() == "None" &&
+              remote_body.find("timingPort") == nullptr,
+          "remote session has no UDP timing");
+    check(remote_body.find("sessionUUID")->as_string() != session_uuid &&
+              remote_requests.front().header("cseq") == "3" && base.header("cseq") == "3",
+          "remote and URL sessions have distinct UUIDs and independent CSeq");
+    check(receiver.remote_control().event_channel_opened() &&
+              !receiver.remote_control().control_was_closed(),
+          "remote session remains open through URL start");
+    receiver.remote_control().push_state("Paused");
+    check(eventually([&] { return session->status().remote_events == 1; }),
+          "remote event answered with its independent keys");
+    check(session->status().playback_state == "playing" &&
+              receiver.remote_control().event_replies().find("CSeq: 1\r\n") != std::string::npos,
+          "remote event does not overwrite URL playback state");
 
     std::vector<std::string> commands;
     for (const auto& request : requests) {
@@ -633,6 +716,11 @@ void happy_path_tests() {
     session->stop();
     check(receiver.control_was_closed() && receiver.event_was_closed(),
           "stop closes control and event connections");
+    check(receiver.remote_control().control_was_closed() &&
+              receiver.remote_control().event_was_closed(),
+          "stop also joins and closes the remote session");
+    check(receiver.control_close_order() == std::vector<std::string>{"URL", "remote"},
+          "remote control remains open until URL control closes");
     session->stop(); // Idempotent.
     check(!session->status().failed, "a clean stop is not a failure");
 }
@@ -653,6 +741,49 @@ void expect_start_failure(const std::string& scenario, Behavior behavior,
     check(receiver.control_was_closed(), scenario + ": control closed");
     check(!receiver.event_channel_opened() || receiver.event_was_closed(),
           scenario + ": event channel closed");
+    check(receiver.remote_control().control_was_closed() &&
+              (!receiver.remote_control().event_channel_opened() ||
+               receiver.remote_control().event_was_closed()),
+          scenario + ": remote session closed after URL failure");
+}
+
+void remote_control_failure_tests() {
+    group = "remote-control failures";
+    Behavior rejected;
+    rejected.remote_setup_status = 403;
+    FakeReceiver receiver(rejected);
+    const auto credentials = receiver.credentials();
+    try {
+        (void)UrlPlaybackSession::start(credentials, options_for(receiver));
+        check(false, "remote SETUP rejection accepted");
+    } catch (const SessionException& error) {
+        check(error.reason() == SessionError::rejected && error.status() == 403,
+              "remote SETUP preserves rejection status");
+    }
+    check(receiver.remote_control().control_was_closed() && receiver.requests().empty(),
+          "rejected remote session closes before any URL requests");
+
+    Behavior refused_events;
+    refused_events.reject_remote_event_connect = true;
+    FakeReceiver refused(refused_events);
+    const auto refused_credentials = refused.credentials();
+    try {
+        (void)UrlPlaybackSession::start(refused_credentials, options_for(refused));
+        check(false, "remote event connect failure accepted");
+    } catch (const TransportException& error) {
+        check(error.reason() == TransportError::network, "remote event connect failure category");
+    }
+    check(refused.remote_control().control_was_closed() && refused.requests().empty(),
+          "remote event failure closes authenticated control before URL start");
+
+    Behavior lost_events;
+    lost_events.report_playing = false;
+    lost_events.end_remote_events_on_rate = true;
+    expect_start_failure<SessionException>("remote events end during URL start", lost_events,
+                                           3000ms, [](const SessionException& error) {
+                                               return error.reason() ==
+                                                      SessionError::connection_lost;
+                                           });
 }
 
 void failure_tests() {
@@ -723,6 +854,16 @@ void failure_after_start_tests() {
     check(status.failed, "a lost event channel marks the session failed");
     session->stop();
     check(receiver.control_was_closed(), "stop still closes the control connection");
+
+    FakeReceiver remote_lost({});
+    const auto remote_credentials = remote_lost.credentials();
+    auto remote_session = UrlPlaybackSession::start(remote_credentials, options_for(remote_lost));
+    remote_lost.remote_control().end_event_channel();
+    check(remote_session->wait_for_change("playing", 2000ms).failed,
+          "remote event loss after start marks the composite session failed");
+    remote_session->stop();
+    check(remote_lost.control_was_closed() && remote_lost.remote_control().control_was_closed(),
+          "stop after remote failure closes both authenticated connections");
 }
 } // namespace
 
@@ -730,6 +871,7 @@ int main() {
     try {
         happy_path_tests();
         failure_tests();
+        remote_control_failure_tests();
         event_log_tests();
         failure_after_start_tests();
     } catch (const std::exception& error) {

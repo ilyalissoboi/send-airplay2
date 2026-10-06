@@ -3,15 +3,17 @@
 Status: DISCOVERY AND PAIRING OBSERVED; built-in fresh-socket and separate-process
 verification passed; pyatv 0.18.0 reference playback FAILED (known upstream
 tvOS 26 incompatibility); reference playback PASSED with an unmerged pyatv fix
-fetching from `airplay2-cli serve`. Native `airplay2-cli cast` plays only
-headlessly on its own (G1 FAIL); with a remote-control session also open,
-native playback is visible (see the G1 observation). Fill out one record per
+fetching from `airplay2-cli serve`. Native `cast` initially failed G1 alone;
+the minimal native remote-control SETUP/event session then PASSED G1 without
+pyatv: video/audio and home-screen return after sender shutdown were user-observed.
+See the dated G1 observations below. Fill out one record per
 receiver firmware and sender platform.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
-static/shared builds; see [media-server.md](media-server.md). Actual Apple TV HTTP
-fetch, real-file >4-GiB seek and firewall reachability remain NOT RUN. No receiver
-or credential operation occurred in the media-server slice. The development
+static/shared builds; see [media-server.md](media-server.md). Apple TV HTTP
+fetch and firewall reachability passed in later reference and native runs.
+Real-file >4-GiB seek remains NOT RUN. The original media-server slice itself
+performed no receiver or credential operation. The development
 `airplay2-cli serve` command now exposes that server for the pyatv reference
 playback step. With pyatv 0.18.0 the receiver never connected to `serve`. With
 an unmerged pyatv fix it fetched the whole file from `serve` while video and
@@ -24,20 +26,24 @@ The environment below was supplied by the user on 2026-10-06 (Asia/Tokyo).
 It identifies the intended test setup. A Windows discovery run subsequently
 resolved this receiver. The user subsequently confirmed authenticated PIN pairing,
 credential save and built-in fresh-socket verification after the M6 metadata fix.
-Playback results remain pending.
+Reference playback, the initial native failure and the subsequent native-only G1 pass are recorded below.
 
 ## Environment
 
-- Date and library commit:
+- Record dates and library commits: dated observations below identify each tested build.
 - Receiver manufacturer/model/generation: Apple TV 4K (user-provided), advertised model `AppleTV14,1`; pyatv 0.18.0 reports "Apple TV 4K (gen 3)". That label is pyatv's model-table mapping, not an independent hardware check.
 - Firmware version and build: tvOS 26.6 (23L773), user-reported from Settings > General > About on 2026-10-06; consistent with advertised `osvers`/`ov=26.6`. Earlier results in this record predate the build report and assume the firmware was unchanged.
 - AirPlay access policy and PIN/password settings (no secrets): access limited to people on the same network (user-reported); pyatv scan reports no password required and mandatory pairing for AirPlay/RAOP/Companion.
 - Sender OS/version/architecture: Windows 11 x64; automated runner observes Windows build `10.0.26200`, AMD64.
-- Host: CLI / packaged Windows C# / Android:
+- Host: native Windows desktop CLI; packaged Windows C# and Android NOT RUN.
 - Network: host on Wi-Fi, same subnet as the receiver. Windows network category **Public** (the runbook expected Private; the user chose to proceed). Existing inbound Allow rules (Public profile) for the `airplay2-cli.exe` builds; pyatv timing needed a temporary user-created inbound UDP rule for the Python interpreter, LocalSubnet, Public profile. See the playback observation.
 - Media SHA-256, container, codecs, duration, dimensions and bitrate: user-owned clip, 53,953,926 bytes, SHA-256 `a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65`; MP4 (`isom`, `moov` before `mdat`), H.264 Main profile level 4.2 1280x720, AAC (`mp4a`) stereo 44.1 kHz, 131.6 s. Read with a standard-library box parser; ffprobe was unavailable. Bitrate not measured.
 - Negotiated protocol/authentication path (reference sender): HAP pair-verify with stored credentials, encrypted RTSP control, NTP timing (sender UDP), event channel, type-130 control stream, `POST /command` queue commands; receiver fetches the URL over plain HTTP from the sender.
 - Reference sender/version and baseline result: pyatv 0.18.0 AirPlay pairing PASS (user-reported); reference URL playback FAIL: `/play` 200, then `/playback-info` 500 and no media fetch, also with a public Apple HLS URL. Matches open upstream issues. Unmerged pyatv fix `robkochman/pyatv@8144c77c` (`/command` queue flow): playback PASS, video and audio (user-observed), served by `airplay2-cli serve`. See [reference-baseline.md](reference-baseline.md) and the observation below.
+- Native sender path: two independently HAP-verified encrypted control/event
+  sessions. Minimum remote-control-only SETUP/event connection retained alongside
+  URL SETUP/NTP/RECORD/type-130 `/command` start and HTTP media fetch. Native-only
+  G1 passed for one 45-second run; no MRP or pyatv was used.
 
 ## Required observations
 
@@ -50,12 +56,12 @@ Playback results remain pending.
 | Repeated verification | Independent processes reuse stored pairing | PASS, baseline plus three reconnects and three fault-recovery verifications per static/shared run |
 | Profile/input guards | Existing/missing profiles and redirected PIN input are refused | PASS, automated native CLI static/shared runs |
 | Local forget | Local deletion and idempotence | Absent-profile no-op PASS; real disposable deletion SKIPPED (no opt-in) |
-| Start MP4 | Both audio and video play | Reference: pyatv 0.18.0 FAIL (no fetch); unmerged pyatv fix PASS, video and audio from `serve` (user-observed). Native `cast`: receiver plays and fetches but shows nothing (FAIL); visible with a pyatv remote-control session open (user-observed) |
+| Start MP4 | Both audio and video play | Reference: pyatv 0.18.0 FAIL (no fetch); unmerged pyatv fix PASS, video and audio from `serve` (user-observed). Native: initially headless (FAIL); minimum native remote SETUP/event session then PASS without pyatv, video/audio user-observed |
 | Pause/resume | Receiver and host state agree | Reference (unmerged pyatv fix): PASS, `Paused` then `Playing`, user-observed. Native NOT RUN |
 | Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native NOT RUN |
 | Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native NOT RUN |
 | End-of-file | Correct ended state and resource cleanup | NOT RUN |
-| Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native NOT RUN |
+| Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; receiver-side stop and protocol idle NOT RUN |
 | Repeated casting | Ten start/stop cycles without stale sessions | NOT RUN |
 | Network interruption | Bounded failure; next cast can recover | NOT RUN |
 | Large file | Seek beyond 4 GiB without integer truncation | NOT RUN |
@@ -65,6 +71,10 @@ Use a personally owned or redistributable unprotected test clip. Capture sanitiz
 diagnostics: timestamps, state transitions, status codes and range requests.
 Do not commit pairing secrets, PINs, private media URLs or raw credential logs.
 Unit tests and mock receivers cannot substitute for this record.
+
+The dated slice observations below preserve their original evidence. Statements
+such as NOT RUN in those historical sections apply at that date/slice; the status
+and required-observations table above summarize the latest result for each gate.
 
 ## Discovery observation: 2026-10-06 (Asia/Tokyo)
 
@@ -344,8 +354,8 @@ This result establishes:
 - the `/command` flow works on tvOS 26.6 with this sender.
 
 It is reference-sender evidence, attributed to unmerged third-party code. It
-does not show that this library can cast: native session code does not exist
-yet.
+did not exercise native session code. Later native G1 observations below
+supersede that implementation status, including the later native-only G1 pass.
 
 ### Control pass with the unmerged fix
 
@@ -430,6 +440,37 @@ Interpretation:
 - **G1 status: FAIL** for `cast` alone. The remote-control session must be part
   of native start. H4 (stop behavior) could not be assessed, because nothing
   was on screen in runs 1 and 2.
+
+
+### Native minimum remote-control session: G1 PASS, 2026-10-07
+
+Same receiver, firmware, host and MP4 as the previous native runs. The new native
+session opens its own stored-credential pair-verify and `isRemoteControlOnly`
+SETUP (`timingProtocol=None`), connects the separately keyed event channel, then
+starts the URL session. It retains remote control until URL teardown. No remote
+RECORD, feedback, type-130 data stream, MRP or pyatv process was used.
+
+- Windows MSVC static Release, based on `66b8a94` with this native minimum change.
+  Tested CLI SHA-256 and sanitized output are in the
+  [machine-readable record](validation/native-minimum-session-windows-static-2026-10-07.json).
+- The agent ran native `cast` using the existing paired profile. Receiver address
+  and discovery output remained in driver memory; no credential file was read.
+- The user reported: video and audio played normally, and the device returned
+  to the home screen after playback finished.
+- The driver sent Enter after 45 seconds. Exit 0; summary:
+  `state=playing events=49 remote_events=0 feedback=22 timing=21 failed=no
+  reads=1317 bytes=86184608 failed_reads=0 span=[0,53953926)`.
+- Existing firewall rules were reused by temporarily staging the tested executable
+  in the stopped session's allowed build location. Its original executable was
+  restored; no firewall rule was added or changed.
+
+**G1 PASS for this run:** native-only visible video/audio, full-file fetch and
+user-observed home-screen return after sender shutdown. The minimum SETUP/event
+connection was sufficient on this receiver; an idle remote event channel is not
+an error. MRP remains the selected controls path (D29/D31). The printed final
+state is the last URL event, not proof of protocol idle. This was not EOF or a
+receiver-side stop test. Native controls, repeated casting, extended session
+lifetime and other firmware/hosts remain unvalidated.
 
 ## Automated CLI E2E observation: 2026-10-06
 

@@ -146,8 +146,8 @@ private:
 void write_summary(const SessionStatus& session, const FileReadStats& reads) {
     std::cout << "Stopped. state="
               << (session.playback_state.empty() ? "none" : session.playback_state)
-              << " events=" << session.events << " feedback=" << session.feedback_sent
-              << " timing=" << session.timing_answered
+              << " events=" << session.events << " remote_events=" << session.remote_events
+              << " feedback=" << session.feedback_sent << " timing=" << session.timing_answered
               << " failed=" << (session.failed ? "yes" : "no") << " reads=" << reads.reads.load()
               << " bytes=" << reads.bytes.load() << " failed_reads=" << reads.failures.load();
     if (reads.reads.load() != 0) {

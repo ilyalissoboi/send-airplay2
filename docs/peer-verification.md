@@ -93,23 +93,16 @@ jobs and Linux ASan/UBSan passed in the
 [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37427502668).
 Inspect checks for the actual final [PR #4](https://github.com/ilyalissoboi/send-airplay2/pull/4)
 head before merging, including documentation-only updates.
-No Apple TV 4K / tvOS 26.6 pairing or playback operation was attempted; hardware
-revocation, reconnect and interoperability remain NOT RUN.
+At that original slice, no Apple TV pairing or playback was attempted.
+Subsequent enrollment/reuse and URL traffic are linked below; hardware
+revocation and restart reconnect remain NOT RUN.
 
-Next implement first-time PIN/SRP provisioning with a vetted backend and verified
-server proofs/signatures, then credential storage and bounded HTTP/socket
-transport. Establish the pyatv hardware playback baseline and native authenticated
-connection before enabling URL playback. Wrong-PIN validation is pending because
-this slice consumes existing credentials and does not implement a PIN flow.
+Subsequent development implements authenticated PIN/SRP, bounded receiver transport
+and Windows credential storage/CLI. Live enrollment and separate-process reuse
+passed; wrong PIN/revocation/restart hardware checks remain pending. Native URL
+traffic and native-only G1 with the minimum remote session are observed;
+see receiver-validation.md.
 
-Subsequent development implements private [PIN/SRP provisioning](pin-pairing.md)
-with Botan and verified server proofs/signatures. Synthetic wrong-PIN tests now
-exist there. Subsequent [receiver transport](receiver-transport.md) implements
-bounded HTTP/socket I/O and the encrypted-record transition privately; receiver
-validation remains pending. Subsequent [credential storage/CLI authentication](credential-storage.md)
-implements a Windows desktop trusted store and commands; other OS stores remain pending.
-The shared Ed25519 verification adapter now rejects noncanonical encodings,
-identity points and keys outside the prime-order subgroup before accepting a
-signature. Botan supplies subgroup validation; OpenSSL alone can accept trivial
-forgeries under weak keys. This applies to pinned peer verification as well as
-new PIN enrollment; see the weak-key regression fixtures in pin-pairing.md.
+The shared Ed25519 adapter rejects noncanonical encodings, identity points and keys
+outside the prime-order subgroup using Botan validation before OpenSSL verification.
+See the weak-key regression fixtures in pin-pairing.md.

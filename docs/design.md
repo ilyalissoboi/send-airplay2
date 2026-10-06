@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Research snapshot: 2026-10-06. This document distinguishes proposed architecture
+Implementation snapshot: 2026-10-07 (Asia/Tokyo), PR #12. This document distinguishes proposed architecture
 from implemented behavior. HTTP single-byte-range resolution and bounded
 mDNS/DNS-SD discovery with a diagnostic CLI are implemented. Private pairing TLV8,
 HKDF-SHA512 and authenticated control-record codecs are implemented, along with
@@ -10,7 +10,11 @@ is tested with synthetic receivers and loopback I/O. Windows desktop credential
 storage and CLI authentication are implemented. The user confirmed live PIN
 pairing, built-in fresh-socket verification and separate-process credential reload
 on Apple TV 4K / tvOS 26.6 after
-the M6 metadata compatibility fix; broader authentication and playback gates remain.
+the M6 metadata compatibility fix. Private channel keys, event I/O, timing,
+session messages and the URL session/`cast` CLI are implemented. Standalone G1
+initially failed. The minimal native remote-control SETUP/event session then
+passed G1: user-observed video/audio and home-screen return after sender shutdown.
+Broader authentication, native controls and host gates remain.
 
 ## Scope and architecture
 
@@ -30,9 +34,9 @@ Proposed components:
 | Discovery | mDNS/DNS-SD, service merging, TXT capability and identity parsing | Implemented bounded IPv4 scan; see discovery.md for limits and evidence |
 | Pairing | PIN flow, authenticated peer verification, credential reuse | Private TLV8, PIN/SRP, peer verification, receiver I/O and Windows storage/CLI implemented; live enrollment/fresh socket passed, broader gates pending |
 | Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Private HTTP/RTSP/TCP and record integration implemented; see receiver-transport.md |
-| Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Pending |
-| Media server | GET/HEAD, byte sources, range responses, bounded streaming | Experimental Boost.Beast/Asio server implemented; loopback tested, receiver fetch pending; see media-server.md |
-| Playback | URL start, pause/resume, seek, status, stop | Pending |
+| Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Private URL session and minimum native remote-control SETUP/event session implemented; MRP next |
+| Media server | GET/HEAD, byte sources, range responses, bounded streaming | Experimental Boost.Beast/Asio server implemented; loopback tested and Apple TV fetch observed; see media-server.md |
+| Playback | URL start, pause/resume, seek, status, stop | URL start and local teardown implemented; native-only G1 passed with sender stop/home-screen observation; MRP controls, EOF and receiver-side stop pending |
 | Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; other stores, packaged hosts and media access pending |
 | Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
 
@@ -44,10 +48,12 @@ transport support for speakers.
 ## Findings that affect the first vertical slice
 
 The UxPlay wiki is a useful reference index, not a complete sender specification.
-pyatv provides an executable sender reference. Its inspected AirPlayV2.play_url
-implementation verifies the connection, establishes a base RTSP session and event
-channel, starts feedback, sends RECORD, posts a binary-plist /play body, and sets
-the playback rate. Its player polls /playback-info. Do not treat a successful
+pyatv provides an executable sender reference. The originally inspected legacy
+`/play` and `/playback-info` path failed on tvOS 26.6. The unmerged reference fix
+validated type-130 `/command` queue start and event state. Native code implements
+that URL flow and now retains the native remote-control SETUP/event session
+that passed G1. MRP controls remain separate work.
+Use [session-design.md](session-design.md) for D27-D31 and the current sequence. Do not treat a successful
 unauthenticated /play HTTP response as an interoperability result.
 
 References inspected:
@@ -117,38 +123,26 @@ brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
 
-Discovery and diagnostic CLI are now implemented. Windows discovery resolved
-the user's "Living Room" (`AppleTV14,1`, advertised OS 26.6); PIN pairing and
-built-in fresh-socket verification were subsequently observed. Playback and real
-departure/interface-change checks remain pending. See
-[discovery.md](discovery.md) for the adapter choice, provenance, API and test limits.
-Pairing, authenticated transport and Windows desktop storage/CLI are implemented
-with synthetic tests and observed live pairing/credential reload. Bounded
-[media serving](media-server.md) is now implemented with callback ownership,
-range handling and cancellation tests. Next add authenticated playback/session
-integration while establishing the pyatv playback baseline. Restart reconnect
-and actual receiver fetch/firewall behavior remain hardware gates.
-The [noninteractive E2E runner](e2e-runner.md) now checks repeated verification,
-profile guards, discovery consistency and loopback faults with live recovery.
-Real reboot/revocation/interface-change tests remain separate gates.
+The reference baseline, Windows pairing/reuse, media fetch and private URL
+session are implemented or observed as recorded in receiver-validation.md.
+The minimal native remote-control-only SETUP/event session is implemented and
+passed G1 without RECORD or a data stream. The next change is MRP framing,
+handshake and controls alongside that retained session. D29 still requires MRP controls, and D31 selects the
+in-tree bounded protobuf codec regardless of that minimum experiment's result.
 
-1. Establish receiver baseline with an existing sender (pyatv) on the user's LAN.
-   Record model, exact firmware/build and PIN/access settings. Test the same
-   unprotected MP4 and document the actual session path. Keep credentials private.
-2. Implement discovery and a diagnostic CLI; bounded parsers must reject malformed
-   records, merge duplicate services and handle device departure/interface changes.
-3. Implement pairing and secure transport using vetted crypto primitives, with
-   transcript fixtures and independent known-answer tests. Test wrong PIN, bad
-   signatures/tags, fragmented reads, replay/counter errors and credential revocation.
-4. Implement local media serving with byte-source callbacks, request limits,
-   unpredictable per-session URLs, exact HEAD/GET lengths and cancellation.
-   Test a file larger than 4 GiB, concurrent reads and unreachable callback addresses.
-5. Complete authenticated URL playback and control; validate session lifecycle,
-   receiver-initiated stop, timeouts, network loss and repeat casting on hardware.
-6. Prove the packaged Windows C# host, then Linux/macOS/Android hosts. Only claim
-   individual tested combinations; publish CI results separately from device results.
-7. Integrate Screenbox in a dedicated fork with Chromecast regression coverage.
+1. G1 passed for the recorded native-only run; expand EOF/receiver-side stop and repeat-run coverage.
+2. Implement MRP framing, message mapping, handshake, correlation and heartbeat;
+   pass G2 for status, pause/resume, forward/backward seek and stop.
+3. Complete EOF, receiver-side stop and terminal-failure cleanup. Pass G3 for
+   ten start/stop cycles, sleep/wake and network-loss recovery; investigate buffering.
+4. Complete hardware authentication/restart/revocation and discovery/interface
+   checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
+5. Expose the versioned session API and bindings; prove packaged Windows C#
+   loading, brokered file access and inbound networking, then Linux/macOS/Android
+   device support and other credential stores. CI is separate from device evidence.
+6. After the standalone gate, integrate Screenbox in a dedicated fork with
+   Chromecast regression and local/remote handoff coverage. Reinspect its instructions.
 
-The original cloud workspace did not run receiver tests. Local Windows LAN
-discovery was observed on 2026-10-06. GitHub access is separate from LAN access;
-hardware playback sign-off still requires reference and native sender results.
+Each implementation slice follows AGENTS.md: readable C++17, secret/resource RAII,
+format checks, static/shared CMake/CTest and CI at the actual PR head. No automatic
+re-pairing or credential deletion. Capture only sanitized receiver results.

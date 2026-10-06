@@ -70,6 +70,7 @@ struct UrlPlaybackOptions {
 struct SessionStatus {
     std::string playback_state; // Lower-cased; empty before the first state event.
     std::uint64_t events = 0;
+    std::uint64_t remote_events = 0;     // Answered on the separate remote-control session.
     std::uint64_t unreadable_events = 0; // Answered, but not a decodable event body.
     std::uint64_t feedback_sent = 0;
     std::uint64_t timing_answered = 0;
@@ -79,6 +80,7 @@ struct SessionStatus {
 /**
  * One URL playback session with a receiver, following the sequence validated
  * on tvOS 26.6 with the reference sender (session-design.md section 2):
+ * remote-control-only pair-verify/SETUP/event connection, then a separate URL
  * pair-verify, timing responder, base SETUP, event channel, periodic
  * /feedback, GET /info, RECORD, the URL control stream SETUP, then the four
  * /command start commands. start() returns once the receiver reports
@@ -90,8 +92,9 @@ struct SessionStatus {
  * answers NTP requests. No user code runs on these threads.
  *
  * stop() tears down in a fixed order, even after earlier failures: feedback,
- * event channel, control connection, timing responder. It is idempotent and
- * also runs from the destructor and when start() fails. Credentials are
+ * URL event channel, URL control connection, timing responder, then remote
+ * event/control connections. Remote events do not update URL playback state.
+ * It is idempotent and runs from the destructor and when start() fails. Credentials are
  * borrowed for start() only. Noncopyable, nonmovable.
  */
 class UrlPlaybackSession {
@@ -124,6 +127,10 @@ public:
 private:
     explicit UrlPlaybackSession(UrlPlaybackOptions options);
     void run_start(const PairCredentials& credentials, const std::atomic_bool* cancelled);
+    /// Minimal H5 experiment: independent verified SETUP/event session, without
+    /// RECORD, feedback, data-stream setup or MRP. Retained until URL teardown.
+    void open_remote_control(const PairCredentials& credentials, const std::atomic_bool* cancelled);
+    void remote_event_loop();
     [[nodiscard]] ReceiverOperation operation(const std::atomic_bool* cancelled) const;
     /// An RTSP request with the session headers; Content-Type only with a body.
     [[nodiscard]] ReceiverRequest rtsp_request(std::string method, std::string target,
@@ -146,6 +153,12 @@ private:
 
     mutable std::mutex control_mutex_; // Serializes all control_ requests.
     std::unique_ptr<ReceiverConnection> control_;
+
+    // Used only by start/stop; the remote reader owns its separate event socket.
+    std::unique_ptr<ReceiverConnection> remote_control_;
+    std::unique_ptr<EventChannel> remote_events_;
+    std::atomic_bool remote_event_stop_{false};
+    std::thread remote_event_thread_;
 
     std::unique_ptr<TimingResponder> timing_;
     std::atomic_bool timing_stop_{false};

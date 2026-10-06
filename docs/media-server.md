@@ -160,7 +160,10 @@ offline runner contracts on all three platforms. The macOS IP-restriction fixtur
 uses an ordinary loopback client with a different allowed peer IP, rather than
 binding an unconfigured loopback alias. Check the actual final PR head separately.
 Virtual >4-GiB sources verify offset/length arithmetic without claiming a real
-large-file adapter or Apple TV seek result. Reference pyatv playback of an owned
-H.264/AAC MP4, real receiver HTTP fetch/ranges, firewall reachability and native
-authenticated playback remain pending. Next add the authenticated playback
-session and host media adapter, using the same clip as the reference baseline.
+large-file or Apple TV seek result. The file adapter and `serve` are implemented;
+reference video/audio, receiver fetch and firewall reachability passed. Native
+`cast` initially fetched the full MP4 without visible presentation. The minimal
+native remote-control SETUP/event session then passed G1. Next add
+MRP controls, EOF and receiver-side stop validation. Packaged/brokered sources,
+real-file >4-GiB seeking and network-change checks remain pending; see the
+[receiver record](receiver-validation.md) and [session plan](session-design.md).
