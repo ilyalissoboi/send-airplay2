@@ -36,10 +36,11 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Pairing/transport PR | [#3: feat: add pairing TLV8 and authenticated control record codecs](https://github.com/ilyalissoboi/send-airplay2/pull/3), merged on 2026-10-06 |
 | Peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), merged on 2026-10-06 |
 | PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), merged on 2026-10-06; verified merge `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
-| Current receiver-transport PR | [#6: feat: add bounded authenticated receiver transport](https://github.com/ilyalissoboi/send-airplay2/pull/6), open |
+| Receiver-transport PR | [#6: feat: add bounded authenticated receiver transport](https://github.com/ilyalissoboi/send-airplay2/pull/6), merged on 2026-10-06; verified merge `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
+| Current development slice | Windows desktop credential storage and CLI pairing/reconnect; next PR publication/check evidence below |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
-| Current local branch | `codex/receiver-transport`, based on verified PR #5 merge at `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
+| Current local branch | `codex/credential-cli`, based on verified PR #6 merge at `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -54,7 +55,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver validation | Windows LAN discovery observed for `AppleTV14,1` advertising OS 26.6 and `Mac14,2`; pairing/playback not run, no compatibility certification |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #5 are merged and `main` contains the foundation/discovery/control codecs, peer verification and PIN setup. Verify current GitHub and
+PRs #1 through #6 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup and bounded receiver transport. Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -165,7 +166,8 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D18 | OpenSSL 3.5+ EVP primitives, private bounded pairing/control codecs before receiver handshake | Engineering choice, implemented; no homegrown cryptography, public pairing API deferred until peer authentication and ownership contracts are complete |
 | D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Engineering choice, implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 schema and one-time control-key release. Credential storage and network correlation/deadlines remain gates |
 | D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP and Ed25519 key validation | Engineering choice, implemented privately; C++17 core, maintained SRP/subgroup checks, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
-| D21 | Private synchronous native TCP with one outstanding request and a strict bounded HTTP/RTSP profile | Engineering choice, implemented on receiver-transport branch; absolute deadlines/cancellation, terminal cleanup, HTTP ordered correlation with optional validated CSeq, mandatory RTSP CSeq, verified record transition. Storage/CLI/hardware remain gates |
+| D21 | Private synchronous native TCP with one outstanding request and a strict bounded HTTP/RTSP profile | Engineering choice, merged in PR #6; absolute deadlines/cancellation, terminal cleanup, HTTP ordered correlation with optional validated CSeq, mandatory RTSP CSeq, verified record transition. Hardware remains a gate |
+| D22 | Private versioned credential envelope, trusted host store and Windows desktop CLI before a public auth ABI | Engineering choice, implemented on credential-cli branch; current-user/same-computer Credential Manager, create-only profile semantics for cooperating writers, no plaintext fallback or automatic re-pair. Other OS stores and packaged hosts remain gates |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -199,6 +201,7 @@ cancellation and errors before publishing production bindings.
 | `tests/pair_verify_tests.cpp` / `tests/fixtures/pair-verify` / `docs/peer-verification.md` | RFC vectors, independent synthetic transcripts, failure/cleanup/record-handoff tests and trust contracts |
 | `src/receiver_http.*` / `src/receiver_stream.*` / `src/receiver_connection.*` | Private bounded framing, native TCP ownership/deadlines/cancellation and authentication-to-record integration |
 | `tests/receiver_tests.cpp` / `docs/receiver-transport.md` | Fragmented fake receiver transcripts, dynamic authenticated peers, native loopback and lifecycle/framing contracts |
+| `src/credential_*`, `src/auth_*` / `tests/credential_tests.cpp` / `docs/credential-storage.md` | Private bounded credential codec, native Windows store, hidden-PIN CLI, enrollment/save/reload/reconnect orchestration and synthetic/OS persistence tests |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -469,6 +472,43 @@ CastContext, CastControlViewModel and playback coordination before choosing wher
 to own a session. Follow current repository instructions rather than assuming
 the recorded source snapshot is still current.
 
+Credential-storage/CLI slice on `codex/credential-cli`, 2026-10-06:
+
+- Verified PR #6 is merged at `8c4ce3e47a3fd6d2cf73ab4197892a9004803d99`
+  and based the new branch on that commit. GitHub CLI remains available and
+  authenticated; there were no open repository PRs before this slice.
+- Implemented a private exact-length/version credential envelope (maximum 203
+  bytes), strict Ed25519 pin validation, erasing blob owners, host store interface
+  and current-user/same-computer Windows Credential Manager adapter. Profile
+  names are bounded/lowercase; named user/profile mutexes serialize cooperating
+  create/delete operations and refuse existing/malformed slots. No plaintext
+  fallback or other-platform adapter is introduced; see decision D22 and
+  [credential-storage.md](credential-storage.md).
+- Added CLI `pair`, `verify` and `forget`. Hidden interactive PIN input is required
+  before receiver enrollment; no PIN argument/stdin/environment route. Pair
+  saves only authenticated M6 credentials, closes provisioning, releases/reloads
+  the credential owner, and verifies on a fresh connection. A saved checkpoint
+  distinguishes reconnect failure; saved credentials are retained for explicit
+  `verify`, never automatically replaced. Forget is local-only and idempotent.
+- Windows 11 x64 / MSVC 19.51 static/shared Release passes all 12 CTests (6.18 s /
+  6.07 s). New codec/workflow/native-store scenarios test exact schema, truncation,
+  weak keys, leading-zero PIN, cancellation, no premature/duplicate saves,
+  fresh connections and retained storage after reconnect failures. Real isolated
+  synthetic Windows store tests pass create/load/delete, cross-process reload,
+  concurrent create refusal and malformed-slot protection. Real CLI tests reject
+  PIN arguments without echo and redirected input before receiver contact.
+  The independent PIN-to-peer-verification oracle now passes through the codec
+  and checks exact transcript/control keys after reloading.
+- No new third-party source/runtime dependency: original Apache-2.0 code uses
+  Windows OS APIs (`Advapi32`); OpenSSL/Botan remain the crypto dependencies.
+  Readability/RAII contracts, formatting and applicable checks are part of this PR.
+- Actual console PIN entry/echo restoration, Apple TV PIN display/enrollment,
+  hardware restart reconnect, wrong PIN/revocation and playback remain NOT RUN.
+  Next assess this authentication gate on Living Room / Apple TV 4K / tvOS 26.6
+  with the exact firmware build/access settings, then add bounded GET/HEAD media
+  serving with size/read-at callbacks, >4-GiB ranges and lifecycle/cancellation.
+  OS storage adapters, packaged Windows/UWP and Android loading remain pending.
+
 ## 7. What is missing and what to do next
 
 The milestone is unfinished. **Do not interpret missing hardware access as a
@@ -486,8 +526,9 @@ while arranging the hardware baseline in parallel with that work.
 3. **Pairing + secure transport:** private TLV8, AEAD/HKDF and record framing are
    implemented, along with existing-credential peer verification and PIN/SRP message
    processing. Private bounded socket/deadline and framing integration is now
-   implemented. Next specify persistent credentials and trusted host storage,
-   add CLI pairing/reconnect, and validate wrong PIN, authentication failure,
+   implemented. Private persistent credential format, Windows desktop trusted
+   storage and CLI pairing/reconnect are now implemented on the current branch.
+   Next validate actual enrollment/restart reconnect, wrong PIN, authentication failure,
    counters/replay, timeouts and revocation before claiming interoperability.
 4. **HTTP media server:** define size/read-at callbacks and cancellation/lifetime;
    integrate the existing resolver into bounded GET/HEAD serving. Select the LAN
@@ -505,7 +546,7 @@ while arranging the hardware baseline in parallel with that work.
 
 Remaining design choices: production OS discovery fallback/IPv6-only backend,
 plist libraries, session socket/event
-model, credential format/storage adapters, asynchronous C API and bindings,
+model, additional OS credential-storage adapters, asynchronous C API and bindings,
 timeouts/cancellation, capability policy, media-server access policy, unsupported
 codec handling, Android packaging and audio transport. These choices remain open;
 OpenSSL covers AEAD/HKDF/identity primitives and Botan covers SRP arithmetic. Keep decisions explicit

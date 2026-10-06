@@ -4,7 +4,8 @@ Experimental native sender library for supported, unprotected media on tested
 AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
 
 **Status: experimental discovery and HTTP range resolution, with private
-authentication/receiver transport. The CLI cannot pair or cast yet. No receiver
+authentication/receiver transport and Windows desktop credential storage/CLI
+pairing. The CLI cannot cast yet. No receiver
 authentication or playback compatibility has been established.**
 
 The C++17 core includes a byte-range resolver with a C interface
@@ -16,7 +17,9 @@ OpenSSL, with independent vector and failure tests. Private authenticated peer
 verification and first-time PIN/SRP message processing are also implemented.
 Private bounded HTTP/RTSP framing and native receiver TCP transport now connect
 these flows, with deadlines, cancellation and the encrypted-record transition.
-Credential storage and a CLI pairing/reconnect flow are still pending.
+Windows desktop credential storage and CLI pairing/reconnect are implemented;
+hardware authentication and storage adapters for other hosts are pending.
+See [credential storage and CLI authentication](docs/credential-storage.md).
 See [pairing transport foundation](docs/pairing-transport.md).
 See [peer verification](docs/peer-verification.md) for trust and state contracts.
 See [PIN pairing](docs/pin-pairing.md) for the private provisioning contract.
@@ -71,6 +74,26 @@ indices, ports, model and raw advertised TXT fields. An empty scan does not prov
 that no receiver exists. Discovery does not establish pairing or playback support.
 See [discovery contracts and limits](docs/discovery.md), including JSON fields
 and the separation between advertisements and tested compatibility.
+
+## Windows desktop authentication
+
+Choose the receiver's numeric address and port from discovery, then use a local
+profile name (lowercase letters/digits/`._-`, starting with a letter/digit):
+
+```powershell
+# Replace the documentation address with the actual receiver address.
+build/Release/airplay2-cli.exe pair --address 192.0.2.10 --profile living-room
+build/Release/airplay2-cli.exe verify --address 192.0.2.10 --profile living-room
+build/Release/airplay2-cli.exe forget --profile living-room
+```
+
+Pairing prompts for a hidden PIN in an interactive Windows console and stores
+authenticated credentials in the current user's Windows Credential Manager.
+Existing profiles are never overwritten automatically. Reconnect failure retains
+saved credentials for `verify`; `forget` deletes local credentials only.
+For scoped IPv6 use `--scope-id` with the numeric interface index. See the
+[storage/CLI contract](docs/credential-storage.md) for deadlines, cancellation,
+failure recovery and platform limits. Apple TV pairing/playback remains unvalidated.
 
 ## Milestones
 

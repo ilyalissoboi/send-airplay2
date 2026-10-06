@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Public synthetic secrets only; see fixtures/README.md.
 #include "pair_setup.h"
+#include "credential_store.h"
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -165,6 +166,11 @@ void credential_round_trip(const std::string& directory) {
     auto credentials = exchange.setup.finish(200, fixture(directory, "m6"));
     check(credentials != nullptr && PairSetupTestAccess::wiped(exchange.setup),
           "authenticated credential release and setup erasure");
+    CredentialBlob stored;
+    encode_credentials(*credentials, stored);
+    credentials.reset();
+    credentials = decode_credentials(stored);
+    // A newly owned seed/identity must reproduce the independent verify transcript.
     const std::string verify_directory = directory + "/../pair-verify";
     PairVerifier verifier(*credentials);
     PairVerifyTestAccess::ephemeral(verifier,

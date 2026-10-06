@@ -71,7 +71,8 @@ Check the actual final PR head as documentation updates also trigger CI.
 
 Subsequent [receiver transport](receiver-transport.md) implements bounded
 HTTP/socket correlation, partial writes, deadlines and cancellation privately.
-Next: define trusted host credential storage and CLI pairing/reconnect, then perform explicit receiver
-PIN/reconnect/revocation tests. UWP support is a packaging gate because the
+Subsequent [credential storage/CLI authentication](credential-storage.md) implements
+the private codec and Windows desktop store plus hidden PIN/reconnect commands.
+Next perform explicit receiver PIN/reconnect/revocation tests. UWP support is a packaging gate because the
 current vcpkg Botan port excludes that triplet. Public API, packaged Windows and
 Android loading, reference playback and native playback remain pending.

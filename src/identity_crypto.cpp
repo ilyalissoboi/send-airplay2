@@ -168,6 +168,9 @@ void x25519_shared(const Secret32& seed, const PublicKey& peer, Secret32& shared
 PublicKey ed25519_public(const Secret32& seed) {
     return export_public(EVP_PKEY_ED25519, seed);
 }
+bool ed25519_key_valid(const PublicKey& bytes) {
+    return valid_ed25519_public(bytes);
+}
 Signature ed25519_sign(const Secret32& seed, const Bytes& message) {
     const auto key = private_key(EVP_PKEY_ED25519, seed);
     const auto context = signature_context(key, true, message.size());
