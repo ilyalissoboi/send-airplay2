@@ -65,8 +65,9 @@ OpenSSL is now selected for the private control crypto adapter; see
 The private authentication slice now implements [peer verification](peer-verification.md)
 using EVP X25519/Ed25519 and pinned identity credentials. Private
 [PIN pairing](pin-pairing.md) uses Botan SRP through its C FFI, preserving C++17.
-Private [receiver I/O](receiver-transport.md) is now implemented. Trusted storage,
-CLI/hardware authentication and the UWP packaging constraint remain gates.
+Private [receiver I/O](receiver-transport.md) and Windows desktop
+[credential storage/CLI authentication](credential-storage.md) are implemented.
+Hardware authentication, other OS store adapters and UWP packaging remain gates.
 
 ## HTTP range contract
 
@@ -117,8 +118,9 @@ Discovery and diagnostic CLI are now implemented. Windows discovery resolved
 the user's "Living Room" (`AppleTV14,1`, advertised OS 26.6); pairing/playback and
 real departure/interface-change checks remain pending. See
 [discovery.md](discovery.md) for the adapter choice, provenance, API and test limits.
-The next implementation slice is pairing and authenticated transport, while
-establishing the pyatv playback baseline on this receiver.
+Pairing, authenticated transport and Windows desktop storage/CLI are implemented
+with synthetic tests. Next validate actual PIN enrollment and restart reconnect,
+then add bounded media serving while establishing the pyatv playback baseline.
 
 1. Establish receiver baseline with an existing sender (pyatv) on the user's LAN.
    Record model, exact firmware/build and PIN/access settings. Test the same

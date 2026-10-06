@@ -36,6 +36,9 @@ void generate_ed25519_seed(Secret32& seed);
 /// Source seed copies remain caller-owned.
 void x25519_shared(const Secret32& seed, const PublicKey& peer, Secret32& shared);
 [[nodiscard]] PublicKey ed25519_public(const Secret32& seed);
+/// Same canonical/prime-order validation used before signature verification.
+/// Returns false for invalid keys; backend/allocation failures throw ControlException.
+[[nodiscard]] bool ed25519_key_valid(const PublicKey& key);
 /// Pure Ed25519, no external hash/prehash. Messages are bounded at 64 KiB.
 [[nodiscard]] Signature ed25519_sign(const Secret32& seed, const Bytes& message);
 /// Reject noncanonical/identity/non-prime-order public keys before checking signatures.

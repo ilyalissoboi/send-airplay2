@@ -95,7 +95,8 @@ Subsequent development implements private [PIN/SRP provisioning](pin-pairing.md)
 with Botan and verified server proofs/signatures. Synthetic wrong-PIN tests now
 exist there. Subsequent [receiver transport](receiver-transport.md) implements
 bounded HTTP/socket I/O and the encrypted-record transition privately; receiver
-validation, trusted storage and CLI authentication remain pending.
+validation remains pending. Subsequent [credential storage/CLI authentication](credential-storage.md)
+implements a Windows desktop trusted store and commands; other OS stores remain pending.
 The shared Ed25519 verification adapter now rejects noncanonical encodings,
 identity points and keys outside the prime-order subgroup before accepting a
 signature. Botan supplies subgroup validation; OpenSSL alone can accept trivial

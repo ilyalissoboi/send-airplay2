@@ -93,3 +93,19 @@ pairing/verification-to-record integration are implemented; see
 sockets exercise these flows. No connection to "Living Room", PIN display/entry,
 credential change/save or playback was attempted. The hardware table remains
 NOT RUN for authentication and playback; loopback success does not validate tvOS.
+
+## Credential storage / CLI slice: 2026-10-06
+
+Windows desktop pairing, stored-credential verification and local forget commands
+are implemented; see [credential storage](credential-storage.md). Tests use only
+public synthetic credentials in a separate random test namespace. Actual Windows
+Credential Manager save/load, cross-process reload, malformed-entry rejection,
+concurrent create refusal and redirected-input refusal passed locally in static
+and shared Release builds. Synthetic enrollment credentials survive serialization
+and satisfy the independent peer-verification transcript/control-key oracle.
+No Apple TV PIN-display request, actual PIN entry, application credential save,
+receiver revocation or playback operation was attempted. Authentication/playback
+hardware results remain NOT RUN. The next receiver gate is interactive hidden PIN
+entry, first pairing and `verify` from a newly started CLI, including wrong PIN,
+cancel/timeout and receiver-revoked credentials. Record the exact firmware build
+and access settings without recording secrets.

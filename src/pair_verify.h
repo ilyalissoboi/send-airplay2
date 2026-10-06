@@ -35,8 +35,9 @@ private:
 /** Credentials from a separately authenticated provisioning flow/trusted storage.
  * Receiver ID + Ed25519 key are pinned, never taken from discovery or a new M2.
  * IDs are opaque nonempty bytes <= 64 bytes. This object owns a signing-seed
- * copy and erases it on destruction; callers erase source copies. No serialization,
- * PIN enrollment or trust-on-first-use. Non-copyable/non-movable; serial use.
+ * copy and erases it on destruction; callers erase source copies. The private
+ * credential codec serializes only across trusted storage boundaries; no public
+ * export or trust-on-first-use. Non-copyable/non-movable; serial use.
  */
 class PairCredentials {
 public:
@@ -49,6 +50,7 @@ public:
 
 private:
     friend class PairVerifier;
+    friend struct CredentialCodec;
     Bytes receiver_id_;
     PublicKey receiver_key_;
     Bytes client_id_;
