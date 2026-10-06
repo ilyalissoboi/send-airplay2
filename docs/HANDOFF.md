@@ -30,21 +30,39 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 
 | Item | Snapshot |
 |---|---|
-| Active PR | [#1: feat: establish portable AirPlay sender foundation](https://github.com/ilyalissoboi/send-airplay2/pull/1) |
-| PR state | Open, draft, unmerged |
+| Foundation PR | [#1: feat: establish portable AirPlay sender foundation](https://github.com/ilyalissoboi/send-airplay2/pull/1) |
+| Foundation PR state | Merged on 2026-10-06; verified through GitHub CLI |
+| Current discovery PR | [#2: feat: add receiver discovery and diagnostic CLI](https://github.com/ilyalissoboi/send-airplay2/pull/2), open |
 | Target | `main` |
-| Work branch | `feat/portable-foundation` |
+| Current local branch | `codex/receiver-discovery`, based on merged `main` at `c61955f5074182e97b2828416175cce42763cc5f` |
+| Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; later commits add documentation and a C++ readability/ownership pass |
+| C++ readability commit | `23f8ff08a12431fc0aba95a21aaf881aa7458674`; all platform/sanitizer CI jobs passed, subsequent commits record evidence only |
+| Final foundation PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
-| Runtime dependencies | None in the foundation |
+| Runtime dependencies | No third-party libraries; native discovery uses OS socket/interface APIs |
 | Actual casting support | None yet |
-| Receiver validation | Not run; no model/firmware combination certified |
+| Receiver validation | Windows LAN discovery observed for `AppleTV14,1` advertising OS 26.6 and `Mac14,2`; pairing/playback not run, no compatibility certification |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-This handoff is added after the foundation commit. Resolve the current branch
-head from GitHub rather than assuming the foundation SHA is still the PR head.
-The PR branch is the source of truth until merged; checking out `main` alone
-does not retrieve the implementation.
+PR #1 is now merged and `main` contains the foundation. Verify current GitHub and
+local branch state before further development; the original foundation SHA is
+not the final PR head.
+
+### Local testing environment
+
+User-provided on 2026-10-06 (Asia/Tokyo):
+
+- Receiver: **Apple TV 4K**; subsequent LAN discovery advertised `AppleTV14,1`
+  and name "Living Room". Generation not independently established.
+- Firmware: **tvOS 26.6** (user-reported, consistent with advertised `osvers`/`ov`);
+  exact build not yet supplied. AirPlay `srcvers` is not a tvOS build identifier.
+- Intended testing host: **Windows 11 x64**; exact OS build not yet supplied.
+
+AirPlay access settings, detailed network configuration and reference playback
+results remain pending. Discovery resolved the receiver; playback compatibility
+is untested.
+See [receiver-validation.md](receiver-validation.md) for the test record.
 
 ## 3. Feasibility findings and evidence levels
 
@@ -103,8 +121,9 @@ research leads, not dependencies selected for the native core:
   record. Resolve its provenance before relying on it. It is not hardware validated
   or adopted here.
 
-No external implementation code has been copied into this foundation. No crypto,
-plist, discovery or audio dependency has been selected. Check each candidate's
+No external implementation code has been copied into this project. Discovery
+uses in-tree native sockets, documented in [discovery.md](discovery.md). No crypto,
+plist or audio dependency has been selected. Check each candidate's
 actual revision, license, maintenance and platform support before incorporating it;
 do not assume all references share this project's Apache-2.0 license.
 
@@ -120,7 +139,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D02 | Standalone library before Screenbox integration | User milestone order |
 | D03 | Portable C++ core, eventual stable/versioned C ABI | Proposed architecture; C++17 foundation and experimental C API implemented |
 | D04 | C# wrapper for Screenbox; JNI for Android | Planned; neither wrapper implemented |
-| D05 | Begin with local H.264/AAC MP4 on one specified Apple TV model/firmware | Proposed first vertical slice; receiver details still needed |
+| D05 | Begin with local H.264/AAC MP4 on one specified Apple TV model/firmware | Proposed first vertical slice; user supplied Apple TV 4K / tvOS 26.6 / Windows 11 x64; generation and exact builds pending |
 | D06 | CLI plus minimal packaged Windows C# host before Screenbox changes | Planned validation gate; packaged networking/file/native-loading risks must be tested early |
 | D07 | Receiver-side URL playback with local HTTP serving | Planned first media path; current code only resolves ranges |
 | D08 | Media source size/read-at callbacks, not filesystem paths alone | Planned for Windows StorageFile and Android content URI access; callback ABI unfinished |
@@ -128,8 +147,11 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D10 | AirPlay beside Chromecast through a provider-neutral boundary | Planned Screenbox integration; retain existing Chromecast behavior behind its adapter |
 | D11 | No initial DRM, mirroring, system-audio capture, synchronized multiroom, auto-transcoding or universal codec/receiver support | Initial scope limits from assessment; unsupported media should fail explicitly |
 | D12 | Preserve repository's Apache-2.0 license | Implemented; no relicensing decision made |
-| D13 | Keep implementation reviewable on PR #1 | Implemented; no merge performed |
+| D13 | Keep implementation reviewable on PR #1 | Foundation reviewed through PR #1; now merged |
 | D14 | Ignore unsupported multipart/invalid Range fields and serve full content | Implemented resolver policy; documented in design.md |
+| D15 | Bounded native IPv4 mDNS scan, portable DNS-SD cache/parser, no new third-party runtime dependency | Implemented; adapter isolated, IPv6-only discovery and Android device validation pending |
+| D16 | Keep protocol-specific records and merge only by matching normalized advertised device identity | Implemented; hostname/friendly name alone is insufficient, advertisements remain unauthenticated |
+| D17 | Experimental C++ discovery API plus CLI before versioned C discovery ABI/event API | Implemented; shared users require compatible C++ runtime, production bindings still pending |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -146,7 +168,12 @@ cancellation and errors before publishing production bindings.
 | `CMakeLists.txt` | C++17 static/shared library and CTest targets |
 | `.github/workflows/build.yml` | Windows/Linux/macOS static/shared build-and-test matrix |
 | `docs/design.md` | Architecture, range contract, integration audit and implementation gates |
-| `docs/receiver-validation.md` | Blank per-platform/per-firmware hardware test record |
+| `docs/receiver-validation.md` | Per-platform/per-firmware hardware test record; discovery observed, pairing/playback not run |
+| `include/send_airplay2/discovery.h` | Experimental synchronous C++ discovery records/options/result API |
+| `src/discovery*.cpp` / internal headers | Bounded DNS-SD parser/cache, scan scheduler and native socket adapter |
+| `src/cli.cpp` | `airplay2-cli discover`, readable and JSON diagnostics |
+| `tests/discovery_tests.cpp` / CLI fixtures | Synthetic parser/lifecycle/query tests, mutation corpus and CLI output validation |
+| `docs/discovery.md` | Discovery contract, adapter limits, source provenance and local LAN observations |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -168,12 +195,58 @@ Verified at foundation commit `dbd654b1d92057b3208953226186c5c2b206ccff`:
   and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37409476906).
 - Android NDK build/device, packaged Windows host and receiver tests: not run.
 
+Discovery slice validation on 2026-10-06:
+
+- Windows 11 x64, Visual Studio 2026 / MSVC 19.51: static and shared Release
+  CMake builds, all six CTest targets pass. Discovery tests cover malformed and
+  compressed DNS, binary/duplicate TXT, feature masks, resolution, identity
+  merging, interface isolation, updates, TTL, goodbye/flush grace and cache caps;
+  10,000 deterministic parser mutations also run. CLI JSON tests verify binary
+  preservation, 64-bit mask formatting and escaped terminal controls.
+- A 10-second LAN scan resolved `Mac14,2` AirPlay/RAOP services; a fresh
+  15-second scan resolved the user's "Living Room" `AppleTV14,1`, advertised
+  OS 26.6, AirPlay/RAOP port 7000, IPv4 plus scoped IPv6. Four responses, none
+  rejected, no warnings. Details are sanitized in receiver-validation.md.
+- Real receiver departure/interface changes, exact tvOS build, pyatv reference
+  playback, pairing, native playback and packaged/Android host validation remain
+  pending. Unit success and discovery do not certify playback.
+- Discovery CI at implementation commit `48189897ba167b44c3da7c6e4a7857bf28120498`:
+  all six Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed,
+  verified 2026-10-06. [Push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37419114646)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37419131062).
+  Commits through `f9b9002` updated documentation only; later readability changes
+  require their own checks. Inspect checks for the actual PR
+  head before merging. Linux/macOS receiver interoperability remains untested.
+
+Readability pass on PR #2, 2026-10-06:
+
+- Added a repository `.clang-format` convention, expanded control flow and clear
+  DNS constants/names, separated query scheduling, service resolution and JSON
+  formatting, and organized cache tests by scenario.
+- Public API and internal comments describe buffer ownership, byte order,
+  interface scope, monotonic time, compression traversal, cache grace, metadata
+  merging and binary/UTF-8 output. Socket and Winsock resource owners explicitly
+  forbid copying; cleanup order and failure unwinding are documented.
+- Windows static/shared Release builds passed all six CTest targets, including
+  new valid/invalid UTF-8 cases. The pre-existing synthetic fixture JSON was
+  byte-for-byte unchanged before adding the new test fields. The test harness
+  now decodes CLI output explicitly as UTF-8 on Windows.
+- Protocol behavior and JSON schema remain the same. Actual pairing/playback
+  validation is still pending; verify CI for the readability commit separately.
+- A post-refactor 10-second Windows LAN scan again resolved "Living Room"
+  (`AppleTV14,1`) and `Mac14,2`, each with both services: four responses, zero
+  rejected packets and no warnings. This remains discovery-only evidence.
+- At readability commit `23f8ff08a12431fc0aba95a21aaf881aa7458674`, all six
+  Windows/Linux/macOS static/shared CI jobs and Linux ASan/UBSan passed:
+  [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37420813282)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37420816897).
+
 Reproduction from a fresh checkout:
 
 ```sh
 git clone https://github.com/ilyalissoboi/send-airplay2.git
 cd send-airplay2
-git switch feat/portable-foundation
+git switch codex/receiver-discovery
 cmake -S . -B build-static -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build-static --config Release
 ctest --test-dir build-static -C Release --output-on-failure
@@ -224,14 +297,14 @@ The milestone is unfinished. **Do not interpret missing hardware access as a
 reason to stop all implementation.** Build and mock/unit-test independent pieces
 while arranging the hardware baseline in parallel with that work.
 
-1. **Hardware baseline:** ask for the available Apple TV model/generation and exact
-   tvOS firmware/build, plus the intended local testing host. Obtain AirPlay access
-   settings without collecting secrets. Establish reference playback with pyatv on
-   that LAN and record the real session path. The cloud workspace cannot reach the
-   user's receiver simply because GitHub is connected.
-2. **Discovery + diagnostics:** add bounded service/TXT parsing, merge `_airplay`
-   and `_raop` identities where justified, handle disappearance/interface changes,
-   and expose a CLI. Select the discovery/platform strategy explicitly.
+1. **Hardware baseline:** use the user-provided Apple TV 4K / tvOS 26.6 /
+   Windows 11 x64 setup (discovery model `AppleTV14,1`). Obtain the exact
+   tvOS build and AirPlay access settings without collecting secrets. Establish
+   reference playback with pyatv on that LAN and record the real session path.
+   Local discovery succeeded; reference and native playback have not been checked.
+2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
+   departure/interface-change checks and other platform/Android host coverage.
+   The Windows Apple TV discovery gate has passed; see discovery.md for limits.
 3. **Pairing + secure transport:** inspect the reference authentication code,
    select vetted crypto/serialization dependencies, specify persistent credentials
    and host storage, and test fragmentation, wrong PIN, authentication failure,
@@ -250,7 +323,8 @@ while arranging the hardware baseline in parallel with that work.
    the casting adapter boundary, route active-session controls, and test Chromecast
    regression and local/remote handoff.
 
-Remaining design choices: discovery backend, crypto/plist libraries, socket/event
+Remaining design choices: production OS discovery fallback/IPv6-only backend,
+crypto/plist libraries, session socket/event
 model, credential format/storage adapters, asynchronous C API and bindings,
 timeouts/cancellation, capability policy, media-server access policy, unsupported
 codec handling, Android packaging and audio transport. None is already implemented
@@ -259,7 +333,14 @@ updates to this record.
 
 ## 8. Continuation mechanics and known obstacles
 
-Public clone/read worked in this session. Command-line `git push` failed with
+Current local environment, verified on 2026-10-06: GitHub CLI 2.102.0 is available
+at `C:\Program Files\GitHub CLI\gh.exe`, authenticated as `ilyalissoboi` through
+the keyring. A GitHub API read confirmed push and admin permissions for this
+repository. Network verification required execution outside the sandbox; the
+initial sandbox authentication error was not evidence of invalid credentials.
+Authenticated command-line Git push succeeded for PR #2 in this local chat.
+
+Historical cloud environment: public clone/read worked. Command-line `git push` failed with
 `could not read Username for 'https://github.com'`; GitHub connector authorization
 does not automatically configure CLI credentials. Publishing resumed successfully
 through the authorized connector's Git tree/commit/branch/PR operations. Do not

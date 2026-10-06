@@ -3,12 +3,13 @@
 Experimental native sender library for supported, unprotected media on tested
 AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
 
-**Status: foundation only. This code cannot discover, pair with, or cast to a
-receiver yet. No receiver compatibility has been established.**
+**Status: experimental discovery and HTTP range resolution. This code cannot
+pair with or cast to a receiver yet. No playback compatibility has been established.**
 
-The first implemented component is a dependency-free C++17 HTTP byte-range
-resolver with a C interface. It will support local-file serving and seeking.
-It is not an HTTP server or a protocol implementation. The pre-1.0 API is not frozen.
+The dependency-free C++17 core includes a byte-range resolver with a C interface
+and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
+CLI. The range resolver will support local-file serving and seeking; an HTTP
+server is not implemented. The pre-1.0 API is not frozen.
 
 ## Build and test
 
@@ -22,6 +23,24 @@ ctest --test-dir build -C Release --output-on-failure
 
 Use `-DBUILD_SHARED_LIBS=ON` for a shared library. CI covers static and shared
 builds on Windows, Linux and macOS. Android build/device validation is pending.
+
+## Receiver discovery
+
+```sh
+# Windows with the default Visual Studio generator:
+build/Release/airplay2-cli.exe discover --timeout-ms 10000
+build/Release/airplay2-cli.exe discover --json --timeout-ms 10000
+# Linux/macOS with a single-config generator:
+./build/airplay2-cli discover --json
+```
+
+Enable AirPlay and place the receiver on the same LAN as the sender. The scanner
+uses active IPv4 multicast interfaces and UDP 5353; allow local-network access
+for the CLI in the host firewall. It reports A and AAAA addresses, interface
+indices, ports, model and raw advertised TXT fields. An empty scan does not prove
+that no receiver exists. Discovery does not establish pairing or playback support.
+See [discovery contracts and limits](docs/discovery.md), including JSON fields
+and the separation between advertisements and tested compatibility.
 
 ## Milestones
 
@@ -41,4 +60,4 @@ See [design and implementation sequence](docs/design.md) and
 [receiver validation checklist](docs/receiver-validation.md).
 
 License: Apache-2.0, as established by the repository's original LICENSE.
-No third-party implementation code is included in this foundation.
+No third-party implementation code or runtime dependencies are included.
