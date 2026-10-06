@@ -20,11 +20,11 @@ Snapshot: 2026-10-06, ~14:30 UTC.
   for the session implementation in [session-design.md](session-design.md).
   CI runs only for pull requests, so keep a draft PR open for this branch.
   Before writing, verify the actual head and checks.
-- **Done on this branch:** steps 1-3: channel key derivation, the event
-  channel and the NTP timing responder (section 5).
-- **Next:** step 4 of session-design.md section 8: session message builders
-  and parsers (SETUP and `/command` bodies) on the plist codec, with plistlib
-  fixtures.
+- **Done on this branch:** steps 1-4: channel key derivation, the event
+  channel, the NTP timing responder and the session messages (section 5).
+- **Next:** step 5 of session-design.md section 8: the `UrlPlaybackSession`
+  orchestrator against a scripted fake receiver. That step adds the plist
+  codec and session messages to the library.
 - **Still true:** the library cannot cast yet. The first hardware gate (G1) is
   step 6.
 
@@ -985,9 +985,45 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   - clang++ 22 strict-warning syntax checks passed for the Windows branches.
   - Making the reply echo the wrong reference time failed the literal check.
   - CI for steps 1 and 2 passed all checks.
-- **Not yet verified:** the POSIX socket branches first compile and run in
-  Linux/macOS CI (WSL is not available on this host). No Apple TV traffic yet;
-  timing interoperability is untested.
+- **CI:** the first run at `094f91a` failed on Linux (GCC and the sanitizer
+  job). `static_cast<decltype(sent)>` cast to a `const` type
+  (`-Werror=ignored-qualifiers`), a warning neither MSVC nor clang raises.
+  It was fixed in `2f46e34` by comparing the signed result as a size; macOS
+  and Windows had passed. No Apple TV traffic yet; timing interoperability is
+  untested.
+
+### Session messages (step 4): 2026-10-06
+
+- **New:** `session_messages.*` on the D27 plist codec.
+  - `SenderIdentity` (D30): reference model and OS values, the display name
+    `send-airplay2`, and a random locally administered device ID.
+  - Random UUIDs, stream seeds below 2^63, and `SessionHeaders`: random
+    DACP-ID and Active-Remote, RTSP headers, and `/command` headers with the
+    `AirPlay/870.14.1` agent and session/stream IDs.
+  - SETUP builders: base, remote-control-only, URL control stream, data stream.
+  - Response parsers: `eventPort`; `streamID` and optional `dataPort`.
+  - `/command` envelope and the four start commands.
+  - `parse_session_event`: the event type, and the lower-cased playback state
+    from `params.playbackState` or `name`.
+- **Encoding rule:** RTSP plist bodies are sorted recursively by key, as
+  plistlib's default `sort_keys=True` does in the reference. Command payloads
+  keep the reference's key order.
+- **`public_random_bytes`:** added to `control_crypto` (OpenSSL `RAND_bytes`)
+  for non-secret identifiers.
+- **Tests** (`session_messages_tests`):
+  - Every builder is byte-exact against 14 plistlib fixtures.
+  - Literal header lists.
+  - Response and event parsing, with 16 rejection cases.
+  - Shape, version, locality and uniqueness checks of random identifiers.
+  - Without the recursive key sort, all four SETUP fixtures fail with byte
+    offsets.
+  - URL-stream (239 bytes) and data-stream (298 bytes) SETUP sizes match the
+    sanitized tvOS 26.6 request log exactly. The base SETUP differs only by the
+    longer display name.
+- **Evidence:** Windows MSVC static/shared Release passed all 19 CTest targets;
+  clang++ 22 strict syntax checks and clang-format passed.
+- **Scope:** the plist codec and session messages remain test-only until the
+  orchestrator uses them. No Apple TV traffic yet.
 
 ## 6. Screenbox integration findings
 

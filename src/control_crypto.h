@@ -4,6 +4,8 @@
 
 #include "pairing_tlv.h"
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <string_view>
 
@@ -27,6 +29,10 @@ private:
 
 /// Wipe transient/key buffers; callers also own responsibility for source-key copies.
 void cleanse(void* data, std::size_t size) noexcept;
+/// Fill `data` from OpenSSL's public random generator, for unpredictable but
+/// non-secret identifiers (session UUIDs, per-session device IDs, stream
+/// seeds). Throws ControlException(backend) on failure.
+void public_random_bytes(std::uint8_t* data, std::size_t size);
 
 /** RFC 8439 AEAD. Values/AAD are bounded at 64 KiB; output owns ciphertext + tag.
  * Caller must use a unique nonce for each message under a given key.

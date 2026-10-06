@@ -135,6 +135,23 @@ revision:
 
 Only these layouts and constants are used.
 
+Session message shapes (`session_messages.*`) follow these sources; only body
+keys, fixed identifiers, header names and version strings are used:
+
+- `pyatv/protocols/raop/protocols/airplayv2.py` at the same pyatv revision: the
+  base SETUP body.
+- `pyatv/protocols/airplay/ap2_session.py` (blob
+  `aa5f1408f11d91a8be7545e9f706f28d2cde1424`): the remote-control-only SETUP
+  and the data-stream SETUP.
+- `pyatv/support/rtsp.py` (blob `56d7c6ed4a50ea38294a6180ecf4ce119a3a4cd6`):
+  the DACP-ID, Active-Remote and Client-Instance headers, `AirPlay/550.10`,
+  and plist bodies serialized with sorted keys.
+- The unmerged fix `robkochman/pyatv@8144c77c6cecbed4f9ba2adb5a350ad86a8f6604`
+  (MIT), `pyatv/protocols/raop/protocols/airplayv2.py` (blob
+  `c4358ede5a0685fffe6bd7ec0817a190af4190f6`): `sessionCorrelationUUID`, the
+  URL control stream, the `/command` envelope, commands and headers, and the
+  `AirPlay/870.14.1` agent.
+
 pyatv is MIT licensed. It is a reference only; no implementation source was
 copied or linked. Tests use independently generated, synthetic inputs; no receiver
 credentials or captured private transcripts are committed. These references

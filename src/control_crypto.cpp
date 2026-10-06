@@ -3,10 +3,12 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/rand.h>
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string_view>
@@ -64,6 +66,12 @@ ControlException::ControlException(ControlError reason)
 void cleanse(void* data, std::size_t size) noexcept {
     if (size != 0) {
         OPENSSL_cleanse(data, size);
+    }
+}
+void public_random_bytes(std::uint8_t* data, std::size_t size) {
+    if (size > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
+        (size != 0 && RAND_bytes(data, static_cast<int>(size)) != 1)) {
+        throw ControlException(ControlError::backend);
     }
 }
 

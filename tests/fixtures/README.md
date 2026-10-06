@@ -121,3 +121,28 @@ Malformed and literal-layout documents are assembled in `plist_tests.cpp` from
 the published bplist00 layout, not from the encoder. Regenerate with
 `python tests/fixtures/generate_plist.py`; the initial generation used
 Python 3.11.9.
+
+## Session messages
+
+`session/*.hex` comes from `generate_session.py`, using only CPython's
+standard `plistlib`. Each body is rebuilt the way the reference sender builds
+it:
+
+- RTSP request bodies use plistlib's default `sort_keys=True`, as pyatv's RTSP
+  layer does.
+- `/command` and event payloads nest an inner plist written with
+  `sort_keys=False`, as the unmerged fix does.
+
+The generator imports nothing from this repository. Identifiers are fixed
+synthetic values: a locally administered device ID, UUIDs ending in `A1`-`A5`,
+timing port 49152, seed `0x0123456789ABCDEF`, and an RFC 5737 media URL. The
+display name is `send-airplay2`. Responses and events use the sanitized
+shapes observed on tvOS 26.6 with synthetic values.
+
+With the reference identity, the URL-stream SETUP body (239 bytes) and the
+data-stream SETUP body (298 bytes) have exactly the sizes seen in the sanitized
+tvOS 26.6 request log. The base SETUP is 8 bytes larger than observed: the only
+difference is the 13-character display name instead of `pyatv`. These sizes
+are a consistency check on the shapes, not a capture. Regenerate with
+`python tests/fixtures/generate_session.py`; the initial generation used
+Python 3.11.9.

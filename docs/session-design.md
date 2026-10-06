@@ -230,6 +230,9 @@ administered one per session.
    formula) and real IPv4/IPv6 UDP loopback tests.
 4. Session message builders and parsers, with plistlib fixtures for SETUP and
    `/command` bodies. Field names must match the sanitized reference sequence.
+   **Done:** `session_messages.*`, byte-exact against the fixtures. The display
+   name is `send-airplay2` rather than the reference's `pyatv`; all
+   capability-relevant fields use reference values (D30).
 5. `UrlPlaybackSession` against a scripted fake receiver: the full sequence,
    each step failing, start timeout, teardown order, and secret cleanup.
 6. `airplay2-cli cast`, start and stop only. Then MRP, after D31: wire codec
