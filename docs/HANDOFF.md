@@ -428,13 +428,16 @@ Receiver-transport slice on `codex/receiver-transport`, 2026-10-06:
 - Readability/ownership pass applies the AGENTS.md rules, including Doxygen
   contracts, named bounds, focused scenarios and RAII sockets/secrets/threads.
   clang-format and diff checks pass. The Windows Debug receiver suite also passes.
-  IPv6 scope IDs stay in the socket address rather than HTTP Host. At source head
-  `979ef0829248203684939274eb3864b8241845cc`, all Linux/macOS static/shared and
-  sanitizer checks passed (both push and PR runs). Windows CI was still configuring
-  dependencies; local static/shared Windows CTests pass. Green merged-main Windows
-  CI spent about 35 minutes installing dependencies and saved its cache after these
-  PR jobs began. The final documentation head starts fresh checks with that cache;
-  verify all checks at the actual PR head before merging.
+  IPv6 scope IDs stay in the socket address rather than HTTP Host. Final source
+  is `979ef0829248203684939274eb3864b8241845cc`. At subsequent documentation head
+  `3360550b1ab7307a6b8e2014438d6e26f221255b`, all 14 checks passed: six native
+  Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan in each of the
+  [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37441690978)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37441695377).
+  Earlier Windows checks were superseded during dependency configuration; green
+  merged-main setup took about 35 minutes, and its saved cache let the final checks
+  finish normally. Subsequent evidence updates are documentation only; still verify
+  checks at the actual PR head before merging.
 - No connection to the Apple TV, PIN display/entry, credential change/save or
   playback attempted. Receiver authentication/playback and Android/UWP packaged
   loading remain untested. Next: trusted credential serialization/host storage
