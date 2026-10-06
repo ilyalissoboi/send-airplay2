@@ -216,7 +216,9 @@ administered one per session.
 ## 8. Implementation and validation plan
 
 1. Channel key derivation, with independent Python HKDF fixtures for the
-   Events labels. Unit only.
+   Events labels. Unit only. **Done** on `claude/url-playback-session`:
+   `channel_keys.*`, `PairVerifier::take_session_keys` and
+   `ReceiverConnection::derive_channel_keys`.
 2. Event request parser/encoder and event channel, tested against a loopback
    fake receiver with fragmented and coalesced records, bad tags, oversized
    requests, cancellation and EOF.

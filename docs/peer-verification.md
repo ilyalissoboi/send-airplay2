@@ -41,8 +41,17 @@ access sets a public synthetic seed and inspects erasure.
    another signed proof. Only then derive the sender's outbound/inbound keys with
    `Control-Salt` and `Control-Write-Encryption-Key`/`Control-Read-Encryption-Key`.
 5. `take_control_keys(write, read)` transfers keys into distinct caller-owned
-   secret buffers once and closes/erases the exchange. Outputs stay unchanged on
-   failure. A connection must install both directional record owners together.
+   secret buffers once and closes/erases the exchange, including the shared
+   secret. Outputs stay unchanged on failure. A connection must install both
+   directional record owners together.
+6. `take_session_keys(write, read, channels)` makes the same release but moves
+   the shared secret into an empty `ChannelKeySource`. That owner derives keys
+   for further channels of the same verified session (the event channel and
+   data streams, see `channel_keys.h`) and never returns the secret.
+   `ReceiverConnection::verify` uses this release, retains the owner while
+   verified, exposes `derive_channel_keys`, and erases the secret on `close()`.
+   Outputs and the destination stay unchanged on failure; an occupied
+   destination is refused.
 
 Responses are complete TLV bodies bounded at 1,024 bytes. The generic TLV fragment
 rules still apply. This state machine additionally rejects missing fields,
@@ -53,8 +62,10 @@ schema is a candidate receiver path; future extensions require explicit tests.
 
 Non-200 responses, authentication/backend errors, malformed messages and method
 order errors are terminal. Errors contain categories only. Ephemeral and handshake
-encryption keys are erased after M3; the shared secret is erased after deriving
-both directions; control keys remain private until one-time release.
+encryption keys are erased after M3. The shared secret stays in the verifier
+from M4 until the one-time release, which either erases it
+(`take_control_keys`) or moves it into the session's `ChannelKeySource`
+(`take_session_keys`). Control keys remain private until that release.
 
 The future HTTP/socket layer must correlate responses on the same connection,
 enforce status/body limits before buffering, handle partial writes exactly once,

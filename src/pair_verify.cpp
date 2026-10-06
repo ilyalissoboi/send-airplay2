@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <initializer_list>
 #include <stdexcept>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -115,25 +114,6 @@ template <std::size_t Size> ControlNonce verification_nonce(const char (&label)[
     std::copy_n(label, Size - 1, nonce.begin() + prefix_size);
     return nonce;
 }
-void derive_key(const Secret32& shared, std::string_view salt, std::string_view info,
-                Secret32& output) {
-    // The existing HKDF adapter accepts a vector; own/erase this temporary copy.
-    struct SecretInput {
-        Bytes bytes;
-        explicit SecretInput(const Secret32& secret)
-            : bytes(secret.bytes.begin(), secret.bytes.end()) {}
-        ~SecretInput() {
-            cleanse(bytes.data(), bytes.size());
-        }
-        SecretInput(const SecretInput&) = delete;
-        SecretInput& operator=(const SecretInput&) = delete;
-        SecretInput(SecretInput&&) = delete;
-        SecretInput& operator=(SecretInput&&) = delete;
-    } input(shared);
-    auto derived = derive_control_key(input.bytes, salt, info);
-    output.bytes = derived;
-    cleanse(derived.data(), derived.size());
-}
 [[noreturn]] void rethrow_crypto(const ControlException& error) {
     throw PairVerifyException(error.reason() == ControlError::authentication
                                   ? PairVerifyError::authentication
@@ -192,7 +172,8 @@ Bytes PairVerifier::respond(unsigned http_status, const Bytes& m2) {
             throw PairVerifyException(PairVerifyError::invalid_message);
         }
         x25519_shared(ephemeral_, peer_public, shared_);
-        derive_key(shared_, "Pair-Verify-Encrypt-Salt", "Pair-Verify-Encrypt-Info", session_key_);
+        derive_session_key(shared_, "Pair-Verify-Encrypt-Salt", "Pair-Verify-Encrypt-Info",
+                           session_key_);
         const auto plaintext =
             open_record(session_key_.bytes, verification_nonce("PV-Msg02"), {}, encrypted);
         const auto identity = parse_schema(plaintext, {identifier_tag, signature_tag});
@@ -229,9 +210,10 @@ void PairVerifier::finish(unsigned http_status, const Bytes& m4) {
         require_state(State::waiting_m4);
         const auto fields = parse_schema(m4, {state_tag, error_tag});
         validate_response(http_status, fields, 4);
-        derive_key(shared_, "Control-Salt", "Control-Write-Encryption-Key", write_key_);
-        derive_key(shared_, "Control-Salt", "Control-Read-Encryption-Key", read_key_);
-        shared_.clear();
+        const auto control = control_channel_labels();
+        derive_session_key(shared_, control.salt, control.sender_write_info, write_key_);
+        derive_session_key(shared_, control.salt, control.sender_read_info, read_key_);
+        // shared_ stays until release: take_session_keys hands it to the session.
         state_ = State::verified;
     } catch (const ControlException& error) {
         close();
@@ -241,14 +223,33 @@ void PairVerifier::finish(unsigned http_status, const Bytes& m4) {
         throw;
     }
 }
+void PairVerifier::require_releasable(const Secret32& write_key, const Secret32& read_key) const {
+    require_state(State::verified);
+    if (&write_key == &read_key) {
+        throw PairVerifyException(PairVerifyError::unexpected_state);
+    }
+}
 void PairVerifier::take_control_keys(Secret32& write_key, Secret32& read_key) {
     try {
-        require_state(State::verified);
-        if (&write_key == &read_key) {
+        require_releasable(write_key, read_key);
+        write_key.bytes = write_key_.bytes;
+        read_key.bytes = read_key_.bytes;
+        close();
+    } catch (...) {
+        close();
+        throw;
+    }
+}
+void PairVerifier::take_session_keys(Secret32& write_key, Secret32& read_key,
+                                     ChannelKeySource& channels) {
+    try {
+        require_releasable(write_key, read_key);
+        if (channels.available()) {
             throw PairVerifyException(PairVerifyError::unexpected_state);
         }
         write_key.bytes = write_key_.bytes;
         read_key.bytes = read_key_.bytes;
+        channels.adopt(shared_); // Clears shared_; close() then wipes the rest.
         close();
     } catch (...) {
         close();

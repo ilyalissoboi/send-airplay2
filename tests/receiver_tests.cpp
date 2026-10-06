@@ -60,7 +60,8 @@ struct ReceiverConnectionTestAccess {
     }
     static bool closed(const ReceiverConnection& connection) {
         return connection.state_ == ReceiverConnection::State::closed && !connection.setup_ &&
-               !connection.writer_ && !connection.reader_ && connection.pending_m2_.body.empty();
+               !connection.writer_ && !connection.reader_ && connection.pending_m2_.body.empty() &&
+               !connection.channel_keys_.available();
     }
     static void exhaust_sequence(ReceiverConnection& connection) {
         connection.sequence_ = UINT32_MAX;
@@ -542,9 +543,22 @@ void verification_transport_tests() {
         }
         check(observed->requests.size() == 4 && !observed->closed,
               "one connection preserves counters across exchanges");
+        // The accessory derives event keys from its side of the shared secret with
+        // literal labels; the sender's write key is the receiver's "Read" key.
+        Secret32 event_write, event_read;
+        connection.derive_channel_keys(event_channel_labels(), event_write, event_read);
+        const auto shared_secret = bytes(accessory.shared.bytes);
+        check(event_write.bytes == derive_control_key(shared_secret, "Events-Salt",
+                                                      "Events-Read-Encryption-Key") &&
+                  event_read.bytes == derive_control_key(shared_secret, "Events-Salt",
+                                                         "Events-Write-Encryption-Key"),
+              "event channel keys match the accessory, chunk " + std::to_string(chunk));
         connection.close();
         check(observed->closed && ReceiverConnectionTestAccess::closed(connection),
-              "close wipes both record directions");
+              "close wipes both record directions and the channel secret");
+        reject("channel keys after close", TransportError::closed, [&] {
+            connection.derive_channel_keys(event_channel_labels(), event_write, event_read);
+        });
     }
     for (unsigned scenario = 0; scenario < 4; ++scenario) {
         auto stream = std::make_unique<ScriptStream>();

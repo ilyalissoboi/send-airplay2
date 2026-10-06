@@ -2,6 +2,7 @@
 #ifndef SEND_AIRPLAY2_PAIR_VERIFY_H
 #define SEND_AIRPLAY2_PAIR_VERIFY_H
 
+#include "channel_keys.h"
 #include "identity_crypto.h"
 #include <cstddef>
 #include <stdexcept>
@@ -79,14 +80,20 @@ public:
     [[nodiscard]] Bytes respond(unsigned http_status, const Bytes& m2);
     void finish(unsigned http_status, const Bytes& m4);
     /// Release once after finish into distinct output owners; sender write/read order.
-    /// Outputs remain unchanged on failure. Success closes/wipes this exchange.
+    /// Outputs remain unchanged on failure. Success closes/wipes this exchange,
+    /// including the shared secret.
     void take_control_keys(Secret32& write_key, Secret32& read_key);
+    /// Same release, but the verified shared secret moves into `channels` so the
+    /// session can derive keys for its further channels. `channels` must be
+    /// empty. Outputs and `channels` remain unchanged on failure.
+    void take_session_keys(Secret32& write_key, Secret32& read_key, ChannelKeySource& channels);
     void close() noexcept;
 
 private:
     friend struct PairVerifyTestAccess;
     enum class State { ready, waiting_m2, waiting_m4, verified, closed };
     void require_state(State expected) const;
+    void require_releasable(const Secret32& write_key, const Secret32& read_key) const;
     const PairCredentials& credentials_;
     State state_ = State::ready;
     Secret32 ephemeral_;

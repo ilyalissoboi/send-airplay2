@@ -82,6 +82,24 @@ save("short-signature-m2", m2(tlv((1, receiver_id), (10, server_signature[:-1]))
 save("malformed-inner-m2", m2(b"\x01\x40\x01"))
 save("unknown-inner-m2", m2(tlv((1, receiver_id), (10, server_signature), (100, b"extension"))))
 
+# Further channels of the same verified session reuse the shared secret with
+# their own salt/info. pyatv calls setup_channel(salt, output_info, input_info):
+# the event channel passes (Events-Salt, Events-Read..., Events-Write...), so the
+# sender writes with the "Read" info; data streams pass Output then Input, with
+# the stream's SETUP seed appended to the salt in decimal.
+data_stream_seed = 0x0123456789ABCDEF
+channel_labels = {
+    "events": (b"Events-Salt", b"Events-Read-Encryption-Key", b"Events-Write-Encryption-Key"),
+    "datastream": (
+        b"DataStream-Salt" + str(data_stream_seed).encode("ascii"),
+        b"DataStream-Output-Encryption-Key",
+        b"DataStream-Input-Encryption-Key",
+    ),
+}
+for channel, (salt, sender_write_info, sender_read_info) in channel_labels.items():
+    save(f"{channel}-write-key", hkdf(shared, salt, sender_write_info))
+    save(f"{channel}-read-key", hkdf(shared, salt, sender_read_info))
+
 for direction in ("write", "read"):
     key = hkdf(shared, b"Control-Salt", f"Control-{direction.title()}-Encryption-Key".encode("ascii"))
     save(f"{direction}-key", key)

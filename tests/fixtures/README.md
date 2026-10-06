@@ -50,6 +50,16 @@ Regenerate with `python tests/fixtures/generate_pair_verify.py` using Python
 3.12.14 / cryptography 50.0.1 (initial generation). Committed fixtures run without
 Python. Existing control fixtures are unchanged.
 
+`events-{write,read}-key.hex` and `datastream-{write,read}-key.hex` are session
+channel key oracles from the same synthetic shared secret. They use the
+generator's own HMAC HKDF with salt `Events-Salt`, and with `DataStream-Salt`
+plus the decimal seed 81985529216486895 (`0x0123456789ABCDEF`). Names are from
+the sender's view: the event-channel write key uses info
+`Events-Read-Encryption-Key`, following pyatv's `(salt, output_info,
+input_info)` call order. Adding them was regenerated with Python 3.11.9 /
+cryptography 50.0.2; every previously committed pair-verify fixture stayed
+byte-for-byte identical.
+
 ## PIN pairing
 
 `pair-setup/*.hex` comes from `generate_pair_setup.py`, using Python integer

@@ -106,6 +106,16 @@ Inspected pyatv revision `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`:
   and sender/receiver control-key direction. Its omitted controller verification
   is not used as a cryptographic test oracle.
 
+Session channel keys (event channel and data streams) follow the same pyatv
+revision: `pyatv/protocols/airplay/ap2_session.py` (blob
+`aa5f1408f11d91a8be7545e9f706f28d2cde1424`) and
+`pyatv/protocols/raop/protocols/airplayv2.py` (blob
+`3d61a34e00559554477cd2ff97d9c337a9e7ccff`) give the salts and infos.
+`pyatv/auth/hap_channel.py` (blob `1cf14fe1ef4964b3582fc46fc7574b333a2823a7`)
+gives the `(salt, output_info, input_info)` order, from which the reversed
+event-channel direction follows. Only these label strings are used, as
+protocol constants.
+
 pyatv is MIT licensed. It is a reference only; no implementation source was
 copied or linked. Tests use independently generated, synthetic inputs; no receiver
 credentials or captured private transcripts are committed. These references
