@@ -273,7 +273,8 @@ Readability pass on PR #3, 2026-10-06:
 
 - Named TLV fragment/header sizes and the HKDF info limit, clarified encoded-size
   calculations, renamed the pure nonce constructor to `nonce_for_counter`, and
-  made the plaintext cleanup guard explicitly non-copyable/non-movable.
+  made the plaintext cleanup guard explicitly non-copyable/non-movable. Touched
+  sources include the standard headers for the facilities they use directly.
 - Split control tests into named AEAD/HKDF, framing/size, authentication/replay,
   EOF/counter and TLV scenarios. Failure diagnostics identify the group/case and
   relevant split, mutation or byte offset. Named final-fragment layout calculations

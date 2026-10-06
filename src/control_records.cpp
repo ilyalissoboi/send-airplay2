@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "control_records.h"
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <utility>
 

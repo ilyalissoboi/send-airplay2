@@ -4,8 +4,12 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <string_view>
 
 namespace send_airplay2::detail {
 namespace {

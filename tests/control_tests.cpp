@@ -2,13 +2,18 @@
 // Public synthetic keys only. Independent fixture provenance: fixtures/README.md.
 #include "control_records.h"
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <vector>
 
 using namespace send_airplay2::detail;
 namespace send_airplay2::detail {

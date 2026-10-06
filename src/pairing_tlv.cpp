@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "pairing_tlv.h"
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <stdexcept>
+#include <vector>
 
 namespace send_airplay2::detail {
 namespace {
