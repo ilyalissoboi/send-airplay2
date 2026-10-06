@@ -1,7 +1,12 @@
 # Reference sender baseline (pyatv)
 
 Status: steps 1-3 (scan and AirPlay pairing) PASS, user-reported on 2026-10-06; see
-[receiver-validation.md](receiver-validation.md). Step 4 (playback) NOT RUN.
+[receiver-validation.md](receiver-validation.md). Step 4 (playback) FAIL on
+2026-10-06: pyatv 0.18.0 `play_url` gets HTTP 500 from `/playback-info` on
+tvOS 26.6, and the receiver never fetches the URL, even a public Apple URL. This
+is a known upstream incompatibility; see
+[the observation](receiver-validation.md#pyatv-reference-playback-2026-10-06).
+Repeating step 4 with pyatv 0.18.0 will not produce a baseline on tvOS 26.
 These steps require the user's Windows host on the same LAN as "Living Room".
 A cloud session cannot reach that LAN.
 
@@ -89,6 +94,11 @@ native session code, which does not exist yet.
    ```
 
    It prints `Private URL (do not share or log): http://...`. Keep it private.
+   pyatv also runs a UDP NTP timing server that the receiver contacts during
+   SETUP. On a host without an inbound rule for the Python interpreter, SETUP
+   timed out with `no response to SETUP`. Allow inbound UDP for that
+   interpreter, scoped to the local subnet, for the duration of the test. For a
+   Microsoft Store Python, the process image is under `WindowsApps`, not the venv.
 3. In a second window, play and control with pyatv, pasting the private URL:
 
    ```powershell

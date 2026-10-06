@@ -1,7 +1,8 @@
 # Receiver validation record
 
 Status: DISCOVERY AND PAIRING OBSERVED; built-in fresh-socket and separate-process
-verification passed; playback NOT IMPLEMENTED. Fill out one record per
+verification passed; pyatv 0.18.0 reference playback FAILED (known upstream
+tvOS 26 incompatibility); native playback NOT IMPLEMENTED. Fill out one record per
 receiver firmware and sender platform.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
@@ -9,7 +10,9 @@ static/shared builds; see [media-server.md](media-server.md). Actual Apple TV HT
 fetch, real-file >4-GiB seek and firewall reachability remain NOT RUN. No receiver
 or credential operation occurred in the media-server slice. The development
 `airplay2-cli serve` command now exposes that server for the pyatv reference
-playback step; its receiver fetch is likewise NOT RUN.
+playback step. In that step the receiver never connected to `serve`; see
+[pyatv reference playback](#pyatv-reference-playback-2026-10-06). Receiver fetch
+therefore remains NOT RUN.
 
 The environment below was supplied by the user on 2026-10-06 (Asia/Tokyo).
 It identifies the intended test setup. A Windows discovery run subsequently
@@ -25,10 +28,10 @@ Playback results remain pending.
 - AirPlay access policy and PIN/password settings (no secrets): access limited to people on the same network (user-reported); pyatv scan reports no password required and mandatory pairing for AirPlay/RAOP/Companion.
 - Sender OS/version/architecture: Windows 11 x64; automated runner observes Windows build `10.0.26200`, AMD64.
 - Host: CLI / packaged Windows C# / Android:
-- Network: Ethernet/Wi-Fi; same subnet; firewall configuration:
-- Media SHA-256, container, codecs, duration, dimensions and bitrate:
+- Network: host on Wi-Fi, same subnet as the receiver. Windows network category **Public** (the runbook expected Private; the user chose to proceed). Existing inbound Allow rules (Public profile) for the `airplay2-cli.exe` builds; pyatv timing needed a temporary user-created inbound UDP rule for the Python interpreter, LocalSubnet, Public profile. See the playback observation.
+- Media SHA-256, container, codecs, duration, dimensions and bitrate: user-owned clip, 53,953,926 bytes, SHA-256 `a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65`; MP4 (`isom`, `moov` before `mdat`), H.264 Main profile level 4.2 1280x720, AAC (`mp4a`) stereo 44.1 kHz, 131.6 s. Read with a standard-library box parser; ffprobe was unavailable. Bitrate not measured.
 - Negotiated protocol/authentication path:
-- Reference sender/version and baseline result: pyatv 0.18.0 AirPlay pairing PASS (user-reported); reference playback NOT RUN. See [reference-baseline.md](reference-baseline.md) and the observation below.
+- Reference sender/version and baseline result: pyatv 0.18.0 AirPlay pairing PASS (user-reported); reference URL playback FAIL: `/play` 200, then `/playback-info` 500 and no media fetch, also with a public Apple HLS URL. Matches open upstream issues. See [reference-baseline.md](reference-baseline.md) and the observation below.
 
 ## Required observations
 
@@ -41,7 +44,7 @@ Playback results remain pending.
 | Repeated verification | Independent processes reuse stored pairing | PASS, baseline plus three reconnects and three fault-recovery verifications per static/shared run |
 | Profile/input guards | Existing/missing profiles and redirected PIN input are refused | PASS, automated native CLI static/shared runs |
 | Local forget | Local deletion and idempotence | Absent-profile no-op PASS; real disposable deletion SKIPPED (no opt-in) |
-| Start MP4 | Both audio and video play | NOT RUN |
+| Start MP4 | Both audio and video play | pyatv 0.18.0 reference: FAIL, no fetch (see observation); native NOT RUN |
 | Pause/resume | Receiver and host state agree | NOT RUN |
 | Seek forward/back | Playback moves to requested position | NOT RUN |
 | Position/duration | Values follow receiver playback | NOT RUN |
@@ -192,6 +195,95 @@ device identifiers printed by the scan are omitted here; credentials were not
 shared. The user subsequently reported tvOS build 23L773 and AirPlay access
 limited to the same network (see Environment). The Companion protocol was not
 paired.
+
+## pyatv reference playback: 2026-10-06
+
+Step 4 of [reference-baseline.md](reference-baseline.md), run by the agent in a
+local session on the user's Windows 11 x64 host (build `10.0.26200`), with the
+user watching the TV. Receiver: Living Room / Apple TV 4K / `AppleTV14,1` /
+tvOS 26.6 (23L773). Reference sender: pyatv 0.18.0 (MIT, external tool) on
+Python 3.11.9, using its existing stored AirPlay credentials. Media server:
+`airplay2-cli serve`, static Release build of PR #11 code head
+`19a08d256fdd2092aecfc63438af2b6a07c95b8c`; media as listed under Environment.
+
+The receiver address came from a fresh `discover` run, and the private URL came
+from `serve` output. Both stayed in driver-script memory. Child output was
+filtered before display: addresses, URLs, MAC addresses, identifiers, headers
+and plist values are omitted, except allowlisted status fields. No raw debug
+output was stored.
+
+**Run 1: no Python firewall rule, commands per the runbook.**
+
+- `play_url` exited 1 after `no response to SETUP` for the base RTSP SETUP.
+  This SETUP advertises an NTP timing port on the sender.
+- A concurrent `device_state` at about 15 s exited 1 after `no response to POST
+  /pair-verify`. Later `set_position=30`, `pause`, `play` and `stop` exited 0,
+  and every status read returned `DeviceState.Idle`, so those commands had
+  nothing to act on.
+- `play_url` logged power state On, Off, On. The user saw the TV wake from
+  sleep with no playback UI.
+- `serve`: `Stopped. reads=0 bytes=0 failed_reads=0`.
+
+Windows Firewall had no rule for the Python interpreter, and the network
+category is Public. The working hypothesis is that the receiver's inbound UDP
+timing requests were dropped, which stalled SETUP. The user added a temporary
+inbound UDP Allow rule for the interpreter (LocalSubnet, Public profile).
+
+**Run 2: same, with the rule.** SETUP completed; `play_url` exited 1 about 2 s
+later with `GET /playback-info` HTTP 500. Control commands were skipped.
+`serve`: `reads=0`.
+
+**Run 3: diagnostic, `--debug` with filtering; TCP connections to `serve`
+polled every 200 ms.** Sanitized sequence, all within about 1.4 s:
+
+| Request | Response |
+|---|---|
+| `POST /pair-verify` x2 | 200, 200 |
+| RTSP `SETUP` (base, no timing) | 200, `eventPort` |
+| `RECORD` | 200 |
+| `SETUP` stream type 130 | 200, `streamID`, `dataPort` |
+| `POST /pair-verify` x2 | 200, 200 |
+| RTSP `SETUP` (base, `timingProtocol=NTP`) | 200, `eventPort` |
+| `RECORD`, `POST /feedback` | 200, 200 |
+| `POST /play` (bplist with `Content-Location`) | 200, empty body |
+| `PUT /setProperty?isInterestedInDateRange`, `?actionAtItemEnd` | 200, `errorCode=0` |
+| `POST /rate?value=1.000000` | 200 |
+| `PUT /setProperty?forwardEndTime`, `?reverseEndTime` | 200, `errorCode=0` |
+| `GET /playback-info` | **500**, empty body; connection then lost |
+
+Inbound TCP connections to `serve`: **0**. `serve`: `reads=0`.
+
+**Run 4: control.** The same filtered run with Apple's public HLS example URL
+in place of `serve` produced the identical sequence and the same 500. The
+failure therefore does not depend on this project's server, the URL or the
+local firewall for TCP.
+
+Interpretation:
+
+- The receiver accepts pyatv 0.18.0's legacy `/play` request on tvOS 26.6, but
+  it does not start media or fetch the URL. This matches open upstream issues
+  [pyatv#2906](https://github.com/postlund/pyatv/issues/2906) (Apple TV 4K,
+  tvOS 26.6, identical symptom) and
+  [pyatv#2821](https://github.com/postlund/pyatv/issues/2821) (tvOS 26.2,
+  regression of [pyatv#2512](https://github.com/postlund/pyatv/issues/2512)).
+- An unmerged proposal, [pyatv#2846](https://github.com/postlund/pyatv/pull/2846)
+  (head `8848ad3fd9ae46b8eb733bfc667b536a28f04c5a`, read on 2026-10-06), replaces
+  `/play` with a type-130 stream SETUP (`controlType` 1), then
+  `POST /command` with a binary plist wrapping queue commands such as
+  `insertPlayQueueItem` (`mediaType` `file`, `Content-Location`), plus
+  `setProperty`. It reads playback state from the event channel instead of
+  polling `/playback-info`. Neither the proposal nor a reworked fork linked from
+  it was run here; neither is maintainer-reviewed or verified on this receiver.
+- Inbound UDP timing to the sender was needed before SETUP completed. A native
+  session will need the same on Windows. Run 1 does not prove the cause; it was
+  not confirmed by a packet capture.
+- `serve` was started, announced and stopped cleanly in every run. Its fetch
+  path and firewall reachability from the Apple TV remain NOT RUN, because no
+  sender caused a fetch. `serve` counts reads only. A HEAD-only or aborted
+  connection would also show `reads=0`, which is why run 3 polled connections.
+
+Seek, pause/resume, position and stop results remain NOT RUN for any working
+playback. Remove the temporary Python firewall rule after testing.
 
 ## Automated CLI E2E observation: 2026-10-06
 
