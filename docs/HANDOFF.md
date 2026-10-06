@@ -31,9 +31,11 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Item | Snapshot |
 |---|---|
 | Foundation PR | [#1: feat: establish portable AirPlay sender foundation](https://github.com/ilyalissoboi/send-airplay2/pull/1) |
-| PR state | Merged on 2026-10-06; verified through GitHub CLI |
+| Foundation PR state | Merged on 2026-10-06; verified through GitHub CLI |
+| Current discovery PR | [#2: feat: add receiver discovery and diagnostic CLI](https://github.com/ilyalissoboi/send-airplay2/pull/2), open |
 | Target | `main` |
-| Current local branch | `codex/receiver-discovery`, based on merged `main` at `c61955f5074182e97b2828416175cce42763cc5f`; next discovery PR in preparation |
+| Current local branch | `codex/receiver-discovery`, based on merged `main` at `c61955f5074182e97b2828416175cce42763cc5f` |
+| Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; subsequent handoff/CI evidence commits may follow |
 | Final PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
@@ -207,6 +209,8 @@ Discovery slice validation on 2026-10-06:
 - Real receiver departure/interface changes, exact tvOS build, pyatv reference
   playback, pairing, native playback and packaged/Android host validation remain
   pending. Unit success and discovery do not certify playback.
+- Discovery CI runs (Windows/Linux/macOS static/shared plus Linux ASan/UBSan)
+  are in progress; results must be verified independently of the foundation runs.
 
 Reproduction from a fresh checkout:
 

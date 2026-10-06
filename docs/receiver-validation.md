@@ -47,7 +47,9 @@ Unit tests and mock receivers cannot substitute for this record.
 ## Discovery observation: 2026-10-06 (Asia/Tokyo)
 
 Windows 11 x64 / MSVC 19.51 Release CLI, discovery implementation on
-`codex/receiver-discovery` (pre-PR commit). A 15-second scan outside the execution
+`codex/receiver-discovery` (working-tree scan before publishing implementation
+commit `48189897ba167b44c3da7c6e4a7857bf28120498` in
+[PR #2](https://github.com/ilyalissoboi/send-airplay2/pull/2)). A 15-second scan outside the execution
 sandbox received four DNS responses with zero rejected packets and no warnings.
 It discovered "Living Room", model `AppleTV14,1`, on interface 24. Its AirPlay
 and RAOP services were merged by matching advertised identity and both resolved
