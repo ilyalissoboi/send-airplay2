@@ -90,3 +90,8 @@ server proofs/signatures, then credential storage and bounded HTTP/socket
 transport. Establish the pyatv hardware playback baseline and native authenticated
 connection before enabling URL playback. Wrong-PIN validation is pending because
 this slice consumes existing credentials and does not implement a PIN flow.
+
+Subsequent development implements private [PIN/SRP provisioning](pin-pairing.md)
+with Botan and verified server proofs/signatures. Synthetic wrong-PIN tests now
+exist there; receiver validation, trusted storage and bounded HTTP/socket I/O
+remain pending.

@@ -74,6 +74,12 @@ void generate_x25519_seed(Secret32& seed) {
 PublicKey x25519_public(const Secret32& seed) {
     return export_public(EVP_PKEY_X25519, seed);
 }
+void generate_ed25519_seed(Secret32& seed) {
+    if (RAND_priv_bytes(seed.bytes.data(), static_cast<int>(seed.bytes.size())) != 1) {
+        seed.clear();
+        throw ControlException(ControlError::backend);
+    }
+}
 void x25519_shared(const Secret32& seed, const PublicKey& peer, Secret32& shared) {
     if (&seed == &shared) {
         throw ControlException(ControlError::invalid_length);

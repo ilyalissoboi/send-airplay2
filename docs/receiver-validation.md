@@ -77,3 +77,10 @@ synthetic RFC/transcript/failure tests; see [peer-verification.md](peer-verifica
 No receiver HTTP/socket connection, PIN enrollment, credential change or playback
 operation was attempted. Synthetic peer-rejection tests are not evidence of actual
 Apple TV revocation behavior; all hardware authentication results remain NOT RUN.
+
+## PIN-pairing slice: 2026-10-06
+
+Private PIN/SRP provisioning message processing is implemented and tested with
+public synthetic transcripts; see [PIN pairing](pin-pairing.md). No receiver
+connection, PIN-display request, actual PIN entry, credential save or playback
+operation was attempted. All hardware pairing/playback results remain NOT RUN.

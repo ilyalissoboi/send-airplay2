@@ -32,6 +32,32 @@ OpenSSL package. Keep the dependency on a supported release; 3.5 is the upstream
 LTS series, while the pinned 3.6 series requires an update before its November
 2026 end of support. [Upstream release lifecycle](https://openssl-library.org/source/)
 
+## Botan SRP backend
+
+The PIN-pairing slice selects Botan 3.12.0 through its C FFI (`ffi`, `srp6`,
+`sha2_64`, `system_rng` modules), pinned by the existing vcpkg baseline. The core
+remains C++17 and includes only Botan's C-compatible `ffi.h`; Botan's own build
+requires C++20. SRP-6a arithmetic uses the maintained backend, not in-tree modular
+arithmetic or OpenSSL's deprecated SRP API. OpenSSL continues to provide HAP
+SHA512 transcript hashing, HKDF, AEAD and Ed25519.
+
+Botan is [BSD-2-Clause licensed](https://github.com/randombit/botan/blob/3.12.0/license.txt).
+Redistributions must include its license/notices and the applicable native runtime.
+No Botan implementation source is copied into the repository. Inspected release
+3.12.0: `src/lib/ffi/ffi_srp6.cpp`, `src/lib/misc/srp6/srp6.cpp`, `src/lib/ffi/ffi.h`
+and its generated CMake target template. The C agreement API returns a padded raw
+shared integer, not HAP's SHA512 session key; the adapter must normalize/hash it
+and verify proofs. [SRP API](https://botan.randombit.net/handbook/api_ref/srp.html).
+
+Alternatives investigated but not adopted: OpenSSL SRP (deprecated since 3.0,
+no replacement); libimobiledevice's Stanford-derived SHA512 client (permissive
+license, but inspected code has unchecked allocation/arithmetic returns and
+non-constant-time proof comparison requiring broader hardening). That candidate
+was inspected at `fa0f79190142bc309307967c058f89c1b36eb6b8`, not copied or linked.
+Windows UWP/Android packaging and hardware interoperability remain validation
+gates; vcpkg's Botan port excludes the UWP triplet, so a packaged-host proof must
+resolve that integration constraint before Screenbox work.
+
 ## Protocol research
 
 Inspected pyatv revision `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`:
@@ -40,10 +66,12 @@ Inspected pyatv revision `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`:
 - `pyatv/support/chacha20.py`: independent directional counters and nonce layout.
 - `pyatv/auth/hap_tlv8.py`: pairing tags and fragment encoding.
 - `pyatv/auth/hap_srp.py`: pair-verification transcript order, HKDF labels and
-  named nonces, reinspected for the peer-verification slice.
+  named nonces, reinspected for the peer-verification and PIN/SRP slices.
 - `pyatv/protocols/airplay/auth/hap.py`: AirPlay pair-verify message sequence.
   Its unchecked final response is not adopted: this project requires HTTP 200,
   state M4 and no error before releasing connection keys.
+  Pair-setup also requires HTTP 200/state M2/M4/M6, a verified server SRP proof
+  and a verified accessory signature before accepting credentials.
 - `pyatv/protocols/airplay/server_auth.py`: candidate M4 state acknowledgement
   and sender/receiver control-key direction. Its omitted controller verification
   is not used as a cryptographic test oracle.

@@ -28,6 +28,8 @@ struct Secret32 {
 
 /// Replace the seed with fresh OpenSSL private randomness. Wipe on backend failure.
 void generate_x25519_seed(Secret32& seed);
+/// Fresh Ed25519 signing seed with the same randomness/erasure contract.
+void generate_ed25519_seed(Secret32& seed);
 [[nodiscard]] PublicKey x25519_public(const Secret32& seed);
 /// Derive into a distinct output owner. Reject low-order/all-zero shared secrets.
 /// On failure the output is cleared, except alias rejection leaves the seed intact.

@@ -49,3 +49,24 @@ and RFC 8032 numeric known answers in the C++ test check the primitive adapters.
 Regenerate with `python tests/fixtures/generate_pair_verify.py` using Python
 3.12.14 / cryptography 50.0.1 (initial generation). Committed fixtures run without
 Python. Existing control fixtures are unchanged.
+
+## PIN pairing
+
+`pair-setup/*.hex` comes from `generate_pair_setup.py`, using Python integer
+arithmetic for SRP-6a and hashlib/HMAC for SHA512/HKDF, independent of Botan.
+RFC 5054 Appendix A supplies the 3072-bit group (generator 5). PIN `0123`, salt
+0..15, controller seed 0..31 and accessory seed 32..63 are public synthetic data.
+The test-only client RNG supplies 0x42; Botan 3.12 sets the exponent's high bit.
+The independent server exponent is selected to yield a leading-zero shared
+integer, proving HAP minimal-integer hashing rather than hashing padded S.
+
+M1/M3/M5 are exact sender-byte oracles; M4 includes the independently calculated
+server proof. M6 authenticates the accessory ID/key; negative M6 fixtures are
+validly encrypted, isolating signature and inner-schema failures from AEAD.
+New credentials use the same identities as the peer-verification fixtures, so
+an enrollment-to-verification test independently checks their retained seed/key.
+The AEAD/Ed25519 generator uses cryptography and may share an OpenSSL backend;
+existing RFC tests cover primitives. No production module is imported.
+
+Regenerate with `python tests/fixtures/generate_pair_setup.py` (Python 3.12.14 /
+cryptography 50.0.1). Python is not needed to run committed fixtures.
