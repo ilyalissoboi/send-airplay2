@@ -62,3 +62,10 @@ interface changes and the complete "Discovery and departure" test above remain
 pending; lifecycle behavior has only synthetic test coverage. Reference playback,
 pairing and all media controls are NOT RUN. This is not playback certification.
 Raw LAN identifiers, addresses and advertised public keys are omitted here.
+
+## Pairing transport foundation: 2026-10-06
+
+The next slice adds private TLV8 and authenticated control-record codecs with
+synthetic test coverage; see [pairing-transport.md](pairing-transport.md). It does
+not perform a handshake or receiver I/O. No PIN, credential or playback operation
+was attempted; all corresponding hardware results above remain NOT RUN.

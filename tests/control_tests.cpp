@@ -1,0 +1,488 @@
+// SPDX-License-Identifier: Apache-2.0
+// Public synthetic keys only. Independent fixture provenance: fixtures/README.md.
+#include "control_records.h"
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <random>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <vector>
+
+using namespace send_airplay2::detail;
+namespace send_airplay2::detail {
+// Test-only access keeps counter injection out of the production constructors.
+struct ControlRecordTestAccess {
+    static void counter(ControlWriter& writer, std::uint64_t value) {
+        writer.counter_ = value;
+    }
+    static void counter(ControlReader& reader, std::uint64_t value) {
+        reader.counter_ = value;
+    }
+    static bool wiped(const ControlReader& reader) {
+        return reader.closed_ && reader.pending_size_ == 0 &&
+               std::all_of(reader.key_.begin(), reader.key_.end(),
+                           [](auto byte) { return byte == 0; }) &&
+               std::all_of(reader.pending_.begin(), reader.pending_.end(),
+                           [](auto byte) { return byte == 0; });
+    }
+    static bool wiped(const ControlWriter& writer) {
+        return writer.closed_ && std::all_of(writer.key_.begin(), writer.key_.end(),
+                                             [](auto byte) { return byte == 0; });
+    }
+};
+} // namespace send_airplay2::detail
+
+namespace {
+int failures = 0;
+const char* active_test = "test setup";
+template <typename Function> void run_case(const char* name, Function action) {
+    active_test = name;
+    action();
+}
+void check(bool passed, std::string_view message) {
+    if (!passed) {
+        std::cerr << "FAIL [" << active_test << "]: " << message << '\n';
+        ++failures;
+    }
+}
+// Scenario labels describe public test inputs only, never key/plaintext contents.
+template <typename Function>
+void expect_control_error(const std::string& scenario, Function action, ControlError reason) {
+    try {
+        action();
+        check(false, scenario + ": expected control error");
+    } catch (const ControlException& error) {
+        check(error.reason() == reason, scenario + ": expected error " +
+                                            std::to_string(static_cast<int>(reason)) + ", got " +
+                                            std::to_string(static_cast<int>(error.reason())));
+    }
+}
+template <typename Function> void expect_bad_tlv(const char* scenario, Function action) {
+    try {
+        action();
+        check(false, std::string(scenario) + ": expected malformed TLV rejection");
+    } catch (const std::invalid_argument&) {
+    }
+}
+Bytes unhex(const std::string& text) {
+    Bytes output;
+    if (text.size() % 2 != 0) {
+        throw std::runtime_error("Odd fixture hex length");
+    }
+    for (std::size_t offset = 0; offset < text.size(); offset += 2) {
+        output.push_back(
+            static_cast<std::uint8_t>(std::stoul(text.substr(offset, 2), nullptr, 16)));
+    }
+    return output;
+}
+Bytes fixture(const std::string& directory, const char* name) {
+    std::ifstream input(directory + '/' + name);
+    std::string hex;
+    if (!(input >> hex)) {
+        throw std::runtime_error(std::string("Missing control fixture: ") + name);
+    }
+    return unhex(hex);
+}
+ControlKey synthetic_key() {
+    ControlKey key{};
+    for (std::size_t index = 0; index < key.size(); ++index) {
+        key[index] = static_cast<std::uint8_t>(index);
+    }
+    return key;
+}
+Bytes synthetic_plaintext(std::size_t length) {
+    Bytes plaintext(length);
+    for (std::size_t index = 0; index < length; ++index) {
+        plaintext[index] = static_cast<std::uint8_t>(index % 251);
+    }
+    return plaintext;
+}
+Bytes slice(const Bytes& bytes, std::size_t first, std::size_t last) {
+    return Bytes(bytes.begin() + static_cast<std::ptrdiff_t>(first),
+                 bytes.begin() + static_cast<std::ptrdiff_t>(last));
+}
+
+void aead_vector_tests(const std::string& directory) {
+    // RFC 8439 section 2.8.2: independent known-answer ciphertext AND tag.
+    ControlKey key{};
+    for (std::size_t index = 0; index < key.size(); ++index) {
+        key[index] = static_cast<std::uint8_t>(0x80 + index);
+    }
+    const ControlNonce nonce{7, 0, 0, 0, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47};
+    const auto aad = unhex("50515253c0c1c2c3c4c5c6c7");
+    const std::string text = "Ladies and Gentlemen of the class of '99: If I could offer you "
+                             "only one tip for the future, sunscreen would be it.";
+    const Bytes plaintext(text.begin(), text.end());
+    const auto expected = fixture(directory, "rfc8439-aead.hex");
+    check(seal_record(key, nonce, aad, plaintext) == expected, "RFC AEAD seal known answer");
+    check(open_record(key, nonce, aad, expected) == plaintext, "RFC AEAD open known answer");
+    auto corrupt = expected;
+    corrupt.back() ^= 1;
+    expect_control_error(
+        "AEAD corrupt tag", [&] { (void)open_record(key, nonce, aad, corrupt); },
+        ControlError::authentication);
+    auto wrong_aad = aad;
+    wrong_aad[0] ^= 1;
+    expect_control_error(
+        "AEAD wrong AAD", [&] { (void)open_record(key, nonce, wrong_aad, expected); },
+        ControlError::authentication);
+    auto wrong_nonce = nonce;
+    wrong_nonce[0] ^= 1;
+    expect_control_error(
+        "AEAD wrong nonce", [&] { (void)open_record(key, wrong_nonce, aad, expected); },
+        ControlError::authentication);
+    expect_control_error(
+        "AEAD short tag", [&] { (void)open_record(key, nonce, {}, Bytes(15)); },
+        ControlError::invalid_length);
+    expect_control_error(
+        "AEAD oversized plaintext", [&] { (void)seal_record(key, nonce, {}, Bytes(65537)); },
+        ControlError::invalid_length);
+    expect_control_error(
+        "AEAD oversized AAD", [&] { (void)seal_record(key, nonce, Bytes(65537), {}); },
+        ControlError::invalid_length);
+    const auto empty = seal_record(key, nonce, {}, {});
+    check(empty.size() == auth_tag_size && open_record(key, nonce, {}, empty).empty(),
+          "Empty AEAD value");
+}
+
+void hkdf_vector_tests(const std::string& directory) {
+    const auto secret_key = synthetic_key();
+    const Bytes secret(secret_key.begin(), secret_key.end());
+    const auto write = derive_control_key(secret, "Control-Salt", "Control-Write-Encryption-Key");
+    const auto read = derive_control_key(secret, "Control-Salt", "Control-Read-Encryption-Key");
+    check(Bytes(write.begin(), write.end()) == fixture(directory, "control-write-key.hex"),
+          "Independent HKDF write key");
+    check(Bytes(read.begin(), read.end()) == fixture(directory, "control-read-key.hex"),
+          "Independent HKDF read key");
+    check(write != read, "Directional HKDF keys differ");
+    expect_control_error(
+        "HKDF oversized secret", [&] { (void)derive_control_key(Bytes(65537), "salt", "info"); },
+        ControlError::invalid_length);
+    expect_control_error(
+        "HKDF oversized info",
+        [&] { (void)derive_control_key(secret, "salt", std::string(1025, 'x')); },
+        ControlError::invalid_length);
+    const auto empty_key = derive_control_key({}, {}, {});
+    check(Bytes(empty_key.begin(), empty_key.end()) == fixture(directory, "hkdf-empty-key.hex"),
+          "Independent empty-input HKDF key");
+}
+
+void record_vector_and_fragmentation_tests(const std::string& directory) {
+    const auto key = synthetic_key();
+    const auto plaintext = synthetic_plaintext(1030);
+    const auto expected = fixture(directory, "control-wire.hex");
+    ControlWriter writer(key);
+    check(writer.encrypt({}).empty(), "Empty write consumes no counter");
+    check(writer.encrypt(plaintext) == expected, "Independent two-record wire oracle");
+    // Every byte split covers partial length fields, ciphertext and authentication tags.
+    for (std::size_t split = 0; split <= expected.size(); ++split) {
+        ControlReader reader(key);
+        auto decoded = reader.feed(slice(expected, 0, split));
+        const auto remainder = reader.feed(slice(expected, split, expected.size()));
+        decoded.insert(decoded.end(), remainder.begin(), remainder.end());
+        check(decoded == plaintext, "Two-part stream split at byte " + std::to_string(split));
+        reader.finish();
+    }
+    ControlReader byte_reader(key);
+    Bytes decoded;
+    for (const auto byte : expected) {
+        const auto fragment = byte_reader.feed({byte});
+        decoded.insert(decoded.end(), fragment.begin(), fragment.end());
+    }
+    check(decoded == plaintext, "One-byte incremental reads");
+    byte_reader.finish();
+    expect_control_error(
+        "feed after EOF", [&] { (void)byte_reader.feed({}); }, ControlError::closed);
+}
+
+void record_size_tests() {
+    const auto key = synthetic_key();
+    for (const auto length : {std::size_t{1}, std::size_t{1023}, std::size_t{1024},
+                              std::size_t{1025}, std::size_t{65536}}) {
+        ControlWriter boundary_writer(key);
+        ControlReader reader(key);
+        const auto payload = synthetic_plaintext(length);
+        const auto wire = boundary_writer.encrypt(payload);
+        Bytes result;
+        for (std::size_t offset = 0; offset < wire.size(); offset += 4096) {
+            const auto part =
+                reader.feed(slice(wire, offset, std::min(offset + 4096, wire.size())));
+            result.insert(result.end(), part.begin(), part.end());
+        }
+        check(result == payload, "Record/call plaintext length " + std::to_string(length));
+        reader.finish();
+    }
+}
+
+void record_authentication_tests(const std::string& directory) {
+    const auto key = synthetic_key();
+    ControlWriter writer(key);
+    const auto wire = writer.encrypt({1, 2, 3, 4});
+    for (std::size_t index = 2; index < wire.size(); ++index) {
+        auto corrupt = wire;
+        corrupt[index] ^= 1;
+        ControlReader reader(key);
+        expect_control_error(
+            "corrupt ciphertext/tag byte " + std::to_string(index),
+            [&] { (void)reader.feed(corrupt); }, ControlError::authentication);
+        check(ControlRecordTestAccess::wiped(reader),
+              "Corrupt byte " + std::to_string(index) + ": key and pending data wiped");
+        expect_control_error(
+            "retry after authentication failure", [&] { (void)reader.feed(wire); },
+            ControlError::closed);
+    }
+    auto corrupt_length = wire;
+    corrupt_length[0] = 3;
+    ControlReader length_reader(key);
+    expect_control_error(
+        "corrupt length AAD", [&] { (void)length_reader.feed(corrupt_length); },
+        ControlError::authentication);
+    auto wrong_key = key;
+    wrong_key[0] ^= 1;
+    ControlReader wrong_key_reader(wrong_key);
+    expect_control_error(
+        "wrong record key", [&] { (void)wrong_key_reader.feed(wire); },
+        ControlError::authentication);
+    // A complete authenticated first record followed by a bad second record fails
+    // atomically for this call. Earlier successful feed calls are already committed.
+    auto two_records = fixture(directory, "control-wire.hex");
+    two_records.back() ^= 1;
+    ControlReader atomic_reader(key);
+    expect_control_error(
+        "bad second record in one call", [&] { (void)atomic_reader.feed(two_records); },
+        ControlError::authentication);
+    check(ControlRecordTestAccess::wiped(atomic_reader), "Multi-record failure is terminal");
+}
+
+void record_limit_tests() {
+    const auto key = synthetic_key();
+    ControlReader oversized(key);
+    expect_control_error(
+        "oversized record header", [&] { (void)oversized.feed({1, 4}); },
+        ControlError::invalid_length);
+    ControlReader oversized_call(key);
+    expect_control_error(
+        "oversized read call", [&] { (void)oversized_call.feed(Bytes(65537)); },
+        ControlError::invalid_length);
+    ControlWriter oversized_writer(key);
+    expect_control_error(
+        "oversized write call", [&] { (void)oversized_writer.encrypt(Bytes(65537)); },
+        ControlError::invalid_length);
+    check(ControlRecordTestAccess::wiped(oversized_writer), "Failed writer wipes key");
+}
+
+void record_replay_tests() {
+    const auto key = synthetic_key();
+    ControlWriter writer(key);
+    const auto wire = writer.encrypt({1, 2, 3, 4});
+    ControlReader replay_reader(key);
+    check(replay_reader.feed(wire) == Bytes({1, 2, 3, 4}), "First record accepted");
+    expect_control_error(
+        "replayed record", [&] { (void)replay_reader.feed(wire); }, ControlError::authentication);
+    const auto next_wire = writer.encrypt({5});
+    ControlReader reordered(key);
+    expect_control_error(
+        "out-of-order record", [&] { (void)reordered.feed(next_wire); },
+        ControlError::authentication);
+    ControlReader skipped(key);
+    ControlRecordTestAccess::counter(skipped, 1);
+    expect_control_error(
+        "wrong expected counter", [&] { (void)skipped.feed(wire); }, ControlError::authentication);
+}
+
+void record_eof_and_close_tests() {
+    const auto key = synthetic_key();
+    ControlWriter writer(key);
+    const auto wire = writer.encrypt({1, 2, 3, 4});
+    for (std::size_t cutoff = 1; cutoff < wire.size(); ++cutoff) {
+        ControlReader truncated(key);
+        check(truncated.feed(slice(wire, 0, cutoff)).empty(),
+              "Partial record at byte " + std::to_string(cutoff) + ": no plaintext");
+        expect_control_error(
+            "truncated EOF at byte " + std::to_string(cutoff), [&] { truncated.finish(); },
+            ControlError::invalid_length);
+    }
+    writer.close();
+    expect_control_error(
+        "write after close", [&] { (void)writer.encrypt({}); }, ControlError::closed);
+}
+
+void record_counter_tests() {
+    const auto key = synthetic_key();
+    ControlWriter writer(key);
+    const auto wire = writer.encrypt({1, 2, 3, 4});
+    ControlWriter exhausted_writer(key);
+    ControlRecordTestAccess::counter(exhausted_writer, std::numeric_limits<std::uint64_t>::max());
+    expect_control_error(
+        "exhausted write counter", [&] { (void)exhausted_writer.encrypt({1}); },
+        ControlError::counter_exhausted);
+    ControlReader exhausted_reader(key);
+    ControlRecordTestAccess::counter(exhausted_reader, std::numeric_limits<std::uint64_t>::max());
+    expect_control_error(
+        "exhausted read counter", [&] { (void)exhausted_reader.feed(wire); },
+        ControlError::counter_exhausted);
+    // The final permitted counter works once, then cannot wrap or restart.
+    ControlWriter final_writer(key);
+    ControlReader final_reader(key);
+    const auto final_counter = std::numeric_limits<std::uint64_t>::max() - 1;
+    ControlRecordTestAccess::counter(final_writer, final_counter);
+    ControlRecordTestAccess::counter(final_reader, final_counter);
+    const auto final_wire = final_writer.encrypt({42});
+    check(final_reader.feed(final_wire) == Bytes({42}), "Final permitted nonce");
+    expect_control_error(
+        "write after final permitted counter", [&] { (void)final_writer.encrypt({42}); },
+        ControlError::counter_exhausted);
+    expect_control_error(
+        "read after final permitted counter", [&] { (void)final_reader.feed(final_wire); },
+        ControlError::counter_exhausted);
+}
+
+void tlv_literal_and_separator_tests() {
+    const auto message = decode_tlv({0, 1, 0, 6, 1, 1, 0x80, 0});
+    check(message.size() == 3 && message[0].value == Bytes({0}) && message[2].value.empty(),
+          "Pairing M1 + unknown empty type");
+    check(encode_tlv(message) == Bytes({0, 1, 0, 6, 1, 1, 0x80, 0}), "Literal TLV known answer");
+    check(decode_tlv({}).empty() && encode_tlv({}).empty(), "Empty TLV message");
+    const Bytes repeated{1, 1, 42, 255, 0, 1, 1, 43};
+    const auto separated = decode_tlv(repeated);
+    check(separated.size() == 3 && encode_tlv(separated) == repeated,
+          "Separator preserves repeated identities");
+    const auto nonadjacent = decode_tlv({1, 1, 42, 6, 1, 2, 1, 1, 43});
+    check(nonadjacent.size() == 3, "Nonadjacent duplicates remain distinct for schema validation");
+}
+
+void tlv_fragment_tests() {
+    for (const auto length : {std::size_t{0}, std::size_t{1}, std::size_t{254}, std::size_t{255},
+                              std::size_t{256}, std::size_t{510}, std::size_t{4096}}) {
+        const std::vector<TlvField> fields{{3, synthetic_plaintext(length)}, {6, {2}}};
+        const auto decoded = decode_tlv(encode_tlv(fields));
+        check(decoded.size() == 2 && decoded[0].value == fields[0].value &&
+                  decoded[1].value == Bytes({2}),
+              "TLV fragment value length " + std::to_string(length));
+    }
+}
+
+void tlv_malformed_tests() {
+    struct RejectedInput {
+        const char* scenario;
+        Bytes body;
+    };
+    const RejectedInput cases[] = {
+        {"truncated header", {1}},
+        {"truncated value", {1, 2, 42}},
+        {"ambiguous adjacent type", {1, 1, 42, 1, 1, 43}},
+        {"nonempty separator", {255, 1, 0}},
+    };
+    for (const auto& input : cases) {
+        expect_bad_tlv(input.scenario, [&] { (void)decode_tlv(input.body); });
+    }
+    expect_bad_tlv("adjacent equal fields", [] { (void)encode_tlv({{1, {42}}, {1, {43}}}); });
+    expect_bad_tlv("nonempty encoded separator", [] { (void)encode_tlv({{255, {42}}}); });
+}
+
+void tlv_limit_tests() {
+    expect_bad_tlv("value exceeds 4 KiB", [] { (void)encode_tlv({{3, Bytes(4097)}}); });
+    expect_bad_tlv("body exceeds 64 KiB", [] { (void)decode_tlv(Bytes(65537)); });
+    std::vector<TlvField> too_many;
+    for (unsigned index = 0; index < 65; ++index) {
+        too_many.push_back({static_cast<std::uint8_t>(index % 2), {}});
+    }
+    expect_bad_tlv("too many encoded fields", [&] { (void)encode_tlv(too_many); });
+    Bytes excessive_fields;
+    for (const auto& field : too_many) {
+        excessive_fields.insert(excessive_fields.end(), {field.type, 0});
+    }
+    expect_bad_tlv("too many decoded fields", [&] { (void)decode_tlv(excessive_fields); });
+    std::vector<TlvField> excessive_body;
+    for (unsigned index = 0; index < 16; ++index) {
+        excessive_body.push_back({static_cast<std::uint8_t>(index % 2), Bytes(4096)});
+    }
+    expect_bad_tlv("encoded body exceeds 64 KiB", [&] { (void)encode_tlv(excessive_body); });
+    constexpr std::size_t value_size = 4096;
+    constexpr std::size_t fragment_capacity = 255;
+    constexpr std::size_t final_fragment_size = value_size % fragment_capacity;
+    auto large_value = encode_tlv({{3, Bytes(value_size)}});
+    // The last fragment's length byte immediately precedes its 16 value bytes.
+    const auto final_length_offset = large_value.size() - final_fragment_size - 1;
+    auto excessive_value = large_value;
+    ++excessive_value[final_length_offset];
+    excessive_value.push_back(0);
+    expect_bad_tlv("decoded value exceeds 4 KiB", [&] { (void)decode_tlv(excessive_value); });
+    large_value[final_length_offset] = 255; // Turn the final fragment into an overrun.
+    expect_bad_tlv("truncated final fragment", [&] { (void)decode_tlv(large_value); });
+}
+
+void tlv_mutation_tests() {
+    // Deterministic malformed corpus: accepted inputs must canonicalize without data loss.
+    std::mt19937 random(8439);
+    const auto mutation_seed = encode_tlv({{3, synthetic_plaintext(510)}, {6, {2}}});
+    for (unsigned sample = 0; sample < 3000; ++sample) {
+        Bytes input(random() % 600);
+        for (auto& byte : input) {
+            byte = static_cast<std::uint8_t>(random());
+        }
+        if (sample % 2 == 0) {
+            input = mutation_seed;
+            input[random() % input.size()] ^= static_cast<std::uint8_t>(1 + random() % 255);
+            if (sample % 5 == 0) {
+                input.resize(random() % input.size());
+            }
+        }
+        std::vector<TlvField> fields;
+        try {
+            fields = decode_tlv(input);
+        } catch (const std::invalid_argument&) {
+            continue;
+        }
+        // Encoder rejection after a successful decode is a test failure, not malformed input.
+        const auto again = decode_tlv(encode_tlv(fields));
+        check(again.size() == fields.size(),
+              "TLV mutation " + std::to_string(sample) + ": canonical field count");
+        for (std::size_t index = 0; index < std::min(fields.size(), again.size()); ++index) {
+            check(again[index].type == fields[index].type &&
+                      again[index].value == fields[index].value,
+                  "TLV mutation " + std::to_string(sample) + ": field " + std::to_string(index) +
+                      " preserved");
+        }
+    }
+}
+
+} // namespace
+
+int main(int argc, char** argv) {
+    static_assert(!std::is_copy_constructible_v<ControlReader> &&
+                  !std::is_move_constructible_v<ControlReader>);
+    static_assert(!std::is_copy_constructible_v<ControlWriter> &&
+                  !std::is_move_constructible_v<ControlWriter>);
+    try {
+        if (argc != 2) {
+            throw std::runtime_error("Expected fixture directory");
+        }
+        run_case("AEAD vectors", [&] { aead_vector_tests(argv[1]); });
+        run_case("HKDF vectors", [&] { hkdf_vector_tests(argv[1]); });
+        run_case("record vectors and fragmentation",
+                 [&] { record_vector_and_fragmentation_tests(argv[1]); });
+        run_case("record sizes", [&] { record_size_tests(); });
+        run_case("record authentication", [&] { record_authentication_tests(argv[1]); });
+        run_case("record limits", [&] { record_limit_tests(); });
+        run_case("record replay", [&] { record_replay_tests(); });
+        run_case("record EOF and close", [&] { record_eof_and_close_tests(); });
+        run_case("record counters", [&] { record_counter_tests(); });
+        run_case("TLV literals and separators", [&] { tlv_literal_and_separator_tests(); });
+        run_case("TLV fragments", [&] { tlv_fragment_tests(); });
+        run_case("TLV malformed input", [&] { tlv_malformed_tests(); });
+        run_case("TLV limits", [&] { tlv_limit_tests(); });
+        run_case("TLV mutations", [&] { tlv_mutation_tests(); });
+    } catch (const std::exception& error) {
+        std::cerr << "Unexpected test exception [" << active_test << "]: " << error.what() << '\n';
+        return 1;
+    }
+    return failures == 0 ? 0 : 1;
+}

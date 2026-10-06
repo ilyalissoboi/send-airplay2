@@ -6,14 +6,19 @@ AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
 **Status: experimental discovery and HTTP range resolution. This code cannot
 pair with or cast to a receiver yet. No playback compatibility has been established.**
 
-The dependency-free C++17 core includes a byte-range resolver with a C interface
+The C++17 core includes a byte-range resolver with a C interface
 and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
 CLI. The range resolver will support local-file serving and seeking; an HTTP
 server is not implemented. The pre-1.0 API is not frozen.
+Private pairing TLV8 and encrypted control-record codecs are implemented using
+OpenSSL, with independent vector and failure tests. The PIN/peer-verification
+handshake, receiver transport and credential storage are still pending.
+See [pairing transport foundation](docs/pairing-transport.md).
 
 ## Build and test
 
-Requires CMake 3.20+ and a C++17 compiler:
+Requires CMake 3.20+, a C++17 compiler and OpenSSL 3.5+ development libraries.
+With a maintained OpenSSL package installed (set `OPENSSL_ROOT_DIR` if needed):
 
 ```sh
 cmake -S . -B build -DBUILD_TESTING=ON
@@ -23,6 +28,22 @@ ctest --test-dir build -C Release --output-on-failure
 
 Use `-DBUILD_SHARED_LIBS=ON` for a shared library. CI covers static and shared
 builds on Windows, Linux and macOS. Android build/device validation is pending.
+
+For the pinned dependency build on Windows, from the repository root:
+
+```powershell
+git clone https://github.com/microsoft/vcpkg.git build-tools/vcpkg
+git -C build-tools/vcpkg checkout 434307da09bc05b2c86996dccc8b2351fc0d5d37
+.\build-tools\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+cmake -S . -B build -DBUILD_TESTING=ON "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake"
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+```
+
+On Linux/macOS, use `bootstrap-vcpkg.sh` with the same manifest/toolchain option.
+vcpkg copies its dependency DLLs alongside Windows build targets. Redistributed
+builds must include the appropriate OpenSSL runtime and license notices; packaged
+Windows/Android loading is still untested. See [dependency provenance](docs/dependencies.md).
 
 ## Receiver discovery
 
@@ -60,4 +81,5 @@ See [design and implementation sequence](docs/design.md) and
 [receiver validation checklist](docs/receiver-validation.md).
 
 License: Apache-2.0, as established by the repository's original LICENSE.
-No third-party implementation code or runtime dependencies are included.
+No third-party implementation source is copied into the repository. The new
+cryptographic adapters link OpenSSL's Apache-2.0 `libcrypto` dependency.

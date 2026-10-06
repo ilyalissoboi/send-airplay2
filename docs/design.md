@@ -2,7 +2,9 @@
 
 Research snapshot: 2026-10-06. This document distinguishes proposed architecture
 from implemented behavior. HTTP single-byte-range resolution and bounded
-mDNS/DNS-SD discovery with a diagnostic CLI are implemented.
+mDNS/DNS-SD discovery with a diagnostic CLI are implemented. Private pairing TLV8,
+HKDF-SHA512 and authenticated control-record codecs are now implemented; no PIN
+handshake or authenticated receiver connection is available yet.
 
 ## Scope and architecture
 
@@ -20,8 +22,8 @@ Proposed components:
 | Component | Responsibility | State |
 |---|---|---|
 | Discovery | mDNS/DNS-SD, service merging, TXT capability and identity parsing | Implemented bounded IPv4 scan; see discovery.md for limits and evidence |
-| Pairing | PIN flow, authenticated peer verification, credential reuse | Pending |
-| Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Pending |
+| Pairing | PIN flow, authenticated peer verification, credential reuse | Private bounded TLV8 codec implemented; handshake/storage pending |
+| Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Private record codec and OpenSSL crypto adapter implemented; socket/deadlines pending |
 | Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Pending |
 | Media server | GET/HEAD, byte sources, range responses, bounded streaming | Range resolver only |
 | Playback | URL start, pause/resume, seek, status, stop | Pending |
@@ -55,6 +57,8 @@ The implementation references are evidence of an approach, not evidence that
 this new library works with any firmware. Select crypto and serialization
 dependencies after checking maintained platform support and licensing; record
 attribution before incorporating any external implementation.
+OpenSSL is now selected for the private control crypto adapter; see
+[dependency provenance](dependencies.md) and [transport contracts](pairing-transport.md).
 
 ## HTTP range contract
 
