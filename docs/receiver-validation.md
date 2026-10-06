@@ -18,7 +18,7 @@ Playback results remain pending.
 ## Environment
 
 - Date and library commit:
-- Receiver manufacturer/model/generation: Apple TV 4K (user-provided), advertised model `AppleTV14,1`; generation not independently established.
+- Receiver manufacturer/model/generation: Apple TV 4K (user-provided), advertised model `AppleTV14,1`; pyatv 0.18.0 reports "Apple TV 4K (gen 3)". That label is pyatv's model-table mapping, not an independent hardware check.
 - Firmware version and build: tvOS 26.6 (user-reported, consistent with advertised `osvers`/`ov=26.6`); exact build not supplied.
 - AirPlay access policy and PIN/password settings (no secrets):
 - Sender OS/version/architecture: Windows 11 x64; automated runner observes Windows build `10.0.26200`, AMD64.
@@ -26,7 +26,7 @@ Playback results remain pending.
 - Network: Ethernet/Wi-Fi; same subnet; firewall configuration:
 - Media SHA-256, container, codecs, duration, dimensions and bitrate:
 - Negotiated protocol/authentication path:
-- Reference sender/version and baseline result: pyatv 0.18.0 selected; pairing and playback NOT RUN (user action pending, see [reference-baseline.md](reference-baseline.md)).
+- Reference sender/version and baseline result: pyatv 0.18.0 AirPlay pairing PASS (user-reported); reference playback NOT RUN. See [reference-baseline.md](reference-baseline.md) and the observation below.
 
 ## Required observations
 
@@ -168,6 +168,28 @@ No PIN was required. The `pair` exit code itself was not supplied.
 These results do not establish encrypted application request/response exchange,
 restart/revocation behavior or playback. Physical-console echo/mode restoration,
 wrong PIN, cancellation/timeout and host/receiver restart checks remain pending.
+
+## pyatv reference pairing: 2026-10-06
+
+The user ran pyatv 0.18.0 (MIT, external tool) on the Windows host, following
+[reference-baseline.md](reference-baseline.md), and reported the following.
+
+- Unicast scan: "Living Room", Apple TV 4K (gen 3) per pyatv's model table,
+  tvOS 26.6, deep sleep false. Services: AirPlay port 7000, Companion port 49153
+  and RAOP port 7000. Each reported `Requires Password: False` and
+  `Pairing: Mandatory`, with no stored credentials before pairing.
+- `atvremote --protocol airplay pair`: succeeded (user-reported). The process
+  exit code was not supplied.
+- `device_state` on a fresh pyatv invocation using stored credentials:
+  `DeviceState.Idle`.
+
+This shows that a second, independent controller can complete AirPlay HAP
+pairing on this receiver/firmware alongside the existing `airplay2-cli` profile,
+and that pyatv can reuse its credentials. It is not a playback result, and it
+says nothing about this library's session code. The address, MAC address and
+device identifiers printed by the scan are omitted here; credentials were not
+shared. Exact tvOS build and AirPlay access settings remain unsupplied. The
+Companion protocol was not paired.
 
 ## Automated CLI E2E observation: 2026-10-06
 

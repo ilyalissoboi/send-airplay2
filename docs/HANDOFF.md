@@ -60,7 +60,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
 | Actual casting support | None yet |
-| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); playback unimplemented |
+| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; reference and native playback not run |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
 PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. Verify current GitHub and
@@ -76,7 +76,8 @@ once; a branch push without an open PR does not trigger this workflow.
 User-provided on 2026-10-06 (Asia/Tokyo):
 
 - Receiver: **Apple TV 4K**; subsequent LAN discovery advertised `AppleTV14,1`
-  and name "Living Room". Generation not independently established.
+  and name "Living Room". pyatv 0.18.0 maps it to Apple TV 4K (gen 3);
+  generation not independently established beyond that model-table mapping.
 - Firmware: **tvOS 26.6** (user-reported, consistent with advertised `osvers`/`ov`);
   exact build not yet supplied. AirPlay `srcvers` is not a tvOS build identifier.
 - Intended testing host: **Windows 11 x64**; exact OS build not yet supplied.
@@ -669,7 +670,13 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   Windows host. The procedure, privacy rules and the sanitized facts to report
   back are in [reference-baseline.md](reference-baseline.md). pyatv remains an
   external reference tool; it is not a dependency and no source was copied.
-- Reference pairing and playback: NOT RUN (user action pending).
+- The user then ran the scan and AirPlay pairing on Windows. AirPlay, Companion
+  and RAOP all report mandatory pairing and no password. pyatv AirPlay pairing
+  succeeded, and `device_state` on a fresh invocation returned `Idle`. pyatv's
+  model table labels the receiver Apple TV 4K (gen 3). The sanitized record is
+  in receiver-validation.md. Reference playback is NOT RUN: it needs a
+  range-capable HTTP server for the test MP4 and the exact tvOS build/access
+  settings.
 
 ## 6. Screenbox integration findings
 

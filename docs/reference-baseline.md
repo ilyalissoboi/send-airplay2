@@ -1,7 +1,9 @@
 # Reference sender baseline (pyatv)
 
-Status: PREPARED, NOT RUN. Pairing and playback require the user's Windows host
-on the same LAN as "Living Room". A cloud session cannot reach that LAN.
+Status: steps 1-3 (scan and AirPlay pairing) PASS, user-reported on 2026-10-06; see
+[receiver-validation.md](receiver-validation.md). Step 4 (playback) NOT RUN.
+These steps require the user's Windows host on the same LAN as "Living Room".
+A cloud session cannot reach that LAN.
 
 This baseline uses an existing sender to establish what the receiver accepts
 before native session code is written. It is reference evidence about the
