@@ -113,6 +113,17 @@ client_signature = client.sign(client_sign + client_id + public(client))
 save("m5", tlv((6, b"\x05"), (5, ChaCha20Poly1305(encryption).encrypt(
     bytes(4) + b"PS-Msg05", tlv((1, client_id), (3, public(client)), (10, client_signature)), b""))))
 save("m6", m6(tlv((1, receiver_id), (3, public(receiver)), (10, signature))))
+# Original public synthetic values only; reproduce the observed type/size without
+# copying Apple TV device information. Metadata is opaque and never used for trust.
+metadata = (b"public-synthetic-metadata:" * 7)[:159]
+save("empty-metadata-m6", m6(tlv((1, receiver_id), (3, public(receiver)), (10, signature), (17, b""))))
+save("metadata-m6", m6(tlv((1, receiver_id), (3, public(receiver)), (10, signature), (17, metadata))))
+save("max-metadata-m6", m6(tlv((1, receiver_id), (3, public(receiver)), (10, signature), (17, b"x" * 256))))
+save("oversized-metadata-m6", m6(tlv((1, receiver_id), (3, public(receiver)), (10, signature), (17, b"x" * 257))))
+save("duplicate-metadata-m6", m6(tlv((1, receiver_id), (3, public(receiver)), (17, metadata),
+                                     (10, signature), (17, b"x"))))
+save("bad-signature-metadata-m6", m6(tlv((1, receiver_id), (3, public(receiver)),
+                                        (10, bytes([signature[0] ^ 1]) + signature[1:]), (17, metadata))))
 save("bad-signature-m6", m6(tlv((1, receiver_id), (3, public(receiver)),
                                (10, bytes([signature[0] ^ 1]) + signature[1:]))))
 save("wrong-id-m6", m6(tlv((1, b"different-receiver"), (3, public(receiver)), (10, signature))))

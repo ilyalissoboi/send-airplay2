@@ -113,3 +113,22 @@ OS `Advapi32` credential/token APIs, without a new third-party implementation or
 runtime dependency. The existing RFC 8032 public-key vector is reused in synthetic
 storage tests. Primary Windows API contracts and the trusted-store boundary are
 recorded in [credential-storage.md](credential-storage.md).
+
+The M6 compatibility fix adds no dependency or copied implementation. It accepts
+one bounded opaque type-17 field based on live sanitized TLV headers. References
+were re-inspected at pyatv revision `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`:
+
+- `pyatv/auth/hap_tlv8.py`, blob `c34e222f1879061c5dcb81a472b5548177dd15be`:
+  names type 17 `Name`.
+- `pyatv/auth/hap_srp.py`, blob `3453bfd1096c483c267a607d2ec29cbd4af4a1dc`:
+  distinguishes metadata from the required ID/key/signature transcript.
+- `pyatv/protocols/airplay/server_auth.py`, blob
+  `9351273fc3707edaa06592a03b86f82340d4c85b`: commented M6 example includes
+  optional type-17 receiver information. This is reference evidence, not proof
+  of its contents on the user's receiver.
+- MIT `LICENSE.md`, blob `c27c9705f92fb19e805a82225f6f9ab5c17966f3`.
+
+The project does not adopt the reference's skipped authentication checks. Server
+SRP proof, AEAD, strong accessory key and Ed25519 signature remain mandatory.
+Metadata is ignored and erased; no OPACK decoder or general extension tolerance
+is introduced. See [synthetic fixture provenance](../tests/fixtures/README.md).

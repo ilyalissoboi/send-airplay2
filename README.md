@@ -5,8 +5,8 @@ AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
 
 **Status: experimental discovery and HTTP range resolution, with private
 authentication/receiver transport and Windows desktop credential storage/CLI
-pairing. The CLI cannot cast yet. No receiver
-authentication or playback compatibility has been established.**
+pairing. The CLI cannot cast yet. Live PIN enrollment and fresh-socket verification
+were observed on Apple TV 4K / tvOS 26.6 / Windows 11 x64; playback is untested.**
 
 The C++17 core includes a byte-range resolver with a C interface
 and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
@@ -18,7 +18,7 @@ verification and first-time PIN/SRP message processing are also implemented.
 Private bounded HTTP/RTSP framing and native receiver TCP transport now connect
 these flows, with deadlines, cancellation and the encrypted-record transition.
 Windows desktop credential storage and CLI pairing/reconnect are implemented;
-hardware authentication and storage adapters for other hosts are pending.
+broader hardware authentication and storage adapters for other hosts are pending.
 See [credential storage and CLI authentication](docs/credential-storage.md).
 See [pairing transport foundation](docs/pairing-transport.md).
 See [peer verification](docs/peer-verification.md) for trust and state contracts.
@@ -93,7 +93,9 @@ Existing profiles are never overwritten automatically. Reconnect failure retains
 saved credentials for `verify`; `forget` deletes local credentials only.
 For scoped IPv6 use `--scope-id` with the numeric interface index. See the
 [storage/CLI contract](docs/credential-storage.md) for deadlines, cancellation,
-failure recovery and platform limits. Apple TV pairing/playback remains unvalidated.
+failure recovery and platform limits. See the
+[receiver validation record](docs/receiver-validation.md) for the observed pairing
+result and remaining restart/revocation/playback gates.
 
 ## Milestones
 

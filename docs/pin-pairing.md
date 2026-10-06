@@ -2,7 +2,11 @@
 
 This slice implements persistent HAP pair-setup in private C++17 code. It does
 not connect to a receiver, request/display a PIN, persist credentials or expose a
-public pairing ABI. Apple TV 4K / tvOS 26.6 interoperability remains untested.
+public pairing ABI. The Windows CLI now connects this flow to receiver I/O and
+storage. Live Apple TV 4K / tvOS 26.6 enrollment exposed an M6 metadata schema
+failure; the user confirmed pairing and built-in fresh-socket verification with
+the compatibility fix. See
+[receiver observations](receiver-validation.md) for the current hardware gate.
 
 ## Authentication and ownership
 
@@ -40,7 +44,13 @@ then be used by the existing pinned-identity peer verifier.
 Bodies are bounded to 2,048 bytes; encrypted M6 to 512 bytes; identifiers to
 1..64 bytes. Fragmented TLV values are supported, but duplicate fields,
 separators, unknown tags, missing fields and wrong fixed lengths are rejected.
-There is no extension negotiation in this private profile.
+The one recognized optional M6 identity field is type 17 (receiver metadata),
+bounded to 0..256 bytes after fragment reassembly. Its content is opaque: it is
+neither parsed nor used for trust, profile naming or stored credentials. It is
+discarded and erased with the decrypted identity buffer and decoded field copies
+on success/failure. ID, key and signature remain mandatory, and duplicate metadata
+or any other unknown tag is rejected. The 512-byte encrypted bound still applies.
+There is no general extension negotiation in this private profile.
 
 Objects are non-copyable/non-movable and require serial use. Every method
 exception is terminal. `close` handles cancellation, timeout and disconnect;
@@ -48,7 +58,11 @@ retry requires a fresh object. Owned controller seeds, SRP keys/proofs, derived
 keys and secret signing transcripts are erased on success/failure/destruction.
 Botan owns its internal SRP temporaries. Caller-owned PINs, returned messages and
 credential owners remain the caller's responsibility; process-wide erasure is
-not guaranteed. Errors expose sanitized categories without identities or secrets.
+not guaranteed. Response/schema errors add the M2/M4/M6 phase, HTTP status, body
+size and bounded wire TLV types/lengths, without identities or secrets. Only valid
+outer state/error codes may be printed; decrypted identity diagnostics report
+headers only (`source=identity`). Malformed/over-limit input is summarized without
+repairing it, copying its values or changing acceptance rules.
 
 ## Validation and remaining gates
 
@@ -59,6 +73,11 @@ validly encrypted bad signatures/IDs/keys, schemas, bounds, cancellation,
 weak public-key/trivial-forgery rejection,
 single-use release and secret cleanup. Newly enrolled synthetic credentials also
 complete the existing peer-verification oracle and derive expected control keys.
+Optional metadata fixtures cover absent, empty, observed-size (159 bytes),
+fragmented maximum (256 bytes), over-limit (257 bytes), duplicates and bad
+signatures. Successful variants serialize/reload credentials and satisfy the
+same independent peer-verification/control-key oracle. Diagnostics tests cover
+each phase, malformed/over-limit bodies and payload/PIN suppression.
 Deterministic randomness injection is test-only; no production seed API exists.
 See [fixtures](../tests/fixtures/README.md) and [dependency provenance](dependencies.md).
 

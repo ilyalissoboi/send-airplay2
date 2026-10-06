@@ -12,6 +12,7 @@ namespace pair_setup {
 constexpr std::size_t max_body_size = 2048;
 constexpr std::size_t max_encrypted_size = 512;
 constexpr std::size_t max_identifier_size = 64;
+constexpr std::size_t max_receiver_metadata_size = 256; // Opaque optional M6 type 17, in bytes.
 } // namespace pair_setup
 
 /** Private persistent HAP pair-setup exchange; no socket or PIN-display API.
@@ -25,7 +26,8 @@ constexpr std::size_t max_identifier_size = 64;
  * Non-copyable/non-movable, serial use. Every method exception is terminal and
  * wipes owned secrets. close handles timeout/cancellation/disconnect; retry creates
  * a fresh object. Caller erases PIN/source copies and stores returned credentials
- * through a trusted host adapter. Receiver interoperability remains untested.
+ * through a trusted host adapter. Hardware evidence and remaining gates are
+ * recorded in docs/receiver-validation.md; this is a bounded private profile.
  */
 class PairSetup {
 public:

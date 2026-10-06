@@ -74,3 +74,14 @@ existing RFC tests cover primitives. No production module is imported.
 
 Regenerate with `python tests/fixtures/generate_pair_setup.py` (Python 3.12.14 /
 cryptography 50.0.1). Python is not needed to run committed fixtures.
+
+The M6 metadata variants are original public synthetic payloads. Only the type
+17 and 159-byte length come from sanitized live Apple TV 4K / tvOS 26.6 error
+headers; no receiver metadata contents, identifiers, keys or capture are included.
+`metadata-m6` repeats a public marker; `empty-metadata-m6` covers zero bytes,
+`max-metadata-m6` covers the 256-byte fragmented bound, and
+`oversized-metadata-m6` is one byte beyond it. `duplicate-metadata-m6` separates
+two type-17 values with the signature field. `bad-signature-metadata-m6` is
+validly encrypted but tampered in the accessory signature. All other fixtures
+remain byte-for-byte unchanged. Acceptance must retain the original identity/key
+and the independent credential-reload/peer-verification/control-key oracle.
