@@ -209,8 +209,12 @@ Discovery slice validation on 2026-10-06:
 - Real receiver departure/interface changes, exact tvOS build, pyatv reference
   playback, pairing, native playback and packaged/Android host validation remain
   pending. Unit success and discovery do not certify playback.
-- Discovery CI runs (Windows/Linux/macOS static/shared plus Linux ASan/UBSan)
-  are in progress; results must be verified independently of the foundation runs.
+- Discovery CI at implementation commit `48189897ba167b44c3da7c6e4a7857bf28120498`:
+  all six Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed,
+  verified 2026-10-06. [Push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37419114646)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37419131062).
+  Subsequent commits update documentation only; inspect checks for the actual PR
+  head before merging. Linux/macOS receiver interoperability remains untested.
 
 Reproduction from a fresh checkout:
 

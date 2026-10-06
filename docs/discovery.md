@@ -122,6 +122,12 @@ TXT semantics, feature masks, identity merging, interface isolation, resolution,
 updates, RRSet/grace handling, TTL/goodbyes and cache caps, plus 10,000 deterministic
 parser mutations. CLI help, invalid timeout handling and JSON/readable output
 (binary TXT, large feature masks and terminal controls) are tested.
+The six Windows/Linux/macOS static/shared CI configurations plus Linux
+ASan/UBSan also passed at implementation commit
+`48189897ba167b44c3da7c6e4a7857bf28120498`:
+[CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37419114646).
+Only Windows has local receiver discovery observations; CI is not receiver
+interoperability evidence for the other platforms.
 
 A 10-second Windows LAN scan outside the execution sandbox received three
 responses, rejected none and resolved a `Mac14,2` receiver with both AirPlay and
