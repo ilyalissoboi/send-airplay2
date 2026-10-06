@@ -4,7 +4,8 @@ Status: **PARTIALLY IMPLEMENTED**, updated 2026-10-07 for draft PR #12.
 Channel keys, events, timing, messages, URL orchestration and `cast` are implemented.
 Standalone G1 initially failed. The minimal native remote-control SETUP/event
 session then passed G1 without pyatv, RECORD or MRP: video/audio played and the TV
-returned home after sender shutdown (user-observed). MRP and controls remain pending. Reference-derived details
+returned home after sender shutdown (user-observed). MRP and controls are now
+implemented; G2 evidence is recorded separately. See [MRP contracts](mrp-controls.md). Reference-derived details
 are hypotheses unless receiver-validation.md explicitly records native evidence.
 
 User decisions on 2026-10-06:
@@ -65,10 +66,12 @@ The existing URL session implements steps 1-10 below. G1 showed that omitting
 the separate remote-control session prevents visible presentation on this receiver.
 The minimal native experiment now starts an independently verified
 remote-control-only SETUP/event connection before URL start and retains it until
-URL teardown. It omits remote RECORD, feedback and the data stream/MRP handshake
+URL teardown. That historical minimum omitted remote RECORD, feedback and the data stream/MRP handshake
 to isolate the SETUP/event contribution. This minimum passed the recorded
 45-second native-only G1 run on tvOS 26.6; that does not validate prolonged
-session lifetime, other firmware or native playback controls.
+session lifetime, other firmware or native playback controls. The normal CLI now
+extends it with RECORD, data SETUP and MRP; see [MRP contracts](mrp-controls.md)
+and the separate G2 record.
 
 1. Connect TCP to the receiver's AirPlay port and run pair-verify with stored
    credentials (existing `ReceiverConnection`). Record the route-selected local
@@ -95,7 +98,7 @@ session lifetime, other firmware or native playback controls.
 
 Teardown order: mark the session stopping; send the stop command if H4 needs
 one; stop the feedback thread; close the event channel; close the control
-connection; stop the timing responder; close the remote event/control session;
+connection; stop the timing responder; join/close MRP, then the remote event/control session;
 stop `MediaServer`, which joins its callbacks. Each step runs even if an earlier one failed. No automatic
 reconnect or re-pair.
 
@@ -107,8 +110,8 @@ reconnect or re-pair.
 | Event channel | TCP/HAP records; acknowledge requests; decode plist envelopes | Implemented `EventRequestParser`, response encoder and `EventChannel` |
 | Timing responder | Answer NTP-style timing requests | Implemented fixed packet codec and receiver-filtered UDP responder |
 | Session messages | SETUP and `/command` bodies, response and event parsing | Implemented on D27 with independent plistlib fixtures |
-| `UrlPlaybackSession` | URL start, state and teardown; retain remote control | Implemented URL flow and minimal remote SETUP/event session; G1 passed; MRP, EOF and receiver-side stop pending |
-| `airplay2-cli cast` | File/profile start, state lines and Enter/EOF cleanup | Implemented; native controls pending; URL/address/payload values never printed |
+| `UrlPlaybackSession` | URL start, state and teardown; retain remote control | Implemented URL/MRP flow; G1 passed; G2 controls, EOF and receiver-side stop validated separately |
+| `airplay2-cli cast` | File/profile start, state lines and Enter/EOF cleanup | Implemented status, pause/play, absolute seek and stop; URL/address/payload values never printed |
 
 ## 4. Threading model (D28)
 
@@ -262,14 +265,13 @@ administered one per session.
    hardware gate G1 initially FAILED without a remote-control session. The
    minimal native SETUP/event session then PASSED G1 without pyatv. The user
    observed video/audio and return home after sender shutdown.
-   MRP remains required by D29/D31: wire codec
-   and message mapping with fixtures; data-stream framing; the
-   remote-control session against a fake receiver; then status and
-   controls. **Hardware gate G1:** the user
+   D29/D31 framing, message mapping, handshake and controls are implemented
+   with independent fixtures; native G2 telemetry is recorded separately.
+   **Hardware gate G1:** the user
    observes video and audio; read counts demonstrate fetch; teardown returns
    the TV home. Protocol-reported idle and EOF/receiver-side stop remain untested.
-7. Controls over MRP: status, pause/resume, seek, stop. **Hardware gate
-   G2.** Record each result in
+7. Controls over MRP: status, pause/resume, seek, stop. **Implemented. Hardware gate
+   G2** is recorded separately. Record each result in
    receiver-validation.md, including failures.
 8. Robustness: 10 start/stop cycles, receiver sleep/wake, network loss
    mid-play. **Gate G3.**

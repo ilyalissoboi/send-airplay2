@@ -3,6 +3,7 @@
 #define SEND_AIRPLAY2_URL_PLAYBACK_SESSION_H
 
 #include "pair_verify.h"
+#include "mrp_messages.h"
 #include "receiver_stream.h"
 #include "session_messages.h"
 #include <atomic>
@@ -23,6 +24,7 @@ namespace send_airplay2::detail {
 class EventChannel;
 class ReceiverConnection;
 class TimingResponder;
+class MrpSession;
 
 /// Session-level failures. Transport, record and verification failures keep
 /// their own exception types and categories.
@@ -64,6 +66,8 @@ struct UrlPlaybackOptions {
     /// Diagnostic: keep value-free outlines of received events
     /// (describe_event_structure) for take_event_log().
     bool record_event_structure = false;
+    /// Keep false only for the recorded minimum-session experiment/tests.
+    bool enable_mrp = true;
 };
 
 /// A snapshot of session progress, safe to read from any thread.
@@ -80,7 +84,8 @@ struct SessionStatus {
 /**
  * One URL playback session with a receiver, following the sequence validated
  * on tvOS 26.6 with the reference sender (session-design.md section 2):
- * remote-control-only pair-verify/SETUP/event connection, then a separate URL
+ * remote-control pair-verify/SETUP/events, RECORD, data SETUP/MRP handshake,
+ * then a separate URL
  * pair-verify, timing responder, base SETUP, event channel, periodic
  * /feedback, GET /info, RECORD, the URL control stream SETUP, then the four
  * /command start commands. start() returns once the receiver reports
@@ -93,7 +98,7 @@ struct SessionStatus {
  *
  * stop() tears down in a fixed order, even after earlier failures: feedback,
  * URL event channel, URL control connection, timing responder, then remote
- * event/control connections. Remote events do not update URL playback state.
+ * MRP data and remote event/control connections. Remote events do not update URL playback state.
  * It is idempotent and runs from the destructor and when start() fails. Credentials are
  * borrowed for start() only. Noncopyable, nonmovable.
  */
@@ -101,7 +106,7 @@ class UrlPlaybackSession {
 public:
     /**
      * Throws SessionException, TransportException, PairVerifyException or
-     * ControlException; every failure tears down what was started.
+     * ControlException or MrpException; every failure tears down what was started.
      * `cancelled`, when given, aborts the start at the next check.
      */
     [[nodiscard]] static std::unique_ptr<UrlPlaybackSession>
@@ -114,6 +119,10 @@ public:
     UrlPlaybackSession& operator=(UrlPlaybackSession&&) = delete;
 
     [[nodiscard]] SessionStatus status() const;
+    [[nodiscard]] MrpPlaybackStatus playback_status() const;
+    /// Synchronous correlated MRP controls. A command requires ownership of
+    /// our URL item; rejection is reported without changing playback locally.
+    void command(PlaybackCommand command, double position_seconds = 0);
     /// Block until the playback state differs from `previous`, the session
     /// fails, or `timeout` passes; returns the status at that point.
     [[nodiscard]] SessionStatus wait_for_change(const std::string& previous,
@@ -127,10 +136,12 @@ public:
 private:
     explicit UrlPlaybackSession(UrlPlaybackOptions options);
     void run_start(const PairCredentials& credentials, const std::atomic_bool* cancelled);
-    /// Minimal H5 experiment: independent verified SETUP/event session, without
-    /// RECORD, feedback, data-stream setup or MRP. Retained until URL teardown.
+    /// Independent verified remote session and MRP; retained until URL teardown.
+    /// enable_mrp=false preserves the isolated minimum H5 experiment.
     void open_remote_control(const PairCredentials& credentials, const std::atomic_bool* cancelled);
     void remote_event_loop();
+    ReceiverResponse remote_request(std::string method, std::string target, Bytes body,
+                                    const std::atomic_bool* cancelled, bool require_success);
     [[nodiscard]] ReceiverOperation operation(const std::atomic_bool* cancelled) const;
     /// An RTSP request with the session headers; Content-Type only with a body.
     [[nodiscard]] ReceiverRequest rtsp_request(std::string method, std::string target,
@@ -156,9 +167,11 @@ private:
 
     // Used only by start/stop; the remote reader owns its separate event socket.
     std::unique_ptr<ReceiverConnection> remote_control_;
+    SessionHeaders remote_headers_ = SessionHeaders::random();
     std::unique_ptr<EventChannel> remote_events_;
     std::atomic_bool remote_event_stop_{false};
     std::thread remote_event_thread_;
+    std::unique_ptr<MrpSession> mrp_;
 
     std::unique_ptr<TimingResponder> timing_;
     std::atomic_bool timing_stop_{false};

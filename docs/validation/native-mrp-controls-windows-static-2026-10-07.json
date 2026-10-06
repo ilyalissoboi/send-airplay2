@@ -1,0 +1,175 @@
+{
+  "experiment": "native MRP controls, no pyatv",
+  "cli_sha256": "b915bac5e3f726880d08a48832986d4e9e4ea8d73b8aab834e918c5aff8b603c",
+  "output": [
+    {
+      "time_seconds": 40.1,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 40.8,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 40.8,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 48.8,
+      "line": "Playback: owned=yes state=playing position=10.2 duration=131.6 mrp_messages=17 heartbeats=0"
+    },
+    {
+      "time_seconds": 50.9,
+      "line": "State: paused"
+    },
+    {
+      "time_seconds": 50.9,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 55.8,
+      "line": "Playback: owned=yes state=paused position=10.0 duration=131.6 mrp_messages=20 heartbeats=0"
+    },
+    {
+      "time_seconds": 56.9,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 56.9,
+      "line": "State: loading"
+    },
+    {
+      "time_seconds": 56.9,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 60.9,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 65.8,
+      "line": "Playback: owned=yes state=playing position=51.5 duration=131.6 mrp_messages=25 heartbeats=0"
+    },
+    {
+      "time_seconds": 66.9,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 71.8,
+      "line": "Playback: owned=yes state=playing position=19.8 duration=131.6 mrp_messages=28 heartbeats=1"
+    },
+    {
+      "time_seconds": 72.9,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 77.8,
+      "line": "Playback: owned=yes state=playing position=25.8 duration=131.6 mrp_messages=29 heartbeats=1"
+    },
+    {
+      "time_seconds": 78.9,
+      "line": "State: paused"
+    },
+    {
+      "time_seconds": 78.9,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 79.2,
+      "line": "Stopped. state=paused events=71 remote_events=9 feedback=19 timing=18 failed=no reads=1773 bytes=116021286 failed_reads=0 span=[0,53953926)"
+    }
+  ],
+  "commands": [
+    {
+      "time_seconds": 48.8,
+      "command": "status"
+    },
+    {
+      "time_seconds": 50.8,
+      "command": "pause"
+    },
+    {
+      "time_seconds": 55.8,
+      "command": "status"
+    },
+    {
+      "time_seconds": 56.8,
+      "command": "play"
+    },
+    {
+      "time_seconds": 60.8,
+      "command": "seek 45"
+    },
+    {
+      "time_seconds": 65.8,
+      "command": "status"
+    },
+    {
+      "time_seconds": 66.8,
+      "command": "seek 15"
+    },
+    {
+      "time_seconds": 71.8,
+      "command": "status"
+    },
+    {
+      "time_seconds": 72.8,
+      "command": "play"
+    },
+    {
+      "time_seconds": 77.8,
+      "command": "status"
+    },
+    {
+      "time_seconds": 78.8,
+      "command": "stop"
+    }
+  ],
+  "tested_source_blobs": {
+    "src/cast_cli.cpp": "504555d7719a7acab7da90362da9212a0bd227b5",
+    "src/control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+    "src/mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+    "src/mrp_messages.cpp": "76bb32ccbb35d7d94646755e8532365a8bff73b7",
+    "src/mrp_session.cpp": "1b055ae48120366f3a405f1c2e18c3825616a476",
+    "src/protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+    "src/receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+    "src/session_messages.cpp": "f9eaf05c7745f77a170710f92399a85815cc05ec",
+    "src/url_playback_session.cpp": "bd9242fbbc8ed511327757e46890177c21435313",
+    "src/control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+    "src/mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+    "src/mrp_messages.h": "3d29ed0572c686557bfef6a30d98c8dc96c2bb9f",
+    "src/mrp_session.h": "9d688e019f29eb545fac7baf3f2847d306c7424f",
+    "src/pair_verify.h": "5fd52a51db6b29ca6e940e697ca33fa6b905f1db",
+    "src/protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+    "src/receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+    "src/session_messages.h": "4f1094da381bc658190539a9a38da4518a22ad62",
+    "src/url_playback_session.h": "a2d6f112d2b774b913bf5dbc2a6086f80dc909fc"
+  },
+  "exit_code": 0,
+  "date": "2026-10-07",
+  "timezone": "Asia/Tokyo",
+  "base_revision": "5950145b9001248edaeddf8bbc81d4cbfeca5e35",
+  "build": "Windows MSVC 19.51 static Release",
+  "receiver": "Apple TV 4K / advertised AppleTV14,1",
+  "firmware": "tvOS 26.6 (23L773)",
+  "sender": "Windows 11 x64",
+  "media_sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+  "media_size_bytes": 53953926,
+  "g2_command_telemetry": "PASS",
+  "g2_visual_observation": "PENDING",
+  "g2": "PENDING visual observer confirmation",
+  "time_origin": "Driver start; native playback began at 40.1 seconds",
+  "ownership": "D32 cooperative startup: new selected TVAirPlay item, matching URL duration, bind once to explicit path/item",
+  "shutdown": "Correlated MRP Stop accepted, then URL and remote teardown. Final URL state paused is not protocol idle.",
+  "pyatv": "No reference controller process used",
+  "executable_staging": "Existing allowed location temporarily used; original restored, no firewall changes",
+  "not_tested": [
+    "EOF",
+    "receiver-side stop",
+    "ten cast cycles",
+    "sleep/wake",
+    "actual network outage/recovery",
+    "concurrent AirPlay takeover",
+    "other firmware/hosts"
+  ]
+}

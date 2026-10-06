@@ -1,0 +1,2 @@
+# Protocol byte oracles must survive Windows checkouts unchanged.
+tests/fixtures/mrp/*.bin binary

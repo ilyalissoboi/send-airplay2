@@ -112,6 +112,7 @@ struct StreamSetup {
 struct SessionEvent {
     std::string type;
     std::optional<std::string> playback_state;
+    std::optional<double> duration_seconds;
 };
 /// Decode an event body: the same {"params": {"data": ...}} envelope, or a
 /// bare dictionary with a "type" (some receiver events are not wrapped).

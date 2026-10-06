@@ -10,12 +10,10 @@ not a claim that the sender has been completed.
 Work continues in a local Codex session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
 Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
-Reviewed baseline head: `66b8a94cb85fe4397df7b478ee9aec1537ba0ccc`, all ten checks
-passed in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37487008800).
-Latest implementation commit: `cd2c983279c81b43462815ba6ab81ec85825be8b` (native
-minimum session and G1 pass). Its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37491750382)
-was started after publishing; inspect PR #12 for the actual current head/checks,
-including subsequent documentation-only commits.
+Step-2 starting head: `5950145b9001248edaeddf8bbc81d4cbfeca5e35`, with all ten
+checks passing. Native MRP changes are identified by the tested source blobs and
+CLI hash in the new hardware record. Inspect PR #12 for its actual published
+head/checks; baseline CI does not validate subsequent changes.
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
 
@@ -45,14 +43,19 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   The user observed normal video/audio and return home after the 45-second run
   was stopped by Enter. Full-file fetch, no failed reads, exit 0. See the new
   receiver record and sanitized artifact for exact counts and executable hash.
-- **Next:** implement D29/D31 MRP framing, protobuf messages, handshake and
-  controls. Keep the minimal remote session until URL teardown. Verify EOF,
-  receiver-side stop, protocol idle and G2/G3 separately. Reuse the existing
-  credential profile; the temporary Python firewall rule is still in place and
-  should be removed when reference testing ends.
-- **Current support:** private native-only URL casting passed one G1 run on
-  Apple TV 4K / tvOS 26.6 (23L773) / Windows 11 x64. No public playback API or
-  native pause/seek/status controls exist. This is not the complete milestone.
+- **Step 2 implemented:** bounded in-tree protobuf/message codecs, data framing,
+  remote RECORD/data SETUP, MRP handshake/correlation/heartbeat, ownership tracking
+  and native status/pause/resume/absolute seek/stop. The native receiver accepted
+  the controls and telemetry followed both seek directions; see the dated G2
+  record for the observer status. D32 documents cooperative startup binding on
+  firmware that omits the URL/item UUID.
+- **Next:** step 3 / G3: EOF, receiver-side stop, automatic bounded failure cleanup,
+  ten start/stop cycles, sleep/wake and network loss/recovery. Keep independent
+  remote/URL sessions until ordered teardown. Reuse the existing credentials.
+- **Current support:** private native casting/control experiment on Apple TV 4K /
+  tvOS 26.6 (23L773) / Windows 11 x64. No public playback ABI or packaged-host
+  proof. The temporary Python firewall rule remains from reference testing and
+  should be removed when that testing ends.
 
 ### PR #11 record (merged; historical)
 
@@ -178,7 +181,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
-| Actual casting support | Private native URL start/CLI implemented in PR #12; native-only video/audio and sender stop/home-screen G1 PASS; native MRP/controls and public API pending |
+| Actual casting support | Private native URL start/CLI implemented in PR #12; native-only video/audio and sender stop/home-screen G1 PASS; native MRP controls implemented with dated G2 evidence; public API pending |
 | Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native-only URL playback with minimum native remote SETUP/event session G1 PASS, user-observed video/audio and return home after sender stop |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
@@ -313,6 +316,14 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D30 | Sender identity: reference SETUP values first, configurable, then a hardware test of neutral values; random per-session device ID, never the host MAC | User decision 2026-10-06 |
 | D31 | MRP protobuf: in-tree bounded wire codec (varint, length-delimited, fixed32/64, unknown fields skipped) plus hand-written mapping of about 10 messages | User decision 2026-10-06 over protozero and Google protobuf/protoc. Apache-2.0, no dependency. Field numbers from pyatv's MIT `.proto` files, with provenance recorded before use; fixtures from Python `protobuf` with pyatv's compiled messages |
 
+**D32 (engineering decision, 2026-10-07):** retain an explicit MRP player
+path. Exact URL/queue UUID linkage is preferred; tvOS 26.6 omits those fields
+in the observed item. Use cooperative startup correlation only for a newly
+appeared item in the active TVAirPlay player after our URL start, with duration
+matching within 0.5 s. Capture the pre-start baseline, bind once and refuse
+stale, replacement or unrelated items. This is not proof against concurrent
+AirPlay senders; see [MRP contracts](mrp-controls.md).
+
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
 cancellation and errors before publishing production bindings.
@@ -353,7 +364,7 @@ current task list. Current next steps are in section 7.
 | `src/file_media_source.*`, `src/serve_cli.*` / `tests/file_source_tests.cpp`, `tests/cli_serve.cmake` | Private file-backed `MediaSource` and development `serve` command; adapter, loopback and real-CLI tests |
 | `src/binary_plist.*` / `tests/plist_tests.cpp`, `tests/fixtures/plist` | Private bounded `bplist00` subset codec (D27); plistlib byte-exact fixtures, literal layouts, malformed/budget cases and mutation sweeps. Integrated into private session code and compiled into its fixture test |
 | `src/channel_keys.*`, `src/event_channel.*`, `src/ntp_timing.*` | Private session keys, receiver event requests and UDP timing, with fixture/stream/loopback tests |
-| `src/session_messages.*`, `src/url_playback_session.*`, `src/cast_cli.*` | Private URL start, state, local teardown and CLI; scripted receiver tests; native-only G1 PASS; MRP controls pending |
+| `src/session_messages.*`, `src/url_playback_session.*`, `src/cast_cli.*` | Private URL start, state, local teardown and CLI; scripted receiver tests; native-only G1 PASS; MRP controls implemented, with separate G2 record |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -1201,6 +1212,24 @@ lifetime and other firmware/hosts remain unvalidated.
   Reference provenance is recorded in dependencies.md. Historical test records
   are preserved; current summaries and the PR continuation instructions are updated.
 
+### Native MRP implementation and receiver controls: 2026-10-07
+
+Step 2 adds original bounded protobuf/frame codecs, correlated handshake,
+commands and heartbeat on a verified data stream. Full player paths accompany
+commands; stale/unrelated/replaced items are refused. D32 binds a new selected
+AirPlay item once when its duration matches our URL event; simultaneous
+same-duration AirPlay takeover remains outside that cooperative guarantee.
+
+Windows MSVC static/shared Release each passed 22/22 CTest targets
+(11.88/11.71 s), offline E2E contracts 10/10, clang-format dry-run/Werror and
+`git diff --check`. The native receiver accepted pause/resume, seek to 45 s,
+seek back to 15 s and Stop. Telemetry followed the changes and a heartbeat
+was acknowledged; exit 0, full file span fetched, no session/failed-read errors.
+The final executable/source fingerprints and observer status are in the
+[dated G2 record](receiver-validation.md#native-mrp-controls-commandtelemetry-pass-g2-observer-pending-2026-10-07).
+G2 visual confirmation is pending. Do not substitute telemetry or CI for it.
+The final URL event was paused, not proof of protocol idle. Next: step 3 / G3.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -1233,10 +1262,11 @@ the recorded source snapshot is still current.
    session implemented and PASS without pyatv. Keep its independently verified
    connection until URL teardown. Expand lifetime/firmware and stop coverage;
    a single video/audio/home-screen observation does not establish G2/G3.
-2. **MRP controls (D29/D31, G2):** implement bounded protobuf wire/message codecs,
-   data-stream framing, handshake, response correlation, heartbeat and ownership
-   tracking. Add native status, pause/resume, forward/backward seek and stop.
-   Record schema provenance before use; keep independent synthetic fixtures.
+2. **MRP controls (D29/D31, G2):** implemented with bounded framing/codecs,
+   independent fixtures, correlated handshake/commands/heartbeat and player
+   tracking. Native command/telemetry evidence is recorded; keep the visual
+   observer result separate. D32 fallback assumes cooperative AirPlay startup
+   and does not guarantee ownership against a concurrent same-duration cast.
 3. **Lifecycle (G3):** complete EOF, receiver-side stop and bounded failure cleanup;
    test ten start/stop cycles, sleep/wake and network loss/recovery. Investigate
    the buffering pause and renewed loading seen in the mixed native/pyatv run.
@@ -1253,7 +1283,7 @@ the recorded source snapshot is still current.
 
 D27-D31 are settled: in-tree plist, synchronous session threads, MRP controls,
 configurable reference identity and in-tree protobuf. Remaining choices concern
-the minimum remote-control sequence, stop semantics, public ABI/cancellation,
+further remote-sequence reduction, stop/EOF semantics, public ABI/cancellation,
 other OS storage/discovery backends, capability/codec policy and packaging.
 Standalone audio, DRM, mirroring, multiroom and transcoding remain outside the
 first MP4 slice. Missing hardware access does not prevent independent implementation.

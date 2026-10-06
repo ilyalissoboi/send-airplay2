@@ -149,6 +149,21 @@ public:
             throw;
         }
     }
+    bool wait_readable(const ReceiverOperation& operation) override {
+        try {
+            wait(false, operation);
+            return true;
+        } catch (const TransportException& error) {
+            if (error.reason() == TransportError::timeout) {
+                return false;
+            }
+            close();
+            throw;
+        } catch (...) {
+            close();
+            throw;
+        }
+    }
     void require_idle(const ReceiverOperation& operation) override {
         try {
             require_open();

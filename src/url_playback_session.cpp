@@ -6,6 +6,7 @@
 #include "native_socket.h"
 #include "ntp_timing.h"
 #include "receiver_connection.h"
+#include "mrp_session.h"
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -120,6 +121,9 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
             .body);
 
     const auto item_uuid = random_uuid();
+    if (mrp_) {
+        mrp_->expect_item(item_uuid, options_.media_url);
+    }
     const PlistValue commands[] = {
         insert_play_queue_item(item_uuid, options_.media_url, options_.start_position_seconds),
         set_interested_in_date_range(item_uuid),
@@ -150,7 +154,7 @@ void UrlPlaybackSession::open_remote_control(const PairCredentials& credentials,
     request.method = "SETUP";
     request.target = rtsp_uri_;
     request.protocol = ReceiverProtocol::rtsp;
-    request.headers = SessionHeaders::random().rtsp(true);
+    request.headers = remote_headers_.rtsp(true);
     request.body = remote_control_setup_body(options_.identity, random_uuid());
     const ErasedRequest owned(std::move(request));
     const auto response =
@@ -167,6 +171,53 @@ void UrlPlaybackSession::open_remote_control(const PairCredentials& credentials,
     remote_events_ = std::make_unique<EventChannel>(
         options_.connect(endpoint, operation(cancelled)), sender_write, sender_read);
     remote_event_thread_ = std::thread([this] { remote_event_loop(); });
+    if (!options_.enable_mrp) {
+        return;
+    }
+    (void)remote_request("RECORD", rtsp_uri_, {}, cancelled, true);
+    const auto seed = random_stream_seed();
+    const auto data_response =
+        remote_request("SETUP", rtsp_uri_,
+                       data_stream_setup_body(random_uuid(), random_uuid(), seed), cancelled, true);
+    const auto setup = decode_binary_plist(data_response.body);
+    const auto* streams = setup.find("streams");
+    if (!streams || streams->kind() != PlistKind::array || streams->as_array().size() != 1) {
+        throw TransportException(TransportError::invalid_message);
+    }
+    const auto* port = streams->as_array().front().find("dataPort");
+    if (!port || port->kind() != PlistKind::integer || port->as_integer() < 1 ||
+        port->as_integer() > 65535) {
+        throw TransportException(TransportError::invalid_message);
+    }
+    remote_control_->derive_channel_keys(data_stream_labels(seed), sender_write, sender_read);
+    endpoint.port = static_cast<std::uint16_t>(port->as_integer());
+    mrp_ = std::make_unique<MrpSession>(
+        std::make_unique<MrpChannel>(options_.connect(endpoint, operation(cancelled)), sender_write,
+                                     sender_read),
+        options_.request_timeout);
+    (void)remote_request("POST", "/feedback", {}, cancelled, false);
+    mrp_->handshake(options_.identity, credentials.client_identifier(), cancelled);
+}
+
+ReceiverResponse UrlPlaybackSession::remote_request(std::string method, std::string target,
+                                                    Bytes body, const std::atomic_bool* cancelled,
+                                                    bool require_success) {
+    ReceiverRequest request;
+    request.method = std::move(method);
+    request.target = std::move(target);
+    request.protocol = ReceiverProtocol::rtsp;
+    request.headers = remote_headers_.rtsp(!body.empty());
+    request.body = std::move(body);
+    const ErasedRequest owned(std::move(request));
+    // Shares serialization with URL feedback; both are complete synchronous
+    // exchanges. Remote start finishes before this thread is started.
+    std::lock_guard<std::mutex> lock(control_mutex_);
+    const auto response =
+        remote_control_->request(owned.request, receiver_http::max_body, operation(cancelled));
+    if (require_success && (response.status < 200 || response.status > 299)) {
+        throw SessionException(SessionError::rejected, response.status);
+    }
+    return response;
 }
 
 void UrlPlaybackSession::remote_event_loop() {
@@ -259,6 +310,10 @@ void UrlPlaybackSession::event_loop() {
                 outline = request.method + " " + request.target + " unreadable";
             }
             cleanse(request.body.data(), request.body.size());
+            if (event && event->playback_state == playing_state && event->duration_seconds &&
+                mrp_) {
+                mrp_->confirm_url_playing(*event->duration_seconds);
+            }
             {
                 std::lock_guard<std::mutex> lock(state_mutex_);
                 if (options_.record_event_structure) {
@@ -302,6 +357,9 @@ void UrlPlaybackSession::feedback_loop() {
             // Best effort, as in the reference: a non-2xx answer is ignored, but
             // a transport failure has closed the control connection.
             (void)control_request(rtsp_request("POST", "/feedback", {}), &feedback_stop_, false);
+            if (mrp_) {
+                (void)remote_request("POST", "/feedback", {}, &feedback_stop_, false);
+            }
             std::lock_guard<std::mutex> lock(state_mutex_);
             ++status_.feedback_sent;
         } catch (...) {
@@ -325,7 +383,7 @@ void UrlPlaybackSession::wait_until_playing(const std::atomic_bool* cancelled) {
     const auto deadline = std::chrono::steady_clock::now() + options_.start_timeout;
     std::unique_lock<std::mutex> lock(state_mutex_);
     for (;;) {
-        if (status_.failed) {
+        if (status_.failed || (mrp_ && mrp_->failed())) {
             throw SessionException(SessionError::connection_lost);
         }
         // Both sessions must remain healthy; a URL event alone cannot hide a
@@ -355,7 +413,19 @@ SessionStatus UrlPlaybackSession::status() const {
     if (timing_) {
         snapshot.timing_answered = timing_->answered();
     }
+    snapshot.failed = snapshot.failed || (mrp_ && mrp_->failed());
     return snapshot;
+}
+
+MrpPlaybackStatus UrlPlaybackSession::playback_status() const {
+    return mrp_ ? mrp_->status() : MrpPlaybackStatus{};
+}
+
+void UrlPlaybackSession::command(PlaybackCommand command, double position_seconds) {
+    if (!mrp_) {
+        throw MrpException(MrpError::not_owned);
+    }
+    mrp_->command(command, position_seconds);
 }
 
 SessionStatus UrlPlaybackSession::wait_for_change(const std::string& previous,
@@ -411,6 +481,9 @@ void UrlPlaybackSession::stop() noexcept {
         timing_->close();
     }
     // Retain remote control until the entire URL transport has stopped.
+    if (mrp_) {
+        mrp_->stop();
+    }
     remote_event_stop_ = true;
     if (remote_event_thread_.joinable()) {
         remote_event_thread_.join();

@@ -214,3 +214,28 @@ threading, sockets, JSON and hashing APIs as a developer tool. It adds no native
 runtime/build dependency or copied implementation. Offline tests use original
 public synthetic fixtures; live reports contain constructed sanitized facts only.
 See [runner contracts](e2e-runner.md) and [hardware evidence](receiver-validation.md).
+
+## Native MRP controls (D29/D31)
+
+Before implementation, the MIT protocol references were reinspected at
+`postlund/pyatv@b277a4c8222ecdcbaab8a24e3e713ca44765adb4` on 2026-10-07:
+`airplay/channels.py`, `airplay/ap2_session.py`, `mrp/protocol.py`,
+`mrp/messages.py`, `mrp/player_state.py` and `mrp/protobuf/*.proto` under
+`pyatv/protocols`. The repository's MIT `LICENSE.md` was also inspected.
+These supply wire field numbers, enum values, data-frame layout, channel labels
+and the handshake sequence. They are reverse-engineered protocol evidence.
+The native bounded wire/message codec and session are original Apache-2.0 code;
+no third-party implementation or schema source is vendored or linked.
+Synthetic fixtures use the pinned pyatv generated messages with Python protobuf
+as an independent developer-only oracle; no new native dependency is added.
+The pinned `airplay/__init__.py`, `airplay/mrp_connection.py`,
+`auth/hap_channel.py` and `auth/hap_session.py` were subsequently inspected for
+the tunnel, remote feedback and record bounds. The reference receives records
+using their two-byte lengths without enforcing the outgoing 1024-byte chunk
+size. Native MRP adds an explicit 16-KiB receive budget after observing a
+2363-byte advertised receiver record; control/event defaults remain 1024.
+
+URL event duration conversion follows Apple's [CMTime rational time contract](https://developer.apple.com/documentation/coremedia/cmtime-api)
+and [dictionary keys](https://developer.apple.com/documentation/coremedia/cmtime-dictionary-keys),
+inspected 2026-10-07. Only field/flag facts are used; no Apple implementation
+is copied and no Core Media runtime dependency is introduced.

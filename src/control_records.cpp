@@ -82,7 +82,15 @@ Bytes ControlWriter::encrypt(const Bytes& plaintext) {
     }
 }
 
-ControlReader::ControlReader(const ControlKey& key) : key_(key) {}
+ControlReader::ControlReader(const ControlKey& key, std::size_t max_plaintext) {
+    if (max_plaintext == 0 || max_plaintext > control_records::max_data_plaintext) {
+        throw ControlException(ControlError::invalid_length);
+    }
+    // No secret has been copied if validation/allocation fails.
+    pending_.resize(control_records::header_size + max_plaintext + auth_tag_size);
+    max_plaintext_ = max_plaintext;
+    key_ = key;
+}
 ControlReader::~ControlReader() {
     close();
 }
@@ -109,7 +117,7 @@ Bytes ControlReader::feed(const Bytes& wire) {
             }
             const auto length = static_cast<std::size_t>(pending_[0]) |
                                 (static_cast<std::size_t>(pending_[1]) << 8);
-            if (length > control_records::max_plaintext) {
+            if (length > max_plaintext_) {
                 throw ControlException(ControlError::invalid_length);
             }
             const auto required = control_records::header_size + length + auth_tag_size;

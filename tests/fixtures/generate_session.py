@@ -141,6 +141,10 @@ def event(name: str, value) -> None:
 # an event type the session only counts.
 event("state-params", {"type": "playbackState", "params": {"playbackState": "Playing"}})
 event("state-name", {"type": "playbackState", "name": "Loading"})
+# CMTime-shaped duration observed on tvOS 26.6; all values are synthetic.
+event("state-duration", {"type": "playbackState", "params": {
+    "playbackState": "Playing", "duration": {
+        "value": 6580, "timescale": 50, "flags": 1, "epoch": 0}}})
 event("notification", {"type": "notification", "params": {"kind": "synthetic"}})
 # Some receiver events are a bare dict, not wrapped in params.data (updateInfo
 # on tvOS 26.6 and in the reference sender's log).

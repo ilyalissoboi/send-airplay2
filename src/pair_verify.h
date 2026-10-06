@@ -48,6 +48,11 @@ public:
     PairCredentials& operator=(const PairCredentials&) = delete;
     PairCredentials(PairCredentials&&) = delete;
     PairCredentials& operator=(PairCredentials&&) = delete;
+    /// Borrowed protocol identity for DEVICE_INFO after verification; no key
+    /// material. Valid for this owner's lifetime; never log or persist it.
+    [[nodiscard]] const Bytes& client_identifier() const noexcept {
+        return client_id_;
+    }
 
 private:
     friend class PairVerifier;

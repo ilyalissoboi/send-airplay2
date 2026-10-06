@@ -231,7 +231,7 @@ void write_usage() {
                  "[--content-type video/mp4] [--start-timeout-ms 1..120000]\n"
                  "Auth storage supports Windows desktop; pair prompts for a hidden PIN. serve "
                  "hosts one file for a receiver to fetch. cast plays one file on a paired "
-                 "receiver until Enter; playback controls are not implemented yet.\n";
+                 "receiver; type status, pause, play, seek SECONDS or stop. Enter tears down.\n";
 }
 
 } // namespace

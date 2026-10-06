@@ -14,7 +14,7 @@ the M6 metadata compatibility fix. Private channel keys, event I/O, timing,
 session messages and the URL session/`cast` CLI are implemented. Standalone G1
 initially failed. The minimal native remote-control SETUP/event session then
 passed G1: user-observed video/audio and home-screen return after sender shutdown.
-Broader authentication, native controls and host gates remain.
+Broader authentication, native control validation and host gates remain.
 
 ## Scope and architecture
 
@@ -34,9 +34,9 @@ Proposed components:
 | Discovery | mDNS/DNS-SD, service merging, TXT capability and identity parsing | Implemented bounded IPv4 scan; see discovery.md for limits and evidence |
 | Pairing | PIN flow, authenticated peer verification, credential reuse | Private TLV8, PIN/SRP, peer verification, receiver I/O and Windows storage/CLI implemented; live enrollment/fresh socket passed, broader gates pending |
 | Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Private HTTP/RTSP/TCP and record integration implemented; see receiver-transport.md |
-| Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Private URL session and minimum native remote-control SETUP/event session implemented; MRP next |
+| Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Private URL/MRP sessions implemented; native control validation tracked at G2 |
 | Media server | GET/HEAD, byte sources, range responses, bounded streaming | Experimental Boost.Beast/Asio server implemented; loopback tested and Apple TV fetch observed; see media-server.md |
-| Playback | URL start, pause/resume, seek, status, stop | URL start and local teardown implemented; native-only G1 passed with sender stop/home-screen observation; MRP controls, EOF and receiver-side stop pending |
+| Playback | URL start, pause/resume, seek, status, stop | URL start and local teardown implemented; native-only G1 passed with sender stop/home-screen observation; MRP controls implemented; G2 validation, EOF and receiver-side stop tracked separately |
 | Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; other stores, packaged hosts and media access pending |
 | Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
 
@@ -52,7 +52,8 @@ pyatv provides an executable sender reference. The originally inspected legacy
 `/play` and `/playback-info` path failed on tvOS 26.6. The unmerged reference fix
 validated type-130 `/command` queue start and event state. Native code implements
 that URL flow and now retains the native remote-control SETUP/event session
-that passed G1. MRP controls remain separate work.
+that passed G1. Native MRP controls now extend that session; see
+[mrp-controls.md](mrp-controls.md).
 Use [session-design.md](session-design.md) for D27-D31 and the current sequence. Do not treat a successful
 unauthenticated /play HTTP response as an interoperability result.
 
@@ -126,13 +127,13 @@ brokered file access and inbound network serving in a packaged UWP host early.
 The reference baseline, Windows pairing/reuse, media fetch and private URL
 session are implemented or observed as recorded in receiver-validation.md.
 The minimal native remote-control-only SETUP/event session is implemented and
-passed G1 without RECORD or a data stream. The next change is MRP framing,
-handshake and controls alongside that retained session. D29 still requires MRP controls, and D31 selects the
+passed G1 without RECORD or a data stream. MRP framing, handshake and controls
+now extend that retained session. D29 requires MRP controls, and D31 selects the
 in-tree bounded protobuf codec regardless of that minimum experiment's result.
 
 1. G1 passed for the recorded native-only run; expand EOF/receiver-side stop and repeat-run coverage.
-2. Implement MRP framing, message mapping, handshake, correlation and heartbeat;
-   pass G2 for status, pause/resume, forward/backward seek and stop.
+2. MRP framing, message mapping, handshake, correlation and heartbeat are implemented;
+   native status/control telemetry passed; G2 visual confirmation is pending.
 3. Complete EOF, receiver-side stop and terminal-failure cleanup. Pass G3 for
    ten start/stop cycles, sleep/wake and network-loss recovery; investigate buffering.
 4. Complete hardware authentication/restart/revocation and discovery/interface

@@ -6,7 +6,8 @@ tvOS 26 incompatibility); reference playback PASSED with an unmerged pyatv fix
 fetching from `airplay2-cli serve`. Native `cast` initially failed G1 alone;
 the minimal native remote-control SETUP/event session then PASSED G1 without
 pyatv: video/audio and home-screen return after sender shutdown were user-observed.
-See the dated G1 observations below. Fill out one record per
+Native MRP command/telemetry checks passed; G2 visual confirmation is pending.
+See the dated G1/G2 observations below. Fill out one record per
 receiver firmware and sender platform.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
@@ -57,11 +58,11 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Profile/input guards | Existing/missing profiles and redirected PIN input are refused | PASS, automated native CLI static/shared runs |
 | Local forget | Local deletion and idempotence | Absent-profile no-op PASS; real disposable deletion SKIPPED (no opt-in) |
 | Start MP4 | Both audio and video play | Reference: pyatv 0.18.0 FAIL (no fetch); unmerged pyatv fix PASS, video and audio from `serve` (user-observed). Native: initially headless (FAIL); minimum native remote SETUP/event session then PASS without pyatv, video/audio user-observed |
-| Pause/resume | Receiver and host state agree | Reference (unmerged pyatv fix): PASS, `Paused` then `Playing`, user-observed. Native NOT RUN |
-| Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native NOT RUN |
-| Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native NOT RUN |
+| Pause/resume | Receiver and host state agree | Reference (unmerged pyatv fix): PASS, `Paused` then `Playing`, user-observed. Native command/telemetry PASS; visual observation pending (dated G2 record) |
+| Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native command/telemetry PASS; visual observation pending (dated G2 record) |
+| Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native PASS: duration 131.6 s and positions follow pause/forward/backward seek |
 | End-of-file | Correct ended state and resource cleanup | NOT RUN |
-| Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; receiver-side stop and protocol idle NOT RUN |
+| Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; native MRP Stop accepted followed by teardown (visual result pending); receiver-side stop and protocol idle NOT RUN |
 | Repeated casting | Ten start/stop cycles without stale sessions | NOT RUN |
 | Network interruption | Bounded failure; next cast can recover | NOT RUN |
 | Large file | Seek beyond 4 GiB without integer truncation | NOT RUN |
@@ -473,6 +474,53 @@ an error. MRP remains the selected controls path (D29/D31). The printed final
 state is the last URL event, not proof of protocol idle. This was not EOF or a
 receiver-side stop test. Native controls, repeated casting, extended session
 lifetime and other firmware/hosts remain unvalidated.
+
+## Native MRP controls: command/telemetry PASS, G2 observer pending, 2026-10-07
+
+Same Apple TV 4K / tvOS 26.6 (23L773), Windows 11 x64 and MP4 as G1. The
+normal native CLI now extends the independently verified remote session with
+RECORD, type-130 controlType-2 data SETUP, keyed MRP framing and handshake.
+No pyatv controller was running. Existing credentials and firewall rules were
+reused; the temporarily staged executable was restored.
+
+The [sanitized record](validation/native-mrp-controls-windows-static-2026-10-07.json)
+contains final CLI SHA-256, tested source blobs, command times and allowlisted
+scalar output. Commands were scoped to the full selected player path using D32
+startup correlation; this firmware omitted our URL and queue UUID in MRP.
+
+| Native command/check | Receiver evidence |
+|---|---|
+| Initial status | owned=yes, playing, position 10.2 s, duration 131.6 s |
+| Pause | Correlated result accepted; URL and MRP paused, position 10.0 s after 5 s |
+| Resume | Correlated result accepted; URL loading then playing |
+| Seek forward to 45 s | Accepted; playing position 51.5 s about 5 s later |
+| Seek backward to 15 s | Accepted; playing position 19.8 s about 5 s later |
+| Heartbeat | One correlated acknowledgment after 30 s |
+| MRP Stop then teardown | Accepted; URL paused; exit 0 and failed=no |
+
+Final summary: `state=paused events=71 remote_events=9 feedback=19 timing=18
+failed=no reads=1773 bytes=116021286 failed_reads=0 span=[0,53953926)`.
+Repeated range reads explain total bytes exceeding file size. Command results and
+telemetry pass for this run; visible pause/resume/seeks, resumed audio and home
+screen return await the user's observation. **G2 remains pending that observation.**
+The final paused URL event does not prove protocol idle or EOF.
+
+Compatibility issues discovered and covered by independent synthetic fixtures:
+receiver replies can contain a plist body; an idle readiness poll must preserve
+the socket; the reference subscription yields a 2363-byte authenticated record;
+configuration/heartbeat use correlated type-0 acknowledgments; URL duration is
+a CMTime rational dictionary. MRP receive opts into a bounded 16-KiB record
+budget while other channels retain 1024 bytes. Full command result types and
+request IDs remain checked. D32 is an engineering fallback for cooperative
+startup, not proof against simultaneous same-duration AirPlay senders.
+
+Windows static/shared Release each passed 22/22 CTest targets (11.88/11.71 s),
+including independent protobuf/frame/large-record oracles, split/coalesced
+frames, malformed input, correlation/authentication/timeout/cancellation,
+heartbeat, ownership/replacement guards and native idle-readiness regression.
+Formatting and diff checks passed. Unit tests and CI are separate from G2/G3.
+EOF, receiver-side stop, automatic failure cleanup, ten cycles, sleep/wake,
+network loss/recovery and other hosts/firmware remain step 3 or later gates.
 
 ## Automated CLI E2E observation: 2026-10-06
 

@@ -4,6 +4,7 @@
 #include "session_messages.h"
 #include "control_crypto.h"
 #include <algorithm>
+#include <cmath>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -312,6 +313,34 @@ PlistValue set_rate(double rate) {
 namespace {
 constexpr std::size_t max_described_paths = 48;
 constexpr std::size_t max_described_depth = 4;
+constexpr std::int64_t time_valid = 1, time_rounded = 2;
+
+/// URL events can represent seconds as a number or as a CMTime dictionary.
+/// A rational duration must have a positive timescale and a valid numeric
+/// flag (bit 0); rounded values (bit 1) are allowed, infinities/indefinite are not.
+std::optional<double> duration_seconds(const PlistValue& duration) {
+    double seconds = -1;
+    if (duration.kind() == PlistKind::real) {
+        seconds = duration.as_real();
+    } else if (duration.kind() == PlistKind::integer) {
+        seconds = static_cast<double>(duration.as_integer());
+    } else if (duration.kind() == PlistKind::dictionary) {
+        const auto* value = duration.find("value");
+        const auto* scale = duration.find("timescale");
+        const auto* flags = duration.find("flags");
+        if (!value || !scale || !flags || value->kind() != PlistKind::integer ||
+            scale->kind() != PlistKind::integer || flags->kind() != PlistKind::integer ||
+            scale->as_integer() <= 0 ||
+            scale->as_integer() > std::numeric_limits<std::int32_t>::max() ||
+            (flags->as_integer() != time_valid &&
+             flags->as_integer() != (time_valid | time_rounded))) {
+            return {};
+        }
+        seconds =
+            static_cast<double>(value->as_integer()) / static_cast<double>(scale->as_integer());
+    }
+    return std::isfinite(seconds) && seconds > 0 ? std::optional<double>{seconds} : std::nullopt;
+}
 
 void collect_key_paths(const PlistValue& value, const std::string& prefix, std::size_t depth,
                        std::vector<std::string>& paths) {
@@ -372,6 +401,9 @@ SessionEvent parse_session_event(const Bytes& body) {
         invalid_body();
     }
     output.playback_state = lower_ascii(state->as_string());
+    if (const auto* duration = params ? params->find("duration") : nullptr) {
+        output.duration_seconds = duration_seconds(*duration);
+    }
     return output;
 }
 } // namespace send_airplay2::detail

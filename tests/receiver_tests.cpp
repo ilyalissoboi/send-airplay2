@@ -765,6 +765,9 @@ void native_socket_tests() {
         auto stream = connect_receiver(listener.endpoint, ReceiverOperation::after(2s));
         TestSocketOwner peer(accept(listener.socket.value, nullptr, nullptr));
         stream->require_idle(ReceiverOperation::after(1s));
+        check(!stream->wait_readable(ReceiverOperation::after(20ms)),
+              "idle poll expires without closing native socket");
+        stream->require_idle(ReceiverOperation::after(1s));
         const auto request = text("loopback");
         std::size_t sent = 0;
         while (sent < request.size()) {
@@ -786,6 +789,8 @@ void native_socket_tests() {
             throw std::runtime_error("Test loopback send failed");
         }
         Bytes inbound(5);
+        check(stream->wait_readable(ReceiverOperation::after(1s)),
+              "native poll detects reply without consuming it");
         offset = 0;
         while (offset < inbound.size()) {
             offset += stream->read_some(inbound.data() + offset, inbound.size() - offset,

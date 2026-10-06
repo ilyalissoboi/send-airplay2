@@ -569,6 +569,7 @@ constexpr const char* media_url = "http://127.0.0.1:49153/synthetic-token/media"
 
 UrlPlaybackOptions options_for(FakeReceiver& receiver) {
     UrlPlaybackOptions options;
+    options.enable_mrp = false; // Preserve coverage of the minimum G1 sequence.
     options.receiver = {"127.0.0.1", control_port, 0};
     options.media_url = media_url;
     options.request_timeout = 2000ms;
@@ -865,6 +866,37 @@ void failure_after_start_tests() {
     check(remote_lost.control_was_closed() && remote_lost.remote_control().control_was_closed(),
           "stop after remote failure closes both authenticated connections");
 }
+void mrp_setup_failure_tests() {
+    group = "MRP setup cleanup";
+    FakeReceiver receiver({});
+    const auto credentials = receiver.credentials();
+    auto options = options_for(receiver);
+    options.enable_mrp = true;
+    try {
+        (void)UrlPlaybackSession::start(credentials, options);
+        check(false, "data SETUP without dataPort accepted");
+    } catch (const TransportException& error) {
+        check(error.reason() == TransportError::invalid_message, "missing dataPort category");
+    }
+    const auto requests = receiver.remote_control().requests();
+    check(sequence_without_feedback(requests) == std::vector<std::string>{"SETUP <uri> RTSP/1.0",
+                                                                          "RECORD <uri> RTSP/1.0",
+                                                                          "SETUP <uri> RTSP/1.0"},
+          "MRP remote SETUP/events, RECORD, then data SETUP");
+    const auto data_setup = decode_binary_plist(requests.back().body);
+    const auto& stream = data_setup.find("streams")->as_array().front();
+    check(stream.find("controlType")->as_integer() == 2 &&
+              stream.find("wantsDedicatedSocket")->as_boolean(),
+          "MRP owns a dedicated type-130 controlType-2 stream");
+    check(std::all_of(requests.begin(), requests.end(),
+                      [&](const ParsedRequest& request) {
+                          return request.header("dacp-id") == requests.front().header("dacp-id");
+                      }),
+          "remote sender identity stable across setup and record");
+    check(receiver.remote_control().control_was_closed() &&
+              receiver.remote_control().event_was_closed() && receiver.requests().empty(),
+          "MRP start failure closes remote and prevents URL start");
+}
 } // namespace
 
 int main() {
@@ -874,6 +906,7 @@ int main() {
         remote_control_failure_tests();
         event_log_tests();
         failure_after_start_tests();
+        mrp_setup_failure_tests();
     } catch (const std::exception& error) {
         std::cerr << "Unexpected test exception [" << group << "]: " << error.what() << '\n';
         return 1;

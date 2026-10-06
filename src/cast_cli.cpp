@@ -6,12 +6,15 @@
 #include "pair_verify.h"
 #include "send_airplay2/media_server.h"
 #include "url_playback_session.h"
+#include "mrp_session.h"
 
 #include <atomic>
 #include <charconv>
 #include <chrono>
 #include <cstdint>
 #include <exception>
+#include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -157,6 +160,73 @@ void write_summary(const SessionStatus& session, const FileReadStats& reads) {
     std::cout << std::endl;
 }
 
+void print_playback_status(UrlPlaybackSession& session) {
+    const auto status = session.playback_status();
+    std::cout << "Playback: owned=" << (status.owned ? "yes" : "no")
+              << " state=" << (status.state.empty() ? "unknown" : status.state) << " position=";
+    if (status.position_seconds) {
+        std::cout << std::fixed << std::setprecision(1) << *status.position_seconds;
+    } else {
+        std::cout << "unknown";
+    }
+    std::cout << " duration=";
+    if (status.duration_seconds) {
+        std::cout << std::fixed << std::setprecision(1) << *status.duration_seconds;
+    } else {
+        std::cout << "unknown";
+    }
+    std::cout << " mrp_messages=" << status.messages << " heartbeats=" << status.heartbeats
+              << std::endl;
+}
+
+/// Fixed diagnostics only. A failed stop still tears down both sessions.
+bool control_loop(UrlPlaybackSession& session) {
+    bool success = true;
+    std::string line;
+    while (std::getline(std::cin, line)) {
+        if (line.empty()) {
+            break;
+        }
+        if (line == "status") {
+            print_playback_status(session);
+            continue;
+        }
+        const bool stopping = line == "stop";
+        try {
+            if (line == "pause") {
+                session.command(PlaybackCommand::pause);
+            } else if (line == "play" || line == "resume") {
+                session.command(PlaybackCommand::play);
+            } else if (stopping) {
+                session.command(PlaybackCommand::stop);
+            } else if (line.rfind("seek ", 0) == 0 && line.size() < 64) {
+                double position = 0;
+                const auto result =
+                    std::from_chars(line.data() + 5, line.data() + line.size(), position);
+                if (result.ec != std::errc{} || result.ptr != line.data() + line.size() ||
+                    !std::isfinite(position) || position < 0) {
+                    throw std::invalid_argument("Invalid seek time");
+                }
+                session.command(PlaybackCommand::seek, position);
+            } else {
+                throw std::invalid_argument("Unknown control");
+            }
+            std::cout << "Control: accepted" << std::endl;
+        } catch (const MrpException& error) {
+            std::cout << "Control: " << error.what() << std::endl;
+            if (stopping) {
+                success = false;
+            }
+        } catch (const std::invalid_argument&) {
+            std::cout << "Use status, pause, play, seek SECONDS, stop or Enter." << std::endl;
+        }
+        if (stopping) {
+            break;
+        }
+    }
+    return success;
+}
+
 /// Starts media serving and the session, waits for the operator, then stops.
 int cast(const CastArguments& arguments) {
     // A bad path is an argument error; opening a local file contacts nobody.
@@ -185,17 +255,18 @@ int cast(const CastArguments& arguments) {
     std::cout << "Starting playback." << std::endl;
     auto session = UrlPlaybackSession::start(*credentials, std::move(options));
     std::cout << "State: " << session->status().playback_state << std::endl;
-    std::cout << "Press Enter to stop." << std::endl;
+    std::cout << "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+              << std::endl;
 
+    bool controls_ok = true;
     {
         StateReporter reporter(*session);
-        std::string ignored;
-        std::getline(std::cin, ignored);
+        controls_ok = control_loop(*session);
     }
     session->stop();
     server->stop(); // Joins every read before the summary reads the statistics.
     write_summary(session->status(), *reads);
-    return 0;
+    return controls_ok ? 0 : 1;
 }
 } // namespace
 
@@ -220,6 +291,8 @@ int run_cast_cli(int argc, const char* const* argv) {
             std::cerr << " (status " << error.status() << ')';
         }
         std::cerr << ".\n";
+    } catch (const MrpException& error) {
+        std::cerr << "MRP: " << error.what() << ".\n";
     } catch (const TransportException& error) {
         std::cerr << "Receiver: " << error.what() << '\n';
     } catch (const PairVerifyException& error) {

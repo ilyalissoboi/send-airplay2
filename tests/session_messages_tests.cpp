@@ -8,6 +8,7 @@
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -179,6 +180,9 @@ void event_tests(const std::string& directory) {
           "params.playbackState, lower-cased");
     const auto loading = parse_session_event(fixture(directory, "event-state-name"));
     check(loading.playback_state == "loading", "state from the name field");
+    const auto timed = parse_session_event(fixture(directory, "event-state-duration"));
+    check(timed.playback_state == "playing" && timed.duration_seconds == 131.6,
+          "independent CMTime duration, value/timescale in seconds");
     const auto notification = parse_session_event(fixture(directory, "event-notification"));
     check(notification.type == "notification" && !notification.playback_state,
           "other event types carry no state");
@@ -189,6 +193,34 @@ void event_tests(const std::string& directory) {
         return encode_binary_plist(
             PlistDictionary{{"params", PlistDictionary{{"data", encode_binary_plist(inner)}}}});
     };
+    auto duration_event = [&](PlistValue duration) {
+        return parse_session_event(envelope(
+            PlistDictionary{{"type", "playbackState"},
+                            {"params", PlistDictionary{{"playbackState", "playing"},
+                                                       {"duration", std::move(duration)}}}}));
+    };
+    check(duration_event(30).duration_seconds == 30.0, "integer duration");
+    check(duration_event(30.5).duration_seconds == 30.5, "real duration");
+    for (const auto flags : {0, 4, 8, 16, -1}) {
+        check(!duration_event(PlistDictionary{{"value", 100}, {"timescale", 10}, {"flags", flags}})
+                   .duration_seconds,
+              "invalid/non-numeric CMTime flags " + std::to_string(flags));
+    }
+    check(duration_event(PlistDictionary{{"value", 101}, {"timescale", 10}, {"flags", 3}})
+                  .duration_seconds == 10.1,
+          "rounded CMTime remains numeric");
+    for (auto scale : {0, -1}) {
+        check(!duration_event(PlistDictionary{{"value", 100}, {"timescale", scale}, {"flags", 1}})
+                   .duration_seconds,
+              "nonpositive timescale " + std::to_string(scale));
+    }
+    for (const auto value : {0.0, -1.0, std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::quiet_NaN()}) {
+        check(!duration_event(value).duration_seconds, "nonpositive/nonfinite duration");
+    }
+    check(!duration_event(PlistDictionary{{"value", 100}, {"flags", 1}}).duration_seconds,
+          "missing timescale");
+    check(!duration_event("100").duration_seconds, "text duration is not parsed");
     // Diagnostic outlines carry key names and the state, never other values.
     check(describe_event_structure(fixture(directory, "event-state-params")) ==
               "type=playbackState state=playing keys=type,params,params.playbackState",
