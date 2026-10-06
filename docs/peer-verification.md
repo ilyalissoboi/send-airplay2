@@ -74,7 +74,14 @@ every truncated/altered M2 byte and 1,000 deterministic random M2 bodies.
 See [fixture provenance](../tests/fixtures/README.md).
 
 Windows 11 x64 / MSVC 19.51 static/shared Release builds pass all eight CTest
-targets. Platform/sanitizer CI must be checked for the published PR head.
+targets. clang-format dry-run and `git diff --check` pass, and independent fixture
+regeneration reproduces the committed bytes. At implementation commit
+`7b572a7b24d7242200e0cb1321c366a83932b3da`, all six Windows/Linux/macOS static/shared
+jobs and Linux ASan/UBSan passed in the
+[PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37427549046) and
+[push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37427502668).
+Inspect checks for the actual final [PR #4](https://github.com/ilyalissoboi/send-airplay2/pull/4)
+head before merging, including documentation-only updates.
 No Apple TV 4K / tvOS 26.6 pairing or playback operation was attempted; hardware
 revocation, reconnect and interoperability remain NOT RUN.
 

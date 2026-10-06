@@ -34,10 +34,11 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Foundation PR state | Merged on 2026-10-06; verified through GitHub CLI |
 | Discovery PR | [#2: feat: add receiver discovery and diagnostic CLI](https://github.com/ilyalissoboi/send-airplay2/pull/2), merged on 2026-10-06 |
 | Pairing/transport PR | [#3: feat: add pairing TLV8 and authenticated control record codecs](https://github.com/ilyalissoboi/send-airplay2/pull/3), merged on 2026-10-06 |
-| Current peer-verification PR | Implementation on `codex/peer-verification`; publication pending |
+| Current peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), open |
 | Target | `main` |
 | Current local branch | `codex/peer-verification`, based on verified PR #3 merge at `360d74661e7cc703a82b7852f425215189217ad3` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
+| Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; later commits add documentation and a C++ readability/ownership pass |
 | C++ readability commit | `23f8ff08a12431fc0aba95a21aaf881aa7458674`; all platform/sanitizer CI jobs passed, subsequent commits record evidence only |
 | Final foundation PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
@@ -311,7 +312,13 @@ Peer verification, 2026-10-06:
   targets. Added RFC 7748/8032 vectors, independent Python wire/HMAC transcript
   fixtures, identity/signature/schema/replay/rejection cases, directional record
   handoff at every split, phase cancellation and 1,000 deterministic M2 mutations.
-  Platform/sanitizer CI for the published head is still pending.
+  Fixture regeneration reproduced committed bytes; clang-format dry-run and
+  `git diff --check` passed. Existing control fixtures and Apache-2.0 LICENSE are unchanged.
+- At implementation commit `7b572a7b24d7242200e0cb1321c366a83932b3da`, all six
+  Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed in the
+  [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37427502668)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37427549046).
+  Inspect final PR #4 head checks, including documentation-only commits, before merging.
 - Continued the AGENTS.md readability requirements: named scenario groups,
   diagnostic context, explicit non-copyable ownership and Doxygen contracts.
   OpenSSL remains the only crypto dependency; no third-party source was copied.
