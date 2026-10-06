@@ -33,14 +33,16 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Foundation PR | [#1: feat: establish portable AirPlay sender foundation](https://github.com/ilyalissoboi/send-airplay2/pull/1) |
 | Foundation PR state | Merged on 2026-10-06; verified through GitHub CLI |
 | Discovery PR | [#2: feat: add receiver discovery and diagnostic CLI](https://github.com/ilyalissoboi/send-airplay2/pull/2), merged on 2026-10-06 |
+| Current pairing/transport PR | [#3: feat: add pairing TLV8 and authenticated control record codecs](https://github.com/ilyalissoboi/send-airplay2/pull/3), open |
 | Target | `main` |
 | Current local branch | `codex/pairing-transport`, based on merged `main` at `02c953a22c9503f1bf17bc14d6814e797cb04a1b` |
+| Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; later commits add documentation and a C++ readability/ownership pass |
 | C++ readability commit | `23f8ff08a12431fc0aba95a21aaf881aa7458674`; all platform/sanitizer CI jobs passed, subsequent commits record evidence only |
 | Final foundation PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
-| Runtime dependencies | OpenSSL 3.5+ libcrypto for private pairing/control adapters; native discovery still uses OS socket/interface APIs |
+| Crypto dependency | OpenSSL 3.5+ libcrypto for private pairing/control adapters/tests; unused sections are removed from the Windows Release discovery DLL, public authenticated-session runtime loading is pending |
 | Actual casting support | None yet |
 | Receiver validation | Windows LAN discovery observed for `AppleTV14,1` advertising OS 26.6 and `Mac14,2`; pairing/playback not run, no compatibility certification |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
@@ -257,8 +259,11 @@ Pairing/control foundation, 2026-10-06:
   resource copying are forbidden. Socket ownership/deadlines and peer verification
   are explicitly pending; see pairing-transport.md.
 - Windows static/shared Release builds passed all seven CTest targets using OpenSSL
-  3.6.5 from the pinned vcpkg manifest, MSVC 19.51 / Visual Studio 2026. CI results
-  must be recorded after completion. Fixtures include independent RFC AEAD bytes,
+  3.6.5 from the pinned vcpkg manifest, MSVC 19.51 / Visual Studio 2026.
+  At implementation commit `ee4afa80172d38300078fad0b5a2332898e95cd5`, all six
+  Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed in the
+  [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37422659514).
+  Inspect checks for the final PR head before merging. Fixtures include RFC AEAD bytes,
   Python-generated control framing/HKDF, every two-part split, byte-at-a-time reads,
   corruption/replay/EOF/nonce limits and 3,000 TLV parser mutations.
 - No receiver handshake, credential change, PIN or playback operation was attempted.

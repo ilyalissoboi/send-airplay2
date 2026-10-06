@@ -12,6 +12,13 @@ OpenSSL 3 is Apache-2.0: [upstream license](https://openssl-library.org/source/l
 Redistributors must retain its license/notices alongside the native library.
 No OpenSSL source is copied into the tracked repository.
 
+The private codecs are not yet called by public discovery/range APIs. A local
+Windows Release `dumpbin /dependents` check showed that unused crypto sections
+were removed from `send_airplay2.dll`, while `control_tests.exe` imports
+`libcrypto-3-x64.dll`. Thus this slice requires OpenSSL at build time and exercises
+it in the codec test executable; runtime packaging for a public authenticated
+session still needs proof once that path calls these codecs.
+
 The Windows reproducible package manifest pins vcpkg at
 `434307da09bc05b2c86996dccc8b2351fc0d5d37`, whose OpenSSL port resolves 3.6.5.
 vcpkg is an MIT-licensed build tool, not a runtime component. Its port records

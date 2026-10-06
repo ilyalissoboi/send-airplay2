@@ -74,7 +74,12 @@ generation; Python is unnecessary to run the committed fixtures.
 
 Local Windows 11 x64 / MSVC 19.51 static and shared Release builds passed all seven
 CTest targets against OpenSSL 3.6.5; clang-format and `git diff --check` passed.
-Cross-platform/sanitizer CI results must be verified for the published PR head.
+At implementation commit `ee4afa80172d38300078fad0b5a2332898e95cd5`, all six
+Windows/Linux/macOS static/shared CI jobs and Linux ASan/UBSan passed in the
+[push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37422659514).
+Verify checks for the final [PR #3](https://github.com/ilyalissoboi/send-airplay2/pull/3)
+head before merging. Sanitizers instrument the in-tree code; packaged/Android
+hosts and receiver authentication remain untested.
 
 Next: implement the PIN pairing/peer-verification state machine using vetted
 SRP/signature/key-agreement primitives, credential ownership/storage adapters and
