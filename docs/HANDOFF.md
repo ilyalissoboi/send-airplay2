@@ -34,22 +34,25 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Foundation PR state | Merged on 2026-10-06; verified through GitHub CLI |
 | Discovery PR | [#2: feat: add receiver discovery and diagnostic CLI](https://github.com/ilyalissoboi/send-airplay2/pull/2), merged on 2026-10-06 |
 | Pairing/transport PR | [#3: feat: add pairing TLV8 and authenticated control record codecs](https://github.com/ilyalissoboi/send-airplay2/pull/3), merged on 2026-10-06 |
-| Current peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), open |
+| Peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), merged on 2026-10-06 |
+| Current PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), open |
 | Target | `main` |
-| Current local branch | `codex/peer-verification`, based on verified PR #3 merge at `360d74661e7cc703a82b7852f425215189217ad3` |
+| Current local branch | `codex/pin-pairing`, based on verified PR #4 merge at `54d63b81d5b9972c12418164aac2076fda1d1ff7` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
+| PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
+| Hardened PIN-pairing source commit | `4c7dcc4f6af6f5ebc391097dcc0998262436f761`; all platform/static/shared and sanitizer checks passed; subsequent documentation commits record evidence |
 | Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; later commits add documentation and a C++ readability/ownership pass |
 | C++ readability commit | `23f8ff08a12431fc0aba95a21aaf881aa7458674`; all platform/sanitizer CI jobs passed, subsequent commits record evidence only |
 | Final foundation PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
-| Crypto dependency | OpenSSL 3.5+ libcrypto for private pairing/control adapters/tests; unused sections are removed from the Windows Release discovery DLL, public authenticated-session runtime loading is pending |
+| Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
 | Actual casting support | None yet |
 | Receiver validation | Windows LAN discovery observed for `AppleTV14,1` advertising OS 26.6 and `Mac14,2`; pairing/playback not run, no compatibility certification |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1, #2 and #3 are merged and `main` contains the foundation/discovery/control codecs. Verify current GitHub and
+PRs #1 through #4 are merged and `main` contains the foundation/discovery/control codecs and peer verification. Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -158,7 +161,8 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D16 | Keep protocol-specific records and merge only by matching normalized advertised device identity | Implemented; hostname/friendly name alone is insufficient, advertisements remain unauthenticated |
 | D17 | Experimental C++ discovery API plus CLI before versioned C discovery ABI/event API | Implemented; shared users require compatible C++ runtime, production bindings still pending |
 | D18 | OpenSSL 3.5+ EVP primitives, private bounded pairing/control codecs before receiver handshake | Engineering choice, implemented; no homegrown cryptography, public pairing API deferred until peer authentication and ownership contracts are complete |
-| D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Engineering choice, implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 schema and one-time control-key release. SRP backend selection, credential storage and network correlation/deadlines are still gates |
+| D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Engineering choice, implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 schema and one-time control-key release. Credential storage and network correlation/deadlines remain gates |
+| D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP and Ed25519 key validation | Engineering choice, implemented privately; C++17 core, maintained SRP/subgroup checks, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -185,6 +189,9 @@ cancellation and errors before publishing production bindings.
 | `src/control_crypto.*` / `src/control_records.*` | OpenSSL AEAD/HKDF, incremental authenticated records, directional counters and terminal failure |
 | `tests/control_tests.cpp` / `tests/fixtures` | Independent synthetic wire/key fixtures and malformed/replay/fragmentation tests |
 | `docs/pairing-transport.md` / `docs/dependencies.md` / `vcpkg.json` | Transport contracts, gates, dependency/license provenance and pinned package manifest |
+| `src/pair_setup_crypto.*` / `src/pair_setup.*` | Private Botan SRP/HAP proof adapter and authenticated persistent PIN setup state machine |
+| `tests/pair_setup_tests.cpp` / `tests/fixtures/pair-setup` | Independent SRP/message fixtures, rejection/cleanup cases and enrollment-to-verification round trip |
+| `docs/pin-pairing.md` | Provisioning trust, bounds, ownership, dependency and remaining I/O/storage gates |
 | `src/identity_crypto.*` / `src/pair_verify.*` | OpenSSL X25519/Ed25519, secret ownership and bounded existing-credential verification state machine |
 | `tests/pair_verify_tests.cpp` / `tests/fixtures/pair-verify` / `docs/peer-verification.md` | RFC vectors, independent synthetic transcripts, failure/cleanup/record-handoff tests and trust contracts |
 
@@ -327,13 +334,56 @@ Peer verification, 2026-10-06:
   Android loading remain untested. Next: vetted PIN/SRP provisioning with verified
   server proofs/signatures, trusted credential storage, bounded HTTP/socket I/O.
 
-Reproduction from a fresh checkout (requires OpenSSL 3.5+; see README for the
+PIN pairing, 2026-10-06:
+
+- Verified PR #4 merged at `54d63b81d5b9972c12418164aac2076fda1d1ff7`; started
+  `codex/pin-pairing` from main. Added private persistent HAP setup using Botan
+  SRP-6a (3072-bit/g=5/SHA512), with OpenSSL transcript/HKDF/AEAD/Ed25519.
+  No third-party implementation source was copied; dependency provenance and
+  BSD-2-Clause notices are recorded in dependencies.md. Botan builds as C++20;
+  its C FFI preserves the core's C++17 requirement.
+- M4 must authenticate before M5 is emitted. M6 AEAD and accessory signature
+  must authenticate before credentials are returned once. Errors/cancellation
+  close and erase owned secrets; no discovery trust or plaintext/transient fallback.
+  See pin-pairing.md for the bounded profile and caller/transport/storage contracts.
+- Native regression tests demonstrated that a validly encrypted M6 with an
+  identity public key and a trivial forged signature could otherwise be accepted.
+  The shared Ed25519 verifier now enforces canonical encoding, rejects identity
+  aliases and uses Botan to check curve/prime-order subgroup membership before
+  signature verification. This protects both enrollment and later peer verification.
+  Regression fixtures and numeric weak-key cases fail before the fix and pass after;
+  no curve arithmetic was copied or implemented.
+- Independent Python integer/SHA512/HMAC fixtures cover a leading-zero shared
+  integer, exact sender bytes, wrong PIN, every server-proof/ciphertext byte,
+  validly encrypted signature/identity/schema failures, bounds, phase cancellation,
+  single-use release and erasure. Enrollment credentials complete the existing
+  peer-verification oracle and derive the expected control keys.
+- Windows 11 x64 / MSVC 19.51 static/shared Release builds pass all nine CTest
+  targets with OpenSSL 3.6.5 and Botan 3.12.0. clang-format dry-run and
+  `git diff --check` pass; fixture regeneration is reproducible.
+- At hardened source commit `4c7dcc4f6af6f5ebc391097dcc0998262436f761`, all six
+  Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed in both the
+  [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37436323914)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37436328684).
+  Inspect checks for the actual final PR #5 head, including documentation commits.
+- The full hardened Windows Debug pair-setup suite also passes (94.70 seconds).
+  Its CTest limit is five minutes to accommodate repeated 3072-bit SRP with
+  unoptimized backends; corruption coverage is retained. Release suite time
+  is about three seconds. GCC/Clang warnings-as-errors exposed a test-loop string
+  copy, fixed with a const reference; final-head CI must be rechecked.
+- No receiver connection, PIN-display request, actual PIN entry, credential save
+  or playback operation was attempted. Hardware authentication remains NOT RUN.
+  Next: bounded HTTP/socket I/O and trusted host credential storage, followed by
+  real PIN/reconnect/revocation validation. vcpkg Botan excludes UWP; packaged
+  Windows/Screenbox and Android loading require separate proof.
+
+Reproduction from a fresh checkout (requires OpenSSL 3.5+ and Botan 3.12+; see README for the
 pinned vcpkg build when the host package is unavailable):
 
 ```sh
 git clone https://github.com/ilyalissoboi/send-airplay2.git
 cd send-airplay2
-git switch codex/peer-verification
+git switch codex/pin-pairing
 cmake -S . -B build-static -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build-static --config Release
 ctest --test-dir build-static -C Release --output-on-failure
@@ -393,8 +443,8 @@ while arranging the hardware baseline in parallel with that work.
    departure/interface-change checks and other platform/Android host coverage.
    The Windows Apple TV discovery gate has passed; see discovery.md for limits.
 3. **Pairing + secure transport:** private TLV8, AEAD/HKDF and record framing are
-   implemented, along with existing-credential peer verification. Next implement authenticated PIN/SRP, the
-   socket/deadline layer, and specify persistent credentials
+   implemented, along with existing-credential peer verification and PIN/SRP message
+   processing. Next implement the socket/deadline layer and specify persistent credentials
    and host storage, and test fragmentation, wrong PIN, authentication failure,
    counters/replay, timeouts and revocation before claiming interoperability.
 4. **HTTP media server:** define size/read-at callbacks and cancellation/lifetime;
@@ -412,11 +462,11 @@ while arranging the hardware baseline in parallel with that work.
    regression and local/remote handoff.
 
 Remaining design choices: production OS discovery fallback/IPv6-only backend,
-SRP backend, plist libraries, session socket/event
+plist libraries, session socket/event
 model, credential format/storage adapters, asynchronous C API and bindings,
 timeouts/cancellation, capability policy, media-server access policy, unsupported
 codec handling, Android packaging and audio transport. These choices remain open;
-the OpenSSL choice currently covers the AEAD/HKDF backend. Keep decisions explicit
+OpenSSL covers AEAD/HKDF/identity primitives and Botan covers SRP arithmetic. Keep decisions explicit
 in future updates to this record.
 
 ## 8. Continuation mechanics and known obstacles

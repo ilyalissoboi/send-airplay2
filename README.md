@@ -12,15 +12,18 @@ CLI. The range resolver will support local-file serving and seeking; an HTTP
 server is not implemented. The pre-1.0 API is not frozen.
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
-verification for existing trusted credentials is also implemented. First-time PIN
-pairing, receiver transport and credential storage are still pending.
+verification and first-time PIN/SRP message processing are also implemented.
+Receiver transport and credential storage are still pending.
 See [pairing transport foundation](docs/pairing-transport.md).
 See [peer verification](docs/peer-verification.md) for trust and state contracts.
+See [PIN pairing](docs/pin-pairing.md) for the private provisioning contract.
 
 ## Build and test
 
-Requires CMake 3.20+, a C++17 compiler and OpenSSL 3.5+ development libraries.
-With a maintained OpenSSL package installed (set `OPENSSL_ROOT_DIR` if needed):
+Requires CMake 3.20+, a C++17 compiler, OpenSSL 3.5+ and Botan 3.12+ development
+libraries (Botan modules: ffi, srp6, sha2_64, system_rng, ed25519). Building Botan itself
+requires C++20. With maintained packages installed (set `OPENSSL_ROOT_DIR` and
+`Botan_DIR` if needed):
 
 ```sh
 cmake -S . -B build -DBUILD_TESTING=ON
@@ -44,7 +47,7 @@ ctest --test-dir build -C Release --output-on-failure
 
 On Linux/macOS, use `bootstrap-vcpkg.sh` with the same manifest/toolchain option.
 vcpkg copies its dependency DLLs alongside Windows build targets. Redistributed
-builds must include the appropriate OpenSSL runtime and license notices; packaged
+builds must include the appropriate OpenSSL/Botan runtimes and license notices; packaged
 Windows/Android loading is still untested. See [dependency provenance](docs/dependencies.md).
 
 ## Receiver discovery
@@ -84,4 +87,4 @@ See [design and implementation sequence](docs/design.md) and
 
 License: Apache-2.0, as established by the repository's original LICENSE.
 No third-party implementation source is copied into the repository. The new
-cryptographic adapters link OpenSSL's Apache-2.0 `libcrypto` dependency.
+cryptographic adapters link OpenSSL's Apache-2.0 `libcrypto` and BSD-2-Clause Botan.

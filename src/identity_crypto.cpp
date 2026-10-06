@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "identity_crypto.h"
+#include <botan/ffi.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 
@@ -12,6 +14,58 @@ constexpr std::size_t max_signed_message = 65536;
 using Key = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
 using KeyContext = std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)>;
 using DigestContext = std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)>;
+
+/// Native validation handles: partial backend initialization must also be cleaned up.
+struct PublicKeyValidation {
+    botan_pubkey_t key = nullptr;
+    botan_rng_t rng = nullptr;
+    PublicKeyValidation() = default;
+    ~PublicKeyValidation() {
+        if (key != nullptr) {
+            (void)botan_pubkey_destroy(key);
+        }
+        if (rng != nullptr) {
+            (void)botan_rng_destroy(rng);
+        }
+    }
+    PublicKeyValidation(const PublicKeyValidation&) = delete;
+    PublicKeyValidation& operator=(const PublicKeyValidation&) = delete;
+    PublicKeyValidation(PublicKeyValidation&&) = delete;
+    PublicKeyValidation& operator=(PublicKeyValidation&&) = delete;
+};
+
+void require_botan_success(int result) {
+    if (result != 0) {
+        throw ControlException(ControlError::backend);
+    }
+}
+
+bool valid_ed25519_public(const PublicKey& encoded) {
+    // RFC 8032: compressed y is little-endian, with x's sign in the top bit.
+    // Enforce y < p and exclude both identity sign encodings before asking the
+    // maintained backend to check curve/prime-order subgroup membership. A valid
+    // signature equation alone can accept trivial forgeries with weak keys.
+    auto y = encoded;
+    y.back() &= 0x7f;
+    PublicKey field_prime;
+    field_prime.fill(0xff);
+    field_prime.front() = 0xed; // p = 2^255 - 19.
+    field_prime.back() = 0x7f;
+    if (y == PublicKey{1} || !std::lexicographical_compare(
+                                 y.rbegin(), y.rend(), field_prime.rbegin(), field_prime.rend())) {
+        return false;
+    }
+    PublicKeyValidation handles;
+    require_botan_success(botan_rng_init(&handles.rng, "system"));
+    require_botan_success(botan_pubkey_load_ed25519(&handles.key, encoded.data()));
+    const auto result =
+        botan_pubkey_check_key(handles.key, handles.rng, BOTAN_CHECK_KEY_EXPENSIVE_TESTS);
+    if (result == BOTAN_FFI_ERROR_INVALID_INPUT) {
+        return false;
+    }
+    require_botan_success(result);
+    return true;
+}
 
 void require_success(int result) {
     if (result != 1) {
@@ -74,6 +128,12 @@ void generate_x25519_seed(Secret32& seed) {
 PublicKey x25519_public(const Secret32& seed) {
     return export_public(EVP_PKEY_X25519, seed);
 }
+void generate_ed25519_seed(Secret32& seed) {
+    if (RAND_priv_bytes(seed.bytes.data(), static_cast<int>(seed.bytes.size())) != 1) {
+        seed.clear();
+        throw ControlException(ControlError::backend);
+    }
+}
 void x25519_shared(const Secret32& seed, const PublicKey& peer, Secret32& shared) {
     if (&seed == &shared) {
         throw ControlException(ControlError::invalid_length);
@@ -121,6 +181,9 @@ Signature ed25519_sign(const Secret32& seed, const Bytes& message) {
     return signature;
 }
 bool ed25519_verify(const PublicKey& bytes, const Bytes& message, const Signature& signature) {
+    if (!valid_ed25519_public(bytes)) {
+        return false;
+    }
     const auto key = public_key(EVP_PKEY_ED25519, bytes);
     const auto context = signature_context(key, false, message.size());
     const auto result = EVP_DigestVerify(context.get(), signature.data(), signature.size(),
