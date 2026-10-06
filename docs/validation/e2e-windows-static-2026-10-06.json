@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "started_at_utc": "2026-10-06T10:57:29.002990+00:00",
+  "started_at_utc": "2026-10-06T11:05:08.105731+00:00",
   "cli_sha256": "bb372d7999e327723fb4c5ee8d4331090fdf4494ca9e18da6dc5e22a05315fe1",
-  "runner_sha256": "ab0fa72354deb8202caa8ef2c6773d4c28ab56caf75b254cf0e96859cdac4754",
+  "runner_sha256": "dd90f27382db4c9534e390e98f9e2513aab46496bbe47b2b78c7271926bf343f",
   "host": {
     "system": "Windows",
     "version": "10.0.26200",
@@ -31,7 +31,7 @@
       "status": "PASS",
       "reason": "expected-result",
       "exit_code": 0,
-      "elapsed_ms": 5031,
+      "elapsed_ms": 5016,
       "device_count": 1,
       "warning_count": 0
     },
@@ -65,7 +65,7 @@
       "status": "PASS",
       "reason": "expected-result",
       "exit_code": 0,
-      "elapsed_ms": 204
+      "elapsed_ms": 63
     },
     {
       "case": "existing-profile-refusal",
@@ -89,7 +89,7 @@
       "status": "PASS",
       "reason": "expected-result",
       "exit_code": 2,
-      "elapsed_ms": 15
+      "elapsed_ms": 16
     },
     {
       "case": "forget-absent-profile",
@@ -97,7 +97,7 @@
       "status": "PASS",
       "reason": "expected-result",
       "exit_code": 0,
-      "elapsed_ms": 16
+      "elapsed_ms": 15
     },
     {
       "case": "fault-refused",
@@ -105,7 +105,7 @@
       "status": "PASS",
       "reason": "expected-result",
       "exit_code": 1,
-      "elapsed_ms": 2063,
+      "elapsed_ms": 2094,
       "connection_accepted": false,
       "request_received": false,
       "native_deadline_ms": 3000
@@ -124,7 +124,7 @@
       "status": "PASS",
       "reason": "expected-result",
       "exit_code": 1,
-      "elapsed_ms": 516,
+      "elapsed_ms": 532,
       "connection_accepted": true,
       "request_received": true,
       "native_deadline_ms": 500
@@ -135,7 +135,7 @@
       "status": "PASS",
       "reason": "expected-result",
       "exit_code": 0,
-      "elapsed_ms": 93
+      "elapsed_ms": 62
     },
     {
       "case": "fault-disconnect",
@@ -154,7 +154,7 @@
       "status": "PASS",
       "reason": "expected-result",
       "exit_code": 0,
-      "elapsed_ms": 63
+      "elapsed_ms": 62
     },
     {
       "case": "forget-disposable-profile",

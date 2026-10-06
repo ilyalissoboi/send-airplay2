@@ -166,7 +166,11 @@ wrong PIN, cancellation/timeout and host/receiver restart checks remain pending.
 
 ## Automated CLI E2E observation: 2026-10-06
 
-The agent ran the [noninteractive runner](e2e-runner.md) on Windows 11 x64,
+The agent ran the [noninteractive runner](e2e-runner.md) from
+[PR #9](https://github.com/ilyalissoboi/send-airplay2/pull/9), initially introduced
+at `2bf31dd8f61d17e4475ec36c78f81bcac21f0009` and then hardened for closed-port
+refusal portability. The report fingerprints identify the tested runner bytes.
+The runs used Windows 11 x64,
 observed Windows build `10.0.26200` / AMD64, using the existing user-paired profile
 and the known Living Room Apple TV 4K / advertised `AppleTV14,1` / user-reported
 tvOS 26.6. Static/shared Release CLIs contain the unchanged C++ code merged in
@@ -186,7 +190,7 @@ Each default run passed 16 checks with one skipped opt-in deletion case:
 - **Local native CLI:** existing-profile refusal, random missing-profile refusal,
   redirected PIN refusal and absent-profile forget all passed with expected exact
   checkpoints/exit codes. No profile was created or deleted.
-- **Loopback faults:** a reserved non-listening port produced a network failure;
+- **Loopback faults:** a selected/released closed port produced a network failure;
   an accepting silent peer produced the native deadline error; a peer closing
   after request bytes produced disconnect/network failure. These peers never
   forwarded to Apple TV and retained no payloads. Actual Apple TV network outage,

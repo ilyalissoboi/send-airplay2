@@ -32,7 +32,7 @@ The default run contains 16 checks, plus an explicit skipped deletion case:
 | Missing-profile verification | A random unused profile is refused explicitly | Local CLI |
 | Redirected PIN input | `pair` on that unused profile refuses noninteractive input | Local CLI |
 | Forget absent profile | No-op success; no credential is deleted | Local CLI |
-| Refused connection | A reserved loopback port without a listener yields a native network failure | Loopback fault |
+| Refused connection | A selected/released closed loopback port yields a native network failure | Loopback fault |
 | Silent response | A loopback peer accepts/drains the request but never responds; native deadline expires | Loopback fault |
 | Disconnection | A loopback peer closes after receiving request bytes; native disconnect/network failure | Loopback fault |
 | Recovery after each fault | A fresh process verifies successfully against the actual receiver | Live receiver |
@@ -43,6 +43,10 @@ verification, not recovery from an actual Apple TV network outage or interruptio
 of an established encrypted application exchange. Discovery advertisements are
 unauthenticated; pinned-key peer verification supplies the authentication gate.
 Unrelated LAN devices may appear/disappear between snapshots.
+The refusal test releases its ephemeral port before connecting because a
+bound/non-listening socket produced timeouts on macOS. Another process could
+claim that port; an unexpected CLI outcome fails the case rather than passing
+as a timeout. Silent/disconnect peers keep their listening port until teardown.
 
 If the baseline verification fails, profile-dependent cases are explicitly
 skipped; they cannot pass merely because every command fails. A missing-profile

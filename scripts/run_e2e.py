@@ -105,7 +105,7 @@ def invoke(command: list[str], timeout_ms: int, output_limit: int = OUTPUT_LIMIT
 class FaultEndpoint:
     """Own one ephemeral IPv4 loopback endpoint; never forward to the receiver.
 
-    refused: reserve a port without listening. silent: accept/drain, no response.
+    refused: select/release a closed port. silent: accept/drain, no response.
     disconnect: close after receiving request bytes. Thread errors are observations
     that fail the case, rather than being confused with successful fault injection.
     """
@@ -124,7 +124,12 @@ class FaultEndpoint:
         self.thread = None
 
     def __enter__(self):
-        if self.mode != "refused":
+        if self.mode == "refused":
+            # macOS may silently drop connects to a bound/non-listening socket.
+            # Close it before connecting. The ephemeral port can theoretically be
+            # claimed by another process; unexpected CLI outcomes fail the test.
+            self.listener.close()
+        else:
             self.listener.listen(1)
             self.listener.settimeout(0.1)
             self.thread = threading.Thread(target=self._serve, daemon=True)
