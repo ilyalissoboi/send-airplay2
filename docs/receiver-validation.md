@@ -84,3 +84,12 @@ Private PIN/SRP provisioning message processing is implemented and tested with
 public synthetic transcripts; see [PIN pairing](pin-pairing.md). No receiver
 connection, PIN-display request, actual PIN entry, credential save or playback
 operation was attempted. All hardware pairing/playback results remain NOT RUN.
+
+## Receiver-transport slice: 2026-10-06
+
+Private bounded HTTP/RTSP framing, native IPv4/IPv6 TCP, deadlines/cancellation and
+pairing/verification-to-record integration are implemented; see
+[receiver transport](receiver-transport.md). Synthetic peers and real loopback
+sockets exercise these flows. No connection to "Living Room", PIN display/entry,
+credential change/save or playback was attempted. The hardware table remains
+NOT RUN for authentication and playback; loopback success does not validate tvOS.

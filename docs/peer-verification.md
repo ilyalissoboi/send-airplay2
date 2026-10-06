@@ -93,8 +93,9 @@ this slice consumes existing credentials and does not implement a PIN flow.
 
 Subsequent development implements private [PIN/SRP provisioning](pin-pairing.md)
 with Botan and verified server proofs/signatures. Synthetic wrong-PIN tests now
-exist there; receiver validation, trusted storage and bounded HTTP/socket I/O
-remain pending.
+exist there. Subsequent [receiver transport](receiver-transport.md) implements
+bounded HTTP/socket I/O and the encrypted-record transition privately; receiver
+validation, trusted storage and CLI authentication remain pending.
 The shared Ed25519 verification adapter now rejects noncanonical encodings,
 identity points and keys outside the prime-order subgroup before accepting a
 signature. Botan supplies subgroup validation; OpenSSL alone can accept trivial

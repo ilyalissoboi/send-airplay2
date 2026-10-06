@@ -102,3 +102,8 @@ Peer-verification primitive vectors use [RFC 7748 section 6.1](https://www.rfc-e
 and [RFC 8032 section 7.1](https://www.rfc-editor.org/rfc/rfc8032.html#section-7.1).
 OpenSSL API contracts were checked against its [X25519](https://docs.openssl.org/3.5/man7/EVP_KEYEXCH-X25519/)
 and [Ed25519](https://docs.openssl.org/3.5/man7/EVP_SIGNATURE-ED25519/) documentation.
+
+The receiver-transport slice adds no dependency or copied implementation source.
+Its native sockets, framing and lifecycle are in-tree Apache-2.0 code. Updated
+pyatv reference blob/license provenance and RFC framing inputs are recorded in
+[receiver-transport.md](receiver-transport.md).

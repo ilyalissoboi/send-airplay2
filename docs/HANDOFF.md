@@ -35,9 +35,10 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Discovery PR | [#2: feat: add receiver discovery and diagnostic CLI](https://github.com/ilyalissoboi/send-airplay2/pull/2), merged on 2026-10-06 |
 | Pairing/transport PR | [#3: feat: add pairing TLV8 and authenticated control record codecs](https://github.com/ilyalissoboi/send-airplay2/pull/3), merged on 2026-10-06 |
 | Peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), merged on 2026-10-06 |
-| Current PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), open |
+| PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), merged on 2026-10-06; verified merge `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
+| Current receiver-transport PR | Pending publication; branch `codex/receiver-transport` |
 | Target | `main` |
-| Current local branch | `codex/pin-pairing`, based on verified PR #4 merge at `54d63b81d5b9972c12418164aac2076fda1d1ff7` |
+| Current local branch | `codex/receiver-transport`, based on verified PR #5 merge at `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -52,7 +53,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver validation | Windows LAN discovery observed for `AppleTV14,1` advertising OS 26.6 and `Mac14,2`; pairing/playback not run, no compatibility certification |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #4 are merged and `main` contains the foundation/discovery/control codecs and peer verification. Verify current GitHub and
+PRs #1 through #5 are merged and `main` contains the foundation/discovery/control codecs, peer verification and PIN setup. Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -163,6 +164,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D18 | OpenSSL 3.5+ EVP primitives, private bounded pairing/control codecs before receiver handshake | Engineering choice, implemented; no homegrown cryptography, public pairing API deferred until peer authentication and ownership contracts are complete |
 | D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Engineering choice, implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 schema and one-time control-key release. Credential storage and network correlation/deadlines remain gates |
 | D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP and Ed25519 key validation | Engineering choice, implemented privately; C++17 core, maintained SRP/subgroup checks, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
+| D21 | Private synchronous native TCP with one outstanding request and a strict bounded HTTP/RTSP profile | Engineering choice, implemented on receiver-transport branch; absolute deadlines/cancellation, terminal cleanup, HTTP ordered correlation with optional validated CSeq, mandatory RTSP CSeq, verified record transition. Storage/CLI/hardware remain gates |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -194,6 +196,8 @@ cancellation and errors before publishing production bindings.
 | `docs/pin-pairing.md` | Provisioning trust, bounds, ownership, dependency and remaining I/O/storage gates |
 | `src/identity_crypto.*` / `src/pair_verify.*` | OpenSSL X25519/Ed25519, secret ownership and bounded existing-credential verification state machine |
 | `tests/pair_verify_tests.cpp` / `tests/fixtures/pair-verify` / `docs/peer-verification.md` | RFC vectors, independent synthetic transcripts, failure/cleanup/record-handoff tests and trust contracts |
+| `src/receiver_http.*` / `src/receiver_stream.*` / `src/receiver_connection.*` | Private bounded framing, native TCP ownership/deadlines/cancellation and authentication-to-record integration |
+| `tests/receiver_tests.cpp` / `docs/receiver-transport.md` | Fragmented fake receiver transcripts, dynamic authenticated peers, native loopback and lifecycle/framing contracts |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -402,6 +406,33 @@ ASAN_OPTIONS=detect_leaks=0 ./build-sanitized/range_tests
 
 Disable leak detection only where that process-inspection limitation exists.
 
+Receiver-transport slice on `codex/receiver-transport`, 2026-10-06:
+
+- Verified PR #5 merged at `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d`
+  and created this branch from that exact main head. No new dependency or copied
+  implementation source; RFC/pyatv blob and license provenance is in
+  [receiver-transport.md](receiver-transport.md).
+- Private bounded HTTP/RTSP request encoding/response parsing and native numeric
+  IPv4/IPv6 TCP now integrate PIN provisioning, pinned peer verification and the
+  encrypted-record transition. One outstanding request, no retries/fallback,
+  absolute deadlines, <=20 ms cancellation polling and terminal socket/key cleanup.
+  HTTP correlation uses ordering and checks CSeq if present; RTSP requires CSeq.
+  This is a narrow receiver profile, not a general HTTP implementation.
+- Windows 11 x64 / MSVC 19.51 static/shared Release: all 10 CTests pass. The new
+  receiver suite exercises independent PIN transcripts, fresh-randomness synthetic
+  verification, encrypted RTSP, fragmented/coalesced input, limits/injection,
+  bad proof/signature/tag, replay, partial trailing records, deadline/cancellation,
+  sequence exhaustion and cleanup. Real IPv4/IPv6 loopback checks native I/O,
+  timeout/cancellation, EOF, refused connect and queued unsolicited input.
+- Readability/ownership pass applies the AGENTS.md rules, including Doxygen
+  contracts, named bounds, focused scenarios and RAII sockets/secrets/threads.
+  clang-format and diff checks run before publication. Cross-platform/sanitizer
+  CI must be checked at the actual PR head and recorded after publication.
+- No connection to the Apple TV, PIN display/entry, credential change/save or
+  playback attempted. Receiver authentication/playback and Android/UWP packaged
+  loading remain untested. Next: trusted credential serialization/host storage
+  and CLI pairing/reconnect, followed by explicit hardware validation.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -444,8 +475,9 @@ while arranging the hardware baseline in parallel with that work.
    The Windows Apple TV discovery gate has passed; see discovery.md for limits.
 3. **Pairing + secure transport:** private TLV8, AEAD/HKDF and record framing are
    implemented, along with existing-credential peer verification and PIN/SRP message
-   processing. Next implement the socket/deadline layer and specify persistent credentials
-   and host storage, and test fragmentation, wrong PIN, authentication failure,
+   processing. Private bounded socket/deadline and framing integration is now
+   implemented. Next specify persistent credentials and trusted host storage,
+   add CLI pairing/reconnect, and validate wrong PIN, authentication failure,
    counters/replay, timeouts and revocation before claiming interoperability.
 4. **HTTP media server:** define size/read-at callbacks and cancellation/lifetime;
    integrate the existing resolver into bounded GET/HEAD serving. Select the LAN
