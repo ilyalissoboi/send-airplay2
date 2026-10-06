@@ -6,6 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -15,7 +16,9 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <thread>
+#include <utility>
 #include <vector>
 using namespace send_airplay2::detail;
 using namespace std::chrono_literals;
@@ -107,8 +110,8 @@ void fixtures(const std::string& root) {
 }
 void malformed_inputs() {
     group = "bounds and malformed input";
-    for (const Bytes input : {Bytes{0}, Bytes{8, 0x80}, Bytes{0x0b}, Bytes{0x0d, 0},
-                              Bytes{0x0a, 0x7f}, Bytes{0x09, 0}}) {
+    for (const Bytes& input : {Bytes{0}, Bytes{8, 0x80}, Bytes{0x0b}, Bytes{0x0d, 0},
+                               Bytes{0x0a, 0x7f}, Bytes{0x09, 0}}) {
         invalid([&] { (void)pb::decode(pb::view(input)); }, "bad wire field");
     }
     Bytes overflow(10, 0xff);
@@ -274,6 +277,7 @@ struct Peer {
     Bytes state, result;
     bool closed = false, eof = false, silent = false, wrong_type = false, wrong_identifier = false;
     bool corrupt_tag = false, reject = false;
+    bool missing_device_payload = false, malformed_result = false;
     std::size_t acknowledgements = 0;
     explicit Peer(const std::string& root)
         : state(load(root, "state")), result(load(root, "result")) {
@@ -308,6 +312,13 @@ struct Peer {
                 if (silent) {
                     continue;
                 }
+                if (message.type == mrp::device_info && missing_device_payload) {
+                    Bytes reply;
+                    pb::integer(reply, 1, 15);
+                    pb::data(reply, 2, message.identifier);
+                    push(reply);
+                    continue;
+                }
                 auto type = message.type;
                 if (type == mrp::updates_config || type == mrp::heartbeat) {
                     type = 0;
@@ -322,6 +333,9 @@ struct Peer {
                     if (reject) {
                         payload.clear();
                         pb::integer(payload, 1, 10);
+                    }
+                    if (malformed_result) {
+                        payload = {0x80}; // Truncated extension field, not a rejection.
                     }
                 }
                 push(encode_mrp(wrong_type ? mrp::heartbeat : type,
@@ -498,6 +512,37 @@ void failures_and_cancel(const std::string& root) {
         check(error.reason() == MrpError::not_owned, "unowned command refusal");
     }
 }
+
+void malformed_response_contracts(const std::string& root) {
+    group = "missing device info payload";
+    auto peer = std::make_shared<Peer>(root);
+    peer->missing_device_payload = true;
+    MrpSession handshake(channel(peer), 1s, 1s);
+    try {
+        handshake.handshake(SenderIdentity{}, text("synthetic"));
+        check(false, "correct type and correlation without device payload accepted");
+    } catch (const MrpException& error) {
+        check(error.reason() == MrpError::malformed && handshake.failed(),
+              "missing required device extension terminates session");
+    }
+    handshake.stop();
+
+    group = "malformed command result";
+    peer = std::make_shared<Peer>(root);
+    peer->malformed_result = true;
+    MrpSession command(channel(peer), 1s, 1s);
+    command.expect_item("synthetic-item", "http://192.0.2.10/synthetic.mp4");
+    command.handshake(SenderIdentity{}, text("synthetic"));
+    check(eventually([&] { return command.status().owned; }), "owned state received");
+    try {
+        command.command(PlaybackCommand::pause);
+        check(false, "malformed correlated command extension accepted");
+    } catch (const MrpException& error) {
+        check(error.reason() == MrpError::malformed && command.failed(),
+              "malformed result maps to terminal protocol error");
+    }
+    command.stop();
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
@@ -511,6 +556,7 @@ int main(int argc, char** argv) {
         startup_binding(argv[1]);
         session_success(argv[1]);
         failures_and_cancel(argv[1]);
+        malformed_response_contracts(argv[1]);
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: " << error.what() << '\n';
         ++failures;

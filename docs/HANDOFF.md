@@ -11,7 +11,8 @@ Work continues in a local Codex session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
 Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
 Step-2 starting head: `5950145b9001248edaeddf8bbc81d4cbfeca5e35`, with all ten
-checks passing. Native MRP changes are identified by the tested source blobs and
+checks passing. Step-2 implementation commit: `ba82e2bc1bed145a53caa6b91b6588842a940026`.
+Native MRP changes are identified by the tested source blobs and
 CLI hash in the new hardware record. Inspect PR #12 for its actual published
 head/checks; baseline CI does not validate subsequent changes.
 The user confirmed the Claude session is stopped; development continues in the
@@ -1225,6 +1226,10 @@ Windows MSVC static/shared Release each passed 22/22 CTest targets
 `git diff --check`. The native receiver accepted pause/resume, seek to 45 s,
 seek back to 15 s and Stop. Telemetry followed the changes and a heartbeat
 was acknowledged; exit 0, full file span fetched, no session/failed-read errors.
+Additional focused static/shared MRP tests passed for missing device payloads
+and malformed correlated command results. The published implementation CI is
+[run 37502136464](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37502136464);
+inspect the actual final PR head after test/documentation follow-ups.
 The final executable/source fingerprints and observer status are in the
 [dated G2 record](receiver-validation.md#native-mrp-controls-commandtelemetry-pass-g2-observer-pending-2026-10-07).
 G2 visual confirmation is pending. Do not substitute telemetry or CI for it.
