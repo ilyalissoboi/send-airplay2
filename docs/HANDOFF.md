@@ -345,6 +345,13 @@ PIN pairing, 2026-10-06:
   must authenticate before credentials are returned once. Errors/cancellation
   close and erase owned secrets; no discovery trust or plaintext/transient fallback.
   See pin-pairing.md for the bounded profile and caller/transport/storage contracts.
+- Native regression tests demonstrated that a validly encrypted M6 with an
+  identity public key and a trivial forged signature could otherwise be accepted.
+  The shared Ed25519 verifier now enforces canonical encoding, rejects identity
+  aliases and uses Botan to check curve/prime-order subgroup membership before
+  signature verification. This protects both enrollment and later peer verification.
+  Regression fixtures and numeric weak-key cases fail before the fix and pass after;
+  no curve arithmetic was copied or implemented.
 - Independent Python integer/SHA512/HMAC fixtures cover a leading-zero shared
   integer, exact sender bytes, wrong PIN, every server-proof/ciphertext byte,
   validly encrypted signature/identity/schema failures, bounds, phase cancellation,

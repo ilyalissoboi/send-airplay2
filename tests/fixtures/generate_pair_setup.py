@@ -10,7 +10,7 @@ from pathlib import Path
 import hashlib
 import hmac
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
 root = Path(__file__).parent / "pair-setup"
@@ -125,4 +125,11 @@ save("short-key-m6", m6(tlv((1, receiver_id), (3, public(receiver)[:-1]), (10, s
 save("short-signature-m6", m6(tlv((1, receiver_id), (3, public(receiver)), (10, signature[:-1]))))
 save("unknown-inner-m6", m6(tlv((1, receiver_id), (3, public(receiver)), (10, signature), (100, b"x"))))
 save("malformed-inner-m6", m6(b"\x01\x40\x01"))
+identity_key = bytes([1]) + bytes(31)
+forged_signature = bytes([1]) + bytes(63)
+# The primitive can accept this without any private key. Enrollment must reject
+# the weak public key even when both the AEAD and signature equation succeed.
+Ed25519PublicKey.from_public_bytes(identity_key).verify(
+    forged_signature, receiver_sign + receiver_id + identity_key)
+save("weak-identity-m6", m6(tlv((1, receiver_id), (3, identity_key), (10, forged_signature))))
 print(f"Generated pair-setup fixtures; server exponent {b}, leading-zero S covered")

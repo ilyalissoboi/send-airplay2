@@ -302,7 +302,8 @@ void state_and_schema(const std::string& directory) {
 
 void accessory_authentication(const std::string& directory) {
     active_group = "accessory identity authentication";
-    for (const char* name : {"bad-signature-m6", "wrong-id-m6", "wrong-key-m6"}) {
+    for (const char* name :
+         {"bad-signature-m6", "wrong-id-m6", "wrong-key-m6", "weak-identity-m6"}) {
         Exchange exchange(directory);
         exchange.advance(directory, 3);
         reject(
@@ -341,6 +342,29 @@ void accessory_authentication(const std::string& directory) {
             PairSetupError::invalid_message);
     }
 }
+
+void weak_identity_keys() {
+    active_group = "Ed25519 identity strength";
+    // RFC 8032's field is p = 2^255 - 19. These are public numeric encodings,
+    // including aliases of the identity and a canonical point of order two.
+    PublicKey field_prime;
+    field_prime.fill(0xff);
+    field_prime.front() = 0xed;
+    field_prime.back() = 0x7f;
+    auto identity_alias = field_prime;
+    identity_alias.front() = 0xee; // y = p + 1.
+    auto order_two = field_prime;
+    order_two.front() = 0xec; // y = p - 1.
+    PublicKey signed_identity{1};
+    signed_identity.back() = 0x80;
+    const Signature trivial_forgery{1}; // R = identity, S = zero; no private seed.
+    std::size_t index = 0;
+    for (const auto& key :
+         {PublicKey{}, PublicKey{1}, signed_identity, field_prime, identity_alias, order_two}) {
+        check(!ed25519_verify(key, text("synthetic-transcript"), trivial_forgery),
+              "weak/noncanonical key " + std::to_string(index++));
+    }
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -355,6 +379,7 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Expected fixture directory");
         }
         const std::string directory = argv[1];
+        weak_identity_keys();
         srp_vectors(directory);
         credential_round_trip(directory);
         malformed_srp(directory);

@@ -31,7 +31,9 @@ These constraints are an implementation profile, not firmware-tested claims.
 HKDF-SHA512 derives separate encryption/controller/accessory signing keys.
 M5/M6 use ChaCha20-Poly1305 with four zero bytes plus `PS-Msg05`/`PS-Msg06`
 and empty AAD. Each signature authenticates the derived signing prefix, opaque
-identifier and Ed25519 public key in that order. M6 must authenticate before
+identifier and Ed25519 public key in that order. Public keys must be canonical,
+non-identity points in the prime-order subgroup, checked through Botan before
+OpenSSL signature verification. M6 must authenticate before
 any receiver ID/key is admitted to `PairCredentials`; those credentials can
 then be used by the existing pinned-identity peer verifier.
 
@@ -54,6 +56,7 @@ not guaranteed. Errors expose sanitized categories without identities or secrets
 independent of Botan arithmetic, with a leading-zero shared integer. It checks
 exact M1/M3/M5, wrong PIN, every server-proof byte and M6 ciphertext byte,
 validly encrypted bad signatures/IDs/keys, schemas, bounds, cancellation,
+weak public-key/trivial-forgery rejection,
 single-use release and secret cleanup. Newly enrolled synthetic credentials also
 complete the existing peer-verification oracle and derive expected control keys.
 Deterministic randomness injection is test-only; no production seed API exists.

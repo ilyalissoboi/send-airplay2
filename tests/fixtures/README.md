@@ -65,6 +65,10 @@ server proof. M6 authenticates the accessory ID/key; negative M6 fixtures are
 validly encrypted, isolating signature and inner-schema failures from AEAD.
 New credentials use the same identities as the peer-verification fixtures, so
 an enrollment-to-verification test independently checks their retained seed/key.
+`weak-identity-m6` is validly encrypted and carries a trivial signature accepted
+by the primitive with the identity public key. Enrollment must reject that key
+before it becomes a reusable credential. Numeric identity, sign-alias, field
+boundary and small-order point tests also exercise the shared verification adapter.
 The AEAD/Ed25519 generator uses cryptography and may share an OpenSSL backend;
 existing RFC tests cover primitives. No production module is imported.
 

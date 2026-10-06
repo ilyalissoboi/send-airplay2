@@ -38,7 +38,8 @@ void x25519_shared(const Secret32& seed, const PublicKey& peer, Secret32& shared
 [[nodiscard]] PublicKey ed25519_public(const Secret32& seed);
 /// Pure Ed25519, no external hash/prehash. Messages are bounded at 64 KiB.
 [[nodiscard]] Signature ed25519_sign(const Secret32& seed, const Bytes& message);
-/// Invalid signatures return false; allocation/backend failures throw ControlException.
+/// Reject noncanonical/identity/non-prime-order public keys before checking signatures.
+/// Invalid keys/signatures return false; allocation/backend failures throw ControlException.
 [[nodiscard]] bool ed25519_verify(const PublicKey& key, const Bytes& message,
                                   const Signature& signature);
 } // namespace send_airplay2::detail

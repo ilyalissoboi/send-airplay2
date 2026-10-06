@@ -95,3 +95,8 @@ Subsequent development implements private [PIN/SRP provisioning](pin-pairing.md)
 with Botan and verified server proofs/signatures. Synthetic wrong-PIN tests now
 exist there; receiver validation, trusted storage and bounded HTTP/socket I/O
 remain pending.
+The shared Ed25519 verification adapter now rejects noncanonical encodings,
+identity points and keys outside the prime-order subgroup before accepting a
+signature. Botan supplies subgroup validation; OpenSSL alone can accept trivial
+forgeries under weak keys. This applies to pinned peer verification as well as
+new PIN enrollment; see the weak-key regression fixtures in pin-pairing.md.

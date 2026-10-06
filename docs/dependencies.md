@@ -10,7 +10,8 @@ through CMake's `FindOpenSSL`; TLS/`libssl` is not used. ChaCha20-Poly1305 and
 HKDF-SHA512 use OpenSSL EVP APIs; the project does not implement these primitives.
 The peer-verification slice also uses EVP X25519 key agreement and pure Ed25519
 signatures, with fresh ephemeral seeds from `RAND_priv_bytes`. No new dependency
-or copied cryptographic implementation is introduced.
+was introduced by that slice. PIN development now adds Botan key validation to
+the shared signature-verification adapter; see below.
 OpenSSL 3 is Apache-2.0: [upstream license](https://openssl-library.org/source/license/).
 Redistributors must retain its license/notices alongside the native library.
 No OpenSSL source is copied into the tracked repository.
@@ -32,14 +33,20 @@ OpenSSL package. Keep the dependency on a supported release; 3.5 is the upstream
 LTS series, while the pinned 3.6 series requires an update before its November
 2026 end of support. [Upstream release lifecycle](https://openssl-library.org/source/)
 
-## Botan SRP backend
+## Botan SRP and key validation
 
 The PIN-pairing slice selects Botan 3.12.0 through its C FFI (`ffi`, `srp6`,
-`sha2_64`, `system_rng` modules), pinned by the existing vcpkg baseline. The core
+`sha2_64`, `system_rng`, `ed25519` modules), pinned by the existing vcpkg baseline. The core
 remains C++17 and includes only Botan's C-compatible `ffi.h`; Botan's own build
 requires C++20. SRP-6a arithmetic uses the maintained backend, not in-tree modular
 arithmetic or OpenSSL's deprecated SRP API. OpenSSL continues to provide HAP
 SHA512 transcript hashing, HKDF, AEAD and Ed25519.
+Before verifying Ed25519 signatures, the adapter enforces canonical public-key
+encoding and excludes the identity, then uses Botan's public-key check for
+curve/prime-order subgroup membership. OpenSSL signature verification alone
+can accept trivial forgeries with weak public keys. Inspected Botan's
+`src/lib/pubkey/ed25519/ed25519_key.cpp` and `src/lib/ffi/ffi_pkey.cpp` for
+validation/FFI error semantics; no curve arithmetic was copied or implemented.
 
 Botan is [BSD-2-Clause licensed](https://github.com/randombit/botan/blob/3.12.0/license.txt).
 Redistributions must include its license/notices and the applicable native runtime.

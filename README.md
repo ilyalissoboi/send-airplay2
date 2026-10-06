@@ -21,7 +21,7 @@ See [PIN pairing](docs/pin-pairing.md) for the private provisioning contract.
 ## Build and test
 
 Requires CMake 3.20+, a C++17 compiler, OpenSSL 3.5+ and Botan 3.12+ development
-libraries (Botan modules: ffi, srp6, sha2_64, system_rng). Building Botan itself
+libraries (Botan modules: ffi, srp6, sha2_64, system_rng, ed25519). Building Botan itself
 requires C++20. With maintained packages installed (set `OPENSSL_ROOT_DIR` and
 `Botan_DIR` if needed):
 
