@@ -16,7 +16,7 @@ Playback results remain pending.
 - Receiver manufacturer/model/generation: Apple TV 4K (user-provided), advertised model `AppleTV14,1`; generation not independently established.
 - Firmware version and build: tvOS 26.6 (user-reported, consistent with advertised `osvers`/`ov=26.6`); exact build not supplied.
 - AirPlay access policy and PIN/password settings (no secrets):
-- Sender OS/version/architecture: Windows 11 x64; exact OS build not supplied.
+- Sender OS/version/architecture: Windows 11 x64; automated runner observes Windows build `10.0.26200`, AMD64.
 - Host: CLI / packaged Windows C# / Android:
 - Network: Ethernet/Wi-Fi; same subnet; firewall configuration:
 - Media SHA-256, container, codecs, duration, dimensions and bitrate:
@@ -31,6 +31,9 @@ Playback results remain pending.
 | First pairing | PIN UI and credential save succeed | PASS, user-reported after M6 metadata fix; see observation below |
 | Wrong PIN / revoked pairing | Explicit failure, no playback | NOT RUN |
 | Reconnect after restart | Stored pairing works when receiver policy permits | Built-in fresh-socket and separate-process verification PASS; host/receiver restart NOT RUN |
+| Repeated verification | Independent processes reuse stored pairing | PASS, baseline plus three reconnects and three fault-recovery verifications per static/shared run |
+| Profile/input guards | Existing/missing profiles and redirected PIN input are refused | PASS, automated native CLI static/shared runs |
+| Local forget | Local deletion and idempotence | Absent-profile no-op PASS; real disposable deletion SKIPPED (no opt-in) |
 | Start MP4 | Both audio and video play | NOT RUN |
 | Pause/resume | Receiver and host state agree | NOT RUN |
 | Seek forward/back | Playback moves to requested position | NOT RUN |
@@ -160,3 +163,50 @@ No PIN was required. The `pair` exit code itself was not supplied.
 These results do not establish encrypted application request/response exchange,
 restart/revocation behavior or playback. Physical-console echo/mode restoration,
 wrong PIN, cancellation/timeout and host/receiver restart checks remain pending.
+
+## Automated CLI E2E observation: 2026-10-06
+
+The agent ran the [noninteractive runner](e2e-runner.md) from
+[PR #9](https://github.com/ilyalissoboi/send-airplay2/pull/9), initially introduced
+at `2bf31dd8f61d17e4475ec36c78f81bcac21f0009` and then hardened for closed-port
+refusal portability at `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`.
+The report fingerprints identify the tested runner bytes.
+The runs used Windows 11 x64,
+observed Windows build `10.0.26200` / AMD64, using the existing user-paired profile
+and the known Living Room Apple TV 4K / advertised `AppleTV14,1` / user-reported
+tvOS 26.6. Static/shared Release CLIs contain the unchanged C++ code merged in
+PR #8 (`f24ac4825a47b2b641caaac1d0f1c00dd1058c33`). No PIN entry, enrollment,
+receiver revocation/settings change, reboot, network-interface change or primary
+credential deletion occurred during these runs.
+
+Each default run passed 16 checks with one skipped opt-in deletion case:
+
+- **Live discovery:** two 5-second scans each found one matching target device
+  without duplicate device/service records or warnings; advertised target identity
+  was consistent. This does not test actual departure/interface changes.
+- **Live authentication:** baseline verification, three independent reconnects
+  and verification after each of three injected faults all passed with exit 0.
+  These prove stored-credential reuse/fresh verification, not playback or encrypted
+  application request/response exchange.
+- **Local native CLI:** existing-profile refusal, random missing-profile refusal,
+  redirected PIN refusal and absent-profile forget all passed with expected exact
+  checkpoints/exit codes. No profile was created or deleted.
+- **Loopback faults:** a selected/released closed port produced a network failure;
+  an accepting silent peer produced the native deadline error; a peer closing
+  after request bytes produced disconnect/network failure. These peers never
+  forwarded to Apple TV and retained no payloads. Actual Apple TV network outage,
+  reconnect after host/receiver reboot and established-session interruption remain
+  NOT RUN; this evidence does not change those hardware gates.
+- **Disposable deletion:** SKIPPED, not opted in. Real-profile deletion/idempotence
+  remains a live gate; its orchestration has offline synthetic coverage.
+
+Sanitized machine-readable artifacts contain runner/CLI SHA-256 fingerprints,
+OS/build/architecture, endpoint address family/port/scope usage and constructed
+case facts. Addresses, identities, profiles, paths, TXT/public keys, PINs, raw
+child output and exception text are omitted:
+
+- [Static CLI E2E report](validation/e2e-windows-static-2026-10-06.json).
+- [Shared CLI E2E report](validation/e2e-windows-shared-2026-10-06.json).
+
+These artifacts are selected-case evidence for this receiver/firmware/host only.
+Offline runner tests and native/sanitizer CI remain distinct from device evidence.

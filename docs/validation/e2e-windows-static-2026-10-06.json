@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "started_at_utc": "2026-10-06T11:05:08.105731+00:00",
+  "cli_sha256": "bb372d7999e327723fb4c5ee8d4331090fdf4494ca9e18da6dc5e22a05315fe1",
+  "runner_sha256": "dd90f27382db4c9534e390e98f9e2513aab46496bbe47b2b78c7271926bf343f",
+  "host": {
+    "system": "Windows",
+    "version": "10.0.26200",
+    "machine": "AMD64"
+  },
+  "receiver": {
+    "address_family": 4,
+    "port": 7000,
+    "scope_used": false
+  },
+  "playback_tested": false,
+  "results": [
+    {
+      "case": "discovery-1",
+      "evidence_kind": "live-discovery",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 5031,
+      "device_count": 1,
+      "warning_count": 0
+    },
+    {
+      "case": "discovery-2",
+      "evidence_kind": "live-discovery",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 5016,
+      "device_count": 1,
+      "warning_count": 0
+    },
+    {
+      "case": "stored-profile-verify",
+      "evidence_kind": "live-receiver",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 78
+    },
+    {
+      "case": "reconnect-1",
+      "evidence_kind": "live-receiver",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 63
+    },
+    {
+      "case": "reconnect-2",
+      "evidence_kind": "live-receiver",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 62
+    },
+    {
+      "case": "reconnect-3",
+      "evidence_kind": "live-receiver",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 63
+    },
+    {
+      "case": "existing-profile-refusal",
+      "evidence_kind": "local-cli",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 1,
+      "elapsed_ms": 15
+    },
+    {
+      "case": "missing-profile-refusal",
+      "evidence_kind": "local-cli",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 1,
+      "elapsed_ms": 16
+    },
+    {
+      "case": "redirected-pin-refusal",
+      "evidence_kind": "local-cli",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 2,
+      "elapsed_ms": 16
+    },
+    {
+      "case": "forget-absent-profile",
+      "evidence_kind": "local-cli",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 15
+    },
+    {
+      "case": "fault-refused",
+      "evidence_kind": "loopback-fault",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 1,
+      "elapsed_ms": 2094,
+      "connection_accepted": false,
+      "request_received": false,
+      "native_deadline_ms": 3000
+    },
+    {
+      "case": "recovery-after-refused",
+      "evidence_kind": "live-receiver",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 62
+    },
+    {
+      "case": "fault-silent",
+      "evidence_kind": "loopback-fault",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 1,
+      "elapsed_ms": 532,
+      "connection_accepted": true,
+      "request_received": true,
+      "native_deadline_ms": 500
+    },
+    {
+      "case": "recovery-after-silent",
+      "evidence_kind": "live-receiver",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 62
+    },
+    {
+      "case": "fault-disconnect",
+      "evidence_kind": "loopback-fault",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 1,
+      "elapsed_ms": 16,
+      "connection_accepted": true,
+      "request_received": true,
+      "native_deadline_ms": 500
+    },
+    {
+      "case": "recovery-after-disconnect",
+      "evidence_kind": "live-receiver",
+      "status": "PASS",
+      "reason": "expected-result",
+      "exit_code": 0,
+      "elapsed_ms": 62
+    },
+    {
+      "case": "forget-disposable-profile",
+      "evidence_kind": "local-cli",
+      "status": "SKIP",
+      "reason": "not-opted-in"
+    }
+  ],
+  "success": true
+}

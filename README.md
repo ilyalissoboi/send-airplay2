@@ -97,6 +97,11 @@ failure recovery and platform limits. See the
 [receiver validation record](docs/receiver-validation.md) for the observed pairing
 result and remaining restart/revocation/playback gates.
 
+Automate the available noninteractive authentication/discovery checks with the
+[E2E runner](docs/e2e-runner.md), using an already paired Windows profile. It runs
+repeated verification, profile guards, loopback faults and live recovery, and
+writes sanitized JSON results. It does not request a PIN or implement playback.
+
 ## Milestones
 
 1. Standalone tested library, starting with local H.264/AAC MP4 playback on a

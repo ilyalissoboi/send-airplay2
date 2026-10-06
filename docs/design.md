@@ -125,6 +125,9 @@ departure/interface-change checks remain pending. See
 Pairing, authenticated transport and Windows desktop storage/CLI are implemented
 with synthetic tests and observed live pairing/credential reload. Next assess restart reconnect,
 then add bounded media serving while establishing the pyatv playback baseline.
+The [noninteractive E2E runner](e2e-runner.md) now checks repeated verification,
+profile guards, discovery consistency and loopback faults with live recovery.
+Real reboot/revocation/interface-change tests remain separate gates.
 
 1. Establish receiver baseline with an existing sender (pyatv) on the user's LAN.
    Record model, exact firmware/build and PIN/access settings. Test the same
