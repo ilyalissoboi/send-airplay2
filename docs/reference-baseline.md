@@ -70,25 +70,44 @@ On failure, report the error message without credentials. Also report
 About, and the AirPlay access settings without secrets (who may AirPlay; whether a
 password is required).
 
-## Step 4: reference URL playback (later; prepared separately)
+## Step 4: reference URL playback with `airplay2-cli serve`
 
-After pairing, play one unprotected H.264/AAC MP4 that the user owns or can
-redistribute:
+Use one unprotected H.264/AAC MP4 that the user owns or can redistribute. The
+receiver fetches the media itself. `airplay2-cli serve` hosts the file with the
+project's `MediaServer`, so this step also tests whether the Apple TV can fetch
+from this library's server through the Windows firewall. That is separate from
+native session code, which does not exist yet.
 
-```powershell
-& $atv -s 192.0.2.10 play_url=http://<sender-lan-ip>:<port>/<path>
-& $atv -s 192.0.2.10 device_state position total_time
-& $atv -s 192.0.2.10 set_position=30
-& $atv -s 192.0.2.10 pause
-& $atv -s 192.0.2.10 play
-& $atv -s 192.0.2.10 stop
-```
+1. Build the CLI from the branch carrying `serve` (pinned vcpkg build, see README).
+2. In one PowerShell window, start serving. Use the receiver's IPv4 address; only
+   that address may fetch. Windows Defender Firewall may ask whether to allow
+   `airplay2-cli.exe`: allow it on **private** networks only, and confirm the
+   LAN's network profile is Private.
 
-The receiver fetches the URL itself. Serve the file from an HTTP server that
-supports byte ranges and is reachable through the Windows firewall from the Apple
-TV's address. The plan is a small `airplay2-cli serve <file>` command over the
-existing `MediaServer`. It would also test the receiver's fetch and firewall
-reachability independently of session code. Record the media SHA-256, container,
-codecs, duration and dimensions in [receiver-validation.md](receiver-validation.md).
-Run with `--debug` only to capture the request sequence, and sanitize the output
-before sharing it: it may include identifiers, addresses and URLs.
+   ```powershell
+   build\Release\airplay2-cli.exe serve --address 192.0.2.10 --file C:\path\to\clip.mp4
+   ```
+
+   It prints `Private URL (do not share or log): http://...`. Keep it private.
+3. In a second window, play and control with pyatv, pasting the private URL:
+
+   ```powershell
+   & $atv -s 192.0.2.10 play_url=<private URL>
+   & $atv -s 192.0.2.10 device_state position total_time
+   & $atv -s 192.0.2.10 set_position=30
+   & $atv -s 192.0.2.10 pause
+   & $atv -s 192.0.2.10 play
+   & $atv -s 192.0.2.10 stop
+   ```
+
+4. Press Enter in the `serve` window. It stops and prints a summary such as
+   `Stopped. reads=N bytes=M failed_reads=F span=[first,end)`.
+
+Report back, sanitized: whether video and audio played, each command's output
+and exit code (or error text without the URL), the `Stopped.` summary line, and
+the media's SHA-256 (`Get-FileHash -Algorithm SHA256`), container, codecs,
+duration and dimensions. `reads=0` after `play_url` means the receiver never
+fetched from the server: check the firewall prompt, network profile and address.
+Record the results in [receiver-validation.md](receiver-validation.md).
+Run pyatv with `--debug` only to capture the request sequence, and sanitize the
+output before sharing it: it includes the private URL, identifiers and addresses.

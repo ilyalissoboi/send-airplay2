@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "send_airplay2/discovery.h"
 #include "auth_cli.h"
+#include "serve_cli.h"
 
 #include <charconv>
 #include <iomanip>
@@ -222,8 +223,11 @@ void write_usage() {
                  "       airplay2-cli verify --address IP --profile NAME [--port 7000] [--scope-id "
                  "N] [--timeout-ms 1..60000]\n"
                  "       airplay2-cli forget --profile NAME\n"
-                 "Auth storage supports Windows desktop; pair prompts for a hidden PIN. Playback "
-                 "is not implemented.\n";
+                 "       airplay2-cli serve --address IP --file PATH [--port 7000] "
+                 "[--listen-port 0..65535] [--timeout-ms 1..600000] [--max-connections 1..16] "
+                 "[--content-type video/mp4]\n"
+                 "Auth storage supports Windows desktop; pair prompts for a hidden PIN. serve "
+                 "hosts one file for a receiver to fetch. Playback is not implemented.\n";
 }
 
 } // namespace
@@ -233,6 +237,9 @@ int main(int argc, char** argv) {
         (std::string_view(argv[1]) == "pair" || std::string_view(argv[1]) == "verify" ||
          std::string_view(argv[1]) == "forget")) {
         return send_airplay2::detail::run_auth_cli(argc - 1, argv + 1);
+    }
+    if (argc >= 2 && std::string_view(argv[1]) == "serve") {
+        return send_airplay2::detail::run_serve_cli(argc - 1, argv + 1);
     }
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
         write_usage();

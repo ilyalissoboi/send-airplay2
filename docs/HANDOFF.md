@@ -186,6 +186,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D23 | Accept one optional opaque M6 type-17 metadata field, bounded to 0..256 bytes; discard and erase it | Live Apple TV M6 headers showed `17:159`. Required ID/key/signature, server proof, AEAD, duplicate and other unknown-field rejection remain enforced; metadata never influences trust, naming or storage. Sanitized phase/HTTP/TLV-header diagnostics retain no payloads |
 | D24 | Standard-library Python CLI E2E runner using an existing paired profile; explicit evidence kinds and opt-in disposable deletion | User requested unattended actions available now. No PIN collection/enrollment, credential export/clone, receiver changes or primary-profile deletion; ephemeral loopback fault peers and fresh live verification distinguish synthetic failures from hardware evidence |
 | D25 | Use Boost.Beast/Asio 1.92 for HTTP media serving behind an experimental C++ callback API | User explicitly selected Boost. Private Boost types, one concrete route-selected bind address, receiver-IP filtering, random per-session bearer URLs, bounded accepted connections/workers/buffers and absolute deadlines. No wildcard listener, scoped/link-local IPv6 URLs, firewall changes or playback commands; callbacks must cooperate with cancellation |
+| D26 | Development `airplay2-cli serve` with a private file adapter that serializes reads of one `std::ifstream` | User chose option 1: serve the reference-baseline MP4 with this project's server rather than a third-party one, so receiver fetch/firewall reachability is tested too. Portable standard-library I/O over parallel positional reads; size snapshot, receiver-only access, private URL printed once, stdin-driven stop with aggregate read counts. Not a playback API |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -220,6 +221,7 @@ cancellation and errors before publishing production bindings.
 | `src/receiver_http.*` / `src/receiver_stream.*` / `src/receiver_connection.*` | Private bounded framing, native TCP ownership/deadlines/cancellation and authentication-to-record integration |
 | `tests/receiver_tests.cpp` / `docs/receiver-transport.md` | Fragmented fake receiver transcripts, dynamic authenticated peers, native loopback and lifecycle/framing contracts |
 | `src/credential_*`, `src/auth_*` / `tests/credential_tests.cpp` / `docs/credential-storage.md` | Private bounded credential codec, native Windows store, hidden-PIN CLI, enrollment/save/reload/reconnect orchestration and synthetic/OS persistence tests |
+| `src/file_media_source.*`, `src/serve_cli.*` / `tests/file_source_tests.cpp`, `tests/cli_serve.cmake` | Private file-backed `MediaSource` and development `serve` command; adapter, loopback and real-CLI tests |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -680,6 +682,32 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   23L773 and AirPlay access limited to the same network. Reference playback is
   NOT RUN: it needs a range-capable HTTP server for the test MP4.
 
+### Development `serve` command: 2026-10-06
+
+- The user chose to serve the reference MP4 with this project's server (D26).
+  Added `airplay2-cli serve --address IP --file PATH` and a private file-backed
+  `MediaSource`. Contracts and limits are in
+  [media-server.md](media-server.md#development-cli-serve). Step 4 of
+  [reference-baseline.md](reference-baseline.md) now uses it. No playback
+  command, credential, firewall rule or receiver setting is touched by `serve`.
+- New tests: `file_source_tests` (exact bytes at literal offsets, EOF, stats,
+  cancellation, concurrent readers, shrinking file, 5-GiB sparse offset on
+  non-Windows hosts, loopback range through `MediaServer`) and `cli_serve`
+  (real CLI argument refusals and a start/stop cycle driven by end-of-file).
+- Local cloud-container evidence. The pinned vcpkg build could not run because
+  the environment's egress policy returned 403 for GitHub archive downloads.
+  Ubuntu's Boost 1.83 headers and OpenSSL 3.0 were used instead of the pinned
+  1.92/3.6. With those, g++ 13 and clang 18 built the new tests with
+  `-Wall -Wextra -Wpedantic -Werror`. `file_source_tests` passed, also under
+  ASan/UBSan and TSan, and `cli_serve.cmake` passed against a scratch harness
+  linking the real `serve` code. A manual loopback run served a 3,000,000-byte
+  random file: a full GET and a tail range matched the file byte for byte, HEAD
+  reported exact length/type/ranges, an unknown path returned 404, and the stop
+  summary reported the reads. The full pinned CMake/CTest matrix is CI's
+  responsibility; check it at the PR head.
+- Receiver fetch from the Apple TV, firewall reachability and pyatv playback
+  remain NOT RUN (user action).
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -718,11 +746,10 @@ while arranging the hardware baseline in parallel with that work.
    reference playback with pyatv on that LAN and record the real session path.
    Local discovery succeeded; reference and native playback have not been checked.
    Follow [reference-baseline.md](reference-baseline.md): pyatv AirPlay pairing
-   first, then `play_url` of one test MP4. Serve the MP4 from a range-capable HTTP
-   server. A small `airplay2-cli serve <file>` command over the existing
-   `MediaServer` would also test the receiver's fetch and firewall reachability
-   independently of session code. Cloud sessions cannot reach the LAN, so these
-   steps run on the user's host.
+   first (passed), then `play_url` of one test MP4 served by
+   `airplay2-cli serve`. That also tests the receiver's fetch and firewall
+   reachability against this library's server, independently of session code.
+   Cloud sessions cannot reach the LAN, so these steps run on the user's host.
 2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
    departure/interface-change checks and other platform/Android host coverage.
    The Windows Apple TV discovery gate has passed; see discovery.md for limits.
