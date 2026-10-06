@@ -5,6 +5,57 @@ Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
 
+## 0. Resume here: continue PR #11 in a local session
+
+The user intends to continue the current PR from a local Claude Code session on
+the Windows 11 host that shares a LAN with "Living Room". A cloud session cannot
+reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC.
+
+- **PR:** [#11: feat: add serve command and pyatv reference baseline records](https://github.com/ilyalissoboi/send-airplay2/pull/11),
+  open as a **draft**, base `main`, head branch `claude/modest-cannon-xa79s5`.
+  Keep working on this branch while the PR is open; do not start a new branch
+  or PR for the playback baseline. Before writing, verify the actual head and
+  checks (`git fetch origin`, `gh pr view 11 --json headRefOid,statusCheckRollup`).
+- **Last validated code head:** `19a08d256fdd2092aecfc63438af2b6a07c95b8c`.
+  All ten checks passed in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37468229857).
+  Later commits on the branch are documentation only unless their messages say otherwise.
+- **What the PR contains:**
+  - this handoff refresh and the [pyatv reference runbook](reference-baseline.md);
+  - the sanitized pyatv pairing result and the tvOS build and access settings, in
+    [receiver-validation.md](receiver-validation.md);
+  - the development `airplay2-cli serve` command with its file-backed
+    `MediaSource` and tests (decision D26; see section 5).
+- **Not yet done (next actions, in order):**
+  1. Build the CLI locally from this branch with the pinned vcpkg toolchain
+     (README). Static Release is enough for the baseline.
+  2. Run step 4 of [reference-baseline.md](reference-baseline.md):
+     - start `airplay2-cli serve --address <Apple TV IPv4> --file <owned H.264/AAC MP4>`;
+     - then use the user's pyatv 0.18.0 venv (`%USERPROFILE%\pyatv-baseline`,
+       credentials already stored by pyatv in `%USERPROFILE%\.pyatv.conf`) to run
+       `play_url`, the status commands, `set_position`, `pause`, `play` and `stop`;
+     - press Enter in the `serve` window to get the `Stopped.` summary.
+     The user must confirm on the TV whether video and audio actually played;
+     process output alone does not establish that. A Windows Firewall prompt
+     must be answered by the user (allow on private networks only).
+  3. Record the sanitized results in receiver-validation.md: media SHA-256 and
+     format, each command's result, the read summary, firewall/network profile.
+     Then update this section and section 5.
+  4. Ask the user before marking the PR ready or merging. Merge commits have
+     been the convention. Section 7 lists the work after the baseline: plist
+     decision, session layer and the `cast` command.
+- **Local-session rules that matter here:**
+  - Never print, log or commit the `serve` URL, the Apple TV's IP/MAC/identifiers,
+    PINs or anything from `.pyatv.conf` or Windows Credential Manager. Do not read
+    the credential files at all.
+  - Run pyatv with `--debug` only if needed, and sanitize before quoting.
+  - Pairing was already completed for both `airplay2-cli` (profile chosen by the
+    user) and pyatv; do not re-pair or `forget` unless the user asks.
+  - Apply AGENTS.md (C++ readability, clang-format, `git diff --check`, CTest
+    static/shared) to any further code change.
+- **Cloud-session leftovers:** the cloud session that produced this snapshot
+  subscribed to PR #11 activity and scheduled a safety-net check-in. Ask the
+  user whether it was stopped, so two sessions do not push to the same branch.
+
 ## 1. Goal and user requirements
 
 The originating discussion was titled **Assess AirPlay 2 Feasibility**. The user
@@ -48,7 +99,8 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
-| Current branch | `claude/modest-cannon-xa79s5` (cloud session), based on verified PR #10 merge `6b9680237184741100415aeb21d440825662ba37` on `main`; documentation/baseline preparation only |
+| Current PR | [#11: feat: add serve command and pyatv reference baseline records](https://github.com/ilyalissoboi/send-airplay2/pull/11), open draft; last validated code head `19a08d256fdd2092aecfc63438af2b6a07c95b8c`, all ten checks passed in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37468229857) |
+| Current branch | `claude/modest-cannon-xa79s5`, based on verified PR #10 merge `6b9680237184741100415aeb21d440825662ba37` on `main`; created by a cloud session, to be continued locally (section 0) |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -63,7 +115,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; reference and native playback not run |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. Verify current GitHub and
+PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is open (section 0). Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -721,6 +773,13 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   - Split `serve` startup, announcement and stop-wait into named functions.
   - Local g++/clang `-Werror`, ASan/UBSan, TSan and `cli_serve.cmake` all pass
     again with the system Boost 1.83.
+- Final CI for this slice: the MSVC fix head `ed9cd72da7946b97f78516b59ae8de326f9d4189`
+  and the readability head `19a08d256fdd2092aecfc63438af2b6a07c95b8c` each passed all
+  ten checks: Windows/Linux/macOS static/shared native CTest (including
+  `file_source_tests` and `cli_serve`), Linux ASan/UBSan, and the three
+  offline runner jobs. See the
+  [CI run for `19a08d2`](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37468229857).
+  This is build/test evidence only. The receiver's fetch from `serve` is NOT RUN.
 
 ## 6. Screenbox integration findings
 
@@ -828,6 +887,13 @@ commit is `dbd654b1d92057b3208953226186c5c2b206ccff` because it was created thro
 the connector. In a carried-over workspace, inspect local versus remote history
 before attempting a push. A clean checkout of the PR branch avoids that divergence.
 Do not force-push over unfamiliar remote changes.
+
+Local continuation (planned): the user will continue PR #11 from a local Claude
+Code session on the Windows host (Claude Desktop app or `claude remote-control`
+in the local checkout). It can reach the LAN and, per section 2, the
+authenticated GitHub CLI. Start with section 0 and AGENTS.md. Check out the
+existing branch rather than creating one:
+`git fetch origin` then `git switch claude/modest-cannon-xa79s5`.
 
 Claude Code cloud sessions (2026-10-06): the repository is cloned fresh into an
 isolated container. Pushes use the session's Git proxy; GitHub reads and PR
