@@ -13,7 +13,9 @@ Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
 Step-2 starting head: `5950145b9001248edaeddf8bbc81d4cbfeca5e35`, with all ten
 checks passing. Step-2 implementation commit: `ba82e2bc1bed145a53caa6b91b6588842a940026`.
 Native MRP changes are identified by the tested source blobs and
-CLI hash in the new hardware record. Inspect PR #12 for its actual published
+CLI hash in the new hardware record. Code/test head `8dca4a55c831563be952a5b3d6c8a353ad8b7807`
+passed all ten checks in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37502438877).
+Inspect PR #12 for its actual published
 head/checks; baseline CI does not validate subsequent changes.
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -1227,9 +1229,13 @@ Windows MSVC static/shared Release each passed 22/22 CTest targets
 seek back to 15 s and Stop. Telemetry followed the changes and a heartbeat
 was acknowledged; exit 0, full file span fetched, no session/failed-read errors.
 Additional focused static/shared MRP tests passed for missing device payloads
-and malformed correlated command results. The published implementation CI is
-[run 37502136464](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37502136464);
-inspect the actual final PR head after test/documentation follow-ups.
+and malformed correlated command results. Initial implementation CI rejected a
+const vector copy in a test loop under GCC/Clang warnings-as-errors; the
+const-reference follow-up fixed it without changing runtime code. All ten
+checks passed at code/test head `8dca4a55c831563be952a5b3d6c8a353ad8b7807` in
+[CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37502438877): six native platform/static/shared jobs,
+ASan/UBSan and three offline runner jobs. Inspect the actual final PR head
+including any documentation-only follow-up.
 The final executable/source fingerprints and observer status are in the
 [dated G2 record](receiver-validation.md#native-mrp-controls-commandtelemetry-pass-g2-observer-pending-2026-10-07).
 G2 visual confirmation is pending. Do not substitute telemetry or CI for it.

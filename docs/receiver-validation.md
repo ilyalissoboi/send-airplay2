@@ -518,7 +518,12 @@ Windows static/shared Release each passed 22/22 CTest targets (11.88/11.71 s),
 including independent protobuf/frame/large-record oracles, split/coalesced
 frames, malformed input, correlation/authentication/timeout/cancellation,
 heartbeat, ownership/replacement guards and native idle-readiness regression.
-Formatting and diff checks passed. Unit tests and CI are separate from G2/G3.
+Formatting and diff checks passed. All ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37502438877)
+passed at code/test head `8dca4a55c831563be952a5b3d6c8a353ad8b7807`: six native
+platform/static/shared jobs, ASan/UBSan and three offline runner jobs. The test
+const-reference follow-up corrected GCC/Clang warnings-as-errors; native runtime
+code and its tested executable remained unchanged. Inspect the actual PR head
+after documentation-only follow-ups. Unit tests and CI are separate from G2/G3.
 EOF, receiver-side stop, automatic failure cleanup, ten cycles, sleep/wake,
 network loss/recovery and other hosts/firmware remain step 3 or later gates.
 
