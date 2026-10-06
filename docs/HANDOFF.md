@@ -269,6 +269,25 @@ Pairing/control foundation, 2026-10-06:
 - No receiver handshake, credential change, PIN or playback operation was attempted.
   Wrong PIN/revocation/signature tests remain gates of the next handshake slice.
 
+Readability pass on PR #3, 2026-10-06:
+
+- Named TLV fragment/header sizes and the HKDF info limit, clarified encoded-size
+  calculations, renamed the pure nonce constructor to `nonce_for_counter`, and
+  made the plaintext cleanup guard explicitly non-copyable/non-movable.
+- Split control tests into named AEAD/HKDF, framing/size, authentication/replay,
+  EOF/counter and TLV scenarios. Failure diagnostics identify the group/case and
+  relevant split, mutation or byte offset. Named final-fragment layout calculations
+  replace unexplained tail offsets. Existing fixture files and boundary expectations
+  are unchanged; all 3,000 TLV mutations and existing record split cases remain.
+- Added project-wide C++ readability requirements to AGENTS.md so subsequent
+  implementation/test changes apply the same standards before PR completion.
+- Windows static/shared Release builds passed all seven CTest targets; clang-format
+  dry-run and `git diff --check` passed. An intentional missing-fixture invocation
+  confirmed the diagnostic includes the active scenario and fixture filename.
+  Verify platform/sanitizer CI for the published readability head separately.
+- Protocol behavior, public API and receiver validation status remain unchanged.
+  No new hardware pairing/playback result is claimed.
+
 Reproduction from a fresh checkout (requires OpenSSL 3.5+; see README for the
 pinned vcpkg build when the host package is unavailable):
 

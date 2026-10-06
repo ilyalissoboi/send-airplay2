@@ -2,10 +2,11 @@
 #include "control_records.h"
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 namespace send_airplay2::detail {
 namespace {
-ControlNonce next_nonce(std::uint64_t counter) {
+ControlNonce nonce_for_counter(std::uint64_t counter) {
     // Reserve UINT64_MAX rather than allowing the next increment to wrap to zero.
     if (counter == std::numeric_limits<std::uint64_t>::max()) {
         throw ControlException(ControlError::counter_exhausted);
@@ -26,12 +27,17 @@ void validate_call(bool closed, std::size_t size) {
     }
 }
 
-/// Wipe per-record decoded bytes even if aggregate allocation fails.
+/// Own and wipe one plaintext record, including when aggregate allocation fails.
 struct PlaintextRecord {
     Bytes bytes;
+    explicit PlaintextRecord(Bytes value) : bytes(std::move(value)) {}
     ~PlaintextRecord() {
         cleanse(bytes.data(), bytes.size());
     }
+    PlaintextRecord(const PlaintextRecord&) = delete;
+    PlaintextRecord& operator=(const PlaintextRecord&) = delete;
+    PlaintextRecord(PlaintextRecord&&) = delete;
+    PlaintextRecord& operator=(PlaintextRecord&&) = delete;
 };
 } // namespace
 
@@ -50,7 +56,8 @@ Bytes ControlWriter::encrypt(const Bytes& plaintext) {
         Bytes wire;
         const auto record_count = (plaintext.size() + control_records::max_plaintext - 1) /
                                   control_records::max_plaintext;
-        wire.reserve(plaintext.size() + record_count * (2 + auth_tag_size));
+        wire.reserve(plaintext.size() +
+                     record_count * (control_records::header_size + auth_tag_size));
         for (std::size_t offset = 0; offset < plaintext.size();) {
             const auto length = std::min(control_records::max_plaintext, plaintext.size() - offset);
             const Bytes header{static_cast<std::uint8_t>(length),
@@ -58,7 +65,8 @@ Bytes ControlWriter::encrypt(const Bytes& plaintext) {
             PlaintextRecord record{
                 Bytes(plaintext.begin() + static_cast<std::ptrdiff_t>(offset),
                       plaintext.begin() + static_cast<std::ptrdiff_t>(offset + length))};
-            auto encrypted = seal_record(key_, next_nonce(counter_), header, record.bytes);
+            const auto encrypted =
+                seal_record(key_, nonce_for_counter(counter_), header, record.bytes);
             wire.insert(wire.end(), header.begin(), header.end());
             wire.insert(wire.end(), encrypted.begin(), encrypted.end());
             ++counter_;
@@ -111,9 +119,10 @@ Bytes ControlReader::feed(const Bytes& wire) {
                 continue;
             }
             const Bytes header{pending_[0], pending_[1]};
-            const Bytes encrypted(pending_.begin() + 2,
+            const Bytes encrypted(pending_.begin() + control_records::header_size,
                                   pending_.begin() + static_cast<std::ptrdiff_t>(required));
-            PlaintextRecord record{open_record(key_, next_nonce(counter_), header, encrypted)};
+            PlaintextRecord record{
+                open_record(key_, nonce_for_counter(counter_), header, encrypted)};
             output.insert(output.end(), record.bytes.begin(), record.bytes.end());
             ++counter_;
             pending_size_ = 0;

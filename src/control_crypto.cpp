@@ -10,6 +10,7 @@
 namespace send_airplay2::detail {
 namespace {
 constexpr std::size_t max_crypto_input = 65536;
+constexpr std::size_t max_hkdf_info_size = 1024;
 using CipherContext = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>;
 using KeyContext = std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)>;
 
@@ -133,7 +134,7 @@ Bytes open_record(const ControlKey& key, const ControlNonce& nonce, const Bytes&
 
 ControlKey derive_control_key(const Bytes& secret, std::string_view salt, std::string_view info) {
     validate_lengths(secret.size(), salt.size());
-    if (info.size() > 1024) {
+    if (info.size() > max_hkdf_info_size) {
         throw ControlException(ControlError::invalid_length);
     }
     KeyContext context(EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr), EVP_PKEY_CTX_free);

@@ -17,6 +17,8 @@ struct TlvField {
 
 namespace pairing_tlv {
 constexpr std::uint8_t separator = 0xff;
+constexpr std::size_t header_size = 2;         // One type byte and one length byte.
+constexpr std::size_t max_fragment_size = 255; // Capacity of the one-byte length field.
 constexpr std::size_t max_message_size = 65536;
 constexpr std::size_t max_value_size = 4096;
 constexpr std::size_t max_fields = 64;

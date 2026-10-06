@@ -20,7 +20,7 @@ std::vector<TlvField> decode_tlv(const Bytes& body) {
     std::size_t cursor = 0;
     std::size_t previous_fragment_length = 0;
     while (cursor < body.size()) {
-        if (body.size() - cursor < 2) {
+        if (body.size() - cursor < pairing_tlv::header_size) {
             throw std::invalid_argument("Truncated pairing TLV header");
         }
         const auto type = body[cursor++];
@@ -30,7 +30,7 @@ std::vector<TlvField> decode_tlv(const Bytes& body) {
         }
         validate_value(type, length);
         if (!fields.empty() && fields.back().type == type && type != pairing_tlv::separator) {
-            if (previous_fragment_length != 255 || length == 0) {
+            if (previous_fragment_length != pairing_tlv::max_fragment_size || length == 0) {
                 throw std::invalid_argument("Ambiguous repeated pairing TLV type");
             }
         } else {
@@ -61,14 +61,18 @@ Bytes encode_tlv(const std::vector<TlvField>& fields) {
             field.type != pairing_tlv::separator) {
             throw std::invalid_argument("Separate equal TLV types require a separator");
         }
-        const auto fragments = std::max<std::size_t>(1, (field.value.size() + 254) / 255);
-        if (field.value.size() + 2 * fragments > pairing_tlv::max_message_size - body.size()) {
+        const auto fragments =
+            std::max<std::size_t>(1, (field.value.size() + pairing_tlv::max_fragment_size - 1) /
+                                         pairing_tlv::max_fragment_size);
+        const auto encoded_size = field.value.size() + pairing_tlv::header_size * fragments;
+        if (encoded_size > pairing_tlv::max_message_size - body.size()) {
             throw std::invalid_argument("Pairing TLV body exceeds limit");
         }
         std::size_t offset = 0;
         // Even an empty value has a two-byte header; exact multiples need no empty tail.
         do {
-            const auto length = std::min<std::size_t>(255, field.value.size() - offset);
+            const auto length =
+                std::min(pairing_tlv::max_fragment_size, field.value.size() - offset);
             body.push_back(field.type);
             body.push_back(static_cast<std::uint8_t>(length));
             body.insert(body.end(), field.value.begin() + static_cast<std::ptrdiff_t>(offset),

@@ -81,6 +81,12 @@ Verify checks for the final [PR #3](https://github.com/ilyalissoboi/send-airplay
 head before merging. Sanitizers instrument the in-tree code; packaged/Android
 hosts and receiver authentication remain untested.
 
+The PR #3 readability pass gives the existing cases named groups and failure
+context, names wire-size/fixture-offset calculations, and makes plaintext-guard
+ownership explicit. Golden fixtures and protocol behavior are unchanged. Future
+C++ changes must follow the readability requirements in AGENTS.md and verify
+checks for the actual modified head, including refactors.
+
 Next: implement the PIN pairing/peer-verification state machine using vetted
 SRP/signature/key-agreement primitives, credential ownership/storage adapters and
 bounded request/response transport. Add independent handshake transcripts and
