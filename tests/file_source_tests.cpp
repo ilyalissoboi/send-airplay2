@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -49,9 +50,9 @@ constexpr int reads_per_reader = 500;
 class TemporaryFile {
 public:
     TemporaryFile() {
-        std::random_device random;
-        path_ = fs::temp_directory_path() /
-                ("sap2-file-source-" + std::to_string(random()) + std::to_string(random()));
+        std::random_device seed_source;
+        path_ = fs::temp_directory_path() / ("sap2-file-source-" + std::to_string(seed_source()) +
+                                             std::to_string(seed_source()));
     }
     ~TemporaryFile() {
         std::error_code ignored;
@@ -181,20 +182,30 @@ void concurrency_tests() {
     file.write_patterned(patterned_size);
     auto source = open_file_media_source(file.path(), std::make_shared<FileReadStats>());
     std::atomic_int mismatches{0};
+    // First mismatch only, for a reproducible diagnostic: seeds are fixed per reader.
+    std::mutex first_failure_mutex;
+    std::string first_failure;
     std::vector<std::thread> readers;
     for (int reader = 0; reader < reader_count; ++reader) {
-        readers.emplace_back([&source, &mismatches, reader] {
+        readers.emplace_back([&, reader] {
             Context context;
-            std::mt19937_64 random(static_cast<std::uint64_t>(reader) + 1);
+            std::mt19937_64 offset_generator(static_cast<std::uint64_t>(reader) + 1);
             std::vector<std::uint8_t> buffer(4096);
             for (int read = 0; read < reads_per_reader; ++read) {
-                const auto offset = random() % patterned_size;
+                const auto offset = offset_generator() % patterned_size;
                 const auto count =
                     source.read_at(offset, buffer.data(), buffer.size(), context.get());
                 const auto expected =
                     std::min<std::uint64_t>(buffer.size(), patterned_size - offset);
-                if (count != expected || !matches_pattern(buffer, offset, count)) {
-                    ++mismatches;
+                if (count == expected && matches_pattern(buffer, offset, count)) {
+                    continue;
+                }
+                if (++mismatches == 1) {
+                    std::lock_guard<std::mutex> lock(first_failure_mutex);
+                    first_failure = "reader " + std::to_string(reader) + " read " +
+                                    std::to_string(read) + " offset " + std::to_string(offset) +
+                                    ": got " + std::to_string(count) + " bytes, expected " +
+                                    std::to_string(expected);
                 }
             }
         });
@@ -202,7 +213,9 @@ void concurrency_tests() {
     for (auto& reader : readers) {
         reader.join();
     }
-    check(mismatches == 0, "serialized seek/read pairs return exact bytes for every reader");
+    check(mismatches == 0, "serialized seek/read pairs return exact bytes for every reader; " +
+                               std::to_string(mismatches.load()) +
+                               " mismatch(es), first: " + first_failure);
 }
 
 void truncation_tests() {

@@ -78,6 +78,38 @@ ServeArguments parse_arguments(int argc, const char* const* argv) {
     return arguments;
 }
 
+/// Running server plus the statistics its file source updates. Destroying the
+/// server stops it and joins all callbacks before the statistics owner is released.
+struct ServingSession {
+    std::shared_ptr<FileReadStats> stats;
+    std::unique_ptr<MediaServer> server;
+    std::uint64_t size = 0;
+};
+
+/// Opens the file and starts the server. Unusable paths, addresses or content types
+/// throw std::invalid_argument; other setup failures throw std::runtime_error.
+ServingSession start_serving(const ServeArguments& arguments) {
+    ServingSession session;
+    session.stats = std::make_shared<FileReadStats>();
+    auto source = open_file_media_source(arguments.file, session.stats);
+    session.size = source.size(); // Pure snapshot; start() reads the same value.
+    session.server = MediaServer::start(std::move(source), arguments.server);
+    return session;
+}
+
+void write_announcement(const ServeArguments& arguments, const ServingSession& session) {
+    std::cout << "Serving " << session.size << " bytes as " << arguments.server.content_type
+              << " to receiver " << arguments.server.receiver_address << " only.\n"
+              << "Private URL (do not share or log): " << session.server->url() << '\n'
+              << "Press Enter to stop." << std::endl;
+}
+
+/// Blocks until the operator enters a line or standard input reaches end-of-file.
+void wait_for_stop_request() {
+    std::string ignored;
+    std::getline(std::cin, ignored);
+}
+
 void write_summary(const FileReadStats& stats) {
     const auto reads = stats.reads.load();
     std::cout << "Stopped. reads=" << reads << " bytes=" << stats.bytes.load()
@@ -100,13 +132,9 @@ int run_serve_cli(int argc, const char* const* argv) {
         return 2;
     }
 
-    auto stats = std::make_shared<FileReadStats>();
-    std::unique_ptr<MediaServer> server;
-    std::uint64_t size = 0;
+    ServingSession session;
     try {
-        auto source = open_file_media_source(arguments.file, stats);
-        size = source.size(); // Pure snapshot; start() reads the same value.
-        server = MediaServer::start(std::move(source), arguments.server);
+        session = start_serving(arguments);
     } catch (const std::invalid_argument& error) {
         std::cerr << "Arguments: " << error.what() << '\n';
         return 2;
@@ -115,14 +143,11 @@ int run_serve_cli(int argc, const char* const* argv) {
         return 1;
     }
 
-    std::cout << "Serving " << size << " bytes as " << arguments.server.content_type
-              << " to receiver " << arguments.server.receiver_address << " only.\n"
-              << "Private URL (do not share or log): " << server->url() << '\n'
-              << "Press Enter to stop." << std::endl;
-    std::string ignored;
-    std::getline(std::cin, ignored); // Returns on a line or end-of-file.
-    server->stop();
-    write_summary(*stats);
+    write_announcement(arguments, session);
+    wait_for_stop_request();
+    // Stop joins every callback, so the summary reads final statistics.
+    session.server->stop();
+    write_summary(*session.stats);
     return 0;
 }
 } // namespace send_airplay2::detail

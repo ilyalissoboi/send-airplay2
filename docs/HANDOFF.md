@@ -713,6 +713,14 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   builds failed: MSVC error C3493 rejected an uncaptured function-local
   `constexpr` used inside a test lambda. The constants moved to namespace scope.
   Check CI at the corrected head.
+- Readability pass at the user's request, applying AGENTS.md; behavior unchanged:
+  - The concurrent-reader test now reports the first failing reader, read index,
+    offset and byte counts. Checked by injecting a fault into a scratch copy.
+  - Renamed the shadowing `random` variables, and named and commented the
+    lock-free min/max helpers and the `streamsize` clamp.
+  - Split `serve` startup, announcement and stop-wait into named functions.
+  - Local g++/clang `-Werror`, ASan/UBSan, TSan and `cli_serve.cmake` all pass
+    again with the system Boost 1.83.
 
 ## 6. Screenbox integration findings
 

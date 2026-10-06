@@ -18,15 +18,21 @@ struct SharedFile {
     std::ifstream stream;
 };
 
-void record_min(std::atomic<std::uint64_t>& target, std::uint64_t value) {
+/// Lock-free running minimum for concurrent workers. On failure,
+/// compare_exchange_weak reloads `current` with the competing value, so the loop
+/// retries only while `value` would still lower the stored minimum.
+void store_if_lower(std::atomic<std::uint64_t>& target, std::uint64_t value) {
     auto current = target.load(std::memory_order_relaxed);
     while (value < current && !target.compare_exchange_weak(current, value)) {
+        // `current` now holds the latest stored value; re-test the condition.
     }
 }
 
-void record_max(std::atomic<std::uint64_t>& target, std::uint64_t value) {
+/// Lock-free running maximum; mirrors store_if_lower.
+void store_if_higher(std::atomic<std::uint64_t>& target, std::uint64_t value) {
     auto current = target.load(std::memory_order_relaxed);
     while (value > current && !target.compare_exchange_weak(current, value)) {
+        // `current` now holds the latest stored value; re-test the condition.
     }
 }
 
@@ -46,6 +52,8 @@ std::size_t read_shared(SharedFile& file, std::uint64_t offset, std::uint8_t* ou
     if (!file.stream) {
         return 0;
     }
+    // The server passes at most 64 KiB, but std::streamsize is signed: clamp so the
+    // conversion below can never produce a negative count for a caller-supplied size.
     const auto request = std::min<std::size_t>(
         capacity, static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max()));
     file.stream.read(reinterpret_cast<char*>(output), static_cast<std::streamsize>(request));
@@ -86,8 +94,8 @@ MediaSource open_file_media_source(const std::filesystem::path& path,
                 }
                 ++stats->reads;
                 stats->bytes += count;
-                record_min(stats->lowest_offset, offset);
-                record_max(stats->highest_end, offset + count);
+                store_if_lower(stats->lowest_offset, offset);
+                store_if_higher(stats->highest_end, offset + count);
                 return count;
             }};
 }
