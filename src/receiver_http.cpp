@@ -97,7 +97,7 @@ Bytes encode_receiver_request(const ReceiverRequest& request, const std::string&
                      [](unsigned char ch) {
                          return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') ||
                                 (ch >= 'A' && ch <= 'F') || ch == '.' || ch == ':' || ch == '[' ||
-                                ch == ']' || ch == '%';
+                                ch == ']';
                      }) ||
         !sequence || request.body.size() > receiver_http::max_body ||
         request.headers.size() > receiver_http::max_fields - 4) {

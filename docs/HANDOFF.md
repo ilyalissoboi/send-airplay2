@@ -427,8 +427,9 @@ Receiver-transport slice on `codex/receiver-transport`, 2026-10-06:
   timeout/cancellation, EOF, refused connect and queued unsolicited input.
 - Readability/ownership pass applies the AGENTS.md rules, including Doxygen
   contracts, named bounds, focused scenarios and RAII sockets/secrets/threads.
-  clang-format and diff checks run before publication. Cross-platform/sanitizer
-  CI must be checked at the actual PR head and recorded after publication.
+  clang-format and diff checks pass. The Windows Debug receiver suite also passes.
+  Cross-platform/sanitizer CI must be checked at the actual PR head and recorded
+  after publication. IPv6 scope IDs stay in the socket address rather than HTTP Host.
 - No connection to the Apple TV, PIN display/entry, credential change/save or
   playback attempted. Receiver authentication/playback and Android/UWP packaged
   loading remain untested. Next: trusted credential serialization/host storage

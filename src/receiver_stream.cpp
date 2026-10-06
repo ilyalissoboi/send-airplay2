@@ -36,8 +36,9 @@ void ReceiverOperation::check() const {
 }
 std::string ReceiverEndpoint::authority() const {
     if (address.find(':') != std::string::npos) {
-        return "[" + address + (scope_id ? "%" + std::to_string(scope_id) : "") +
-               "]:" + std::to_string(port);
+        // The scope identifies a sender-local interface, not part of the peer's
+        // HTTP authority. It is supplied only through sockaddr_in6::sin6_scope_id.
+        return "[" + address + "]:" + std::to_string(port);
     }
     return address + ":" + std::to_string(port);
 }

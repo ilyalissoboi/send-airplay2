@@ -9,7 +9,8 @@ gate for this PR.
 ## Connection and authentication lifecycle
 
 `connect_receiver` accepts a numeric IPv4/IPv6 endpoint and an absolute deadline.
-IPv6 scope IDs are explicit; no DNS resolution, address fallback or automatic
+IPv6 scope IDs are explicit in the socket address and omitted from HTTP Host:
+they identify sender-local interfaces. No DNS resolution, address fallback or automatic
 retry is performed. `ReceiverConnection` owns the stream and permits serial use
 only. The cancellation flag is the sole object that another thread may modify.
 

@@ -802,8 +802,8 @@ void native_socket_tests() {
         reject("numeric endpoint validation", TransportError::invalid_argument,
                [&] { (void)connect_receiver(endpoint, ReceiverOperation::after(1s)); });
     }
-    check(ReceiverEndpoint{"fe80::1", 7000, 24}.authority() == "[fe80::1%24]:7000",
-          "IPv6 authority preserves numeric scope");
+    check(ReceiverEndpoint{"fe80::1", 7000, 24}.authority() == "[fe80::1]:7000",
+          "IPv6 HTTP authority omits the sender-local routing scope");
 }
 
 void native_disconnect_tests() {
