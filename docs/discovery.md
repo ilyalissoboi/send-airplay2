@@ -116,6 +116,12 @@ credentials are obtained by discovery.
 
 ## Validation status
 
+The C++ readability pass in PR #2 adds `.clang-format`, named DNS wire constants,
+separate scheduling/resolution/output helpers, API ownership/error documentation,
+and explicit non-copyable native resource owners. The JSON schema and discovery
+policy remain unchanged. Windows static/shared tests include valid UTF-8 display
+and exact preservation of malformed UTF-8 bytes alongside binary TXT values.
+
 On 2026-10-06, Windows 11 x64 / MSVC 19.51 static and shared Release builds passed
 the six CTest targets. Synthetic tests cover truncation/compression bounds,
 TXT semantics, feature masks, identity merging, interface isolation, resolution,

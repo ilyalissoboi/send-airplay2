@@ -3,67 +3,116 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <utility>
 
 namespace send_airplay2::detail {
 namespace {
-constexpr std::size_t max_packet = 9000;
-constexpr std::size_t max_records = 2048;
 const Name airplay{"_airplay", "_tcp", "local"};
 const Name raop{"_raop", "_tcp", "local"};
-std::string lower(std::string s) {
-    for (auto& c : s) if (c >= 'A' && c <= 'Z') c = static_cast<char>(c + ('a' - 'A'));
-    return s;
+constexpr std::uint64_t milliseconds_per_second = 1000;
+constexpr std::uint64_t cache_grace_ms = 1000;
+
+// DNS case folding is ASCII-only; locale-sensitive tolower would alter byte labels.
+std::string ascii_lower(std::string text) {
+    for (auto& character : text) {
+        if (character >= 'A' && character <= 'Z') {
+            character = static_cast<char>(character + ('a' - 'A'));
+        }
+    }
+    return text;
 }
-bool same_name(const Name& a, const Name& b) {
-    if (a.size() != b.size()) return false;
-    for (std::size_t i = 0; i < a.size(); ++i) if (lower(a[i]) != lower(b[i])) return false;
+
+bool names_equal(const Name& a, const Name& b) {
+    if (a.size() != b.size()) {
+        return false;
+    }
+    for (std::size_t i = 0; i < a.size(); ++i) {
+        if (ascii_lower(a[i]) != ascii_lower(b[i])) {
+            return false;
+        }
+    }
     return true;
 }
-bool instance_of(const Name& name, const Name& type) {
-    return name.size() == type.size() + 1 && same_name(Name(name.begin() + 1, name.end()), type);
+
+bool is_service_instance(const Name& name, const Name& type) {
+    return name.size() == type.size() + 1 && names_equal(Name(name.begin() + 1, name.end()), type);
 }
-std::uint16_t u16(const std::uint8_t* p) {
+
+std::uint16_t read_u16_be(const std::uint8_t* p) {
     return static_cast<std::uint16_t>((static_cast<unsigned>(p[0]) << 8) | p[1]);
 }
-std::uint32_t u32(const std::uint8_t* p) {
-    return (static_cast<std::uint32_t>(u16(p)) << 16) | u16(p + 2);
+
+std::uint32_t read_u32_be(const std::uint8_t* p) {
+    return (static_cast<std::uint32_t>(read_u16_be(p)) << 16) | read_u16_be(p + 2);
 }
-bool read_name(const std::uint8_t* p, std::size_t size, std::size_t& cursor, Name& out) {
-    std::size_t pos = cursor, wire_size = 1, steps = 0;
-    bool jumped = false;
-    out.clear();
-    while (pos < size && ++steps <= 128) {
-        const auto length = p[pos++];
-        if ((length & 0xc0) == 0xc0) {
-            if (pos >= size) return false;
-            const auto target = static_cast<std::size_t>(((length & 0x3f) << 8) | p[pos++]);
-            if (target >= pos - 2) return false; // Backward pointers only; prevents cycles.
-            if (!jumped) cursor = pos;
-            jumped = true;
-            pos = target;
+
+// cursor advances over the encoded name, while position may follow compression
+// pointers elsewhere in the packet. After the first pointer, cursor must stay at
+// its end so the caller can continue reading the containing resource record.
+bool decode_name(const std::uint8_t* packet, std::size_t packet_size, std::size_t& cursor,
+                 Name& labels) {
+    constexpr std::size_t max_name_traversal_steps = 128;
+    constexpr std::size_t max_expanded_name_size = 255;
+    constexpr std::uint8_t pointer_tag = 0xc0;
+    std::size_t position = cursor;
+    std::size_t expanded_size = 1; // Includes the terminating root label.
+    std::size_t traversal_steps = 0;
+    bool followed_pointer = false;
+    labels.clear();
+    while (position < packet_size && ++traversal_steps <= max_name_traversal_steps) {
+        const auto length = packet[position++];
+        if ((length & pointer_tag) == pointer_tag) {
+            if (position >= packet_size) {
+                return false;
+            }
+            const auto target =
+                static_cast<std::size_t>(((length & 0x3f) << 8) | packet[position++]);
+            if (target >= position - 2) {
+                return false; // DNS compression references must point backward.
+            }
+            if (!followed_pointer) {
+                cursor = position;
+            }
+            followed_pointer = true;
+            position = target;
         } else {
-            if (length & 0xc0) return false;
+            if (length & pointer_tag) {
+                return false;
+            }
             if (!length) {
-                if (!jumped) cursor = pos;
+                if (!followed_pointer) {
+                    cursor = position;
+                }
                 return true;
             }
-            if (length > size - pos || (wire_size += length + 1) > 255) return false;
-            out.emplace_back(reinterpret_cast<const char*>(p + pos), length);
-            pos += length;
+            if (length > packet_size - position) {
+                return false;
+            }
+            expanded_size += length + 1;
+            if (expanded_size > max_expanded_name_size) {
+                return false;
+            }
+            labels.emplace_back(reinterpret_cast<const char*>(packet + position), length);
+            position += length;
         }
     }
     return false;
 }
-bool valid_txt(const Bytes& bytes) {
+
+bool has_valid_txt_lengths(const Bytes& bytes) {
     std::size_t pos = 0;
     while (pos < bytes.size()) {
         const auto length = bytes[pos++];
-        if (length > bytes.size() - pos) return false;
+        if (length > bytes.size() - pos) {
+            return false;
+        }
         pos += length;
     }
     return true;
 }
-std::map<std::string, std::optional<std::string>> txt_fields(const Bytes& bytes) {
+
+std::map<std::string, std::optional<std::string>> parse_txt_fields(const Bytes& bytes) {
+    // The packet parser has already validated every length-prefixed entry.
     std::map<std::string, std::optional<std::string>> fields;
     for (std::size_t pos = 0; pos < bytes.size();) {
         const auto length = bytes[pos++];
@@ -71,295 +120,527 @@ std::map<std::string, std::optional<std::string>> txt_fields(const Bytes& bytes)
         pos += length;
         const auto eq = entry.find('=');
         const auto key = entry.substr(0, eq);
-        if (key.empty() || std::any_of(key.begin(), key.end(), [](unsigned char c) {
-            return c < 0x20 || c > 0x7e;
-        })) continue;
+        if (key.empty() || std::any_of(key.begin(), key.end(),
+                                       [](unsigned char c) { return c < 0x20 || c > 0x7e; })) {
+            continue;
+        }
         // RFC 6763: first duplicate wins; flag differs from empty value.
-        fields.emplace(lower(key), eq == std::string::npos ? std::optional<std::string>{}
-                                                         : entry.substr(eq + 1));
+        fields.emplace(ascii_lower(key), eq == std::string::npos ? std::optional<std::string>{}
+                                                                 : entry.substr(eq + 1));
     }
     return fields;
 }
-std::string field(const Service& s, const char* key) {
-    const auto it = s.txt.find(key);
-    return it != s.txt.end() && it->second ? *it->second : std::string{};
+
+std::string txt_value(const Service& service, const char* key) {
+    const auto entry = service.txt.find(key);
+    return entry != service.txt.end() && entry->second ? *entry->second : std::string{};
 }
-int hex(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+
+int hex_digit(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
     return -1;
 }
-std::string mac(const std::string& value) {
+
+std::string normalize_mac(const std::string& value) {
     std::string digits;
-    if (value.size() == 12) digits = value;
-    else if (value.size() == 17) {
+    if (value.size() == 12) {
+        digits = value;
+    } else if (value.size() == 17) {
         for (std::size_t i = 0; i < value.size(); ++i) {
-            if (i % 3 == 2) { if (value[i] != ':') return {}; }
-            else digits += value[i];
+            if (i % 3 == 2) {
+                if (value[i] != ':') {
+                    return {};
+                }
+            } else {
+                digits += value[i];
+            }
         }
-    } else return {};
-    if (std::any_of(digits.begin(), digits.end(), [](char c) { return hex(c) < 0; })) return {};
+    } else {
+        return {};
+    }
+    if (std::any_of(digits.begin(), digits.end(), [](char c) { return hex_digit(c) < 0; })) {
+        return {};
+    }
     std::string result;
     for (std::size_t i = 0; i < digits.size(); ++i) {
-        if (i && i % 2 == 0) result += ':';
-        result += lower(digits.substr(i, 1));
+        if (i && i % 2 == 0) {
+            result += ':';
+        }
+        result += ascii_lower(digits.substr(i, 1));
     }
     return result;
 }
+
+// TTL/cache-flush are freshness metadata, not part of resource-record identity.
 bool same_record(const Record& a, const Record& b) {
-    return a.type == b.type && same_name(a.name, b.name) && same_name(a.target, b.target)
-        && a.port == b.port && a.data == b.data;
+    return a.type == b.type && names_equal(a.name, b.name) && names_equal(a.target, b.target) &&
+           a.port == b.port && a.data == b.data;
 }
-void put16(Bytes& b, std::uint16_t n) {
-    b.push_back(static_cast<std::uint8_t>(n >> 8)); b.push_back(static_cast<std::uint8_t>(n));
+
+void append_u16_be(Bytes& b, std::uint16_t n) {
+    b.push_back(static_cast<std::uint8_t>(n >> 8));
+    b.push_back(static_cast<std::uint8_t>(n));
 }
-void put32(Bytes& b, std::uint32_t n) { put16(b, static_cast<std::uint16_t>(n >> 16)); put16(b, static_cast<std::uint16_t>(n)); }
-void put_name(Bytes& b, const Name& name) {
+
+void append_u32_be(Bytes& b, std::uint32_t n) {
+    append_u16_be(b, static_cast<std::uint16_t>(n >> 16));
+    append_u16_be(b, static_cast<std::uint16_t>(n));
+}
+
+void append_name(Bytes& b, const Name& name) {
     for (const auto& label : name) {
         b.push_back(static_cast<std::uint8_t>(label.size()));
         b.insert(b.end(), label.begin(), label.end());
     }
     b.push_back(0);
 }
-std::string address(const Bytes& data, std::uint32_t index) {
-    std::ostringstream s;
+
+std::string address_text(const Bytes& data, std::uint32_t interface_index) {
+    std::ostringstream stream;
     if (data.size() == 4) {
-        s << unsigned(data[0]) << '.' << unsigned(data[1]) << '.' << unsigned(data[2]) << '.' << unsigned(data[3]);
+        stream << unsigned(data[0]) << '.' << unsigned(data[1]) << '.' << unsigned(data[2]) << '.'
+               << unsigned(data[3]);
     } else {
         for (std::size_t i = 0; i < 16; i += 2) {
-            if (i) s << ':';
-            s << std::hex << u16(data.data() + i);
+            if (i) {
+                stream << ':';
+            }
+            stream << std::hex << read_u16_be(data.data() + i);
         }
-        if (data[0] == 0xfe && (data[1] & 0xc0) == 0x80) s << '%' << std::dec << index;
+        if (data[0] == 0xfe && (data[1] & 0xc0) == 0x80) {
+            stream << '%' << std::dec << interface_index;
+        }
     }
-    return s.str();
+    return stream.str();
 }
+
+// Resolve one PTR instance only against records on its receiving interface.
+// TXT is optional, but a usable SRV endpoint and at least one address are required.
+std::optional<Service> resolve_service(const CachedRecord& pointer,
+                                       const std::vector<CachedRecord>& records) {
+    const auto& record = pointer.record;
+    const CachedRecord* latest_srv = nullptr;
+    const CachedRecord* latest_txt = nullptr;
+    // Old unique records remain during flush grace, but metadata uses the newest
+    // assertion. On equal timestamps, retain the existing last-record tie break.
+    for (const auto& cached : records) {
+        if (cached.interface_index == pointer.interface_index &&
+            names_equal(cached.record.name, record.target)) {
+            if (cached.record.type == dns::srv &&
+                (!latest_srv || cached.seen_ms >= latest_srv->seen_ms)) {
+                latest_srv = &cached;
+            }
+            if (cached.record.type == dns::txt &&
+                (!latest_txt || cached.seen_ms >= latest_txt->seen_ms)) {
+                latest_txt = &cached;
+            }
+        }
+    }
+    if (!latest_srv || !latest_srv->record.port || latest_srv->record.target.empty()) {
+        return std::nullopt;
+    }
+    Service service;
+    service.type = ascii_lower(name_text(record.name));
+    service.instance = name_text(record.target);
+    service.interface_index = pointer.interface_index;
+    service.hostname = name_text(latest_srv->record.target);
+    service.port = latest_srv->record.port;
+    if (latest_txt) {
+        service.txt = parse_txt_fields(latest_txt->record.data);
+    }
+    for (const auto& cached : records) {
+        if (cached.interface_index == pointer.interface_index &&
+            (cached.record.type == dns::a || cached.record.type == dns::aaaa) &&
+            names_equal(cached.record.name, latest_srv->record.target)) {
+            service.addresses.push_back(address_text(cached.record.data, pointer.interface_index));
+        }
+    }
+    std::sort(service.addresses.begin(), service.addresses.end());
+    service.addresses.erase(std::unique(service.addresses.begin(), service.addresses.end()),
+                            service.addresses.end());
+    if (service.addresses.empty()) {
+        return std::nullopt; // Only expose resolved endpoints.
+    }
+    auto features_text = txt_value(service, "features");
+    if (features_text.empty()) {
+        features_text = txt_value(service, "ft"); // RAOP's advertised feature alias.
+    }
+    service.features = parse_features(features_text);
+    const auto password_flag = ascii_lower(txt_value(service, "pw"));
+    if (password_flag == "true" || password_flag == "1") {
+        service.password_required = true;
+    } else if (password_flag == "false" || password_flag == "0") {
+        service.password_required = false;
+    }
+    return service;
 }
+} // namespace
 
 std::string name_text(const Name& name) {
     std::string text;
     for (const auto& label : name) {
         for (unsigned char c : label) {
             if (c == '.' || c == '\\' || c < 0x20 || c == 0x7f) {
-                text += '\\'; text += static_cast<char>('0' + c / 100);
-                text += static_cast<char>('0' + (c / 10) % 10); text += static_cast<char>('0' + c % 10);
-            } else text += static_cast<char>(c);
+                text += '\\';
+                text += static_cast<char>('0' + c / 100);
+                text += static_cast<char>('0' + (c / 10) % 10);
+                text += static_cast<char>('0' + c % 10);
+            } else {
+                text += static_cast<char>(c);
+            }
         }
         text += '.';
     }
     return text;
 }
 
-bool parse_response(const std::uint8_t* p, std::size_t size, std::vector<Record>& out) {
-    out.clear();
-    if (!p || size < 12 || size > max_packet) return false;
-    const auto flags = u16(p + 2);
+bool parse_response(const std::uint8_t* packet, std::size_t packet_size,
+                    std::vector<Record>& output) {
+    output.clear();
+    if (!packet || packet_size < dns::header_size || packet_size > dns::max_packet_size) {
+        return false;
+    }
+    const auto header_flags = read_u16_be(packet + 2);
     // Only complete, standard, successful responses; ignore query/probe data.
-    if (!(flags & 0x8000) || (flags & 0x7a0f)) return false;
-    const auto questions = u16(p + 4);
-    const auto count = static_cast<unsigned>(u16(p + 6)) + u16(p + 8) + u16(p + 10);
-    if (questions > 128 || count > 512) return false;
-    std::size_t pos = 12;
-    Name name;
-    for (unsigned i = 0; i < questions; ++i) {
-        if (!read_name(p, size, pos, name) || size - pos < 4) return false;
-        pos += 4;
+    const auto invalid_flags = dns::opcode_mask | dns::truncated_flag | dns::response_code_mask;
+    if (!(header_flags & dns::response_flag) || (header_flags & invalid_flags)) {
+        return false;
     }
-    std::vector<Record> parsed;
-    for (unsigned i = 0; i < count; ++i) {
-        Record r;
-        if (!read_name(p, size, pos, r.name) || size - pos < 10) return false;
-        r.type = u16(p + pos);
-        const auto klass = u16(p + pos + 2);
-        r.flush = (klass & 0x8000) != 0;
-        r.ttl = u32(p + pos + 4);
-        const auto length = u16(p + pos + 8);
-        pos += 10;
-        if (length > size - pos) return false;
-        const auto end = pos + length;
-        if ((klass & 0x7fff) == 1) {
-            if (r.type == 12 || r.type == 33) {
-                if (r.type == 33) {
-                    if (length < 7) return false;
-                    r.data.assign(p + pos, p + pos + 4); // Preserve priority/weight for equality.
-                    r.port = u16(p + pos + 4); pos += 6;
-                }
-                if (!read_name(p, size, pos, r.target) || pos != end) return false;
-            } else if (r.type == 16 || r.type == 1 || r.type == 28) {
-                r.data.assign(p + pos, p + end);
-                if ((r.type == 1 && length != 4) || (r.type == 28 && length != 16)
-                    || (r.type == 16 && !valid_txt(r.data))) return false;
-            } else { pos = end; continue; }
-            parsed.push_back(std::move(r));
+    const auto question_count = read_u16_be(packet + 4);
+    const auto record_count = static_cast<unsigned>(read_u16_be(packet + 6)) +
+                              read_u16_be(packet + 8) + read_u16_be(packet + 10);
+    if (question_count > dns::max_questions || record_count > dns::max_records_per_packet) {
+        return false;
+    }
+    std::size_t position = dns::header_size;
+    Name ignored_name;
+    for (unsigned i = 0; i < question_count; ++i) {
+        if (!decode_name(packet, packet_size, position, ignored_name) ||
+            packet_size - position < 4) {
+            return false;
         }
-        pos = end;
+        position += 4;
     }
-    if (pos != size) return false;
-    out = std::move(parsed);
+    std::vector<Record> parsed_records;
+    for (unsigned i = 0; i < record_count; ++i) {
+        Record record;
+        if (!decode_name(packet, packet_size, position, record.name) ||
+            packet_size - position < 10) {
+            return false;
+        }
+        record.type = read_u16_be(packet + position);
+        const auto record_class = read_u16_be(packet + position + 2);
+        record.flush = (record_class & dns::cache_flush_flag) != 0;
+        record.ttl = read_u32_be(packet + position + 4);
+        const auto data_length = read_u16_be(packet + position + 8);
+        position += 10;
+        if (data_length > packet_size - position) {
+            return false;
+        }
+        const auto data_end = position + data_length;
+        if ((record_class & dns::class_mask) == dns::internet_class) {
+            if (record.type == dns::ptr || record.type == dns::srv) {
+                if (record.type == dns::srv) {
+                    if (data_length < 7) {
+                        return false;
+                    }
+                    // Preserve the SRV priority/weight bytes for record equality.
+                    record.data.assign(packet + position, packet + position + 4);
+                    record.port = read_u16_be(packet + position + 4);
+                    position += 6;
+                }
+                if (!decode_name(packet, packet_size, position, record.target) ||
+                    position != data_end) {
+                    return false;
+                }
+            } else if (record.type == dns::txt || record.type == dns::a ||
+                       record.type == dns::aaaa) {
+                record.data.assign(packet + position, packet + data_end);
+                if ((record.type == dns::a && data_length != 4) ||
+                    (record.type == dns::aaaa && data_length != 16) ||
+                    (record.type == dns::txt && !has_valid_txt_lengths(record.data))) {
+                    return false;
+                }
+            } else {
+                position = data_end;
+                continue;
+            }
+            parsed_records.push_back(std::move(record));
+        }
+        position = data_end;
+    }
+    if (position != packet_size) {
+        return false;
+    }
+    // Publish only after all sections and the exact datagram length validate.
+    output = std::move(parsed_records);
     return true;
 }
 
 Bytes query(const std::vector<Question>& questions, const std::vector<CachedRecord>& known,
-            std::uint32_t index, std::uint64_t now) {
-    Bytes b(12, 0);
-    std::uint16_t qcount = 0, acount = 0;
-    for (const auto& q : questions) {
-        Bytes entry; put_name(entry, q.name); put16(entry, q.type); put16(entry, 1); // QM, not QU.
-        if (b.size() + entry.size() > 1400) break;
-        b.insert(b.end(), entry.begin(), entry.end()); ++qcount;
+            std::uint32_t interface_index, std::uint64_t now_ms) {
+    Bytes packet(dns::header_size, 0);
+    std::uint16_t question_count = 0;
+    std::uint16_t answer_count = 0;
+    for (const auto& question : questions) {
+        Bytes entry;
+        append_name(entry, question.name);
+        append_u16_be(entry, question.type);
+        append_u16_be(entry, dns::internet_class); // QM, not QU.
+        if (packet.size() + entry.size() > dns::max_query_size) {
+            break;
+        }
+        packet.insert(packet.end(), entry.begin(), entry.end());
+        ++question_count;
     }
-    for (const auto& c : known) {
-        const auto& r = c.record;
-        if (c.interface_index != index || c.expires_ms <= now) continue;
-        const auto ttl = (c.expires_ms - now) / 1000;
-        if (ttl < (static_cast<std::uint64_t>(r.ttl) + 1) / 2) continue;
-        if (!std::any_of(questions.begin(), questions.begin() + qcount, [&](const Question& q) {
-            return q.type == r.type && same_name(q.name, r.name);
-        })) continue;
+    for (const auto& cached : known) {
+        const auto& record = cached.record;
+        if (cached.interface_index != interface_index || cached.expires_ms <= now_ms) {
+            continue;
+        }
+        const auto remaining_ttl = (cached.expires_ms - now_ms) / milliseconds_per_second;
+        // RFC 6762 known-answer suppression requires at least half the original TTL.
+        if (remaining_ttl < (static_cast<std::uint64_t>(record.ttl) + 1) / 2) {
+            continue;
+        }
+        if (!std::any_of(questions.begin(), questions.begin() + question_count,
+                         [&](const Question& question) {
+                             return question.type == record.type &&
+                                    names_equal(question.name, record.name);
+                         })) {
+            continue;
+        }
         Bytes entry, data;
-        put_name(entry, r.name); put16(entry, r.type); put16(entry, 1);
-        put32(entry, static_cast<std::uint32_t>(ttl));
-        if (r.type == 12) put_name(data, r.target);
-        else if (r.type == 33) { data = r.data; put16(data, r.port); put_name(data, r.target); }
-        else data = r.data;
-        put16(entry, static_cast<std::uint16_t>(data.size())); entry.insert(entry.end(), data.begin(), data.end());
-        if (b.size() + entry.size() > 1400) break;
-        b.insert(b.end(), entry.begin(), entry.end()); ++acount;
+        append_name(entry, record.name);
+        append_u16_be(entry, record.type);
+        append_u16_be(entry, dns::internet_class);
+        append_u32_be(entry, static_cast<std::uint32_t>(remaining_ttl));
+        if (record.type == dns::ptr) {
+            append_name(data, record.target);
+        } else if (record.type == dns::srv) {
+            data = record.data;
+            append_u16_be(data, record.port);
+            append_name(data, record.target);
+        } else {
+            data = record.data;
+        }
+        append_u16_be(entry, static_cast<std::uint16_t>(data.size()));
+        entry.insert(entry.end(), data.begin(), data.end());
+        if (packet.size() + entry.size() > dns::max_query_size) {
+            break;
+        }
+        packet.insert(packet.end(), entry.begin(), entry.end());
+        ++answer_count;
     }
-    b[4] = static_cast<std::uint8_t>(qcount >> 8); b[5] = static_cast<std::uint8_t>(qcount);
-    b[6] = static_cast<std::uint8_t>(acount >> 8); b[7] = static_cast<std::uint8_t>(acount);
-    return b;
+    packet[4] = static_cast<std::uint8_t>(question_count >> 8);
+    packet[5] = static_cast<std::uint8_t>(question_count);
+    packet[6] = static_cast<std::uint8_t>(answer_count >> 8);
+    packet[7] = static_cast<std::uint8_t>(answer_count);
+    return packet;
 }
 
 std::optional<std::uint64_t> parse_features(const std::string& text) {
     const auto comma = text.find(',');
-    auto word = [](std::string s, std::size_t max_digits) -> std::optional<std::uint64_t> {
-        if (s.size() >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) s.erase(0, 2);
-        if (s.empty() || s.size() > max_digits) return {};
-        std::uint64_t n = 0;
-        for (char c : s) { const auto d = hex(c); if (d < 0) return {}; n = (n << 4) | static_cast<unsigned>(d); }
-        return n;
+    const auto parse_hex_word = [](std::string digits,
+                                   std::size_t max_digits) -> std::optional<std::uint64_t> {
+        if (digits.size() >= 2 && digits[0] == '0' && (digits[1] == 'x' || digits[1] == 'X')) {
+            digits.erase(0, 2);
+        }
+        if (digits.empty() || digits.size() > max_digits) {
+            return {};
+        }
+        std::uint64_t value = 0;
+        for (char character : digits) {
+            const auto digit = hex_digit(character);
+            if (digit < 0) {
+                return {};
+            }
+            value = (value << 4) | static_cast<unsigned>(digit);
+        }
+        return value;
     };
-    if (comma == std::string::npos) return word(text, 16);
-    const auto low = word(text.substr(0, comma), 8), high = word(text.substr(comma + 1), 8);
-    if (!low || !high) return {};
+    if (comma == std::string::npos) {
+        return parse_hex_word(text, 16);
+    }
+    const auto low = parse_hex_word(text.substr(0, comma), 8);
+    const auto high = parse_hex_word(text.substr(comma + 1), 8);
+    if (!low || !high) {
+        return {};
+    }
     return *low | (*high << 32);
 }
 
-bool Cache::ingest(const std::uint8_t* data, std::size_t size, std::uint32_t index, std::uint64_t now) {
-    std::vector<Record> parsed;
-    if (!index || !parse_response(data, size, parsed)) return false;
-    expire(now);
-    // Flush grace and recent-record protection apply to the entire RRSet.
-    for (const auto& r : parsed) if (r.flush && r.ttl) {
-        for (auto& c : records_) if (c.interface_index == index && c.record.type == r.type
-            && same_name(c.record.name, r.name) && now - c.seen_ms >= 1000) {
-            c.expires_ms = std::min(c.expires_ms, now + 1000);
+bool Cache::ingest(const std::uint8_t* data, std::size_t size, std::uint32_t interface_index,
+                   std::uint64_t now_ms) {
+    std::vector<Record> parsed_records;
+    if (!interface_index || !parse_response(data, size, parsed_records)) {
+        return false;
+    }
+    expire(now_ms);
+    // Mark the whole old RRSet first, then refresh/insert every record in this
+    // packet. This prevents one member of a new multi-address RRSet from flushing
+    // another. Protect records seen within the preceding one-second burst.
+    for (const auto& record : parsed_records) {
+        if (record.flush && record.ttl) {
+            for (auto& cached : records_) {
+                if (cached.interface_index == interface_index &&
+                    cached.record.type == record.type &&
+                    names_equal(cached.record.name, record.name) &&
+                    now_ms - cached.seen_ms >= cache_grace_ms) {
+                    cached.expires_ms = std::min(cached.expires_ms, now_ms + cache_grace_ms);
+                }
+            }
         }
     }
-    for (auto& r : parsed) {
-        auto it = std::find_if(records_.begin(), records_.end(), [&](const CachedRecord& c) {
-            return c.interface_index == index && same_record(c.record, r);
-        });
-        if (!r.ttl) {
-            if (it != records_.end()) it->expires_ms = std::min(it->expires_ms, now + 1000);
+    for (auto& record : parsed_records) {
+        auto existing =
+            std::find_if(records_.begin(), records_.end(), [&](const CachedRecord& cached) {
+                return cached.interface_index == interface_index &&
+                       same_record(cached.record, record);
+            });
+        if (!record.ttl) {
+            // A goodbye shortens existing lifetime but never introduces a record.
+            // Another responder can rescue it with a refresh during the grace.
+            if (existing != records_.end()) {
+                existing->expires_ms = std::min(existing->expires_ms, now_ms + cache_grace_ms);
+            }
         } else {
-            const auto expires = now + static_cast<std::uint64_t>(r.ttl) * 1000;
-            if (it != records_.end()) *it = {std::move(r), index, now, expires};
-            else if (records_.size() < max_records) records_.push_back({std::move(r), index, now, expires});
-            else overflowed_ = true;
+            const auto expires_ms =
+                now_ms + static_cast<std::uint64_t>(record.ttl) * milliseconds_per_second;
+            if (existing != records_.end()) {
+                *existing = {std::move(record), interface_index, now_ms, expires_ms};
+            } else if (records_.size() < dns::max_cached_records) {
+                records_.push_back({std::move(record), interface_index, now_ms, expires_ms});
+            } else {
+                overflowed_ = true;
+            }
         }
     }
     return true;
 }
-void Cache::expire(std::uint64_t now) {
-    records_.erase(std::remove_if(records_.begin(), records_.end(), [now](const CachedRecord& c) {
-        return c.expires_ms <= now;
-    }), records_.end());
+
+void Cache::expire(std::uint64_t now_ms) {
+    records_.erase(std::remove_if(records_.begin(), records_.end(),
+                                  [now_ms](const CachedRecord& cached) {
+                                      return cached.expires_ms <= now_ms;
+                                  }),
+                   records_.end());
 }
+
 void Cache::retain_interfaces(const std::vector<std::uint32_t>& active) {
-    records_.erase(std::remove_if(records_.begin(), records_.end(), [&](const CachedRecord& c) {
-        return std::find(active.begin(), active.end(), c.interface_index) == active.end();
-    }), records_.end());
+    records_.erase(std::remove_if(records_.begin(), records_.end(),
+                                  [&](const CachedRecord& cached) {
+                                      return std::find(active.begin(), active.end(),
+                                                       cached.interface_index) == active.end();
+                                  }),
+                   records_.end());
 }
+
 std::vector<Question> Cache::questions() const {
-    std::vector<Question> result{{airplay, 12}, {raop, 12}};
+    std::vector<Question> result{{airplay, dns::ptr}, {raop, dns::ptr}};
     auto add = [&](const Name& name, std::uint16_t type) {
-        if (result.size() < 128 && std::none_of(result.begin(), result.end(), [&](const Question& q) {
-            return q.type == type && same_name(q.name, name);
-        })) result.push_back({name, type});
+        if (result.size() < dns::max_questions &&
+            std::none_of(result.begin(), result.end(), [&](const Question& question) {
+                return question.type == type && names_equal(question.name, name);
+            })) {
+            result.push_back({name, type});
+        }
     };
-    for (const auto& c : records_) {
-        const auto& r = c.record;
-        if (r.type != 12 || (!same_name(r.name, airplay) && !same_name(r.name, raop))
-            || !instance_of(r.target, r.name)) continue;
-        add(r.target, 33); add(r.target, 16);
-        for (const auto& srv : records_) if (srv.interface_index == c.interface_index
-            && srv.record.type == 33 && same_name(srv.record.name, r.target) && !srv.record.target.empty()) {
-            add(srv.record.target, 1); add(srv.record.target, 28);
+    for (const auto& cached : records_) {
+        const auto& record = cached.record;
+        if (record.type != dns::ptr ||
+            (!names_equal(record.name, airplay) && !names_equal(record.name, raop)) ||
+            !is_service_instance(record.target, record.name)) {
+            continue;
+        }
+        add(record.target, dns::srv);
+        add(record.target, dns::txt);
+        for (const auto& service_record : records_) {
+            if (service_record.interface_index == cached.interface_index &&
+                service_record.record.type == dns::srv &&
+                names_equal(service_record.record.name, record.target) &&
+                !service_record.record.target.empty()) {
+                add(service_record.record.target, dns::a);
+                add(service_record.record.target, dns::aaaa);
+            }
         }
     }
     return result;
 }
+
 std::vector<Device> Cache::devices() const {
     std::map<std::string, Device> grouped;
     std::vector<std::string> seen;
-    for (const auto& ptr : records_) {
-        const auto& r = ptr.record;
-        if (r.type != 12 || (!same_name(r.name, airplay) && !same_name(r.name, raop))
-            || !instance_of(r.target, r.name)) continue;
-        const auto service_key = std::to_string(ptr.interface_index) + ':' + lower(name_text(r.target));
-        if (std::find(seen.begin(), seen.end(), service_key) != seen.end()) continue;
+    for (const auto& pointer : records_) {
+        const auto& record = pointer.record;
+        if (record.type != dns::ptr ||
+            (!names_equal(record.name, airplay) && !names_equal(record.name, raop)) ||
+            !is_service_instance(record.target, record.name)) {
+            continue;
+        }
+        const auto service_key =
+            std::to_string(pointer.interface_index) + ':' + ascii_lower(name_text(record.target));
+        if (std::find(seen.begin(), seen.end(), service_key) != seen.end()) {
+            continue;
+        }
         seen.push_back(service_key);
-        const CachedRecord* srv = nullptr;
-        const CachedRecord* txt = nullptr;
-        for (const auto& c : records_) if (c.interface_index == ptr.interface_index && same_name(c.record.name, r.target)) {
-            if (c.record.type == 33 && (!srv || c.seen_ms >= srv->seen_ms)) srv = &c;
-            if (c.record.type == 16 && (!txt || c.seen_ms >= txt->seen_ms)) txt = &c;
+        auto resolved = resolve_service(pointer, records_);
+        if (!resolved) {
+            continue;
         }
-        if (!srv || !srv->record.port || srv->record.target.empty()) continue;
-        Service s;
-        s.type = lower(name_text(r.name)); s.instance = name_text(r.target);
-        s.interface_index = ptr.interface_index; s.hostname = name_text(srv->record.target); s.port = srv->record.port;
-        if (txt) s.txt = txt_fields(txt->record.data);
-        for (const auto& c : records_) if (c.interface_index == ptr.interface_index
-            && (c.record.type == 1 || c.record.type == 28) && same_name(c.record.name, srv->record.target)) {
-            s.addresses.push_back(address(c.record.data, ptr.interface_index));
-        }
-        std::sort(s.addresses.begin(), s.addresses.end());
-        s.addresses.erase(std::unique(s.addresses.begin(), s.addresses.end()), s.addresses.end());
-        if (s.addresses.empty()) continue; // Only expose resolved endpoints.
-        s.features = parse_features(field(s, "features").empty() ? field(s, "ft") : field(s, "features"));
-        const auto pw = lower(field(s, "pw"));
-        if (pw == "true" || pw == "1") s.password_required = true;
-        else if (pw == "false" || pw == "0") s.password_required = false;
-        auto identity = mac(field(s, "deviceid"));
-        std::string display = r.target.front();
-        if (same_name(r.name, raop)) {
-            const auto at = display.find('@');
-            if (at != std::string::npos) {
-                const auto raop_identity = mac(display.substr(0, at));
-                if (identity.empty()) identity = raop_identity;
-                if (!raop_identity.empty()) display.erase(0, at + 1);
+        Service service = std::move(*resolved);
+        // Merge only by a validated advertised identity. Friendly names and SRV
+        // hostnames are not sufficient evidence that two services share a device.
+        auto identity = normalize_mac(txt_value(service, "deviceid"));
+        std::string display = record.target.front();
+        if (names_equal(record.name, raop)) {
+            const auto identity_separator = display.find('@');
+            if (identity_separator != std::string::npos) {
+                const auto raop_identity = normalize_mac(display.substr(0, identity_separator));
+                if (identity.empty()) {
+                    identity = raop_identity;
+                }
+                if (!raop_identity.empty()) {
+                    display.erase(0, identity_separator + 1);
+                }
             }
         }
         const auto id = identity.empty() ? "instance:" + service_key : "deviceid:" + identity;
-        auto& d = grouped[id]; d.id = id;
-        const auto model = field(s, "model").empty() ? field(s, "am") : field(s, "model");
-        if (d.name.empty() || same_name(r.name, airplay)) d.name = display;
-        if (d.model.empty() || (!model.empty() && same_name(r.name, airplay))) d.model = model;
-        d.services.push_back(std::move(s));
+        auto& device = grouped[id];
+        device.id = id;
+        auto model = txt_value(service, "model");
+        if (model.empty()) {
+            model = txt_value(service, "am");
+        }
+        // AirPlay supplies the preferred display metadata; keep RAOP endpoints.
+        if (device.name.empty() || names_equal(record.name, airplay)) {
+            device.name = display;
+        }
+        if (device.model.empty() || (!model.empty() && names_equal(record.name, airplay))) {
+            device.model = model;
+        }
+        device.services.push_back(std::move(service));
     }
     std::vector<Device> result;
     for (auto& entry : grouped) {
-        auto& d = entry.second;
-        std::sort(d.services.begin(), d.services.end(), [](const Service& a, const Service& b) {
-            if (a.interface_index != b.interface_index) return a.interface_index < b.interface_index;
-            return a.instance < b.instance;
-        });
-        result.push_back(std::move(d));
+        auto& device = entry.second;
+        std::sort(device.services.begin(), device.services.end(),
+                  [](const Service& a, const Service& b) {
+                      if (a.interface_index != b.interface_index) {
+                          return a.interface_index < b.interface_index;
+                      }
+                      return a.instance < b.instance;
+                  });
+        result.push_back(std::move(device));
     }
     return result;
 }
-}
+} // namespace send_airplay2::detail

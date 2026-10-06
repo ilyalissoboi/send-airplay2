@@ -35,8 +35,8 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Current discovery PR | [#2: feat: add receiver discovery and diagnostic CLI](https://github.com/ilyalissoboi/send-airplay2/pull/2), open |
 | Target | `main` |
 | Current local branch | `codex/receiver-discovery`, based on merged `main` at `c61955f5074182e97b2828416175cce42763cc5f` |
-| Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; subsequent handoff/CI evidence commits may follow |
-| Final PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
+| Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; later commits add documentation and a C++ readability/ownership pass |
+| Final foundation PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Runtime dependencies | No third-party libraries; native discovery uses OS socket/interface APIs |
@@ -213,15 +213,35 @@ Discovery slice validation on 2026-10-06:
   all six Windows/Linux/macOS static/shared jobs and Linux ASan/UBSan passed,
   verified 2026-10-06. [Push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37419114646)
   and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37419131062).
-  Subsequent commits update documentation only; inspect checks for the actual PR
+  Commits through `f9b9002` updated documentation only; later readability changes
+  require their own checks. Inspect checks for the actual PR
   head before merging. Linux/macOS receiver interoperability remains untested.
+
+Readability pass on PR #2, 2026-10-06:
+
+- Added a repository `.clang-format` convention, expanded control flow and clear
+  DNS constants/names, separated query scheduling, service resolution and JSON
+  formatting, and organized cache tests by scenario.
+- Public API and internal comments describe buffer ownership, byte order,
+  interface scope, monotonic time, compression traversal, cache grace, metadata
+  merging and binary/UTF-8 output. Socket and Winsock resource owners explicitly
+  forbid copying; cleanup order and failure unwinding are documented.
+- Windows static/shared Release builds passed all six CTest targets, including
+  new valid/invalid UTF-8 cases. The pre-existing synthetic fixture JSON was
+  byte-for-byte unchanged before adding the new test fields. The test harness
+  now decodes CLI output explicitly as UTF-8 on Windows.
+- Protocol behavior and JSON schema remain the same. Actual pairing/playback
+  validation is still pending; verify CI for the readability commit separately.
+- A post-refactor 10-second Windows LAN scan again resolved "Living Room"
+  (`AppleTV14,1`) and `Mac14,2`, each with both services: four responses, zero
+  rejected packets and no warnings. This remains discovery-only evidence.
 
 Reproduction from a fresh checkout:
 
 ```sh
 git clone https://github.com/ilyalissoboi/send-airplay2.git
 cd send-airplay2
-git switch main
+git switch codex/receiver-discovery
 cmake -S . -B build-static -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build-static --config Release
 ctest --test-dir build-static -C Release --output-on-failure
@@ -313,7 +333,7 @@ at `C:\Program Files\GitHub CLI\gh.exe`, authenticated as `ilyalissoboi` through
 the keyring. A GitHub API read confirmed push and admin permissions for this
 repository. Network verification required execution outside the sandbox; the
 initial sandbox authentication error was not evidence of invalid credentials.
-An authenticated command-line Git push has not been tested in this local chat.
+Authenticated command-line Git push succeeded for PR #2 in this local chat.
 
 Historical cloud environment: public clone/read worked. Command-line `git push` failed with
 `could not read Username for 'https://github.com'`; GitHub connector authorization
