@@ -354,6 +354,11 @@ PIN pairing, 2026-10-06:
   targets with OpenSSL 3.6.5 and Botan 3.12.0. clang-format dry-run and
   `git diff --check` pass; fixture regeneration is reproducible. CI evidence
   for the published PR head is recorded after checks complete.
+- The full Windows Debug pair-setup suite also passes (about 91 seconds).
+  Its CTest limit is five minutes to accommodate repeated 3072-bit SRP with
+  unoptimized backends; corruption coverage is retained. Release suite time
+  is about 3.4 seconds. GCC/Clang warnings-as-errors exposed a test-loop string
+  copy, fixed with a const reference; final-head CI must be rechecked.
 - No receiver connection, PIN-display request, actual PIN entry, credential save
   or playback operation was attempted. Hardware authentication remains NOT RUN.
   Next: bounded HTTP/socket I/O and trusted host credential storage, followed by
