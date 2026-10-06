@@ -37,7 +37,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Peer-verification PR | [#4: feat: add authenticated peer verification for existing credentials](https://github.com/ilyalissoboi/send-airplay2/pull/4), merged on 2026-10-06 |
 | PIN-pairing PR | [#5: feat: add authenticated PIN pairing message flow](https://github.com/ilyalissoboi/send-airplay2/pull/5), merged on 2026-10-06; verified merge `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
 | Current receiver-transport PR | [#6: feat: add bounded authenticated receiver transport](https://github.com/ilyalissoboi/send-airplay2/pull/6), open |
-| Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; local static/shared checks passed; CI running |
+| Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
 | Current local branch | `codex/receiver-transport`, based on verified PR #5 merge at `24bb2b86a1a725ea82a4a32d5a33fd2c22ef7e9d` |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
@@ -428,8 +428,13 @@ Receiver-transport slice on `codex/receiver-transport`, 2026-10-06:
 - Readability/ownership pass applies the AGENTS.md rules, including Doxygen
   contracts, named bounds, focused scenarios and RAII sockets/secrets/threads.
   clang-format and diff checks pass. The Windows Debug receiver suite also passes.
-  Cross-platform/sanitizer CI must be checked at the actual PR head and recorded
-  after publication. IPv6 scope IDs stay in the socket address rather than HTTP Host.
+  IPv6 scope IDs stay in the socket address rather than HTTP Host. At source head
+  `979ef0829248203684939274eb3864b8241845cc`, all Linux/macOS static/shared and
+  sanitizer checks passed (both push and PR runs). Windows CI was still configuring
+  dependencies; local static/shared Windows CTests pass. Green merged-main Windows
+  CI spent about 35 minutes installing dependencies and saved its cache after these
+  PR jobs began. The final documentation head starts fresh checks with that cache;
+  verify all checks at the actual PR head before merging.
 - No connection to the Apple TV, PIN display/entry, credential change/save or
   playback attempted. Receiver authentication/playback and Android/UWP packaged
   loading remain untested. Next: trusted credential serialization/host storage
