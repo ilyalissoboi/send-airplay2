@@ -60,9 +60,13 @@ reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UT
   6. Implemented the bounded in-tree `bplist00` codec (D27) with plistlib
      fixtures; see section 5. Not yet used by the library.
 - **Next actions:**
-  1. Native session layer, designed for the `/command` flow (section 7,
-     item 5): the session and threading model, then `cast`. The plist codec
-     (D27) is in place. Use the fork's observed sequence as protocol
+  1. Native session layer: the proposal is in
+     [session-design.md](session-design.md). It separates validated facts from
+     hypotheses H1-H4 and lists three open decisions (threading, control path,
+     sender identity). Get the user's choices, then follow its staged plan.
+     Note: the seek, pause and status controls validated with the fork used
+     pyatv's MRP data stream, not `/command`. The plist codec (D27) is in
+     place. Use the fork's observed sequence as protocol
      reference, not as copied code. Define stop as explicit teardown verified
      by receiver state.
   2. Small `serve` diagnostic: count connections and requests in the stop
@@ -948,8 +952,9 @@ while arranging the hardware baseline in parallel with that work.
    playback (section 5, reference playback attempt). Design for the
    `/command` queue flow on a type-130 stream, with playback state from the event
    channel. The unmerged pyatv fix confirmed the start path on this receiver.
-   The `bplist00` codec (D27) is implemented; the session and threading model
-   remain.
+   The `bplist00` codec (D27) is implemented. The session and threading
+   proposal is in [session-design.md](session-design.md), with decisions
+   pending.
    Native stop must tear down the session and verify receiver state; after
    the fork's `stop`, the TV left playback but reported `Paused` with the
    session still open.
