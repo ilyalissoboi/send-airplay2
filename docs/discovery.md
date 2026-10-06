@@ -121,6 +121,9 @@ separate scheduling/resolution/output helpers, API ownership/error documentation
 and explicit non-copyable native resource owners. The JSON schema and discovery
 policy remain unchanged. Windows static/shared tests include valid UTF-8 display
 and exact preservation of malformed UTF-8 bytes alongside binary TXT values.
+All six platform configurations and Linux ASan/UBSan passed at readability
+commit `23f8ff08a12431fc0aba95a21aaf881aa7458674`
+([CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37420816897)).
 
 On 2026-10-06, Windows 11 x64 / MSVC 19.51 static and shared Release builds passed
 the six CTest targets. Synthetic tests cover truncation/compression bounds,

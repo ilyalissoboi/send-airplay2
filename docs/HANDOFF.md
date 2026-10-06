@@ -36,6 +36,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Target | `main` |
 | Current local branch | `codex/receiver-discovery`, based on merged `main` at `c61955f5074182e97b2828416175cce42763cc5f` |
 | Discovery implementation commit | `48189897ba167b44c3da7c6e4a7857bf28120498`; later commits add documentation and a C++ readability/ownership pass |
+| C++ readability commit | `23f8ff08a12431fc0aba95a21aaf881aa7458674`; all platform/sanitizer CI jobs passed, subsequent commits record evidence only |
 | Final foundation PR head | `034983ca095fd0803d3de2307c6d27fdf18db488` on `feat/portable-foundation` |
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
@@ -235,6 +236,10 @@ Readability pass on PR #2, 2026-10-06:
 - A post-refactor 10-second Windows LAN scan again resolved "Living Room"
   (`AppleTV14,1`) and `Mac14,2`, each with both services: four responses, zero
   rejected packets and no warnings. This remains discovery-only evidence.
+- At readability commit `23f8ff08a12431fc0aba95a21aaf881aa7458674`, all six
+  Windows/Linux/macOS static/shared CI jobs and Linux ASan/UBSan passed:
+  [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37420813282)
+  and [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37420816897).
 
 Reproduction from a fresh checkout:
 
