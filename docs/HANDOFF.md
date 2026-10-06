@@ -78,12 +78,14 @@ User-provided on 2026-10-06 (Asia/Tokyo):
 - Receiver: **Apple TV 4K**; subsequent LAN discovery advertised `AppleTV14,1`
   and name "Living Room". pyatv 0.18.0 maps it to Apple TV 4K (gen 3);
   generation not independently established beyond that model-table mapping.
-- Firmware: **tvOS 26.6** (user-reported, consistent with advertised `osvers`/`ov`);
-  exact build not yet supplied. AirPlay `srcvers` is not a tvOS build identifier.
+- Firmware: **tvOS 26.6 (23L773)**, user-reported (build supplied 2026-10-06), consistent
+  with advertised `osvers`/`ov`. AirPlay `srcvers` is not a tvOS build identifier.
+- AirPlay access: limited to the same network (user-reported); no password;
+  pairing mandatory per pyatv scan.
 - Intended testing host: **Windows 11 x64**; exact OS build not yet supplied.
 
-AirPlay access settings, detailed network configuration and reference playback
-results remain pending. Discovery resolved the receiver; playback compatibility
+Detailed network/firewall configuration and reference playback results remain
+pending. Discovery resolved the receiver; playback compatibility
 is untested.
 See [receiver-validation.md](receiver-validation.md) for the test record.
 
@@ -674,9 +676,9 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   and RAOP all report mandatory pairing and no password. pyatv AirPlay pairing
   succeeded, and `device_state` on a fresh invocation returned `Idle`. pyatv's
   model table labels the receiver Apple TV 4K (gen 3). The sanitized record is
-  in receiver-validation.md. Reference playback is NOT RUN: it needs a
-  range-capable HTTP server for the test MP4 and the exact tvOS build/access
-  settings.
+  in receiver-validation.md. The user then reported pair exit code 0, tvOS build
+  23L773 and AirPlay access limited to the same network. Reference playback is
+  NOT RUN: it needs a range-capable HTTP server for the test MP4.
 
 ## 6. Screenbox integration findings
 

@@ -19,8 +19,8 @@ Playback results remain pending.
 
 - Date and library commit:
 - Receiver manufacturer/model/generation: Apple TV 4K (user-provided), advertised model `AppleTV14,1`; pyatv 0.18.0 reports "Apple TV 4K (gen 3)". That label is pyatv's model-table mapping, not an independent hardware check.
-- Firmware version and build: tvOS 26.6 (user-reported, consistent with advertised `osvers`/`ov=26.6`); exact build not supplied.
-- AirPlay access policy and PIN/password settings (no secrets):
+- Firmware version and build: tvOS 26.6 (23L773), user-reported from Settings > General > About on 2026-10-06; consistent with advertised `osvers`/`ov=26.6`. Earlier results in this record predate the build report and assume the firmware was unchanged.
+- AirPlay access policy and PIN/password settings (no secrets): access limited to people on the same network (user-reported); pyatv scan reports no password required and mandatory pairing for AirPlay/RAOP/Companion.
 - Sender OS/version/architecture: Windows 11 x64; automated runner observes Windows build `10.0.26200`, AMD64.
 - Host: CLI / packaged Windows C# / Android:
 - Network: Ethernet/Wi-Fi; same subnet; firewall configuration:
@@ -178,8 +178,7 @@ The user ran pyatv 0.18.0 (MIT, external tool) on the Windows host, following
   tvOS 26.6, deep sleep false. Services: AirPlay port 7000, Companion port 49153
   and RAOP port 7000. Each reported `Requires Password: False` and
   `Pairing: Mandatory`, with no stored credentials before pairing.
-- `atvremote --protocol airplay pair`: succeeded (user-reported). The process
-  exit code was not supplied.
+- `atvremote --protocol airplay pair`: succeeded, exit code 0 (user-reported).
 - `device_state` on a fresh pyatv invocation using stored credentials:
   `DeviceState.Idle`.
 
@@ -188,8 +187,9 @@ pairing on this receiver/firmware alongside the existing `airplay2-cli` profile,
 and that pyatv can reuse its credentials. It is not a playback result, and it
 says nothing about this library's session code. The address, MAC address and
 device identifiers printed by the scan are omitted here; credentials were not
-shared. Exact tvOS build and AirPlay access settings remain unsupplied. The
-Companion protocol was not paired.
+shared. The user subsequently reported tvOS build 23L773 and AirPlay access
+limited to the same network (see Environment). The Companion protocol was not
+paired.
 
 ## Automated CLI E2E observation: 2026-10-06
 
