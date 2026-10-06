@@ -20,11 +20,10 @@ Snapshot: 2026-10-06, ~14:30 UTC.
   for the session implementation in [session-design.md](session-design.md).
   CI runs only for pull requests, so keep a draft PR open for this branch.
   Before writing, verify the actual head and checks.
-- **Done on this branch:** step 1, channel key derivation (section 5,
-  "Session channel keys").
-- **Next:** step 2 of session-design.md section 8: the event-channel request
-  parser and response encoder, and the event channel against a loopback fake
-  receiver.
+- **Done on this branch:** step 1, channel key derivation, and step 2, the
+  event channel (section 5).
+- **Next:** step 3 of session-design.md section 8: the NTP timing packet codec
+  and UDP responder.
 - **Still true:** the library cannot cast yet. The first hardware gate (G1) is
   step 6.
 
@@ -927,6 +926,39 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   blobs are recorded in dependencies.md.
 - **Not yet exercised:** no receiver traffic uses these keys yet. Event-channel
   interoperability is untested.
+
+### Event channel (step 2): 2026-10-06
+
+- **Framing** (`receiver_http.*`): `EventRequestParser` handles
+  receiver-initiated requests, back to back, with bounded pending input.
+  `encode_event_response` builds the reference reply: `200 OK`,
+  `Content-Length: 0`, `Audio-Latency: 0`, with `Server` and `CSeq` echoed. The
+  per-line field check is now shared with the response parser, which behaves
+  as before (`receiver_tests` unchanged and passing).
+- **`EventChannel`** (`event_channel.*`) owns the stream, both record directions
+  and the parser. It answers each request before returning it. Every failure is
+  terminal and erases state. One owning thread; other threads stop a blocked
+  receive through the cancellation flag.
+- **`ReceiverOperation::until_cancelled(flag)`:** a no-deadline operation for
+  long-lived readers. `after()` stays capped at 60 s, and an expired deadline is
+  terminal, so a silent receiver must not time out the event reader.
+- **Tests** (`event_channel_tests`):
+  - Parser: literal requests, HTTP without a length, coalesced and split input,
+    byte-at-a-time input, and 14 rejection cases plus the pending limit and EOF
+    rules.
+  - Replies: literal bytes, and refusal of injected CRLF.
+  - Channel: read fragments of 1, 7 and 4096 bytes; requests across records;
+    3-byte partial writes; clean and partial EOF; truncated and tampered
+    records; an oversized body; cancellation; a deadline; construction checks.
+- **Evidence:**
+  - Windows MSVC static/shared Release passed all 17 CTest targets.
+  - clang++ 22 strict-warning syntax checks passed. They again caught a C++20-only
+    structured-binding lambda capture, now fixed.
+  - Reversing the reply field order failed six checks by name.
+  - clang-format and `git diff --check` passed.
+  - CI for step 1 (`c5a2734`) passed all checks.
+- **Not yet exercised:** no Apple TV traffic. Event-channel interoperability is
+  untested.
 
 ## 6. Screenbox integration findings
 

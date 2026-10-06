@@ -221,7 +221,9 @@ administered one per session.
    `ReceiverConnection::derive_channel_keys`.
 2. Event request parser/encoder and event channel, tested against a loopback
    fake receiver with fragmented and coalesced records, bad tags, oversized
-   requests, cancellation and EOF.
+   requests, cancellation and EOF. **Done:** `EventRequestParser`,
+   `encode_event_response`, `EventChannel` and
+   `ReceiverOperation::until_cancelled`, tested with a scripted stream.
 3. Timing packet codec and responder: Python fixtures; source filtering;
    malformed packets.
 4. Session message builders and parsers, with plistlib fixtures for SETUP and

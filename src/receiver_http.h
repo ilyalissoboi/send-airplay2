@@ -4,6 +4,7 @@
 #include "pairing_tlv.h"
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -17,6 +18,9 @@ constexpr std::size_t max_fields = 32;
 constexpr std::size_t max_body = 32768;
 constexpr std::size_t read_chunk = 4096;
 constexpr std::size_t max_feed = 65536;
+/// Unparsed event-channel input kept between requests: at most one maximal
+/// request (headers plus body) and one decrypted read chunk.
+constexpr std::size_t max_pending_event_input = max_headers + max_body + read_chunk;
 } // namespace receiver_http
 
 enum class TransportError {
@@ -105,5 +109,51 @@ private:
     bool complete_ = false;
     bool closed_ = false;
 };
+/// A receiver-initiated request on an event channel (receiver to sender).
+struct EventRequest {
+    std::string method;
+    std::string target;
+    ReceiverProtocol protocol = ReceiverProtocol::rtsp;
+    ReceiverHeaders headers; // Lower-case names; duplicate names rejected.
+    Bytes body;              // Caller owns/erases returned bytes; do not log them.
+};
+
+/** Incremental parser for receiver-initiated event-channel requests; serial,
+ * noncopyable. Requests may arrive back to back in one read, so bytes after a
+ * complete request are kept for the next call to next().
+ * The request line is "METHOD target RTSP/1.0" or "... HTTP/1.1". Fields follow
+ * the response rules: token names, visible values, unique lower-cased names,
+ * no Transfer-Encoding, Upgrade or Trailer. Content-Length is at most 32 KiB;
+ * when absent the body is empty. CSeq, when present, must be decimal.
+ * append() rejects input beyond max_pending_event_input. Any method exception
+ * is terminal and wipes buffered input; destruction wipes it too.
+ */
+class EventRequestParser {
+public:
+    EventRequestParser() = default;
+    ~EventRequestParser();
+    EventRequestParser(const EventRequestParser&) = delete;
+    EventRequestParser& operator=(const EventRequestParser&) = delete;
+    EventRequestParser(EventRequestParser&&) = delete;
+    EventRequestParser& operator=(EventRequestParser&&) = delete;
+    void append(const Bytes& plaintext);
+    /// The next complete request, or nullopt when more input is needed.
+    [[nodiscard]] std::optional<EventRequest> next();
+    /// End of input: a partial request throws `disconnected`. Either way the
+    /// parser is closed afterwards.
+    void finish();
+    void close() noexcept;
+
+private:
+    Bytes pending_;
+    bool closed_ = false;
+};
+
+/** The reply to one event request, matching the reference sender's reply:
+ * "<protocol> 200 OK", Content-Length 0, Audio-Latency 0, then Server and CSeq
+ * echoed when the request carried them. The reply contains no request body
+ * bytes. Throws TransportException for field values a request could not carry.
+ */
+[[nodiscard]] Bytes encode_event_response(const EventRequest& request);
 } // namespace send_airplay2::detail
 #endif

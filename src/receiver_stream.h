@@ -20,6 +20,10 @@ struct ReceiverOperation {
     const std::atomic_bool* cancelled = nullptr;
     [[nodiscard]] static ReceiverOperation after(std::chrono::milliseconds timeout,
                                                  const std::atomic_bool* cancelled = nullptr);
+    /// No deadline: only the (required) cancellation flag ends the wait. For
+    /// long-lived readers, such as an event channel whose peer may stay silent
+    /// indefinitely. Throws TransportException(invalid_argument) without a flag.
+    [[nodiscard]] static ReceiverOperation until_cancelled(const std::atomic_bool* cancelled);
     void check() const;
 };
 struct ReceiverEndpoint {

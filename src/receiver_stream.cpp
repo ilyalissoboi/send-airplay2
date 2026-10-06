@@ -26,6 +26,12 @@ ReceiverOperation ReceiverOperation::after(std::chrono::milliseconds timeout,
     }
     return {std::chrono::steady_clock::now() + timeout, cancelled};
 }
+ReceiverOperation ReceiverOperation::until_cancelled(const std::atomic_bool* cancelled) {
+    if (cancelled == nullptr) {
+        throw TransportException(TransportError::invalid_argument);
+    }
+    return {std::chrono::steady_clock::time_point::max(), cancelled};
+}
 void ReceiverOperation::check() const {
     if (cancelled && cancelled->load(std::memory_order_relaxed)) {
         throw TransportException(TransportError::cancelled);

@@ -84,6 +84,39 @@ MSG_NOSIGNAL on Linux/Android). EOF before a complete response is terminal; an
 incomplete encrypted record at EOF is rejected by the record codec. Errors expose
 sanitized transport/crypto categories, without endpoint, body or native error data.
 
+## Event channel (receiver to sender)
+
+A verified session also receives requests from the receiver on a separate TCP
+connection to the base SETUP's `eventPort`. `EventChannel` (`event_channel.*`)
+owns that stream and HAP records keyed with `event_channel_labels()` (see
+`channel_keys.h`). `EventRequestParser` and `encode_event_response`
+(`receiver_http.*`) frame this opposite direction:
+
+- **Request line:** `METHOD target RTSP/1.0` or `HTTP/1.1`. The method is a
+  token of at most 32 bytes; the target is visible ASCII.
+- **Fields:** the same rules as responses. Token names, visible values, unique
+  lower-cased names, at most 32 fields, an 8 KiB header block, and no
+  Transfer-Encoding, Upgrade or Trailer. `Content-Length` is at most 32 KiB and
+  an absent length means an empty body. `CSeq` must be decimal when present.
+- **Buffering:** requests may arrive back to back. The parser keeps at most one
+  maximal request plus one read chunk of unparsed input, and erases consumed
+  bytes.
+- **Replies:** each well-formed request gets `<protocol> 200 OK` with
+  `Content-Length: 0`, `Audio-Latency: 0` and the request's `Server` and `CSeq`
+  echoed. These are the fields of the reference sender's reply (pyatv 0.18.0
+  `channels.py`, MIT; constants only). The reply is sent before the request is
+  returned to the caller.
+- **Failures:** every error is terminal. A clean or partial end of input,
+  authentication or framing failure, deadline or cancellation closes the
+  stream and erases keys and buffered plaintext.
+- **Waiting:** a reader thread uses `ReceiverOperation::until_cancelled(flag)`.
+  The receiver may stay silent indefinitely, so only the session's
+  cancellation flag ends that wait; the native stream polls it in short slices.
+
+Tests use a scripted stream and literal request and reply bytes; see
+`event_channel_tests.cpp`. Event-channel interoperability with a receiver is
+not yet tested.
+
 ## Evidence and provenance
 
 No new dependency or external implementation source was added. The in-tree TCP
