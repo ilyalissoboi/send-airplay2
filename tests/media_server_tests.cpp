@@ -114,14 +114,11 @@ class WireClient {
     }
 
 public:
-    WireReply wire_exchange(const Target& target, std::string request, std::size_t fragment = 65536,
-                            const std::string& source_address = "") {
+    WireReply wire_exchange(const Target& target, std::string request,
+                            std::size_t fragment = 65536) {
         request_ = std::move(request);
         fragment_ = fragment;
         socket_.open(target.endpoint.protocol());
-        if (!source_address.empty()) {
-            socket_.bind({asio::ip::make_address(source_address), 0});
-        }
         timer_.expires_after(3s);
         timer_.async_wait([this](ErrorCode error) {
             if (!error) {
@@ -303,7 +300,14 @@ void rejection_tests() {
     check(!overflow.timed_out && overflow.status(431),
           "total header limit rejects oversized request");
     check(reads == 0, "rejected requests invoke no source callback");
-    const auto denied = WireClient{}.wire_exchange(target, target.request(), 65536, "127.0.0.2");
+    // Use the normal loopback source against a different allowed receiver IP.
+    // macOS cannot bind an unconfigured 127.0.0.2 client alias. Route selection
+    // for that peer still chooses the configured local loopback address.
+    auto restricted = MediaServer::start(patterned_source(32, 65536, &reads), options("127.0.0.2"));
+    const Target restricted_target(restricted->url());
+    check(restricted_target.endpoint.address() == asio::ip::make_address("127.0.0.1"),
+          "independent route selection chooses configured loopback");
+    const auto denied = wire_exchange(restricted_target, restricted_target.request());
     check(!denied.timed_out && denied.wire.empty(),
           "different loopback source IP denied before HTTP");
     check(reads == 0, "IP restriction invokes no source callback");

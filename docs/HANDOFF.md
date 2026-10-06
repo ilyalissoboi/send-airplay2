@@ -621,6 +621,15 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
 - This adds media-serving building blocks only. Reference pyatv playback, an
   actual file/brokered media adapter, receiver fetch/firewall reachability,
   authenticated session/playback and packaged hosts remain pending.
+- Initial macOS CI exposed a test-only alias assumption: binding a client to
+  unconfigured `127.0.0.2` fails there. The IP-filter fixture now uses the ordinary
+  `127.0.0.1` client against an allowed peer of `127.0.0.2`, whose route still
+  selects the configured loopback listener. No interface alias is created; the
+  production server is unchanged. Check CI at the corrected PR head.
+- At head `7b227a3aeae9b95d1ac7c0b79ba8f4948f84624b`, Linux static/shared
+  and ASan/UBSan checks passed; macOS exposed the alias fixture failure above.
+  The corrected media tests subsequently passed on Windows static/shared
+  (2.73/2.74 s). This is partial historical evidence, not final-head CI approval.
 
 ## 6. Screenbox integration findings
 
