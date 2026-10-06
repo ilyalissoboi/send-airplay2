@@ -53,13 +53,14 @@ reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UT
   4. Recorded both results there and in section 5. No C++ changed.
   5. Control pass with the fork, run by the user: status, forward seek,
      pause, resume and position all PASSED (user-observed, values consistent).
-     `stop` exited 0, but the receiver reported `Paused` and the session did not
-     end until the sender's connections closed. See the control table in
+     `stop` exited 0 and the TV returned to the home screen, but the receiver
+     reported `Paused` and the sender's session stayed open until its
+     connections closed. See the control table in
      receiver-validation.md.
 - **Next actions:**
   1. Native session layer, designed for the `/command` flow (section 7,
-     item 5): binary-plist decision first, then the session and threading
-     model, then `cast`. Use the fork's observed sequence as protocol
+     item 5): the bounded in-tree `bplist00` codec (D27) first, then the
+     session and threading model, then `cast`. Use the fork's observed sequence as protocol
      reference, not as copied code. Define stop as explicit teardown verified
      by receiver state.
   2. Small `serve` diagnostic: count connections and requests in the stop
@@ -265,6 +266,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D24 | Standard-library Python CLI E2E runner using an existing paired profile; explicit evidence kinds and opt-in disposable deletion | User requested unattended actions available now. No PIN collection/enrollment, credential export/clone, receiver changes or primary-profile deletion; ephemeral loopback fault peers and fresh live verification distinguish synthetic failures from hardware evidence |
 | D25 | Use Boost.Beast/Asio 1.92 for HTTP media serving behind an experimental C++ callback API | User explicitly selected Boost. Private Boost types, one concrete route-selected bind address, receiver-IP filtering, random per-session bearer URLs, bounded accepted connections/workers/buffers and absolute deadlines. No wildcard listener, scoped/link-local IPv6 URLs, firewall changes or playback commands; callbacks must cooperate with cancellation |
 | D26 | Development `airplay2-cli serve` with a private file adapter that serializes reads of one `std::ifstream` | User chose option 1: serve the reference-baseline MP4 with this project's server rather than a third-party one, so receiver fetch/firewall reachability is tested too. Portable standard-library I/O over parallel positional reads; size snapshot, receiver-only access, private URL printed once, stdin-driven stop with aggregate read counts. Not a playback API |
+| D27 | In-tree bounded `bplist00` subset codec for the session layer | User chose this on 2026-10-06 over libplist (LGPL-2.1) and other libraries. Apache-2.0, no new dependency. Covers only the types the `/command` flow needs, with strict bounds, tested against independent Python `plistlib` fixtures |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -836,7 +838,8 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   this project's `MediaServer` through the Windows firewall, which needed no
   new rule for `serve`. It does not show native casting. Controls (seek,
   pause, stop) were then run by the user with the fork: seek, pause/resume and
-  position passed. `stop` left the receiver `Paused` with the session open.
+  position passed. `stop` returned the TV to the home screen, but the receiver
+  reported `Paused` and the sender's session stayed open.
 
 ## 6. Screenbox integration findings
 
@@ -881,7 +884,8 @@ while arranging the hardware baseline in parallel with that work.
    `/play` flow, which this firmware accepts but does not act on). The
    unmerged pyatv fix (`/command` flow) then PASSED with video and audio
    fetched from `serve`. Seek, pause/resume and position also passed with it;
-   `stop` left the receiver paused with the session open. Cloud
+   `stop` closed playback on the TV, but the receiver reported `Paused` and
+   the sender's session stayed open. Cloud
    sessions cannot reach the LAN, so these steps run on the user's host.
 2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
    departure/interface-change checks and other platform/Android host coverage.
@@ -908,8 +912,9 @@ while arranging the hardware baseline in parallel with that work.
    playback (section 5, reference playback attempt). Design for the
    `/command` queue flow on a type-130 stream, with playback state from the event
    channel. The unmerged pyatv fix confirmed the start path on this receiver.
-   Native stop must tear down the session and verify receiver state; the
-   fork's `stop` only paused.
+   Native stop must tear down the session and verify receiver state; after
+   the fork's `stop`, the TV left playback but reported `Paused` with the
+   session still open.
    Prerequisite decisions: a binary-plist codec, and the session threading model.
    For plist, a bounded in-tree `bplist00` subset tested against Python `plistlib`
    fixtures is the proposed option; libplist is LGPL-2.1, so check licensing and
