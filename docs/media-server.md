@@ -107,6 +107,40 @@ compressed; the host is responsible for accurate media metadata. Malformed,
 overflowing, unknown-unit and multipart ranges use the existing full-response
 policy, as documented in [design.md](design.md).
 
+## Development CLI (`serve`)
+
+`airplay2-cli serve --address IP --file PATH` exposes one local file through this
+server for manual receiver tests. It is a development tool, not a playback API.
+Options: `--port` (receiver port used only for route selection, default 7000),
+`--listen-port` (default ephemeral), `--timeout-ms` (default and maximum 600000,
+because a receiver may hold one open-ended range request while it buffers),
+`--max-connections` (1..16, default 4) and `--content-type` (default `video/mp4`).
+
+- The private file adapter (`src/file_media_source.*`) opens the file once and
+  snapshots its size. Reads seek and read one shared `std::ifstream` under a
+  mutex, so concurrent workers are serialized; this favors portability over
+  parallel throughput. The file must not change while it is served: a shorter
+  file fails the affected request, and appended bytes are never served. On
+  Windows, paths come from the narrow command line and must be representable
+  in the active code page.
+- The URL is printed once to standard output for the operator, labelled
+  private; diagnostics never repeat it. A line or end-of-file on standard input
+  stops the server, which joins all callbacks before the summary
+  `Stopped. reads=N bytes=M failed_reads=F span=[first,end)` is printed. The
+  summary reports aggregate offsets and counts only. Ctrl+C terminates without
+  the summary.
+- Exit codes: 0 after a clean stop, 2 for invalid arguments or an unusable
+  path/address/content type, 1 for runtime failures such as an unreadable file
+  or listener setup failure.
+
+`file_source_tests` checks exact bytes at literal offsets, reads crossing EOF,
+statistics, cancellation, four concurrent readers, a file shrinking after open
+(skipped where the host refuses the resize), a 5-GiB sparse-file offset
+(skipped on Windows to avoid writing gigabytes) and a loopback range request
+through `MediaServer`. `cli_serve` runs the real CLI: it checks argument refusals
+without printing a URL, and a start/stop cycle driven by end-of-file. Neither
+contacts a receiver or opens a firewall.
+
 ## Validation and next gate
 
 `media_server_tests` uses independent literal HTTP requests and patterned virtual

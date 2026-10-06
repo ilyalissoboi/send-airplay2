@@ -104,6 +104,20 @@ Automate the available noninteractive authentication/discovery checks with the
 repeated verification, profile guards, loopback faults and live recovery, and
 writes sanitized JSON results. It does not request a PIN or implement playback.
 
+## Serving a file to a receiver (development)
+
+```powershell
+build/Release/airplay2-cli.exe serve --address 192.0.2.10 --file C:\media\clip.mp4
+```
+
+`serve` hosts one local file with the bounded media server so that a receiver can
+fetch it, for example during the [pyatv reference baseline](docs/reference-baseline.md).
+Only the given receiver address may fetch from it. It prints a private URL once,
+serves until Enter or end-of-file on standard input, then prints aggregate read
+counts. It sends no playback commands; this library cannot cast yet. See the
+[media server CLI notes](docs/media-server.md#development-cli-serve) for options
+and limits.
+
 ## Milestones
 
 1. Standalone tested library, starting with local H.264/AAC MP4 playback on a
@@ -118,7 +132,8 @@ multiroom, automatic transcoding, and universal receiver/codec compatibility.
 
 Start with the [developer/model handoff](docs/HANDOFF.md) for project history,
 decisions, verified state and continuation instructions.
-See [design and implementation sequence](docs/design.md) and
+See [design and implementation sequence](docs/design.md),
+[reference sender baseline](docs/reference-baseline.md) and
 [receiver validation checklist](docs/receiver-validation.md).
 
 License: Apache-2.0, as established by the repository's original LICENSE.

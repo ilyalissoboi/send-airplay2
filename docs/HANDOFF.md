@@ -5,6 +5,90 @@ Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
 
+## 0. Resume here: continue PR #11 in a local session
+
+The user intends to continue the current PR from a local Claude Code session on
+the Windows 11 host that shares a LAN with "Living Room". A cloud session cannot
+reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UTC.
+
+- **PR:** [#11: feat: add serve command and pyatv reference baseline records](https://github.com/ilyalissoboi/send-airplay2/pull/11),
+  open as a **draft**, base `main`, head branch `claude/modest-cannon-xa79s5`.
+  Keep working on this branch while the PR is open; do not start a new branch
+  or PR for the playback baseline. Before writing, verify the actual head and
+  checks (`git fetch origin`, `gh pr view 11 --json headRefOid,statusCheckRollup`).
+- **Last validated code head:** `19a08d256fdd2092aecfc63438af2b6a07c95b8c`.
+  All ten checks passed in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37468229857).
+  Later commits on the branch are documentation only unless their messages say otherwise.
+- **What the PR contains:**
+  - this handoff refresh and the [pyatv reference runbook](reference-baseline.md);
+  - the sanitized pyatv pairing result and the tvOS build and access settings, in
+    [receiver-validation.md](receiver-validation.md);
+  - the development `airplay2-cli serve` command with its file-backed
+    `MediaSource` and tests (decision D26; see section 5).
+- **Local session, 2026-10-06 (this update):** the branch was continued from a
+  local Claude Code session on the Windows host. The user confirmed the cloud
+  session had been stopped.
+  1. Built static and shared Release with the pinned vcpkg toolchain
+     (`434307d`, reusing the main checkout's installed packages). Both passed all
+     15 CTest targets, including `file_source_tests` and `cli_serve`.
+  2. Ran step 4 of [reference-baseline.md](reference-baseline.md) with
+     `serve` and pyatv 0.18.0, driven by a script that kept the receiver
+     address and private URL out of all output. **Result: FAIL, known upstream
+     tvOS 26 incompatibility.** The receiver accepts pyatv's legacy `/play`
+     (200) but returns 500 for `/playback-info` and never connects to `serve`.
+     A public Apple HLS URL fails identically. SETUP first needed a temporary
+     inbound UDP rule for pyatv's NTP timing server, created by the user.
+     Details and sanitized sequence:
+     [receiver-validation.md](receiver-validation.md#pyatv-reference-playback-2026-10-06).
+  3. The user chose to try the unmerged fix `robkochman/pyatv@8144c77c`, linked
+     from [pyatv#2846](https://github.com/postlund/pyatv/pull/2846). The agent
+     reviewed its source diff; the user installed it into a separate venv
+     (`%USERPROFILE%\pyatv-fork8144`) and ran the filtered driver. **Result:
+     PASS.** Video and audio played (user-observed). The receiver opened 17
+     connections to `serve` and read the whole file (`reads=1466
+     bytes=95888702 failed_reads=0`). Flow: type-130 control stream, then
+     `POST /command` queue commands, with `loading` then `playing` events.
+     Details:
+     [receiver-validation.md](receiver-validation.md#reference-playback-with-unmerged-pyatv-fix-2026-10-06).
+  4. Recorded both results there and in section 5. No C++ changed.
+  5. Control pass with the fork, run by the user: status, forward seek,
+     pause, resume and position all PASSED (user-observed, values consistent).
+     `stop` exited 0 and the TV returned to the home screen, but the receiver
+     reported `Paused` and the sender's session stayed open until its
+     connections closed. See the control table in
+     receiver-validation.md.
+  6. Implemented the bounded in-tree `bplist00` codec (D27) with plistlib
+     fixtures; see section 5. Not yet used by the library.
+- **Next actions:**
+  1. Native session layer: the proposal is in
+     [session-design.md](session-design.md). It separates validated facts from
+     hypotheses H1-H4. The user decided D28 (threads), D29 (MRP controls now)
+     and D30 (identity), then D31 (in-tree protobuf wire codec). Next: follow
+     the staged plan, starting with channel key derivation.
+     Note: the seek, pause and status controls validated with the fork used
+     pyatv's MRP data stream, not `/command`. The plist codec (D27) is in
+     place. Use the fork's observed sequence as protocol
+     reference, not as copied code. Define stop as explicit teardown verified
+     by receiver state.
+  2. Small `serve` diagnostic: count connections and requests in the stop
+     summary.
+  Ask the user before marking the PR ready or merging. Merge commits have been
+  the convention.
+- **Local-session rules that matter here:**
+  - Never print, log or commit the `serve` URL, the Apple TV's IP/MAC/identifiers,
+    PINs or anything from `.pyatv.conf` or Windows Credential Manager. Do not read
+    the credential files at all.
+  - Run pyatv with `--debug` only if needed, and sanitize before quoting.
+  - Pairing was already completed for both `airplay2-cli` (profile chosen by the
+    user) and pyatv; do not re-pair or `forget` unless the user asks.
+  - Apply AGENTS.md (C++ readability, clang-format, `git diff --check`, CTest
+    static/shared) to any further code change.
+- **Cloud-session leftovers:** the user confirmed on 2026-10-06 that the cloud
+  session was stopped.
+- **Temporary firewall rule:** the user created an inbound UDP Allow rule,
+  "pyatv-baseline timing (temporary)", for the Store Python interpreter. Remind
+  the user to remove it when reference testing ends.
+
 ## 1. Goal and user requirements
 
 The originating discussion was titled **Assess AirPlay 2 Feasibility**. The user
@@ -40,7 +124,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), merged; verified merge `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
 | Compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), merged; verified merge `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` |
 | E2E PR | [#9: test: add noninteractive CLI e2e runner](https://github.com/ilyalissoboi/send-airplay2/pull/9), merged; verified merge `d70a143a97f06b30c8b5bd266c03c36d8ed07ec9` |
-| Current media-server PR | [#10: feat: add bounded Boost HTTP media server](https://github.com/ilyalissoboi/send-airplay2/pull/10), open; verify actual head/check state through GitHub |
+| Media-server PR | [#10: feat: add bounded Boost HTTP media server](https://github.com/ilyalissoboi/send-airplay2/pull/10), merged; verified merge `6b9680237184741100415aeb21d440825662ba37` on `main`. Final head `f55b9db1a95f0c0c66084b05c1b3ca345b607270` passed all ten checks in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37461887701) |
 | Media-server source commit | `c4e73156bffadacac3860a72df328c46a5fe5986`; subsequent documentation commits record PR/check evidence |
 | E2E source commit | `2bf31dd8f61d17e4475ec36c78f81bcac21f0009`; subsequent documentation commits record checks |
 | Portable E2E source commit | `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`; closed-port correction and refreshed live artifacts |
@@ -48,7 +132,8 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
-| Current local branch | `codex/media-server`, based on verified PR #9 merge at `d70a143a97f06b30c8b5bd266c03c36d8ed07ec9` |
+| Current PR | [#11: feat: add serve command and pyatv reference baseline records](https://github.com/ilyalissoboi/send-airplay2/pull/11), open draft; last validated code head `19a08d256fdd2092aecfc63438af2b6a07c95b8c`, all ten checks passed in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37468229857) |
+| Current branch | `claude/modest-cannon-xa79s5`, based on verified PR #10 merge `6b9680237184741100415aeb21d440825662ba37` on `main`; created by a cloud session, to be continued locally (section 0) |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -60,10 +145,10 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
 | Actual casting support | None yet |
-| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); playback unimplemented |
+| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native playback not implemented |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #9 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility and the noninteractive E2E runner. Verify current GitHub and
+PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is open (section 0). Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -76,14 +161,18 @@ once; a branch push without an open PR does not trigger this workflow.
 User-provided on 2026-10-06 (Asia/Tokyo):
 
 - Receiver: **Apple TV 4K**; subsequent LAN discovery advertised `AppleTV14,1`
-  and name "Living Room". Generation not independently established.
-- Firmware: **tvOS 26.6** (user-reported, consistent with advertised `osvers`/`ov`);
-  exact build not yet supplied. AirPlay `srcvers` is not a tvOS build identifier.
+  and name "Living Room". pyatv 0.18.0 maps it to Apple TV 4K (gen 3);
+  generation not independently established beyond that model-table mapping.
+- Firmware: **tvOS 26.6 (23L773)**, user-reported (build supplied 2026-10-06), consistent
+  with advertised `osvers`/`ov`. AirPlay `srcvers` is not a tvOS build identifier.
+- AirPlay access: limited to the same network (user-reported); no password;
+  pairing mandatory per pyatv scan.
 - Intended testing host: **Windows 11 x64**; exact OS build not yet supplied.
 
-AirPlay access settings, detailed network configuration and reference playback
-results remain pending. Discovery resolved the receiver; playback compatibility
-is untested.
+The host is on Wi-Fi classified by Windows as a Public network; see
+receiver-validation.md for firewall details. The pyatv 0.18.0 reference playback
+attempt failed on this firmware. An unmerged pyatv fix then played the MP4 from
+`airplay2-cli serve`; see section 5.
 See [receiver-validation.md](receiver-validation.md) for the test record.
 
 ## 3. Feasibility findings and evidence levels
@@ -183,6 +272,12 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D23 | Accept one optional opaque M6 type-17 metadata field, bounded to 0..256 bytes; discard and erase it | Live Apple TV M6 headers showed `17:159`. Required ID/key/signature, server proof, AEAD, duplicate and other unknown-field rejection remain enforced; metadata never influences trust, naming or storage. Sanitized phase/HTTP/TLV-header diagnostics retain no payloads |
 | D24 | Standard-library Python CLI E2E runner using an existing paired profile; explicit evidence kinds and opt-in disposable deletion | User requested unattended actions available now. No PIN collection/enrollment, credential export/clone, receiver changes or primary-profile deletion; ephemeral loopback fault peers and fresh live verification distinguish synthetic failures from hardware evidence |
 | D25 | Use Boost.Beast/Asio 1.92 for HTTP media serving behind an experimental C++ callback API | User explicitly selected Boost. Private Boost types, one concrete route-selected bind address, receiver-IP filtering, random per-session bearer URLs, bounded accepted connections/workers/buffers and absolute deadlines. No wildcard listener, scoped/link-local IPv6 URLs, firewall changes or playback commands; callbacks must cooperate with cancellation |
+| D26 | Development `airplay2-cli serve` with a private file adapter that serializes reads of one `std::ifstream` | User chose option 1: serve the reference-baseline MP4 with this project's server rather than a third-party one, so receiver fetch/firewall reachability is tested too. Portable standard-library I/O over parallel positional reads; size snapshot, receiver-only access, private URL printed once, stdin-driven stop with aggregate read counts. Not a playback API |
+| D27 | In-tree bounded `bplist00` subset codec for the session layer | User chose this on 2026-10-06 over libplist (LGPL-2.1) and other libraries. Apache-2.0, no new dependency. Covers only the types the `/command` flow needs, with strict bounds, tested against independent Python `plistlib` fixtures |
+| D28 | Session threading: synchronous components with dedicated reader, feedback and timing threads | User decision 2026-10-06 over Boost.Asio async; reuses the deadline/cancellation transport. See session-design.md |
+| D29 | Control path: implement MRP (remote-control session, data stream, protobuf messages) now | User decision 2026-10-06 over `/command`-only controls. The seek, pause and status validated with the fork used this path; `/command` still starts playback |
+| D30 | Sender identity: reference SETUP values first, configurable, then a hardware test of neutral values; random per-session device ID, never the host MAC | User decision 2026-10-06 |
+| D31 | MRP protobuf: in-tree bounded wire codec (varint, length-delimited, fixed32/64, unknown fields skipped) plus hand-written mapping of about 10 messages | User decision 2026-10-06 over protozero and Google protobuf/protoc. Apache-2.0, no dependency. Field numbers from pyatv's MIT `.proto` files, with provenance recorded before use; fixtures from Python `protobuf` with pyatv's compiled messages |
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -217,6 +312,8 @@ cancellation and errors before publishing production bindings.
 | `src/receiver_http.*` / `src/receiver_stream.*` / `src/receiver_connection.*` | Private bounded framing, native TCP ownership/deadlines/cancellation and authentication-to-record integration |
 | `tests/receiver_tests.cpp` / `docs/receiver-transport.md` | Fragmented fake receiver transcripts, dynamic authenticated peers, native loopback and lifecycle/framing contracts |
 | `src/credential_*`, `src/auth_*` / `tests/credential_tests.cpp` / `docs/credential-storage.md` | Private bounded credential codec, native Windows store, hidden-PIN CLI, enrollment/save/reload/reconnect orchestration and synthetic/OS persistence tests |
+| `src/file_media_source.*`, `src/serve_cli.*` / `tests/file_source_tests.cpp`, `tests/cli_serve.cmake` | Private file-backed `MediaSource` and development `serve` command; adapter, loopback and real-CLI tests |
+| `src/binary_plist.*` / `tests/plist_tests.cpp`, `tests/fixtures/plist` | Private bounded `bplist00` subset codec (D27); plistlib byte-exact fixtures, literal layouts, malformed/budget cases and mutation sweeps. Compiled into its test only until the session layer uses it |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -641,6 +738,153 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   corrected IP fixture and the rest of the media suite. Inspect checks for the
   final documentation head before merging. No receiver media interoperability
   result is added by this gate.
+- PR #10 merged into `main` as `6b9680237184741100415aeb21d440825662ba37`. Its final documentation head
+  `f55b9db1a95f0c0c66084b05c1b3ca345b607270` passed all ten checks in
+  [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37461887701).
+
+### Continuation assessment and reference-baseline preparation: 2026-10-06
+
+- Cloud session on `claude/modest-cannon-xa79s5`, started from `main` at `6b9680237184741100415aeb21d440825662ba37`.
+  GitHub showed no open PRs; PRs #1-#10 are merged. No C++ source changed.
+- Status at this point: discovery, private pairing/verification, encrypted
+  receiver transport, Windows credential CLI and the media server exist. Nothing
+  calls `ReceiverConnection::request` yet; no plist codec, RTSP session/event/
+  feedback lifecycle, playback commands, file-backed `MediaSource` or `cast`
+  CLI exists. The library still cannot cast.
+- Checks run in the Linux cloud container (Python 3.13): all ten offline E2E
+  runner tests pass. The native build and CTest were not run, because the
+  container lacks Boost 1.92 and Botan 3.12 and the pinned vcpkg build is slow.
+  clang-format 18 `--dry-run --Werror` reports violations only in four foundation
+  files that predate `.clang-format`: `src/http_range.cpp`,
+  `include/send_airplay2/http_range.h`, `tests/range_tests.cpp` and
+  `tests/c_abi_smoke.c`. Reformat them only in a change that touches them, and
+  check the result against CI's formatter version.
+- The user requested pyatv pairing with "Living Room" as the reference-baseline
+  first step. The cloud container cannot reach the user's LAN: it has one
+  interface on an isolated documentation-range subnet, and a pyatv 0.18.0
+  (MIT) `atvremote scan` found no devices. The pairing must run on the user's
+  Windows host. The procedure, privacy rules and the sanitized facts to report
+  back are in [reference-baseline.md](reference-baseline.md). pyatv remains an
+  external reference tool; it is not a dependency and no source was copied.
+- The user then ran the scan and AirPlay pairing on Windows. AirPlay, Companion
+  and RAOP all report mandatory pairing and no password. pyatv AirPlay pairing
+  succeeded, and `device_state` on a fresh invocation returned `Idle`. pyatv's
+  model table labels the receiver Apple TV 4K (gen 3). The sanitized record is
+  in receiver-validation.md. The user then reported pair exit code 0, tvOS build
+  23L773 and AirPlay access limited to the same network. Reference playback is
+  NOT RUN: it needs a range-capable HTTP server for the test MP4.
+
+### Development `serve` command: 2026-10-06
+
+- The user chose to serve the reference MP4 with this project's server (D26).
+  Added `airplay2-cli serve --address IP --file PATH` and a private file-backed
+  `MediaSource`. Contracts and limits are in
+  [media-server.md](media-server.md#development-cli-serve). Step 4 of
+  [reference-baseline.md](reference-baseline.md) now uses it. No playback
+  command, credential, firewall rule or receiver setting is touched by `serve`.
+- New tests: `file_source_tests` (exact bytes at literal offsets, EOF, stats,
+  cancellation, concurrent readers, shrinking file, 5-GiB sparse offset on
+  non-Windows hosts, loopback range through `MediaServer`) and `cli_serve`
+  (real CLI argument refusals and a start/stop cycle driven by end-of-file).
+- Local cloud-container evidence. The pinned vcpkg build could not run because
+  the environment's egress policy returned 403 for GitHub archive downloads.
+  Ubuntu's Boost 1.83 headers and OpenSSL 3.0 were used instead of the pinned
+  1.92/3.6. With those, g++ 13 and clang 18 built the new tests with
+  `-Wall -Wextra -Wpedantic -Werror`. `file_source_tests` passed, also under
+  ASan/UBSan and TSan, and `cli_serve.cmake` passed against a scratch harness
+  linking the real `serve` code. A manual loopback run served a 3,000,000-byte
+  random file: a full GET and a tail range matched the file byte for byte, HEAD
+  reported exact length/type/ranges, an unknown path returned 404, and the stop
+  summary reported the reads. The full pinned CMake/CTest matrix is CI's
+  responsibility; check it at the PR head.
+- Receiver fetch from the Apple TV, firewall reachability and pyatv playback
+  remain NOT RUN (user action).
+- First CI run at `f821570ccc528a45151c988b2b6f9c5de922b0e6`: Linux/macOS
+  static/shared, the sanitizer job and the runner contracts passed, including
+  `file_source_tests` and `cli_serve` with the pinned dependencies. Both Windows
+  builds failed: MSVC error C3493 rejected an uncaptured function-local
+  `constexpr` used inside a test lambda. The constants moved to namespace scope.
+  Check CI at the corrected head.
+- Readability pass at the user's request, applying AGENTS.md; behavior unchanged:
+  - The concurrent-reader test now reports the first failing reader, read index,
+    offset and byte counts. Checked by injecting a fault into a scratch copy.
+  - Renamed the shadowing `random` variables, and named and commented the
+    lock-free min/max helpers and the `streamsize` clamp.
+  - Split `serve` startup, announcement and stop-wait into named functions.
+  - Local g++/clang `-Werror`, ASan/UBSan, TSan and `cli_serve.cmake` all pass
+    again with the system Boost 1.83.
+- Final CI for this slice: the MSVC fix head `ed9cd72da7946b97f78516b59ae8de326f9d4189`
+  and the readability head `19a08d256fdd2092aecfc63438af2b6a07c95b8c` each passed all
+  ten checks: Windows/Linux/macOS static/shared native CTest (including
+  `file_source_tests` and `cli_serve`), Linux ASan/UBSan, and the three
+  offline runner jobs. See the
+  [CI run for `19a08d2`](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37468229857).
+  This is build/test evidence only. The receiver's fetch from `serve` is NOT RUN.
+
+### Reference playback attempt: 2026-10-06 (local session)
+
+- Local Windows 11 x64 session on `claude/modest-cannon-xa79s5` at `20aaaee`.
+  Static and shared Release builds (MSVC, Visual Studio 2026 generator, pinned
+  vcpkg `434307d`) each passed all 15 CTest targets.
+- The reference baseline with pyatv 0.18.0 and `airplay2-cli serve` failed.
+  Every run produced `reads=0`, and polling saw zero TCP connections to `serve`.
+  Legacy `/play` returns 200 and `setProperty`/`rate` succeed, but
+  `/playback-info` returns 500 within about 1.4 s, with the same result for a
+  public Apple HLS URL. This matches open upstream pyatv#2906/#2821. The
+  unmerged pyatv#2846 proposal moves URL playback to `POST /command` queue
+  commands on a type-130 stream, which matters for the native session design
+  (section 7, item 5). It was read as reference only: no code was copied or run.
+- The base SETUP timed out until the user allowed inbound UDP to pyatv's NTP
+  timing server; Windows had no rule for Python, and the network is Public.
+  A native session that advertises a timing port needs the same reachability.
+- Diagnostic gap: `serve` reports successful reads only. A connection or request
+  counter in the stop summary would separate "never connected" from "HEAD only"
+  without external polling.
+- No receiver setting, credential or pairing changed. No C++ changed.
+
+- The user then chose the unmerged fix `robkochman/pyatv@8144c77c`, one
+  commit on the maintainer's 0.18.0 release. The agent reviewed the source
+  diff; the user installed and ran it. Playback PASSED: video and audio played
+  (user-observed), and the receiver opened 17 connections to `serve` and read
+  the full file range. This is the first evidence that the receiver fetches from
+  this project's `MediaServer` through the Windows firewall, which needed no
+  new rule for `serve`. It does not show native casting. Controls (seek,
+  pause, stop) were then run by the user with the fork: seek, pause/resume and
+  position passed. `stop` returned the TV to the home screen, but the receiver
+  reported `Paused` and the sender's session stayed open.
+
+### Binary plist codec (D27): 2026-10-06
+
+- The user chose a bounded in-tree codec over libplist (LGPL-2.1) or another
+  library. Original Apache-2.0 code; no third-party source or new dependency.
+  The format layout follows Apple's CFBinaryPList as documented by CPython
+  `plistlib`.
+- `PlistValue` covers booleans, signed 64-bit integers, reals, dates, UTF-8
+  strings, data, arrays and ordered dictionaries. The encoder matches
+  plistlib's binary writer byte for byte (`sort_keys=False`): depth-first
+  numbering, shared equal scalars, and minimal 1/2/4/8-byte widths. One
+  documented difference: reals are shared by bit pattern, so -0.0 stays
+  distinct.
+- The decoder accepts that subset plus 4-byte reals and any 1-8-byte table
+  width. It rejects null/fill/UID/set/16-byte integers, malformed or misplaced
+  tables, out-of-range references, cycles, duplicate or non-string keys, and
+  invalid ASCII/UTF-16. Limits: 1 MiB document, 16,384 objects, depth 32, and
+  65,536 decoded values / 4 MiB decoded payload, because shared references can
+  otherwise expand exponentially.
+- Tests: 7 plistlib fixtures (all types and boundaries, sharing, wide tables,
+  the `/command` and event envelopes) checked in both directions; hand-built
+  literal layouts; 30+ malformed and budget cases; encoder UTF-8, duplicate-key,
+  depth, object and size limits; every single-byte XOR, every truncation and
+  2,000 seeded random mutations per fixture.
+- Evidence: Windows MSVC static/shared Release passed all 16 CTest targets
+  (`plist_tests` about 0.1 s). clang++ 22 with `-Wall -Wextra -Wpedantic
+  -Werror` built and passed; clang AddressSanitizer passed. That clang check
+  caught a C++20-only structured-binding lambda capture before CI. A
+  fault-injected fixture produced `root.ascii` and byte-offset diagnostics.
+  MSVC caught an unspecified-evaluation-order bug: length reads now happen
+  before the payload cursor is passed on.
+- This is a building block only. No receiver message is encoded or decoded
+  by library code yet.
 
 ## 6. Screenbox integration findings
 
@@ -679,6 +923,15 @@ while arranging the hardware baseline in parallel with that work.
    tvOS build and AirPlay access settings without collecting secrets. Establish
    reference playback with pyatv on that LAN and record the real session path.
    Local discovery succeeded; reference and native playback have not been checked.
+   Follow [reference-baseline.md](reference-baseline.md): pyatv AirPlay pairing
+   first (passed), then `play_url` of one test MP4 served by
+   `airplay2-cli serve` (FAILED on tvOS 26.6: pyatv 0.18.0 uses the legacy
+   `/play` flow, which this firmware accepts but does not act on). The
+   unmerged pyatv fix (`/command` flow) then PASSED with video and audio
+   fetched from `serve`. Seek, pause/resume and position also passed with it;
+   `stop` closed playback on the TV, but the receiver reported `Paused` and
+   the sender's session stayed open. Cloud
+   sessions cannot reach the LAN, so these steps run on the user's host.
 2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
    departure/interface-change checks and other platform/Android host coverage.
    The Windows Apple TV discovery gate has passed; see discovery.md for limits.
@@ -692,12 +945,31 @@ while arranging the hardware baseline in parallel with that work.
    wrong PIN, authentication failure,
    counters/replay, timeouts and revocation before claiming interoperability.
 4. **HTTP media server:** bounded Boost callback server is implemented and loopback
-   tested on the current branch. Complete real host/file adapters, receiver fetch,
-   firewall reachability and network-change checks. Virtual >4-GiB source tests
+   tested on the current branch. The file adapter and `serve` now have
+   receiver-fetch evidence: the Apple TV read the full MP4 through the Windows
+   firewall on a Public network. Network-change checks and packaged/brokered
+   adapters remain. Virtual >4-GiB source tests
    establish arithmetic, not real-file or Apple TV seeking interoperability.
 5. **Session/playback:** implement authenticated setup, event/timing/feedback
    lifecycle, URL start, status, pause/resume, seek and stop. Treat receiver status
    and disconnects explicitly. Use the same MP4 as the reference baseline.
+   On tvOS 26.6, legacy `/play` plus `/playback-info` polling does not start
+   playback (section 5, reference playback attempt). Design for the
+   `/command` queue flow on a type-130 stream, with playback state from the event
+   channel. The unmerged pyatv fix confirmed the start path on this receiver.
+   The `bplist00` codec (D27) is implemented. The session and threading
+   proposal is in [session-design.md](session-design.md), with decisions
+   pending.
+   Native stop must tear down the session and verify receiver state; after
+   the fork's `stop`, the TV left playback but reported `Paused` with the
+   session still open.
+   Prerequisite decisions: a binary-plist codec, and the session threading model.
+   For plist, a bounded in-tree `bplist00` subset tested against Python `plistlib`
+   fixtures is the proposed option; libplist is LGPL-2.1, so check licensing and
+   static linking before choosing it. For threading, `ReceiverConnection` is
+   serial with one request in flight, while the reference sequence needs a second
+   encrypted event connection and periodic `/feedback`. Re-inspect the pyatv event
+   channel key derivation before implementing it.
 6. **Host proofs:** implement the CLI and packaged Windows C# sample; test native
    loading, brokered media access and inbound networking. Add macOS/Linux/Android
    device coverage and bindings. Record failures separately from build success.
@@ -736,6 +1008,20 @@ commit is `dbd654b1d92057b3208953226186c5c2b206ccff` because it was created thro
 the connector. In a carried-over workspace, inspect local versus remote history
 before attempting a push. A clean checkout of the PR branch avoids that divergence.
 Do not force-push over unfamiliar remote changes.
+
+Local continuation (planned): the user will continue PR #11 from a local Claude
+Code session on the Windows host (Claude Desktop app or `claude remote-control`
+in the local checkout). It can reach the LAN and, per section 2, the
+authenticated GitHub CLI. Start with section 0 and AGENTS.md. Check out the
+existing branch rather than creating one:
+`git fetch origin` then `git switch claude/modest-cannon-xa79s5`.
+
+Claude Code cloud sessions (2026-10-06): the repository is cloned fresh into an
+isolated container. Pushes use the session's Git proxy; GitHub reads and PR
+operations use the GitHub MCP connector, because the `gh` CLI is not available
+there. The container has no route to the user's LAN, so discovery, pairing and
+playback against "Living Room" must run on the user's host. Native dependencies
+(Boost/Botan) are not preinstalled.
 
 No background implementation task was scheduled. CI is asynchronous; further
 coding resumes when a developer/model actively continues the project.
