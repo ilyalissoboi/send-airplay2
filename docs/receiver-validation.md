@@ -49,11 +49,11 @@ Playback results remain pending.
 | Profile/input guards | Existing/missing profiles and redirected PIN input are refused | PASS, automated native CLI static/shared runs |
 | Local forget | Local deletion and idempotence | Absent-profile no-op PASS; real disposable deletion SKIPPED (no opt-in) |
 | Start MP4 | Both audio and video play | Reference: pyatv 0.18.0 FAIL (no fetch); unmerged pyatv fix PASS, video and audio from `serve` (user-observed). Native NOT RUN |
-| Pause/resume | Receiver and host state agree | NOT RUN |
-| Seek forward/back | Playback moves to requested position | NOT RUN |
-| Position/duration | Values follow receiver playback | NOT RUN |
+| Pause/resume | Receiver and host state agree | Reference (unmerged pyatv fix): PASS, `Paused` then `Playing`, user-observed. Native NOT RUN |
+| Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native NOT RUN |
+| Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native NOT RUN |
 | End-of-file | Correct ended state and resource cleanup | NOT RUN |
-| Stop from sender/receiver | Correct state and resource cleanup | NOT RUN |
+| Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 but the receiver then reported `Paused`, and the URL session did not end; see observation. Native NOT RUN |
 | Repeated casting | Ten start/stop cycles without stale sessions | NOT RUN |
 | Network interruption | Bounded failure; next cast can recover | NOT RUN |
 | Large file | Seek beyond 4 GiB without integer truncation | NOT RUN |
@@ -344,6 +344,41 @@ This result establishes:
 It is reference-sender evidence, attributed to unmerged third-party code. It
 does not show that this library can cast: native session code does not exist
 yet.
+
+### Control pass with the unmerged fix
+
+The user ran the sanitized control driver with the same fork, `serve` build,
+media and network. Each control is a separate `atvremote` process, which uses
+pyatv's remote-control channel; the fork did not change that code.
+
+| Time (s) | Command | Exit | Reported state / position / duration |
+|---|---|---|---|
+| 10.2 | `play_url` started (background) | | |
+| 35.4 | `device_state position total_time` | 0 | `Playing` / 17 / 131 |
+| 36.3 | `set_position=30` | 0 | |
+| 43.2 | status | 0 | `Playing` / 36 / 131 |
+| 44.1 | `pause` | 0 | |
+| 51.0 | status | 0 | `Paused` / 37 / 131 |
+| 51.9 | `play` | 0 | |
+| 60.8 | status | 0 | `Playing` / 46 / 131 |
+| 61.7 | `stop` | 0 | |
+| 65.6 | `device_state` | 0 | `Paused` |
+| 96.5 | `play_url` still running 30 s after `stop`; killed by the driver | | |
+
+`serve`: `reads=1436 bytes=93970360 failed_reads=0 span=[0,53953926)`.
+
+The user reported normal video and audio, and that seek, pause and play worked
+as expected. Positions match wall-clock progress, the seek target and the
+pause. The concurrent status connection that failed in the pyatv 0.18.0 run
+worked here once playback was established.
+
+After `stop`, the receiver reported `Paused` rather than idle, and the
+fork's `play_url`, which waits for an `idle` or `stopped` event, did not
+return. Ending the session took closing the sender's connections. For native
+code, "stop" must therefore be defined explicitly: for example, a stop or
+queue-removal command followed by session teardown, verified by observed
+receiver state, not assumed from a 200 response. End-of-file, backward seek,
+repeated casts and receiver-side stop remain NOT RUN.
 
 ## Automated CLI E2E observation: 2026-10-06
 

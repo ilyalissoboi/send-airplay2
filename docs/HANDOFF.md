@@ -51,17 +51,18 @@ reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UT
      Details:
      [receiver-validation.md](receiver-validation.md#reference-playback-with-unmerged-pyatv-fix-2026-10-06).
   4. Recorded both results there and in section 5. No C++ changed.
+  5. Control pass with the fork, run by the user: status, forward seek,
+     pause, resume and position all PASSED (user-observed, values consistent).
+     `stop` exited 0, but the receiver reported `Paused` and the session did not
+     end until the sender's connections closed. See the control table in
+     receiver-validation.md.
 - **Next actions:**
-  1. Control pass with the fork, run by the user, since the agent does not
-     execute the fork: seek, pause/resume, position and stop, using the same
-     driver approach (`device_state position total_time`, `set_position=30`,
-     `pause`, `play`, `stop`). The fork changed only URL start and state;
-     controls go through pyatv's unchanged remote-control channel.
-  2. Then the native session layer, designed for the `/command` flow (section
-     7, item 5): binary-plist decision first, then the session and threading
+  1. Native session layer, designed for the `/command` flow (section 7,
+     item 5): binary-plist decision first, then the session and threading
      model, then `cast`. Use the fork's observed sequence as protocol
-     reference, not as copied code.
-  3. Small `serve` diagnostic: count connections and requests in the stop
+     reference, not as copied code. Define stop as explicit teardown verified
+     by receiver state.
+  2. Small `serve` diagnostic: count connections and requests in the stop
      summary.
   Ask the user before marking the PR ready or merging. Merge commits have been
   the convention.
@@ -834,7 +835,8 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   the full file range. This is the first evidence that the receiver fetches from
   this project's `MediaServer` through the Windows firewall, which needed no
   new rule for `serve`. It does not show native casting. Controls (seek,
-  pause, stop) were not yet exercised with the fork.
+  pause, stop) were then run by the user with the fork: seek, pause/resume and
+  position passed. `stop` left the receiver `Paused` with the session open.
 
 ## 6. Screenbox integration findings
 
@@ -878,7 +880,8 @@ while arranging the hardware baseline in parallel with that work.
    `airplay2-cli serve` (FAILED on tvOS 26.6: pyatv 0.18.0 uses the legacy
    `/play` flow, which this firmware accepts but does not act on). The
    unmerged pyatv fix (`/command` flow) then PASSED with video and audio
-   fetched from `serve`. Controls with that fork remain to be run. Cloud
+   fetched from `serve`. Seek, pause/resume and position also passed with it;
+   `stop` left the receiver paused with the session open. Cloud
    sessions cannot reach the LAN, so these steps run on the user's host.
 2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
    departure/interface-change checks and other platform/Android host coverage.
@@ -904,7 +907,9 @@ while arranging the hardware baseline in parallel with that work.
    On tvOS 26.6, legacy `/play` plus `/playback-info` polling does not start
    playback (section 5, reference playback attempt). Design for the
    `/command` queue flow on a type-130 stream, with playback state from the event
-   channel. Confirm it on hardware before relying on it.
+   channel. The unmerged pyatv fix confirmed the start path on this receiver.
+   Native stop must tear down the session and verify receiver state; the
+   fork's `stop` only paused.
    Prerequisite decisions: a binary-plist codec, and the session threading model.
    For plist, a bounded in-tree `bplist00` subset tested against Python `plistlib`
    fixtures is the proposed option; libplist is LGPL-2.1, so check licensing and
