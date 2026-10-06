@@ -4,6 +4,8 @@ Implemented on `codex/pairing-transport`, based on merged discovery PR #2 at
 `02c953a22c9503f1bf17bc14d6814e797cb04a1b`. This slice adds private codecs and
 cryptographic adapters. It performs no receiver I/O and does not pair or cast.
 See [dependency provenance](dependencies.md) before changing the crypto backend.
+Subsequent work adds [private peer verification](peer-verification.md) for existing
+trusted credentials; the foundation codec contracts below remain unchanged.
 
 ## Pairing messages
 
@@ -56,9 +58,10 @@ this does not guarantee erasure of all process memory, registers or host copies.
 Errors expose categories only, without raw OpenSSL errors or credential bytes.
 
 These codecs do not provide sockets, HTTP/RTSP parsing, deadlines, cancellation,
-PIN/SRP proof validation, Ed25519 peer identity verification, X25519 handshake,
-credential persistence, revocation handling or a public pairing API. Those remain
-explicit gates before enabling a control connection. The socket layer must send
+PIN/SRP proof validation, credential persistence or a public pairing API.
+Peer-verification identity/signature/key agreement and protocol error handling
+are now implemented separately; real receiver revocation remains untested.
+The pending socket layer must send
 each encrypted byte exactly once in order, retaining bytes after partial writes.
 
 ## Verification and next gate
@@ -90,8 +93,7 @@ At final readability source commit `85e2b8d48a4bf993ba4581f539f1103ed601ba4a`,
 all six platform/static/shared jobs and Linux ASan/UBSan passed in the
 [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37425248739).
 
-Next: implement the PIN pairing/peer-verification state machine using vetted
-SRP/signature/key-agreement primitives, credential ownership/storage adapters and
+Next: implement PIN pairing with vetted SRP primitives, credential storage adapters and
 bounded request/response transport. Add independent handshake transcripts and
 wrong-PIN/signature/revocation tests, then validate the exact receiver path and a
 pyatv playback baseline on the Apple TV 4K / tvOS 26.6 / Windows 11 x64 setup.

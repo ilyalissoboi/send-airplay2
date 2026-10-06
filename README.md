@@ -11,9 +11,11 @@ and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnos
 CLI. The range resolver will support local-file serving and seeking; an HTTP
 server is not implemented. The pre-1.0 API is not frozen.
 Private pairing TLV8 and encrypted control-record codecs are implemented using
-OpenSSL, with independent vector and failure tests. The PIN/peer-verification
-handshake, receiver transport and credential storage are still pending.
+OpenSSL, with independent vector and failure tests. Private authenticated peer
+verification for existing trusted credentials is also implemented. First-time PIN
+pairing, receiver transport and credential storage are still pending.
 See [pairing transport foundation](docs/pairing-transport.md).
+See [peer verification](docs/peer-verification.md) for trust and state contracts.
 
 ## Build and test
 
