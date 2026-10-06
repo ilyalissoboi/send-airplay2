@@ -1,0 +1,158 @@
+// SPDX-License-Identifier: Apache-2.0
+#ifndef SEND_AIRPLAY2_URL_PLAYBACK_SESSION_H
+#define SEND_AIRPLAY2_URL_PLAYBACK_SESSION_H
+
+#include "pair_verify.h"
+#include "receiver_stream.h"
+#include "session_messages.h"
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <thread>
+
+namespace send_airplay2::detail {
+class EventChannel;
+class ReceiverConnection;
+class TimingResponder;
+
+/// Session-level failures. Transport, record and verification failures keep
+/// their own exception types and categories.
+enum class SessionError {
+    rejected,       // The receiver answered a required request with a non-2xx status.
+    start_timeout,  // No "playing" state before the start deadline.
+    connection_lost // The control, event or timing connection failed.
+};
+/// Categories and HTTP status only; never URLs, identifiers or payloads.
+class SessionException : public std::runtime_error {
+public:
+    explicit SessionException(SessionError reason, unsigned status = 0);
+    [[nodiscard]] SessionError reason() const noexcept {
+        return reason_;
+    }
+    /// The rejecting status for SessionError::rejected, otherwise 0.
+    [[nodiscard]] unsigned status() const noexcept {
+        return status_;
+    }
+
+private:
+    SessionError reason_;
+    unsigned status_;
+};
+
+/// Opens a TCP stream to a receiver endpoint; tests inject fake receivers.
+using StreamConnector = std::function<std::unique_ptr<ReceiverStream>(const ReceiverEndpoint&,
+                                                                      const ReceiverOperation&)>;
+
+struct UrlPlaybackOptions {
+    ReceiverEndpoint receiver; // The AirPlay control endpoint (port 7000).
+    std::string media_url;     // Private: never logged or put in errors.
+    double start_position_seconds = 0;
+    SenderIdentity identity; // A random device ID is used when empty.
+    std::chrono::milliseconds request_timeout{5000};
+    std::chrono::milliseconds start_timeout{30000}; // Until the receiver reports "playing".
+    std::chrono::milliseconds feedback_interval{2000};
+    StreamConnector connect; // Defaults to connect_receiver.
+};
+
+/// A snapshot of session progress, safe to read from any thread.
+struct SessionStatus {
+    std::string playback_state; // Lower-cased; empty before the first state event.
+    std::uint64_t events = 0;
+    std::uint64_t unreadable_events = 0; // Answered, but not a decodable event body.
+    std::uint64_t feedback_sent = 0;
+    std::uint64_t timing_answered = 0;
+    bool failed = false; // The control or event connection failed after start.
+};
+
+/**
+ * One URL playback session with a receiver, following the sequence validated
+ * on tvOS 26.6 with the reference sender (session-design.md section 2):
+ * pair-verify, timing responder, base SETUP, event channel, periodic
+ * /feedback, GET /info, RECORD, the URL control stream SETUP, then the four
+ * /command start commands. start() returns once the receiver reports
+ * "playing".
+ *
+ * Threads (D28): the control connection is shared by the caller and the
+ * feedback thread under one mutex, so one request is in flight at a time. An
+ * event thread answers receiver requests and publishes state; a timing thread
+ * answers NTP requests. No user code runs on these threads.
+ *
+ * stop() tears down in a fixed order, even after earlier failures: feedback,
+ * event channel, control connection, timing responder. It is idempotent and
+ * also runs from the destructor and when start() fails. Credentials are
+ * borrowed for start() only. Noncopyable, nonmovable.
+ */
+class UrlPlaybackSession {
+public:
+    /**
+     * Throws SessionException, TransportException, PairVerifyException or
+     * ControlException; every failure tears down what was started.
+     * `cancelled`, when given, aborts the start at the next check.
+     */
+    [[nodiscard]] static std::unique_ptr<UrlPlaybackSession>
+    start(const PairCredentials& credentials, UrlPlaybackOptions options,
+          const std::atomic_bool* cancelled = nullptr);
+    ~UrlPlaybackSession();
+    UrlPlaybackSession(const UrlPlaybackSession&) = delete;
+    UrlPlaybackSession& operator=(const UrlPlaybackSession&) = delete;
+    UrlPlaybackSession(UrlPlaybackSession&&) = delete;
+    UrlPlaybackSession& operator=(UrlPlaybackSession&&) = delete;
+
+    [[nodiscard]] SessionStatus status() const;
+    /// Block until the playback state differs from `previous`, the session
+    /// fails, or `timeout` passes; returns the status at that point.
+    [[nodiscard]] SessionStatus wait_for_change(const std::string& previous,
+                                                std::chrono::milliseconds timeout) const;
+    void stop() noexcept;
+
+private:
+    explicit UrlPlaybackSession(UrlPlaybackOptions options);
+    void run_start(const PairCredentials& credentials, const std::atomic_bool* cancelled);
+    [[nodiscard]] ReceiverOperation operation(const std::atomic_bool* cancelled) const;
+    /// An RTSP request with the session headers; Content-Type only with a body.
+    [[nodiscard]] ReceiverRequest rtsp_request(std::string method, std::string target,
+                                               Bytes body) const;
+    /// One control request; non-2xx throws SessionException(rejected) when required.
+    ReceiverResponse control_request(ReceiverRequest request, const std::atomic_bool* cancelled,
+                                     bool require_success);
+    void start_timing(const std::string& local_address);
+    void open_event_channel(std::uint16_t event_port, const std::atomic_bool* cancelled);
+    void start_feedback();
+    void wait_until_playing(const std::atomic_bool* cancelled);
+    void event_loop();
+    void feedback_loop();
+    void mark_failed();
+
+    UrlPlaybackOptions options_;
+    std::string session_uuid_;
+    std::string rtsp_uri_;
+    SessionHeaders headers_;
+
+    mutable std::mutex control_mutex_; // Serializes all control_ requests.
+    std::unique_ptr<ReceiverConnection> control_;
+
+    std::unique_ptr<TimingResponder> timing_;
+    std::atomic_bool timing_stop_{false};
+    std::thread timing_thread_;
+
+    std::unique_ptr<EventChannel> events_;
+    std::atomic_bool event_stop_{false};
+    std::thread event_thread_;
+
+    std::atomic_bool feedback_stop_{false};
+    std::thread feedback_thread_;
+
+    mutable std::mutex state_mutex_; // Guards status_ and the stop flags' waits.
+    mutable std::condition_variable state_changed_;
+    SessionStatus status_;
+    bool stopped_ = false;
+};
+} // namespace send_airplay2::detail
+#endif

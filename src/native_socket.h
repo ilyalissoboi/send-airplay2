@@ -7,6 +7,7 @@
 
 #include "receiver_stream.h"
 #include <cstdint>
+#include <string>
 #include <string_view>
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -91,6 +92,11 @@ struct NativeAddress {
 /// True when both addresses are the same host (family, address bytes and, for
 /// IPv6, scope). Ports are ignored.
 [[nodiscard]] bool same_host(const NativeAddress& left, const NativeAddress& right);
+
+/// The local address the OS route uses to reach `receiver`, as numeric text.
+/// Connects a UDP socket without sending anything. Throws
+/// TransportException(invalid_argument or network).
+[[nodiscard]] std::string route_local_address(const ReceiverEndpoint& receiver);
 
 /// Nonblocking, close-on-exec and (macOS) no SIGPIPE.
 void nonblocking(Socket socket);

@@ -20,11 +20,13 @@ Snapshot: 2026-10-06, ~14:30 UTC.
   for the session implementation in [session-design.md](session-design.md).
   CI runs only for pull requests, so keep a draft PR open for this branch.
   Before writing, verify the actual head and checks.
-- **Done on this branch:** steps 1-4: channel key derivation, the event
-  channel, the NTP timing responder and the session messages (section 5).
-- **Next:** step 5 of session-design.md section 8: the `UrlPlaybackSession`
-  orchestrator against a scripted fake receiver. That step adds the plist
-  codec and session messages to the library.
+- **Done on this branch:** steps 1-5. Channel key derivation, the event
+  channel, the NTP timing responder, the session messages, and the
+  `UrlPlaybackSession` orchestrator (section 5).
+- **Next:** step 6 of session-design.md section 8: `airplay2-cli cast` (start
+  and stop only), then **hardware gate G1** on Living Room. The user observes
+  video and audio; the `serve`-style read counts are recorded; stop must return
+  the TV to idle (hypothesis H4).
 - **Still true:** the library cannot cast yet. The first hardware gate (G1) is
   step 6.
 
@@ -1024,6 +1026,51 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   clang++ 22 strict syntax checks and clang-format passed.
 - **Scope:** the plist codec and session messages remain test-only until the
   orchestrator uses them. No Apple TV traffic yet.
+
+### URL playback session (step 5): 2026-10-06
+
+- **New:** `url_playback_session.*`. `UrlPlaybackSession::start` runs the
+  reference sequence: connect and pair-verify; timing responder on the
+  route-selected local address; base SETUP; event channel with derived keys;
+  feedback every 2 s; `GET /info` (errors tolerated); RECORD; URL-stream SETUP;
+  the four `/command` start commands. It returns only when the receiver reports
+  `playing`; `loading` is not success.
+- **Threads (D28):** callers and the feedback thread share the control
+  connection under one mutex. An event thread answers events and publishes
+  state; a timing thread answers NTP.
+- **Failures:** `SessionException` categories are `rejected` (with the status),
+  `start_timeout` and `connection_lost`. Any start failure tears everything
+  down.
+- **Stop:** `stop()` runs in a fixed order (feedback, event channel, control
+  connection, timing responder). It is idempotent and also runs from the
+  destructor.
+- **Supporting changes:**
+  - `native::route_local_address`: a UDP connect plus `getsockname`, sending
+    nothing.
+  - `StreamConnector` injection for tests.
+  - The plist codec, session messages and session are now part of the library
+    (`sap2_session_sources`).
+- **Tests** (`url_playback_session_tests`), against a thread-safe fake receiver
+  that does accessory-side pair-verify, encrypted control responses, and
+  encrypted events derived from literal labels:
+  - Full happy path: request order, RTSP URI and session headers, `/command`
+    headers and command order, the media URL in the queued item, a live
+    timing port (a real UDP probe), periodic feedback, and every event
+    answered.
+  - Later state changes, ordered stop, and idempotent stop.
+  - Rejected base SETUP (500), rejected `insertPlayQueueItem` (400), never
+    `playing` (timeout), event channel lost during start, cancelled start, and
+    event channel lost after start.
+- **Evidence:**
+  - Windows MSVC static/shared Release passed all 20 CTest targets.
+  - 25 repeated runs of the threaded suite: no failures (0.6 s each).
+  - clang strict syntax checks and clang-format passed.
+  - Accepting any state as started failed three scenarios by name.
+  - One test bug was found and fixed during development: a pointer into a
+    temporary decoded plist.
+  - CI passed for `2f46e34` (step 3 fix) and `f2cfd23` (step 4).
+- **Not yet exercised:** no Apple TV traffic. The first hardware run is gate G1
+  in step 6.
 
 ## 6. Screenbox integration findings
 

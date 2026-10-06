@@ -110,6 +110,39 @@ bool same_host(const NativeAddress& left, const NativeAddress& right) {
     return false;
 }
 
+std::string route_local_address(const ReceiverEndpoint& receiver) {
+    const auto remote = numeric_address(receiver);
+    [[maybe_unused]] NetworkRuntime runtime; // Outlives the socket below.
+    SocketOwner socket;
+    socket.value = ::socket(remote.family, SOCK_DGRAM, IPPROTO_UDP);
+    if (socket.value == invalid_socket) {
+        network_failure();
+    }
+    // A UDP connect only selects the route; no datagram is sent.
+    if (::connect(socket.value, reinterpret_cast<const sockaddr*>(&remote.storage), remote.size) !=
+        0) {
+        network_failure();
+    }
+    sockaddr_storage local{};
+    SocketLength local_size = sizeof(local);
+    if (::getsockname(socket.value, reinterpret_cast<sockaddr*>(&local), &local_size) != 0) {
+        network_failure();
+    }
+    char text[INET6_ADDRSTRLEN] = {};
+    const void* address = nullptr;
+    if (local.ss_family == AF_INET) {
+        address = &reinterpret_cast<const sockaddr_in*>(&local)->sin_addr;
+    } else if (local.ss_family == AF_INET6) {
+        address = &reinterpret_cast<const sockaddr_in6*>(&local)->sin6_addr;
+    } else {
+        network_failure();
+    }
+    if (inet_ntop(local.ss_family, address, text, sizeof(text)) == nullptr) {
+        network_failure();
+    }
+    return text;
+}
+
 void nonblocking(Socket socket) {
 #ifdef _WIN32
     u_long enabled = 1;

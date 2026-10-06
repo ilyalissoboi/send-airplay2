@@ -235,6 +235,14 @@ administered one per session.
    capability-relevant fields use reference values (D30).
 5. `UrlPlaybackSession` against a scripted fake receiver: the full sequence,
    each step failing, start timeout, teardown order, and secret cleanup.
+   **Done:** `url_playback_session.*`. Additions:
+   - The RTSP request URI is `rtsp://<local address>/<random 32-bit number>`,
+     like the reference's.
+   - `/info` errors are tolerated, as in the reference.
+   - `/feedback` is best effort: a non-2xx answer is ignored, but a transport
+     failure marks the session failed.
+   - An unreadable event body is answered and counted, and does not end the
+     session.
 6. `airplay2-cli cast`, start and stop only. Then MRP, after D31: wire codec
    and message mapping with fixtures; data-stream framing; the
    remote-control session against a fake receiver; then status and
