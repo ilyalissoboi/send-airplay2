@@ -40,7 +40,8 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Credential-storage/CLI PR | [#7: feat: add Windows credential storage and authentication CLI](https://github.com/ilyalissoboi/send-airplay2/pull/7), merged; verified merge `6e83badfc5146371ee0c886e3f75fba492f9ab61` |
 | Compatibility PR | [#8: fix: accept bounded Apple TV pair-setup metadata](https://github.com/ilyalissoboi/send-airplay2/pull/8), merged; verified merge `f24ac4825a47b2b641caaac1d0f1c00dd1058c33` |
 | E2E PR | [#9: test: add noninteractive CLI e2e runner](https://github.com/ilyalissoboi/send-airplay2/pull/9), merged; verified merge `d70a143a97f06b30c8b5bd266c03c36d8ed07ec9` |
-| Current development | Bounded Boost HTTP media server on `codex/media-server`; PR/check state must be verified through GitHub |
+| Current media-server PR | [#10: feat: add bounded Boost HTTP media server](https://github.com/ilyalissoboi/send-airplay2/pull/10), open; verify actual head/check state through GitHub |
+| Media-server source commit | `c4e73156bffadacac3860a72df328c46a5fe5986`; subsequent documentation commits record PR/check evidence |
 | E2E source commit | `2bf31dd8f61d17e4475ec36c78f81bcac21f0009`; subsequent documentation commits record checks |
 | Portable E2E source commit | `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`; closed-port correction and refreshed live artifacts |
 | Compatibility source commit | `f61698fa930893c139efcb5f5d2b0a40a93d0cae`; subsequent documentation commits record checks |
@@ -614,7 +615,8 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   host supports it; this does not validate actual receiver IPv6 fetching.
 - Windows 11 x64 / MSVC Release static/shared builds each passed all 13 CTest
   targets (9.51/9.45 s), including shared-DLL media calls and existing auth tests.
-  C++ format dry-run and whitespace checks passed. CI must be checked at the
+  All ten offline E2E runner contract tests also passed. C++ format dry-run and
+  whitespace checks passed. CI must be checked at the
   actual PR head; no LAN media fetch, private media or Apple TV operation occurred.
 - This adds media-serving building blocks only. Reference pyatv playback, an
   actual file/brokered media adapter, receiver fetch/firewall reachability,
