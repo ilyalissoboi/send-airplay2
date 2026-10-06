@@ -44,6 +44,13 @@ Hypotheses to test on hardware, in this order:
   control-path decision (decision 2).
 - **H4:** closing the control and event connections ends playback on the TV.
   Explicit stop may also need a command or `TEARDOWN`.
+- **H5 (G1, 2026-10-07):** the receiver presents URL playback only while the
+  sender also holds a remote-control session. Our session alone played
+  headlessly (fetching the whole file, reporting `playing`); with pyatv's
+  remote-control session open, the same native session was visible. The
+  remote-control session therefore belongs to start, not only to controls.
+  Next, find the minimum: the SETUP and event channel alone, or the MRP data
+  stream and handshake too.
 
 ## 2. Session sequence (reference-derived)
 

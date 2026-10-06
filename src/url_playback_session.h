@@ -8,6 +8,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <deque>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -16,6 +17,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <vector>
 
 namespace send_airplay2::detail {
 class EventChannel;
@@ -59,6 +61,9 @@ struct UrlPlaybackOptions {
     std::chrono::milliseconds start_timeout{30000}; // Until the receiver reports "playing".
     std::chrono::milliseconds feedback_interval{2000};
     StreamConnector connect; // Defaults to connect_receiver.
+    /// Diagnostic: keep value-free outlines of received events
+    /// (describe_event_structure) for take_event_log().
+    bool record_event_structure = false;
 };
 
 /// A snapshot of session progress, safe to read from any thread.
@@ -111,6 +116,10 @@ public:
     [[nodiscard]] SessionStatus wait_for_change(const std::string& previous,
                                                 std::chrono::milliseconds timeout) const;
     void stop() noexcept;
+    /// Diagnostic: the event outlines recorded since the last call, oldest
+    /// first. At most 256 are kept; older ones are dropped. Empty unless
+    /// record_event_structure was set.
+    [[nodiscard]] std::vector<std::string> take_event_log();
 
 private:
     explicit UrlPlaybackSession(UrlPlaybackOptions options);
@@ -152,6 +161,7 @@ private:
     mutable std::mutex state_mutex_; // Guards status_ and the stop flags' waits.
     mutable std::condition_variable state_changed_;
     SessionStatus status_;
+    std::deque<std::string> event_log_;
     bool stopped_ = false;
 };
 } // namespace send_airplay2::detail

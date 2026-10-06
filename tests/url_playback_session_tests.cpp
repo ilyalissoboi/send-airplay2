@@ -692,6 +692,26 @@ void failure_tests() {
     }
 }
 
+void event_log_tests() {
+    group = "diagnostic event log";
+    FakeReceiver receiver({});
+    const auto credentials = receiver.credentials();
+    auto options = options_for(receiver);
+    options.record_event_structure = true;
+    auto session = UrlPlaybackSession::start(credentials, std::move(options));
+    const auto log = session->take_event_log();
+    check(log.size() == 2 && log.back() == "POST /command type=playbackState state=playing "
+                                           "keys=type,params,params.playbackState",
+          "outlines of the start events");
+    check(session->take_event_log().empty(), "taking the log empties it");
+    session->stop();
+
+    FakeReceiver quiet({});
+    const auto quiet_credentials = quiet.credentials();
+    auto quiet_session = UrlPlaybackSession::start(quiet_credentials, options_for(quiet));
+    check(quiet_session->take_event_log().empty(), "no outlines unless enabled");
+}
+
 void failure_after_start_tests() {
     group = "failure after start";
     FakeReceiver receiver({});
@@ -709,6 +729,7 @@ int main() {
     try {
         happy_path_tests();
         failure_tests();
+        event_log_tests();
         failure_after_start_tests();
     } catch (const std::exception& error) {
         std::cerr << "Unexpected test exception [" << group << "]: " << error.what() << '\n';

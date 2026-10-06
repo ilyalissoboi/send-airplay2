@@ -3,7 +3,9 @@
 Status: DISCOVERY AND PAIRING OBSERVED; built-in fresh-socket and separate-process
 verification passed; pyatv 0.18.0 reference playback FAILED (known upstream
 tvOS 26 incompatibility); reference playback PASSED with an unmerged pyatv fix
-fetching from `airplay2-cli serve`; native playback NOT IMPLEMENTED. Fill out one record per
+fetching from `airplay2-cli serve`. Native `airplay2-cli cast` plays only
+headlessly on its own (G1 FAIL); with a remote-control session also open,
+native playback is visible (see the G1 observation). Fill out one record per
 receiver firmware and sender platform.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
@@ -48,7 +50,7 @@ Playback results remain pending.
 | Repeated verification | Independent processes reuse stored pairing | PASS, baseline plus three reconnects and three fault-recovery verifications per static/shared run |
 | Profile/input guards | Existing/missing profiles and redirected PIN input are refused | PASS, automated native CLI static/shared runs |
 | Local forget | Local deletion and idempotence | Absent-profile no-op PASS; real disposable deletion SKIPPED (no opt-in) |
-| Start MP4 | Both audio and video play | Reference: pyatv 0.18.0 FAIL (no fetch); unmerged pyatv fix PASS, video and audio from `serve` (user-observed). Native NOT RUN |
+| Start MP4 | Both audio and video play | Reference: pyatv 0.18.0 FAIL (no fetch); unmerged pyatv fix PASS, video and audio from `serve` (user-observed). Native `cast`: receiver plays and fetches but shows nothing (FAIL); visible with a pyatv remote-control session open (user-observed) |
 | Pause/resume | Receiver and host state agree | Reference (unmerged pyatv fix): PASS, `Paused` then `Playing`, user-observed. Native NOT RUN |
 | Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native NOT RUN |
 | Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native NOT RUN |
@@ -380,6 +382,54 @@ code, "stop" must therefore be defined explicitly: for example, a stop or
 queue-removal command followed by session teardown, verified by observed
 receiver state, not assumed from a 200 response. End-of-file, backward seek,
 repeated casts and receiver-side stop remain NOT RUN.
+
+## Native cast, hardware gate G1: 2026-10-07
+
+The first casts by this library's own session code. Receiver: Living Room /
+Apple TV 4K / `AppleTV14,1` / tvOS 26.6 (23L773). Host: Windows 11 x64, Public
+Wi-Fi profile, existing inbound Allow rules for this `airplay2-cli.exe`.
+
+- **Build:** static Release from `claude/url-playback-session`; step 6 commit
+  `1630b61`, plus the diagnostic event log added after run 1.
+- **Command:** `airplay2-cli cast` with the stored `airplay2-cli` profile and
+  the same media as the reference runs.
+- **Driver:** the agent ran it; the receiver address stayed in driver memory.
+- **Observation:** the user watched the TV.
+
+| Run | Setup | `cast` output (sanitized) | TV (user-observed) |
+|---|---|---|---|
+| 1 | `cast` alone, 45 s | `playing` within 1 s, then `paused`; `events=42 feedback=22 timing=21 failed=no reads=762 bytes=49859866 failed_reads=0 span=[0,47054848)`; exit 0 | Nothing appeared; home screen throughout |
+| 2 | `cast --event-log` alone, 25 s | `loading` x3, `playing` with full playback info, then `loading`/`playing`/`loading` around 26-32 s; `events=47 reads=1103 bytes=72159904 span=[0,53953926)`; exit 0 | Nothing appeared |
+| 3 | `cast` while pyatv 0.18.0 `atvremote push_updates` held its remote-control session open, 30 s | `playing`; `events=40 feedback=15 timing=14 reads=1219 bytes=79762080 span=[0,53953926)`; exit 0. pyatv's session saw device states including `Playing` | **Video and audio played correctly**, with one short buffering pause around 15 s |
+
+Interpretation:
+
+- The native sequence works at the protocol level on tvOS 26.6. Every request
+  was accepted, and the receiver fetched the whole MP4 from this project's
+  `MediaServer` through the Windows firewall, without errors. Event channel,
+  feedback and timing all worked: 12-22 feedback requests and 13-21 timing
+  answers per run. Stop was clean each time.
+- **H5 is supported:** the receiver presents URL playback only when the sender
+  also has a remote-control session. On its own, our session's playback
+  happens headlessly. Run 3 used official pyatv 0.18.0 for that session (the
+  `isRemoteControlOnly` SETUP plus its MRP data stream). Whether the SETUP and
+  event channel alone are enough, or the MRP handshake is needed, is not yet
+  known.
+- **Event structure** (run 2, key names only):
+  - `playbackState` events carry `params.playbackState`, `rate`, `position`,
+    `duration`, `readyToPlay`, `stallCount`, buffer flags, and loaded and
+    seekable time ranges.
+  - Notifications carry `name`, `item.uuid` and sometimes `position` or
+    `value`.
+  - Some events (`updateInfo`) are bare dictionaries without the `params.data`
+    envelope. The parser now accepts both shapes; earlier they were counted as
+    unreadable and answered.
+- The receiver read more than the file size in every run (up to 1.5x), so ranges
+  are re-requested. The state also returned to `loading` mid-play; the buffering
+  pause in run 3 may be related. Not yet investigated.
+- **G1 status: FAIL** for `cast` alone. The remote-control session must be part
+  of native start. H4 (stop behavior) could not be assessed, because nothing
+  was on screen in runs 1 and 2.
 
 ## Automated CLI E2E observation: 2026-10-06
 

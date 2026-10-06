@@ -182,12 +182,22 @@ void event_tests(const std::string& directory) {
     const auto notification = parse_session_event(fixture(directory, "event-notification"));
     check(notification.type == "notification" && !notification.playback_state,
           "other event types carry no state");
+    const auto bare = parse_session_event(fixture(directory, "event-bare"));
+    check(bare.type == "updateInfo" && !bare.playback_state, "bare event without envelope");
 
     auto envelope = [](PlistValue inner) {
         return encode_binary_plist(
             PlistDictionary{{"params", PlistDictionary{{"data", encode_binary_plist(inner)}}}});
     };
-    expect_invalid("envelope without params", [] {
+    // Diagnostic outlines carry key names and the state, never other values.
+    check(describe_event_structure(fixture(directory, "event-state-params")) ==
+              "type=playbackState state=playing keys=type,params,params.playbackState",
+          "event outline");
+    check(describe_event_structure(fixture(directory, "event-notification")) ==
+              "type=notification keys=type,params,params.kind",
+          "notification outline omits the value");
+
+    expect_invalid("neither envelope nor type", [] {
         (void)parse_session_event(encode_binary_plist(PlistDictionary{{"data", Bytes{}}}));
     });
     expect_invalid("params.data not data", [] {

@@ -36,6 +36,7 @@ struct CastArguments {
     std::string file;
     std::string content_type = "video/mp4";
     std::uint32_t start_timeout_ms = 30000;
+    bool event_log = false; // Diagnostic: print value-free event outlines.
 };
 
 std::uint32_t parse_bounded(std::string_view value, std::uint32_t minimum, std::uint32_t maximum,
@@ -54,6 +55,10 @@ CastArguments parse_arguments(int argc, const char* const* argv) {
     CastArguments arguments;
     for (int index = 1; index < argc; ++index) {
         const std::string_view option = argv[index];
+        if (option == "--event-log") {
+            arguments.event_log = true;
+            continue;
+        }
         if (index + 1 >= argc) {
             throw std::invalid_argument("unknown or incomplete option: " + std::string(option));
         }
@@ -96,7 +101,7 @@ const char* session_message(SessionError error) {
 /// Prints playback-state changes until stopped, from its own thread.
 class StateReporter {
 public:
-    explicit StateReporter(const UrlPlaybackSession& session)
+    explicit StateReporter(UrlPlaybackSession& session)
         : thread_([this, &session] { report(session); }) {}
     ~StateReporter() {
         stop();
@@ -113,9 +118,15 @@ public:
     }
 
 private:
-    void report(const UrlPlaybackSession& session) {
+    static void print_event_log(UrlPlaybackSession& session) {
+        for (const auto& entry : session.take_event_log()) {
+            std::cout << "Event: " << entry << std::endl;
+        }
+    }
+    void report(UrlPlaybackSession& session) {
         auto last = session.status();
         while (!done_) {
+            print_event_log(session);
             const auto current = session.wait_for_change(last.playback_state, state_poll);
             if (current.playback_state != last.playback_state) {
                 std::cout << "State: " << current.playback_state << std::endl;
@@ -125,6 +136,7 @@ private:
             }
             last = current;
         }
+        print_event_log(session);
     }
 
     std::atomic_bool done_{false};
@@ -169,6 +181,7 @@ int cast(const CastArguments& arguments) {
     options.receiver = {arguments.address, arguments.port, 0};
     options.media_url = server->url();
     options.start_timeout = std::chrono::milliseconds(arguments.start_timeout_ms);
+    options.record_event_structure = arguments.event_log;
     std::cout << "Starting playback." << std::endl;
     auto session = UrlPlaybackSession::start(*credentials, std::move(options));
     std::cout << "State: " << session->status().playback_state << std::endl;

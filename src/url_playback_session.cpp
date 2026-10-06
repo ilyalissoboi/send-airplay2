@@ -19,6 +19,7 @@ namespace {
 /// Longest single wait while polling for cancellation during start.
 constexpr std::chrono::milliseconds start_poll_slice{20};
 constexpr const char* playing_state = "playing";
+constexpr std::size_t max_event_log = 256;
 
 std::string session_message(SessionError reason, unsigned status) {
     std::string text =
@@ -197,14 +198,26 @@ void UrlPlaybackSession::event_loop() {
         for (;;) {
             auto request = events_->receive(operation);
             std::optional<SessionEvent> event;
+            std::string outline;
             try {
                 event = parse_session_event(request.body);
+                if (options_.record_event_structure) {
+                    outline = request.method + " " + request.target + " " +
+                              describe_event_structure(request.body);
+                }
             } catch (const TransportException&) {
                 // Answered already; an unreadable body does not end the session.
+                outline = request.method + " " + request.target + " unreadable";
             }
             cleanse(request.body.data(), request.body.size());
             {
                 std::lock_guard<std::mutex> lock(state_mutex_);
+                if (options_.record_event_structure) {
+                    if (event_log_.size() == max_event_log) {
+                        event_log_.pop_front();
+                    }
+                    event_log_.push_back(std::move(outline));
+                }
                 if (!event) {
                     ++status_.unreadable_events;
                 } else {
@@ -304,6 +317,13 @@ SessionStatus UrlPlaybackSession::wait_for_change(const std::string& previous,
         });
     }
     return status();
+}
+
+std::vector<std::string> UrlPlaybackSession::take_event_log() {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::vector<std::string> entries(event_log_.begin(), event_log_.end());
+    event_log_.clear();
+    return entries;
 }
 
 void UrlPlaybackSession::stop() noexcept {

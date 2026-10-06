@@ -142,3 +142,6 @@ def event(name: str, value) -> None:
 event("state-params", {"type": "playbackState", "params": {"playbackState": "Playing"}})
 event("state-name", {"type": "playbackState", "name": "Loading"})
 event("notification", {"type": "notification", "params": {"kind": "synthetic"}})
+# Some receiver events are a bare dict, not wrapped in params.data (updateInfo
+# on tvOS 26.6 and in the reference sender's log).
+write("event-bare", rtsp_body({"type": "updateInfo", "value": {"kind": "synthetic"}}))

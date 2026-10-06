@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace send_airplay2::detail {
 namespace {
@@ -84,11 +85,17 @@ std::uint16_t require_port(const PlistValue& container, const char* key) {
     return static_cast<std::uint16_t>(port);
 }
 
-/// The inner command of a {"params": {"data": <plist>}} envelope.
+/// The inner command of a {"params": {"data": <plist>}} envelope. Receiver
+/// events may also arrive as a bare dictionary with a "type" and no envelope.
 PlistValue unwrap_envelope(const Bytes& body) {
-    const auto envelope = decode_body(body);
+    auto envelope = decode_body(body);
     if (envelope.kind() != PlistKind::dictionary) {
         invalid_body();
+    }
+    const auto* wrapped = envelope.find("params");
+    const auto* data = wrapped != nullptr ? wrapped->find("data") : nullptr;
+    if (data == nullptr && envelope.find("type") != nullptr) {
+        return envelope;
     }
     const auto& params = require(envelope, "params", PlistKind::dictionary);
     const auto inner = decode_body(require(params, "data", PlistKind::data).as_data());
@@ -300,6 +307,52 @@ PlistValue set_action_at_item_end() {
 
 PlistValue set_rate(double rate) {
     return PlistDictionary{{"type", "setRate"}, {"rate", rate}};
+}
+
+namespace {
+constexpr std::size_t max_described_paths = 48;
+constexpr std::size_t max_described_depth = 4;
+
+void collect_key_paths(const PlistValue& value, const std::string& prefix, std::size_t depth,
+                       std::vector<std::string>& paths) {
+    if (depth >= max_described_depth || paths.size() >= max_described_paths) {
+        return;
+    }
+    if (value.kind() == PlistKind::array) {
+        // Describe the first element's shape; arrays are usually homogeneous.
+        if (!value.as_array().empty()) {
+            collect_key_paths(value.as_array().front(), prefix + "[]", depth + 1, paths);
+        }
+        return;
+    }
+    if (value.kind() != PlistKind::dictionary) {
+        return;
+    }
+    for (const auto& entry : value.as_dictionary()) {
+        if (paths.size() >= max_described_paths) {
+            return;
+        }
+        const auto path = prefix.empty() ? entry.key : prefix + "." + entry.key;
+        paths.push_back(entry.value.kind() == PlistKind::array ? path + "[]" : path);
+        collect_key_paths(entry.value, path, depth + 1, paths);
+    }
+}
+} // namespace
+
+std::string describe_event_structure(const Bytes& body) {
+    const auto event = unwrap_envelope(body);
+    const auto parsed = parse_session_event(body);
+    std::string output = "type=" + parsed.type;
+    if (parsed.playback_state) {
+        output += " state=" + *parsed.playback_state;
+    }
+    std::vector<std::string> paths;
+    collect_key_paths(event, "", 0, paths);
+    output += " keys=";
+    for (std::size_t index = 0; index < paths.size(); ++index) {
+        output += (index == 0 ? "" : ",") + paths[index];
+    }
+    return output;
 }
 
 SessionEvent parse_session_event(const Bytes& body) {

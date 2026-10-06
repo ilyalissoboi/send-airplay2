@@ -113,7 +113,15 @@ struct SessionEvent {
     std::string type;
     std::optional<std::string> playback_state;
 };
-/// Decode an event body: the same {"params": {"data": ...}} envelope.
+/// Decode an event body: the same {"params": {"data": ...}} envelope, or a
+/// bare dictionary with a "type" (some receiver events are not wrapped).
 [[nodiscard]] SessionEvent parse_session_event(const Bytes& body);
+/**
+ * A diagnostic, value-free outline of an event body: "type=<type>", the
+ * playback state when present, then the key paths of the inner plist
+ * (arrays as "name[]"). No other values are included, so identifiers, URLs and
+ * metadata never appear. At most 48 paths, 4 levels deep.
+ */
+[[nodiscard]] std::string describe_event_structure(const Bytes& body);
 } // namespace send_airplay2::detail
 #endif

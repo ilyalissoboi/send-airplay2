@@ -23,10 +23,18 @@ Snapshot: 2026-10-06, ~14:30 UTC.
 - **Done on this branch:** steps 1-5. Channel key derivation, the event
   channel, the NTP timing responder, the session messages, and the
   `UrlPlaybackSession` orchestrator (section 5).
-- **Implemented, awaiting hardware:** step 6, `airplay2-cli cast --address
-  IP --profile NAME --file PATH`.
-- **Next: hardware gate G1** on Living Room. The user observes video and audio;
-  the read counts are recorded; stop must return the TV to idle (H4).
+- **Step 6 implemented, G1 FAIL on its own:** `airplay2-cli cast` runs the
+  whole native sequence on Living Room. The receiver fetches the full file and
+  reports `playing`, but shows nothing. With pyatv 0.18.0's remote-control
+  session held open (`atvremote push_updates`), the same native cast played
+  video and audio correctly (user-observed). That supports H5: the
+  remote-control session is required for presentation. See
+  receiver-validation.md, "Native cast, hardware gate G1".
+- **Next:** implement the remote-control session natively. Test the minimum
+  first, the `isRemoteControlOnly` SETUP and event channel without MRP. If that
+  is not enough, add the data stream and MRP handshake (D29/D31). Then rerun G1
+  without pyatv. The credential profile for `cast` is `living-room-test`. The
+  temporary pyatv Python firewall rule is still in place.
 - **Still true:** the library cannot cast yet. The first hardware gate (G1) is
   step 6.
 
@@ -1095,6 +1103,20 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
   exits 1 with a `Credentials:` message; no output ever contains a URL.
 - **Evidence:** Windows MSVC static/shared Release passed all 21 CTest targets;
   clang strict syntax checks and clang-format passed.
+
+### G1 diagnostics: 2026-10-07
+
+- **Event log:** `cast --event-log` prints value-free event outlines (method,
+  target, type, playback state and key paths), via
+  `UrlPlaybackOptions::record_event_structure`, `take_event_log()` and
+  `describe_event_structure()`.
+- **Parser fix:** bare-dictionary events (`updateInfo`) are now parsed instead
+  of counted as unreadable.
+- **Tests:** a literal outline for each fixture event; the session records
+  outlines only when enabled; and a bare-event fixture.
+- **Evidence:** Windows static/shared builds passed all 21 CTest targets.
+- **Hardware:** see receiver-validation.md. The native protocol sequence works;
+  presentation needs the remote-control session (H5).
 
 ## 6. Screenbox integration findings
 
