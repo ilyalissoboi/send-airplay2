@@ -11,7 +11,7 @@ Work continues in a local Codex session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
 Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
 Latest runtime follow-up: D43's [PR review](pr-review.md) fixes URL diagnostic
-redaction and decoded MRP extension-payload erasure on exception paths. Windows
+redaction and decoded plaintext erasure on exception paths. Windows
 static/shared Release passed 24/24 CTest targets each; runner contracts passed
 10/10; all 52 PR-changed C++ files passed formatting. Inspect the actual PR head
 and CI after publication. This follow-up has no new receiver observation.
@@ -184,10 +184,10 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   at planned near-end EOF, exiting media_end/0. Pre-interruption presentation was
   asked about but not reported. See the [artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
 - **PR review complete locally (D43):** fixed two reproduced issues: raw peer
-  strings/keys/targets in URL output, and decoded MRP payload release without
+  strings/keys/targets in URL output, and decoded plaintext release without
   erasure on error paths. See [scope, regressions and limits](pr-review.md).
-- **Next:** verify actual-head CI for the D43 fixes, then obtain user approval
-  before marking ready or merging. Keep ambiguous
+- **Next:** after actual-head CI passes, obtain user approval before marking
+  ready or merging. Keep ambiguous
   peer closure classified conservatively: the reference audit and single Ethernet
   comparison do not establish Stop intent. Investigate the unresolved receiver
   transition behind the intermittent startup pause using matched Home/idle
@@ -685,15 +685,20 @@ paths, omitting peer request targets even for unreadable bodies. Event body
 ownership uses RAII through parsing/logging failures. Decoded MRP extension
 payloads now belong to move-only erasing owners, covering partially decoded
 batches, allocation failures, rejected responses and pending response cleanup.
+Event-channel body RAII also covers failed acknowledgments before caller ownership;
+the combined plaintext regression observes erasure immediately before release.
 Known state handling, wire messages, commands, startup policy and end reasons
 remain unchanged. No third-party source/dependency was added.
 
 Regression tests failed against the previous behavior, then passed after the
-fixes. Windows static/shared Release each passed 24/24 CTest targets (15.76/15.34 s);
+fixes, including the independently reproduced event acknowledgment failure.
+Windows static/shared Release each passed 24/24 CTest targets (15.88/15.72 s);
 runner contracts passed 10/10; all 52 PR-changed C++ files passed clang-format
 dry-run and whitespace checks. Loopback UDP and runner temporary-file checks
 required execution outside the restricted sandbox; no firewall/network policy
-was changed. Actual-head CI remains a publication gate. No receiver test was
+was changed. Initial D43 commit `d1011ab5b6a413f2e58a5e8587060d5866af6894`
+passed all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37582693970).
+Inspect actual-head CI including the acknowledgment-guard follow-up. No receiver test was
 performed for this follow-up: D40/D42 source/binary fingerprints remain the
 hardware evidence. Remote-Stop intent, intermittent startup pause and broader
 reliability remain open; frozen video stays low priority unless it recurs (D37).

@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Observe owned plaintext immediately before freeing it; never read freed storage.
 #include "mrp_messages.h"
+#include "event_channel.h"
 #include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <new>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -75,7 +81,7 @@ namespace {
 int failures = 0;
 void check(bool value, const char* scenario) {
     if (!value) {
-        std::cerr << "FAIL [MRP plaintext ownership]: " << scenario << '\n';
+        std::cerr << "FAIL [plaintext ownership]: " << scenario << '\n';
         ++failures;
     }
 }
@@ -145,13 +151,58 @@ void exception_tests() {
     }
     check_erasure("allocation failure after payload decoding erases its temporary owner");
 }
+
+/// A synthetic encrypted event arrives normally, but its reply fails. No sockets.
+class ReplyFailureStream final : public ReceiverStream {
+public:
+    explicit ReplyFailureStream(Bytes wire) : wire_(std::move(wire)) {}
+    std::size_t write_some(const std::uint8_t*, std::size_t,
+                           const ReceiverOperation& operation) override {
+        operation.check();
+        throw TransportException(TransportError::network);
+    }
+    std::size_t read_some(std::uint8_t* output, std::size_t capacity,
+                          const ReceiverOperation& operation) override {
+        operation.check();
+        const auto count = std::min(capacity, wire_.size() - offset_);
+        std::copy_n(wire_.begin() + static_cast<std::ptrdiff_t>(offset_), count, output);
+        offset_ += count;
+        return count;
+    }
+    void require_idle(const ReceiverOperation&) override {}
+    void close() noexcept override {}
+
+private:
+    Bytes wire_;
+    std::size_t offset_ = 0;
+};
+
+void event_reply_failure_tests() {
+    const std::string header = "POST /command RTSP/1.0\r\nCSeq: 1\r\nContent-Length: 257\r\n\r\n";
+    Bytes request(header.begin(), header.end());
+    request.insert(request.end(), synthetic_payload_size, 0x5a);
+    Secret32 write_key, read_key; // Public zero-valued fixture keys, separate owners.
+    ControlWriter receiver_writer(read_key.bytes);
+    auto stream = std::make_unique<ReplyFailureStream>(receiver_writer.encrypt(request));
+    EventChannel channel(std::move(stream), write_key, read_key);
+    begin_observation();
+    try {
+        (void)channel.receive(ReceiverOperation::after(std::chrono::seconds{1}));
+        check(false, "failed event acknowledgment was accepted");
+    } catch (const TransportException& error) {
+        check(error.reason() == TransportError::network, "event reply retains network category");
+    }
+    check_erasure("failed event acknowledgment erases decoded body before freeing it");
+    check(channel.closed(), "failed event acknowledgment closes the channel");
+}
 } // namespace
 int main() {
     lifetime_tests();
     exception_tests();
+    event_reply_failure_tests();
     if (failures) {
         return 1;
     }
-    std::cout << "MRP plaintext ownership tests passed\n";
+    std::cout << "Plaintext ownership tests passed\n";
     return 0;
 }

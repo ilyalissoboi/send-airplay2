@@ -19,6 +19,19 @@ struct ErasedBytes {
     ErasedBytes(ErasedBytes&&) = delete;
     ErasedBytes& operator=(ErasedBytes&&) = delete;
 };
+/// Protect the decoded body until acknowledgment succeeds and ownership can
+/// transfer to the caller. A failed reply must not release plaintext un-erased.
+struct ErasedEvent {
+    EventRequest request;
+    explicit ErasedEvent(EventRequest input) : request(std::move(input)) {}
+    ~ErasedEvent() {
+        cleanse(request.body.data(), request.body.size());
+    }
+    ErasedEvent(const ErasedEvent&) = delete;
+    ErasedEvent& operator=(const ErasedEvent&) = delete;
+    ErasedEvent(ErasedEvent&&) = delete;
+    ErasedEvent& operator=(ErasedEvent&&) = delete;
+};
 } // namespace
 
 EventChannel::EventChannel(std::unique_ptr<ReceiverStream> stream, const Secret32& sender_write,
@@ -58,8 +71,9 @@ EventRequest EventChannel::receive(const ReceiverOperation& operation) {
         while (true) {
             operation.check();
             if (auto request = parser_.next()) {
-                send_reply(*request, operation);
-                return std::move(*request);
+                ErasedEvent owned(std::move(*request));
+                send_reply(owned.request, operation);
+                return std::move(owned.request);
             }
             read_more(operation);
         }

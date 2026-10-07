@@ -243,6 +243,8 @@ administered one per session.
   themselves on success, failure and destruction, and are non-copyable.
   Decoded MRP extension payloads also have move-only owners that erase bytes on
   replacement/destruction, including partially decoded batches and rejected replies (D43).
+  Event bodies are protected through acknowledgment and then transferred to the
+  caller; failed replies erase the body before release.
 - **Logging:** never log the media URL, receiver identifiers, sender identifiers
   or raw event payloads. Diagnostics use categories and allowlisted fields.
   URL type/state strings are fixed labels (`other` for unknown strings); URL

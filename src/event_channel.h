@@ -39,7 +39,8 @@ public:
 
     /**
      * Block until the receiver's next complete request, answer it, and return
-     * it. The caller owns and erases the body. A clean or partial end of input
+     * it. The caller owns and erases the body after return. A failed reply erases
+     * the decoded body before unwinding. A clean or partial end of input
      * throws TransportException(disconnected); record authentication failures
      * throw ControlException; deadline and cancellation throw
      * TransportException(timeout or cancelled).

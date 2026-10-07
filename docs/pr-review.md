@@ -17,10 +17,12 @@ implementation. Two concrete issues were reproduced and fixed:
 | Finding | Trigger and effect | Fix and regression evidence |
 |---|---|---|
 | URL diagnostic redaction | Receiver-provided type/state strings, dictionary keys and HTTP/RTSP request targets could enter output; a state containing a newline could inject output lines. | Fixed type/state allowlists, unknown strings mapped to `other`, allowlisted key paths, fixed `URL` prefix and `URL unreadable=yes` fallback. Codec and scripted-session tests use synthetic private values/targets and require exact safe output. |
-| Decoded MRP extension-payload cleanup | A malformed later batch message, allocation failure or rejected correlated reply could release decoded plaintext before a per-message/caller erasure guard was reached. | Move-only erasing `MrpMessage` ownership, plus pending-response reset at Stop. A standalone single-threaded test observes still-live payload bytes immediately before deallocation, tests move/replacement, malformed later input and injected allocation failure; compile-time checks prohibit copying. |
+| Decoded plaintext cleanup | A malformed later MRP batch message, allocation failure or rejected correlated reply could release decoded extension plaintext before an erasure guard was reached. An event acknowledgment failure likewise released its body before caller ownership. | Move-only erasing `MrpMessage` ownership, pending-response reset at Stop and event-body RAII until acknowledgment/ownership transfer. A standalone single-threaded test observes still-live bytes before deallocation and checks move/replacement, malformed later input, injected allocation failure and event reply failure; compile-time checks prohibit MRP copying. |
 
 The cleanup and redaction regressions were first run against the old behavior;
 both test targets failed with the expected scenarios. They pass after the fixes.
+The event acknowledgment regression also failed with the old receive path and
+passed with the ownership guard; `plaintext_cleanup_tests` covers both protocols.
 The session tests also verify that malformed event bodies remain acknowledged
 without terminating playback. URL event-body RAII now covers exceptions while
 constructing diagnostics. The payload-erasure contract covers decoded extension
@@ -35,7 +37,8 @@ Apache-2.0 and existing provenance remain intact.
 ## Validation and remaining gates
 
 - Windows 11 x64 / MSVC Release: full static and shared builds succeeded;
-  CTest passed **24/24 each** (15.76/15.34 seconds).
+  CTest passed **24/24 each** on the final acknowledgment-guard source
+  (15.88/15.72 seconds).
 - Offline runner contracts passed **10/10** (13.045 seconds).
 - All **52 PR-changed C++ files** passed `clang-format --dry-run --Werror`;
   `git diff --check` passed.
@@ -44,6 +47,9 @@ Apache-2.0 and existing provenance remain intact.
   No firewall/network settings or credential data were changed.
 - Inspect CI for the actual published head, including sanitizer and all six
   platform/static/shared builds. An earlier head's success is not this gate.
+  Initial D43 commit `d1011ab5b6a413f2e58a5e8587060d5866af6894` passed all ten
+  [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37582693970);
+  inspect the acknowledgment-guard follow-up's own results on PR #12.
 
 This review performed **no new receiver test**. D40's runtime and the D42 Ethernet
 artifact retain their exact source/binary fingerprints and selected hardware

@@ -23,8 +23,8 @@ insufficient media connections the likely cause; raise priority if it recurs in
 later testing. Preserve its original FAIL evidence. Startup pause remains active.
 See the dated observations below; record each receiver/firmware/platform separately.
 
-D43's [PR review](pr-review.md) changes diagnostic redaction and decoded MRP
-payload ownership. It passed offline checks only; the latest hardware artifact
+D43's [PR review](pr-review.md) changes diagnostic redaction and decoded MRP/event
+plaintext ownership. It passed offline checks only; the latest hardware artifact
 still fingerprints D40's runtime. No hardware pass is attributed to the D43 build.
 
 The Boost HTTP media server is implemented with loopback tests on Windows

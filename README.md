@@ -197,7 +197,7 @@ See [session design and gates](docs/session-design.md) and
 [receiver results](docs/receiver-validation.md).
 
 The [D43 PR review](docs/pr-review.md) fixed URL diagnostic redaction and decoded
-MRP payload cleanup on exception paths. Windows static/shared Release each pass
+MRP/event plaintext cleanup on exception paths. Windows static/shared Release each pass
 24 CTest targets; offline runner contracts pass 10 tests. These checks are
 separate from the dated receiver observations above.
 
