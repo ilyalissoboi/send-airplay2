@@ -150,7 +150,7 @@ lifecycle checks on the recorded Apple TV/tvOS/Windows combination. Four slots
 were occupied by long-lived read-ahead responses while needed ranges waited; the
 higher-capacity traces admitted five/six concurrent requests. This is a bounded
 admission choice, not a decoding guarantee or a fix for the intermittent startup
-pause. See the [receiver evidence](receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
+pause. See the [receiver evidence](receiver-validation.md#bounded-cast-admission-policy-and-controlslifecycle-checks-2026-10-07).
 
 The option changes both active request slots and the maximum source-worker count.
 Each slot has one 64-KiB buffer: `cast` now permits up to 1 MiB of body buffers and

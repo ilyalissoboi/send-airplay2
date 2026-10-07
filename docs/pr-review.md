@@ -80,7 +80,8 @@ guarantee protection against concurrent same-duration takeover. Broader lifecycl
 other receiver/host, packaged application and public ABI gates remain pending.
 
 The user approved marking PR #12 ready, and that status change was verified on
-2026-10-07 at `ab7ec01`. It is open and unmerged. Merge still requires user approval.
+2026-10-07 at `ab7ec01`. After the D44 follow-up below, the user merged PR #12 as
+`2bb25df` (D45).
 
 ## Review feedback follow-up (D44)
 
@@ -95,5 +96,5 @@ status and are superseded by D42 for this selected check.
 
 This follow-up changes documentation only, adds the detailed
 [separate-session note](CONTINUATION.md), and updates the live ready-for-review
-status. It adds no runtime, test, dependency or receiver evidence. Inspect CI and
-the review thread at the actual published head before merging.
+status. It adds no runtime, test, dependency or receiver evidence. Its published
+head `923d8ef` passed all ten checks and the thread was resolved before merge.

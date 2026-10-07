@@ -6,9 +6,11 @@ They preserve the user scope, decisions, evidence, current status and next steps
 For the separate-session checkpoint and ordered work queue, also read
 [docs/CONTINUATION.md](docs/CONTINUATION.md).
 
-- Continue on the current PR branch while it is open; inspect its actual head
-  before writing. The API is experimental; native-only G1 passed for one recorded receiver/host.
-  Use the current PR handoff rather than assuming that casting code is absent.
+- If a PR for the current slice is open, continue on its branch and inspect its
+  actual head before writing. Otherwise start a fresh branch from `origin/main`
+  and open its own PR; ask before merging. The API is experimental; native-only
+  G1 passed for one recorded receiver/host. Use the current handoff rather than
+  assuming that casting code is absent.
 - Keep user requirements, engineering proposals and tested behavior distinct.
   Update the handoff when making a material decision or reaching a validation gate.
 - Build/test using CMake and CTest as described in README.md. Unit/CI success is
@@ -21,7 +23,7 @@ For the separate-session checkpoint and ordered work queue, also read
 ## C++ readability requirements
 
 Apply these requirements to every C++ change, including tests, before finalizing
-the current PR. Make readability part of implementation, not a separate cleanup
+a PR. Make readability part of implementation, not a separate cleanup
 left for the reviewer.
 
 - Follow the repository `.clang-format` file. Format touched C++ headers/sources

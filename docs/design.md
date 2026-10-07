@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-07 (Asia/Tokyo), PR #12. This document distinguishes proposed architecture
+Implementation snapshot: 2026-10-07 (Asia/Tokyo), after PR #12 merged into `main`. This document distinguishes proposed architecture
 from implemented behavior. HTTP single-byte-range resolution and bounded
 mDNS/DNS-SD discovery with a diagnostic CLI are implemented. Private pairing TLV8,
 HKDF-SHA512 and authenticated control-record codecs are implemented, along with
@@ -175,7 +175,8 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    checks passed; this follow-up has no new hardware observation.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
-5. Expose the versioned session API and bindings; prove packaged Windows C#
+5. Expose the versioned session API and bindings (proposed as the next slice in
+   [CONTINUATION.md](CONTINUATION.md), pending user confirmation); prove packaged Windows C#
    loading, brokered file access and inbound networking, then Linux/macOS/Android
    device support and other credential stores. CI is separate from device evidence.
 6. After the standalone gate, integrate Screenbox in a dedicated fork with

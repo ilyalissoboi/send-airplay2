@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-07 (Asia/Tokyo), after addressing PR #12's review feedback.
+Checkpoint: 2026-10-07 (Asia/Tokyo), after PR #12 was merged into `main` (D45).
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -8,54 +8,40 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- Current PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12),
-  `feat: native URL playback, MRP controls and lifecycle cleanup`.
-- Branch: `claude/url-playback-session`, based on PR #11's merge into `main`,
-  `2b0e57c9d3ee44c5afc66418c23084ffada01d59`.
-- Latest implementation/test head:
-  `ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5`. D44, committed with this note,
-  changes documentation only. Inspect `git rev-parse HEAD` and the PR's actual
-  head/checks rather than assuming the implementation hash is the latest tip.
-- The user explicitly authorized marking PR #12 ready, and `isDraft=false`
-  was verified. The PR is open and unmerged at this checkpoint. Do not revert
-  it to draft just because historical notes use that term.
-- The user authorized addressing review comments and writing this handoff.
-  Routine fixes, validation, commits and pushes to this open PR are authorized.
-  **Merging is not authorized**; ask before merging. Do not force-push, create a
-  replacement PR, or start another branch while continuing this open PR.
-- The former Claude session was stopped. Its old checkout was detached to allow
-  this branch to be checked out in Codex; do not assume it is an active collaborator.
+- **No PR is open.** [PR #12](https://github.com/ilyalissoboi/send-airplay2/pull/12),
+  `feat: native URL playback, MRP controls and lifecycle cleanup`, was merged by
+  the user on 2026-10-07 as `2bb25df4b4f58ef0a2c6936ed6f44161b815890c`. Its final
+  head `923d8efbee066a5a7ce37dd6e83cb891ede58a06` (D44, documentation only) passed
+  all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37587291158),
+  and its single review thread is resolved. PRs #1-#12 are all merged.
+- Latest implementation/test commit on `main`:
+  `ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5` (D43). Later commits change
+  documentation only. Inspect `git rev-parse origin/main` rather than assuming
+  these hashes are the latest tip.
+- **Branch workflow (D45):** start each new slice on a fresh descriptive branch
+  from current `origin/main` and publish it as its own PR. CI runs only for pull
+  requests, so a branch push without a PR has no CI result. Do not reuse the
+  merged `claude/url-playback-session` branch; it was deleted locally.
+- Routine implementation, validation, commits and pushes to the active slice's
+  own PR branch are authorized once the user has asked for that slice. **Ask
+  before merging**, before force-pushing, and before closing or replacing a PR.
+- The former Codex checkout `C:\Users\Ilya\.codex\worktrees\681a\send-airplay2`
+  was detached at `923d8ef` with no changes so its branch could be deleted. The
+  main checkout `E:\work\send-airplay2` now tracks `main`. Neither is assumed to be
+  an active collaborator; use the new session's actual checkout.
 
-The current local checkout is
-`C:\Users\Ilya\.codex\worktrees\681a\send-airplay2` on Windows 11 x64.
-Use the new session's actual checkout if it differs. This note does not request
-creation of a new Codex chat/worktree; the user will start the separate session.
-
-## Review disposition and publication checkpoint
+## Review and merge record for PR #12
 
 The automated review of `ab7ec01` produced one inline
-[P2 comment](https://github.com/ilyalissoboi/send-airplay2/pull/12#discussion_r4204085497),
-thread `PRRT_kwDOU9eE786py4dR`, about contradictory network-recovery gate status.
-The README said actual network-loss recovery remained open and the current
-required-observations table said NOT RUN, despite D42's recorded pass.
-
-D44 fixes those two current summaries: **selected Ethernet interruption cleanup
-and fresh explicit same-credential recovery PASS**. Automatic in-session
-reconnect/resume is not implemented; broader network/lifecycle reliability is
-pending. This does not close all G3 work, measure cable-removal detection latency,
-or add a new hardware run. Historical dated NOT RUN statements remain historical.
-Live handoff/design/review text also now reflects the user-approved ready status.
-Local D44 checks passed 141 documentation links/anchors, gate/status consistency,
-all 52 unchanged PR C++ format checks and whitespace checks. Two existing links
-to the capacity-validation heading were repaired. Unchanged code was not rebuilt
-or receiver-tested for this documentation correction.
-
-After publication, verify that the review thread is resolved and the actual new
-PR head has ten passing checks. Resolve the existing thread after the correction
-is published; do not treat an older head's green CI as the new head's result.
-The final chat/PR description records the documentation commit and its CI run.
-For later comments, compare the claimed issue with source/evidence before changing
-code. No runtime changes were needed for this review comment.
+[P2 comment](https://github.com/ilyalissoboi/send-airplay2/pull/12#discussion_r4204085497)
+about contradictory network-recovery gate status. D44 corrected the README and
+required-observations table to report **selected Ethernet interruption cleanup
+and fresh explicit same-credential recovery PASS**, with automatic in-session
+reconnect/resume unimplemented and broader network/lifecycle reliability pending.
+The thread was resolved and all ten checks passed at `923d8ef` before the user
+merged. D44 and D45 add no new receiver observation.
+For later review comments, compare the claimed issue with source/evidence before
+changing code.
 
 ## What is implemented
 
@@ -130,11 +116,20 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 
 ## Open issues and ordered next work
 
-1. **Finish this PR's review process.** Verify current head, CI and thread state;
-   address new actionable feedback on this branch. Ask for merge authorization
-   once review is satisfactory. Prior requests to mark ready are already fulfilled.
-   No further implementation blocker was identified for this private experimental
-   slice; the items below are follow-up development, not retroactive gate failures.
+PR #12's review process is complete and merged; no implementation blocker was
+identified for that private experimental slice. The items below are follow-up
+development, not retroactive gate failures. Item 1 is an engineering proposal
+for the next slice because it needs no receiver observer and gates Milestone 1's
+packaged-host work; confirm the slice with the user before starting it.
+
+1. **Proposed next slice: versioned public playback API design.** Specify the
+   C ABI's handle ownership, lifetime, cancellation, threading, error/status and
+   end-reason reporting, and read-at-offset/size media-source callbacks for
+   brokered files and content URIs, with no exceptions or C++ objects crossing
+   the boundary. Wrap the existing private `UrlPlaybackSession`; do not change
+   its validated protocol sequence. Hardware-independent work in the same spirit:
+   a synthetic beyond-4-GiB byte-source/range test through the media server, and
+   aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
 2. **Startup reliability.** Spontaneous pause at zero/first-frame-only occurred
    without remote input, including a 16-slot run. One-second confirmation improves
    readiness reporting but does not explain or cure the receiver transition.
@@ -149,7 +144,8 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
    classification; pause, ownership loss and EOF from an independent channel do
    not by themselves establish receiver intent. Investigate a discriminating
    protocol signal or propose a separate API termination policy, labeling it as
-   a policy choice rather than discovered intent. Broaden interruption/idle/long
+   a policy choice rather than discovered intent; the policy itself needs a user
+   decision before it changes public end reasons. Broaden interruption/idle/long
    playback checks with explicit observer checkpoints and current fingerprints.
 4. **Frozen-video priority (user decision D37).** The historical buffering pause
    near 18 s followed by frozen video/normal audio remains a recorded FAIL.
@@ -162,9 +158,8 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
    The selected D42 network check is already PASS; broaden it rather than claiming
    it has never run. Cooperative duration-based ownership can misidentify a
    concurrent same-duration takeover and does not guarantee exclusive ownership.
-6. **Public library/host work.** Define versioned playback ABI, ownership,
-   lifetime, cancellation, threading, errors and status before production bindings.
-   Prove packaged Windows C# loading, brokered file reads/inbound networking,
+6. **Public library/host work.** After the item 1 ABI exists, add production
+   bindings. Prove packaged Windows C# loading, brokered file reads/inbound networking,
    then other credential stores and Linux/macOS/Android device support. Botan UWP
    packaging remains unresolved; desktop/CI success is not packaged-host proof.
 7. **Screenbox integration.** After the standalone gate, re-read that repository's
@@ -178,10 +173,11 @@ DRM, mirroring, multiroom and transcoding remain outside the first MP4 slice.
 
 ## Local tools, checks and execution constraints
 
-Existing build directories `build-static` and `build-shared` belong to the current
-Codex checkout, using Visual Studio 18 2026/MSVC and the pinned vcpkg toolchain
+Build directories `build-static` and `build-shared` are per checkout, using
+Visual Studio 18 2026/MSVC and the pinned vcpkg toolchain
 `E:\work\send-airplay2\build-tools\vcpkg\scripts\buildsystems\vcpkg.cmake`.
-Verify cache paths before reusing them in another checkout; use README's normal
+Check `CMAKE_HOME_DIRECTORY` in `CMakeCache.txt` before reusing a build
+directory in another checkout; use README's normal
 CMake configure instructions on another machine. Preserve dependency/license
 provenance before adding third-party code or dependencies.
 
@@ -191,13 +187,16 @@ Current tool paths:
 $cmakeTool = 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe'
 $ctestTool = 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/ctest.exe'
 $formatTool = 'C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/Llvm/x64/bin/clang-format.exe'
-$pythonTool = 'C:/Users/Ilya/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'
+$pythonTool = 'C:/Users/Ilya/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'  # Codex runtime; any Python 3 works
 $githubTool = 'C:/Program Files/GitHub CLI/gh.exe'
 
+git fetch --prune origin
 git status --short
 git branch --show-current
-git rev-parse HEAD
-& $githubTool pr view 12 --repo ilyalissoboi/send-airplay2 --json headRefOid,isDraft,state,statusCheckRollup
+git rev-parse HEAD origin/main
+& $githubTool pr list --repo ilyalissoboi/send-airplay2 --state open
+# After opening the slice's PR:
+# & $githubTool pr view <number> --repo ilyalissoboi/send-airplay2 --json headRefOid,isDraft,state,statusCheckRollup
 
 & $cmakeTool --build build-static --config Release
 & $ctestTool --test-dir build-static -C Release --output-on-failure
@@ -232,8 +231,7 @@ filters before reusing it with a new binary; do not blindly run it or publish it
 raw output. Previously staged allowed executables were restored with hash checks.
 
 No hardware cast or implementation automation is left running at this checkpoint.
-The publication CI is checked during this task; inspect live status in the new
-session. The user previously could observe the TV within 30 seconds and later
+Inspect live PR/CI status in the new session. The user previously could observe the TV within 30 seconds and later
 performed Ethernet removal/reconnection, but future availability must be checked.
 Batch manual checkpoints if they are unavailable; unattended telemetry never
 substitutes for visual video/audio/Home observations.
@@ -247,9 +245,8 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue send-airplay2 from AGENTS.md, docs/HANDOFF.md, docs/design.md,
-> docs/receiver-validation.md and docs/CONTINUATION.md. Inspect PR #12's actual
-> head, CI and review threads before writing. It was marked ready with my approval;
-> it is not merged and merging still needs approval. D44 addressed the selected
-> network-recovery status contradiction; preserve D42 PASS and its limits. Start
-> with outstanding review feedback if any; otherwise use the ordered follow-up
-> queue and propose the next concrete slice without reopening settled decisions.
+> docs/receiver-validation.md and docs/CONTINUATION.md. PR #12 is merged; check
+> `origin/main` and any open PR before writing. Start the next slice on a fresh
+> branch from `main` with its own PR; ask me before merging. Preserve D42 PASS and
+> its limits. Use the ordered follow-up queue and confirm the proposed next slice
+> with me without reopening settled decisions.
