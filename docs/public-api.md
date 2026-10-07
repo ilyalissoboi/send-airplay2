@@ -14,6 +14,11 @@ Windows 11 x64 host; see [receiver-validation.md](receiver-validation.md#public-
 
 ## User decisions (D46)
 
+**Revised by D49 (2026-10-08):** credentials may also come from a host-provided
+store passed through the C interface, and pairing will join the interface. The
+"secrets never cross the ABI" guarantee below then holds for built-in stores
+only. See [credential-interface.md](credential-interface.md).
+
 - **Credentials by profile name.** The host passes a profile name. The library
   loads it from its own platform store (Windows Credential Manager today), so
   pairing secrets never cross the ABI. Packaged UWP and Android hosts therefore

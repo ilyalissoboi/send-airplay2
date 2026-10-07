@@ -1,7 +1,8 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-07 (Asia/Tokyo). PR #12 and the D45 handoff PR #13 are
-merged; the D46 public playback interface slice is on `claude/public-playback-api`.
+Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12, #13 and #14 are merged; `main`
+contains the receiver-tested public playback interface (D46-D48). The D49 common
+credential design is recorded on `claude/credential-interface-decision`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -9,10 +10,13 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D46):** versioned C playback interface on branch
-  `claude/public-playback-api`, published as its own PR (find it with
-  `gh pr list --state open`). The user asked to merge PR #13 and start this slice.
-  See [public-api.md](public-api.md) for decisions, contract and limits.
+- **Active slice (D49):** the common credential interface decision record,
+  [credential-interface.md](credential-interface.md), on branch
+  `claude/credential-interface-decision` with its own PR (find it with
+  `gh pr list --state open`). Documentation only.
+- [PR #14](https://github.com/ilyalissoboi/send-airplay2/pull/14), the public
+  playback interface (D46-D48), was merged by the user as `9c8869e` after all
+  ten checks passed at its head `d84a365`.
 - [PR #13](https://github.com/ilyalissoboi/send-airplay2/pull/13), the D45 handoff
   reconciliation, was merged at the user's request as `b0b0f86` after all ten
   checks passed at its head `5e0a98e`.
@@ -140,15 +144,14 @@ PR #12's review process is complete and merged; no implementation blocker was
 identified for that private experimental slice. The items below are follow-up
 development, not retroactive gate failures.
 
-1. **In progress: versioned public playback interface (D46).** The user chose
+1. **Done (merged in PR #14): versioned public playback interface (D46).** The user chose
    credentials by profile name (secrets stay inside the library) and a
    playback-only first slice. `include/send_airplay2/playback.h` and its
    controller are implemented; see [public-api.md](public-api.md). The
    development host `airplay2-api-host` drives only that interface. Its manual
    validation plan **passed on 2026-10-08 (D48)**, on the D47 runtime, static and
-   shared, with the user observing; see receiver-validation.md. Remaining in this
-   item, in order: finish the slice's PR review and get merge approval; then the C#
-   binding and packaged UWP proof under item 6. The fake receiver is now shared
+   shared, with the user observing; see receiver-validation.md. Follow-up work
+   is item 6. The fake receiver is now shared
    (`tests/fake_receiver.h`) and has an optional MRP data stream, so the
    controller's commands, ends and ownership loss are unit-tested. That work
    found a teardown ordering bug, now fixed (D47): an in-flight remote
@@ -185,10 +188,15 @@ development, not retroactive gate failures.
    The selected D42 network check is already PASS; broaden it rather than claiming
    it has never run. Cooperative duration-based ownership can misidentify a
    concurrent same-duration takeover and does not guarantee exclusive ownership.
-6. **Public library/host work.** Build production bindings on the item 1
-   interface. Prove packaged Windows C# loading, brokered file reads/inbound networking,
-   then other credential stores and Linux/macOS/Android device support. Botan UWP
-   packaging remains unresolved; desktop/CI success is not packaged-host proof.
+6. **Public library/host work, next implementation (D49 order).** Follow
+   [credential-interface.md](credential-interface.md): (a) host-store callbacks
+   and pairing in the C interface, with a test store on all CI platforms; (b) the
+   C# binding and a packaged UWP test app with a C# `PasswordVault` host store,
+   also proving native loading, discovery, brokered file reads and inbound
+   serving, and measuring D49's unverified items; (c) a UWP library build without
+   the Credential Manager adapter; (d) macOS Keychain and Linux Secret Service
+   adapters, then Linux/macOS/Android device support. Botan UWP packaging remains
+   unresolved; desktop/CI success is not packaged-host proof.
 7. **Screenbox integration.** After the standalone gate, re-read that repository's
    current instructions and work in its dedicated fork. Test Chromecast regressions
    and local/remote handoff. This session changed no Screenbox source or project.
