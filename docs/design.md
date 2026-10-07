@@ -165,6 +165,11 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    received-state diagnostics after cleanup. They do not change classification;
    see the separate [validation record](receiver-validation.md) for the observed
    Stop/sleep comparison and the unobserved first attempt.
+   D41's [pyatv audit](pyatv-stop-reference.md) found no validated Stop discriminator.
+   D42 subsequently passed selected Ethernet interruption cleanup and fresh
+   explicit same-credential playback after reconnection/Home, with user-confirmed
+   video/audio/Home at near-end EOF. Connection failures retain their existing
+   classification; normal Stop intent, startup pause and longer reliability remain open.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

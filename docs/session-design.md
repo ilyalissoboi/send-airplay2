@@ -311,14 +311,21 @@ administered one per session.
    selected startup, controls/full EOF and sleep/wake presentation/Home; remote
    Stop/Home cleaned automatically but normal protocol intent remains unresolved.
    Playing telemetry and EOF cleanup do not prove moving video.
-   Normal stop classification, actual network loss/recovery and longer playback
-   remain **Gate G3**; see the dated validation record.
+   Normal stop classification and longer playback remain **Gate G3**; D42 passed
+   the selected Ethernet interruption/explicit fresh recovery check below.
+   See the dated validation record.
    D40 observes remote notifications using fixed labels and bounded numeric
    codes in the shared 256-entry log, without updating URL state. Final MRP
    diagnostics report retained received state after joined cleanup; received
    elapsed time is distinct from extrapolated progress. These observations do
    not change failure priority, end reasons or cleanup order. See
    [mrp-controls.md](mrp-controls.md#remote-stop-diagnostics-d40) for the contract.
+   D41's [reference audit](pyatv-stop-reference.md) found no validated remote-Stop
+   discriminator. D42's user-confirmed Ethernet removal triggered automatic
+   connection_lost/exit 1 cleanup on URL feedback timeout. Fresh casting after
+   reconnection/Home reused credentials and passed observed video/audio/near-end
+   EOF/Home with media_end/exit 0. The existing termination policy is unchanged;
+   this is fresh explicit recovery, not automatic reconnect or resume.
 
 Each step follows AGENTS.md: readability rules, clang-format, static/shared
 CTest, sanitizer CI. Each step is its own commit on the PR branch.

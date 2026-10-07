@@ -10,7 +10,8 @@ Native MRP command/telemetry checks passed; G2 visual confirmation passed by use
 Native automatic EOF cleanup and ten short cycles passed, with user-confirmed
 EOF video/audio/home and sleep/wake recovery. Receiver-remote stop returned home
 and automatically cleaned up but classified connection_lost/exit 1. Normal stop
-classification and actual network-loss recovery remain G3 work. A full 132-second
+classification remains G3 work. D42's selected Ethernet interruption and fresh
+same-credential recovery passed as recorded below. A historical full 132-second
 native run reached EOF cleanup but **failed sustained video presentation**:
 buffering near 18 s was followed by frozen video while audio continued to clip end.
 D35 follow-up: the minimum remote session played the full clip normally; default
@@ -1060,3 +1061,49 @@ Final Windows Release static/shared CTest passed 23/23 each (15.67/15.53 s), off
 runner contracts 10/10, touched C++ format checks and `git diff --check` passed.
 Inspect CI at the actual published D40 PR head. Those checks are separate from
 the selected receiver observations above.
+
+## Ethernet interruption and fresh recovery (D42, 2026-10-07)
+
+The user became available for the actual network check, previously NOT RUN.
+Two native casts used the unchanged D40 runtime on Windows 11 x64 and the same
+Living Room Apple TV 4K (AppleTV14,1), media file and stored profile. tvOS 26.6
+(23L773) is assumed unchanged from the prior user report, not newly queried.
+Normal MRP/16-slot/30-second-startup/one-second-confirmation defaults applied.
+Static CLI SHA-256 was
+`da3f85a3f4b8f0595834b0462250859ee56c3bab89c38acdd632434d889f6e83`.
+Tested source blobs match D40 implementation head
+`4a18b2662150768a00154ca17e222f2e701fd192` and the actual tested PR head
+`72b3059c1a1fa11cd641c24f20764b5b99e6e535`. Exact hashes, traces and observer
+quotes are in the [artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
+
+| Case | Native result | Observer scope |
+| --- | --- | --- |
+| Established cast, user removes Ethernet cable, stdin open | Owned/playing before cue; later URL paused and URL feedback timeout; automatic connection_lost/exit 1, cleaned=yes; final MRP owned/paused, received position 0 s, duration 131.567 s, rate 1, at_end=false, 24 messages and one heartbeat | Disconnection confirmed; cable explicitly confirmed as Ethernet/network. Video/audio before action was asked about but not reported. |
+| Fresh process after reconnection/Home, same credentials | Owned/playing; planned seek 124/Play accepted; URL stopped then owned received EOF; media_end/exit 0, cleaned=yes; final MRP owned/paused, received position/duration 131.567 s, rate 0, at_end=true, 21 messages and one heartbeat | Home after reconnection confirmed. Normal video/audio and Home after EOF confirmed; separate buffering/freeze detail was not supplied. |
+
+The interrupted process required no sender Stop/Enter; only `status` was sent
+and stdin remained open. The user was cued to leave the network disconnected
+until cleanup completed, then to reconnect. User action times were not synchronized
+with process logs; the known cue-to-cleanup interval is not disconnect-detection
+latency. This tests automatic failure cleanup and a fresh explicit cast after
+reconnection, not automatic in-session reconnect/resume. The recovery cast ended
+after a planned near-end seek; it adds no full-clip proof.
+
+Both cases joined cleanup and restored the staged allowed executable, verified
+by SHA-256 equality. No sender firewall/network setting, credential or runtime
+source changed. The user temporarily removed and restored the receiver Ethernet
+connection. The selected network cleanup/fresh recovery gate is PASS. D40 Stop
+ended on URL event EOF while this network sample ended on feedback timeout; that
+difference and retained ownership do not establish a reliable cause classifier.
+The existing conservative policy remains: ambiguous connection failure stays
+connection_lost/exit 1. Remote-Stop intent, intermittent startup pause, broader
+network cases and longer reliability remain open. D37's frozen-video priority
+and original FAIL evidence remain unchanged.
+
+No rebuild or local CTest rerun was needed for this evidence-only slice. The
+unchanged D40 runtime retains its Windows static/shared Release 23/23 results
+and offline runner 10/10. All 51 PR-changed C++ files passed clang-format checks,
+and `git diff --check` passed. All ten CI checks passed at tested head `72b3059`
+in [this run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37579365861).
+Inspect the actual PR head after publishing this evidence follow-up; CI remains
+separate from the selected receiver observations above.

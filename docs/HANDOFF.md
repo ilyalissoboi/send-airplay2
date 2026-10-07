@@ -55,6 +55,12 @@ runtime behavior: upstream swallows URL polling connection loss as completion;
 the tvOS fork's event waiter does not finish on socket EOF alone. Neither
 provides a validated Stop-versus-network/sleep discriminator. This is offline
 reference evidence, not a new hardware pass.
+The subsequent D42 [Ethernet interruption/recovery check](validation/native-network-recovery-windows-static-2026-10-07.json)
+passed selected automatic timeout cleanup and fresh same-credential playback
+after reconnection/Home, with user-confirmed video/audio/Home at near-end EOF.
+It uses the unchanged D40 runtime. The tested D41 documentation head `72b3059`
+passed all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37579365861).
+Inspect the actual PR head after this evidence-only follow-up.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -166,11 +172,18 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   recurrence was reported in this selected batch; their historical evidence and
   limits remain. See the [batch record](manual-validation.md) and
   [exact runtime/observer artifact](validation/native-manual-batch-windows-static-2026-10-07.json).
-- **Next:** investigate the unresolved receiver transition behind the intermittent
-  startup pause, using matched Home/idle comparisons if it recurs; six selected
-  successful starts do not establish its cause. Establish explicit receiver-stop intent, then
-  test actual network interruption/recovery when available. The user cannot
-  perform network disconnect/reconnect in this session. Preserve credentials,
+- **Observed network interruption/recovery (D42):** the user removed the Ethernet
+  cable during an owned/playing cast, then reconnected it and confirmed Home.
+  URL feedback timed out; automatic cleanup exited connection_lost/1. A fresh
+  explicit cast with the same credentials passed observed video/audio and Home
+  at planned near-end EOF, exiting media_end/0. Pre-interruption presentation was
+  asked about but not reported. See the [artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
+- **Next:** finish PR diff/readability review and actual-head CI. Keep ambiguous
+  peer closure classified conservatively: the reference audit and single Ethernet
+  comparison do not establish Stop intent. Investigate the unresolved receiver
+  transition behind the intermittent startup pause using matched Home/idle
+  comparisons if it recurs; selected successful starts do not establish its cause.
+  Broader lifecycle reliability and other host/receiver gates remain. Preserve credentials,
   independent remote/URL sessions and ordered teardown; no automatic Play/seek.
 - **Current support:** private native casting/control experiment on Apple TV 4K /
   tvOS 26.6 (23L773) / Windows 11 x64. No public playback ABI or packaged-host
@@ -622,6 +635,33 @@ Complete the actual network interruption/recovery comparison when available,
 then decide how ambiguous peer closure should be exposed. See the
 [audit and provenance](pyatv-stop-reference.md); no source vendoring, dependency,
 runtime change or new hardware gate occurred.
+
+**D42 (selected hardware gate and policy, 2026-10-07):** the user became available
+for actual network interruption/recovery and confirmed removal of the Ethernet
+network cable. The established cast had owned/playing telemetry before the cue;
+it later reported paused and a URL feedback timeout, automatically joined cleanup
+and exited connection_lost/1 with stdin held open and no sender Stop. Retained
+MRP remained owned/paused, received elapsed zero, rate one and at_end=false.
+The user confirmed Home after reconnection. A fresh process reused the stored
+credentials, accepted planned seek 124/Play and ended media_end/0; the user
+confirmed normal video/audio and Home after EOF. This is fresh explicit recovery,
+not automatic reconnect/resume or a separate full-clip proof. Pre-interruption
+video/audio was not reported; user action times were not synchronized with logs.
+Exact quotes, source/binary fingerprints and scalar traces are in the
+[artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
+
+Keep the existing conservative termination policy: timeout, ownership loss,
+pause and connection closure are not remote-Stop intent. The observed network
+timeout differs from D40's remote-Stop event EOF but independent channel ordering
+and one sample per cause cannot validate a classifier. No pyatv polling heuristic
+is adopted. This selected network cleanup/fresh recovery check is PASS; normal
+Stop intent, intermittent startup pause and broader reliability remain open.
+No native source, dependency or credential changed. The existing D40 static/shared
+CTest 23/23 results remain applicable to this unchanged runtime; all ten CI checks
+passed at tested head `72b3059`, and all 51 PR-changed C++ files passed formatting.
+Inspect the evidence follow-up's actual head/checks. Every staged executable was
+restored with a SHA-256 equality check; no sender firewall/network setting changed.
+The user temporarily disconnected and restored the receiver's Ethernet connection.
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1707,8 +1747,11 @@ the recorded source snapshot is still current.
    discriminator. Separate any API termination-policy change from intent evidence.
    Per user decision D37, the original frozen-video failure is low priority:
    insufficient media connections are the likely cause; retain its evidence and
-   raise priority if it recurs in later testing. Finish actual
-   network interruption/recovery when available. Investigate the
+   raise priority if it recurs in later testing. D42 passed selected actual
+   Ethernet interruption cleanup and fresh explicit same-credential recovery
+   with observed video/audio/near-end EOF/Home. Broader network cases remain
+   untested; remote-Stop intent remains open under the conservative policy.
+   Investigate the
    buffering pause and renewed loading seen in the mixed native/pyatv run; one
    preliminary native EOF probe paused at startup and needed explicit play.
    Successful later cycles/full-clip completion do not resolve that intermittent behavior.

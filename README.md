@@ -8,9 +8,10 @@ URL playback sessions with a development `cast` CLI. Native-only G1 passed on
 Apple TV 4K / tvOS 26.6 (23L773) / Windows 11 x64: video/audio played and the TV
 returned home after sender shutdown. The session retains a separate native
 remote-control session, now extended with native MRP status and controls. G2
-controls and selected G3 lifecycle cases passed on that combination; receiver-stop
-classification, actual network-loss recovery and the public playback API remain
-pending. A full-clip run failed sustained video: after buffering near 18 seconds,
+controls and selected G3 lifecycle cases passed on that combination, including
+Ethernet interruption cleanup and fresh same-credential playback after reconnection
+(D42). Receiver-stop intent and the public playback API remain pending.
+A historical full-clip run failed sustained video: after buffering near 18 seconds,
 the picture froze while audio continued to EOF.**
 
 The C++17 core includes a byte-range resolver with a C interface
@@ -151,6 +152,15 @@ second of URL playing without an explicitly zero/reverse rate, within the
 startup deadline.
 A transient playing event is insufficient; no automatic Play retry is sent.
 This confirmation is telemetry, not a proof of moving video.
+
+D42's [network check](docs/receiver-validation.md#ethernet-interruption-and-fresh-recovery-d42-2026-10-07)
+used a user-confirmed Ethernet cable removal during established playback. The
+sender cleaned automatically on a URL feedback timeout, with connection_lost/exit 1.
+A fresh cast after reconnection/Home reused credentials and passed user-observed
+video/audio and Home at near-end EOF. Recovery starts a new session explicitly;
+there is no automatic reconnect or resume. Ambiguous socket closure still does
+not prove remote Stop intent; see the [pyatv audit](docs/pyatv-stop-reference.md).
+
 D39's [manual batch](docs/manual-validation.md) passed selected startup,
 controls/full EOF and sleep/wake presentation on the recorded receiver/host.
 Remote Stop returned Home and cleaned up but still reports connection_lost/exit 1.

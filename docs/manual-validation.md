@@ -50,3 +50,24 @@ Its first attempt was unobserved and cannot establish remote action or Home.
 The repeated Stop/Home result is separate from that trace. Classification
 remains conservative until receiver intent has a validated protocol signal;
 MRP ownership loss, pause or connection closure alone is insufficient.
+
+## Additional Ethernet interruption/recovery check (D42)
+
+The user became available for the previously deferred network action on 2026-10-07.
+Two casts used the unchanged D40 runtime, normal MRP/16-slot/startup defaults and
+existing credentials. The observer confirmed removing the Ethernet/network cable
+during the established first cast, then reconnecting and reaching Home.
+
+| Check | Native result | Observer scope | Status |
+| --- | --- | --- | --- |
+| Established playback interrupted by Ethernet removal; stdin open | URL feedback timeout, automatic joined cleanup, connection_lost/exit 1; no sender Stop | Disconnection and Ethernet cable removal confirmed; video/audio before action was asked about but not reported | PASS for selected failure cleanup |
+| Fresh explicit cast after reconnection/Home | Same profile, planned seek 124/Play, owned receiver-reported EOF, media_end/exit 0, automatic cleanup | Home before cast and normal video/audio/Home after EOF confirmed | PASS for selected fresh recovery |
+
+Exact quotes, traces and runtime fingerprints are in the
+[artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
+User action times were not synchronized with diagnostics; do not treat the time
+from the cue to cleanup as disconnect-detection latency. The recovery cast ends
+after a planned seek and is not a full-clip proof. No sender firewall/network
+setting, credential or native source changed; staged executables were restored.
+The receiver Ethernet connection was temporarily removed and restored by the user.
+Broader network cases and normal remote-Stop intent remain unvalidated.

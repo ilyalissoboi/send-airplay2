@@ -74,11 +74,13 @@ Stop message or code that would justify relabeling that failure as normal Stop.
 
 Further work must separate a termination-policy choice from receiver evidence.
 Adopting upstream's permissive polling rule would deliberately treat some
-connection failures as completion; it would not discover Stop intent. Complete
-the established-session network interruption/recovery comparison when the user
-can perform it, then choose and test the intended API behavior for ambiguous
-peer closure. Until then, retain the conservative classification and the
-separate user-observed Home result. Other PR gates are unchanged.
+connection failures as completion; it would not discover Stop intent. D42
+subsequently completed a selected user-confirmed Ethernet interruption and fresh
+same-credential recovery check; see [receiver-validation.md](receiver-validation.md#ethernet-interruption-and-fresh-recovery-d42-2026-10-07).
+That network run ended on URL feedback timeout, while D40 Stop ended on URL
+event EOF. One comparison and independent channel ordering do not validate a
+cause classifier. Retain the conservative classification and separate
+user-observed Home result. Broader PR gates remain unchanged.
 
 ## Provenance
 

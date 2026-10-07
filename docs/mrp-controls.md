@@ -115,7 +115,8 @@ socket EOF. No automatic reconnect, resume, re-pairing or credential replacement
 is attempted: after restoring reachability, start a fresh cast with the existing
 profile. Receiver-remote stop and sleep caused automatic failure cleanup; fresh wake
 recovery and EOF video/audio/home passed by user report. Normal receiver-stop
-classification and actual network-loss recovery remain G3 work; see the dated
+classification remains G3 work; D42's selected Ethernet interruption and fresh
+recovery passed as recorded below. See the dated
 lifecycle record. Public playback ABI is later work.
 In the separate full-clip run, video froze after buffering near 18 s while audio
 continued normally to EOF (user-confirmed). MRP playing/position and healthy
@@ -174,4 +175,22 @@ discriminator in the inspected reference paths. Upstream's URL polling treats
 connection loss as completion; the tvOS fork instead waits for idle/stopped
 events, and its URL event-channel EOF alone leaves that waiter pending. MRP's
 closure/error callbacks describe transport state. Native classification remains
-unchanged pending network-loss evidence and an explicit termination-policy choice.
+unchanged. D42's selected Ethernet comparison below adds network-loss evidence,
+but does not validate Stop intent; the conservative policy is retained.
+
+## Ethernet interruption and explicit recovery (D42)
+
+During an established owned/playing cast, the user removed the Ethernet/network
+cable. URL feedback timed out and the session joined cleanup automatically,
+ending connection_lost/exit 1 with stdin open. Final MRP remained owned/paused
+with received elapsed zero and at_end=false. The user confirmed Home after
+reconnection. A fresh explicit cast reused the same profile, accepted planned
+seek 124/Play, and reached owned receiver-reported EOF with media_end/exit 0;
+normal video/audio and Home were user-confirmed. See the
+[sanitized artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
+
+No automatic reconnect, resume or re-pairing occurs. The retained first-failure
+category differs from D40's Stop trace but does not establish cause: socket
+ordering and final ownership are not a validated Stop classifier. Pre-interruption
+presentation and synchronized action times were not supplied. This selected
+check adds no full-clip or broader host/receiver reliability claim.
