@@ -17,6 +17,9 @@ D35 follow-up: the minimum remote session played the full clip normally; default
 MRP/four slots buffered but recovered; MRP/16 slots played normal video/audio and
 returned Home, with no recorded loading transition. Admission capacity is a
 supported candidate, not proof that the original persistent freeze is fixed.
+User decision D37 lowers that frozen-video issue to low priority for now, with
+insufficient media connections the likely cause; raise priority if it recurs in
+later testing. Preserve its original FAIL evidence. Startup pause remains active.
 See the dated observations below; record each receiver/firmware/platform separately.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
@@ -663,9 +666,9 @@ playing state, advancing/extrapolated position, full-file fetch and successful
 heartbeats did not reveal the frozen picture. Natural EOF/cleanup remains a
 protocol/process PASS; this run is not successful full-clip video playback.
 Home return for this particular run remains unconfirmed. Earlier separate
-near-end EOF and short-session observations remain unchanged. Prioritize the
-video-freeze-after-buffering investigation; no automatic retry/resume workaround
-has been validated.
+near-end EOF and short-session observations remain unchanged. This D34 gate
+initially prioritized video-freeze investigation; D37 subsequently lowers its
+priority unless it recurs. No automatic retry/resume workaround has been validated.
 The user confirmed moving video past 18 s during normal local PC playback of
 the same original file. A receiver-specific media/decoder issue is still possible;
 this comparison does not prove a particular casting fault.
@@ -866,3 +869,15 @@ reliability next. Local tests and actual PR-head CI remain separate from hardwar
 Windows static/shared Release passed 23/23 CTest targets each (13.48/13.44 s),
 offline runner contracts 10/10, touched C++ clang-format dry-run/Werror and
 git diff --check passed. Inspect CI at the actual PR head.
+
+
+### Frozen-video triage, user decision D37, 2026-10-07
+
+The user considers insufficient media connections the most likely cause of the
+original frozen-video failure and requests low priority for now, unless it recurs
+in later testing. D35 admission timing and the successful 16-slot D35/D36 runs
+support that working explanation. Causality is not proven and the original FAIL
+record is retained. Monitor later playback tests and raise priority if video
+freezes again. The separate paused-at-zero startup failure remains active and
+is the next investigation. This changes task priority only; no runtime or
+receiver behavior changed and no new hardware result is inferred.

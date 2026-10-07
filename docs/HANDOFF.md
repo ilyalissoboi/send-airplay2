@@ -108,9 +108,13 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   Cleanup passed, but this startup failure remains explicit. Normal `cast` now
   defaults to 16 bounded slots (override 1..16); generic server/`serve` remain four.
   See the [new artifact](validation/native-capacity-controls-lifecycle-windows-static-2026-10-07.json).
+- **Frozen-video priority (user decision D37):** insufficient media admission
+  capacity is the likely cause of the original frozen-video run. Keep its FAIL
+  evidence and treat it as low priority for now; raise its priority and reopen
+  active investigation if frozen video recurs in later testing. This is a triage
+  decision, not a proven root cause or a retroactive playback PASS.
 - **Next:** investigate the intermittent startup pause, now also reproduced with
-  16 slots and only two active requests, and require moving-video proof for
-  persistent-freeze resolution. Establish explicit receiver-stop intent, then
+  16 slots and only two active requests. Establish explicit receiver-stop intent, then
   test actual network interruption/recovery when available. The user cannot
   perform network disconnect/reconnect in this session. Preserve credentials,
   independent remote/URL sessions and ordered teardown; no automatic Play/seek.
@@ -452,6 +456,13 @@ ordering/state next instead of interpreting successful telemetry as moving video
 Static/shared Release passed 23/23 CTest targets each (13.48/13.44 s);
 offline runner contracts passed 10/10, and touched C++ format/diff checks passed.
 See [receiver validation](receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
+
+**D37 (user prioritization decision, 2026-10-07):** the user considers insufficient
+media connections the most likely cause of the original frozen-video failure
+and requests low priority unless it recurs in later testing. Retain the historical
+FAIL and capacity evidence without claiming proven causality or a resolved
+decoder fault. Monitor later playback tests; any recurrence restores active
+investigation priority. The separate startup pause remains the next task.
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1428,8 +1439,9 @@ presentation FAIL.** The user reports a short buffering stop near 18 s, then vid
 remained frozen while audio played normally until clip end. Home return for this
 run is unconfirmed. The loading/playing pairs correlate with that report; returned
 playing state, extrapolated positions, full-file read span, heartbeats and EOF
-cleanup do not prove advancing video frames. Root cause is unresolved; prioritize
-video recovery investigation over broader support work. Earlier short/near-end
+cleanup do not prove advancing video frames. At this D34 gate, video recovery
+investigation took priority over broader support work; D37 below subsequently
+lowers its priority unless it recurs. Earlier short/near-end
 video/audio/Home observations remain evidence for those separate runs.
 The user also confirmed that the original MP4 plays past 18 s with moving video
 on the PC. This supports investigating the casting/receiver path; it does not
@@ -1524,8 +1536,10 @@ the recorded source snapshot is still current.
    controls and selected lifecycle checks at 16 slots and selected 16 as normal
    `cast` default (generic server/`serve` remain four). Another 16-slot attempt
    paused at zero with only two active requests before transport commands;
-   investigate startup ordering/state next. The original persistent freeze and
-   spontaneous startup pause remain unresolved. Finish actual
+   investigate startup ordering/state next. The spontaneous startup pause remains
+   active. Per user decision D37, the original frozen-video failure is low priority:
+   insufficient media connections are the likely cause; retain its evidence and
+   raise priority if it recurs in later testing. Finish actual
    network interruption/recovery when available. Investigate the
    buffering pause and renewed loading seen in the mixed native/pyatv run; one
    preliminary native EOF probe paused at startup and needed explicit play.

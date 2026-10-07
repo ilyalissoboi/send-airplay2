@@ -302,8 +302,10 @@ administered one per session.
    cycles and natural EOF at 16 slots. Normal `cast` now defaults to 16 bounded
    slots (override 1..16); generic server/`serve` defaults remain four. A 16-slot
    attempt also paused at zero without transport commands or remote input, so
-   startup ordering/state is the next investigation. Persistent freeze and startup
-   pause remain unresolved; playing telemetry and EOF cleanup do not prove moving video.
+   startup ordering/state is the next investigation. Per user decision D37, keep
+   the original frozen-video failure at low priority unless it recurs; insufficient
+   media connections are the likely cause, with evidence retained. Startup pause
+   remains active; playing telemetry and EOF cleanup do not prove moving video.
    Normal stop classification, actual network loss/recovery and longer playback
    remain **Gate G3**; see the dated validation record.
 

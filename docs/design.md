@@ -143,16 +143,18 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    remote Stop without a terminal state; retain failure classification until
    intent is validated. One full clip reached natural EOF, but the user observed
    video frozen after a buffering stop near 18 s while audio continued normally
-   through clip end. Prioritize this video presentation failure; playing telemetry
-   and cleanup success do not prove moving video. D35 diagnostics now correlate
+   through clip end. Preserve this historical failure; playing telemetry and
+   cleanup success do not prove moving video. D35 diagnostics now correlate
    stalled read-ahead requests occupying four slots with buffering. Minimal/four
    and MRP/16 comparisons passed full video/audio/Home; a default MRP/four repeat
    buffered but recovered. D36 passed user-observed controls, ten fresh-process
    stop/teardown cycles and a natural-EOF repeat at 16 slots; normal `cast` now
    defaults to 16 (override 1..16), while generic server/`serve` defaults stay four.
    Another 16-slot run paused at zero without transport commands or remote input;
-   investigate startup ordering/state before further reliability claims. Persistent
-   freeze, spontaneous startup pause and longer reliability remain open.
+   investigate startup ordering/state before further reliability claims. Per user
+   decision D37, frozen video is low priority for now, with insufficient media
+   connections the likely cause; raise priority if it recurs in later testing.
+   Startup pause and longer reliability remain active work.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

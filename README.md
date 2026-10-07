@@ -154,8 +154,10 @@ user-observed controls and ten fresh-process stop/teardown cycles at that budget
 a full-clip repeat reached automatic EOF with no recorded loading transition
 and user-confirmed normal video/audio and Home return.
 `cast` now defaults to 16 media connections; `--media-connections N` accepts 1..16.
-The generic server and `serve` still default to four. The original freeze and
-intermittent startup pause remain unresolved: another 16-slot run paused at zero
+The generic server and `serve` still default to four. The original freeze is low
+priority unless it recurs in later testing; insufficient media connections are
+the likely cause (user triage decision). The intermittent startup pause remains
+active: another 16-slot run paused at zero
 without transport commands or remote input. See the [capacity validation record](docs/receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
 `--minimal-remote` is a separate diagnostic comparison without MRP controls.
 Receiver-remote stop and sleep
