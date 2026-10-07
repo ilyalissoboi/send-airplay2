@@ -25,6 +25,13 @@ the receiver resume and does not prove decoder progress. Earlier G1/G2/D36 visua
 results remain evidence for their own configurations. New D38 manual results
 remain pending until observed.
 
+If B1 reproduces startup pausing, capture the failed-start trace and cleanup
+first. Then compare explicit `--minimal-remote` and normal MRP casts from the
+same observed Home/idle condition, recording order and time since the previous
+session. Keep this a diagnostic comparison: minimal remote omits MRP controls
+and cannot establish its owned-item EOF. Earlier alternating unattended trials
+confounded mode with order/idle state; they do not prove MRP caused the pause.
+
 Per user decision D37, the original frozen-video failure is low priority unless
 it recurs in these or later playback tests. Any recurrence restores active
 investigation priority. Actual network disconnect/reconnect stays outside this

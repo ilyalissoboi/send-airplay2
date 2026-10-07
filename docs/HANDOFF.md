@@ -33,6 +33,10 @@ and checks rather than reusing a prior CI result.
 The D37 documentation head `1d69560578fbbebafa5ab9c33d2cb56bd90b76cb` passed all ten
 [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37562737055).
 D38 adds startup code/tests below; its current PR-head CI is a separate gate.
+D38 startup code/test head is `6bed9febffb857050a9370bc34533add9abcf547`;
+its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37564851802)
+was pending when this continuation note was written. Inspect both that run and
+the actual PR head, including this documentation-only follow-up.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
