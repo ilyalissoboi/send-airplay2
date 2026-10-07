@@ -82,6 +82,32 @@ enum class SessionEnd {
 /// Fixed diagnostics only; never receiver-provided descriptions.
 [[nodiscard]] const char* session_end_name(SessionEnd reason) noexcept;
 
+/// Local channel/operation and fixed error category; no peer text or identifiers.
+/// The first observed failure is retained; cancellation during normal cleanup is omitted.
+enum class SessionFailureChannel {
+    none,
+    url_events,
+    remote_events,
+    url_feedback,
+    remote_feedback,
+    timing,
+    mrp,
+    supervisor
+};
+enum class SessionFailureReason {
+    none,
+    timeout,
+    disconnected,
+    network,
+    invalid_message,
+    authentication,
+    cancelled,
+    rejected,
+    other
+};
+[[nodiscard]] const char* session_failure_channel_name(SessionFailureChannel channel) noexcept;
+[[nodiscard]] const char* session_failure_reason_name(SessionFailureReason reason) noexcept;
+
 /// A snapshot of session progress, safe to read from any thread.
 struct SessionStatus {
     std::string playback_state; // Lower-cased; empty before the first state event.
@@ -91,6 +117,8 @@ struct SessionStatus {
     std::uint64_t feedback_sent = 0;
     std::uint64_t timing_answered = 0;
     bool failed = false; // The control or event connection failed after start.
+    SessionFailureChannel failure_channel = SessionFailureChannel::none;
+    SessionFailureReason failure_reason = SessionFailureReason::none;
     SessionEnd end_reason = SessionEnd::none;
     bool cleaned_up =
         false; // Transport workers joined and channel secrets erased; stop joins supervisor.
@@ -176,7 +204,7 @@ private:
     void wait_until_playing(const std::atomic_bool* cancelled);
     void event_loop();
     void feedback_loop();
-    void mark_failed();
+    void mark_failed(SessionFailureChannel channel, SessionFailureReason reason);
     void request_end(SessionEnd reason);
     void supervise();
     void cleanup() noexcept;

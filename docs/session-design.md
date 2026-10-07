@@ -37,7 +37,8 @@ project's `MediaServer`, with explicit start, state, controls and teardown.
 | Event messages are RTSP-style requests from the receiver; the sender answers `200 OK` with `CSeq` echoed and an empty body | pyatv source; observed traffic shape |
 | `/command` body: `{"params": {"data": <bplist of the command>}}`, HTTP/1.1 on the control connection, with `X-Apple-Session-ID` and `X-Apple-StreamID` from the type-130 SETUP | Fork source; matched the successful run |
 
-Hardware hypotheses (H5 is the current priority; H1-H3 are optional fallbacks):
+Historical hardware hypotheses (H5 passed for the recorded minimum; H1-H3
+remain optional, untested alternatives to the implemented MRP controls):
 
 - **H1:** `setRate` with rate 0 pauses and rate 1 resumes. Rate 1 is part of the
   validated start sequence.
@@ -49,8 +50,9 @@ Hardware hypotheses (H5 is the current priority; H1-H3 are optional fallbacks):
   control-path decision (decision 2).
 - **H4:** closing the control and event connections ends playback on the TV.
   Supported by the minimum native session run: the user observed home-screen
-  return after sender shutdown. Protocol idle, EOF and receiver-side stop remain
-  untested; an explicit command or `TEARDOWN` may still be needed for those cases.
+  return after sender shutdown. Native EOF and selected receiver-side lifecycle
+  checks are now recorded in receiver-validation.md; normal remote-stop reason
+  classification remains unresolved.
 - **H5 (G1, 2026-10-07):** the receiver presents URL playback only while the
   sender also holds a remote-control session. Our session alone played
   headlessly (fetching the whole file, reporting `playing`); with pyatv's

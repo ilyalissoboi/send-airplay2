@@ -137,6 +137,10 @@ private:
             }
             if (current.failed && !last.failed) {
                 std::cout << "A receiver connection failed; cleaning up." << std::endl;
+                std::cout << "Failure: channel="
+                          << session_failure_channel_name(current.failure_channel)
+                          << " reason=" << session_failure_reason_name(current.failure_reason)
+                          << std::endl;
             }
             last = current;
         }
@@ -159,7 +163,10 @@ void write_summary(const SessionStatus& session, const FileReadStats& reads) {
                   << ')';
     }
     std::cout << " end=" << session_end_name(session.end_reason)
-              << " cleaned=" << (session.cleaned_up ? "yes" : "no") << std::endl;
+              << " cleaned=" << (session.cleaned_up ? "yes" : "no")
+              << " failure_channel=" << session_failure_channel_name(session.failure_channel)
+              << " failure_reason=" << session_failure_reason_name(session.failure_reason)
+              << std::endl;
 }
 
 void print_playback_status(UrlPlaybackSession& session) {

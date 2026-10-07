@@ -88,6 +88,15 @@ callers to finish. Owners remain allocated for safe final snapshots, while close
 erases transport keys. `end_reason` is set once; `cleaned_up` follows worker joins.
 The CLI stops its media server only after session cleanup.
 
+Failure snapshots and the CLI summary retain a fixed channel/operation and
+category: URL/remote events, URL/remote feedback, timing, MRP or supervisor;
+timeout, disconnect, network, malformed/correlation, authentication, cancellation,
+rejection or other. These contain no peer descriptions or identifiers. MRP's
+first category survives stop; normal cleanup cancellation adds no failure.
+This diagnostic records the first failure observed by the session, rather than
+claiming a total ordering across independent sockets. It does not infer a normal
+receiver stop from pause followed by a closed connection.
+
 EOF uses the owned item's receiver-reported paused/stopped position at or beyond
 its positive duration. Wall-clock extrapolation or clamping never proves EOF.
 tvOS 26.6 reports URL stopped before final MRP telemetry; that state allows up

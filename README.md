@@ -7,8 +7,10 @@ AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
 URL playback sessions with a development `cast` CLI. Native-only G1 passed on
 Apple TV 4K / tvOS 26.6 (23L773) / Windows 11 x64: video/audio played and the TV
 returned home after sender shutdown. The session retains a separate native
-remote-control-only SETUP/event connection. MRP controls and the public playback
-API remain pending; this is one tested combination, not universal support.**
+remote-control session, now extended with native MRP status and controls. G2
+controls and selected G3 lifecycle cases passed on that combination; receiver-stop
+classification, actual network-loss recovery and the public playback API remain
+pending.**
 
 The C++17 core includes a byte-range resolver with a C interface
 and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
@@ -133,7 +135,8 @@ an authenticated URL/MRP session. Type `status`, `pause`, `play`, `seek SECONDS`
 (absolute position), or `stop`; Enter or stdin EOF tears down directly. Media
 EOF, receiver terminal state, ownership loss and connection failure now trigger
 automatic cleanup without command input. The summary reports the first terminal
-reason and whether cleanup finished; connection failure returns exit 1. It
+reason, whether cleanup finished and fixed failure channel/category; connection
+failure returns exit 1. It
 prints no private URL or receiver address. `--event-log` enables bounded event
 outlines for diagnostics. A `playing` event does not prove visible playback:
 G1 passed for the recorded native-only run, with user-observed video/audio and

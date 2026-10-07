@@ -200,8 +200,11 @@ MrpPlaybackStatus MrpSession::status() const {
     return result;
 }
 bool MrpSession::failed() const {
+    return failure().has_value();
+}
+std::optional<MrpError> MrpSession::failure() const {
     std::lock_guard<std::mutex> lock(mutex_);
-    return failure_.has_value();
+    return failure_;
 }
 void MrpSession::run() {
     auto heartbeat_due = std::chrono::steady_clock::now() + heartbeat_interval_;

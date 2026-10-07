@@ -57,6 +57,8 @@ public:
                  const std::atomic_bool* cancelled = nullptr);
     [[nodiscard]] MrpPlaybackStatus status() const;
     [[nodiscard]] bool failed() const;
+    /// First terminal category, retained after stop(); safe alongside status/commands.
+    [[nodiscard]] std::optional<MrpError> failure() const;
     void stop() noexcept;
 
 private:

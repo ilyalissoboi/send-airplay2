@@ -19,6 +19,8 @@ in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37553955465).
 CI is separate from hardware gates; inspect PR #12's actual head/checks,
 including documentation-only follow-ups. Step 2's final documentation head
 `dafb70a4bcec0236b8f20901d745a1546ff853ba` passed all ten checks before this work.
+The observer-documentation head `3caad5ffedde8942102138ac774df23b015f5e94`
+also passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37555176050).
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -65,7 +67,15 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   automatically cleaned up, but reported connection_lost/exit 1. Sleep likewise
   triggered bounded cleanup. Fresh casting after wake reused credentials and
   played normal video/audio; EOF again returned home (user-confirmed).
-- **Next:** investigate normal receiver-stop classification and buffering; run
+- **Stop/buffering investigation (D34):** fixed failure diagnostics identify URL
+  event socket EOF on a repeated, user-confirmed remote Stop, with last state
+  playing and no stopped/idle/ended event. Preserve failure classification until
+  receiver intent is validated. A fresh full 131.6-second clip, with status-only
+  input and no seek, reached natural media_end/exit 0 and four heartbeats. Two
+  brief loading/playing transitions occurred near 18 s; visual observation is
+  pending. See the [stop/full-clip artifact](validation/native-stop-buffering-windows-static-2026-10-07.json).
+- **Next:** establish explicit receiver-stop intent and investigate remaining
+  intermittent startup/buffering behavior; run
   actual network interruption/recovery when available. The user cannot perform
   network disconnect/reconnect in this session. Preserve credentials and
   independent remote/URL sessions through ordered teardown.
@@ -349,6 +359,17 @@ duration while paused/stopped, never an extrapolated clock. URL stopped/idle
 allows one second for final MRP evidence. Do not automatically reconnect,
 resume, re-pair or adopt replacement players; a recovered network permits a
 fresh explicit cast. The host owns media-server shutdown. See [contracts](mrp-controls.md).
+
+**D34 (engineering decision, 2026-10-07):** retain fixed failure channel/operation
+and error category through cleanup. Expose MRP's first terminal category without
+peer descriptions, and distinguish URL/remote feedback and event failures.
+The diagnostic is the first failure recorded by the session, not a total ordering
+of independent socket events. Intentional normal-cleanup cancellation adds no
+failure. A repeated user-confirmed remote Stop closed the URL event connection
+with last state playing and no stopped/idle/ended event; preserve connection_lost
+until explicit, validated receiver intent is available. Pause or socket EOF alone
+must not be relabelled normal stop. Notification shapes are retained without their
+unmapped values; do not guess their semantics. No dependency or copied source.
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1299,6 +1320,34 @@ Do not mark G3 or the standalone milestone complete. Next investigate normal
 receiver-stop classification and buffering, then actual network-loss recovery
 when available; recovery means a fresh explicit cast with the retained profile.
 
+### Receiver-stop diagnostics and full-clip playback: 2026-10-07
+
+D34 adds fixed failure channel/category snapshots and CLI output, preserving MRP's
+first category through stop. Tests distinguish URL/remote event EOF from URL
+feedback timeout and suppress intentional cleanup cancellation. An ordinary
+pause followed by event EOF still fails, protecting outage detection. Windows
+static/shared Release each passed 23/23 CTest targets (13.13/13.05 s), offline
+runner contracts 10/10, touched C++ clang-format dry-run/Werror and diff checks.
+No dependency or copied implementation was introduced.
+
+The repeated user-confirmed remote Stop returned Home; the native URL event
+connection closed without a terminal playback-state event. Summary:
+connection_lost, cleaned=yes, failed=yes, failure_channel=url_events,
+failure_reason=disconnected, exit 1. This narrows the cause beyond the previous
+paused snapshot. Unknown notification values were omitted, and the inspected
+reference handler ignores them; no terminal meaning was inferred from their shape.
+
+A fresh full clip reached EOF without seek/play/pause/stop commands while stdin
+remained open. Two brief loading/playing transitions occurred around 18 seconds
+after playing began, followed by advancing status snapshots and four acknowledged
+heartbeats. URL stopped at the natural end and cleanup returned media_end/exit 0,
+failed=no, failed_reads=0, full-file span. This is full-clip protocol/process proof,
+with visual confirmation pending, not a claim that intermittent buffering is fixed.
+The [sanitized artifact](validation/native-stop-buffering-windows-static-2026-10-07.json)
+contains exact executable/source fingerprints and event/state/position facts.
+The initial missed remote-stop window was ended by the sender and contributes no
+remote-stop evidence. The allowed executable was restored after every run.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -1340,11 +1389,14 @@ the recorded source snapshot is still current.
 3. **Lifecycle (G3):** automatic EOF/terminal/failure cleanup implemented; native
    EOF and ten short cycles passed, with user-confirmed EOF video/audio/home.
    Receiver-remote stop and sleep triggered automatic cleanup; stop classified
-   connection_lost/exit 1, so normal stop reason remains unresolved. Finish actual
+   connection_lost/exit 1. D34 diagnostics reproduced URL event EOF while still
+   playing, without an explicit terminal state, so normal stop intent remains
+   unresolved. A full 131.6-second clip now reached natural EOF without seeking,
+   with two brief loading transitions; visual observation is pending. Finish actual
    network interruption/recovery when available. Investigate the
    buffering pause and renewed loading seen in the mixed native/pyatv run; one
    preliminary native EOF probe paused at startup and needed explicit play.
-   Successful later cycles do not resolve that intermittent behavior.
+   Successful later cycles/full-clip completion do not resolve that intermittent behavior.
 4. **Other hardware gates:** restart authentication, wrong PIN/revocation,
    disposable-profile deletion only when opted in, departure/interface changes,
    real-file >4-GiB seeking and neutral sender identities. Discovery, pairing/reuse,

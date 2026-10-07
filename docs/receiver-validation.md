@@ -614,6 +614,50 @@ network continuation uses the same paired profile and supplied local MP4:
    ordinary pause and genuine outage detection. Investigate repeated loading/
    playing and startup pauses during longer playback.
 
+## Native receiver-stop diagnosis and full-clip EOF: 2026-10-07
+
+Same receiver/firmware, Windows static Release and supplied 131.6-second MP4.
+The [sanitized artifact](validation/native-stop-buffering-windows-static-2026-10-07.json)
+fingerprints the CLI and tested source blobs; its media hash was rechecked. No
+pyatv controller, new credentials or firewall/network changes. The allowed
+executable was restored after the checks. D34 diagnostics use fixed channel/error
+categories; per-event state outlines prevent a transient terminal state being
+hidden by the CLI's latest-state display.
+
+**Repeated remote Stop:** the user exited playback and confirmed normal Home
+return. URL events remained playing until the event socket reported disconnected
+at 13.9 s after cast start. All received state events were loading/playing; none
+were stopped, idle or ended. Ordered cleanup completed at 14.0 s: connection_lost,
+failed=yes, cleaned=yes, exit 1, failure_channel=url_events,
+failure_reason=disconnected, failed_reads=0 and full-file span. This identifies
+the socket failure; it does not distinguish a user stop from an unexpected event
+connection closure using the parsed protocol facts. Unmapped notification names
+and reason values were omitted; shapes alone cannot establish terminal intent.
+Keep connection_lost until explicit receiver intent is validated. A new scripted
+pause-then-EOF regression preserves genuine outage detection during pause.
+The earlier timed-out operator window ended locally and provides no remote-stop evidence.
+
+**Full-clip natural EOF, protocol/process PASS:** a fresh cast received only
+`status` input every five seconds, with stdin held open and no seek or transport
+command. Owned playing snapshots progressed from 4.1 to 129.5 s; these snapshots
+can extrapolate receiver timestamps and are not independent continuous clock
+measurements. Four heartbeats were acknowledged. Two loading/playing pairs
+occurred about 17.3 and 18.3 s after playing began: the first spanned about 0.4 s,
+the second shared a tenth-second trace timestamp. There were no later loading or
+paused state events in this run. URL stopped at 133.1 s after cast start, and
+cleanup finished at 133.9 s: media_end, cleaned=yes, failed=no, exit 0,
+reads=1652, bytes=108091430, failed_reads=0, full span [0,53953926).
+That is a complete clip, rather than the earlier near-end seek experiment.
+Video/audio, visible buffering and Home return are pending user observation.
+One completion does not resolve earlier intermittent startup pause or prove
+longer playback, other media, hosts or firmware.
+
+Final Windows static/shared Release each passed 23/23 CTest targets
+(13.13/13.05 s), offline runner contracts 10/10, touched C++ formatting and
+git diff --check. Actual-head CI must be inspected after publishing. G3 remains
+open for explicit normal-stop classification, actual network interruption and
+fresh-cast recovery; the user cannot perform the network checkpoint this session.
+
 ## Automated CLI E2E observation: 2026-10-06
 
 The agent ran the [noninteractive runner](e2e-runner.md) from

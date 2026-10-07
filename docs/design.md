@@ -139,7 +139,10 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    start/stop cycles passed, as did user-confirmed sleep/wake recovery. Receiver
    remote stop returned home and cleaned up but classified connection_lost/exit 1.
    Complete G3 with actual network-loss recovery; investigate normal stop reason
-   and buffering.
+   and buffering. D34 diagnostics reproduce URL event EOF during user-confirmed
+   remote Stop without a terminal state; retain failure classification until
+   intent is validated. One full clip reached natural EOF, with brief loading
+   transitions and visual confirmation pending; longer reliability remains open.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

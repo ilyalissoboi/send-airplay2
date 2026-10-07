@@ -869,6 +869,9 @@ void failure_after_start_tests() {
           "event loss automatically joins and closes workers without operator input");
     check(session->status().end_reason == SessionEnd::connection_lost,
           "event failure retains terminal reason");
+    check(session->status().failure_channel == SessionFailureChannel::url_events &&
+              session->status().failure_reason == SessionFailureReason::disconnected,
+          "URL EOF preserves its fixed channel/category after cleanup");
     session->stop();
     check(receiver.control_was_closed(), "stop still closes the control connection");
 
@@ -880,6 +883,9 @@ void failure_after_start_tests() {
           "remote event loss after start marks the composite session failed");
     check(eventually([&] { return remote_session->status().cleaned_up; }),
           "remote loss automatically cleans both sessions");
+    check(remote_session->status().failure_channel == SessionFailureChannel::remote_events &&
+              remote_session->status().failure_reason == SessionFailureReason::disconnected,
+          "remote event EOF is distinct from URL EOF");
     remote_session->stop();
     check(remote_lost.control_was_closed() && remote_lost.remote_control().control_was_closed(),
           "stop after remote failure closes both authenticated connections");
@@ -904,6 +910,22 @@ void terminal_event_tests() {
         session->stop();
         check(session->status().end_reason == expected, "first terminal reason survives stop");
     }
+}
+void paused_connection_loss_tests() {
+    group = "connection loss during ordinary pause";
+    FakeReceiver receiver({});
+    auto session = UrlPlaybackSession::start(receiver.credentials(), options_for(receiver));
+    receiver.push_state("Paused");
+    check(session->wait_for_change("playing", 1000ms).playback_state == "paused",
+          "pause established before event socket closes");
+    receiver.end_event_channel();
+    check(eventually([&] { return session->status().cleaned_up; }),
+          "paused connection loss automatically finishes cleanup");
+    const auto status = session->status();
+    check(status.failed && status.end_reason == SessionEnd::connection_lost &&
+              status.failure_channel == SessionFailureChannel::url_events &&
+              status.failure_reason == SessionFailureReason::disconnected,
+          "paused socket EOF remains failure, rather than an inferred normal receiver stop");
 }
 void concurrent_stop_tests() {
     group = "concurrent stop";
@@ -937,6 +959,9 @@ void feedback_deadline_tests() {
           "80 ms request deadline bounds failure and joined cleanup to 500 ms");
     check(receiver.control_close_order() == std::vector<std::string>{"URL", "remote"},
           "deadline cleanup preserves closure order");
+    check(session->status().failure_channel == SessionFailureChannel::url_feedback &&
+              session->status().failure_reason == SessionFailureReason::timeout,
+          "silent URL feedback preserves deadline failure through cleanup cancellation");
 }
 void feedback_cancel_tests() {
     group = "stop during pending feedback";
@@ -951,6 +976,9 @@ void feedback_cancel_tests() {
     check(session->status().cleaned_up && !session->status().failed &&
               std::chrono::steady_clock::now() - started < 500ms,
           "stop cancels blocked feedback rather than waiting its two-second deadline");
+    check(session->status().failure_channel == SessionFailureChannel::none &&
+              session->status().failure_reason == SessionFailureReason::none,
+          "intentional cleanup cancellation does not invent a failure diagnostic");
 }
 void mrp_setup_failure_tests() {
     group = "MRP setup cleanup";
@@ -994,6 +1022,7 @@ int main() {
         failure_after_start_tests();
         mrp_setup_failure_tests();
         terminal_event_tests();
+        paused_connection_loss_tests();
         concurrent_stop_tests();
         feedback_deadline_tests();
         feedback_cancel_tests();

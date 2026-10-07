@@ -505,6 +505,9 @@ void failures_and_cancel(const std::string& root) {
                                   : fault == 3             ? MrpError::authentication
                                                            : MrpError::disconnected;
             check(error.reason() == expected, "fault category index " + std::to_string(fault));
+            session.stop();
+            check(session.failure() == expected,
+                  "first MRP failure survives stop index " + std::to_string(fault));
         }
         session.stop();
         std::lock_guard<std::mutex> lock(peer->mutex);

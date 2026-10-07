@@ -22,6 +22,56 @@ constexpr std::chrono::milliseconds start_poll_slice{20};
 constexpr const char* playing_state = "playing";
 constexpr std::size_t max_event_log = 256;
 
+SessionFailureReason mrp_failure_reason(MrpError reason) noexcept {
+    switch (reason) {
+    case MrpError::timeout:
+        return SessionFailureReason::timeout;
+    case MrpError::disconnected:
+        return SessionFailureReason::disconnected;
+    case MrpError::malformed:
+        return SessionFailureReason::invalid_message;
+    case MrpError::authentication:
+        return SessionFailureReason::authentication;
+    case MrpError::cancelled:
+        return SessionFailureReason::cancelled;
+    case MrpError::rejected:
+        return SessionFailureReason::rejected;
+    case MrpError::not_owned:
+        return SessionFailureReason::other;
+    }
+    return SessionFailureReason::other;
+}
+
+/// Call only from an active catch handler. Never retain exception text or peer bytes.
+SessionFailureReason caught_failure_reason() noexcept {
+    try {
+        throw;
+    } catch (const TransportException& error) {
+        switch (error.reason()) {
+        case TransportError::timeout:
+            return SessionFailureReason::timeout;
+        case TransportError::cancelled:
+            return SessionFailureReason::cancelled;
+        case TransportError::disconnected:
+        case TransportError::closed:
+            return SessionFailureReason::disconnected;
+        case TransportError::network:
+            return SessionFailureReason::network;
+        case TransportError::invalid_message:
+        case TransportError::correlation:
+            return SessionFailureReason::invalid_message;
+        case TransportError::invalid_argument:
+            return SessionFailureReason::other;
+        }
+    } catch (const ControlException& error) {
+        return error.reason() == ControlError::authentication ? SessionFailureReason::authentication
+                                                              : SessionFailureReason::other;
+    } catch (...) {
+        return SessionFailureReason::other;
+    }
+    return SessionFailureReason::other;
+}
+
 std::string session_message(SessionError reason, unsigned status) {
     std::string text =
         "AirPlay session failed (category " + std::to_string(static_cast<int>(reason)) + ")";
@@ -78,6 +128,52 @@ const char* session_end_name(SessionEnd reason) noexcept {
         return "connection_lost";
     }
     return "none";
+}
+
+const char* session_failure_channel_name(SessionFailureChannel channel) noexcept {
+    switch (channel) {
+    case SessionFailureChannel::none:
+        return "none";
+    case SessionFailureChannel::url_events:
+        return "url_events";
+    case SessionFailureChannel::remote_events:
+        return "remote_events";
+    case SessionFailureChannel::url_feedback:
+        return "url_feedback";
+    case SessionFailureChannel::remote_feedback:
+        return "remote_feedback";
+    case SessionFailureChannel::timing:
+        return "timing";
+    case SessionFailureChannel::mrp:
+        return "mrp";
+    case SessionFailureChannel::supervisor:
+        return "supervisor";
+    }
+    return "none";
+}
+
+const char* session_failure_reason_name(SessionFailureReason reason) noexcept {
+    switch (reason) {
+    case SessionFailureReason::none:
+        return "none";
+    case SessionFailureReason::timeout:
+        return "timeout";
+    case SessionFailureReason::disconnected:
+        return "disconnected";
+    case SessionFailureReason::network:
+        return "network";
+    case SessionFailureReason::invalid_message:
+        return "invalid_message";
+    case SessionFailureReason::authentication:
+        return "authentication";
+    case SessionFailureReason::cancelled:
+        return "cancelled";
+    case SessionFailureReason::rejected:
+        return "rejected";
+    case SessionFailureReason::other:
+        return "other";
+    }
+    return "other";
 }
 
 UrlPlaybackSession::UrlPlaybackSession(UrlPlaybackOptions options)
@@ -252,7 +348,7 @@ void UrlPlaybackSession::remote_event_loop() {
         }
     } catch (...) {
         if (!remote_event_stop_) {
-            mark_failed();
+            mark_failed(SessionFailureChannel::remote_events, caught_failure_reason());
         }
     }
 }
@@ -291,7 +387,7 @@ void UrlPlaybackSession::start_timing(const std::string& local_address) {
             timing_->serve(ReceiverOperation::until_cancelled(&timing_stop_));
         } catch (...) {
             if (!timing_stop_) {
-                mark_failed();
+                mark_failed(SessionFailureChannel::timing, caught_failure_reason());
             }
         }
     });
@@ -355,7 +451,7 @@ void UrlPlaybackSession::event_loop() {
         }
     } catch (...) {
         if (!event_stop_) {
-            mark_failed();
+            mark_failed(SessionFailureChannel::url_events, caught_failure_reason());
         }
     }
 }
@@ -373,29 +469,33 @@ void UrlPlaybackSession::feedback_loop() {
                 return;
             }
         }
+        auto channel = SessionFailureChannel::url_feedback;
         try {
             // Best effort, as in the reference: a non-2xx answer is ignored, but
             // a transport failure has closed the control connection.
             (void)control_request(rtsp_request("POST", "/feedback", {}), &feedback_stop_, false);
             if (mrp_) {
+                channel = SessionFailureChannel::remote_feedback;
                 (void)remote_request("POST", "/feedback", {}, &feedback_stop_, false);
             }
             std::lock_guard<std::mutex> lock(state_mutex_);
             ++status_.feedback_sent;
         } catch (...) {
             if (!feedback_stop_) {
-                mark_failed();
+                mark_failed(channel, caught_failure_reason());
             }
             return;
         }
     }
 }
 
-void UrlPlaybackSession::mark_failed() {
+void UrlPlaybackSession::mark_failed(SessionFailureChannel channel, SessionFailureReason reason) {
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
-        if (status_.end_reason == SessionEnd::none) {
+        if (status_.end_reason == SessionEnd::none && !status_.failed) {
             status_.failed = true;
+            status_.failure_channel = channel;
+            status_.failure_reason = reason;
         }
     }
     state_changed_.notify_all();
@@ -430,7 +530,7 @@ SessionStatus UrlPlaybackSession::status() const {
     // Read MRP first: intentional command cancellation follows request_end().
     // The later state snapshot must retain that normal end rather than combine
     // an earlier "none" snapshot with a later cancellation failure.
-    const bool remote_failed = mrp_ && mrp_->failed();
+    const auto remote_failure = mrp_ ? mrp_->failure() : std::optional<MrpError>{};
     SessionStatus snapshot;
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
@@ -439,7 +539,13 @@ SessionStatus UrlPlaybackSession::status() const {
     if (timing_) {
         snapshot.timing_answered = timing_->answered();
     }
-    snapshot.failed = snapshot.failed || (snapshot.end_reason == SessionEnd::none && remote_failed);
+    if (remote_failure && snapshot.failure_channel == SessionFailureChannel::none &&
+        (snapshot.end_reason == SessionEnd::none ||
+         snapshot.end_reason == SessionEnd::connection_lost)) {
+        snapshot.failed = true;
+        snapshot.failure_channel = SessionFailureChannel::mrp;
+        snapshot.failure_reason = mrp_failure_reason(*remote_failure);
+    }
     return snapshot;
 }
 
@@ -499,6 +605,7 @@ void UrlPlaybackSession::supervise() {
                 break;
             }
             if (current.failed) {
+                mark_failed(current.failure_channel, current.failure_reason);
                 request_end(SessionEnd::connection_lost);
                 break;
             }
@@ -540,6 +647,7 @@ void UrlPlaybackSession::supervise() {
             });
         }
     } catch (...) {
+        mark_failed(SessionFailureChannel::supervisor, caught_failure_reason());
         request_end(SessionEnd::connection_lost);
     }
     cleanup();
