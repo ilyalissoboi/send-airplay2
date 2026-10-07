@@ -327,12 +327,20 @@ void source_failure_tests() {
                                }
                                return mode == 0 ? 0 : capacity + 1;
                            }};
-        auto server = MediaServer::start(std::move(source), options());
+        auto config = options();
+        config.record_request_diagnostics = true;
+        auto server = MediaServer::start(std::move(source), config);
         const Target target(server->url());
         const auto reply = wire_exchange(target, target.request());
         assert_response(reply, 500, 0, "", "initial read failure " + std::to_string(mode));
         check(reply.wire.find("synthetic-private-path") == std::string::npos,
               "callback exception text not returned");
+        server->stop();
+        const auto log = server->take_request_log();
+        check(log.size() == 1 && log[0].status == 500 && log[0].header_completed &&
+                  log[0].expected_body_bytes == 0 && log[0].body_bytes_written == 0 &&
+                  log[0].end == MediaRequestEnd::source_error,
+              "initial source failure diagnostic " + std::to_string(mode));
     }
     auto source = patterned_source(32, 7);
     const auto read = source.read_at;
@@ -383,6 +391,7 @@ void concurrency_and_shutdown_tests() {
     };
     auto config = options();
     config.max_connections = 2;
+    config.record_request_diagnostics = true;
     auto server = MediaServer::start(std::move(source), config);
     const Target target(server->url());
     auto first =
@@ -413,6 +422,10 @@ void concurrency_and_shutdown_tests() {
     check(!stopped.timed_out && stopped.wire.empty(), "stop cancels source read before headers");
     server->stop();
     check(entered == 1, "idempotent stop; callbacks quiescent");
+    const auto log = server->take_request_log();
+    check(log.size() == 4 && log.back().end == MediaRequestEnd::cancelled &&
+              !log.back().header_completed && log.back().body_bytes_written == 0,
+          "shutdown diagnostic distinguishes cancelled source from a completed response");
     ErrorCode error;
     asio::io_context context;
     Tcp::socket after_stop(context);
@@ -424,6 +437,7 @@ void deadline_tests() {
     auto config = options();
     config.request_timeout_ms = 100;
     config.max_connections = 1;
+    config.record_request_diagnostics = true;
     std::atomic_uint entered{0};
     auto source = patterned_source(32);
     const auto read = source.read_at;
@@ -467,6 +481,111 @@ void deadline_tests() {
                     1099511627776ULL, "", "slot released after blocked response write deadline");
     check(before_recovery > 0 && large_reads == before_recovery,
           "stalled receiver causes no source work after deadline");
+    large->stop();
+    const auto blocked_log = large->take_request_log();
+    check(blocked_log.size() == 2 && blocked_log.front().end == MediaRequestEnd::timeout &&
+              blocked_log.front().header_completed && blocked_log.front().body_bytes_written > 0 &&
+              blocked_log.front().body_bytes_written < 1099511627776ULL &&
+              blocked_log.back().end == MediaRequestEnd::complete &&
+              blocked_log.back().method == MediaRequestMethod::head &&
+              blocked_log.back().body_bytes_written == 0,
+          "blocked write deadline includes partial progress and leaves HEAD recovery complete");
+    server->stop();
+    const auto log = server->take_request_log();
+    check(log.size() == 4 && log[0].end == MediaRequestEnd::timeout && !log[0].header_completed &&
+              log[2].end == MediaRequestEnd::timeout && log[1].end == MediaRequestEnd::complete &&
+              log[3].end == MediaRequestEnd::complete,
+          "absolute source/header deadlines remain distinct from subsequent completed requests");
+}
+void request_diagnostic_tests() {
+    group = "bounded request diagnostics";
+    auto disabled = MediaServer::start(patterned_source(32), options());
+    const Target silent(disabled->url());
+    (void)wire_exchange(silent, silent.request());
+    disabled->stop();
+    check(disabled->take_request_log().empty(), "diagnostics disabled by default");
+
+    auto config = options();
+    config.record_request_diagnostics = true;
+    auto server = MediaServer::start(patterned_source(32, 7), config);
+    const Target target(server->url());
+    assert_response(wire_exchange(target, target.request("GET", "Range: bytes=5-13\r\n")), 206, 9,
+                    expected_body(5, 9), "recorded short-read range");
+    assert_response(wire_exchange(target, target.request("HEAD")), 200, 32, "", "recorded HEAD");
+    for (unsigned request = 0; request < 258; ++request) {
+        (void)wire_exchange(target, target.request("HEAD"));
+    }
+    server->stop();
+    const auto log = server->take_request_log();
+    check(log.size() == 256 && log.front().request_id == 5 && log.back().request_id == 260,
+          "literal 256-record bound retains newest requests in order");
+    check(server->take_request_log().empty(), "draining discards exactly the returned records");
+
+    auto range_server = MediaServer::start(patterned_source(32, 7), config);
+    const Target range_target(range_server->url());
+    (void)wire_exchange(range_target, range_target.request("GET", "Range: bytes=5-13\r\n"));
+    (void)wire_exchange(range_target, range_target.request("HEAD"));
+    range_server->stop();
+    const auto ranges = range_server->take_request_log();
+    check(ranges.size() == 2 && ranges[0].method == MediaRequestMethod::get &&
+              ranges[0].status == 206 && ranges[0].offset == 5 && ranges[0].declared_length == 9 &&
+              ranges[0].expected_body_bytes == 9 && ranges[0].body_bytes_written == 9 &&
+              ranges[0].header_completed && ranges[0].end == MediaRequestEnd::complete &&
+              ranges[0].accepted_ms <= ranges[0].last_body_write_ms &&
+              ranges[0].last_body_write_ms <= ranges[0].closed_ms &&
+              ranges[1].method == MediaRequestMethod::head && ranges[1].declared_length == 32 &&
+              ranges[1].expected_body_bytes == 0 && ranges[1].body_bytes_written == 0 &&
+              ranges[1].header_completed && ranges[1].end == MediaRequestEnd::complete,
+          "range/body completion and HEAD representation length use distinct counters");
+
+    auto source = patterned_source(32, 7);
+    const auto read = source.read_at;
+    source.read_at = [read](std::uint64_t off, std::uint8_t* out, std::size_t cap,
+                            const MediaReadContext& context) {
+        return off ? std::size_t{0} : read(off, out, cap, context);
+    };
+    auto broken = MediaServer::start(std::move(source), config);
+    const Target broken_target(broken->url());
+    const auto reply = wire_exchange(broken_target, broken_target.request());
+    broken->stop();
+    const auto failure = broken->take_request_log();
+    check(failure.size() == 1 && failure[0].status == 200 && failure[0].header_completed &&
+              failure[0].expected_body_bytes == 32 && failure[0].body_bytes_written == 7 &&
+              failure[0].body_bytes_written == reply.body().size() &&
+              failure[0].end == MediaRequestEnd::source_error,
+          "source read is not counted as body delivery; incomplete success response is diagnosed");
+}
+void aborted_write_diagnostic_test() {
+    group = "peer abort during body write";
+    auto config = options();
+    config.request_timeout_ms = 1000; // Bounds the synchronous read before the intentional reset.
+    config.record_request_diagnostics = true;
+    auto server = MediaServer::start(patterned_source(1099511627776ULL), config);
+    const Target target(server->url());
+    asio::io_context context;
+    Tcp::socket client(context);
+    client.connect(target.endpoint);
+    client.set_option(asio::socket_base::receive_buffer_size(1024));
+    const auto request = target.request();
+    asio::write(client, asio::buffer(request));
+    std::array<char, 1024> received{};
+    ErrorCode error;
+    const auto count = client.read_some(asio::buffer(received), error);
+    check(!error && count > 0, "response starts before intentional TCP reset");
+    client.set_option(asio::socket_base::linger(true, 0));
+    client.close();
+    std::vector<MediaRequestDiagnostic> log;
+    const auto deadline = std::chrono::steady_clock::now() + 2s;
+    do {
+        log = server->take_request_log();
+        if (log.empty()) {
+            std::this_thread::sleep_for(1ms);
+        }
+    } while (log.empty() && std::chrono::steady_clock::now() < deadline);
+    server->stop();
+    check(log.size() == 1 && log[0].end == MediaRequestEnd::io_error &&
+              log[0].body_bytes_written < 1099511627776ULL,
+          "receiver abort is observed before sender stop and cannot be called complete");
 }
 template <class Action> void invalid(const std::string& scenario, Action action) {
     try {
@@ -556,6 +675,8 @@ int main() {
         source_failure_tests();
         concurrency_and_shutdown_tests();
         deadline_tests();
+        request_diagnostic_tests();
+        aborted_write_diagnostic_test();
         option_and_ipv6_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()

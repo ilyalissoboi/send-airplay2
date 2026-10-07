@@ -139,13 +139,20 @@ automatic cleanup without command input. The summary reports the first terminal
 reason, whether cleanup finished and fixed failure channel/category; connection
 failure returns exit 1. It
 prints no private URL or receiver address. `--event-log` enables bounded event
-outlines for diagnostics. A `playing` event does not prove visible playback:
+outlines and allowlisted numeric/boolean buffering values for diagnostics.
+`--media-log` reports bounded HTTP range/status/socket-write/completion facts;
+socket completion does not prove receipt or decoding (see [diagnostic contracts](docs/media-server.md#opt-in-request-diagnostics)). A `playing` event does not prove visible playback:
 G1 passed for the recorded native-only run, with user-observed video/audio and
 return to the home screen after sender stop. Native EOF cleanup with stdin held
 open and ten short start/stop cycles passed on the recorded receiver; the user
 confirmed G2 controls and near-end EOF video/audio/home. A separate full-clip run
 froze video after buffering near 18 s while audio continued normally; its EOF
-cleanup still passed. Receiver-remote stop and sleep
+cleanup still passed. D35 diagnostics support media admission capacity as a
+buffering cause: an explicit `--media-connections 16` comparison retained MRP and
+passed full video/audio/Home with no recorded loading transition. The default
+remains four; the original freeze and intermittent startup pause remain unresolved.
+`--minimal-remote` is a separate diagnostic comparison without MRP controls.
+Receiver-remote stop and sleep
 triggered cleanup; normal stop classification and actual network-loss recovery
 remain open G3 work. Native MRP controls are implemented; see the recorded
 G2 result and [control contracts](docs/mrp-controls.md).

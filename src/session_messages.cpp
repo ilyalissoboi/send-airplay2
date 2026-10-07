@@ -9,9 +9,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <iomanip>
+#include <locale>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -318,7 +321,7 @@ constexpr std::int64_t time_valid = 1, time_rounded = 2;
 /// URL events can represent seconds as a number or as a CMTime dictionary.
 /// A rational duration must have a positive timescale and a valid numeric
 /// flag (bit 0); rounded values (bit 1) are allowed, infinities/indefinite are not.
-std::optional<double> duration_seconds(const PlistValue& duration) {
+std::optional<double> duration_seconds(const PlistValue& duration, bool allow_zero = false) {
     double seconds = -1;
     if (duration.kind() == PlistKind::real) {
         seconds = duration.as_real();
@@ -339,7 +342,33 @@ std::optional<double> duration_seconds(const PlistValue& duration) {
         seconds =
             static_cast<double>(value->as_integer()) / static_cast<double>(scale->as_integer());
     }
-    return std::isfinite(seconds) && seconds > 0 ? std::optional<double>{seconds} : std::nullopt;
+    return std::isfinite(seconds) && (seconds > 0 || (allow_zero && seconds == 0))
+               ? std::optional<double>{seconds}
+               : std::nullopt;
+}
+
+void describe_buffering_container(const PlistValue& container, const char* prefix,
+                                  std::ostringstream& output) {
+    constexpr double max_diagnostic_seconds = 1e9;
+    for (const auto* key : {"rate", "position", "duration"}) {
+        const auto* value = container.find(key);
+        if (!value) {
+            continue;
+        }
+        const auto number = duration_seconds(*value, true);
+        if (number && *number <= max_diagnostic_seconds) {
+            output << ' ' << prefix << key << '=' << *number;
+        }
+    }
+    if (const auto* ready = container.find("readyToPlay");
+        ready && ready->kind() == PlistKind::boolean) {
+        output << ' ' << prefix << "readyToPlay=" << (ready->as_boolean() ? "yes" : "no");
+    }
+    if (const auto* stalls = container.find("stallCount");
+        stalls && stalls->kind() == PlistKind::integer && stalls->as_integer() >= 0 &&
+        stalls->as_integer() <= std::numeric_limits<std::uint32_t>::max()) {
+        output << ' ' << prefix << "stallCount=" << stalls->as_integer();
+    }
 }
 
 void collect_key_paths(const PlistValue& value, const std::string& prefix, std::size_t depth,
@@ -382,6 +411,22 @@ std::string describe_event_structure(const Bytes& body) {
         output += (index == 0 ? "" : ",") + paths[index];
     }
     return output;
+}
+
+std::string describe_buffering_values(const Bytes& body) {
+    const auto event = unwrap_envelope(body);
+    std::ostringstream output;
+    output.imbue(std::locale::classic());
+    output << std::fixed << std::setprecision(3);
+    describe_buffering_container(event, "root.", output);
+    if (const auto* params = event.find("params")) {
+        describe_buffering_container(*params, "params.", output);
+    }
+    if (const auto* value = event.find("value")) {
+        describe_buffering_container(*value, "value.", output);
+    }
+    auto text = output.str();
+    return text.empty() ? text : "buffer" + text;
 }
 
 SessionEvent parse_session_event(const Bytes& body) {

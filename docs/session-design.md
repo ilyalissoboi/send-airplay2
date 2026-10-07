@@ -296,7 +296,11 @@ administered one per session.
    Receiver-remote stop cleaned up but classified connection_lost/exit 1.
    A separate full-clip run failed video presentation after buffering near 18 s:
    video froze while audio continued normally through EOF (user-confirmed).
-   Prioritize video recovery; playing telemetry and EOF cleanup do not prove it.
+   D35 HTTP/buffering diagnostics and controlled comparisons are implemented:
+   minimal/four and MRP/16 passed full video/audio/Home; default MRP/four buffered
+   but recovered. Repeat the higher-capacity control/lifecycle case before choosing
+   a normal cast budget. Persistent freeze and spontaneous startup pause remain
+   unresolved; playing telemetry and EOF cleanup do not prove moving video.
    Normal stop classification, actual network loss/recovery and longer playback
    remain **Gate G3**; see the dated validation record.
 

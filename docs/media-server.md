@@ -41,7 +41,7 @@ idempotent, and no callback runs after it returns. Hosts serialize stop/destruct
 the immutable owned string returned by `url()` can be read concurrently. A server
 cannot be restarted; create a new instance and bearer path for a new session.
 Shared-library users require a compatible C++ compiler/runtime; a versioned C ABI
-and file/StorageFile/content-URI adapters remain future work.
+and public file/StorageFile/content-URI adapters remain future work.
 
 ## Network and resource policy
 
@@ -62,7 +62,7 @@ and file/StorageFile/content-URI adapters remain future work.
   many source worker threads run. No unbounded application connection/task queue
   exists; acceptance pauses at the limit. The OS manages its bounded listen
   backlog. Cancelled sessions retain their admission slot until their source
-  callback finishes, so cancellation cannot create an unbounded callback queue.
+  callback and pending network operation finish, so cancellation cannot create an unbounded callback queue.
 - Headers are bounded to 8192 bytes, 64 fields, and 2048 bytes per parsed value
   and request target. Each active request has a fixed 64-KiB streaming buffer;
   no full representation is buffered. HTTP syntax/normalization, including folded
@@ -106,6 +106,50 @@ type/subtype (default `video/mp4`). Content is neither inspected, transcoded nor
 compressed; the host is responsible for accurate media metadata. Malformed,
 overflowing, unknown-unit and multipart ranges use the existing full-response
 policy, as documented in [design.md](design.md).
+
+## Opt-in request diagnostics
+
+Set `record_request_diagnostics=true` and drain `take_request_log()` to inspect
+closed requests. A fixed 256-record ring drops the oldest entries on overflow;
+recording allocates no memory. Draining is thread-safe, can allocate, and leaves
+the queue intact if allocation fails. Requests retain their admission slot until
+source and network callbacks finish, so a cancelled write's partial byte count
+is included before the record is emitted. `stop()` drains all accepted work.
+
+Records contain a local request number, GET/HEAD/other, numeric response status,
+selected offset, declared length, expected body length, body bytes reported by
+socket writes, header completion, active requests on acceptance, and steady-clock
+accept/last-body-write/close milliseconds since construction. No peer addresses,
+URLs, arbitrary headers, metadata or payloads are included. Terminal categories
+are complete, cancelled, timeout, I/O, source or internal error. HEAD declares the
+representation length but expects/writes no body. A source failure before headers
+can finish an empty HTTP 500 while still being classified as a source error.
+
+Socket-write completion means delivery to the local TCP stack. It proves neither
+receiver receipt nor video decoding; source read counts prove even less. The
+native `cast --media-log` flag prints these records. `--event-log` additionally
+prints only allowlisted finite numeric/boolean buffering values (rate, position,
+duration, readyToPlay, stallCount) from root/params/value dictionaries, separately
+from the existing event outlines. Diagnostic time values accept zero and valid
+numeric CMTime; values over 1e9 seconds and stall counts outside uint32 are omitted.
+Unknown strings/metadata never appear in the scalar records. No playback,
+retry, range or timeout policy is changed by enabling these logging flags.
+
+For the controlled receiver comparison, `cast --minimal-remote` selects the
+existing minimum-session experiment: independently verified remote SETUP/events
+remain open, but remote RECORD, the data stream, MRP handshake/subscription/
+heartbeat and remote feedback are omitted. The default still enables all MRP
+controls. This explicit diagnostic mode has no MRP ownership/position/control
+telemetry; a URL stopped/idle event is classified receiver_stop without MRP's
+EOF evidence. Require separate human video/audio/Home observations and keep its
+results separate from normal control-enabled casting. It is not a recovery mode.
+
+`cast --media-connections N` selects the existing bounded server limit (1..16,
+default 4) for an explicit admission-capacity comparison. It changes both active
+request slots and source-worker count. Each slot still has one 64-KiB buffer;
+there is no application connection queue and no eviction/retry of active ranges.
+Keep the default and timeout policy unchanged until receiver evidence supports
+an engineering decision. More slots are not a general decoding guarantee.
 
 ## Development CLI (`serve`)
 

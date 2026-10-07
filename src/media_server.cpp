@@ -9,11 +9,13 @@
 #include <chrono>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace send_airplay2 {
 namespace {
@@ -27,6 +29,7 @@ constexpr std::size_t field_limit = 64;
 constexpr std::size_t field_value_limit = 2048;
 constexpr std::size_t body_chunk_size = 64 * 1024;
 constexpr std::size_t token_bytes = 16;
+constexpr std::size_t request_log_limit = 256;
 constexpr std::uint32_t max_connections_limit = 16;
 constexpr std::uint32_t max_request_timeout_ms = 600000;
 constexpr std::size_t max_numeric_address_length = 64;
@@ -100,6 +103,38 @@ struct MediaServer::Impl {
     Tcp::acceptor listener{network};
     std::unique_ptr<asio::thread_pool> readers;
     std::thread network_thread;
+    const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
+    std::uint64_t next_request_id = 1; // Network thread only.
+    std::mutex log_mutex;
+    std::array<MediaRequestDiagnostic, request_log_limit> request_log{};
+    std::size_t log_begin = 0, log_size = 0;
+
+    std::uint64_t elapsed_ms() const {
+        return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                              std::chrono::steady_clock::now() - started)
+                                              .count());
+    }
+    void record(const MediaRequestDiagnostic& entry) {
+        if (!options.record_request_diagnostics) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(log_mutex);
+        if (log_size == request_log_limit) {
+            log_begin = (log_begin + 1) % request_log_limit;
+            --log_size;
+        }
+        request_log[(log_begin + log_size++) % request_log_limit] = entry;
+    }
+    std::vector<MediaRequestDiagnostic> take_request_log() {
+        std::lock_guard<std::mutex> lock(log_mutex);
+        std::vector<MediaRequestDiagnostic> entries;
+        entries.reserve(log_size);
+        for (std::size_t i = 0; i < log_size; ++i) {
+            entries.push_back(request_log[(log_begin + i) % request_log_limit]);
+        }
+        log_begin = log_size = 0;
+        return entries;
+    }
     // Only the network thread mutates sessions; pending source work retains its slot.
     std::set<std::shared_ptr<Session>> sessions;
 
@@ -180,34 +215,52 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
     bool reading_source = false;
     bool closed = false;
     bool header_sent = false;
+    bool pending_network = false; // One header read, header write or body write at a time.
+    bool source_failed = false;
+    MediaRequestDiagnostic diagnostic;
 
     Session(Impl& owner, Tcp::socket accepted)
         : server(owner), socket(std::move(accepted)), deadline_timer(server.network),
           deadline(std::chrono::steady_clock::now() +
                    std::chrono::milliseconds(server.options.request_timeout_ms)) {
+        diagnostic.request_id = server.next_request_id++;
+        diagnostic.accepted_ms = server.elapsed_ms();
+        diagnostic.active_on_accept = static_cast<std::uint32_t>(server.sessions.size() + 1);
         parser.header_limit(static_cast<std::uint32_t>(header_limit));
         parser.body_limit(0);
     }
-    void close() {
-        closed = true;
-        cancelled.store(true, std::memory_order_relaxed);
-        ErrorCode ignored;
-        deadline_timer.cancel();
-        socket.close(ignored);
-        if (!reading_source) {
+    /// Keep the slot until cancelled callbacks report any partial socket writes.
+    void release_if_drained() {
+        if (closed && !reading_source && !pending_network) {
+            diagnostic.closed_ms = server.elapsed_ms();
             server.remove(shared_from_this());
         }
+    }
+    void close(MediaRequestEnd reason = MediaRequestEnd::cancelled) {
+        if (!closed) {
+            diagnostic.end = source_failed && reason == MediaRequestEnd::complete
+                                 ? MediaRequestEnd::source_error
+                                 : reason;
+            closed = true;
+            cancelled.store(true, std::memory_order_relaxed);
+            ErrorCode ignored;
+            deadline_timer.cancel();
+            socket.close(ignored);
+        }
+        release_if_drained();
     }
     void start() {
         deadline_timer.expires_at(deadline);
         deadline_timer.async_wait([self = shared_from_this()](ErrorCode error) {
             if (!error) {
-                self->close();
+                self->close(MediaRequestEnd::timeout);
             }
         });
         http::async_read_header(
             socket, input, parser, [self = shared_from_this()](ErrorCode error, std::size_t) {
+                self->pending_network = false;
                 if (self->closed) {
+                    self->release_if_drained();
                     return;
                 }
                 try {
@@ -220,12 +273,15 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
                         self->prepare_response();
                     }
                 } catch (...) {
-                    self->close();
+                    self->close(MediaRequestEnd::internal_error);
                 }
             });
+        pending_network = true; // Initiation succeeded; handlers never run inline.
     }
     void send_error(http::status status) {
         remaining = 0;
+        diagnostic.expected_body_bytes = 0;
+        diagnostic.declared_length = 0;
         response.result(status);
         response.erase(http::field::content_range);
         response.content_length(0);
@@ -268,6 +324,9 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
     }
     void prepare_response() {
         const auto& request = parser.get();
+        diagnostic.method = request.method() == http::verb::get    ? MediaRequestMethod::get
+                            : request.method() == http::verb::head ? MediaRequestMethod::head
+                                                                   : MediaRequestMethod::other;
         if (!valid_headers()) {
             send_error(http::status::bad_request);
             return;
@@ -310,6 +369,9 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
         response.content_length(selection.length);
         offset = selection.offset;
         remaining = head ? 0 : selection.length;
+        diagnostic.offset = selection.offset;
+        diagnostic.declared_length = selection.length;
+        diagnostic.expected_body_bytes = remaining;
         if (remaining) {
             read_chunk(); // Detect initial source failure before committing a success header.
         } else {
@@ -324,18 +386,25 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
         response.keep_alive(false);
         response.set(http::field::cache_control, "no-store");
         serializer = std::make_unique<http::response_serializer<http::empty_body>>(response);
+        diagnostic.status = response.result_int();
         http::async_write_header(socket, *serializer,
                                  [self = shared_from_this()](ErrorCode error, std::size_t) {
+                                     self->pending_network = false;
+                                     self->diagnostic.header_completed = !error;
                                      if (self->closed) {
+                                         self->release_if_drained();
                                          return;
                                      }
-                                     if (error || !self->remaining) {
-                                         self->close();
+                                     if (error) {
+                                         self->close(MediaRequestEnd::io_error);
+                                     } else if (!self->remaining) {
+                                         self->close(MediaRequestEnd::complete);
                                      } else {
                                          self->header_sent = true;
                                          self->write_chunk();
                                      }
                                  });
+        pending_network = true; // Initiation succeeded; handlers never run inline.
     }
     void read_chunk() {
         if (closed || server.stopped.load(std::memory_order_relaxed)) {
@@ -360,10 +429,13 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
                 self->reading_source = false;
                 if (self->closed || self->server.stopped.load(std::memory_order_relaxed) ||
                     std::chrono::steady_clock::now() >= self->deadline) {
-                    self->close();
+                    self->close(std::chrono::steady_clock::now() >= self->deadline
+                                    ? MediaRequestEnd::timeout
+                                    : MediaRequestEnd::cancelled);
                 } else if (!count || count > capacity) {
+                    self->source_failed = true;
                     if (self->header_sent) {
-                        self->close(); // A short body must remain visibly incomplete.
+                        self->close(MediaRequestEnd::source_error); // Keep a short body incomplete.
                     } else {
                         self->send_error(http::status::internal_server_error);
                     }
@@ -380,22 +452,29 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
     }
     void write_chunk() {
         asio::async_write(socket, asio::buffer(chunk.data(), chunk_length),
-                          [self = shared_from_this()](ErrorCode error, std::size_t) {
+                          [self = shared_from_this()](ErrorCode error, std::size_t count) {
+                              self->pending_network = false;
+                              self->diagnostic.body_bytes_written += count;
+                              if (count) {
+                                  self->diagnostic.last_body_write_ms = self->server.elapsed_ms();
+                              }
                               if (self->closed) {
+                                  self->release_if_drained();
                                   return;
                               }
                               if (error) {
-                                  self->close();
+                                  self->close(MediaRequestEnd::io_error);
                                   return;
                               }
                               self->offset += self->chunk_length;
                               self->remaining -= self->chunk_length;
                               if (!self->remaining) {
-                                  self->close();
+                                  self->close(MediaRequestEnd::complete);
                               } else {
                                   self->read_chunk();
                               }
                           });
+        pending_network = true; // Initiation succeeded; handlers never run inline.
     }
 };
 
@@ -445,6 +524,9 @@ void MediaServer::Impl::accept() {
 void MediaServer::Impl::remove(const std::shared_ptr<Session>& session) {
     const bool was_full = sessions.size() == options.max_connections;
     const auto removed = sessions.erase(session);
+    if (removed) {
+        record(session->diagnostic);
+    }
     if (removed && was_full && !stopped.load(std::memory_order_relaxed)) {
         accept();
     }
@@ -486,6 +568,9 @@ std::unique_ptr<MediaServer> MediaServer::start(MediaSource source, MediaServerO
 }
 std::string MediaServer::url() const {
     return impl_->media_url;
+}
+std::vector<MediaRequestDiagnostic> MediaServer::take_request_log() {
+    return impl_->take_request_log();
 }
 void MediaServer::stop() {
     impl_->stop();

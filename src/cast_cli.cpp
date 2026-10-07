@@ -19,6 +19,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -28,6 +29,7 @@ namespace send_airplay2::detail {
 namespace {
 constexpr std::uint32_t max_port = 65535;
 constexpr std::uint32_t max_start_timeout_ms = 120000;
+constexpr std::uint32_t max_media_connections = 16; // MediaServer's documented bound.
 // The receiver keeps open-ended range requests while it buffers; use the media
 // server's maximum per-request budget, as `serve` does.
 constexpr std::uint32_t media_request_timeout_ms = 600000;
@@ -40,7 +42,10 @@ struct CastArguments {
     std::string file;
     std::string content_type = "video/mp4";
     std::uint32_t start_timeout_ms = 30000;
-    bool event_log = false; // Diagnostic: print value-free event outlines.
+    std::uint32_t media_connections = 4;
+    bool event_log = false;      // Diagnostic: print value-free event outlines.
+    bool media_log = false;      // Diagnostic: bounded HTTP completion facts.
+    bool minimal_remote = false; // Comparison only: remote SETUP/events without MRP.
 };
 
 std::uint32_t parse_bounded(std::string_view value, std::uint32_t minimum, std::uint32_t maximum,
@@ -63,6 +68,14 @@ CastArguments parse_arguments(int argc, const char* const* argv) {
             arguments.event_log = true;
             continue;
         }
+        if (option == "--media-log") {
+            arguments.media_log = true;
+            continue;
+        }
+        if (option == "--minimal-remote") {
+            arguments.minimal_remote = true;
+            continue;
+        }
         if (index + 1 >= argc) {
             throw std::invalid_argument("unknown or incomplete option: " + std::string(option));
         }
@@ -80,6 +93,9 @@ CastArguments parse_arguments(int argc, const char* const* argv) {
         } else if (option == "--start-timeout-ms") {
             arguments.start_timeout_ms =
                 parse_bounded(value, 1, max_start_timeout_ms, "start timeout");
+        } else if (option == "--media-connections") {
+            arguments.media_connections =
+                parse_bounded(value, 1, max_media_connections, "media connections");
         } else {
             throw std::invalid_argument("unknown option: " + std::string(option));
         }
@@ -102,11 +118,47 @@ const char* session_message(SessionError error) {
     return "The session failed";
 }
 
-/// Prints playback-state changes until stopped, from its own thread.
+const char* media_end_name(MediaRequestEnd end) {
+    switch (end) {
+    case MediaRequestEnd::complete:
+        return "complete";
+    case MediaRequestEnd::cancelled:
+        return "cancelled";
+    case MediaRequestEnd::timeout:
+        return "timeout";
+    case MediaRequestEnd::io_error:
+        return "io_error";
+    case MediaRequestEnd::source_error:
+        return "source_error";
+    case MediaRequestEnd::internal_error:
+        return "internal_error";
+    }
+    return "internal_error";
+}
+
+void print_media_log(MediaServer& server) {
+    for (const auto& entry : server.take_request_log()) {
+        const auto* method = entry.method == MediaRequestMethod::get    ? "get"
+                             : entry.method == MediaRequestMethod::head ? "head"
+                                                                        : "other";
+        std::ostringstream line;
+        line << "Media: id=" << entry.request_id << " method=" << method
+             << " status=" << entry.status << " offset=" << entry.offset
+             << " declared=" << entry.declared_length << " expected=" << entry.expected_body_bytes
+             << " written=" << entry.body_bytes_written
+             << " header=" << (entry.header_completed ? "yes" : "no")
+             << " active=" << entry.active_on_accept << " accepted_ms=" << entry.accepted_ms
+             << " last_write_ms=" << entry.last_body_write_ms << " closed_ms=" << entry.closed_ms
+             << " end=" << media_end_name(entry.end) << '\n';
+        std::cout << line.str() << std::flush;
+    }
+}
+
+/// Prints playback-state changes and drained diagnostics from its own thread.
 class StateReporter {
 public:
-    explicit StateReporter(UrlPlaybackSession& session)
-        : thread_([this, &session] { report(session); }) {}
+    StateReporter(UrlPlaybackSession& session, MediaServer& server)
+        : thread_([this, &session, &server] { report(session, server); }) {}
     ~StateReporter() {
         stop();
     }
@@ -124,13 +176,15 @@ public:
 private:
     static void print_event_log(UrlPlaybackSession& session) {
         for (const auto& entry : session.take_event_log()) {
-            std::cout << "Event: " << entry << std::endl;
+            std::cout << (entry.rfind("buffer ", 0) == 0 ? "Buffer: " : "Event: ") + entry + "\n"
+                      << std::flush;
         }
     }
-    void report(UrlPlaybackSession& session) {
+    void report(UrlPlaybackSession& session, MediaServer& server) {
         auto last = session.status();
         while (!done_) {
             print_event_log(session);
+            print_media_log(server);
             const auto current = session.wait_for_change(last.playback_state, state_poll);
             if (current.playback_state != last.playback_state) {
                 std::cout << "State: " << current.playback_state << std::endl;
@@ -145,6 +199,7 @@ private:
             last = current;
         }
         print_event_log(session);
+        print_media_log(server);
     }
 
     std::atomic_bool done_{false};
@@ -270,6 +325,8 @@ int cast(const CastArguments& arguments) {
     server_options.receiver_port = arguments.port;
     server_options.request_timeout_ms = media_request_timeout_ms;
     server_options.content_type = arguments.content_type;
+    server_options.record_request_diagnostics = arguments.media_log;
+    server_options.max_connections = arguments.media_connections;
     auto server = MediaServer::start(std::move(source), server_options);
 
     UrlPlaybackOptions options;
@@ -277,19 +334,26 @@ int cast(const CastArguments& arguments) {
     options.media_url = server->url();
     options.start_timeout = std::chrono::milliseconds(arguments.start_timeout_ms);
     options.record_event_structure = arguments.event_log;
+    options.enable_mrp = !arguments.minimal_remote;
     std::cout << "Starting playback." << std::endl;
     auto session = UrlPlaybackSession::start(*credentials, std::move(options));
     std::cout << "State: " << session->status().playback_state << std::endl;
-    std::cout << "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
-              << std::endl;
+    if (arguments.minimal_remote) {
+        std::cout << "Minimal remote comparison: MRP controls unavailable. Press Enter to stop."
+                  << std::endl;
+    } else {
+        std::cout << "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+                  << std::endl;
+    }
 
     bool controls_ok = true;
     {
-        StateReporter reporter(*session);
+        StateReporter reporter(*session, *server);
         controls_ok = control_loop(*session);
     }
     session->stop();
     server->stop(); // Joins every read before the summary reads the statistics.
+    print_media_log(*server);
     write_summary(session->status(), *reads);
     return controls_ok && !session->status().failed ? 0 : 1;
 }

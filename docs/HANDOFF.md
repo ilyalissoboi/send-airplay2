@@ -17,7 +17,8 @@ All ten checks passed in its [CI run](https://github.com/ilyalissoboi/send-airpl
 and at code-equivalent documentation head `759de2d30043aa7bd6873f9e2700adceffa8e187`
 in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37553955465).
 CI is separate from hardware gates; inspect PR #12's actual head/checks,
-including documentation-only follow-ups. Step 2's final documentation head
+including documentation-only follow-ups. Observer head `c13d59ff485bb5883d91f9e05cd7369bf4bf88ef`
+passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37557470097). Step 2's final documentation head
 `dafb70a4bcec0236b8f20901d745a1546ff853ba` passed all ten checks before this work.
 The observer-documentation head `3caad5ffedde8942102138ac774df23b015f5e94`
 also passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37555176050).
@@ -82,13 +83,23 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   video presentation did not. The original file plays normally past 18 s on the
   PC (user-confirmed). Home return for this particular run is unconfirmed.
   See the [stop/full-clip artifact](validation/native-stop-buffering-windows-static-2026-10-07.json).
-- **Next:** prioritize the video-freeze-after-buffering failure, then establish
-  explicit receiver-stop intent. Add bounded HTTP per-request completion/write
-  diagnostics and correlate reviewed receiver buffer/stall scalars; current source
-  read counters do not prove completed response bodies. Then run
-  actual network interruption/recovery when available. The user cannot perform
-  network disconnect/reconnect in this session. Preserve credentials and
-  independent remote/URL sessions through ordered teardown.
+- **HTTP/buffering comparison (D35):** opt-in socket-write/completion and receiver
+  scalar diagnostics are implemented. A fresh default run paused at zero without
+  remote input (first frame visible). Minimal remote/four slots passed the whole
+  clip's video/audio/Home. A same-executable MRP/four-slot repeat buffered but
+  recovered normal video/audio/Home; slot release closely preceded new range
+  admission and playback resumption. MRP with 16 slots admitted up to six active
+  requests and passed full video/audio/Home with no recorded loading transition.
+  Admission starvation is a supported buffering hypothesis; the original
+  persistent freeze and startup pause are unresolved. The default remains four;
+  comparison flags are explicit. See the [four-run artifact](validation/native-http-buffering-windows-static-2026-10-07.json).
+- **Next:** repeat the explicit `--media-connections 16` comparison with controls
+  and lifecycle coverage, then choose a bounded normal-cast admission policy.
+  Investigate the intermittent startup pause and require moving-video proof for
+  persistent-freeze resolution. Establish explicit receiver-stop intent, then
+  test actual network interruption/recovery when available. The user cannot
+  perform network disconnect/reconnect in this session. Preserve credentials,
+  independent remote/URL sessions and ordered teardown; no automatic Play/seek.
 - **Current support:** private native casting/control experiment on Apple TV 4K /
   tvOS 26.6 (23L773) / Windows 11 x64. No public playback ABI or packaged-host
   proof. The temporary Python firewall rule remains from reference testing and
@@ -380,6 +391,29 @@ with last state playing and no stopped/idle/ended event; preserve connection_los
 until explicit, validated receiver intent is available. Pause or socket EOF alone
 must not be relabelled normal stop. Notification shapes are retained without their
 unmapped values; do not guess their semantics. No dependency or copied source.
+
+**D35 (engineering decision, 2026-10-07):** diagnose the sustained video freeze
+before changing receiver/session behavior. Add optional fixed-size HTTP completion
+records and allowlisted finite receiver scalar values. Count partial socket writes
+even after cancellation; publish each record after pending callbacks drain.
+Complete local TCP writes are not receiver receipt/decoding proof. Preserve the
+10-minute cast request budget, all queue commands, session/control topology and
+teardown order in the default mode. `--minimal-remote` explicitly selects the
+existing SETUP/event-only comparison (omitting remote RECORD/data/MRP/feedback),
+with no MRP ownership/control/EOF telemetry. It is not an automatic fallback.
+No automatic Play/seek workaround, dependency or copied source.
+Static/shared Release passed 23/23 CTest targets (13.74/13.39 s), offline runner
+contracts passed 10/10, and touched C++ format/diff checks passed. The instrumented
+normal-mode reproduction instead paused at zero without remote input; the user
+saw its first frame. Preserve this separate startup failure. The explicit minimal
+comparison subsequently played the full clip with normal video/audio/Home by
+user report. A same-executable default-mode repeat buffered but resumed normal
+video. HTTP admission/resume timing suggests comparing the bounded slot limit;
+`--media-connections 1..16` exposes that explicit test while the default remains 4.
+MRP/16 slots then passed full video/audio/Home with no recorded loading transition
+and up to six active requests. The default remains four until a normal-cast budget
+is chosen after additional control/lifecycle validation. The persistent freeze
+itself has not been reproduced by these new runs.
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1373,10 +1407,11 @@ sequence. Existing sanitized event traces omit buffer/stall values and request
 completion/write errors, so they cannot identify the cause. No behavior fix or
 automatic Play/seek retry is supported by this evidence.
 
-**Proposed next investigation:** bounded opt-in diagnostics with local request
+**Investigation implementation (D35):** bounded opt-in diagnostics with local request
 numbers, GET/HEAD, numeric selected ranges/status, bytes written, response
 completion and timeout/cancel/I/O categories, plus active-connection counts.
-Correlate only reviewed finite receiver buffer/stall fields; omit media URLs,
+Implemented `cast --media-log` and allowlisted `--event-log` rate/position/duration/
+readyToPlay/stallCount values. Correlate these finite receiver scalars; omit media URLs,
 identifiers and raw payloads. Use the unchanged supplied clip, first a natural
 reproduction, then controlled native-session comparisons. Require observed moving
 video past the stall through clip end before calling recovery successful.
@@ -1384,6 +1419,21 @@ The [sanitized artifact](validation/native-stop-buffering-windows-static-2026-10
 contains exact executable/source fingerprints and event/state/position facts.
 The initial missed remote-stop window was ended by the sender and contributes no
 remote-stop evidence. The allowed executable was restored after every run.
+
+### D35 instrumented HTTP/buffering follow-up
+
+See the dated [receiver record](receiver-validation.md#instrumented-httpbuffering-investigation-2026-10-07)
+and [four-run artifact](validation/native-http-buffering-windows-static-2026-10-07.json).
+Socket writes are now distinguished from source reads, including partial failures,
+with no addresses/URLs/metadata in scalar records. Four occupied slots coincided with new small range admission occurring only
+when older read-ahead requests ended, supporting an admission-delay hypothesis. Increasing the
+explicit limit to 16 while retaining MRP admitted up to six requests and passed
+full video/audio/Home without recorded loading. Abandoned read-ahead requests also
+occurred in successful runs, so I/O error counts alone are not a playback failure.
+`stallCount=0` did not exclude visible buffering. The same-source minimum session
+also passed; a default repeat buffered but recovered. Preserve the earlier video
+FAIL and this separate capacity candidate, without claiming MRP caused the freeze
+or declaring the startup pause solved. Default cast/server budget is still four.
 
 ## 6. Screenbox integration findings
 
@@ -1430,9 +1480,11 @@ the recorded source snapshot is still current.
    playing, without an explicit terminal state, so normal stop intent remains
    unresolved. A full 131.6-second clip reached natural EOF without seeking, but
    **video froze after buffering near 18 s while audio continued to clip end**
-   (user-confirmed); the same source file plays normally on the PC. Prioritize
-   response-completion/write and receiver-buffer diagnostics for this sustained
-   video presentation failure. Finish actual
+   (user-confirmed); the same source file plays normally on the PC. D35 diagnostics and
+   controlled comparisons are implemented: minimal/four and MRP/16 passed full
+   video/audio/Home; MRP/four buffered but recovered. Repeat the higher-capacity
+   control/lifecycle case before choosing a normal cast budget. The original
+   persistent freeze and spontaneous startup pause remain unresolved. Finish actual
    network interruption/recovery when available. Investigate the
    buffering pause and renewed loading seen in the mixed native/pyatv run; one
    preliminary native EOF probe paused at startup and needed explicit play.

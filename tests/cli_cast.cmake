@@ -19,8 +19,11 @@ run_cast(2 "unknown option: --pin" "unknown option" --address 127.0.0.1 --profil
 run_cast(2 "incomplete option: --file" "incomplete option" --address 127.0.0.1 --profile p --file)
 run_cast(2 "port must be 1..65535" "port bound" --address 127.0.0.1 --profile p --file "${media}" --port 0)
 run_cast(2 "start timeout must be 1..120000" "start timeout bound" --address 127.0.0.1 --profile p --file "${media}" --start-timeout-ms 0)
+run_cast(2 "media connections must be 1..16" "media connection lower bound" --address 127.0.0.1 --profile p --file "${media}" --media-connections 0)
+run_cast(2 "media connections must be 1..16" "media connection upper bound" --address 127.0.0.1 --profile p --file "${media}" --media-connections 17)
 run_cast(2 "not an existing regular file" "absent media" --address 127.0.0.1 --profile p --file "${WORK_DIR}/cli-cast-absent.bin")
 # A random-looking profile is absent from the store (Windows), or the store is
 # unsupported (other platforms); both stop before the media server or receiver.
 run_cast(1 "Credentials:" "absent profile" --address 127.0.0.1 --profile cast-test-absent-7f3a9c --file "${media}")
+run_cast(1 "Credentials:" "diagnostic flags accepted before profile refusal" --address 127.0.0.1 --profile cast-test-absent-7f3a9c --file "${media}" --event-log --media-log --minimal-remote --media-connections 16)
 file(REMOVE "${media}")

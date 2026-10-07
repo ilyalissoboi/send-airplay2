@@ -248,6 +248,46 @@ void event_tests(const std::string& directory) {
 bool upper_hex(char ch) {
     return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F');
 }
+
+void buffering_diagnostic_tests() {
+    group = "allowlisted buffering values";
+    const auto diagnostics = [](PlistDictionary fields) {
+        return describe_buffering_values(
+            encode_binary_plist(PlistDictionary{{"type", "playbackState"},
+                                                {"params", std::move(fields)},
+                                                {"name", "private-player-name"},
+                                                {"url", "http://private.example/media"}}));
+    };
+    check(diagnostics(
+              {{"rate", 1.0},
+               {"position", 0},
+               {"duration", PlistDictionary{{"value", 1316}, {"timescale", 10}, {"flags", 1}}},
+               {"readyToPlay", false},
+               {"stallCount", 2},
+               {"uuid", "private-id"}}) ==
+              "buffer params.rate=1.000 params.position=0.000 params.duration=131.600 "
+              "params.readyToPlay=no params.stallCount=2",
+          "fixed numeric/boolean fields and valid CMTime; no metadata values or key names");
+    check(diagnostics({{"rate", "private-rate"},
+                       {"position", -1},
+                       {"duration", std::numeric_limits<double>::infinity()},
+                       {"readyToPlay", "private-ready"},
+                       {"stallCount", -1}})
+              .empty(),
+          "wrong types, negative times/counters and nonfinite values are omitted");
+    check(diagnostics({{"position", PlistDictionary{{"value", 10}, {"timescale", 1}, {"flags", 4}}},
+                       {"rate", std::numeric_limits<double>::quiet_NaN()},
+                       {"duration", 1e100},
+                       {"stallCount", std::int64_t{4294967296LL}}})
+              .empty(),
+          "indefinite CMTime and unbounded numeric values are omitted");
+    check(describe_buffering_values(encode_binary_plist(PlistDictionary{
+              {"type", "private-unknown-type"},
+              {"rate", 0},
+              {"value", PlistDictionary{{"readyToPlay", true}, {"stallCount", 0}}}})) ==
+              "buffer root.rate=0.000 value.readyToPlay=yes value.stallCount=0",
+          "bare root/value dictionaries use fixed scope labels and never output event type");
+}
 int hex_value(char ch) {
     return ch <= '9' ? ch - '0' : ch - 'A' + 10;
 }
@@ -299,6 +339,7 @@ int main(int argc, char** argv) {
         header_tests();
         response_tests(directory);
         event_tests(directory);
+        buffering_diagnostic_tests();
         random_identifier_tests();
     } catch (const std::exception& error) {
         std::cerr << "Unexpected test exception [" << group << "]: " << error.what() << '\n';

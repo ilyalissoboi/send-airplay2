@@ -144,7 +144,12 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    intent is validated. One full clip reached natural EOF, but the user observed
    video frozen after a buffering stop near 18 s while audio continued normally
    through clip end. Prioritize this video presentation failure; playing telemetry
-   and cleanup success do not prove moving video. Longer reliability remains open.
+   and cleanup success do not prove moving video. D35 diagnostics now correlate
+   stalled read-ahead requests occupying four slots with buffering. Minimal/four
+   and MRP/16 comparisons passed full video/audio/Home; a default MRP/four repeat
+   buffered but recovered. Repeat the explicit higher-capacity control/lifecycle
+   case before choosing the normal cast budget (currently four). Persistent freeze,
+   spontaneous startup pause and longer reliability remain open.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

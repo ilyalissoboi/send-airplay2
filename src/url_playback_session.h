@@ -63,8 +63,8 @@ struct UrlPlaybackOptions {
     std::chrono::milliseconds start_timeout{30000}; // Until the receiver reports "playing".
     std::chrono::milliseconds feedback_interval{2000};
     StreamConnector connect; // Defaults to connect_receiver.
-    /// Diagnostic: keep value-free outlines of received events
-    /// (describe_event_structure) for take_event_log().
+    /// Diagnostic: keep event outlines and allowlisted numeric/boolean buffering
+    /// values (session_messages.h) for take_event_log().
     bool record_event_structure = false;
     /// Keep false only for the recorded minimum-session experiment/tests.
     bool enable_mrp = true;

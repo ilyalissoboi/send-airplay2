@@ -124,5 +124,11 @@ struct SessionEvent {
  * metadata never appear. At most 48 paths, 4 levels deep.
  */
 [[nodiscard]] std::string describe_event_structure(const Bytes& body);
+/** Fixed-key numeric/boolean buffering diagnostics from the root, params and
+ * value dictionaries. Only rate, position, duration, readyToPlay and stallCount
+ * are included. Unknown keys, strings, malformed/nonfinite values are omitted;
+ * time values accept numeric seconds or valid numeric CMTime (including zero).
+ * This is observation only; it does not change playback or EOF decisions. */
+[[nodiscard]] std::string describe_buffering_values(const Bytes& body);
 } // namespace send_airplay2::detail
 #endif

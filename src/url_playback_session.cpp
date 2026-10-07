@@ -415,11 +415,13 @@ void UrlPlaybackSession::event_loop() {
             auto request = events_->receive(operation);
             std::optional<SessionEvent> event;
             std::string outline;
+            std::string buffering;
             try {
                 event = parse_session_event(request.body);
                 if (options_.record_event_structure) {
                     outline = request.method + " " + request.target + " " +
                               describe_event_structure(request.body);
+                    buffering = describe_buffering_values(request.body);
                 }
             } catch (const TransportException&) {
                 // Answered already; an unreadable body does not end the session.
@@ -437,6 +439,12 @@ void UrlPlaybackSession::event_loop() {
                         event_log_.pop_front();
                     }
                     event_log_.push_back(std::move(outline));
+                    if (!buffering.empty()) {
+                        if (event_log_.size() == max_event_log) {
+                            event_log_.pop_front();
+                        }
+                        event_log_.push_back(std::move(buffering));
+                    }
                 }
                 if (!event) {
                     ++status_.unreadable_events;

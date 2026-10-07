@@ -13,6 +13,10 @@ and automatically cleaned up but classified connection_lost/exit 1. Normal stop
 classification and actual network-loss recovery remain G3 work. A full 132-second
 native run reached EOF cleanup but **failed sustained video presentation**:
 buffering near 18 s was followed by frozen video while audio continued to clip end.
+D35 follow-up: the minimum remote session played the full clip normally; default
+MRP/four slots buffered but recovered; MRP/16 slots played normal video/audio and
+returned Home, with no recorded loading transition. Admission capacity is a
+supported candidate, not proof that the original persistent freeze is fixed.
 See the dated observations below; record each receiver/firmware/platform separately.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
@@ -67,7 +71,7 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native PASS: forward/backward command/telemetry and user-observed movement (dated G2 record) |
 | Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native PASS: duration 131.6 s and positions follow pause/forward/backward seek |
 | End-of-file | Correct ended state and resource cleanup | Native near-end seek/play: automatic media_end and joined cleanup, exit 0 with stdin held open; user confirmed video/audio and home-screen return (dated lifecycle record) |
-| Sustained full-clip video | Moving video and normal audio through the full clip | FAIL: buffering near 18 s, then video frozen through clip end while audio continued normally; telemetry/EOF cleanup still passed (dated stop/buffering record) |
+| Sustained full-clip video | Moving video and normal audio through the full clip | Original FAIL: video froze after buffering near 18 s; audio/EOF cleanup passed. D35 follow-up: minimal remote/four slots and MRP/16 slots PASS video/audio/Home; MRP/four slots buffered but recovered. Persistent-freeze resolution remains unproven. |
 | Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; native MRP Stop accepted followed by teardown and user-confirmed home return; receiver-remote stop returned home and automatically cleaned up, but classified connection_lost/exit 1; protocol idle unresolved |
 | Repeated casting | Ten start/stop cycles without stale sessions | Native PASS: ten short independent casts, alternating five MRP Stop and five direct teardown; owned playing status, exit 0, no session/failed-read errors in each. Long sessions and visible home-screen observation remain separate |
 | Receiver sleep/wake | Terminal cleanup; fresh cast works after waking | PASS: user-confirmed sleep, automatic connection_lost/exit 1 cleanup, fresh cast after wake without pairing, normal video/audio and EOF return home |
@@ -731,3 +735,81 @@ child output and exception text are omitted:
 
 These artifacts are selected-case evidence for this receiver/firmware/host only.
 Offline runner tests and native/sanitizer CI remain distinct from device evidence.
+
+
+### Instrumented HTTP/buffering investigation, 2026-10-07
+
+D35 adds bounded per-request socket-write/completion facts and allowlisted finite
+receiver scalars; neither constitutes decoder or visual playback proof. The same
+53,953,926-byte MP4 and SHA-256 were retained, with no pyatv controller. Each run
+fingerprints its own executable and source blobs; the explicit comparison flag
+was added after the first run, so the executable fingerprints differ.
+
+The first control-enabled reproduction did not reach sustained playback. It
+reported playing briefly, then paused at zero about 1.6 s after cast start. The
+user saw the first frame and confirmed no remote buttons were pressed. MRP
+remained owned/paused at zero with five successful heartbeats. At the 175-second
+observation deadline the driver sent Enter; ordered cleanup reported sender_stop,
+cleaned=yes and no session failure. This is a separate startup failure, not a
+reproduction of the earlier moving-video freeze near 18 s. Audio and Home return
+were not confirmed. The driver timed out rather than reaching natural EOF; its
+exit-code field was not captured on that path, so no exit code is inferred.
+
+Eight GET range requests were recorded: six completed and two ended with I/O
+errors after partial writes. Request 2 selected the full file but wrote 4,849,664
+bytes; request 4 selected offset 3,158,760/length 23,842,072 and wrote 13,107,200.
+Their last reported body progress was at 720/1,576 ms after server construction;
+I/O completion arrived at 19,726/20,534 ms. No media request reached its 600,000 ms
+deadline. Source reads totalled 58,908,600 bytes, while socket writes totalled
+58,777,528 bytes: two read chunks were never reported written. Overlapping written
+ranges covered the representation, which still does not prove receiver receipt,
+per-request completion or decoding. Last-write timestamps describe completion
+callbacks, not packet-level progress within an outstanding write.
+
+A second full-clip comparison explicitly uses the existing minimum native remote
+SETUP/event-only session, omitting remote RECORD/data/MRP/remote feedback. Logging,
+file source, HTTP range policy and four-connection budget are unchanged. Its
+user confirmed normal video for the whole clip without buffering/freezing, normal
+audio and Home return at EOF. Its URL stopped event produced receiver_stop/exit 0
+without MRP EOF evidence. No fallback or automatic Play/seek retry is introduced. Aborted read-ahead requests alone do not identify
+which side intentionally cancelled a transfer or establish the freeze's cause.
+
+
+The same-executable MRP/four-slot repeat instead buffered and recovered. URL
+loading intervals were 56.0-62.4, 64.6-69.1 and 105.9-106.0 seconds on the driver
+clock (cast began at 40.1). The user observed buffering near clip time 18 s, then
+normal video/audio through EOF and Home return. All four slots were occupied at
+server times 13,933-22,116 and 22,202-28,747 ms; a new small range was accepted at
+22,116/28,747 ms exactly when an older stalled response ended. Natural media_end,
+exit 0 and joined cleanup passed. `stallCount=0`/readyToPlay=yes on playing events
+did not exclude these observed pauses. MRP position extrapolation ran ahead during
+the loading interval and later corrected; it is not a video-progress measurement.
+
+For the next comparison only the media limit increased to 16 (MRP stayed enabled;
+the server API already supported 1..16). The trace admitted low-offset ranges
+with five/six active requests and had no recorded loading transition. The user
+confirmed normal video/audio for the entire duration and Home at EOF. Natural
+media_end, exit 0 and cleanup passed. This supports admission-capacity starvation
+as a cause of the buffering pauses: long-lived read-ahead transfers consume the
+four-slot budget while new requests wait for acceptance. Backlog arrival times
+are not measured, so the timing remains inference, not a packet-level proof.
+The default remains four; `--media-connections 16` is an explicit comparison.
+
+| Run | HTTP requests | Complete / I/O / cancelled | Local body bytes written | Presentation / end |
+|---|---:|---|---:|---|
+| MRP/four, startup pause | 8 | 6 / 2 / 0 | 58,777,528 | First frame/paused at zero; sender deadline/Enter cleanup |
+| Minimal remote/four | 30 | 12 / 17 / 1 | 100,423,718 | Normal full video/audio/Home; URL stopped cleanup, exit 0 |
+| MRP/four repeat | 27 | 13 / 14 / 0 | 99,581,886 | Buffered then normal full video/audio/Home; media_end, exit 0 |
+| MRP/16 | 29 | 14 / 15 / 0 | 125,410,732 | Normal full video/audio/Home; no loading transition; media_end, exit 0 |
+
+No request hit its server deadline and no source read failed. Successful playback
+also had I/O errors on abandoned read-ahead requests; those alone do not establish
+failure. The original frozen-video/audio-continuing run remains a separate FAIL,
+and the spontaneous startup pause remains unresolved. Next repeat the capacity
+comparison with controls/lifecycle checks before choosing the normal cast budget;
+do not reduce MRP functionality or add automatic Play/seek to conceal failures.
+Static/shared Release passed 23/23 CTest targets (13.74/13.39 s), offline runner
+contracts 10/10, touched C++ clang-format and diff checks passed. CI is separate
+and must be inspected at PR #12's actual head. The four exact runtime/source and
+observer records are in the [sanitized artifact](validation/native-http-buffering-windows-static-2026-10-07.json).
+Each staged allowed executable was restored; no firewall or receiver settings changed.
