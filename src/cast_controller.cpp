@@ -240,6 +240,9 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
     options.start_position_seconds = settings_.start_position_seconds;
     options.start_timeout = settings_.start_timeout;
     options.connect = dependencies_.connect;
+    if (dependencies_.adjust_session) {
+        dependencies_.adjust_session(options);
+    }
     session = UrlPlaybackSession::start(*credentials, std::move(options), &cancel_requested_);
 }
 

@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // CastController lifecycle and failure mapping with injected credentials and
-// connectors. Loopback only: no receiver, credential store or private media.
+// connectors, plus active sessions against the scripted fake receiver.
+// Loopback only: no receiver, credential store or private media.
 #include "cast_controller.h"
 #include "control_crypto.h"
+#include "fake_receiver.h"
 #include "credential_store.h"
 #include "mrp_session.h"
 #include "receiver_http.h"
@@ -21,10 +23,12 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace {
 using namespace send_airplay2;
 using namespace send_airplay2::detail;
+using namespace send_airplay2::detail::testing;
 using namespace std::chrono_literals;
 
 int failures = 0;
@@ -320,6 +324,145 @@ void cancellation_tests() {
     check(probe->releases == 1, "cancelled start releases the source once");
 }
 
+/// Credentials, connector and session timing for one scripted fake receiver.
+/// The fake has no MRP data stream, so the session runs without MRP and its
+/// commands report not_owned; command success needs an MRP-capable fake.
+CastDependencies fake_receiver_dependencies(FakeReceiver& receiver) {
+    CastDependencies dependencies;
+    dependencies.load_credentials = [&receiver](std::string_view) {
+        // Direct initialization from the returned prvalue; PairCredentials is
+        // neither copyable nor movable.
+        return std::unique_ptr<PairCredentials>(new PairCredentials(receiver.credentials()));
+    };
+    dependencies.connect = receiver.connector();
+    dependencies.adjust_session = [](UrlPlaybackOptions& options) {
+        options.enable_mrp = false;
+        options.start_confirmation_interval = 20ms; // Keep scripted scenarios fast.
+        options.feedback_interval = 30ms;
+    };
+    return dependencies;
+}
+
+const std::vector<std::string> url_then_remote{"URL", "remote"};
+
+void active_session_tests() {
+    group = "active session";
+    auto probe = std::make_shared<SourceProbe>();
+    FakeReceiver receiver({});
+    {
+        CastController controller(loopback_settings(), probed_source(probe),
+                                  fake_receiver_dependencies(receiver));
+        check(controller.start() == CastResult::ok, "scripted receiver start");
+        auto snapshot = controller.snapshot();
+        check(snapshot.phase == CastPhase::active && snapshot.start_result == CastResult::ok &&
+                  snapshot.session.playback_state == "playing" && !snapshot.session.cleaned_up,
+              "started snapshot is active and playing");
+        check(controller.start() == CastResult::invalid_state, "second start while active");
+        check(controller.command(PlaybackCommand::pause, 0) == CastResult::not_owned,
+              "command without an MRP session reports not_owned");
+
+        receiver.push_state("Paused");
+        const auto paused = controller.wait_for_change("playing", 2s);
+        check(paused.phase == CastPhase::active && paused.session.playback_state == "paused" &&
+                  paused.session.end_reason == SessionEnd::none,
+              "receiver pause reaches wait_for_change without ending the session");
+
+        controller.stop();
+        snapshot = controller.snapshot();
+        check(snapshot.phase == CastPhase::stopped &&
+                  snapshot.session.end_reason == SessionEnd::sender_stop &&
+                  snapshot.session.cleaned_up && !snapshot.session.failed,
+              "stop records sender_stop after joined cleanup");
+        check(receiver.control_close_order() == url_then_remote,
+              "stop closes the URL session before the remote session");
+        check(controller.command(PlaybackCommand::play, 0) == CastResult::ended,
+              "command after stop");
+        controller.stop();
+        check(controller.snapshot().session.end_reason == SessionEnd::sender_stop,
+              "repeated stop keeps the first end reason");
+        check(probe->releases == 0, "source retained until destruction");
+    }
+    check(probe->releases == 1, "active session releases the source exactly once");
+}
+
+void natural_end_tests() {
+    group = "natural end";
+    auto probe = std::make_shared<SourceProbe>();
+    FakeReceiver receiver({});
+    {
+        CastController controller(loopback_settings(), probed_source(probe),
+                                  fake_receiver_dependencies(receiver));
+        check(controller.start() == CastResult::ok, "scripted receiver start");
+        receiver.push_state("Ended");
+        check(eventually([&] { return controller.snapshot().session.cleaned_up; }),
+              "receiver end cleans the session without host input");
+        const auto ended = controller.snapshot();
+        check(ended.phase == CastPhase::ended &&
+                  ended.session.end_reason == SessionEnd::media_end && !ended.session.failed,
+              "ended phase with media_end");
+        const auto wait_started = std::chrono::steady_clock::now();
+        (void)controller.wait_for_change("playing", 2s);
+        check(std::chrono::steady_clock::now() - wait_started < 1s,
+              "wait returns promptly once the session has ended");
+        check(controller.command(PlaybackCommand::pause, 0) == CastResult::ended,
+              "command after natural end");
+        controller.stop();
+        const auto stopped = controller.snapshot();
+        check(stopped.phase == CastPhase::stopped &&
+                  stopped.session.end_reason == SessionEnd::media_end,
+              "host stop after natural end keeps media_end");
+    }
+    check(probe->releases == 1, "natural end releases the source exactly once");
+}
+
+void connection_loss_tests() {
+    group = "connection loss";
+    auto probe = std::make_shared<SourceProbe>();
+    FakeReceiver receiver({});
+    {
+        CastController controller(loopback_settings(), probed_source(probe),
+                                  fake_receiver_dependencies(receiver));
+        check(controller.start() == CastResult::ok, "scripted receiver start");
+        receiver.end_event_channel();
+        check(eventually([&] { return controller.snapshot().session.cleaned_up; }),
+              "event channel loss cleans the session without host input");
+        const auto lost = controller.snapshot();
+        check(lost.phase == CastPhase::ended &&
+                  lost.session.end_reason == SessionEnd::connection_lost &&
+                  lost.session.failure_channel == SessionFailureChannel::url_events &&
+                  lost.session.failure_reason == SessionFailureReason::disconnected,
+              "loss is reported as connection_lost on the URL event channel");
+        check(controller.command(PlaybackCommand::play, 0) == CastResult::ended,
+              "command after connection loss");
+        controller.stop();
+        check(controller.snapshot().session.end_reason == SessionEnd::connection_lost,
+              "stop after loss keeps connection_lost");
+    }
+    check(probe->releases == 1, "connection loss releases the source exactly once");
+}
+
+void concurrent_stop_tests() {
+    group = "concurrent stop";
+    auto probe = std::make_shared<SourceProbe>();
+    FakeReceiver receiver({});
+    {
+        CastController controller(loopback_settings(), probed_source(probe),
+                                  fake_receiver_dependencies(receiver));
+        check(controller.start() == CastResult::ok, "scripted receiver start");
+        std::thread first([&] { controller.stop(); });
+        std::thread second([&] { controller.stop(); });
+        first.join();
+        second.join();
+        const auto snapshot = controller.snapshot();
+        check(snapshot.phase == CastPhase::stopped && snapshot.session.cleaned_up &&
+                  snapshot.session.end_reason == SessionEnd::sender_stop,
+              "concurrent stops finish one teardown");
+        check(receiver.control_close_order() == url_then_remote,
+              "concurrent stops close each session once, in order");
+    }
+    check(probe->releases == 1, "concurrent stops release the source exactly once");
+}
+
 void command_argument_tests() {
     group = "command arguments";
     CastController controller(loopback_settings(), probed_source(std::make_shared<SourceProbe>()),
@@ -344,6 +487,10 @@ int main() {
     start_failure_tests();
     cancellation_tests();
     command_argument_tests();
+    active_session_tests();
+    natural_end_tests();
+    connection_loss_tests();
+    concurrent_stop_tests();
     if (failures != 0) {
         std::cerr << failures << " failure(s)\n";
         return 1;

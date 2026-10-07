@@ -62,6 +62,10 @@ using CredentialLoader = std::function<std::unique_ptr<PairCredentials>(std::str
 struct CastDependencies {
     CredentialLoader load_credentials;
     StreamConnector connect;
+    /// Applied to the filled session options just before the session starts,
+    /// for scripted fakes (shorter intervals, no MRP data stream). Production
+    /// and the C interface leave it empty.
+    std::function<void(UrlPlaybackOptions&)> adjust_session;
 };
 
 /// Controller fields are read together; session and MRP status are each copied

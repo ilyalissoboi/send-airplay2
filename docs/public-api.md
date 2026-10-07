@@ -101,9 +101,12 @@ Telemetry only (no observer needed):
 
 1. **Receiver validation through the interface** (the plan above). Until it runs,
    only the CLI path has hardware evidence.
-2. **Happy-path tests through the controller.** The fake receiver lives inside
-   `url_playback_session_tests.cpp`. Extracting it into a shared test header would
-   let `cast_controller_tests` cover active status, commands and natural end.
+2. **Command success through the controller.** The shared fake receiver
+   (`tests/fake_receiver.h`) has no MRP data stream, so controller tests run the
+   session with MRP disabled and see commands return `NOT_OWNED`. Testing
+   pause/play/seek/stop acceptance needs an MRP-capable fake: data-stream SETUP
+   with derived keys, the MRP peer now inside `mrp_tests.cpp`, and ownership
+   fixtures that bind to the media server's random URL.
 3. **C# binding and packaged UWP proof:** P/Invoke over this header, native loading,
    brokered file reads and inbound serving in a packaged app.
 4. **Credential stores for other platforms** (Keychain, libsecret, Android
@@ -130,7 +133,13 @@ CTest targets each. New targets:
   command mapping; created/stopped phases; absent profile without a connection;
   credential-store failure; unreachable receiver; media-server argument
   rejection; prompt cancellation of a blocked start; seek argument bounds; source
-  release exactly once. It passed 10 repeated local runs.
+  release exactly once. Against the shared scripted fake receiver (MRP
+  disabled through the test-only `adjust_session` hook) it also covers a
+  successful start, a receiver pause seen through `wait_for_change`, stop with
+  URL-then-remote closure, natural end (`media_end`), event-channel loss
+  (`connection_lost` on `url_events`), concurrent stops, and commands returning
+  `ENDED` after each end. It passed 10 sequential runs and 18 runs as six
+  concurrent copies.
 
 These are synthetic loopback checks. They establish neither receiver behavior nor
 packaged-host behavior.

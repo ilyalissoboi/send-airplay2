@@ -1,0 +1,602 @@
+// SPDX-License-Identifier: Apache-2.0
+// Scripted fake AirPlay receiver for session-level tests, shared by the
+// UrlPlaybackSession and CastController tests. Public synthetic identities and
+// secrets only; the fake derives its keys from literal labels. It implements
+// the URL and remote-control SETUP/event sequence without the MRP data stream,
+// so sessions using it must run with UrlPlaybackOptions::enable_mrp = false.
+#ifndef SEND_AIRPLAY2_TESTS_FAKE_RECEIVER_H
+#define SEND_AIRPLAY2_TESTS_FAKE_RECEIVER_H
+#include "url_playback_session.h"
+#include "binary_plist.h"
+#include "control_crypto.h"
+#include "control_records.h"
+#include "identity_crypto.h"
+#include "pairing_tlv.h"
+#include "receiver_http.h"
+#include "receiver_stream.h"
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <chrono>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <utility>
+#include <vector>
+
+namespace send_airplay2::detail::testing {
+using namespace std::chrono_literals;
+
+inline Bytes text(std::string_view value) {
+    return Bytes(value.begin(), value.end());
+}
+template <std::size_t Size> Bytes bytes(const std::array<std::uint8_t, Size>& input) {
+    return Bytes(input.begin(), input.end());
+}
+template <typename Predicate> bool eventually(Predicate predicate) {
+    const auto deadline = std::chrono::steady_clock::now() + 3s;
+    while (std::chrono::steady_clock::now() < deadline) {
+        if (predicate()) {
+            return true;
+        }
+        std::this_thread::sleep_for(5ms);
+    }
+    return predicate();
+}
+
+// ---- Independent request framing for the fake receiver ----
+
+struct ParsedRequest {
+    std::string method;
+    std::string target;
+    std::string protocol;
+    std::vector<std::pair<std::string, std::string>> headers; // Lower-case names.
+    Bytes body;
+    [[nodiscard]] std::string header(std::string_view name) const {
+        for (const auto& field : headers) {
+            if (field.first == name) {
+                return field.second;
+            }
+        }
+        return {};
+    }
+};
+inline std::optional<ParsedRequest> take_request(Bytes& buffer) {
+    const std::string view(buffer.begin(), buffer.end());
+    const auto end = view.find("\r\n\r\n");
+    if (end == std::string::npos) {
+        return std::nullopt;
+    }
+    ParsedRequest request;
+    std::size_t line_start = 0;
+    auto line_end = view.find("\r\n");
+    const auto first = view.substr(0, line_end);
+    const auto first_space = first.find(' ');
+    const auto second_space = first.find(' ', first_space + 1);
+    request.method = first.substr(0, first_space);
+    request.target = first.substr(first_space + 1, second_space - first_space - 1);
+    request.protocol = first.substr(second_space + 1);
+    std::size_t length = 0;
+    for (line_start = line_end + 2; line_start < end; line_start = line_end + 2) {
+        line_end = view.find("\r\n", line_start);
+        const auto line = view.substr(line_start, line_end - line_start);
+        const auto colon = line.find(':');
+        std::string name = line.substr(0, colon);
+        std::transform(name.begin(), name.end(), name.begin(),
+                       [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        const auto value = line.substr(colon + 2);
+        if (name == "content-length") {
+            length = std::stoul(value);
+        }
+        request.headers.emplace_back(name, value);
+    }
+    const auto body_start = end + 4;
+    if (buffer.size() < body_start + length) {
+        return std::nullopt;
+    }
+    request.body.assign(buffer.begin() + static_cast<std::ptrdiff_t>(body_start),
+                        buffer.begin() + static_cast<std::ptrdiff_t>(body_start + length));
+    buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(body_start + length));
+    return request;
+}
+inline Bytes response(const ParsedRequest& request, unsigned status, const Bytes& body = {}) {
+    auto output = text(request.protocol + " " + std::to_string(status) +
+                       " Synthetic\r\nCSeq: " + request.header("cseq") +
+                       "\r\nContent-Length: " + std::to_string(body.size()) + "\r\n\r\n");
+    output.insert(output.end(), body.begin(), body.end());
+    return output;
+}
+inline ControlNonce named_nonce(const char* label) {
+    ControlNonce nonce{};
+    std::copy_n(label, 8, nonce.begin() + 4); // Four zero bytes, then the label.
+    return nonce;
+}
+template <std::size_t Size> std::array<std::uint8_t, Size> fixed(const Bytes& input) {
+    std::array<std::uint8_t, Size> output{};
+    std::copy_n(input.begin(), Size, output.begin());
+    return output;
+}
+inline Bytes tlv_field(const std::vector<TlvField>& fields, std::uint8_t type) {
+    for (const auto& field : fields) {
+        if (field.type == type) {
+            return field.value;
+        }
+    }
+    throw std::runtime_error("Fake receiver: missing TLV field");
+}
+
+// ---- Fake event connection: a blocking, cancellable pipe ----
+
+struct EventPipe {
+    std::mutex mutex;
+    std::condition_variable changed;
+    Bytes inbound;  // Receiver to sender (encrypted).
+    Bytes outbound; // Sender to receiver (encrypted replies).
+    bool ended = false;
+    bool closed = false;
+};
+
+class FakeEventStream final : public ReceiverStream {
+public:
+    explicit FakeEventStream(std::shared_ptr<EventPipe> pipe) : pipe_(std::move(pipe)) {}
+    std::size_t write_some(const std::uint8_t* data, std::size_t size,
+                           const ReceiverOperation& operation) override {
+        operation.check();
+        std::lock_guard<std::mutex> lock(pipe_->mutex);
+        if (pipe_->closed) {
+            throw TransportException(TransportError::closed);
+        }
+        pipe_->outbound.insert(pipe_->outbound.end(), data, data + size);
+        return size;
+    }
+    std::size_t read_some(std::uint8_t* data, std::size_t capacity,
+                          const ReceiverOperation& operation) override {
+        std::unique_lock<std::mutex> lock(pipe_->mutex);
+        for (;;) {
+            if (pipe_->closed) {
+                throw TransportException(TransportError::closed);
+            }
+            if (!pipe_->inbound.empty()) {
+                const auto count = std::min(capacity, pipe_->inbound.size());
+                std::copy_n(pipe_->inbound.begin(), count, data);
+                pipe_->inbound.erase(pipe_->inbound.begin(),
+                                     pipe_->inbound.begin() + static_cast<std::ptrdiff_t>(count));
+                return count;
+            }
+            if (pipe_->ended) {
+                return 0;
+            }
+            pipe_->changed.wait_for(lock, 5ms);
+            operation.check(); // Cancellation reaches a blocked reader here.
+        }
+    }
+    void require_idle(const ReceiverOperation&) override {}
+    void close() noexcept override {
+        std::lock_guard<std::mutex> lock(pipe_->mutex);
+        pipe_->closed = true;
+        pipe_->changed.notify_all();
+    }
+
+private:
+    std::shared_ptr<EventPipe> pipe_;
+};
+
+// ---- Fake receiver ----
+
+struct Behavior {
+    unsigned base_setup_status = 200;
+    int reject_command = -1;    // Index 0..3 of the /command to answer with 400.
+    bool report_playing = true; // After setRate: "Loading", then "Playing".
+    bool end_events_on_rate = false;
+    bool remote_control_only = false;
+    unsigned remote_setup_status = 200;
+    bool reject_remote_event_connect = false;
+    bool end_remote_events_on_rate = false;
+    bool silent_feedback = false;
+    unsigned zero_rate_events = 0;
+    bool pause_after_zero_rate = false;
+    bool remain_stationary = false;
+};
+
+inline constexpr std::uint16_t control_port = 7000;
+inline constexpr std::uint16_t event_port = 49213;
+inline constexpr std::uint16_t remote_event_port = 49214;
+inline constexpr std::int64_t stream_id = 1;
+
+struct ControlCloseOrder {
+    std::mutex mutex;
+    std::vector<std::string> sessions;
+};
+
+class FakeReceiver;
+
+class FakeControlStream final : public ReceiverStream {
+public:
+    explicit FakeControlStream(FakeReceiver& receiver) : receiver_(receiver) {}
+    std::size_t write_some(const std::uint8_t* data, std::size_t size,
+                           const ReceiverOperation& operation) override;
+    std::size_t read_some(std::uint8_t* data, std::size_t capacity,
+                          const ReceiverOperation& operation) override;
+    void require_idle(const ReceiverOperation&) override {}
+    void close() noexcept override;
+
+private:
+    FakeReceiver& receiver_;
+};
+
+/// Accessory side of pair-verify, then the URL playback request sequence.
+class FakeReceiver {
+public:
+    explicit FakeReceiver(Behavior behavior) : behavior_(behavior) {
+        for (std::size_t index = 0; index < 32; ++index) {
+            receiver_seed_.bytes[index] = static_cast<std::uint8_t>(index + 32);
+            server_ephemeral_.bytes[index] = static_cast<std::uint8_t>(index + 96);
+            client_seed_.bytes[index] = static_cast<std::uint8_t>(index);
+        }
+        server_public_ = x25519_public(server_ephemeral_);
+    }
+    PairCredentials credentials() const {
+        return PairCredentials(text("synthetic-receiver"), ed25519_public(receiver_seed_),
+                               text("synthetic-controller"), client_seed_);
+    }
+    StreamConnector connector() {
+        Behavior remote_behavior;
+        remote_behavior.remote_control_only = true;
+        remote_behavior.base_setup_status = behavior_.remote_setup_status;
+        remote_receiver_ = std::make_unique<FakeReceiver>(remote_behavior);
+        remote_receiver_->close_order_ = close_order_;
+        // Different ephemeral secrets make accidental key sharing fail authentication.
+        remote_receiver_->server_ephemeral_.bytes[0] ^= 0x40;
+        remote_receiver_->server_public_ = x25519_public(remote_receiver_->server_ephemeral_);
+        auto url_connector = direct_connector();
+        auto remote_connector = remote_receiver_->direct_connector();
+        return [this, url_connector, remote_connector, remote_connected = false](
+                   const ReceiverEndpoint& endpoint,
+                   const ReceiverOperation& operation) mutable -> std::unique_ptr<ReceiverStream> {
+            if (endpoint.port == control_port && !remote_connected) {
+                remote_connected = true;
+                return remote_connector(endpoint, operation);
+            }
+            if (endpoint.port == remote_event_port) {
+                if (behavior_.reject_remote_event_connect) {
+                    throw TransportException(TransportError::network);
+                }
+                return remote_connector(endpoint, operation);
+            }
+            return url_connector(endpoint, operation);
+        };
+    }
+    FakeReceiver& remote_control() {
+        return *remote_receiver_;
+    }
+    std::vector<std::string> control_close_order() const {
+        std::lock_guard<std::mutex> lock(close_order_->mutex);
+        return close_order_->sessions;
+    }
+
+private:
+    StreamConnector direct_connector() {
+        return [this](const ReceiverEndpoint& endpoint,
+                      const ReceiverOperation& operation) -> std::unique_ptr<ReceiverStream> {
+            operation.check();
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (endpoint.port == control_port) {
+                return std::make_unique<FakeControlStream>(*this);
+            }
+            const auto session_event_port =
+                behavior_.remote_control_only ? remote_event_port : event_port;
+            if (endpoint.port == session_event_port && verified_) {
+                // The receiver writes with the key the sender reads, and so on.
+                const auto secret = bytes(shared_.bytes);
+                event_writer_ = std::make_unique<ControlWriter>(
+                    derive_control_key(secret, "Events-Salt", "Events-Write-Encryption-Key"));
+                event_reader_ = std::make_unique<ControlReader>(
+                    derive_control_key(secret, "Events-Salt", "Events-Read-Encryption-Key"));
+                event_pipe_ = std::make_shared<EventPipe>();
+                return std::make_unique<FakeEventStream>(event_pipe_);
+            }
+            throw TransportException(TransportError::network);
+        };
+    }
+
+public:
+    // Called by FakeControlStream under the session's control mutex.
+    void on_control_bytes(const std::uint8_t* data, std::size_t size) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        Bytes wire(data, data + size);
+        auto plain = control_reader_ ? control_reader_->feed(wire) : wire;
+        control_input_.insert(control_input_.end(), plain.begin(), plain.end());
+        while (auto request = take_request(control_input_)) {
+            const bool encrypted = control_writer_ != nullptr;
+            auto reply = respond(*request);
+            if (reply.empty()) {
+                continue; // Scripted silent peer; the reader must honor its deadline.
+            }
+            if (encrypted) {
+                reply = control_writer_->encrypt(reply);
+            }
+            control_output_.insert(control_output_.end(), reply.begin(), reply.end());
+        }
+    }
+    std::size_t take_control_output(std::uint8_t* data, std::size_t capacity) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (control_output_.empty()) {
+            return 0; // No queued bytes, rather than transport EOF.
+        }
+        const auto count = std::min(capacity, control_output_.size());
+        std::copy_n(control_output_.begin(), count, data);
+        control_output_.erase(control_output_.begin(),
+                              control_output_.begin() + static_cast<std::ptrdiff_t>(count));
+        return count;
+    }
+    void control_closed() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!control_closed_) {
+            std::lock_guard<std::mutex> order_lock(close_order_->mutex);
+            close_order_->sessions.push_back(behavior_.remote_control_only ? "remote" : "URL");
+        }
+        control_closed_ = true;
+    }
+
+    /// Send a playbackState event on the event channel.
+    void push_state(const std::string& state) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        push_state_locked(state);
+    }
+    /// Synthetic remote notification, including malformed bodies.
+    void push_event_body(const Bytes& body, const std::string& target = "/command") {
+        std::lock_guard<std::mutex> lock(mutex_);
+        push_event_body_locked(body, target);
+    }
+    /// Arm the fault after startup; return the count of earlier answered requests.
+    int silence_feedback() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        behavior_.silent_feedback = true;
+        return feedback_;
+    }
+    void end_event_channel() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        end_events_locked();
+    }
+
+    // ---- Inspection ----
+    std::vector<ParsedRequest> requests() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return requests_;
+    }
+    int feedback_count() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return feedback_;
+    }
+    std::uint16_t announced_timing_port() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return timing_port_;
+    }
+    bool control_was_closed() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return control_closed_;
+    }
+    bool event_channel_opened() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return event_pipe_ != nullptr;
+    }
+    bool event_was_closed() const {
+        std::shared_ptr<EventPipe> pipe;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            pipe = event_pipe_;
+        }
+        if (!pipe) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(pipe->mutex);
+        return pipe->closed;
+    }
+    /// The sender's decrypted replies on the event channel.
+    std::string event_replies() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!event_pipe_) {
+            return {};
+        }
+        Bytes wire;
+        {
+            std::lock_guard<std::mutex> pipe_lock(event_pipe_->mutex);
+            wire.swap(event_pipe_->outbound);
+        }
+        const auto plain = event_reader_->feed(wire);
+        replies_ += std::string(plain.begin(), plain.end());
+        return replies_;
+    }
+
+private:
+    Bytes respond(const ParsedRequest& request) {
+        if (!verified_) {
+            return pair_verify(request);
+        }
+        requests_.push_back(request);
+        if (request.method == "SETUP") {
+            const auto body = decode_binary_plist(request.body);
+            if (body.find("streams") != nullptr) {
+                return response(request, 200,
+                                encode_binary_plist(PlistDictionary{
+                                    {"streams", PlistArray{PlistDictionary{
+                                                    {"type", 130}, {"streamID", stream_id}}}}}));
+            }
+            if (const auto* timing_port = body.find("timingPort")) {
+                timing_port_ = static_cast<std::uint16_t>(timing_port->as_integer());
+            }
+            if (behavior_.base_setup_status != 200) {
+                return response(request, behavior_.base_setup_status);
+            }
+            return response(request, 200,
+                            encode_binary_plist(PlistDictionary{
+                                {"eventPort",
+                                 behavior_.remote_control_only ? remote_event_port : event_port}}));
+        }
+        if (request.method == "GET" && request.target == "/info") {
+            return response(request, 200, encode_binary_plist(PlistDictionary{{"name", "fake"}}));
+        }
+        if (request.method == "RECORD") {
+            return response(request, 200);
+        }
+        if (request.method == "POST" && request.target == "/feedback") {
+            ++feedback_;
+            if (behavior_.silent_feedback) {
+                return {};
+            }
+            return response(request, 200);
+        }
+        if (request.method == "POST" && request.target == "/command") {
+            const auto index = commands_++;
+            if (index == behavior_.reject_command) {
+                return response(request, 400);
+            }
+            const auto envelope = decode_binary_plist(request.body);
+            const auto command =
+                decode_binary_plist(envelope.find("params")->find("data")->as_data());
+            if (command.find("type")->as_string() == "setRate") {
+                if (behavior_.end_remote_events_on_rate) {
+                    remote_receiver_->end_event_channel();
+                }
+                if (behavior_.end_events_on_rate) {
+                    end_events_locked();
+                } else if (behavior_.report_playing) {
+                    push_state_locked("Loading");
+                    for (unsigned event = 0; event < behavior_.zero_rate_events; ++event) {
+                        push_state_locked("Playing", 0.0);
+                    }
+                    if (behavior_.pause_after_zero_rate) {
+                        push_state_locked("Paused");
+                    } else if (!behavior_.remain_stationary) {
+                        push_state_locked("Playing", behavior_.zero_rate_events
+                                                         ? std::optional<double>{1.0}
+                                                         : std::nullopt);
+                    }
+                } else {
+                    push_state_locked("Loading");
+                }
+            }
+            return response(request, 200);
+        }
+        return response(request, 404);
+    }
+
+    Bytes pair_verify(const ParsedRequest& request) {
+        const auto fields = decode_tlv(request.body);
+        if (tlv_field(fields, 6) == Bytes{1}) {
+            client_public_ = fixed<32>(tlv_field(fields, 3));
+            x25519_shared(server_ephemeral_, client_public_, shared_);
+            session_key_.bytes = derive_control_key(
+                bytes(shared_.bytes), "Pair-Verify-Encrypt-Salt", "Pair-Verify-Encrypt-Info");
+            const auto identity = text("synthetic-receiver");
+            auto transcript = bytes(server_public_);
+            transcript.insert(transcript.end(), identity.begin(), identity.end());
+            transcript.insert(transcript.end(), client_public_.begin(), client_public_.end());
+            const auto sealed = seal_record(
+                session_key_.bytes, named_nonce("PV-Msg02"), {},
+                encode_tlv({{1, identity}, {10, bytes(ed25519_sign(receiver_seed_, transcript))}}));
+            return response(request, 200,
+                            encode_tlv({{6, {2}}, {3, bytes(server_public_)}, {5, sealed}}));
+        }
+        // M3: acknowledge in plaintext; later bytes use the control keys.
+        const auto secret = bytes(shared_.bytes);
+        control_reader_ = std::make_unique<ControlReader>(
+            derive_control_key(secret, "Control-Salt", "Control-Write-Encryption-Key"));
+        control_writer_ = std::make_unique<ControlWriter>(
+            derive_control_key(secret, "Control-Salt", "Control-Read-Encryption-Key"));
+        verified_ = true;
+        auto reply = response(request, 200, encode_tlv({{6, {4}}}));
+        return reply;
+    }
+
+    void push_state_locked(const std::string& state, std::optional<double> rate = {}) {
+        if (!event_pipe_) {
+            return;
+        }
+        PlistDictionary params{{"playbackState", state}};
+        if (rate) {
+            params.push_back({"rate", *rate});
+        }
+        const auto inner = encode_binary_plist(
+            PlistDictionary{{"type", "playbackState"}, {"params", std::move(params)}});
+        const auto body =
+            encode_binary_plist(PlistDictionary{{"params", PlistDictionary{{"data", inner}}}});
+        push_event_body_locked(body);
+    }
+    void push_event_body_locked(const Bytes& body, const std::string& target = "/command") {
+        auto event =
+            text("POST " + target + " RTSP/1.0\r\nCSeq: " + std::to_string(++event_sequence_) +
+                 "\r\nContent-Type: application/x-apple-binary-plist\r\n"
+                 "Content-Length: " +
+                 std::to_string(body.size()) + "\r\n\r\n");
+        event.insert(event.end(), body.begin(), body.end());
+        const auto wire = event_writer_->encrypt(event);
+        std::lock_guard<std::mutex> lock(event_pipe_->mutex);
+        event_pipe_->inbound.insert(event_pipe_->inbound.end(), wire.begin(), wire.end());
+        event_pipe_->changed.notify_all();
+    }
+    void end_events_locked() {
+        if (!event_pipe_) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(event_pipe_->mutex);
+        event_pipe_->ended = true;
+        event_pipe_->changed.notify_all();
+    }
+
+    Behavior behavior_;
+    std::unique_ptr<FakeReceiver> remote_receiver_;
+    std::shared_ptr<ControlCloseOrder> close_order_ = std::make_shared<ControlCloseOrder>();
+    mutable std::mutex mutex_;
+    Secret32 receiver_seed_;
+    Secret32 server_ephemeral_;
+    Secret32 client_seed_;
+    Secret32 shared_;
+    Secret32 session_key_;
+    PublicKey server_public_{};
+    PublicKey client_public_{};
+    bool verified_ = false;
+    std::unique_ptr<ControlReader> control_reader_;
+    std::unique_ptr<ControlWriter> control_writer_;
+    Bytes control_input_;
+    Bytes control_output_;
+    bool control_closed_ = false;
+    std::vector<ParsedRequest> requests_;
+    int feedback_ = 0;
+    int commands_ = 0;
+    std::uint16_t timing_port_ = 0;
+    std::shared_ptr<EventPipe> event_pipe_;
+    std::unique_ptr<ControlWriter> event_writer_;
+    std::unique_ptr<ControlReader> event_reader_;
+    unsigned event_sequence_ = 0;
+    std::string replies_;
+};
+
+inline std::size_t FakeControlStream::write_some(const std::uint8_t* data, std::size_t size,
+                                                 const ReceiverOperation& operation) {
+    operation.check();
+    receiver_.on_control_bytes(data, size);
+    return size;
+}
+inline std::size_t FakeControlStream::read_some(std::uint8_t* data, std::size_t capacity,
+                                                const ReceiverOperation& operation) {
+    for (;;) {
+        operation.check();
+        if (const auto count = receiver_.take_control_output(data, capacity)) {
+            return count;
+        }
+        std::this_thread::sleep_for(1ms);
+    }
+}
+inline void FakeControlStream::close() noexcept {
+    receiver_.control_closed();
+}
+} // namespace send_airplay2::detail::testing
+#endif

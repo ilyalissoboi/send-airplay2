@@ -809,7 +809,13 @@ failed once on macOS shared in the unchanged session test's silent-feedback
 precondition: no healthy feedback had been answered when `start()` returned.
 The test now waits (bounded) for one healthy answer before arming the fault;
 its 80 ms deadline, 500 ms cleanup bound and post-arm assertions are unchanged.
-It passed 5/5 per build locally and 18/18 with six concurrent copies. **No receiver cast has
+It passed 5/5 per build locally and 18/18 with six concurrent copies. The
+session tests' scripted fake receiver then moved unchanged into
+`tests/fake_receiver.h`, and a test-only `CastDependencies::adjust_session` hook
+lets `cast_controller_tests` drive it with MRP disabled: start, pause through
+`wait_for_change`, stop ordering, natural end, event loss and concurrent stops.
+The fake has no MRP data stream, so command acceptance through the controller
+remains untested. **No receiver cast has
 been run through the interface**; the CLI evidence does not transfer to it
 automatically. Contract, mapping tables, limits and next steps:
 [public-api.md](public-api.md).

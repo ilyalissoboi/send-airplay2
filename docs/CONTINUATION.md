@@ -142,10 +142,11 @@ development, not retroactive gate failures.
    [public-api.md](public-api.md). The development host `airplay2-api-host` drives
    only that interface. Remaining in this item, in order: run the
    [manual validation plan](public-api.md#manual-validation-plan) with the user
-   at the TV; extract the session tests' fake receiver so the controller's
-   active/command/end paths are unit-tested; finish the slice's PR review and get
-   merge approval; then the C#
-   binding and packaged UWP proof under item 6. Related hardware-free work: a
+   at the TV; finish the slice's PR review and get merge approval; then the C#
+   binding and packaged UWP proof under item 6. The fake receiver is now shared
+   (`tests/fake_receiver.h`) and the controller's active, end and loss paths are
+   unit-tested with MRP disabled; command acceptance through the controller still
+   needs an MRP-capable fake (public-api.md, "Not covered yet"). Related hardware-free work: a
    synthetic beyond-4-GiB byte-source/range test through the media server, and
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
 2. **Startup reliability.** Spontaneous pause at zero/first-frame-only occurred
