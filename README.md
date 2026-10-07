@@ -130,12 +130,17 @@ build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room -
 
 `cast` reuses a stored profile, starts the receiver-restricted media server and
 an authenticated URL/MRP session. Type `status`, `pause`, `play`, `seek SECONDS`
-(absolute position), or `stop`; Enter or stdin EOF tears down directly. It
+(absolute position), or `stop`; Enter or stdin EOF tears down directly. Media
+EOF, receiver terminal state, ownership loss and connection failure now trigger
+automatic cleanup without command input. The summary reports the first terminal
+reason and whether cleanup finished; connection failure returns exit 1. It
 prints no private URL or receiver address. `--event-log` enables bounded event
 outlines for diagnostics. A `playing` event does not prove visible playback:
 G1 passed for the recorded native-only run, with user-observed video/audio and
-return to the home screen after sender stop. EOF, receiver-side stop, repeat casts
-still need validation. Native MRP controls are implemented; see the recorded
+return to the home screen after sender stop. Native EOF cleanup with stdin held
+open and ten short start/stop cycles passed on the recorded receiver; receiver-side
+stop, sleep/wake, network interruption/recovery and visual confirmations remain
+separate gates. Native MRP controls are implemented; see the recorded
 G2 result and [control contracts](docs/mrp-controls.md).
 See [session design and gates](docs/session-design.md) and
 [receiver results](docs/receiver-validation.md).

@@ -7,7 +7,9 @@ fetching from `airplay2-cli serve`. Native `cast` initially failed G1 alone;
 the minimal native remote-control SETUP/event session then PASSED G1 without
 pyatv: video/audio and home-screen return after sender shutdown were user-observed.
 Native MRP command/telemetry checks passed; G2 visual confirmation is pending.
-See the dated G1/G2 observations below. Fill out one record per
+Native automatic EOF cleanup and ten short start/stop cycles passed; manual
+receiver-side stop, sleep/wake, actual network-loss recovery and observer
+confirmation remain G3 gates. See the dated G1/G2/G3 observations below. Fill out one record per
 receiver firmware and sender platform.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
@@ -61,9 +63,10 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Pause/resume | Receiver and host state agree | Reference (unmerged pyatv fix): PASS, `Paused` then `Playing`, user-observed. Native command/telemetry PASS; visual observation pending (dated G2 record) |
 | Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native command/telemetry PASS; visual observation pending (dated G2 record) |
 | Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native PASS: duration 131.6 s and positions follow pause/forward/backward seek |
-| End-of-file | Correct ended state and resource cleanup | NOT RUN |
+| End-of-file | Correct ended state and resource cleanup | Native near-end seek/play: automatic media_end and joined cleanup, exit 0 with stdin held open; visual home-screen confirmation pending (dated lifecycle record) |
 | Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; native MRP Stop accepted followed by teardown (visual result pending); receiver-side stop and protocol idle NOT RUN |
-| Repeated casting | Ten start/stop cycles without stale sessions | NOT RUN |
+| Repeated casting | Ten start/stop cycles without stale sessions | Native PASS: ten short independent casts, alternating five MRP Stop and five direct teardown; owned playing status, exit 0, no session/failed-read errors in each. Long sessions and visible home-screen observation remain separate |
+| Receiver sleep/wake | Terminal cleanup; fresh cast works after waking | NOT RUN |
 | Network interruption | Bounded failure; next cast can recover | NOT RUN |
 | Large file | Seek beyond 4 GiB without integer truncation | NOT RUN |
 | Packaged Windows host | Discovery, native loading, file access, serving work | NOT RUN |
@@ -526,6 +529,69 @@ code and its tested executable remained unchanged. Inspect the actual PR head
 after documentation-only follow-ups. Unit tests and CI are separate from G2/G3.
 EOF, receiver-side stop, automatic failure cleanup, ten cycles, sleep/wake,
 network loss/recovery and other hosts/firmware remain step 3 or later gates.
+
+## Native lifecycle: selected G3 cases PASS, manual gates pending, 2026-10-07
+
+Same Apple TV 4K / advertised AppleTV14,1 / user-reported tvOS 26.6 (23L773),
+Windows 11 x64 and 131.6-second unprotected MP4 as G1/G2. Existing credentials
+and firewall rules were reused. No pyatv controller was running; the temporarily
+staged native executable was restored. The [sanitized record](validation/native-lifecycle-windows-static-2026-10-07.json)
+contains CLI SHA-256, tested runtime source blobs, allowlisted scalar output and
+per-cycle results. This evidence covers this combination only.
+
+- **EOF cleanup:** after owned playing telemetry, native seek to 124 seconds and
+  Play were accepted. Stdin remained open. URL stopped, then the supervisor
+  recognized owned receiver-reported terminal position and completed ordered
+  cleanup. Summary: media_end, cleaned=yes, failed=no, failed_reads=0, exit 0;
+  the receiver fetched the entire file span. This tests the end boundary after
+  a near-end seek, not uninterrupted full-duration playback. Home-screen/video/audio
+  observer confirmation is pending.
+- **Ten short cycles:** each used a new process/session and existing credentials,
+  reported owned playing status, then alternated five MRP Stops with five direct
+  Enter teardowns. All exited 0, cleaned=yes, no session/failed-read errors and
+  full-file read spans. Subsequent starts established fresh playback without
+  observed stale ownership. These are protocol/process results; no long-session,
+  simultaneous-sender or visual home-screen result is inferred.
+- **Automated fault tests:** scripted URL and remote-event EOF now trigger joined
+  automatic cleanup without operator input. A silent established feedback peer
+  exercises its 80 ms test deadline; stopping during blocked feedback cancels
+  rather than waiting the normal two-second test deadline. Ten synthetic
+  concurrent-stop cycles verify one cleanup owner and URL-before-remote closure.
+  Independent protobuf fixtures reject mid-item pause and playing/extrapolated
+  EOF, and accept only owned paused-at-duration telemetry. Pending MRP command
+  cancellation and real native-pipe partial/idle/EOF input are covered.
+  These injected peers are separate from actual receiver/network interruption.
+
+D33 preserves first terminal reason, cancellation and fixed cleanup order.
+The CLI stops its media server after session cleanup and exits without blocking
+on command input. Failure returns exit 1; a recovered network requires a fresh
+explicit cast and retains credentials. A silent MRP-only peer may require the
+next 30-second heartbeat plus its five-second default request deadline.
+
+Final Windows static/shared Release each passed 23/23 CTest targets
+(13.33/13.07 s), offline runner contracts 10/10, clang-format dry-run/Werror
+and git diff --check. Actual-head CI is recorded in the handoff after publishing.
+Unit/CI results do not close G3 interoperability gates.
+
+**Not run / still pending:** receiver-remote stop, sleep/wake, actual established
+receiver network loss then fresh-cast recovery, EOF/home-screen observation,
+G2 visual confirmation, longer playback, other receiver firmware/hosts.
+A preliminary EOF probe paused near startup; seek preserved that pause and the
+probe needed explicit Play. Later cycles reported playing. That intermittent
+buffering/startup behavior remains unresolved; it is not evidence of EOF failure.
+
+Manual continuation uses the same paired profile and supplied local MP4:
+
+1. Start a fresh native cast, confirm video/audio and owned status, then use
+   the receiver remote to leave/stop playback. Keep sender stdin open and record
+   its automatic end reason, cleanup and whether the TV returns home.
+2. Start again, sleep the receiver during playback, and record bounded cleanup.
+   Wake it and start a fresh cast; confirm playback without new pairing.
+3. Start again, disconnect the receiver's network during playback and wait for
+   terminal failure/cleanup (a silent data-only peer may take about 35 seconds).
+   Restore the network, then start a fresh cast with the retained profile and
+   confirm playback. Record actual interruption/recovery separately from the
+   already passing scripted deadlines and short-cycle results.
 
 ## Automated CLI E2E observation: 2026-10-06
 

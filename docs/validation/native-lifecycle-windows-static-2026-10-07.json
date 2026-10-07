@@ -1,0 +1,536 @@
+{
+  "date": "2026-10-07",
+  "evidence_kind": "native receiver protocol/process lifecycle; visual observations pending",
+  "implementation_commit": "2f77f622acbaff3e6579cb8c997c927a6ea12206",
+  "cli_build": "Windows 11 x64, MSVC 19.51, Release, static",
+  "receiver": {
+    "model": "Apple TV 4K",
+    "advertised_model": "AppleTV14,1",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_source": "user report on 2026-10-06; assumed unchanged"
+  },
+  "media": {
+    "type": "unprotected H.264/AAC MP4",
+    "duration_seconds": 131.6,
+    "file_size_bytes": 53953926
+  },
+  "cli_sha256": "3e9e8559cae5f1e0e8edf6eec52caf7ef4b7104b10cb9435417fe96a8ae28df3",
+  "tested_source_blobs": {
+    "src\\cast_cli.cpp": "515b9c4b3ee64144c61cb0cf86a246812c22df8e",
+    "src\\cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+    "src\\cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+    "src\\cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+    "src\\control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+    "src\\control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+    "src\\mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+    "src\\mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+    "src\\mrp_messages.cpp": "af48753904bba3e5cd6d67a8fb08b341739ff7b3",
+    "src\\mrp_messages.h": "d25b152f72f541c88199f9df7d620fd2c23c84bc",
+    "src\\mrp_session.cpp": "1b055ae48120366f3a405f1c2e18c3825616a476",
+    "src\\mrp_session.h": "9d688e019f29eb545fac7baf3f2847d306c7424f",
+    "src\\protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+    "src\\protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+    "src\\receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+    "src\\receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+    "src\\session_messages.cpp": "f9eaf05c7745f77a170710f92399a85815cc05ec",
+    "src\\session_messages.h": "4f1094da381bc658190539a9a38da4518a22ad62",
+    "src\\url_playback_session.cpp": "2a28a752d7ae56418e534b8d8ac4c1c6b8851e09",
+    "src\\url_playback_session.h": "f6e90f7459a217db91811b416f6048b04da81db2"
+  },
+  "preconditions": {
+    "pyatv_controller_running": false,
+    "existing_credentials_reused": true,
+    "credential_files_read": false,
+    "pairing_or_receiver_settings_changed": false,
+    "existing_firewall_rules_reused": true,
+    "staged_executable_restored": true
+  },
+  "ten_cycles_pass": true,
+  "cycles": [
+    {
+      "cycle": 1,
+      "stop_method": "MRP Stop",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=paused events=29 remote_events=7 feedback=2 timing=5 failed=no reads=974 bytes=63704312 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 2,
+      "stop_method": "local Enter",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=playing events=27 remote_events=6 feedback=2 timing=5 failed=no reads=892 bytes=58331808 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 3,
+      "stop_method": "MRP Stop",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=paused events=30 remote_events=7 feedback=2 timing=5 failed=no reads=905 bytes=59189568 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 4,
+      "stop_method": "local Enter",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=playing events=27 remote_events=7 feedback=2 timing=5 failed=no reads=886 bytes=57938592 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 5,
+      "stop_method": "MRP Stop",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=paused events=30 remote_events=7 feedback=2 timing=5 failed=no reads=917 bytes=59980344 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 6,
+      "stop_method": "local Enter",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=playing events=26 remote_events=5 feedback=2 timing=5 failed=no reads=882 bytes=57686584 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 7,
+      "stop_method": "MRP Stop",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=paused events=30 remote_events=7 feedback=2 timing=5 failed=no reads=908 bytes=59380384 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 8,
+      "stop_method": "local Enter",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=playing events=27 remote_events=7 feedback=2 timing=5 failed=no reads=913 bytes=59710960 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 9,
+      "stop_method": "MRP Stop",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=paused events=25 remote_events=5 feedback=2 timing=5 failed=no reads=888 bytes=58069664 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "cycle": 10,
+      "stop_method": "local Enter",
+      "exit_code": 0,
+      "pass": true,
+      "summary": "Stopped. state=playing events=26 remote_events=6 feedback=2 timing=5 failed=no reads=894 bytes=58462880 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    }
+  ],
+  "automatic_eof": {
+    "exit_code": 0,
+    "stdin_held_open": true,
+    "pass": true,
+    "output": [
+      {
+        "time_seconds": 111.0,
+        "line": "Starting playback."
+      },
+      {
+        "time_seconds": 111.7,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 111.7,
+        "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+      },
+      {
+        "time_seconds": 119.7,
+        "line": "Playback: owned=yes state=playing position=8.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_seconds": 121.8,
+        "line": "Control: accepted"
+      },
+      {
+        "time_seconds": 123.8,
+        "line": "Control: accepted"
+      },
+      {
+        "time_seconds": 130.0,
+        "line": "State: stopped"
+      },
+      {
+        "time_seconds": 130.8,
+        "line": "Stopped. state=stopped events=41 remote_events=5 feedback=9 timing=10 failed=no reads=1009 bytes=65948886 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes"
+      }
+    ],
+    "summary": "Stopped. state=stopped events=41 remote_events=5 feedback=9 timing=10 failed=no reads=1009 bytes=65948886 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes"
+  },
+  "allowlisted_output": [
+    {
+      "time_seconds": 40.1,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 40.9,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 40.9,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 44.9,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+    },
+    {
+      "time_seconds": 45.9,
+      "line": "State: paused"
+    },
+    {
+      "time_seconds": 45.9,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 46.3,
+      "line": "Stopped. state=paused events=29 remote_events=7 feedback=2 timing=5 failed=no reads=974 bytes=63704312 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 47.3,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 48.1,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 48.1,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 52.1,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=21 heartbeats=0"
+    },
+    {
+      "time_seconds": 53.4,
+      "line": "Stopped. state=playing events=27 remote_events=6 feedback=2 timing=5 failed=no reads=892 bytes=58331808 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 54.4,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 55.1,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 55.1,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 59.1,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+    },
+    {
+      "time_seconds": 60.2,
+      "line": "State: paused"
+    },
+    {
+      "time_seconds": 60.2,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 60.5,
+      "line": "Stopped. state=paused events=30 remote_events=7 feedback=2 timing=5 failed=no reads=905 bytes=59189568 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 61.6,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 62.3,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 62.3,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 66.3,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=21 heartbeats=0"
+    },
+    {
+      "time_seconds": 67.6,
+      "line": "Stopped. state=playing events=27 remote_events=7 feedback=2 timing=5 failed=no reads=886 bytes=57938592 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 68.6,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 69.4,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 69.4,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 73.4,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+    },
+    {
+      "time_seconds": 74.5,
+      "line": "State: paused"
+    },
+    {
+      "time_seconds": 74.5,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 74.9,
+      "line": "Stopped. state=paused events=30 remote_events=7 feedback=2 timing=5 failed=no reads=917 bytes=59980344 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 75.9,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 76.6,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 76.6,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 80.6,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=21 heartbeats=0"
+    },
+    {
+      "time_seconds": 81.9,
+      "line": "Stopped. state=playing events=26 remote_events=5 feedback=2 timing=5 failed=no reads=882 bytes=57686584 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 82.9,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 83.7,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 83.7,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 87.7,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+    },
+    {
+      "time_seconds": 88.8,
+      "line": "State: paused"
+    },
+    {
+      "time_seconds": 88.8,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 89.1,
+      "line": "Stopped. state=paused events=30 remote_events=7 feedback=2 timing=5 failed=no reads=908 bytes=59380384 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 90.1,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 90.8,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 90.8,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 94.8,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=21 heartbeats=0"
+    },
+    {
+      "time_seconds": 96.1,
+      "line": "Stopped. state=playing events=27 remote_events=7 feedback=2 timing=5 failed=no reads=913 bytes=59710960 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 97.1,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 97.8,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 97.8,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 101.8,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+    },
+    {
+      "time_seconds": 103.0,
+      "line": "Stopped. state=paused events=25 remote_events=5 feedback=2 timing=5 failed=no reads=888 bytes=58069664 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 104.0,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 104.7,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 104.7,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 108.7,
+      "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=21 heartbeats=0"
+    },
+    {
+      "time_seconds": 110.0,
+      "line": "Stopped. state=playing events=26 remote_events=6 feedback=2 timing=5 failed=no reads=894 bytes=58462880 failed_reads=0 span=[0,53953926) end=sender_stop cleaned=yes"
+    },
+    {
+      "time_seconds": 111.0,
+      "line": "Starting playback."
+    },
+    {
+      "time_seconds": 111.7,
+      "line": "State: playing"
+    },
+    {
+      "time_seconds": 111.7,
+      "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+    },
+    {
+      "time_seconds": 119.7,
+      "line": "Playback: owned=yes state=playing position=8.1 duration=131.6 mrp_messages=17 heartbeats=0"
+    },
+    {
+      "time_seconds": 121.8,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 123.8,
+      "line": "Control: accepted"
+    },
+    {
+      "time_seconds": 130.0,
+      "line": "State: stopped"
+    },
+    {
+      "time_seconds": 130.8,
+      "line": "Stopped. state=stopped events=41 remote_events=5 feedback=9 timing=10 failed=no reads=1009 bytes=65948886 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes"
+    }
+  ],
+  "commands": [
+    {
+      "time_seconds": 44.9,
+      "command": "status"
+    },
+    {
+      "time_seconds": 45.9,
+      "command": "stop"
+    },
+    {
+      "time_seconds": 52.1,
+      "command": "status"
+    },
+    {
+      "time_seconds": 53.1,
+      "command": "Enter"
+    },
+    {
+      "time_seconds": 59.1,
+      "command": "status"
+    },
+    {
+      "time_seconds": 60.1,
+      "command": "stop"
+    },
+    {
+      "time_seconds": 66.3,
+      "command": "status"
+    },
+    {
+      "time_seconds": 67.3,
+      "command": "Enter"
+    },
+    {
+      "time_seconds": 73.4,
+      "command": "status"
+    },
+    {
+      "time_seconds": 74.4,
+      "command": "stop"
+    },
+    {
+      "time_seconds": 80.6,
+      "command": "status"
+    },
+    {
+      "time_seconds": 81.6,
+      "command": "Enter"
+    },
+    {
+      "time_seconds": 87.7,
+      "command": "status"
+    },
+    {
+      "time_seconds": 88.7,
+      "command": "stop"
+    },
+    {
+      "time_seconds": 94.8,
+      "command": "status"
+    },
+    {
+      "time_seconds": 95.8,
+      "command": "Enter"
+    },
+    {
+      "time_seconds": 101.8,
+      "command": "status"
+    },
+    {
+      "time_seconds": 102.8,
+      "command": "stop"
+    },
+    {
+      "time_seconds": 108.7,
+      "command": "status"
+    },
+    {
+      "time_seconds": 109.7,
+      "command": "Enter"
+    },
+    {
+      "time_seconds": 119.7,
+      "command": "status"
+    },
+    {
+      "time_seconds": 121.7,
+      "command": "seek 124"
+    },
+    {
+      "time_seconds": 123.7,
+      "command": "play"
+    }
+  ],
+  "not_run_or_pending": [
+    "receiver-remote stop",
+    "receiver sleep/wake",
+    "actual established receiver network loss and recovery",
+    "EOF/home-screen/video/audio observer confirmation",
+    "G2 visual observer confirmation",
+    "uninterrupted full-duration playback",
+    "other firmware/hosts"
+  ],
+  "limitations": [
+    "Short-cycle protocol/process evidence does not prove visible presentation or long-session stability.",
+    "EOF used near-end seek to 124 seconds and explicit Play; stdin remained open.",
+    "Preliminary probe paused near startup; seek retained pause. Later successful cycles do not resolve intermittent buffering.",
+    "Silent MRP-only loss is bounded by the next 30-second heartbeat plus the default 5-second request deadline; actual interruption not tested."
+  ]
+}

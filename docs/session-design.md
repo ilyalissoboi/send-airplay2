@@ -283,7 +283,8 @@ administered one per session.
    with independent fixtures; native G2 telemetry is recorded separately.
    **Hardware gate G1:** the user
    observes video and audio; read counts demonstrate fetch; teardown returns
-   the TV home. Protocol-reported idle and EOF/receiver-side stop remain untested.
+   the TV home. Protocol idle, EOF/home-screen observation and receiver-side
+   stop are separate G3 checks; see the latest lifecycle record.
 7. Controls over MRP: status, pause/resume, seek, stop. **Implemented. Hardware gate
    G2** is recorded separately. Record each result in
    receiver-validation.md, including failures.

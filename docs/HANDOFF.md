@@ -10,13 +10,14 @@ not a claim that the sender has been completed.
 Work continues in a local Codex session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
 Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
-Step-2 starting head: `5950145b9001248edaeddf8bbc81d4cbfeca5e35`, with all ten
-checks passing. Step-2 implementation commit: `ba82e2bc1bed145a53caa6b91b6588842a940026`.
-Native MRP changes are identified by the tested source blobs and
-CLI hash in the new hardware record. Code/test head `8dca4a55c831563be952a5b3d6c8a353ad8b7807`
-passed all ten checks in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37502438877).
-Inspect PR #12 for its actual published
-head/checks; baseline CI does not validate subsequent changes.
+Lifecycle implementation/code-test head:
+`2f77f622acbaff3e6579cb8c997c927a6ea12206` (D33). Native runtime source blobs
+and CLI SHA-256 are recorded in the [lifecycle artifact](validation/native-lifecycle-windows-static-2026-10-07.json).
+Its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37553605053)
+is separate from the hardware gates; inspect PR #12's actual head/checks,
+including documentation-only follow-ups. Step 2's final documentation head
+`dafb70a4bcec0236b8f20901d745a1546ff853ba` passed all ten checks before this work.
+
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
 
@@ -52,9 +53,14 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   the controls and telemetry followed both seek directions; see the dated G2
   record for the observer status. D32 documents cooperative startup binding on
   firmware that omits the URL/item UUID.
-- **Next:** step 3 / G3: EOF, receiver-side stop, automatic bounded failure cleanup,
-  ten start/stop cycles, sleep/wake and network loss/recovery. Keep independent
-  remote/URL sessions until ordered teardown. Reuse the existing credentials.
+- **Step 3 implemented (D33):** sole lifecycle supervisor, automatic ordered
+  teardown, first end reason, command cancellation and pollable CLI stdin. Native
+  EOF exited with stdin held open; ten short native cycles passed. The sanitized
+  lifecycle record fingerprints the executable and runtime sources.
+- **Next:** finish G3 manual checkpoints: receiver-side stop, sleep/wake, actual
+  network loss then a fresh cast after recovery, and visual observations. G2
+  observer confirmation is also pending. Preserve the existing credentials and
+  independent remote/URL sessions through ordered teardown.
 - **Current support:** private native casting/control experiment on Apple TV 4K /
   tvOS 26.6 (23L773) / Windows 11 x64. No public playback ABI or packaged-host
   proof. The temporary Python firewall rule remains from reference testing and
@@ -326,6 +332,15 @@ appeared item in the active TVAirPlay player after our URL start, with duration
 matching within 0.5 s. Capture the pre-start baseline, bind once and refuse
 stale, replacement or unrelated items. This is not proof against concurrent
 AirPlay senders; see [MRP contracts](mrp-controls.md).
+
+**D33 (engineering decision, 2026-10-07):** one lifecycle supervisor owns
+automatic cleanup after startup. Preserve the first terminal reason and expose
+completed joins/key erasure separately. Cancel pending commands before closing
+MRP; retain URL-before-remote cleanup. EOF requires owned receiver telemetry at
+duration while paused/stopped, never an extrapolated clock. URL stopped/idle
+allows one second for final MRP evidence. Do not automatically reconnect,
+resume, re-pair or adopt replacement players; a recovered network permits a
+fresh explicit cast. The host owns media-server shutdown. See [contracts](mrp-controls.md).
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1241,6 +1256,36 @@ The final executable/source fingerprints and observer status are in the
 G2 visual confirmation is pending. Do not substitute telemetry or CI for it.
 The final URL event was paused, not proof of protocol idle. Next: step 3 / G3.
 
+### Native lifecycle implementation and selected G3 checks: 2026-10-07
+
+D33 adds automatic cleanup for terminal URL state, owned receiver EOF, loss of
+ownership and connection failure. One supervisor starts after initialization,
+cancels commands and retains URL-before-remote closure. Concurrent stop calls
+join that owner; startup failures clean directly. CLI command input is polled
+without a detached stdin worker, so a terminal session closes its media server
+and exits even while stdin remains open. First end reason and completed cleanup
+are separate status facts. The stop path does not allocate a status string,
+including during allocation failures in startup.
+
+Final Windows MSVC static/shared Release passed 23/23 CTest targets
+(13.33/13.07 s), offline runner contracts 10/10, touched C++ formatting and
+git diff --check. New tests cover real native pipe input, partial/overlong/EOF
+lines, concurrent stops, silent established feedback deadlines, pending feedback
+and MRP cancellation, and independent receiver EOF boundaries. Scripted peers
+are not actual receiver outages.
+
+Native EOF after seek to 124 seconds/Play exited automatically with stdin held
+open: media_end, cleaned=yes, failed=no, no failed reads, full-file fetch, exit 0.
+Ten short native casts alternated MRP Stop and direct teardown; all established
+owned playing telemetry and completed cleanup without errors. Exact build/source
+fingerprints and counts: [dated lifecycle record](receiver-validation.md#native-lifecycle-selected-g3-cases-pass-manual-gates-pending-2026-10-07).
+Manual receiver-side stop, sleep/wake, actual network interruption/recovery and
+visual observations remain pending, as does the G2 observer result. A preliminary
+probe paused near startup; seek retained pause and explicit Play was necessary.
+Later passing cycles do not resolve intermittent buffering/startup behavior.
+Do not mark G3 or the standalone milestone complete. Next action is those manual
+checkpoints using the existing profile; recovery means a fresh explicit cast.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -1278,9 +1323,12 @@ the recorded source snapshot is still current.
    tracking. Native command/telemetry evidence is recorded; keep the visual
    observer result separate. D32 fallback assumes cooperative AirPlay startup
    and does not guarantee ownership against a concurrent same-duration cast.
-3. **Lifecycle (G3):** complete EOF, receiver-side stop and bounded failure cleanup;
-   test ten start/stop cycles, sleep/wake and network loss/recovery. Investigate
-   the buffering pause and renewed loading seen in the mixed native/pyatv run.
+3. **Lifecycle (G3):** automatic EOF/terminal/failure cleanup implemented; native
+   EOF and ten short cycles passed. Finish receiver-side stop, sleep/wake, actual
+   network interruption/recovery and visual observations. Investigate the
+   buffering pause and renewed loading seen in the mixed native/pyatv run; one
+   preliminary native EOF probe paused at startup and needed explicit play.
+   Successful later cycles do not resolve that intermittent behavior.
 4. **Other hardware gates:** restart authentication, wrong PIN/revocation,
    disposable-profile deletion only when opted in, departure/interface changes,
    real-file >4-GiB seeking and neutral sender identities. Discovery, pairing/reuse,
@@ -1294,7 +1342,7 @@ the recorded source snapshot is still current.
 
 D27-D31 are settled: in-tree plist, synchronous session threads, MRP controls,
 configurable reference identity and in-tree protobuf. Remaining choices concern
-further remote-sequence reduction, stop/EOF semantics, public ABI/cancellation,
+further remote-sequence reduction, broader lifecycle behavior, public ABI/cancellation,
 other OS storage/discovery backends, capability/codec policy and packaging.
 Standalone audio, DRM, mirroring, multiroom and transcoding remain outside the
 first MP4 slice. Missing hardware access does not prevent independent implementation.

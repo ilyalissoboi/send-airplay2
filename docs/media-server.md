@@ -163,7 +163,8 @@ Virtual >4-GiB sources verify offset/length arithmetic without claiming a real
 large-file or Apple TV seek result. The file adapter and `serve` are implemented;
 reference video/audio, receiver fetch and firewall reachability passed. Native
 `cast` initially fetched the full MP4 without visible presentation. The minimal
-native remote-control SETUP/event session then passed G1. Next add
-MRP controls, EOF and receiver-side stop validation. Packaged/brokered sources,
+native remote-control SETUP/event session then passed G1. Native MRP controls
+and automatic session cleanup are implemented; EOF and ten short native cycles
+have selected receiver evidence. Remaining manual G3 validation, packaged/brokered sources,
 real-file >4-GiB seeking and network-change checks remain pending; see the
 [receiver record](receiver-validation.md) and [session plan](session-design.md).
