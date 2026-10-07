@@ -804,7 +804,12 @@ development host, `airplay2-api-host` (`tools/airplay2_api_host.cpp`), was then
 added; it calls the library only through `playback.h`, offers interactive,
 cancel-during-start and repeated-cycle modes for the
 [manual validation plan](public-api.md#manual-validation-plan), and has its own
-offline `api_host_arguments` test (27/27 targets each). **No receiver cast has
+offline `api_host_arguments` test (27/27 targets each). CI at `5a46749` then
+failed once on macOS shared in the unchanged session test's silent-feedback
+precondition: no healthy feedback had been answered when `start()` returned.
+The test now waits (bounded) for one healthy answer before arming the fault;
+its 80 ms deadline, 500 ms cleanup bound and post-arm assertions are unchanged.
+It passed 5/5 per build locally and 18/18 with six concurrent copies. **No receiver cast has
 been run through the interface**; the CLI evidence does not transfer to it
 automatically. Contract, mapping tables, limits and next steps:
 [public-api.md](public-api.md).

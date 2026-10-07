@@ -1223,9 +1223,14 @@ void feedback_deadline_tests() {
     // must stay healthy until the established-session fault is armed.
     options.start_confirmation_interval = 120ms;
     auto session = UrlPlaybackSession::start(receiver.credentials(), options);
+    // Feedback starts before the URL commands and repeats every 30 ms, so an
+    // answer normally precedes start()'s return. A loaded CI runner can delay
+    // the feedback thread past it, so wait for one healthy answer rather than
+    // assume it; the fault must still be armed only after that answer.
+    check(eventually([&] { return receiver.feedback_count() > 0; }),
+          "healthy feedback was answered before the fault was armed");
     const auto started = std::chrono::steady_clock::now();
     const auto answered_feedback = receiver.silence_feedback();
-    check(answered_feedback > 0, "healthy feedback was answered during startup confirmation");
     check(eventually([&] { return session->status().cleaned_up; }),
           "silent established control peer triggers automatic cleanup");
     check(session->status().failed && session->status().end_reason == SessionEnd::connection_lost &&
