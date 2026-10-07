@@ -7,15 +7,17 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: public playback interface merged; credential design next
+## 0. Resume here: host credential stores and pairing in the C interface
 
-**Active slice: common credential interface (D49).** The user merged PR #14
-(public playback interface, D46-D48) as `9c8869e`. Before the C# binding and the
-packaged UWP host, research showed the D46 store cannot serve UWP or Android, so
-the user approved a common design: built-in stores plus a host-provided store
-behind the existing seam, with pairing in the C interface. It is recorded, not
-implemented, in [credential-interface.md](credential-interface.md) and the D49
-record in section 4, on `claude/credential-interface-decision` with its own PR.
+**Active slice: D49 step 1 (D50).** The user merged PR #15 (the D49 credential
+design) as `4c03c0a` and asked to proceed. Branch `claude/host-credential-store`
+adds host-provided credential stores and pairing to the C interface (API
+version 2); see [public-api.md](public-api.md#credential-stores-and-pairing-api-version-2-d50)
+and the D50 record in section 4. Unit/CI-tested only; no receiver has been
+paired through `sap2_pair()` yet.
+
+D49 (common credential design) is recorded in
+[credential-interface.md](credential-interface.md).
 
 The public playback interface's manual plan **passed on the TV on 2026-10-08
 (D48)** for one receiver/host, with D47's teardown fix; see
@@ -878,6 +880,22 @@ interface; `PasswordVault` stays host-supplied; UWP builds exclude the Credentia
 Manager adapter; no plaintext fallback. The host-store contract is an
 engineering proposal for the next slice. Details, sources and unverified items:
 [credential-interface.md](credential-interface.md). Documentation only.
+
+**D50 (host credential stores and pairing, 2026-10-08):** the user merged PR #15
+and asked to proceed with D49 step 1. New public headers `credentials.h`
+(`sap2_credential_store` callbacks, `SAP2_STORE_*` results, 203-byte record
+bound) and `pairing.h` (`sap2_pair`, `sap2_pair_options_init`,
+`sap2_forget_profile`); `sap2_cast_options.credential_store` as a new last field,
+with version 1 structs still accepted; results `PROFILE_EXISTS` and
+`PIN_TIMEOUT`; `SAP2_PLAYBACK_API_VERSION` 2. `sap2_pair` drives the existing
+`run_auth_workflow` through a host-store adapter and a PIN-callback prompt, so
+the CLI's save/reload/verify order and refusals are reused, not reimplemented.
+Engineering choices: a synchronous `read_pin` callback whose deadline is checked
+on return; no pairing cancellation besides `read_pin`; the shared result mapping
+now covers pair-setup failures, and `already_exists` maps to `PROFILE_EXISTS`.
+New tests `c_credentials_smoke` and `host_credential_tests`; Windows
+static/shared Release 29/29 CTest each. **Not receiver-tested:** pairing the
+Apple TV through `sap2_pair()` needs the user at the TV.
 
 ## 5. Implemented code and verification
 

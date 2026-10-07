@@ -3,6 +3,7 @@
 #include "control_crypto.h"
 #include "credential_store.h"
 #include "mrp_session.h"
+#include "pair_setup_crypto.h"
 #include "receiver_http.h"
 
 #include <cmath>
@@ -63,8 +64,9 @@ CastResult credential_result(CredentialError reason) noexcept {
         return CastResult::invalid_argument;
     case CredentialError::unsupported:
         return CastResult::unsupported;
-    case CredentialError::invalid_record:
     case CredentialError::already_exists:
+        return CastResult::profile_exists;
+    case CredentialError::invalid_record:
     case CredentialError::unavailable:
         return CastResult::credential_store;
     }
@@ -80,6 +82,21 @@ CastResult verification_result(PairVerifyError reason) noexcept {
     case PairVerifyError::unexpected_state:
         return CastResult::protocol;
     case PairVerifyError::backend:
+        return CastResult::internal;
+    }
+    return CastResult::internal;
+}
+
+/// PIN enrollment: a wrong PIN surfaces as a failed proof or a peer rejection.
+CastResult pairing_result(PairSetupError reason) noexcept {
+    switch (reason) {
+    case PairSetupError::authentication:
+    case PairSetupError::peer_rejected:
+        return CastResult::authentication;
+    case PairSetupError::invalid_message:
+    case PairSetupError::unexpected_state:
+        return CastResult::protocol;
+    case PairSetupError::backend:
         return CastResult::internal;
     }
     return CastResult::internal;
@@ -168,6 +185,8 @@ CastResult cast_start_result(const std::exception_ptr& failure,
         return credential_result(error.reason());
     } catch (const PairVerifyException& error) {
         return verification_result(error.reason());
+    } catch (const PairSetupException& error) {
+        return pairing_result(error.reason());
     } catch (const ControlException& error) {
         return record_result(error.reason());
     } catch (const TransportException& error) {

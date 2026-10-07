@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-// C boundary for send_airplay2/playback.h: validation, type mapping and
-// exception containment only. Behavior lives in CastController.
+// C boundary for send_airplay2/playback.h and pairing.h: validation, type
+// mapping and exception containment only. Behavior lives in CastController and
+// host_credentials.cpp.
+#include "send_airplay2/pairing.h"
 #include "send_airplay2/playback.h"
 #include "cast_controller.h"
 #include "credential_store.h"
+#include "host_credentials.h"
 
 #include <chrono>
 #include <cmath>
@@ -11,6 +14,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <string_view>
 #include <new>
 #include <optional>
 #include <string>
@@ -22,8 +26,9 @@ struct sap2_read_control {
 };
 
 struct sap2_cast {
-    sap2_cast(send_airplay2::detail::CastSettings settings, send_airplay2::MediaSource source)
-        : controller(std::move(settings), std::move(source)) {}
+    sap2_cast(send_airplay2::detail::CastSettings settings, send_airplay2::MediaSource source,
+              send_airplay2::detail::CastDependencies dependencies)
+        : controller(std::move(settings), std::move(source), std::move(dependencies)) {}
     send_airplay2::detail::CastController controller;
 };
 
@@ -54,6 +59,13 @@ static_assert(static_cast<std::int32_t>(CastResult::command_failed) == SAP2_ERRO
 static_assert(static_cast<std::int32_t>(CastResult::ended) == SAP2_ERROR_ENDED);
 static_assert(static_cast<std::int32_t>(CastResult::out_of_memory) == SAP2_ERROR_OUT_OF_MEMORY);
 static_assert(static_cast<std::int32_t>(CastResult::internal) == SAP2_ERROR_INTERNAL);
+static_assert(static_cast<std::int32_t>(CastResult::profile_exists) == SAP2_ERROR_PROFILE_EXISTS);
+static_assert(static_cast<std::int32_t>(CastResult::pin_timeout) == SAP2_ERROR_PIN_TIMEOUT);
+
+// Version 1 sap2_cast_options ended before credential_store (API version 2).
+constexpr std::size_t cast_options_v1_size = offsetof(sap2_cast_options, credential_store);
+constexpr std::size_t cast_options_v2_size =
+    cast_options_v1_size + sizeof(sap2_cast_options::credential_store);
 
 // Longest numeric IPv6 text form (INET6_ADDRSTRLEN without the terminator).
 constexpr std::size_t max_address_length = 45;
@@ -122,8 +134,23 @@ MediaSource media_source_for(const std::shared_ptr<HostSource>& host) {
 }
 
 /// Returns ok and fills `settings`, or the argument error. May throw bad_alloc.
+/// The host store a cast options struct carries: null for a version 1 struct or
+/// a null field. Sets `valid` to false for a malformed table.
+const sap2_credential_store* host_store_from(const sap2_cast_options& options, bool& valid) {
+    valid = true;
+    if (options.struct_size < cast_options_v2_size || !options.credential_store) {
+        return nullptr;
+    }
+    valid = valid_credential_store(*options.credential_store);
+    return options.credential_store;
+}
+
+/// Profiles longer than this are rejected before copying; the format check
+/// itself is validate_credential_profile().
+constexpr std::size_t max_profile_length = 64;
+
 CastResult settings_from(const sap2_cast_options& options, CastSettings& settings) {
-    if (options.struct_size < sizeof(sap2_cast_options) || !options.receiver_address ||
+    if (options.struct_size < cast_options_v1_size || !options.receiver_address ||
         !options.profile || options.receiver_port == 0) {
         return CastResult::invalid_argument;
     }
@@ -141,10 +168,8 @@ CastResult settings_from(const sap2_cast_options& options, CastSettings& setting
     if (content_type_length == 0 || content_type_length > max_content_type_length) {
         return CastResult::invalid_argument;
     }
-    // Profiles are bounded by validate_credential_profile; reject long input
-    // before copying it.
-    const auto profile_length = bounded_length(options.profile, 64);
-    if (profile_length > 64) {
+    const auto profile_length = bounded_length(options.profile, max_profile_length);
+    if (profile_length > max_profile_length) {
         return CastResult::invalid_argument;
     }
     settings.profile.assign(options.profile, profile_length);
@@ -294,17 +319,11 @@ bool valid_status(const sap2_cast_status* status) noexcept {
     return status && status->struct_size >= sizeof(sap2_cast_status);
 }
 
+/// Map the in-flight exception with the shared categories, so a platform
+/// without a built-in store reports SAP2_ERROR_UNSUPPORTED here too.
 std::int32_t contained_failure() noexcept {
-    try {
-        throw;
-    } catch (const CredentialException& error) {
-        return error.reason() == CredentialError::invalid_profile ? SAP2_ERROR_INVALID_ARGUMENT
-                                                                  : SAP2_ERROR_CREDENTIAL_STORE;
-    } catch (const std::bad_alloc&) {
-        return SAP2_ERROR_OUT_OF_MEMORY;
-    } catch (...) {
-        return SAP2_ERROR_INTERNAL;
-    }
+    unsigned rejected_status = 0;
+    return to_c(cast_start_result(std::current_exception(), rejected_status));
 }
 } // namespace
 
@@ -352,6 +371,10 @@ const char* sap2_result_name(int32_t result) {
         return "out_of_memory";
     case SAP2_ERROR_INTERNAL:
         return "internal";
+    case SAP2_ERROR_PROFILE_EXISTS:
+        return "profile_exists";
+    case SAP2_ERROR_PIN_TIMEOUT:
+        return "pin_timeout";
     default:
         return "unknown";
     }
@@ -388,8 +411,22 @@ int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_media_sour
         if (validated != CastResult::ok) {
             return to_c(validated);
         }
+        bool valid_store = true;
+        const auto* host_store = host_store_from(*options, valid_store);
+        if (!valid_store) {
+            return SAP2_ERROR_INVALID_ARGUMENT;
+        }
+        CastDependencies dependencies;
+        if (host_store) {
+            // Copied now; the host keeps its callbacks valid until destroy.
+            auto store = std::make_shared<HostCredentialStore>(*host_store);
+            dependencies.load_credentials = [store](std::string_view profile) {
+                return store->load(profile);
+            };
+        }
         auto host = std::make_shared<HostSource>(*source);
-        auto handle = std::make_unique<sap2_cast>(std::move(settings), media_source_for(host));
+        auto handle = std::make_unique<sap2_cast>(std::move(settings), media_source_for(host),
+                                                  std::move(dependencies));
         host->arm(); // Ownership transfers only now that nothing else can fail.
         *cast = handle.release();
         return SAP2_OK;
@@ -467,5 +504,62 @@ int32_t sap2_cast_stop(sap2_cast* cast) {
 
 void sap2_cast_destroy(sap2_cast* cast) {
     delete cast; // The controller destructor stops; the last source copy releases.
+}
+void sap2_pair_options_init(sap2_pair_options* options) {
+    if (!options) {
+        return;
+    }
+    std::memset(options, 0, sizeof(*options));
+    options->struct_size = sizeof(sap2_pair_options);
+    options->receiver_port = SAP2_DEFAULT_RECEIVER_PORT;
+    options->timeout_ms = SAP2_DEFAULT_PAIR_TIMEOUT_MS;
+    options->pin_timeout_ms = SAP2_DEFAULT_PIN_TIMEOUT_MS;
+}
+
+int32_t sap2_pair(const sap2_pair_options* options) {
+    if (!options || options->struct_size < sizeof(sap2_pair_options) ||
+        !options->receiver_address || !options->profile || !options->read_pin ||
+        options->receiver_port == 0 || options->timeout_ms == 0 ||
+        options->timeout_ms > SAP2_MAX_PAIR_TIMEOUT_MS || options->pin_timeout_ms == 0 ||
+        options->pin_timeout_ms > SAP2_MAX_PIN_TIMEOUT_MS ||
+        (options->credential_store && !valid_credential_store(*options->credential_store))) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    const auto address_length = bounded_length(options->receiver_address, max_address_length);
+    const auto profile_length = bounded_length(options->profile, max_profile_length);
+    if (address_length == 0 || address_length > max_address_length ||
+        profile_length > max_profile_length) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    try {
+        PairSettings settings;
+        settings.endpoint = {std::string(options->receiver_address, address_length),
+                             options->receiver_port, 0};
+        settings.profile.assign(options->profile, profile_length);
+        settings.timeout = std::chrono::milliseconds(options->timeout_ms);
+        settings.pin_timeout = std::chrono::milliseconds(options->pin_timeout_ms);
+        auto store = select_credential_store(options->credential_store);
+        auto sessions = native_auth_sessions();
+        CallbackPinPrompt prompt(options->read_pin, options->pin_context);
+        return to_c(pair_profile(settings, *store, *sessions, prompt));
+    } catch (...) {
+        return contained_failure();
+    }
+}
+
+int32_t sap2_forget_profile(const char* profile, const sap2_credential_store* credential_store) {
+    if (!profile || (credential_store && !valid_credential_store(*credential_store))) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    const auto profile_length = bounded_length(profile, max_profile_length);
+    if (profile_length > max_profile_length) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    try {
+        auto store = select_credential_store(credential_store);
+        return to_c(forget_profile(std::string_view(profile, profile_length), *store));
+    } catch (...) {
+        return contained_failure();
+    }
 }
 } // extern "C"

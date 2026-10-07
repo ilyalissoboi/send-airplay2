@@ -92,6 +92,40 @@ plan must run on a build that contains this fix. New regression tests in
 - An unanswered request at stop: stop takes under 1.5 s with a 300 ms deadline,
   and is not reported as a failure.
 
+## Credential stores and pairing (API version 2, D50)
+
+Implements step 1 of D49 ([credential-interface.md](credential-interface.md)).
+Unit/CI-tested only: no receiver has been paired through the interface yet.
+
+- [`credentials.h`](../include/send_airplay2/credentials.h): the
+  `sap2_credential_store` callback table (`load`, `save_new`, `erase`) with
+  `SAP2_STORE_*` results and `SAP2_CREDENTIAL_RECORD_MAX` (203 bytes). Records
+  are opaque; the library's buffers are fixed-size and erased after each call.
+- `sap2_cast_options.credential_store` (new last field): a host store for that
+  cast, or NULL for the built-in store. Version 1 option structs are still
+  accepted through `struct_size`. The store is called only inside
+  `sap2_cast_start()`, once, before any network work.
+- [`pairing.h`](../include/send_airplay2/pairing.h): `sap2_pair()` wraps the CLI's
+  existing pairing workflow (refuse an existing profile, ask the receiver to show
+  its PIN, call the host's `read_pin`, save only authenticated credentials,
+  reload them, verify a fresh connection). `sap2_forget_profile()` removes a
+  local profile without touching the receiver.
+- New results: `SAP2_ERROR_PROFILE_EXISTS` (pairing an existing profile, or
+  `save_new` losing a race) and `SAP2_ERROR_PIN_TIMEOUT` (`read_pin` returned
+  after `pin_timeout_ms`). A wrong PIN reports `SAP2_ERROR_AUTHENTICATION`; a
+  cancelled PIN entry, `SAP2_ERROR_CANCELLED`. `SAP2_PLAYBACK_API_VERSION` is 2.
+- Threading and lifetime follow credentials.h: callbacks run on the calling
+  thread; a cast's store must stay valid until `sap2_cast_destroy()` returns,
+  and a pairing call's store and `read_pin` until it returns.
+
+Engineering choices made while implementing: `read_pin` is a synchronous
+callback rather than a two-step API, because the existing workflow keeps the
+provisioning socket open between the PIN request and the proof; its deadline is
+checked when it returns, since a callback cannot be interrupted. Pairing has no
+cancellation besides `read_pin`; each network phase is bounded by `timeout_ms`.
+On a platform without a built-in store, a NULL store reports
+`SAP2_ERROR_UNSUPPORTED`.
+
 ## Threading and lifetime
 
 - `start` blocks its caller. `get_status`, `wait_for_change`, `command` and `stop`
@@ -154,15 +188,34 @@ Telemetry only (no observer needed):
    ([credential-interface.md](credential-interface.md)): built-in macOS Keychain
    and Linux Secret Service adapters, and host-provided stores for UWP
    (`PasswordVault`) and Android (Keystore). Plus the Botan UWP packaging question.
-5. **Pairing and profile removal** in the C interface (planned by D49), and
-   diagnostics (start trace, event and media logs) in a later interface version,
-   if hosts need them.
+5. **Pairing on the receiver through `sap2_pair()`** (implemented in D50 but not
+   yet run against the Apple TV), and diagnostics (start trace, event and media
+   logs) in a later interface version, if hosts need them.
 6. **IPv6 link-local receivers** (scope IDs): the media server rejects them today.
 
 ## Validation
 
-Windows 11 x64, MSVC (Visual Studio 18 2026), Release, static and shared: 27/27
-CTest targets each. New targets:
+Windows 11 x64, MSVC (Visual Studio 18 2026), Release, static and shared: 29/29
+CTest targets each after D50. D50 targets:
+
+- `c_credentials_smoke` (C): a one-slot C memory store behind the real library.
+  Covers store-table validation; a cast's store being loaded once in start and
+  never at create; absent, unavailable, malformed, zero-length and oversized
+  records; profile removal (stored, absent, invalid profile, and an absent
+  profile in the built-in store); pairing defaults and argument refusals; and
+  pairing stopping before any PIN request or save on a malformed existing record
+  or an unreachable receiver.
+- `host_credential_tests` (C++, scripted sessions and the fake receiver): record
+  round trip through the C table; `already_exists`, `invalid_record` and
+  `unavailable` mapping; pairing success (PIN called once, leading zeros kept,
+  one save, verification of the reloaded record on a fresh connection), wrong
+  PIN, cancelled entry, invalid PINs (3 digits, 9 digits, a letter), late PIN,
+  an existing profile (no PIN or connection), a lost `save_new` race and a save
+  failure; removal; and a cast authenticated from a host store. Disabling the
+  PIN deadline check fails the late-PIN case.
+- `c_playback_smoke` now also checks that version 1 option structs are accepted.
+
+Earlier targets:
 
 - `api_host_arguments`: runs `airplay2-api-host` offline. Covers argument
   refusals, range errors reported by `sap2_cast_create`, and an absent profile

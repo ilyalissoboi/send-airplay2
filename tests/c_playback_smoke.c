@@ -5,6 +5,7 @@
  * is read; nothing is written to any credential store and no receiver is used. */
 #include "send_airplay2/playback.h"
 #include <math.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -67,6 +68,7 @@ static int create_result(const sap2_cast_options* options) {
 
 static void version_and_names(void) {
     check(sap2_playback_api_version() == SAP2_PLAYBACK_API_VERSION, "runtime version");
+    check(SAP2_PLAYBACK_API_VERSION == 2, "credential stores and pairing are version 2");
     check(strcmp(sap2_result_name(SAP2_OK), "ok") == 0, "ok name");
     check(strcmp(sap2_result_name(SAP2_ERROR_CONNECTION), "connection") == 0, "connection name");
     check(strcmp(sap2_result_name(-1), "unknown") == 0, "unknown name");
@@ -107,8 +109,12 @@ static void argument_validation(void) {
           "truncated source struct");
     check(probe.releases == 0, "rejected sources are not released");
 
-    options.struct_size = sizeof(options) - 1;
-    check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "truncated options struct");
+    /* Version 1 options end before credential_store and stay accepted (API 2). */
+    options.struct_size = (uint32_t)offsetof(sap2_cast_options, credential_store) - 1;
+    check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT,
+          "options struct shorter than version 1");
+    options.struct_size = (uint32_t)offsetof(sap2_cast_options, credential_store);
+    check(create_result(&options) == SAP2_OK, "version 1 options struct is still accepted");
     options = valid_options();
     options.receiver_address = NULL;
     check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "NULL address");

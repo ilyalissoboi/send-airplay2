@@ -23,7 +23,10 @@ with GET/HEAD and byte ranges. Private session integration uses authenticated
 SETUP, encrypted events, NTP timing, feedback and `/command` queue messages.
 The pre-1.0 API is not frozen. Playback has an experimental C interface,
 [`playback.h`](include/send_airplay2/playback.h), that casts a host read-callback
-source to a paired profile; see [its design record](docs/public-api.md).
+source to a paired profile; see [its design record](docs/public-api.md). Since API
+version 2 it also accepts a host-provided credential store and can pair by PIN
+([`credentials.h`](include/send_airplay2/credentials.h),
+[`pairing.h`](include/send_airplay2/pairing.h); not yet receiver-tested).
 See [media serving contracts and validation](docs/media-server.md).
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
