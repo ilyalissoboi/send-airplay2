@@ -38,7 +38,7 @@ Proposed components:
 | Media server | GET/HEAD, byte sources, range responses, bounded streaming | Experimental Boost.Beast/Asio server implemented; loopback tested and Apple TV fetch observed; see media-server.md |
 | Playback | URL start, pause/resume, seek, status, stop | URL/MRP and automatic terminal cleanup implemented; G1 passed; native EOF and ten short cycles passed; G2 passed by user report; remaining manual G3 checks pending |
 | Public playback interface | Versioned C handle over session and media server | Experimental v1 implemented (D46, [public-api.md](public-api.md)); manual plan passed on one receiver/host (D48) |
-| Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; other stores, packaged hosts and media access pending |
+| Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; common credential design (built-in plus host-provided stores) decided in D49, [credential-interface.md](credential-interface.md); other stores, packaged hosts and media access pending |
 | Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
 
 An AirPlay 2-capable receiver accepting an older protocol path is not proof of

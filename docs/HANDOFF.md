@@ -7,13 +7,18 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: native playback session merged into `main`
+## 0. Resume here: public playback interface merged; credential design next
 
-**Active slice: public playback interface (D46).** At the user's request PR #13
-(D45 handoff) was merged as `b0b0f86` after all ten checks passed, and the
-versioned C playback interface was started on `claude/public-playback-api` with
-its own PR. Its manual plan **passed on the TV on 2026-10-08 (D48)** for one
-receiver/host, with D47's teardown fix; see
+**Active slice: common credential interface (D49).** The user merged PR #14
+(public playback interface, D46-D48) as `9c8869e`. Before the C# binding and the
+packaged UWP host, research showed the D46 store cannot serve UWP or Android, so
+the user approved a common design: built-in stores plus a host-provided store
+behind the existing seam, with pairing in the C interface. It is recorded, not
+implemented, in [credential-interface.md](credential-interface.md) and the D49
+record in section 4, on `claude/credential-interface-decision` with its own PR.
+
+The public playback interface's manual plan **passed on the TV on 2026-10-08
+(D48)** for one receiver/host, with D47's teardown fix; see
 [public-api.md](public-api.md) and the D46 record in section 4.
 
 **PR #12 is merged (D45).** The user merged
@@ -855,6 +860,24 @@ indication. One receiver, firmware and host only; unreachable-address, handle
 counts and cable-pull checks were not run. Record:
 [receiver-validation.md](receiver-validation.md#public-playback-interface-manual-batch-d48-2026-10-08)
 and its [artifact](validation/native-api-host-manual-batch-windows-2026-10-08.json).
+
+**D49 (common credential interface, 2026-10-08):** the user merged PR #14 and,
+before the next slice, asked for the credential design to cover non-Windows
+platforms and for the Windows facts to be researched. Research against the
+installed SDK, Microsoft Learn and the built DLL found: Credential Manager is
+desktop-only; `PasswordVault` is available to UWP but limited to 20 credentials
+per app, can roam with the Microsoft account, stores strings and is keyed by
+package identity; Screenbox is an AppContainer UWP app; and `send_airplay2.dll`
+imports the desktop-only credential functions. The user approved recording the
+resulting design: one `CredentialStore` seam with built-in adapters (Windows
+desktop now; macOS Keychain and Linux Secret Service later) and a host-provided
+store through the C interface (UWP `PasswordVault` from C#, Android Keystore
+from Kotlin, headless Linux); profiles stay the key; D46's "secrets never cross
+the ABI" holds for built-in stores only; pairing and profile removal join the C
+interface; `PasswordVault` stays host-supplied; UWP builds exclude the Credential
+Manager adapter; no plaintext fallback. The host-store contract is an
+engineering proposal for the next slice. Details, sources and unverified items:
+[credential-interface.md](credential-interface.md). Documentation only.
 
 ## 5. Implemented code and verification
 

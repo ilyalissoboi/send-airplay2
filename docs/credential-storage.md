@@ -6,6 +6,11 @@ exercise the portable codec/workflow but native storage reports unsupported;
 Android and packaged Windows/UWP storage/loading are unvalidated. This slice
 does not implement playback or establish Apple TV compatibility.
 
+The planned design for other platforms and packaged hosts (built-in stores plus a
+host-provided store through the C interface) is recorded as D49 in
+[credential-interface.md](credential-interface.md); this page describes what is
+implemented today.
+
 ## Trust and record contract
 
 `CredentialStore` owns the persistence boundary. Credentials originate in
