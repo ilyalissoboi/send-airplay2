@@ -74,7 +74,7 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Test | Expected | Result/evidence |
 |---|---|---|
 | Discovery and departure | Correct identity; no duplicate/stale entries | Discovery observed; departure/interface changes NOT RUN |
-| First pairing | PIN UI and credential save succeed | PASS, user-reported after M6 metadata fix; see observation below |
+| First pairing | PIN UI and credential save succeed | PASS, user-reported after M6 metadata fix; see observation below. Through the C interface: PASS (D51), `sap2_pair()` into the built-in store with hidden console PIN entry, then a cast with the new profile |
 | Wrong PIN / revoked pairing | Explicit failure, no playback | NOT RUN |
 | Reconnect after restart | Stored pairing works when receiver policy permits | Built-in fresh-socket and separate-process verification PASS; host/receiver restart NOT RUN |
 | Repeated verification | Independent processes reuse stored pairing | PASS, baseline plus three reconnects and three fault-recovery verifications per static/shared run |
@@ -1160,3 +1160,25 @@ reports connection_lost/exit 1; no classifier change is implied. The original
 frozen-video FAIL keeps its D37 priority; no freeze recurred in this batch,
 including the full clip. Startup pause did not recur in this batch; that does not
 establish its cause.
+
+## Pairing through the public interface (D51, 2026-10-08)
+
+First receiver pairing through `sap2_pair()` ([pairing.h](../include/send_airplay2/pairing.h)),
+at source head `b87e1ae8366e569c757d12b6d6ef7548822821a9` on Windows 11 x64 with
+the Living Room Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged
+and not queried. `airplay2-api-host --pair` (static, SHA-256
+`eb20a5c68aab9fee2809596fe7cb8c79209c7d4d115901b95246708656e8ecc7`) paired a new
+profile, `living-room-api`, into Windows Credential Manager. The user typed the
+PIN in a separate console window with echo off; it never reached any output, log
+or record. The existing `living-room-test` profile was not touched. Details are
+in the [artifact](validation/native-api-pairing-windows-2026-10-08.json).
+
+| Step | Native result | Observer |
+| --- | --- | --- |
+| `sap2_pair()` | `Pair: ok`: authenticated enrollment, `save_new`, reload and verification on a fresh connection | PIN shown on the TV; console accepted it hidden and closed |
+| Cast with `living-room-api` | `Start: ok` in 1.8 s, owned/playing; sender_stop after 20 s, cleaned, failed_reads=0, releases=1, exit 0 | Normal video/audio; Home after stop |
+
+This adds one pairing entry on the Apple TV, which only its settings can remove.
+Not run on hardware: pairing into a host-provided store, a wrong or cancelled
+PIN, and `sap2_forget_profile()`; those remain unit-tested only. One receiver,
+firmware and host.

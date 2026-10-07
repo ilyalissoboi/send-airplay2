@@ -13,7 +13,9 @@ guide; the master handoff and dated artifacts preserve the longer history.
 - **Active slice (D50):** host-provided credential stores, `sap2_pair()` and
   `sap2_forget_profile()` in the C interface (API version 2), on branch
   `claude/host-credential-store` with its own PR (find it with
-  `gh pr list --state open`). Unit/CI-tested only.
+  `gh pr list --state open`). A real pairing through `sap2_pair()` into the
+  built-in store, then a cast with the new profile `living-room-api`, passed
+  on the TV (D51).
 - [PR #15](https://github.com/ilyalissoboi/send-airplay2/pull/15), the D49 design
   record, was merged by the user as `4c03c0a`.
 - [PR #14](https://github.com/ilyalissoboi/send-airplay2/pull/14), the public
@@ -193,8 +195,7 @@ development, not retroactive gate failures.
 6. **Public library/host work, next implementation (D49 order).** Follow
    [credential-interface.md](credential-interface.md): (a) **done in D50:**
    host-store callbacks and pairing in the C interface, with test stores on all
-   CI platforms (a real pairing through `sap2_pair()` still needs the user at the
-   TV); (b) the
+   CI platforms, and one real pairing into the built-in store (D51); (b) the
    C# binding and a packaged UWP test app with a C# `PasswordVault` host store,
    also proving native loading, discovery, brokered file reads and inbound
    serving, and measuring D49's unverified items; (c) a UWP library build without

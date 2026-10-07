@@ -95,7 +95,10 @@ plan must run on a build that contains this fix. New regression tests in
 ## Credential stores and pairing (API version 2, D50)
 
 Implements step 1 of D49 ([credential-interface.md](credential-interface.md)).
-Unit/CI-tested only: no receiver has been paired through the interface yet.
+**Receiver result (D51):** `sap2_pair()` paired the recorded Apple TV into the
+built-in store with hidden console PIN entry, and a cast with the new profile
+passed; see [receiver-validation.md](receiver-validation.md#pairing-through-the-public-interface-d51-2026-10-08).
+Host stores, wrong and cancelled PINs, and profile removal are unit-tested only.
 
 - [`credentials.h`](../include/send_airplay2/credentials.h): the
   `sap2_credential_store` callback table (`load`, `save_new`, `erase`) with
@@ -188,9 +191,9 @@ Telemetry only (no observer needed):
    ([credential-interface.md](credential-interface.md)): built-in macOS Keychain
    and Linux Secret Service adapters, and host-provided stores for UWP
    (`PasswordVault`) and Android (Keystore). Plus the Botan UWP packaging question.
-5. **Pairing on the receiver through `sap2_pair()`** (implemented in D50 but not
-   yet run against the Apple TV), and diagnostics (start trace, event and media
-   logs) in a later interface version, if hosts need them.
+5. **Pairing on hardware beyond D51's single pairing:** into a host-provided
+   store, and wrong or cancelled PINs. Diagnostics (start trace, event and media
+   logs) may come in a later interface version, if hosts need them.
 6. **IPv6 link-local receivers** (scope IDs): the media server rejects them today.
 
 ## Validation

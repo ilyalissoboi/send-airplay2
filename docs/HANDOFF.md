@@ -13,8 +13,9 @@ checkpoint, review disposition, validation commands and ordered development queu
 design) as `4c03c0a` and asked to proceed. Branch `claude/host-credential-store`
 adds host-provided credential stores and pairing to the C interface (API
 version 2); see [public-api.md](public-api.md#credential-stores-and-pairing-api-version-2-d50)
-and the D50 record in section 4. Unit/CI-tested only; no receiver has been
-paired through `sap2_pair()` yet.
+and the D50 record in section 4. With the user at the TV, `sap2_pair()` paired
+the Apple TV into the built-in store and a cast with the new profile passed
+(D51).
 
 D49 (common credential design) is recorded in
 [credential-interface.md](credential-interface.md).
@@ -894,8 +895,19 @@ Engineering choices: a synchronous `read_pin` callback whose deadline is checked
 on return; no pairing cancellation besides `read_pin`; the shared result mapping
 now covers pair-setup failures, and `already_exists` maps to `PROFILE_EXISTS`.
 New tests `c_credentials_smoke` and `host_credential_tests`; Windows
-static/shared Release 29/29 CTest each. **Not receiver-tested:** pairing the
-Apple TV through `sap2_pair()` needs the user at the TV.
+static/shared Release 29/29 CTest each.
+
+**D51 (pairing through the public interface, 2026-10-08):** the user asked to
+proceed with a real pairing and chose hidden console PIN entry, the built-in
+store followed by a cast, and the profile `living-room-api`.
+`airplay2-api-host` gained `--pair` (hidden `read_pin` through CONIN$/CONOUT$,
+written against the public contract). `sap2_pair()` returned ok at source head
+`b87e1ae` (authenticated enrollment, save, reload, fresh-connection
+verification), and a 20 s cast with the new profile started in 1.8 s and stopped
+cleanly; the user confirmed the PIN prompt and normal video/audio/Home. One new
+pairing entry now exists on the Apple TV. Not run on hardware: a host-store
+pairing, a wrong or cancelled PIN, profile removal. Record:
+[receiver-validation.md](receiver-validation.md#pairing-through-the-public-interface-d51-2026-10-08).
 
 ## 5. Implemented code and verification
 

@@ -26,7 +26,8 @@ The pre-1.0 API is not frozen. Playback has an experimental C interface,
 source to a paired profile; see [its design record](docs/public-api.md). Since API
 version 2 it also accepts a host-provided credential store and can pair by PIN
 ([`credentials.h`](include/send_airplay2/credentials.h),
-[`pairing.h`](include/send_airplay2/pairing.h); not yet receiver-tested).
+[`pairing.h`](include/send_airplay2/pairing.h)). One real pairing through it
+passed on the recorded Apple TV (D51).
 See [media serving contracts and validation](docs/media-server.md).
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer

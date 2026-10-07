@@ -135,7 +135,8 @@ implementation; dependencies such as libsecret are recorded in
 
 1. **Done (D50, unit/CI-tested):** host-store callbacks and pairing in the C
    interface, with test stores, so CI covers them on Windows, Linux and macOS.
-   Pairing a real receiver through `sap2_pair()` is still to be observed.
+   A real pairing through `sap2_pair()` into the built-in store passed on
+   2026-10-08 (D51); pairing into a host store on hardware comes with step 2.
 2. The C# binding and the packaged UWP test app with a C# `PasswordVault` host
    store; measure the unverified items above.
 3. The UWP library build without the Credential Manager adapter.
