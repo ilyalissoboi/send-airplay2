@@ -573,9 +573,13 @@ void UrlPlaybackSession::feedback_loop() {
             // Best effort, as in the reference: a non-2xx answer is ignored, but
             // a transport failure has closed the control connection.
             (void)control_request(rtsp_request("POST", "/feedback", {}), &feedback_stop_, false);
-            if (mrp_) {
+            if (mrp_ && !feedback_stop_) {
                 channel = SessionFailureChannel::remote_feedback;
-                (void)remote_request("POST", "/feedback", {}, &feedback_stop_, false);
+                // Not cancellable: an interrupted request closes its connection,
+                // and cleanup stops feedback first, so cancelling here would
+                // close remote control before the URL session. Its request
+                // deadline still bounds how long cleanup waits for it.
+                (void)remote_request("POST", "/feedback", {}, nullptr, false);
             }
             std::lock_guard<std::mutex> lock(state_mutex_);
             ++status_.feedback_sent;

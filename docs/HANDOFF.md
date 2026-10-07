@@ -9,6 +9,13 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here: native playback session merged into `main`
 
+**Active slice: public playback interface (D46).** At the user's request PR #13
+(D45 handoff) was merged as `b0b0f86` after all ten checks passed, and the
+versioned C playback interface was started on `claude/public-playback-api` with
+its own PR. Its manual plan **passed on the TV on 2026-10-08 (D48)** for one
+receiver/host, with D47's teardown fix; see
+[public-api.md](public-api.md) and the D46 record in section 4.
+
 **PR #12 is merged (D45).** The user merged
 [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12) into `main` on
 2026-10-07 as `2bb25df4b4f58ef0a2c6936ed6f44161b815890c`. Its final head
@@ -776,6 +783,78 @@ PR, because the prior "continue on the open PR branch" rule no longer applies; a
 before merging. The ordered queue in [CONTINUATION.md](CONTINUATION.md) now
 proposes a versioned public playback API design as the next slice, pending user
 confirmation. Documentation only: no source, test, dependency or receiver change.
+
+**D46 (public playback interface, 2026-10-07):** the user asked to merge PR #13
+and start the API slice. PR #13 merged as `b0b0f86` at verified head `5e0a98e`
+with all ten checks passing. The user then chose two options offered as
+questions: **credentials by profile name**, loaded from the library's own
+platform store so secrets never cross the ABI, and a **playback-only** first
+slice (no pairing, profile deletion or diagnostics in the interface yet).
+Engineering proposals under those choices: an opaque `sap2_cast` handle owning
+the media server and session in the CLI's validated order; `struct_size`
+versioning plus `SAP2_PLAYBACK_API_VERSION` 1; host `read_at`/`release` media
+callbacks with ownership transferred only on successful create; blocking
+start cancelled by `sap2_cast_stop()`; polled and waited status without event
+callbacks (keeps D28); end reasons unchanged, so remote Stop/Home still reports
+connection_lost; no Play/seek retry. `export.h` now holds `SAP2_API`, and the
+library includes the credential store sources and links `advapi32` on Windows.
+Implementation is in `src/cast_controller.*` and `src/playback_api.cpp`; tests
+are `cast_controller_tests` and the C-language `c_playback_smoke`. Windows
+static/shared Release passed 26/26 CTest targets each. At the user's request a
+development host, `airplay2-api-host` (`tools/airplay2_api_host.cpp`), was then
+added; it calls the library only through `playback.h`, offers interactive,
+cancel-during-start and repeated-cycle modes for the
+[manual validation plan](public-api.md#manual-validation-plan), and has its own
+offline `api_host_arguments` test (27/27 targets each). CI at `5a46749` then
+failed once on macOS shared in the unchanged session test's silent-feedback
+precondition: no healthy feedback had been answered when `start()` returned.
+The test now waits (bounded) for one healthy answer before arming the fault;
+its 80 ms deadline, 500 ms cleanup bound and post-arm assertions are unchanged.
+It passed 5/5 per build locally and 18/18 with six concurrent copies. The
+session tests' scripted fake receiver then moved unchanged into
+`tests/fake_receiver.h`, and a test-only `CastDependencies::adjust_session` hook
+lets `cast_controller_tests` drive it with MRP disabled: start, pause through
+`wait_for_change`, stop ordering, natural end, event loss and concurrent stops.
+At the user's request the fake then gained an optional MRP data stream
+(`Behavior::mrp_fixtures`, `FakeMrpPeer`), and the controller tests now cover
+ownership, accepted pause/play/seek/stop reaching the receiver with their wire
+numbers, MRP-reported `media_end` and `ownership_lost`. That work found a
+session teardown ordering bug, fixed under D47 below. Receiver results for the
+interface are under D48. Contract, mapping tables, limits and next steps:
+[public-api.md](public-api.md).
+
+**D47 (remote feedback no longer cancelled at teardown, 2026-10-08):** the MRP
+fake showed that cleanup, which stops feedback first, cancelled any remote
+`/feedback` request in flight. `ReceiverConnection::request` closes its
+connection on any exception, so the remote session closed before the URL
+session, contrary to "retain remote control through URL teardown". It
+reproduced 3/3 with a held request and broke 7 of 18 loaded MRP controller
+runs. The user chose to fix it in PR #14. The feedback loop now skips the
+remote request once stop has begun and does not cancel one already in flight;
+its request deadline (5 s default) bounds the wait. A remote request that fails
+at that deadline still closes its connection first; that is accepted for an
+unresponsive receiver. New `url_playback_session_tests` cases cover a held
+request (fails as `[remote,URL]` without the fix) and an unanswered one (stop
+under 1.5 s with a 300 ms deadline, no failure reported). **This changes the
+runtime used by both `airplay2-cli cast` and the C interface:** every recorded
+hardware result predates it, so the next receiver run must use a build that
+contains D47.
+
+**D48 (public interface manual batch, 2026-10-08):** with the user at the TV,
+the [manual plan](public-api.md#manual-validation-plan) ran on source head
+`8a7050d` (D47 runtime) through `airplay2-api-host`, using a local driver that
+kept the receiver address out of all output and restored staged executables with
+hash checks. Checks 1-7 passed with observer confirmation: start/stop, controls,
+full clip to media_end, cancel during start (a few frames, then Home), remote
+Home button (connection_lost/exit 1, as known), receiver sleep then fresh cast
+after wake, and the shared build. Ten cycles in one process passed 10/10. A
+`cast --media-log` run with a user-provided 6.32 GB remuxed film passed a seek
+past 4 GiB (37 requests at offsets of 4,490,723,328 bytes and above, picture at
+about 1:20:00 with sound) and played E-AC-3 audio normally, without an Atmos
+indication. One receiver, firmware and host only; unreachable-address, handle
+counts and cable-pull checks were not run. Record:
+[receiver-validation.md](receiver-validation.md#public-playback-interface-manual-batch-d48-2026-10-08)
+and its [artifact](validation/native-api-host-manual-batch-windows-2026-10-08.json).
 
 ## 5. Implemented code and verification
 

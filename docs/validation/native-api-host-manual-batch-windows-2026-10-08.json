@@ -1,0 +1,1142 @@
+{
+  "date": "2026-10-08",
+  "decision": "D48",
+  "scope": "Manual validation plan for the experimental C playback interface (public-api.md) via airplay2-api-host, plus one cast CLI run with a user-provided remuxed film for E-AC-3 audio and seeking past 4 GiB. First receiver runs on the D47 teardown runtime. Observer answers are recorded separately from protocol results.",
+  "receiver": {
+    "name": "Living Room",
+    "hardware": "Apple TV 4K (AppleTV14,1)",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_scope": "Prior user report, assumed unchanged; not queried during this test."
+  },
+  "host": "Windows 11 x64",
+  "source_head": "8a7050d8e17a7ec7684ef0dbcb3561c78731660c",
+  "tested_source_blobs": {
+    "include/send_airplay2/discovery.h": "093c02ff9b9b1f19c1869889cd6df3d9b09ddc8b",
+    "include/send_airplay2/export.h": "65d9e3b1ce02495a484d8c29e25d11f21904ef8a",
+    "include/send_airplay2/http_range.h": "931acac8000afffdfb9764ff2a433a666ace529e",
+    "include/send_airplay2/media_server.h": "9fab99bd54d99873e8188b2501e1101c1ed4e543",
+    "include/send_airplay2/playback.h": "73d97a9991c0a047c59ff1ab4cf6139aaeae0bcf",
+    "src/auth_cli.cpp": "0267a44443745d673f7b61dc2a1c93be9b84dfc9",
+    "src/auth_cli.h": "8d1b99bc003e2a9520a2de3bba81c74549da89f2",
+    "src/auth_workflow.cpp": "fc2197e71444c5ec6b38f56a22e4f2247a1215be",
+    "src/auth_workflow.h": "c6c612705a66bb6242cb8adf4abd6ae6f5606e8b",
+    "src/binary_plist.cpp": "410811189536ae1bf65ca118e136e3ffe2450c95",
+    "src/binary_plist.h": "a5240c63aa69a251682ff5bcb5f4d280c7d8c9c6",
+    "src/cast_cli.cpp": "8a32427c3c9acc20fd3ab2efe190eb07c41cb776",
+    "src/cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+    "src/cast_controller.cpp": "1eb7078b08e85a37b083162650d9da897844e543",
+    "src/cast_controller.h": "601f1a0d4f87c165605dac2669284046f5c2c13a",
+    "src/channel_keys.cpp": "adecb919bccdf5e25ac263a1215a997a7ba3c2da",
+    "src/channel_keys.h": "de40d7d3c8025a1286a22b1f042e87f35d3a5ad9",
+    "src/cli.cpp": "76a9f28d5a0a83ac0710ae85f3426a570bea7121",
+    "src/cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+    "src/cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+    "src/control_crypto.cpp": "5bc9b89f05bf599012424022408d7cb70926f361",
+    "src/control_crypto.h": "207d4a0cca5904303f09ec21be500a208cd089ef",
+    "src/control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+    "src/control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+    "src/credential_codec.cpp": "e5807d18914efc0d5f04c87060e6a914ad5d7106",
+    "src/credential_store.cpp": "cdf6808d49ac4fa0e423541bbf5f5c5288136b63",
+    "src/credential_store.h": "598478c2cda6b157a537ea604b0524ac1904d1db",
+    "src/discovery.cpp": "c42d8e3eecb0629ae97ea5877cfd58488b615504",
+    "src/discovery_core.cpp": "ca35d93a08d31d44dbef0fca906691b1ba927885",
+    "src/discovery_core.h": "6f73a607c8038c80ba32d5e9a794f21c15124e66",
+    "src/discovery_transport.cpp": "a836dd94c33bb438f4f535a2bcc38d0f14e578d8",
+    "src/discovery_transport.h": "64479c4ea33e4e71606862a042575000628f2180",
+    "src/event_channel.cpp": "9f4b59ebffd968257793361064c70e8606bef1c5",
+    "src/event_channel.h": "27e41ba61b3047185d5e4e0bdbdda990fc5fbf02",
+    "src/file_media_source.cpp": "5e7402cca8fe624e59e6c4c602286f677dd0d28f",
+    "src/file_media_source.h": "a05ef442a202332a0d500ab9e4b44acfefbf2bfe",
+    "src/http_range.cpp": "1fc7e2fabc379527e9f7fb97efc1f6ea5af30543",
+    "src/identity_crypto.cpp": "b0b02696e16c56e266bac4fac809ee8b64521520",
+    "src/identity_crypto.h": "0c52c26b6b1ffbae6bd8fa5bbe420d8d4a8e2b58",
+    "src/media_server.cpp": "621626fc6891503c22402a5b283a176114983e0c",
+    "src/mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+    "src/mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+    "src/mrp_messages.cpp": "dae191cb28fede0c8a8f67ce5e1deeb802b1d84e",
+    "src/mrp_messages.h": "49f2f041346c97d6d74d353bb7da57a26c61ddd0",
+    "src/mrp_session.cpp": "f75f292fcd880901524ff3154fe402fc2a626a9f",
+    "src/mrp_session.h": "77271d1fd3242b802ba85a16c142db4f4200f45f",
+    "src/native_socket.cpp": "dc5b83638de6f3040fbfa3aaf10e997753b109b4",
+    "src/native_socket.h": "d1eebfc0f7defa70389778a0d68f07a9766cadbe",
+    "src/ntp_timing.cpp": "f294d8ed63a4a05ea49cb37d8401bd50929fa891",
+    "src/ntp_timing.h": "c6acbdc070535895560f133dd49b86575f390e5a",
+    "src/pair_setup.cpp": "ed1ee763503ca64ffab81e4d98f17ce405b6e431",
+    "src/pair_setup.h": "1c1044b0fdce8e42945dbb9aa09b8ca2652e410c",
+    "src/pair_setup_crypto.cpp": "601929d94a09026c8e7c26d822150fe09d77d3c9",
+    "src/pair_setup_crypto.h": "cd8ca1ca064b939d4baa1768da3e33539d4600b8",
+    "src/pair_verify.cpp": "aa90b30dd20274b1936eff5e7f484c29c59136a8",
+    "src/pair_verify.h": "5fd52a51db6b29ca6e940e697ca33fa6b905f1db",
+    "src/pairing_tlv.cpp": "dd3f90f9bcff2711c6f5fb03d32c00785ffe84df",
+    "src/pairing_tlv.h": "4ef114ba678a9d592dbef833d029e0e913c6ea8b",
+    "src/playback_api.cpp": "4589d861ad6a04de5115de14d71011a9f162c946",
+    "src/protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+    "src/protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+    "src/receiver_connection.cpp": "98b0ca621fb530651fefcc5fcd08e45bd9167b97",
+    "src/receiver_connection.h": "cfc541d8f0f393bad7eee8a7859344266f2b5bca",
+    "src/receiver_http.cpp": "995f71500fbaeb91616fbd1560f7f7cd195568a7",
+    "src/receiver_http.h": "f2a0713ba73f5d81b2ed4ef52ed63f51cfcd6395",
+    "src/receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+    "src/receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+    "src/serve_cli.cpp": "0952c7c26371b78dc4b53c00f11374ec58a4f211",
+    "src/serve_cli.h": "94eb75017201a849317df5112fb57ed01884f493",
+    "src/session_messages.cpp": "c03f3e1c312c456bfef560e88f12bf4f19d7ae6f",
+    "src/session_messages.h": "a7a91fa27ea4ca49857ba99c14d2c0cf228412a3",
+    "src/url_playback_session.cpp": "ed6c8975fb405b614ae681e1ca555788cc3f9ff3",
+    "src/url_playback_session.h": "1478ce24f19b9a4a96c7c2227da94182c1e2d87b",
+    "tools/airplay2_api_host.cpp": "26035d3ab14d6230f79998f39da99bcf436d1ea1"
+  },
+  "binaries": {
+    "api_host_static_sha256": "1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90",
+    "api_host_shared_sha256": "0eee6348c15dca22bce46c218c1a32d724d0875ef36166094edfc5251cb162b1",
+    "send_airplay2_dll_sha256": "291841dd64b66bff715f374f9dd5a0c1a80d9d6551925fac69dc1c3891fb8c1d",
+    "cli_static_sha256": "2a3e249b8966b6fb5fc54af7dfb1d95cce3f2de489ae2eef485dc357c00dd18d",
+    "staging": "Each tested executable (and the shared DLL) was copied to a path with an existing inbound firewall rule and the original restored afterwards with SHA-256 equality. No firewall, network, credential or receiver setting changed."
+  },
+  "media": {
+    "clip": {
+      "sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+      "bytes": 53953926,
+      "description": "H.264/AAC MP4, about 131.6 s (the established test clip)"
+    },
+    "film": {
+      "sha256": "be482f544c20852f57888c98c0defdbf7718005af0bdf53843784781f8ba4266",
+      "bytes": 6321795698,
+      "duration_seconds": 6824.544,
+      "description": "User-provided feature film, remuxed by the user from MKV with ffmpeg stream copy; personally held, not committed. H.264 High level 4.0 1920x802 23.976 fps (avc1); E-AC-3 5.1 48 kHz (ec-3, dec3 Atmos extension flag set, complexity index 16); mov_text subtitles; moov before mdat; 64-bit co64 chunk offsets."
+    },
+    "profile": "living-room-test (existing stored credentials; no pairing)"
+  },
+  "cases": {
+    "1_start_local_stop": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.2 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 42.0,
+          "line": ">>> sending Enter"
+        },
+        {
+          "time_seconds": 42.1,
+          "line": "Summary: api_version=1 linkage=static start=ok phase=stopped state=playing end=sender_stop owned=yes position=31.4 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=1177 bytes=77009568 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 42.1,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 42.1,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "Normal video and audio for about 30 s: yes. Home after stop: yes."
+    },
+    "2_controls": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.3 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 22.0,
+          "line": ">>> sending 'pause'"
+        },
+        {
+          "time_seconds": 22.0,
+          "line": "State: paused"
+        },
+        {
+          "time_seconds": 22.0,
+          "line": "Control: ok"
+        },
+        {
+          "time_seconds": 24.0,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 24.0,
+          "line": "Status: phase=active state=paused end=none owned=yes position=11.1 duration=131.6 rate=0.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 27.0,
+          "line": ">>> sending 'play'"
+        },
+        {
+          "time_seconds": 27.1,
+          "line": "Control: ok"
+        },
+        {
+          "time_seconds": 27.1,
+          "line": "State: loading"
+        },
+        {
+          "time_seconds": 27.1,
+          "line": "State: playing"
+        },
+        {
+          "time_seconds": 29.0,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 29.0,
+          "line": "Status: phase=active state=playing end=none owned=yes position=13.1 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 35.0,
+          "line": ">>> sending 'seek 60'"
+        },
+        {
+          "time_seconds": 35.1,
+          "line": "Control: ok"
+        },
+        {
+          "time_seconds": 37.0,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 37.0,
+          "line": "Status: phase=active state=playing end=none owned=yes position=61.7 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 43.1,
+          "line": ">>> sending 'seek 10'"
+        },
+        {
+          "time_seconds": 43.1,
+          "line": "Control: ok"
+        },
+        {
+          "time_seconds": 45.1,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 45.1,
+          "line": "Status: phase=active state=playing end=none owned=yes position=11.5 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 51.1,
+          "line": ">>> sending 'stop'"
+        },
+        {
+          "time_seconds": 51.2,
+          "line": "State: paused"
+        },
+        {
+          "time_seconds": 51.2,
+          "line": "Control: ok"
+        },
+        {
+          "time_seconds": 51.5,
+          "line": "Summary: api_version=1 linkage=static start=ok phase=stopped state=paused end=sender_stop owned=yes position=17.9 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=2007 bytes=131330646 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 51.5,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 51.5,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "Pause, resume with audio, forward seek to about 1:00, back to about 0:10, Home after MRP stop: 'Everything worked as expected'."
+    },
+    "3_full_clip_natural_end": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.2 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 72.0,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 72.0,
+          "line": "Status: phase=active state=playing end=none owned=yes position=61.3 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 132.0,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 132.0,
+          "line": "Status: phase=active state=playing end=none owned=yes position=121.3 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 142.6,
+          "line": "State: stopped"
+        },
+        {
+          "time_seconds": 143.3,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "time_seconds": 143.4,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "time_seconds": 143.6,
+          "line": "Summary: api_version=1 linkage=static start=ok phase=stopped state=stopped end=media_end owned=yes position=131.6 duration=131.6 rate=0.0 failure=none/none cleaned=yes reads=1920 bytes=125655078 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 143.7,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 143.7,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "Moving video through the whole clip including near 0:18, normal audio, Home at the end: 'Everything worked as expected'."
+    },
+    "4_cancel_during_start": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback; stop scheduled after 1000 ms."
+        },
+        {
+          "time_seconds": 11.2,
+          "line": "Cancel: start=cancelled start_ms=1078 stop_fired=yes"
+        },
+        {
+          "time_seconds": 11.2,
+          "line": "Summary: api_version=1 linkage=static start=cancelled phase=start_failed state=none end=none owned=no position=unknown duration=unknown rate=unknown failure=none/none cleaned=no reads=93 bytes=6029314 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 11.2,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 11.2,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "A few frames of the clip showed, then the receiver went back to Home."
+    },
+    "4_follow_up_cast": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.2 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 27.0,
+          "line": ">>> sending Enter"
+        },
+        {
+          "time_seconds": 27.2,
+          "line": "Summary: api_version=1 linkage=static start=ok phase=stopped state=playing end=sender_stop owned=yes position=16.5 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=1131 bytes=73994912 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 27.3,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 27.3,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "Video played normally; the receiver returned Home at the end."
+    },
+    "5_remote_home_button": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.2 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 23.5,
+          "line": "End: connection_lost failure=url_events/disconnected"
+        },
+        {
+          "time_seconds": 23.5,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "time_seconds": 23.8,
+          "line": "Summary: api_version=1 linkage=static start=ok phase=stopped state=playing end=connection_lost owned=yes position=13.0 duration=131.6 rate=1.0 failure=url_events/disconnected cleaned=yes reads=1057 bytes=69123584 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 23.8,
+          "line": "Exit code: 1"
+        },
+        {
+          "time_seconds": 23.8,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "User pressed the TV/Home button about 10 s into playback; TV went Home."
+    },
+    "6_receiver_sleep": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 12.0,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.3 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 12.0,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 23.0,
+          "line": "State: paused"
+        },
+        {
+          "time_seconds": 28.5,
+          "line": "End: connection_lost failure=url_events/disconnected"
+        },
+        {
+          "time_seconds": 28.5,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "time_seconds": 28.8,
+          "line": "Summary: api_version=1 linkage=static start=ok phase=stopped state=paused end=connection_lost owned=yes position=0.0 duration=131.6 rate=1.0 failure=url_events/disconnected cleaned=yes reads=1020 bytes=66720416 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 28.8,
+          "line": "Exit code: 1"
+        },
+        {
+          "time_seconds": 28.9,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "User put the receiver to sleep (not a network cable pull). Woke it; it returned to Home. The final MRP position read 0.0 after the pause."
+    },
+    "6_fresh_cast_after_wake": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.2 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 31.9,
+          "line": ">>> sending Enter"
+        },
+        {
+          "time_seconds": 32.1,
+          "line": "Summary: api_version=1 linkage=static start=ok phase=stopped state=playing end=sender_stop owned=yes position=21.5 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=1130 bytes=73929376 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 32.2,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 32.2,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "Video and audio for about 20 s, then Home: yes."
+    },
+    "7_shared_build": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-shared. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested binary SHA-256: 0eee6348c15dca22bce46c218c1a32d724d0875ef36166094edfc5251cb162b1"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Tested DLL SHA-256: 291841dd64b66bff715f374f9dd5a0c1a80d9d6551925fac69dc1c3891fb8c1d"
+        },
+        {
+          "time_seconds": 10.2,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 12.1,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.3 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 12.1,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 42.1,
+          "line": ">>> sending Enter"
+        },
+        {
+          "time_seconds": 42.4,
+          "line": "Summary: api_version=1 linkage=shared start=ok phase=stopped state=playing end=sender_stop owned=yes position=31.6 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=1265 bytes=82776736 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 42.5,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 42.5,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "Normal video and audio for about 30 s, then Home: yes.",
+      "note": "A first attempt found no 'Living Room' in discovery and ran nothing."
+    },
+    "ten_cycles_one_process": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4"
+        },
+        {
+          "time_seconds": 10.0,
+          "line": "Tested binary SHA-256: 1870972fab01e7219bc83c230f38e5f4cb8438fa84c4d7d957f9dd402854dc90"
+        },
+        {
+          "time_seconds": 17.1,
+          "line": "Cycle 1/10: PASS start=ok stop=mrp+local control=ok released_once=yes phase=stopped state=paused end=sender_stop owned=yes position=6.4 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 23.8,
+          "line": "Cycle 2/10: PASS start=ok stop=local control=ok released_once=yes phase=stopped state=playing end=sender_stop owned=yes position=6.1 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 31.0,
+          "line": "Cycle 3/10: PASS start=ok stop=mrp+local control=ok released_once=yes phase=stopped state=paused end=sender_stop owned=yes position=6.4 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 37.7,
+          "line": "Cycle 4/10: PASS start=ok stop=local control=ok released_once=yes phase=stopped state=playing end=sender_stop owned=yes position=6.0 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 44.9,
+          "line": "Cycle 5/10: PASS start=ok stop=mrp+local control=ok released_once=yes phase=stopped state=paused end=sender_stop owned=yes position=6.4 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 51.7,
+          "line": "Cycle 6/10: PASS start=ok stop=local control=ok released_once=yes phase=stopped state=playing end=sender_stop owned=yes position=6.2 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 58.8,
+          "line": "Cycle 7/10: PASS start=ok stop=mrp+local control=ok released_once=yes phase=stopped state=paused end=sender_stop owned=yes position=6.4 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 65.6,
+          "line": "Cycle 8/10: PASS start=ok stop=local control=ok released_once=yes phase=stopped state=playing end=sender_stop owned=yes position=6.2 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 72.8,
+          "line": "Cycle 9/10: PASS start=ok stop=mrp+local control=ok released_once=yes phase=stopped state=paused end=sender_stop owned=yes position=6.4 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 79.6,
+          "line": "Cycle 10/10: PASS start=ok stop=local control=ok released_once=yes phase=stopped state=playing end=sender_stop owned=yes position=6.1 duration=131.6 rate=1.0 failure=none/none cleaned=yes"
+        },
+        {
+          "time_seconds": 79.6,
+          "line": "Cycles: passed=10/10 api_version=1 linkage=static reads=10000 bytes=654058194 failed_reads=0 releases=10"
+        },
+        {
+          "time_seconds": 79.7,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 79.7,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "Telemetry only."
+    },
+    "film_eac3_and_past_4_gib_cli": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: cli-static. Media: operation-fortune.mp4"
+        },
+        {
+          "time_seconds": 10.0,
+          "line": "Tested binary SHA-256: 2a3e249b8966b6fb5fc54af7dfb1d95cce3f2de489ae2eef485dc357c00dd18d"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "State: playing"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=1 method=get status=206 offset=0 declared=2 expected=2 written=2 header=yes active=1 accepted_ms=474 last_write_ms=476 closed_ms=476 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=2 method=get status=206 offset=0 declared=6321795698 expected=6321795698 written=131072 header=yes active=1 accepted_ms=495 last_write_ms=504 closed_ms=516 end=io_error"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=3 method=get status=206 offset=3997696 declared=6317798002 expected=6317798002 written=786432 header=yes active=1 accepted_ms=517 last_write_ms=594 closed_ms=602 end=io_error"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=5 method=get status=206 offset=8688 declared=3989008 expected=3989008 written=3989008 header=yes active=2 accepted_ms=704 last_write_ms=850 closed_ms=850 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=6 method=get status=206 offset=4535016 declared=1953048 expected=1953048 written=1953048 header=yes active=2 accepted_ms=892 last_write_ms=1007 closed_ms=1007 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=8 method=get status=206 offset=32440320 declared=6289355378 expected=6289355378 written=262144 header=yes active=3 accepted_ms=1750 last_write_ms=1808 closed_ms=1816 end=io_error"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=9 method=get status=206 offset=3123642368 declared=3198153330 expected=3198153330 written=1572864 header=yes active=3 accepted_ms=1817 last_write_ms=1912 closed_ms=1921 end=io_error"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=11 method=get status=206 offset=7077888 declared=524288 expected=524288 written=524288 header=yes active=4 accepted_ms=2066 last_write_ms=2129 closed_ms=2129 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=12 method=get status=206 offset=7733248 declared=65536 expected=65536 written=65536 header=yes active=4 accepted_ms=2155 last_write_ms=2156 closed_ms=2156 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=13 method=get status=206 offset=9306112 declared=65536 expected=65536 written=65536 header=yes active=4 accepted_ms=2192 last_write_ms=2193 closed_ms=2193 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=14 method=get status=206 offset=9437184 declared=65536 expected=65536 written=65536 header=yes active=4 accepted_ms=2228 last_write_ms=2229 closed_ms=2229 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=15 method=get status=206 offset=10027008 declared=65536 expected=65536 written=65536 header=yes active=4 accepted_ms=2267 last_write_ms=2268 closed_ms=2269 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=16 method=get status=206 offset=10158080 declared=65536 expected=65536 written=65536 header=yes active=4 accepted_ms=2313 last_write_ms=2315 closed_ms=2315 end=complete"
+        },
+        {
+          "time_seconds": 12.9,
+          "line": "Media: id=17 method=get status=206 offset=30015488 declared=1638400 expected=1638400 written=917504 header=yes active=4 accepted_ms=2354 last_write_ms=2441 closed_ms=2452 end=io_error"
+        },
+        {
+          "time_seconds": 15.3,
+          "line": "Media: id=19 method=get status=206 offset=9437184 declared=851968 expected=851968 written=851968 header=yes active=5 accepted_ms=4962 last_write_ms=5041 closed_ms=5041 end=complete"
+        },
+        {
+          "time_seconds": 15.3,
+          "line": "Media: id=20 method=get status=206 offset=12517376 declared=65536 expected=65536 written=65536 header=yes active=5 accepted_ms=5072 last_write_ms=5072 closed_ms=5072 end=complete"
+        },
+        {
+          "time_seconds": 16.3,
+          "line": "Media: id=22 method=get status=206 offset=31326208 declared=65536 expected=65536 written=65536 header=yes active=6 accepted_ms=6158 last_write_ms=6158 closed_ms=6158 end=complete"
+        },
+        {
+          "time_seconds": 17.6,
+          "line": "Media: id=23 method=get status=206 offset=30670848 declared=524288 expected=524288 written=524288 header=yes active=6 accepted_ms=7335 last_write_ms=7412 closed_ms=7412 end=complete"
+        },
+        {
+          "time_seconds": 17.6,
+          "line": "Media: id=24 method=get status=206 offset=31260672 declared=131072 expected=131072 written=131072 header=yes active=6 accepted_ms=7442 last_write_ms=7449 closed_ms=7449 end=complete"
+        },
+        {
+          "time_seconds": 17.9,
+          "line": "Media: id=25 method=get status=206 offset=31522816 declared=6290272882 expected=6290272882 written=1179648 header=yes active=6 accepted_ms=7512 last_write_ms=7584 closed_ms=7594 end=io_error"
+        },
+        {
+          "time_seconds": 29.8,
+          "line": "Media: id=4 method=get status=206 offset=6488064 declared=6315307634 expected=6315307634 written=917504 header=yes active=1 accepted_ms=610 last_write_ms=694 closed_ms=19665 end=io_error"
+        },
+        {
+          "time_seconds": 30.6,
+          "line": "Media: id=7 method=get status=206 offset=7025384 declared=6314770314 expected=6314770314 written=30015488 header=yes active=2 accepted_ms=1059 last_write_ms=1568 closed_ms=20501 end=io_error"
+        },
+        {
+          "time_seconds": 31.2,
+          "line": "Media: id=10 method=get status=206 offset=6318129152 declared=3666546 expected=3666546 written=1638400 header=yes active=3 accepted_ms=1943 last_write_ms=2043 closed_ms=20985 end=io_error"
+        },
+        {
+          "time_seconds": 32.9,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 32.9,
+          "line": "Playback: owned=yes state=playing position=21.2 duration=6824.5 mrp_messages=15 heartbeats=0"
+        },
+        {
+          "time_seconds": 33.2,
+          "line": "Media: id=18 method=get status=206 offset=28573696 declared=6293222002 expected=6293222002 written=4325376 header=yes active=4 accepted_ms=4023 last_write_ms=4164 closed_ms=23115 end=io_error"
+        },
+        {
+          "time_seconds": 34.0,
+          "line": ">>> sending 'seek 4800'"
+        },
+        {
+          "time_seconds": 34.0,
+          "line": "Control: accepted"
+        },
+        {
+          "time_seconds": 34.3,
+          "line": "Media: id=33 method=get status=206 offset=4490723328 declared=65536 expected=65536 written=65536 header=yes active=9 accepted_ms=24128 last_write_ms=24133 closed_ms=24133 end=complete"
+        },
+        {
+          "time_seconds": 34.3,
+          "line": "Media: id=35 method=get status=206 offset=4490788864 declared=65536 expected=65536 written=65536 header=yes active=10 accepted_ms=24175 last_write_ms=24175 closed_ms=24175 end=complete"
+        },
+        {
+          "time_seconds": 34.3,
+          "line": "Media: id=36 method=get status=206 offset=4490854400 declared=65536 expected=65536 written=65536 header=yes active=10 accepted_ms=24214 last_write_ms=24215 closed_ms=24215 end=complete"
+        },
+        {
+          "time_seconds": 34.5,
+          "line": "Media: id=37 method=get status=206 offset=4491326184 declared=52504 expected=52504 written=52504 header=yes active=10 accepted_ms=24238 last_write_ms=24239 closed_ms=24239 end=complete"
+        },
+        {
+          "time_seconds": 34.5,
+          "line": "Media: id=34 method=get status=206 offset=4490788864 declared=2949120 expected=2949120 written=2949120 header=yes active=9 accepted_ms=24155 last_write_ms=24274 closed_ms=24274 end=complete"
+        },
+        {
+          "time_seconds": 34.5,
+          "line": "Media: id=38 method=get status=206 offset=4497997824 declared=65536 expected=65536 written=65536 header=yes active=9 accepted_ms=24285 last_write_ms=24286 closed_ms=24286 end=complete"
+        },
+        {
+          "time_seconds": 34.5,
+          "line": "Media: id=40 method=get status=206 offset=4496896744 declared=52504 expected=52504 written=52504 header=yes active=10 accepted_ms=24334 last_write_ms=24337 closed_ms=24337 end=complete"
+        },
+        {
+          "time_seconds": 34.5,
+          "line": "Media: id=41 method=get status=206 offset=4503437312 declared=65536 expected=65536 written=65536 header=yes active=10 accepted_ms=24368 last_write_ms=24368 closed_ms=24369 end=complete"
+        },
+        {
+          "time_seconds": 34.5,
+          "line": "Media: id=42 method=get status=206 offset=4496949248 declared=65536 expected=65536 written=65536 header=yes active=10 accepted_ms=24405 last_write_ms=24406 closed_ms=24406 end=complete"
+        },
+        {
+          "time_seconds": 35.3,
+          "line": "Media: id=21 method=get status=206 offset=30605312 declared=6291190386 expected=6291190386 written=1703936 header=yes active=5 accepted_ms=6014 last_write_ms=6121 closed_ms=25058 end=io_error"
+        },
+        {
+          "time_seconds": 35.6,
+          "line": "Media: id=43 method=get status=206 offset=4495704064 declared=1048576 expected=1048576 written=1048576 header=yes active=9 accepted_ms=25245 last_write_ms=25339 closed_ms=25339 end=complete"
+        },
+        {
+          "time_seconds": 35.6,
+          "line": "Media: id=44 method=get status=206 offset=4497080320 declared=65536 expected=65536 written=65536 header=yes active=9 accepted_ms=25389 last_write_ms=25390 closed_ms=25390 end=complete"
+        },
+        {
+          "time_seconds": 35.6,
+          "line": "Media: id=45 method=get status=206 offset=4498259968 declared=65536 expected=65536 written=65536 header=yes active=9 accepted_ms=25433 last_write_ms=25434 closed_ms=25434 end=complete"
+        },
+        {
+          "time_seconds": 38.7,
+          "line": "Media: id=26 method=get status=206 offset=31981568 declared=6289814130 expected=6289814130 written=5963776 header=yes active=6 accepted_ms=9467 last_write_ms=9639 closed_ms=28591 end=io_error"
+        },
+        {
+          "time_seconds": 39.0,
+          "line": "Media: id=48 method=get status=206 offset=4500094976 declared=786432 expected=786432 written=786432 header=yes active=10 accepted_ms=28660 last_write_ms=28732 closed_ms=28732 end=complete"
+        },
+        {
+          "time_seconds": 40.0,
+          "line": "Media: id=27 method=get status=206 offset=35192832 declared=6286602866 expected=6286602866 written=3735552 header=yes active=7 accepted_ms=10670 last_write_ms=10821 closed_ms=29783 end=io_error"
+        },
+        {
+          "time_seconds": 41.6,
+          "line": "Media: id=28 method=get status=206 offset=37486592 declared=6284309106 expected=6284309106 written=3670016 header=yes active=8 accepted_ms=12421 last_write_ms=12594 closed_ms=31537 end=io_error"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Playback: owned=yes state=playing position=4807.4 duration=6824.5 mrp_messages=18 heartbeats=1"
+        },
+        {
+          "time_seconds": 45.5,
+          "line": "Media: id=29 method=get status=206 offset=39124992 declared=6282670706 expected=6282670706 written=3866624 header=yes active=9 accepted_ms=16184 last_write_ms=16350 closed_ms=35310 end=io_error"
+        },
+        {
+          "time_seconds": 46.8,
+          "line": "Media: id=30 method=get status=206 offset=41287680 declared=6280508018 expected=6280508018 written=4587520 header=yes active=10 accepted_ms=17386 last_write_ms=17538 closed_ms=36478 end=io_error"
+        },
+        {
+          "time_seconds": 50.2,
+          "line": "Media: id=31 method=get status=206 offset=44367872 declared=6277427826 expected=6277427826 written=3866624 header=yes active=9 accepted_ms=20811 last_write_ms=20996 closed_ms=39935 end=io_error"
+        },
+        {
+          "time_seconds": 53.3,
+          "line": "Media: id=32 method=get status=206 offset=4493737984 declared=1828057714 expected=1828057714 written=4259840 header=yes active=8 accepted_ms=23950 last_write_ms=24138 closed_ms=43093 end=io_error"
+        },
+        {
+          "time_seconds": 53.8,
+          "line": "Media: id=39 method=get status=206 offset=4496896744 declared=1824898954 expected=1824898954 written=26411008 header=yes active=9 accepted_ms=24325 last_write_ms=24736 closed_ms=43687 end=io_error"
+        },
+        {
+          "time_seconds": 55.7,
+          "line": "Media: id=55 method=get status=206 offset=4532928512 declared=1788867186 expected=1788867186 written=4325376 header=yes active=9 accepted_ms=45255 last_write_ms=45454 closed_ms=45459 end=io_error"
+        },
+        {
+          "time_seconds": 55.7,
+          "line": "Media: id=46 method=get status=206 offset=4517658624 declared=1804137074 expected=1804137074 written=1835008 header=yes active=9 accepted_ms=26505 last_write_ms=26597 closed_ms=45568 end=io_error"
+        },
+        {
+          "time_seconds": 56.7,
+          "line": "Media: id=57 method=get status=206 offset=4515954688 declared=262144 expected=262144 written=262144 header=yes active=9 accepted_ms=46531 last_write_ms=46591 closed_ms=46591 end=complete"
+        },
+        {
+          "time_seconds": 57.0,
+          "line": "Media: id=58 method=get status=206 offset=4518379520 declared=131072 expected=131072 written=131072 header=yes active=9 accepted_ms=46636 last_write_ms=46645 closed_ms=46645 end=complete"
+        },
+        {
+          "time_seconds": 57.0,
+          "line": "Media: id=47 method=get status=206 offset=4517986304 declared=1803809394 expected=1803809394 written=2162688 header=yes active=10 accepted_ms=27683 last_write_ms=27823 closed_ms=46754 end=io_error"
+        },
+        {
+          "time_seconds": 57.8,
+          "line": "Media: id=59 method=get status=206 offset=4538105856 declared=1783689842 expected=1783689842 written=131072 header=yes active=8 accepted_ms=47635 last_write_ms=47652 closed_ms=47659 end=io_error"
+        },
+        {
+          "time_seconds": 57.8,
+          "line": "Media: id=60 method=get status=206 offset=4537712640 declared=1784083058 expected=1784083058 written=65536 header=yes active=8 accepted_ms=47663 last_write_ms=47665 closed_ms=47676 end=io_error"
+        },
+        {
+          "time_seconds": 58.0,
+          "line": "Media: id=61 method=get status=206 offset=4516937728 declared=851968 expected=851968 written=851968 header=yes active=8 accepted_ms=47677 last_write_ms=47749 closed_ms=47749 end=complete"
+        },
+        {
+          "time_seconds": 58.0,
+          "line": "Media: id=49 method=get status=206 offset=4519428096 declared=1802367602 expected=1802367602 written=1572864 header=yes active=10 accepted_ms=28754 last_write_ms=28845 closed_ms=47779 end=io_error"
+        },
+        {
+          "time_seconds": 58.0,
+          "line": "Media: id=62 method=get status=206 offset=4536598528 declared=1785197170 expected=1785197170 written=131072 header=yes active=7 accepted_ms=47789 last_write_ms=47799 closed_ms=47810 end=io_error"
+        },
+        {
+          "time_seconds": 58.0,
+          "line": "Media: id=63 method=get status=206 offset=4536401920 declared=1785393778 expected=1785393778 written=131072 header=yes active=7 accepted_ms=47812 last_write_ms=47830 closed_ms=47849 end=io_error"
+        },
+        {
+          "time_seconds": 58.0,
+          "line": "Media: id=64 method=get status=206 offset=4536270848 declared=1785524850 expected=1785524850 written=131072 header=yes active=7 accepted_ms=47849 last_write_ms=47858 closed_ms=47866 end=io_error"
+        },
+        {
+          "time_seconds": 60.1,
+          "line": "Media: id=50 method=get status=206 offset=4520148992 declared=1801646706 expected=1801646706 written=2686976 header=yes active=10 accepted_ms=30829 last_write_ms=30963 closed_ms=49914 end=io_error"
+        },
+        {
+          "time_seconds": 61.4,
+          "line": "Media: id=66 method=get status=206 offset=4536401920 declared=1785393778 expected=1785393778 written=3670016 header=yes active=7 accepted_ms=50984 last_write_ms=51121 closed_ms=51127 end=io_error"
+        },
+        {
+          "time_seconds": 62.0,
+          "line": ">>> sending 'seek 600'"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Control: accepted"
+        },
+        {
+          "time_seconds": 62.2,
+          "line": "Media: id=51 method=get status=206 offset=4521328640 declared=1800467058 expected=1800467058 written=3801088 header=yes active=10 accepted_ms=32897 last_write_ms=33056 closed_ms=51991 end=io_error"
+        },
+        {
+          "time_seconds": 62.2,
+          "line": "Media: id=67 method=get status=206 offset=4539023360 declared=1782772338 expected=1782772338 written=1769472 header=yes active=7 accepted_ms=51868 last_write_ms=52007 closed_ms=52009 end=io_error"
+        },
+        {
+          "time_seconds": 62.5,
+          "line": "Media: id=69 method=get status=206 offset=553582592 declared=65536 expected=65536 written=65536 header=yes active=7 accepted_ms=52148 last_write_ms=52148 closed_ms=52148 end=complete"
+        },
+        {
+          "time_seconds": 62.5,
+          "line": "Media: id=70 method=get status=206 offset=550305792 declared=65536 expected=65536 written=65536 header=yes active=7 accepted_ms=52177 last_write_ms=52188 closed_ms=52188 end=complete"
+        },
+        {
+          "time_seconds": 62.5,
+          "line": "Media: id=72 method=get status=206 offset=551550976 declared=65536 expected=65536 written=65536 header=yes active=8 accepted_ms=52234 last_write_ms=52234 closed_ms=52234 end=complete"
+        },
+        {
+          "time_seconds": 62.5,
+          "line": "Media: id=73 method=get status=206 offset=551747584 declared=65536 expected=65536 written=65536 header=yes active=8 accepted_ms=52270 last_write_ms=52271 closed_ms=52271 end=complete"
+        },
+        {
+          "time_seconds": 62.5,
+          "line": "Media: id=71 method=get status=206 offset=550371328 declared=1900544 expected=1900544 written=1900544 header=yes active=7 accepted_ms=52198 last_write_ms=52300 closed_ms=52300 end=complete"
+        },
+        {
+          "time_seconds": 62.5,
+          "line": "Media: id=74 method=get status=206 offset=551616512 declared=65536 expected=65536 written=65536 header=yes active=7 accepted_ms=52308 last_write_ms=52311 closed_ms=52311 end=complete"
+        },
+        {
+          "time_seconds": 64.3,
+          "line": "Media: id=77 method=get status=206 offset=577306624 declared=65536 expected=65536 written=65536 header=yes active=9 accepted_ms=54140 last_write_ms=54141 closed_ms=54141 end=complete"
+        },
+        {
+          "time_seconds": 64.3,
+          "line": "Media: id=52 method=get status=206 offset=4523556864 declared=1798238834 expected=1798238834 written=5308416 header=yes active=11 accepted_ms=35024 last_write_ms=35199 closed_ms=54166 end=io_error"
+        },
+        {
+          "time_seconds": 66.7,
+          "line": "Media: id=53 method=get status=206 offset=4527357952 declared=1794437746 expected=1794437746 written=3997696 header=yes active=10 accepted_ms=37225 last_write_ms=37411 closed_ms=56370 end=io_error"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": ">>> sending 'status'"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": "Playback: owned=yes state=playing position=607.4 duration=6824.5 mrp_messages=20 heartbeats=1"
+        },
+        {
+          "time_seconds": 70.8,
+          "line": "Media: id=54 method=get status=206 offset=4529717248 declared=1792078450 expected=1792078450 written=5963776 header=yes active=10 accepted_ms=41429 last_write_ms=41630 closed_ms=60561 end=io_error"
+        },
+        {
+          "time_seconds": 72.9,
+          "line": "Media: id=81 method=get status=206 offset=561512448 declared=131072 expected=131072 written=131072 header=yes active=9 accepted_ms=62720 last_write_ms=62730 closed_ms=62730 end=complete"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "Media: id=56 method=get status=206 offset=4535746560 declared=1786049138 expected=1786049138 written=4456448 header=yes active=8 accepted_ms=45620 last_write_ms=45771 closed_ms=64738 end=io_error"
+        },
+        {
+          "time_seconds": 75.2,
+          "line": "Media: id=84 method=get status=206 offset=563150848 declared=786432 expected=786432 written=786432 header=yes active=10 accepted_ms=64927 last_write_ms=65002 closed_ms=65002 end=complete"
+        },
+        {
+          "time_seconds": 75.2,
+          "line": "Media: id=85 method=get status=206 offset=564985856 declared=65536 expected=65536 written=65536 header=yes active=10 accepted_ms=65036 last_write_ms=65036 closed_ms=65036 end=complete"
+        },
+        {
+          "time_seconds": 75.2,
+          "line": "Media: id=86 method=get status=206 offset=586022912 declared=5735772786 expected=5735772786 written=131072 header=yes active=10 accepted_ms=65080 last_write_ms=65089 closed_ms=65102 end=io_error"
+        },
+        {
+          "time_seconds": 75.2,
+          "line": "Media: id=87 method=get status=206 offset=585826304 declared=5735969394 expected=5735969394 written=131072 header=yes active=10 accepted_ms=65103 last_write_ms=65113 closed_ms=65121 end=io_error"
+        },
+        {
+          "time_seconds": 77.1,
+          "line": "Media: id=65 method=get status=206 offset=4536205312 declared=1785590386 expected=1785590386 written=851968 header=yes active=7 accepted_ms=47870 last_write_ms=47946 closed_ms=66880 end=io_error"
+        },
+        {
+          "time_seconds": 77.3,
+          "line": "Media: id=90 method=get status=206 offset=565116928 declared=1376256 expected=1376256 written=1376256 header=yes active=11 accepted_ms=67119 last_write_ms=67213 closed_ms=67213 end=complete"
+        },
+        {
+          "time_seconds": 81.3,
+          "line": "Media: id=68 method=get status=206 offset=552271872 declared=3967614976 expected=3967614976 written=4325376 header=yes active=6 accepted_ms=52029 last_write_ms=52177 closed_ms=71125 end=io_error"
+        },
+        {
+          "time_seconds": 81.8,
+          "line": "Media: id=75 method=get status=206 offset=555430632 declared=3964456216 expected=3964456216 written=24248320 header=yes active=7 accepted_ms=52330 last_write_ms=52748 closed_ms=71701 end=io_error"
+        },
+        {
+          "time_seconds": 82.9,
+          "line": "Media: id=76 method=get status=206 offset=575143936 declared=5746651762 expected=5746651762 written=3866624 header=yes active=8 accepted_ms=53690 last_write_ms=53850 closed_ms=72786 end=io_error"
+        },
+        {
+          "time_seconds": 83.1,
+          "line": "Media: id=92 method=get status=206 offset=589299712 declared=5732495986 expected=5732495986 written=4259840 header=yes active=10 accepted_ms=72708 last_write_ms=72872 closed_ms=72883 end=io_error"
+        },
+        {
+          "time_seconds": 83.4,
+          "line": "Media: id=78 method=get status=206 offset=576389120 declared=983040 expected=983040 written=851968 header=yes active=8 accepted_ms=54166 last_write_ms=54269 closed_ms=73221 end=io_error"
+        },
+        {
+          "time_seconds": 85.0,
+          "line": ">>> sending 'stop'"
+        },
+        {
+          "time_seconds": 85.1,
+          "line": "State: paused"
+        },
+        {
+          "time_seconds": 85.1,
+          "line": "Media: id=93 method=get status=206 offset=592183296 declared=5729612402 expected=5729612402 written=2097152 header=yes active=8 accepted_ms=74860 last_write_ms=74982 closed_ms=74995 end=io_error"
+        },
+        {
+          "time_seconds": 85.1,
+          "line": "Control: accepted"
+        },
+        {
+          "time_seconds": 85.3,
+          "line": "Media: id=94 method=get status=206 offset=563675136 declared=9109504 expected=9109504 written=9109504 header=yes active=8 accepted_ms=74996 last_write_ms=75209 closed_ms=75209 end=complete"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Media: id=88 method=get status=206 offset=585695232 declared=5736100466 expected=5736100466 written=851968 header=yes active=10 accepted_ms=65123 last_write_ms=65210 closed_ms=75314 end=cancelled"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Media: id=80 method=get status=206 offset=580386816 declared=5741408882 expected=5741408882 written=1179648 header=yes active=8 accepted_ms=62596 last_write_ms=62690 closed_ms=75314 end=cancelled"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Media: id=91 method=get status=206 offset=587071488 declared=5734724210 expected=5734724210 written=3670016 header=yes active=11 accepted_ms=70547 last_write_ms=70697 closed_ms=75314 end=cancelled"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Media: id=82 method=get status=206 offset=580924136 declared=5740871562 expected=5740871562 written=1572864 header=yes active=9 accepted_ms=62781 last_write_ms=62884 closed_ms=75315 end=cancelled"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Media: id=83 method=get status=206 offset=581894144 declared=5739901554 expected=5739901554 written=7471104 header=yes active=10 accepted_ms=64590 last_write_ms=64806 closed_ms=75315 end=cancelled"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Media: id=89 method=get status=206 offset=585236480 declared=5736559218 expected=5736559218 written=5898240 header=yes active=11 accepted_ms=66778 last_write_ms=66952 closed_ms=75315 end=cancelled"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Media: id=79 method=get status=206 offset=576454656 declared=5745341042 expected=5745341042 written=6356992 header=yes active=8 accepted_ms=60422 last_write_ms=60632 closed_ms=75315 end=cancelled"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Stopped. state=paused events=123 remote_events=6 feedback=36 timing=33 failed=no reads=3694 bytes=241976666 failed_reads=0 span=[0,6319833088) end=sender_stop cleaned=yes failure_channel=none failure_reason=none"
+        },
+        {
+          "time_seconds": 85.4,
+          "line": "Exit code: 0"
+        }
+      ],
+      "media_log_summary": {
+        "requests": 94,
+        "status_206": 94,
+        "ends": {
+          "complete": 42,
+          "io_error": 45,
+          "cancelled": 7
+        },
+        "requests_at_or_above_4_gib": 37,
+        "lowest_offset_at_or_above_4_gib": 4490723328,
+        "bytes_written_from_offsets_at_or_above_4_gib": 81959472,
+        "note": "io_error ends are receiver-closed read-ahead requests after seeks; the host reported failed_reads=0."
+      },
+      "observer": "Audio played normally: yes. Atmos or Dolby indication: no (whether the TV/AV chain can show Atmos is unknown). Picture jumped to about 1:20:00 with sound, then to about 0:10:00: yes. Home after MRP stop: yes."
+    }
+  },
+  "not_run": [
+    "Unreachable receiver address (needs a safely unused LAN address; no TV observation needed).",
+    "Task Manager handle/thread counts during the ten cycles.",
+    "Network cable interruption on this runtime (check 6 used receiver sleep instead)."
+  ]
+}

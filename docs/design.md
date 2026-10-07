@@ -37,6 +37,7 @@ Proposed components:
 | Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Private URL/MRP sessions and automatic ordered cleanup implemented; selected G3 checks and remaining manual gates recorded |
 | Media server | GET/HEAD, byte sources, range responses, bounded streaming | Experimental Boost.Beast/Asio server implemented; loopback tested and Apple TV fetch observed; see media-server.md |
 | Playback | URL start, pause/resume, seek, status, stop | URL/MRP and automatic terminal cleanup implemented; G1 passed; native EOF and ten short cycles passed; G2 passed by user report; remaining manual G3 checks pending |
+| Public playback interface | Versioned C handle over session and media server | Experimental v1 implemented (D46, [public-api.md](public-api.md)); manual plan passed on one receiver/host (D48) |
 | Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; other stores, packaged hosts and media access pending |
 | Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
 
@@ -175,8 +176,9 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    checks passed; this follow-up has no new hardware observation.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
-5. Expose the versioned session API and bindings (proposed as the next slice in
-   [CONTINUATION.md](CONTINUATION.md), pending user confirmation); prove packaged Windows C#
+5. Expose the versioned session API and bindings. The experimental C playback
+   interface ([public-api.md](public-api.md), D46) is implemented and unit-tested,
+   and passed its manual plan on one receiver/host (D48); bindings remain. Prove packaged Windows C#
    loading, brokered file access and inbound networking, then Linux/macOS/Android
    device support and other credential stores. CI is separate from device evidence.
 6. After the standalone gate, integrate Screenbox in a dedicated fork with

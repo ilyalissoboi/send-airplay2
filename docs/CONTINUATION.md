@@ -1,6 +1,7 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-07 (Asia/Tokyo), after PR #12 was merged into `main` (D45).
+Checkpoint: 2026-10-07 (Asia/Tokyo). PR #12 and the D45 handoff PR #13 are
+merged; the D46 public playback interface slice is on `claude/public-playback-api`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -8,7 +9,14 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **No PR is open.** [PR #12](https://github.com/ilyalissoboi/send-airplay2/pull/12),
+- **Active slice (D46):** versioned C playback interface on branch
+  `claude/public-playback-api`, published as its own PR (find it with
+  `gh pr list --state open`). The user asked to merge PR #13 and start this slice.
+  See [public-api.md](public-api.md) for decisions, contract and limits.
+- [PR #13](https://github.com/ilyalissoboi/send-airplay2/pull/13), the D45 handoff
+  reconciliation, was merged at the user's request as `b0b0f86` after all ten
+  checks passed at its head `5e0a98e`.
+- [PR #12](https://github.com/ilyalissoboi/send-airplay2/pull/12),
   `feat: native URL playback, MRP controls and lifecycle cleanup`, was merged by
   the user on 2026-10-07 as `2bb25df4b4f58ef0a2c6936ed6f44161b815890c`. Its final
   head `923d8efbee066a5a7ce37dd6e83cb891ede58a06` (D44, documentation only) passed
@@ -71,6 +79,16 @@ The public playback/session ABI and production bindings are not implemented.
 - Bounded opt-in startup, HTTP completion, buffering, fixed-label event and final
   received MRP diagnostics. Fixed URL state/type labels use `other` for unknown
   strings; peer targets/unknown keys/arbitrary descriptions do not enter output.
+- **D47, receiver-tested in D48:** at teardown, an in-flight remote `/feedback`
+  request is waited for (bounded by its deadline) instead of cancelled, so
+  remote control outlives the URL session.
+- **D46, receiver-tested in D48:** experimental C interface `playback.h` (API
+  version 1). One `sap2_cast` handle owns the media server and session, loads
+  credentials by profile, takes host `read_at` callbacks, and offers blocking
+  start, cancelling stop, polled/waited status and MRP commands. D48 passed its
+  seven manual checks and ten cycles on one Apple TV 4K / tvOS 26.6 / Windows 11.
+- **D48 also passed, for one selected file:** a seek past 4 GiB (37 range
+  requests above 4 GiB, user-observed picture) and E-AC-3 audio, via `cast`.
 
 D43 review fixes are in `d1011ab`, `880feb3` and `ab7ec01`: decoded MRP extension
 payloads have move-only erasing owners; event bodies are erased if acknowledgment
@@ -90,6 +108,8 @@ files** passed clang-format dry-run; whitespace checks passed. All ten
 passed: Windows/Linux/macOS static/shared, ASan/UBSan and three runner jobs.
 Earlier macOS shared CI exposed the feedback-fixture scheduling race; it passed
 after the test-only correction. D44 adds documentation; inspect its own CI.
+D46 local checks are in [public-api.md](public-api.md#validation); inspect the
+slice PR's actual-head CI.
 
 Hardware evidence is for **Apple TV 4K (`AppleTV14,1`) / tvOS 26.6 (`23L773`) /
 Windows 11 x64**, with firmware assumed unchanged where a later run did not query
@@ -118,17 +138,24 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 
 PR #12's review process is complete and merged; no implementation blocker was
 identified for that private experimental slice. The items below are follow-up
-development, not retroactive gate failures. Item 1 is an engineering proposal
-for the next slice because it needs no receiver observer and gates Milestone 1's
-packaged-host work; confirm the slice with the user before starting it.
+development, not retroactive gate failures.
 
-1. **Proposed next slice: versioned public playback API design.** Specify the
-   C ABI's handle ownership, lifetime, cancellation, threading, error/status and
-   end-reason reporting, and read-at-offset/size media-source callbacks for
-   brokered files and content URIs, with no exceptions or C++ objects crossing
-   the boundary. Wrap the existing private `UrlPlaybackSession`; do not change
-   its validated protocol sequence. Hardware-independent work in the same spirit:
-   a synthetic beyond-4-GiB byte-source/range test through the media server, and
+1. **In progress: versioned public playback interface (D46).** The user chose
+   credentials by profile name (secrets stay inside the library) and a
+   playback-only first slice. `include/send_airplay2/playback.h` and its
+   controller are implemented; see [public-api.md](public-api.md). The
+   development host `airplay2-api-host` drives only that interface. Its manual
+   validation plan **passed on 2026-10-08 (D48)**, on the D47 runtime, static and
+   shared, with the user observing; see receiver-validation.md. Remaining in this
+   item, in order: finish the slice's PR review and get merge approval; then the C#
+   binding and packaged UWP proof under item 6. The fake receiver is now shared
+   (`tests/fake_receiver.h`) and has an optional MRP data stream, so the
+   controller's commands, ends and ownership loss are unit-tested. That work
+   found a teardown ordering bug, now fixed (D47): an in-flight remote
+   `/feedback` request is waited for at stop instead of cancelled. D47 changes
+   the session runtime shared with `cast`; D48 is the first hardware batch on
+   it (including one `cast` CLI run). Related hardware-free work: a
+   synthetic beyond-4-GiB byte-source/range test through the media server, and
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
 2. **Startup reliability.** Spontaneous pause at zero/first-frame-only occurred
    without remote input, including a 16-slot run. One-second confirmation improves
@@ -158,8 +185,8 @@ packaged-host work; confirm the slice with the user before starting it.
    The selected D42 network check is already PASS; broaden it rather than claiming
    it has never run. Cooperative duration-based ownership can misidentify a
    concurrent same-duration takeover and does not guarantee exclusive ownership.
-6. **Public library/host work.** After the item 1 ABI exists, add production
-   bindings. Prove packaged Windows C# loading, brokered file reads/inbound networking,
+6. **Public library/host work.** Build production bindings on the item 1
+   interface. Prove packaged Windows C# loading, brokered file reads/inbound networking,
    then other credential stores and Linux/macOS/Android device support. Botan UWP
    packaging remains unresolved; desktop/CI success is not packaged-host proof.
 7. **Screenbox integration.** After the standalone gate, re-read that repository's
@@ -187,7 +214,9 @@ Current tool paths:
 $cmakeTool = 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe'
 $ctestTool = 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/ctest.exe'
 $formatTool = 'C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/Llvm/x64/bin/clang-format.exe'
-$pythonTool = 'C:/Users/Ilya/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'  # Codex runtime; any Python 3 works
+# Use a real interpreter file. The Microsoft Store `python` alias under WindowsApps
+# cannot be opened for hashing, so three runner contracts fail with exit 2 there.
+$pythonTool = 'C:/Users/Ilya/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'
 $githubTool = 'C:/Program Files/GitHub CLI/gh.exe'
 
 git fetch --prune origin
