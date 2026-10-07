@@ -1440,7 +1440,7 @@ remained frozen while audio played normally until clip end. Home return for this
 run is unconfirmed. The loading/playing pairs correlate with that report; returned
 playing state, extrapolated positions, full-file read span, heartbeats and EOF
 cleanup do not prove advancing video frames. At this D34 gate, video recovery
-investigation took priority over broader support work; D37 below subsequently
+investigation took priority over broader support work; D37 subsequently
 lowers its priority unless it recurs. Earlier short/near-end
 video/audio/Home observations remain evidence for those separate runs.
 The user also confirmed that the original MP4 plays past 18 s with moving video
