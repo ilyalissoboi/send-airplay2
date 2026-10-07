@@ -1,36 +1,40 @@
-# Deferred receiver checks
+# Receiver checks
 
-Queue created 2026-10-07 (Asia/Tokyo) under D38. The user is unavailable for
-manual testing for approximately the next hour. Run this batch when the user
-returns and announces availability; do not request observations during that
-window. No scheduled reminder or unattended visual pass is implied.
+Queue created 2026-10-07 (Asia/Tokyo) under D38 while the user was unavailable.
+The user returned and completed this selected batch under D39 on the same date.
+The [sanitized artifact](validation/native-manual-batch-windows-static-2026-10-07.json)
+records six native casts with exact runtime/source fingerprints and separate
+observer responses. No runtime change or unattended visual pass is implied.
 
-Use the existing Living Room receiver and local MP4 with stored native credentials.
-Codex starts each checkpoint and captures sanitized startup/media/status diagnostics;
-the observer uses the TV remote only at the announced checkpoints. Keep exact
-CLI/source fingerprints for the completed batch. These checks target the rebuilt
+The batch used the existing Living Room receiver and local MP4 with stored native credentials.
+Codex captured sanitized startup/media/status diagnostics for each checkpoint;
+the observer used the TV remote at the announced Stop/sleep/wake checkpoints.
+Exact CLI/source fingerprints are retained in the artifact. These checks target the rebuilt
 D38 normal configuration: MRP enabled, 16 media slots, a one-second startup
 confirmation interval and no automatic Play/seek retry.
 
-| ID | Checkpoint | Observation to report | Status |
+| ID | Checkpoint | Observation | Status |
 |---|---|---|---|
-| B1 | Fresh cast from idle/Home, then fresh cast after sender Stop | Does moving video/audio begin without remote input? If the first frame stays still, report that and whether automatic deadline cleanup returns Home. Do not press Play to conceal the result. | PENDING |
-| B2 | Native pause/resume, forward/backward seek and sender Stop, followed by a separate full natural-EOF run | Visible controls, normal resumed video/audio, full moving video/audio through EOF and Home after Stop/EOF. Report any buffering or freeze separately. | PENDING |
-| B3 | Receiver remote Stop during established playback | Exit playback with the remote at the cue; report Home return. Correlate with retained URL/MRP diagnostics. Socket closure still conservatively means connection_lost; do not infer a normal reason from Home alone. | PENDING |
-| B4 | Sleep receiver during playback, wake to Home, then fresh native cast with the same credentials | Sleep and Home after wake; moving video/audio from fresh startup; automatic cleanup/Home at near-end EOF. | PENDING |
+| B1 | Fresh cast, then fresh cast after sender Stop/Home | Normal startup video/audio and Home after Stop were user-confirmed; the controls cast also started normally after confirmed Home. First run initial Home/untouched remote were not explicitly answered. | PASS for selected startup/presentation; condition limit retained |
+| B2 | Native pause/resume, forward/backward seek and sender Stop, followed by a separate full natural-EOF run | User confirmed all requested controls/startup/Home results. Separate full clip had normal video/audio and automatic Home at EOF. Native controls and EOF cleanups exited 0. | PASS |
+| B3 | Receiver remote Stop during established playback | User confirmed Home. Sender automatically cleaned up, but URL socket closed while still playing without a terminal event; connection_lost/exit 1 remains. | Home/cleanup PASS; protocol intent OPEN |
+| B4 | Sleep, wake to Home, then fresh native cast with the same credentials | User confirmed screen off, wake/Home, fresh normal video/audio and Home at near-end EOF. Sleep cleaned on URL disconnect; wake cast reused credentials and exited 0 at media_end. | PASS for selected sleep/wake recovery |
 
 B1/B4 help distinguish startup transitions from sustained playback failures.
 The one-second interval filters short contradictory telemetry; it does not make
 the receiver resume and does not prove decoder progress. Earlier G1/G2/D36 visual
-results remain evidence for their own configurations. New D38 manual results
-remain pending until observed.
+results remain evidence for their own configurations. D39 adds results for the
+submitted normal-default D38 runtime. Selected passes do not establish longer
+reliability or fix the historical spontaneous startup pause. No new buffering or
+freeze was reported; normal full playback was user-confirmed.
 
-If B1 reproduces startup pausing, capture the failed-start trace and cleanup
+If a later startup check reproduces pausing, capture the failed-start trace and cleanup
 first. Then compare explicit `--minimal-remote` and normal MRP casts from the
 same observed Home/idle condition, recording order and time since the previous
 session. Keep this a diagnostic comparison: minimal remote omits MRP controls
 and cannot establish its owned-item EOF. Earlier alternating unattended trials
 confounded mode with order/idle state; they do not prove MRP caused the pause.
+No matched minimal-remote comparison was triggered in this successful batch.
 
 Per user decision D37, the original frozen-video failure is low priority unless
 it recurs in these or later playback tests. Any recurrence restores active

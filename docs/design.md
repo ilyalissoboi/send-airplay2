@@ -157,7 +157,9 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    D38 adds bounded startup traces and a one-second eligible-playing confirmation
    within the original deadline, with synthetic interruption/cancellation tests.
    This improves readiness reporting; the physical startup pause remains unresolved.
-   Complete the [batched manual checks](manual-validation.md) when the user returns.
+   D39 completed the [manual batch](manual-validation.md): startup, controls/full
+   EOF and post-wake presentation/Home passed. Remote Stop/Home and automatic
+   cleanup passed, but protocol intent still reports connection_lost/exit 1.
    Startup pause and longer reliability remain active work.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).

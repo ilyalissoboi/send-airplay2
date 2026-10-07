@@ -144,6 +144,9 @@ including failed starts. Startup success requires one continuous second of URL
 playing without an explicitly zero/reverse rate, within the startup deadline.
 A transient playing event is insufficient; no automatic Play retry is sent.
 This confirmation is telemetry, not a proof of moving video.
+D39's [manual batch](docs/manual-validation.md) passed selected startup,
+controls/full EOF and sleep/wake presentation on the recorded receiver/host.
+Remote Stop returned Home and cleaned up but still reports connection_lost/exit 1.
 `--media-log` reports bounded HTTP range/status/socket-write/completion facts;
 socket completion does not prove receipt or decoding (see [diagnostic contracts](docs/media-server.md#opt-in-request-diagnostics)). A `playing` event does not prove visible playback:
 G1 passed for the recorded native-only run, with user-observed video/audio and

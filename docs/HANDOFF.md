@@ -35,8 +35,10 @@ The D37 documentation head `1d69560578fbbebafa5ab9c33d2cb56bd90b76cb` passed all
 D38 adds startup code/tests below; its current PR-head CI is a separate gate.
 D38 startup code/test head is `6bed9febffb857050a9370bc34533add9abcf547`;
 its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37564851802)
-was pending when this continuation note was written. Inspect both that run and
-the actual PR head, including this documentation-only follow-up.
+passed all ten checks, as did tested documentation head
+`fa9b9189f599b0b6405b8c1b81327761900470c2` in
+[CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37565052646).
+Inspect the actual PR head, including subsequent documentation-only follow-ups.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -136,13 +138,21 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   (15.41/15.22 s); offline runner contracts passed 10/10, format/diff checks passed.
   Inspect CI at the actual PR head before finalizing.
   The physical receiver pause remains unresolved.
-- **Manual batch:** the user is unavailable for approximately the next hour;
-  collect observations together when they announce availability. See
-  [manual-validation.md](manual-validation.md) for startup, controls/full EOF,
-  receiver Stop and sleep/wake checkpoints. Do not ask for observations during
-  that window or infer a visual PASS from unattended telemetry.
-- **Next:** complete the queued startup/receiver observations and investigate the
-  receiver transition that still pauses the item. Establish explicit receiver-stop intent, then
+- **Observed manual batch (D39):** the user returned and completed startup,
+  controls/full EOF, remote Stop and sleep/wake checks on the submitted D38
+  runtime. All six native casts confirmed startup and joined cleanup. Initial
+  startup and fresh startup after sender Stop passed video/audio/Home; controls
+  passed visibly, and a separate full clip passed normal video/audio/Home at EOF.
+  Sleep was observed; wake reached Home, then fresh native playback reused
+  credentials and passed video/audio/near-end EOF/Home. Remote Stop returned Home
+  and cleaned automatically, but again had URL socket closure without a terminal
+  event: connection_lost/exit 1 remains explicit. No startup-pause/frozen-video
+  recurrence was reported in this selected batch; their historical evidence and
+  limits remain. See the [batch record](manual-validation.md) and
+  [exact runtime/observer artifact](validation/native-manual-batch-windows-static-2026-10-07.json).
+- **Next:** investigate the unresolved receiver transition behind the intermittent
+  startup pause, using matched Home/idle comparisons if it recurs; six selected
+  successful starts do not establish its cause. Establish explicit receiver-stop intent, then
   test actual network interruption/recovery when available. The user cannot
   perform network disconnect/reconnect in this session. Preserve credentials,
   independent remote/URL sessions and ordered teardown; no automatic Play/seek.
@@ -511,11 +521,34 @@ URL/remote cleanup, then stops/drains its media server before rethrowing. No
 identity, URL, credential, metadata or arbitrary receiver text enters these rows.
 All queue commands, MRP topology, media admission and ordered teardown remain.
 
-The user is unavailable for manual testing for approximately one hour and
-requests batched checkpoints afterward. Unattended native telemetry and local/CI
-results are separate from the pending visual gates. The batch is maintained in
+During D38 the user was unavailable for manual testing for approximately one
+hour and requested batched checkpoints afterward. At that gate, unattended
+native telemetry and local/CI results were separate from pending visual gates.
+The completed D39 batch is maintained in
 [manual-validation.md](manual-validation.md). Frozen-video triage stays D37:
 low priority unless it recurs; a paused-at-zero startup is a separate issue.
+
+**D39 (observed validation gate, 2026-10-07):** the user announced availability
+and completed the D38 manual batch. No runtime change. The submitted static CLI
+SHA-256 is `f5f7fcd3ef15307c7e64294875f405e115d4452c6c71760cda84c6ee56970309`;
+all recorded runtime source blobs match tested head
+`fa9b9189f599b0b6405b8c1b81327761900470c2` (D38 code head `6bed9fe`).
+Normal defaults were used: MRP, 16 media slots, 30,000-ms startup timeout,
+1,000-ms confirmation, existing credentials and no startup recovery command.
+Six starts confirmed after 1,011-1,027 ms of eligible playing. The user confirmed
+startup/controls/full-clip and post-wake presentation/Home results. Initial Home
+and untouched remote were not explicitly answered for the first run; the next
+cast followed user-confirmed sender Stop/Home. Keep that condition limit explicit.
+
+Remote Stop again returned Home but ended via URL socket EOF while still playing;
+normal protocol intent remains unresolved and classification is unchanged.
+Sleep reported paused then URL disconnect; cleanup completed, and fresh playback
+after wake reused credentials successfully. Neither scenario establishes actual
+network interruption/recovery. The physical startup pause was not reproduced
+in this selected batch, not proven fixed. Frozen video retains low priority under
+D37 unless it recurs; retain its original FAIL. Longer reliability, other hardware,
+public ABI and packaged-host gates remain open. Exact observer quotes, timing and
+HTTP completion facts are in the new [artifact](validation/native-manual-batch-windows-static-2026-10-07.json).
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1590,8 +1623,10 @@ the recorded source snapshot is still current.
    `cast` default (generic server/`serve` remain four). Another 16-slot attempt
    paused at zero with only two active requests before transport commands;
    D38 now traces command/event order and requires one second of eligible playing
-   before startup success; the spontaneous receiver pause remains active. Complete
-   [batched manual checks](manual-validation.md) after the user returns. Per user decision D37, the original frozen-video failure is low priority:
+   before startup success; the spontaneous receiver pause remains active. D39
+   completed the [manual batch](manual-validation.md): startup, controls/full EOF
+   and post-wake presentation/Home passed; remote Stop/Home and cleanup passed
+   but protocol intent remains unresolved. Per user decision D37, the original frozen-video failure is low priority:
    insufficient media connections are the likely cause; retain its evidence and
    raise priority if it recurs in later testing. Finish actual
    network interruption/recovery when available. Investigate the

@@ -307,7 +307,9 @@ administered one per session.
    media connections are the likely cause, with evidence retained. Startup pause
    remains active. D38 records startup phase/state/rate timing and requires one
    continuous second of eligible playing before returning, without retrying Play
-   or extending the deadline. Pending visual gates are [batched](manual-validation.md).
+   or extending the deadline. D39's [manual batch](manual-validation.md) passed
+   selected startup, controls/full EOF and sleep/wake presentation/Home; remote
+   Stop/Home cleaned automatically but normal protocol intent remains unresolved.
    Playing telemetry and EOF cleanup do not prove moving video.
    Normal stop classification, actual network loss/recovery and longer playback
    remain **Gate G3**; see the dated validation record.

@@ -885,7 +885,7 @@ receiver behavior changed and no new hardware result is inferred.
 
 ### Startup confirmation and deferred manual batch, D38, 2026-10-07
 
-The user is unavailable for manual observation for approximately the next hour.
+During these D38 samples the user was unavailable for manual observation.
 These new native runs therefore record **telemetry only**; moving video, audio
 and Home return are NOT RUN. The existing Apple TV 4K/tvOS/Windows combination
 and 53,953,926-byte MP4 are unchanged to our knowledge. All runs used the normal
@@ -943,7 +943,75 @@ receiver presentation.
 
 The physical startup pause remains unresolved. Complete the
 [deferred manual batch](manual-validation.md) when the user announces availability:
-fresh startup, controls/full EOF, remote Stop and sleep/wake. New results remain
-PENDING until observed. Network interruption remains NOT RUN because the user
+fresh startup, controls/full EOF, remote Stop and sleep/wake. Results were PENDING
+at this gate; D39 below records the subsequent observed batch. Network interruption remains NOT RUN because the user
 cannot perform it this session. D37's frozen-video issue stays low priority
 unless it recurs; healthy scalar telemetry cannot establish that it did not recur.
+
+
+### Observed normal-default manual batch, D39, 2026-10-07
+
+The user returned and performed the [queued checks](manual-validation.md).
+Six native casts used the submitted D38 runtime on the same recorded Apple TV
+4K/tvOS 26.6/Windows 11 combination and 53,953,926-byte MP4. Receiver firmware
+is assumed unchanged from the earlier user report. No pyatv, explicit media
+capacity/start-timeout override, credential deletion, re-pairing or startup
+recovery command. Normal MRP/16-slot/30,000-ms deadline/1,000-ms confirmation
+defaults were used. Every start confirmed after 1,011-1,027 ms of eligible URL
+playing, and every process joined cleanup.
+
+The static CLI SHA-256 was
+`f5f7fcd3ef15307c7e64294875f405e115d4452c6c71760cda84c6ee56970309`.
+The [sanitized six-case artifact](validation/native-manual-batch-windows-static-2026-10-07.json)
+records exact runtime/source fingerprints, scalar traces, commands and separate
+observer quotes. All sampled runtime blobs match tested head
+`fa9b9189f599b0b6405b8c1b81327761900470c2` (D38 code head `6bed9fe`), including
+the final direct-standard-include adjustment. This is a newly rebuilt binary,
+distinct from the earlier unattended D38 sampling fingerprint.
+
+| Case | Native result | User observation |
+|---|---|---|
+| First startup, 45 s observation then Enter | Confirmed in 1,011 ms; owned/playing; sender_stop/exit 0, cleaned=yes | Normal video/audio until Stop, then Home |
+| Fresh after sender Stop/Home, controls | Confirmed in 1,019 ms; six accepted controls; pause, Play, seek 65, seek 15, Play, Stop; sender_stop/exit 0 | Everything requested performed as expected: startup, visible pause/resume/both seeks, resumed presentation and Home |
+| Separate full clip, status only, stdin open | Confirmed in 1,011 ms; natural media_end/exit 0, four heartbeats, no post-start loading transition, cleaned=yes | Normal video/audio for the clip, automatic Home at EOF |
+| Receiver remote Stop, stdin open | Confirmed in 1,017 ms; URL event disconnect while last state playing, no terminal state; connection_lost/exit 1, cleaned=yes | Home appeared normally after the remote-Stop cue |
+| Sleep, stdin open | Confirmed in 1,027 ms; paused then URL event disconnect; connection_lost/exit 1, cleaned=yes | Screen off after the sleep cue |
+| Fresh after wake/Home, same credentials | Confirmed in 1,023 ms; owned/playing, planned seek 124/Play, media_end/exit 0, cleaned=yes | Home visible before cast; normal video/audio, Home after near-end EOF |
+
+The first run's initial Home and untouched remote were not explicitly answered;
+retain that condition limit. The next cast followed user-confirmed sender
+Stop/Home. The full run has direct normal-video/audio/EOF/Home evidence; healthy
+status is not used as a substitute. No new freeze was reported in this batch.
+Selected successful starts do not establish the cause of the historical
+intermittent startup pause or prove it fixed. No matched minimal-remote comparison
+was triggered because these starts succeeded.
+
+| Case | HTTP records | Peak active | Complete / I/O / cancelled | Local body bytes written |
+|---|---:|---:|---|---:|
+| First startup | 23 | 4 | 10 / 11 / 2 | 89,199,264 |
+| Controls | 30 | 7 | 16 / 13 / 1 | 147,161,022 |
+| Full clip | 30 | 6 | 15 / 15 / 0 | 124,624,300 |
+| Remote Stop | 16 | 5 | 8 / 4 / 4 | 77,019,704 |
+| Sleep | 27 | 7 | 14 / 10 / 3 | 89,264,800 |
+| After wake | 23 | 5 | 12 / 8 / 3 | 83,764,542 |
+
+No source read or HTTP request deadline failed. Abandoned read-ahead I/O ends
+also occurred in the observed passing runs; they do not establish receiver
+failure. Local writes and source spans remain distinct from receiver receipt
+and decoder progress. Every staged allowed executable was restored; no firewall,
+network or receiver settings changed.
+
+Remote Stop/Home and automatic cleanup are observed, but explicit normal-stop
+protocol intent remains OPEN: socket EOF alone conservatively stays a connection
+failure. Sleep is separate from an actual network disconnect/reconnect, which
+remains NOT RUN under the prior user constraint. D37's frozen-video issue remains
+low priority unless it recurs, with the original FAIL retained. Longer reliability,
+other receiver/firmware/host combinations, public ABI and packaged-host gates
+remain open. This gate changes evidence and documentation only.
+
+The unchanged D38 code already passed Windows static/shared Release CTest 23/23
+each, offline runner contracts 10/10 and touched C++ format/diff checks. All ten
+CI checks passed at both the [code head](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37564851802)
+and [tested documentation head](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37565052646).
+Inspect the actual PR head for this documentation/evidence follow-up. Local/CI
+results remain separate from the receiver observations above.

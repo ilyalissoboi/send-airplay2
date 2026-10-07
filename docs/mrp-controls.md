@@ -143,5 +143,8 @@ resolve receiver pausing or guarantee future playback; no MRP Play fallback.
 `cast --event-log` also emits at most 64 fixed startup phase/state/status/rate
 records with relative steady milliseconds and truncation/cleanup flags, including
 failed startup after cleanup. Receiver text/metadata/IDs/URLs/credentials are
-excluded from these records. Visual checks are [queued as a batch](manual-validation.md)
-for the user's return; unattended status is separate evidence.
+excluded from these records. D39's [observed batch](manual-validation.md) passed
+selected startup, controls/full EOF and post-wake presentation/Home on the
+submitted runtime. Remote Stop returned Home and cleaned automatically, but URL
+socket EOF without a terminal event remains connection_lost/exit 1. Startup
+pausing was not reproduced in six selected casts; it is not proven fixed.
