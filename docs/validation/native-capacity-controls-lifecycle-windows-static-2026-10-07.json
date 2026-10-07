@@ -3952,7 +3952,10 @@
       "media_connections": 16,
       "configuration": "explicit override at pre-policy head 6ef958de3e8ff7a9968f9e247a3ec1739adf2441",
       "observer": {
-        "result": "pending human video/audio/Home observation; automated natural EOF passed"
+        "video": "PASS: played normally through the full clip (user confirmed)",
+        "audio": "PASS: normal (user confirmed)",
+        "home_at_eof": "PASS: returned Home (user confirmed)",
+        "remote": "left untouched for this observation as requested; no sender transport commands"
       },
       "http_summary": {
         "requests_recorded": 38,

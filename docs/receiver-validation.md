@@ -831,7 +831,7 @@ the default; rebuilt default-policy CTest/CI results are separate.
 | First 16-slot attempt | Playing line then paused at zero, before any transport command; status owned/paused; Enter cleanup, exit 0 | FAIL: first frame only; remote untouched |
 | Fresh 16-slot controls | Six accepted commands; pause, Play, seek 65, seek 15, Play, Stop; owned positions 25.2, 26.0 paused, 34.1, 72.7, 22.7, 31.7; sender_stop/exit 0, joined cleanup | PASS: all requested operations performed as expected, including video/audio and Home after Stop |
 | Ten fresh short processes | Five MRP Stop/five Enter; each owned/playing around 4.2-4.3 s, sender_stop/exit 0, cleaned=yes, failed=no, no failed file reads | Individual visual results not asserted for these ten cycles |
-| Full 131.6-second repeat | No transport command; stdin open; natural media_end/exit 0, cleaned=yes, failed=no, four heartbeats, full-file source span, no loading transition | Final video/audio/Home observation pending |
+| Full 131.6-second repeat | No transport command; stdin open; natural media_end/exit 0, cleaned=yes, failed=no, four heartbeats, full-file source span, no loading transition | PASS: normal video/audio through the full clip and Home at EOF (user confirmed) |
 
 The startup failure used only two active media requests; it appeared about 0.1 s
 after the playing line, and receiver scalar rate was zero. The test did not

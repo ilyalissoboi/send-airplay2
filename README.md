@@ -151,7 +151,8 @@ cleanup still passed. D35 diagnostics support media admission capacity as a
 buffering cause: an explicit `--media-connections 16` comparison retained MRP and
 passed full video/audio/Home with no recorded loading transition. D36 then passed
 user-observed controls and ten fresh-process stop/teardown cycles at that budget;
-a full-clip repeat reached automatic EOF with no recorded loading transition.
+a full-clip repeat reached automatic EOF with no recorded loading transition
+and user-confirmed normal video/audio and Home return.
 `cast` now defaults to 16 media connections; `--media-connections N` accepts 1..16.
 The generic server and `serve` still default to four. The original freeze and
 intermittent startup pause remain unresolved: another 16-slot run paused at zero

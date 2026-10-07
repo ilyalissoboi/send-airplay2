@@ -102,8 +102,8 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   processes alternated MRP Stop and Enter; all were owned/playing and exited 0
   with joined cleanup, no session failure or failed file reads. A full-clip repeat
   reached natural media_end/exit 0 with stdin held open, four heartbeats, no recorded
-  loading transition and up to five active media requests. Its final visual
-  observation is pending. A separate first attempt at 16 slots paused at zero
+  loading transition and up to five active media requests. The user confirmed
+  normal full-clip video/audio and Home at EOF. A separate first attempt at 16 slots paused at zero
   before transport commands; user confirmed first frame and untouched remote.
   Cleanup passed, but this startup failure remains explicit. Normal `cast` now
   defaults to 16 bounded slots (override 1..16); generic server/`serve` remain four.
