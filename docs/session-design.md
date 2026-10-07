@@ -136,16 +136,30 @@ cancellation polling.
   acknowledges requests and counts them without changing URL playback state.
   Its unexpected failure marks the composite session failed.
 - **`MediaServer`:** unchanged; it owns its Boost threads.
-- **Failure:** terminal control, event or timing errors mark the session failed.
-  Start failures tear down everything. After-start failures currently require
-  `stop()` (the CLI waits for Enter); automatic bounded cleanup and lifecycle
-  error reporting remain work. Events never run user callbacks on internal
-  threads in this slice; callers poll or wait on state.
+- **Lifecycle supervisor (D33):** starts after all owners are initialized.
+  Detects terminal control/event/timing/MRP failure, URL terminal state,
+  receiver-reported owned-item EOF and loss of established ownership. It alone
+  joins workers and closes transports; readers signal state rather than joining
+  themselves. Concurrent stop calls serialize the supervisor join. Pending MRP
+  commands cancel before cleanup acquires their mutex. Status remains readable.
+  The first end reason is retained; cleaned_up follows joins/key erasure.
+  The CLI polls stdin and stops its media server after session cleanup.
+  Events never run user callbacks; callers poll or wait on state.
 
 *Alternative:* move the event channel, timing and feedback onto one Boost.Asio
 `io_context`, since Boost is already a dependency. That means fewer threads,
 but it needs an asynchronous rewrite of the record and framing layers, and two
 I/O models in one session. Not recommended for the first slice.
+
+**D33 (engineering decision, 2026-10-07): automatic ordered cleanup.**
+Use one supervisor and the existing synchronous I/O deadlines. EOF requires
+owned receiver telemetry at its positive duration while paused/stopped, never
+extrapolated position. URL stopped/idle allows one second for the independently
+ordered final MRP position before classifying receiver_stop. A pause alone is
+not terminal. Failure takes priority if detected first. Do not reconnect or
+adopt a replacement player automatically; recovery is a fresh explicit cast
+with retained credentials. Detailed contracts: [mrp-controls.md](mrp-controls.md).
+Selected hardware EOF/cycle evidence does not close all G3 gates.
 
 ## 5. Controls and status (D29)
 
@@ -273,8 +287,10 @@ administered one per session.
 7. Controls over MRP: status, pause/resume, seek, stop. **Implemented. Hardware gate
    G2** is recorded separately. Record each result in
    receiver-validation.md, including failures.
-8. Robustness: 10 start/stop cycles, receiver sleep/wake, network loss
-   mid-play. **Gate G3.**
+8. Robustness: automatic EOF/failure/ownership-loss cleanup is implemented.
+   Native EOF and ten short start/stop cycles passed for the recorded receiver.
+   Receiver-side stop, sleep/wake, actual network loss/recovery and observer
+   confirmation remain **Gate G3**; see the dated validation record.
 
 Each step follows AGENTS.md: readability rules, clang-format, static/shared
 CTest, sanitizer CI. Each step is its own commit on the PR branch.

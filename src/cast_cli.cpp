@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "cast_cli.h"
+#include "cli_input.h"
 #include "auth_cli.h"
 #include "credential_store.h"
 #include "file_media_source.h"
@@ -135,7 +136,7 @@ private:
                 std::cout << "State: " << current.playback_state << std::endl;
             }
             if (current.failed && !last.failed) {
-                std::cout << "A receiver connection failed. Press Enter to clean up." << std::endl;
+                std::cout << "A receiver connection failed; cleaning up." << std::endl;
             }
             last = current;
         }
@@ -157,7 +158,8 @@ void write_summary(const SessionStatus& session, const FileReadStats& reads) {
         std::cout << " span=[" << reads.lowest_offset.load() << ',' << reads.highest_end.load()
                   << ')';
     }
-    std::cout << std::endl;
+    std::cout << " end=" << session_end_name(session.end_reason)
+              << " cleaned=" << (session.cleaned_up ? "yes" : "no") << std::endl;
 }
 
 void print_playback_status(UrlPlaybackSession& session) {
@@ -182,8 +184,24 @@ void print_playback_status(UrlPlaybackSession& session) {
 /// Fixed diagnostics only. A failed stop still tears down both sessions.
 bool control_loop(UrlPlaybackSession& session) {
     bool success = true;
-    std::string line;
-    while (std::getline(std::cin, line)) {
+    CliInput input;
+    for (;;) {
+        const auto current = session.status();
+        if (current.end_reason != SessionEnd::none || current.failed) {
+            return success && !current.failed;
+        }
+        const auto next = input.poll(std::chrono::milliseconds{20});
+        if (next.kind == CliInputKind::waiting) {
+            continue;
+        }
+        if (next.kind == CliInputKind::eof) {
+            break;
+        }
+        if (next.kind == CliInputKind::invalid) {
+            std::cout << "Use status, pause, play, seek SECONDS, stop or Enter." << std::endl;
+            continue;
+        }
+        const auto& line = next.line;
         if (line.empty()) {
             break;
         }
@@ -266,7 +284,7 @@ int cast(const CastArguments& arguments) {
     session->stop();
     server->stop(); // Joins every read before the summary reads the statistics.
     write_summary(session->status(), *reads);
-    return controls_ok ? 0 : 1;
+    return controls_ok && !session->status().failed ? 0 : 1;
 }
 } // namespace
 

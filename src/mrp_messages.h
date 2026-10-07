@@ -42,6 +42,9 @@ struct MrpMessage {
 /// Only scalar telemetry is exposed to the CLI; no metadata or identifiers.
 struct MrpPlaybackStatus {
     bool owned = false;
+    /// Receiver-reported paused/stopped position reaches its duration. Does
+    /// not use our wall-clock extrapolation; a mid-item pause is not EOF.
+    bool at_end = false;
     std::string state;
     std::optional<double> position_seconds, duration_seconds, playback_rate;
     std::uint64_t messages = 0;

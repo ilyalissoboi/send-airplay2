@@ -264,6 +264,24 @@ void startup_binding(const std::string& root) {
     check(!other_app.status().owned, "unrelated app cannot use duration fallback");
 }
 
+void end_of_media(const std::string& root) {
+    group = "receiver-reported EOF";
+    MrpPlaybackTracker tracker;
+    tracker.expect_item("synthetic-item", "http://192.0.2.10/synthetic.mp4");
+    tracker.apply(decode_mrp(pb::view(load(root, "paused-before-end"))));
+    check(tracker.status().owned && !tracker.status().at_end,
+          "paused at 131.59 of 131.6 seconds is not EOF");
+    tracker.apply(decode_mrp(pb::view(load(root, "playing-at-end"))));
+    check(tracker.status().owned && !tracker.status().at_end,
+          "playing at the duration is not terminal; extrapolation/clamping cannot prove EOF");
+    tracker.apply(decode_mrp(pb::view(load(root, "paused-at-end"))));
+    check(tracker.status().owned && tracker.status().at_end,
+          "owned item paused at receiver-reported 131.6 of 131.6 seconds is terminal");
+    tracker.expect_item("unrelated-item", "other-url");
+    tracker.apply(decode_mrp(pb::view(load(root, "paused-at-end"))));
+    check(!tracker.status().at_end, "another item's EOF cannot end our cast");
+}
+
 /// Thread-safe peer facts. Only the worker accesses codec instances; the test
 /// configures faults under mutex before issuing a request.
 struct Peer {
@@ -543,6 +561,42 @@ void malformed_response_contracts(const std::string& root) {
     }
     command.stop();
 }
+void pending_command_cancel(const std::string& root) {
+    group = "pending command cancellation";
+    auto peer = std::make_shared<Peer>(root);
+    MrpSession session(channel(peer), 1s, 1s);
+    session.expect_item("synthetic-item", "http://192.0.2.10/synthetic.mp4");
+    session.handshake(SenderIdentity{}, text("synthetic"));
+    check(eventually([&] { return session.status().owned; }), "owned state received");
+    {
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        peer->silent = true;
+    }
+    std::atomic_bool cancelled{false};
+    std::atomic_bool cancelled_result{false};
+    std::thread command([&] {
+        try {
+            session.command(PlaybackCommand::pause, 0, &cancelled);
+        } catch (const MrpException& error) {
+            cancelled_result = error.reason() == MrpError::cancelled;
+        }
+    });
+    check(eventually([&] {
+              std::lock_guard<std::mutex> lock(peer->mutex);
+              return std::find(peer->types.begin(), peer->types.end(), mrp::send_command) !=
+                     peer->types.end();
+          }),
+          "request is in flight before cancellation");
+    const auto started = std::chrono::steady_clock::now();
+    cancelled = true;
+    command.join();
+    session.stop();
+    check(cancelled_result && std::chrono::steady_clock::now() - started < 500ms,
+          "pending command returns cancellation and joins within 500 ms");
+    std::lock_guard<std::mutex> lock(peer->mutex);
+    check(peer->closed, "cancelled command transport closed");
+}
+
 } // namespace
 int main(int argc, char** argv) {
     try {
@@ -554,6 +608,8 @@ int main(int argc, char** argv) {
         large_data_records(argv[1]);
         ownership(argv[1]);
         startup_binding(argv[1]);
+        end_of_media(argv[1]);
+        pending_command_cancel(argv[1]);
         session_success(argv[1]);
         failures_and_cancel(argv[1]);
         malformed_response_contracts(argv[1]);

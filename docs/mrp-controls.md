@@ -80,9 +80,32 @@ then shares the URL feedback worker's periodic schedule on its own verified
 control connection. Stop joins feedback/events and closes the URL control/timing transport, then
 joins/closes MRP and remote events/control. The CLI's `stop` sends MRP Stop first
 and tears down even if the command fails. Enter or stdin EOF tears down directly.
-Start failures clean up everything. Automatic cleanup after a running-session
-failure, EOF/receiver-side stop semantics, long-session robustness and the
-public playback ABI remain G3/host work.
+Start failures clean up everything. D33 adds a sole lifecycle supervisor after
+startup: terminal failure, URL ended/stopped/idle, owned-item EOF or loss of
+previously established ownership cancel commands and trigger the same cleanup.
+Callers may read status or call stop concurrently; destruction requires external
+callers to finish. Owners remain allocated for safe final snapshots, while close
+erases transport keys. `end_reason` is set once; `cleaned_up` follows worker joins.
+The CLI stops its media server only after session cleanup.
+
+EOF uses the owned item's receiver-reported paused/stopped position at or beyond
+its positive duration. Wall-clock extrapolation or clamping never proves EOF.
+tvOS 26.6 reports URL stopped before final MRP telemetry; that state allows up
+to one second for EOF evidence before becoming receiver_stop. An ordinary
+mid-item pause remains active. Connection failure takes priority when detected
+before terminal completion. Loss of ownership ends this cast without adopting
+or controlling the replacement player.
+
+The CLI polls borrowed stdin without a detached reader or blocking getline;
+partial lines survive polls, commands are bounded to 256 printable ASCII
+characters, and Enter/stdin EOF retain their direct-teardown behavior.
+Native control/event operations retain cancellation polling and configured
+request deadlines (5 s by default). A silent MRP-only peer is detected by the
+next 30 s heartbeat plus its request deadline; this is distinct from immediate
+socket EOF. No automatic reconnect, resume, re-pairing or credential replacement
+is attempted: after restoring reachability, start a fresh cast with the existing
+profile. Actual receiver-side stop, sleep/wake and network-loss recovery remain
+manual G3 gates; see the dated lifecycle record. Public playback ABI is later work.
 
 ## CLI
 

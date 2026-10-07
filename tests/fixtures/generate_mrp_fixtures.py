@@ -83,6 +83,20 @@ item.metadata.duration = 131.6
 item.metadata.elapsedTime = 17.0
 item.metadata.playbackRate = 1.0
 save("state", msg)
+
+# Independent boundary oracles: sender wall-clock extrapolation cannot prove EOF.
+for name, state, elapsed, rate in [
+    ("paused-at-end", pb.PlaybackState.Paused, 131.6, 0.0),
+    ("paused-before-end", pb.PlaybackState.Paused, 131.59, 0.0),
+    ("playing-at-end", pb.PlaybackState.Playing, 131.6, 1.0),
+]:
+    boundary = pb.ProtocolMessage()
+    boundary.CopyFrom(msg)
+    boundary_inner = pb.extract_inner(boundary)
+    boundary_inner.playbackState = state
+    boundary_inner.playbackQueue.contentItems[0].metadata.elapsedTime = elapsed
+    boundary_inner.playbackQueue.contentItems[0].metadata.playbackRate = rate
+    save(name, boundary)
 airplay = pb.ProtocolMessage()
 airplay.CopyFrom(msg)
 airplay_inner = pb.extract_inner(airplay)

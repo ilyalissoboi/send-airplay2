@@ -62,6 +62,24 @@ struct ErasedRequest {
 SessionException::SessionException(SessionError reason, unsigned status)
     : std::runtime_error(session_message(reason, status)), reason_(reason), status_(status) {}
 
+const char* session_end_name(SessionEnd reason) noexcept {
+    switch (reason) {
+    case SessionEnd::none:
+        return "none";
+    case SessionEnd::sender_stop:
+        return "sender_stop";
+    case SessionEnd::media_end:
+        return "media_end";
+    case SessionEnd::receiver_stop:
+        return "receiver_stop";
+    case SessionEnd::ownership_lost:
+        return "ownership_lost";
+    case SessionEnd::connection_lost:
+        return "connection_lost";
+    }
+    return "none";
+}
+
 UrlPlaybackSession::UrlPlaybackSession(UrlPlaybackOptions options)
     : options_(std::move(options)), session_uuid_(random_uuid()),
       headers_(SessionHeaders::random()) {}
@@ -78,6 +96,8 @@ std::unique_ptr<UrlPlaybackSession> UrlPlaybackSession::start(const PairCredenti
     std::unique_ptr<UrlPlaybackSession> session(new UrlPlaybackSession(std::move(options)));
     try {
         session->run_start(credentials, cancelled);
+        // Owners are fully initialized before the cleanup thread can inspect them.
+        session->supervisor_thread_ = std::thread([owner = session.get()] { owner->supervise(); });
     } catch (...) {
         session->stop();
         throw;
@@ -374,7 +394,9 @@ void UrlPlaybackSession::feedback_loop() {
 void UrlPlaybackSession::mark_failed() {
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
-        status_.failed = true;
+        if (status_.end_reason == SessionEnd::none) {
+            status_.failed = true;
+        }
     }
     state_changed_.notify_all();
 }
@@ -405,6 +427,10 @@ void UrlPlaybackSession::wait_until_playing(const std::atomic_bool* cancelled) {
 }
 
 SessionStatus UrlPlaybackSession::status() const {
+    // Read MRP first: intentional command cancellation follows request_end().
+    // The later state snapshot must retain that normal end rather than combine
+    // an earlier "none" snapshot with a later cancellation failure.
+    const bool remote_failed = mrp_ && mrp_->failed();
     SessionStatus snapshot;
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
@@ -413,7 +439,7 @@ SessionStatus UrlPlaybackSession::status() const {
     if (timing_) {
         snapshot.timing_answered = timing_->answered();
     }
-    snapshot.failed = snapshot.failed || (mrp_ && mrp_->failed());
+    snapshot.failed = snapshot.failed || (snapshot.end_reason == SessionEnd::none && remote_failed);
     return snapshot;
 }
 
@@ -422,10 +448,14 @@ MrpPlaybackStatus UrlPlaybackSession::playback_status() const {
 }
 
 void UrlPlaybackSession::command(PlaybackCommand command, double position_seconds) {
+    std::lock_guard<std::mutex> serial(command_mutex_);
+    if (stopping_) {
+        throw MrpException(MrpError::cancelled);
+    }
     if (!mrp_) {
         throw MrpException(MrpError::not_owned);
     }
-    mrp_->command(command, position_seconds);
+    mrp_->command(command, position_seconds, &stopping_);
 }
 
 SessionStatus UrlPlaybackSession::wait_for_change(const std::string& previous,
@@ -433,7 +463,8 @@ SessionStatus UrlPlaybackSession::wait_for_change(const std::string& previous,
     {
         std::unique_lock<std::mutex> lock(state_mutex_);
         state_changed_.wait_for(lock, timeout, [&] {
-            return status_.playback_state != previous || status_.failed || stopped_;
+            return status_.playback_state != previous || status_.failed ||
+                   status_.end_reason != SessionEnd::none;
         });
     }
     return status();
@@ -446,13 +477,99 @@ std::vector<std::string> UrlPlaybackSession::take_event_log() {
     return entries;
 }
 
-void UrlPlaybackSession::stop() noexcept {
+void UrlPlaybackSession::request_end(SessionEnd reason) {
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
-        if (stopped_) {
+        if (status_.end_reason == SessionEnd::none) {
+            status_.end_reason = reason;
+            status_.failed = status_.failed || reason == SessionEnd::connection_lost;
+        }
+        stopping_ = true;
+    }
+    state_changed_.notify_all();
+}
+
+void UrlPlaybackSession::supervise() {
+    try {
+        bool had_owned_player = false;
+        std::optional<std::chrono::steady_clock::time_point> receiver_stop_deadline;
+        for (;;) {
+            const auto current = status();
+            if (current.end_reason != SessionEnd::none) {
+                break;
+            }
+            if (current.failed) {
+                request_end(SessionEnd::connection_lost);
+                break;
+            }
+            if (current.playback_state == "ended") {
+                request_end(SessionEnd::media_end);
+                break;
+            }
+            if (mrp_) {
+                const auto playback = mrp_->status();
+                if (playback.at_end) {
+                    request_end(SessionEnd::media_end);
+                    break;
+                }
+                if (had_owned_player && !playback.owned && current.playback_state != "idle" &&
+                    current.playback_state != "stopped") {
+                    request_end(SessionEnd::ownership_lost);
+                    break;
+                }
+                had_owned_player = had_owned_player || playback.owned;
+            }
+            if (current.playback_state == "idle" || current.playback_state == "stopped") {
+                // tvOS reports URL "stopped" before its final MRP position. Give
+                // that independent channel one second to distinguish EOF from
+                // a mid-item receiver stop. A pause alone never starts this timer.
+                const auto now = std::chrono::steady_clock::now();
+                if (!receiver_stop_deadline) {
+                    receiver_stop_deadline = now + std::chrono::seconds(1);
+                }
+                if (!mrp_ || now >= *receiver_stop_deadline) {
+                    request_end(SessionEnd::receiver_stop);
+                    break;
+                }
+            } else {
+                receiver_stop_deadline.reset();
+            }
+            std::unique_lock<std::mutex> lock(state_mutex_);
+            state_changed_.wait_for(lock, start_poll_slice, [&] {
+                return status_.end_reason != SessionEnd::none || status_.failed;
+            });
+        }
+    } catch (...) {
+        request_end(SessionEnd::connection_lost);
+    }
+    cleanup();
+}
+
+void UrlPlaybackSession::stop() noexcept {
+    std::lock_guard<std::mutex> join_lock(stop_mutex_);
+    bool failed = false;
+    {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        failed = status_.failed;
+    }
+    // Teardown must not allocate a status string, including on start failure.
+    failed = failed || (mrp_ && mrp_->failed());
+    request_end(failed ? SessionEnd::connection_lost : SessionEnd::sender_stop);
+    if (supervisor_thread_.joinable()) {
+        supervisor_thread_.join();
+    } else {
+        // Start failures have no supervisor. No caller can access this object yet.
+        cleanup();
+    }
+}
+
+void UrlPlaybackSession::cleanup() noexcept {
+    std::lock_guard<std::mutex> command_lock(command_mutex_);
+    {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        if (status_.cleaned_up) {
             return;
         }
-        stopped_ = true;
         feedback_stop_ = true;
     }
     state_changed_.notify_all();
@@ -493,6 +610,10 @@ void UrlPlaybackSession::stop() noexcept {
     }
     if (remote_control_) {
         remote_control_->close();
+    }
+    {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        status_.cleaned_up = true;
     }
     state_changed_.notify_all();
 }

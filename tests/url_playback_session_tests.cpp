@@ -206,6 +206,7 @@ struct Behavior {
     unsigned remote_setup_status = 200;
     bool reject_remote_event_connect = false;
     bool end_remote_events_on_rate = false;
+    bool silent_feedback = false;
 };
 
 constexpr std::uint16_t control_port = 7000;
@@ -319,6 +320,9 @@ public:
         while (auto request = take_request(control_input_)) {
             const bool encrypted = control_writer_ != nullptr;
             auto reply = respond(*request);
+            if (reply.empty()) {
+                continue; // Scripted silent peer; the reader must honor its deadline.
+            }
             if (encrypted) {
                 reply = control_writer_->encrypt(reply);
             }
@@ -328,7 +332,7 @@ public:
     std::size_t take_control_output(std::uint8_t* data, std::size_t capacity) {
         std::lock_guard<std::mutex> lock(mutex_);
         if (control_output_.empty()) {
-            throw std::runtime_error("Fake receiver: no response queued");
+            return 0; // No queued bytes, rather than transport EOF.
         }
         const auto count = std::min(capacity, control_output_.size());
         std::copy_n(control_output_.begin(), count, data);
@@ -437,6 +441,9 @@ private:
         }
         if (request.method == "POST" && request.target == "/feedback") {
             ++feedback_;
+            if (behavior_.silent_feedback) {
+                return {};
+            }
             return response(request, 200);
         }
         if (request.method == "POST" && request.target == "/command") {
@@ -556,8 +563,13 @@ std::size_t FakeControlStream::write_some(const std::uint8_t* data, std::size_t 
 }
 std::size_t FakeControlStream::read_some(std::uint8_t* data, std::size_t capacity,
                                          const ReceiverOperation& operation) {
-    operation.check();
-    return receiver_.take_control_output(data, capacity);
+    for (;;) {
+        operation.check();
+        if (const auto count = receiver_.take_control_output(data, capacity)) {
+            return count;
+        }
+        std::this_thread::sleep_for(1ms);
+    }
 }
 void FakeControlStream::close() noexcept {
     receiver_.control_closed();
@@ -853,6 +865,10 @@ void failure_after_start_tests() {
     receiver.end_event_channel();
     const auto status = session->wait_for_change("playing", 2000ms);
     check(status.failed, "a lost event channel marks the session failed");
+    check(eventually([&] { return session->status().cleaned_up; }),
+          "event loss automatically joins and closes workers without operator input");
+    check(session->status().end_reason == SessionEnd::connection_lost,
+          "event failure retains terminal reason");
     session->stop();
     check(receiver.control_was_closed(), "stop still closes the control connection");
 
@@ -862,9 +878,79 @@ void failure_after_start_tests() {
     remote_lost.remote_control().end_event_channel();
     check(remote_session->wait_for_change("playing", 2000ms).failed,
           "remote event loss after start marks the composite session failed");
+    check(eventually([&] { return remote_session->status().cleaned_up; }),
+          "remote loss automatically cleans both sessions");
     remote_session->stop();
     check(remote_lost.control_was_closed() && remote_lost.remote_control().control_was_closed(),
           "stop after remote failure closes both authenticated connections");
+}
+void terminal_event_tests() {
+    group = "automatic terminal events";
+    for (const auto* terminal : {"Ended", "Stopped", "Idle"}) {
+        FakeReceiver receiver({});
+        auto session = UrlPlaybackSession::start(receiver.credentials(), options_for(receiver));
+        receiver.push_state("Paused");
+        check(session->wait_for_change("playing", 1000ms).end_reason == SessionEnd::none,
+              std::string(terminal) + ": ordinary pause remains active");
+        receiver.push_state(terminal);
+        check(eventually([&] { return session->status().cleaned_up; }),
+              std::string(terminal) + ": terminal event cleans automatically");
+        const auto expected =
+            std::string(terminal) == "Ended" ? SessionEnd::media_end : SessionEnd::receiver_stop;
+        check(session->status().end_reason == expected && !session->status().failed,
+              std::string(terminal) + ": normal completion reason");
+        check(receiver.control_close_order() == std::vector<std::string>{"URL", "remote"},
+              std::string(terminal) + ": remote retained through URL closure");
+        session->stop();
+        check(session->status().end_reason == expected, "first terminal reason survives stop");
+    }
+}
+void concurrent_stop_tests() {
+    group = "concurrent stop";
+    for (int cycle = 0; cycle < 10; ++cycle) {
+        FakeReceiver receiver({});
+        auto session = UrlPlaybackSession::start(receiver.credentials(), options_for(receiver));
+        std::thread first([&] { session->stop(); });
+        std::thread second([&] { session->stop(); });
+        first.join();
+        second.join();
+        check(session->status().cleaned_up &&
+                  session->status().end_reason == SessionEnd::sender_stop,
+              "concurrent stops finish cycle " + std::to_string(cycle));
+        check(receiver.control_close_order() == std::vector<std::string>{"URL", "remote"},
+              "one cleanup owner cycle " + std::to_string(cycle));
+    }
+}
+void feedback_deadline_tests() {
+    group = "silent feedback deadline";
+    Behavior behavior;
+    behavior.silent_feedback = true;
+    FakeReceiver receiver(behavior);
+    auto options = options_for(receiver);
+    options.request_timeout = 80ms;
+    auto session = UrlPlaybackSession::start(receiver.credentials(), options);
+    const auto started = std::chrono::steady_clock::now();
+    check(eventually([&] { return session->status().cleaned_up; }),
+          "silent established control peer triggers automatic cleanup");
+    check(session->status().failed && session->status().end_reason == SessionEnd::connection_lost &&
+              std::chrono::steady_clock::now() - started < 500ms,
+          "80 ms request deadline bounds failure and joined cleanup to 500 ms");
+    check(receiver.control_close_order() == std::vector<std::string>{"URL", "remote"},
+          "deadline cleanup preserves closure order");
+}
+void feedback_cancel_tests() {
+    group = "stop during pending feedback";
+    Behavior behavior;
+    behavior.silent_feedback = true;
+    FakeReceiver receiver(behavior);
+    auto session = UrlPlaybackSession::start(receiver.credentials(), options_for(receiver));
+    check(eventually([&] { return receiver.feedback_count() > 0; }),
+          "feedback request in flight before stop");
+    const auto started = std::chrono::steady_clock::now();
+    session->stop();
+    check(session->status().cleaned_up && !session->status().failed &&
+              std::chrono::steady_clock::now() - started < 500ms,
+          "stop cancels blocked feedback rather than waiting its two-second deadline");
 }
 void mrp_setup_failure_tests() {
     group = "MRP setup cleanup";
@@ -907,6 +993,10 @@ int main() {
         event_log_tests();
         failure_after_start_tests();
         mrp_setup_failure_tests();
+        terminal_event_tests();
+        concurrent_stop_tests();
+        feedback_deadline_tests();
+        feedback_cancel_tests();
     } catch (const std::exception& error) {
         std::cerr << "Unexpected test exception [" << group << "]: " << error.what() << '\n';
         return 1;

@@ -70,6 +70,18 @@ struct UrlPlaybackOptions {
     bool enable_mrp = true;
 };
 
+/// First terminal reason; retained after cleanup and subsequent stop() calls.
+enum class SessionEnd {
+    none,
+    sender_stop,
+    media_end,
+    receiver_stop,
+    ownership_lost,
+    connection_lost
+};
+/// Fixed diagnostics only; never receiver-provided descriptions.
+[[nodiscard]] const char* session_end_name(SessionEnd reason) noexcept;
+
 /// A snapshot of session progress, safe to read from any thread.
 struct SessionStatus {
     std::string playback_state; // Lower-cased; empty before the first state event.
@@ -79,6 +91,9 @@ struct SessionStatus {
     std::uint64_t feedback_sent = 0;
     std::uint64_t timing_answered = 0;
     bool failed = false; // The control or event connection failed after start.
+    SessionEnd end_reason = SessionEnd::none;
+    bool cleaned_up =
+        false; // Transport workers joined and channel secrets erased; stop joins supervisor.
 };
 
 /**
@@ -94,13 +109,15 @@ struct SessionStatus {
  * Threads (D28): the control connection is shared by the caller and the
  * feedback thread under one mutex, so one request is in flight at a time. An
  * event thread answers receiver requests and publishes state; a timing thread
- * answers NTP requests. No user code runs on these threads.
+ * answers NTP requests. A supervisor detects EOF, receiver stop, ownership
+ * loss or connection failure and owns cleanup. No user code runs on these threads.
  *
- * stop() tears down in a fixed order, even after earlier failures: feedback,
+ * Automatic cleanup and stop() use the same fixed order, even after failures: feedback,
  * URL event channel, URL control connection, timing responder, then remote
  * MRP data and remote event/control connections. Remote events do not update URL playback state.
- * It is idempotent and runs from the destructor and when start() fails. Credentials are
- * borrowed for start() only. Noncopyable, nonmovable.
+ * stop() is idempotent and runs from the destructor and when start() fails.
+ * The host owns its media server and must stop it after session cleanup.
+ * Credentials are borrowed for start() only. Noncopyable, nonmovable.
  */
 class UrlPlaybackSession {
 public:
@@ -122,11 +139,15 @@ public:
     [[nodiscard]] MrpPlaybackStatus playback_status() const;
     /// Synchronous correlated MRP controls. A command requires ownership of
     /// our URL item; rejection is reported without changing playback locally.
+    /// Teardown cancels a pending command before closing its transport.
     void command(PlaybackCommand command, double position_seconds = 0);
     /// Block until the playback state differs from `previous`, the session
-    /// fails, or `timeout` passes; returns the status at that point.
+    /// fails/ends, or `timeout` passes; returns the status at that point.
     [[nodiscard]] SessionStatus wait_for_change(const std::string& previous,
                                                 std::chrono::milliseconds timeout) const;
+    /// Request local teardown and wait for the sole cleanup owner. Safe alongside
+    /// status/commands and another stop; first terminal reason wins. Destruction
+    /// still requires all external callers to have returned.
     void stop() noexcept;
     /// Diagnostic: the event outlines recorded since the last call, oldest
     /// first. At most 256 are kept; older ones are dropped. Empty unless
@@ -156,6 +177,9 @@ private:
     void event_loop();
     void feedback_loop();
     void mark_failed();
+    void request_end(SessionEnd reason);
+    void supervise();
+    void cleanup() noexcept;
 
     UrlPlaybackOptions options_;
     std::string session_uuid_;
@@ -188,7 +212,10 @@ private:
     mutable std::condition_variable state_changed_;
     SessionStatus status_;
     std::deque<std::string> event_log_;
-    bool stopped_ = false;
+    std::atomic_bool stopping_{false}; // Also cancels a pending MRP command.
+    std::mutex command_mutex_;         // Prevents teardown racing a callable command.
+    std::mutex stop_mutex_;            // Serializes joining the sole supervisor.
+    std::thread supervisor_thread_;
 };
 } // namespace send_airplay2::detail
 #endif

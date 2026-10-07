@@ -135,7 +135,10 @@ The fixtures independently establish extension/field numbers, enum values,
 little-endian protobuf floats, network-endian frame headers and plist envelopes.
 The 74-byte reply fixture tests a reply with a plist body, a shape observed during
 the native handshake; its body is independently constructed, not captured.
-See [schema provenance](../../docs/dependencies.md#native-mrp-controls-d29d31).
+The paused-at-end, paused-before-end and playing-at-end fixtures independently
+model 131.6/131.6 and 131.59/131.6-second EOF boundaries. They distinguish
+receiver terminal telemetry from an ordinary pause or extrapolated playing
+position. See [schema provenance](../../docs/dependencies.md#native-mrp-controls-d29d31).
 
 ## Session messages
 
