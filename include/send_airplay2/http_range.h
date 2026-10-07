@@ -1,18 +1,10 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #ifndef SEND_AIRPLAY2_HTTP_RANGE_H
 #define SEND_AIRPLAY2_HTTP_RANGE_H
+#include "send_airplay2/export.h"
 #include <stddef.h>
 #include <stdint.h>
 
-#if defined(_WIN32) && defined(SAP2_SHARED)
-# if defined(SAP2_BUILDING)
-#  define SAP2_API __declspec(dllexport)
-# else
-#  define SAP2_API __declspec(dllimport)
-# endif
-#else
-# define SAP2_API
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,8 +35,8 @@ typedef struct sap2_byte_range {
  * UNSATISFIABLE and INVALID_ARGUMENT initialize it to {0, 0}.
  * Caller applies HTTP method, If-Range and conditional request semantics first.
  * This pre-1.0 API is experimental. */
-SAP2_API int32_t sap2_resolve_http_range(const char* header, size_t header_length,
-                                      uint64_t size, sap2_byte_range* output);
+SAP2_API int32_t sap2_resolve_http_range(const char* header, size_t header_length, uint64_t size,
+                                         sap2_byte_range* output);
 #ifdef __cplusplus
 }
 #endif

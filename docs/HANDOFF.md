@@ -9,6 +9,12 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here: native playback session merged into `main`
 
+**Active slice: public playback interface (D46).** At the user's request PR #13
+(D45 handoff) was merged as `b0b0f86` after all ten checks passed, and the
+versioned C playback interface was started on `claude/public-playback-api` with
+its own PR. It is implemented and unit/CI-tested, **not receiver-tested**; see
+[public-api.md](public-api.md) and the D46 record in section 4.
+
 **PR #12 is merged (D45).** The user merged
 [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12) into `main` on
 2026-10-07 as `2bb25df4b4f58ef0a2c6936ed6f44161b815890c`. Its final head
@@ -776,6 +782,27 @@ PR, because the prior "continue on the open PR branch" rule no longer applies; a
 before merging. The ordered queue in [CONTINUATION.md](CONTINUATION.md) now
 proposes a versioned public playback API design as the next slice, pending user
 confirmation. Documentation only: no source, test, dependency or receiver change.
+
+**D46 (public playback interface, 2026-10-07):** the user asked to merge PR #13
+and start the API slice. PR #13 merged as `b0b0f86` at verified head `5e0a98e`
+with all ten checks passing. The user then chose two options offered as
+questions: **credentials by profile name**, loaded from the library's own
+platform store so secrets never cross the ABI, and a **playback-only** first
+slice (no pairing, profile deletion or diagnostics in the interface yet).
+Engineering proposals under those choices: an opaque `sap2_cast` handle owning
+the media server and session in the CLI's validated order; `struct_size`
+versioning plus `SAP2_PLAYBACK_API_VERSION` 1; host `read_at`/`release` media
+callbacks with ownership transferred only on successful create; blocking
+start cancelled by `sap2_cast_stop()`; polled and waited status without event
+callbacks (keeps D28); end reasons unchanged, so remote Stop/Home still reports
+connection_lost; no Play/seek retry. `export.h` now holds `SAP2_API`, and the
+library includes the credential store sources and links `advapi32` on Windows.
+Implementation is in `src/cast_controller.*` and `src/playback_api.cpp`; tests
+are `cast_controller_tests` and the C-language `c_playback_smoke`. Windows
+static/shared Release passed 26/26 CTest targets each. **No receiver cast has
+been run through the interface**; the CLI evidence does not transfer to it
+automatically. Contract, mapping tables, limits and next steps:
+[public-api.md](public-api.md).
 
 ## 5. Implemented code and verification
 

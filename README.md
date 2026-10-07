@@ -10,7 +10,8 @@ returned home after sender shutdown. The session retains a separate native
 remote-control session, now extended with native MRP status and controls. G2
 controls and selected G3 lifecycle cases passed on that combination, including
 Ethernet interruption cleanup and fresh same-credential playback after reconnection
-(D42). Receiver-stop intent and the public playback API remain pending.
+(D42). An experimental versioned C playback interface now exists (D46) but has
+not been receiver-tested; receiver-stop intent remains pending.
 A historical full-clip run failed sustained video: after buffering near 18 seconds,
 the picture froze while audio continued to EOF.**
 
@@ -19,7 +20,9 @@ and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnos
 CLI. A Boost.Beast/Asio media server now streams immutable byte-source callbacks
 with GET/HEAD and byte ranges. Private session integration uses authenticated
 SETUP, encrypted events, NTP timing, feedback and `/command` queue messages.
-The pre-1.0 API is not frozen; playback has no public API yet.
+The pre-1.0 API is not frozen. Playback has an experimental C interface,
+[`playback.h`](include/send_airplay2/playback.h), that casts a host read-callback
+source to a paired profile; see [its design record](docs/public-api.md).
 See [media serving contracts and validation](docs/media-server.md).
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
@@ -198,9 +201,10 @@ See [session design and gates](docs/session-design.md) and
 [receiver results](docs/receiver-validation.md).
 
 The [D43 PR review](docs/pr-review.md) fixed URL diagnostic redaction and decoded
-MRP/event plaintext cleanup on exception paths. Windows static/shared Release each pass
-24 CTest targets; offline runner contracts pass 10 tests. These checks are
-separate from the dated receiver observations above.
+MRP/event plaintext cleanup on exception paths. With the D46 playback interface
+tests, Windows static/shared Release each pass 26 CTest targets; offline runner
+contracts pass 10 tests. These checks are separate from the dated receiver
+observations above; the C interface has no receiver observation yet.
 
 ## Milestones
 
