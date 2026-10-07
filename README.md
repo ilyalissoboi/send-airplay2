@@ -140,13 +140,23 @@ reason, whether cleanup finished and fixed failure channel/category; connection
 failure returns exit 1. It
 prints no private URL or receiver address. `--event-log` enables bounded event
 outlines, allowlisted buffering values and a fixed startup phase/state/rate trace,
-including failed starts. Startup success requires one continuous second of URL
-playing without an explicitly zero/reverse rate, within the startup deadline.
+including failed starts. It also records fixed-label remote notification
+observations (shared 256-entry event log) and the retained final MRP state after
+joined cleanup. Remote output omits arbitrary names/values and request targets;
+numeric reason/error/status
+codes have no inferred meaning. Final MRP reports the received position rather
+than wall-clock progress and is not a fresh receiver query. These observations
+do not change terminal classification. Startup success requires one continuous
+second of URL playing without an explicitly zero/reverse rate, within the
+startup deadline.
 A transient playing event is insufficient; no automatic Play retry is sent.
 This confirmation is telemetry, not a proof of moving video.
 D39's [manual batch](docs/manual-validation.md) passed selected startup,
 controls/full EOF and sleep/wake presentation on the recorded receiver/host.
 Remote Stop returned Home and cleaned up but still reports connection_lost/exit 1.
+D40's [diagnostic comparison](docs/receiver-validation.md#remote-stop-diagnostic-comparison-d40-2026-10-07)
+retained that classification: Stop/Home and sleep differed in final MRP state,
+but did not establish normal protocol intent. Fresh post-wake video/audio/EOF/Home passed.
 `--media-log` reports bounded HTTP range/status/socket-write/completion facts;
 socket completion does not prove receipt or decoding (see [diagnostic contracts](docs/media-server.md#opt-in-request-diagnostics)). A `playing` event does not prove visible playback:
 G1 passed for the recorded native-only run, with user-observed video/audio and

@@ -206,7 +206,7 @@ void ownership(const std::string& root) {
     tracker.apply(decode_mrp(pb::view(load(root, "state"))));
     auto status = tracker.status();
     check(status.owned && status.state == "playing" && status.position_seconds == 17.0 &&
-              status.duration_seconds == 131.6,
+              status.reported_position_seconds == 17.0 && status.duration_seconds == 131.6,
           "exact URL ownership and initial scalar telemetry");
     check(tracker.owned_player_path() == load(root, "path"),
           "original explicit playerPath retained");
@@ -459,6 +459,9 @@ void session_success(const std::string& root) {
     check(!session.failed(), "command rejection does not invent a terminal network failure");
     session.stop();
     session.stop();
+    check(session.status().owned && session.status().state == "playing" &&
+              session.status().reported_position_seconds == 17.0,
+          "joined cleanup retains received MRP state and elapsed-time evidence");
     std::lock_guard<std::mutex> lock(peer->mutex);
     check(peer->closed && peer->acknowledgements >= 4, "sync replies and ordered close");
     check(!peer->sender_sequences.empty() &&

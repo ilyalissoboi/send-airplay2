@@ -161,6 +161,10 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    EOF and post-wake presentation/Home passed. Remote Stop/Home and automatic
    cleanup passed, but protocol intent still reports connection_lost/exit 1.
    Startup pause and longer reliability remain active work.
+   D40 adds fixed-label remote-event observations and retained final MRP
+   received-state diagnostics after cleanup. They do not change classification;
+   see the separate [validation record](receiver-validation.md) for the observed
+   Stop/sleep comparison and the unobserved first attempt.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

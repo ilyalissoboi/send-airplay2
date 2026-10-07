@@ -39,6 +39,10 @@ passed all ten checks, as did tested documentation head
 `fa9b9189f599b0b6405b8c1b81327761900470c2` in
 [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37565052646).
 Inspect the actual PR head, including subsequent documentation-only follow-ups.
+D39 documentation/evidence head `5a2c58d9eec880c81e96ef264a489a709a7fa4a9`
+passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37573362161).
+D40 below adds diagnostic code and a separate native comparison; its actual
+PR-head CI must be checked after publication.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -549,6 +553,47 @@ in this selected batch, not proven fixed. Frozen video retains low priority unde
 D37 unless it recurs; retain its original FAIL. Longer reliability, other hardware,
 public ABI and packaged-host gates remain open. Exact observer quotes, timing and
 HTTP completion facts are in the new [artifact](validation/native-manual-batch-windows-static-2026-10-07.json).
+
+**D40 (engineering decision, 2026-10-07):** remote Stop classification remains
+conservative while gathering bounded remote-event and final MRP observations.
+Remote bodies are acknowledged before inspection and erased by a noncopyable
+ownership guard. Opt-in logs use fixed type/state/key labels and signed 32-bit
+reason/error/status codes, share the 256-entry event bound and omit arbitrary
+peer text, names, targets, metadata and identifiers. Malformed observations do
+not end an otherwise healthy channel. Remote events never update URL state.
+The final CLI diagnostic runs after joined cleanup and exposes retained MRP
+ownership/state/EOF, received elapsed time (without extrapolation or clamping),
+duration/rate and message/heartbeat counts. It is not a fresh receiver query and
+cannot establish that every final message arrived before cancellation.
+
+Windows Release static/shared builds and CTest passed 23/23 each (15.67/15.53 s);
+offline runner contracts passed 10/10. Ten touched C++ files pass format checks.
+New scripted coverage verifies redaction/code bounds, malformed acknowledged
+observations, disabled logging, literal 256-entry overflow, remote/URL state
+separation and retained MRP elapsed-time state after cleanup. No dependency or
+copied implementation was introduced; Apache-2.0 remains unchanged.
+The native comparison and observer scope are recorded separately in the
+[D40 artifact](validation/native-stop-diagnostics-windows-static-2026-10-07.json).
+The user could not observe the first attempt and requested a repeat; preserve
+that attempt as unobserved, with no confirmed remote action or Home result.
+The repeated remote-Stop checkpoint returned Home (user-confirmed), closed URL
+events while last URL state was playing and retained MRP unowned/unknown.
+Sleep was separately confirmed screen-off; URL/MRP paused, MRP retained ownership
+with received elapsed time zero and at_end=false, and URL feedback disconnected
+first. Both cleaned automatically with connection_lost/exit 1. Remote events in
+these traces were allowlisted updateInfo outlines without terminal state/codes.
+This single comparison is not a validated normal-stop discriminator: ownership
+loss and independent first-failure ordering cannot establish intent. Do not
+change failure classification from these snapshots alone.
+Fresh playback after confirmed wake/Home reused existing credentials, accepted
+the planned near-end seek/Play and ended media_end/exit 0. Final owned MRP paused
+at received elapsed time/duration 131.567 s, rate zero, at_end=true. The user
+confirmed normal video/audio and Home after EOF. No new freeze was reported;
+D37 stays unchanged. Actual network interruption/recovery remains NOT RUN.
+Next: review the current diff/readability and actual PR-head CI, then complete
+the available G3 network-loss/recovery check. Further normal-Stop classification
+needs validated receiver intent, potentially a fixed MRP message-kind/ownership
+transition trace; do not infer it from ownership loss plus socket closure.
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1626,7 +1671,10 @@ the recorded source snapshot is still current.
    before startup success; the spontaneous receiver pause remains active. D39
    completed the [manual batch](manual-validation.md): startup, controls/full EOF
    and post-wake presentation/Home passed; remote Stop/Home and cleanup passed
-   but protocol intent remains unresolved. Per user decision D37, the original frozen-video failure is low priority:
+   but protocol intent remains unresolved. D40 adds bounded remote-event/final
+   MRP observations; the repeated Stop/Home and sleep trace differ but do not
+   establish a reliable normal-stop rule. The first D40 attempt was unobserved.
+   Per user decision D37, the original frozen-video failure is low priority:
    insufficient media connections are the likely cause; retain its evidence and
    raise priority if it recurs in later testing. Finish actual
    network interruption/recovery when available. Investigate the

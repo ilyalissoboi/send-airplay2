@@ -69,8 +69,8 @@ struct UrlPlaybackOptions {
     std::chrono::milliseconds start_confirmation_interval{1000};
     std::chrono::milliseconds feedback_interval{2000};
     StreamConnector connect; // Defaults to connect_receiver.
-    /// Diagnostic: keep event outlines and allowlisted numeric/boolean buffering
-    /// values (session_messages.h) for take_event_log().
+    /// Diagnostic: keep URL outlines, fixed-label remote observations and
+    /// allowlisted buffering values (session_messages.h) for take_event_log().
     bool record_event_structure = false;
     /// Keep false only for the recorded minimum-session experiment/tests.
     bool enable_mrp = true;

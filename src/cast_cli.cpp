@@ -18,7 +18,9 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <locale>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <sstream>
 #include <string>
@@ -179,6 +181,38 @@ void print_start_diagnostics(const SessionStartDiagnostics& diagnostics) {
               << " cleaned=" << (diagnostics.cleaned_up ? "yes" : "no") << std::endl;
 }
 
+void print_event_log(UrlPlaybackSession& session) {
+    for (const auto& entry : session.take_event_log()) {
+        std::cout << (entry.rfind("buffer ", 0) == 0 ? "Buffer: " : "Event: ") + entry + "\n"
+                  << std::flush;
+    }
+}
+
+/// Retained MRP scalars after its worker is joined, not a fresh receiver query.
+/// Report the received position separately from the estimated status position.
+void print_final_mrp(UrlPlaybackSession& session, bool enabled) {
+    const auto status = session.playback_status();
+    const auto state = status.state.empty() ? "unknown" : status.state;
+    std::ostringstream line;
+    line.imbue(std::locale::classic());
+    line << "Final MRP: enabled=" << (enabled ? "yes" : "no")
+         << " owned=" << (status.owned ? "yes" : "no") << " state=" << state
+         << " at_end=" << (status.at_end ? "yes" : "no");
+    const auto scalar = [&line](const char* key, std::optional<double> value) {
+        line << ' ' << key << '=';
+        if (value && std::isfinite(*value)) {
+            line << std::scientific << std::setprecision(6) << *value;
+        } else {
+            line << "unknown";
+        }
+    };
+    scalar("reported_position", status.reported_position_seconds);
+    scalar("duration", status.duration_seconds);
+    scalar("rate", status.playback_rate);
+    line << " mrp_messages=" << status.messages << " heartbeats=" << status.heartbeats;
+    std::cout << line.str() << std::endl;
+}
+
 /// Prints playback-state changes and drained diagnostics from its own thread.
 class StateReporter {
 public:
@@ -199,12 +233,6 @@ public:
     }
 
 private:
-    static void print_event_log(UrlPlaybackSession& session) {
-        for (const auto& entry : session.take_event_log()) {
-            std::cout << (entry.rfind("buffer ", 0) == 0 ? "Buffer: " : "Event: ") + entry + "\n"
-                      << std::flush;
-        }
-    }
     void report(UrlPlaybackSession& session, MediaServer& server) {
         auto last = session.status();
         while (!done_) {
@@ -394,7 +422,11 @@ int cast(const CastArguments& arguments) {
         controls_ok = control_loop(*session);
     }
     session->stop();
-    server->stop(); // Joins every read before the summary reads the statistics.
+    server->stop();            // Joins every read before the summary reads the statistics.
+    print_event_log(*session); // Include notifications received during final cleanup.
+    if (arguments.event_log) {
+        print_final_mrp(*session, !arguments.minimal_remote);
+    }
     print_media_log(*server);
     write_summary(session->status(), *reads);
     return controls_ok && !session->status().failed ? 0 : 1;

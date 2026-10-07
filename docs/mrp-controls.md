@@ -148,3 +148,23 @@ selected startup, controls/full EOF and post-wake presentation/Home on the
 submitted runtime. Remote Stop returned Home and cleaned automatically, but URL
 socket EOF without a terminal event remains connection_lost/exit 1. Startup
 pausing was not reproduced in six selected casts; it is not proven fixed.
+
+## Remote-Stop diagnostics (D40)
+
+`--event-log` observes the separate remote event channel using fixed type/state
+labels, known key presence and signed 32-bit reason/error/status codes. Unknown
+text and key names, URLs, identifiers, request targets and headers are omitted.
+Remote observations share the existing 256-entry log, dropping oldest entries
+at capacity; malformed bodies are acknowledged and logged as unreadable without
+ending the channel. Remote notifications remain separate from URL playback state
+and cannot establish normal completion. The code values are observations, with
+no validated terminal meaning.
+
+After joined cleanup, the CLI drains remaining notifications and prints retained
+MRP ownership/state, receiver-reported EOF, received elapsed time, duration/rate
+and message/heartbeat counts. Received elapsed time is separate from the estimated
+position in interactive `status`: it has neither extrapolation nor clamping.
+An unowned item has unavailable scalar state; removal does not retain its private
+metadata. This is the last processed MRP snapshot, not a fresh receiver query or
+a guarantee that every final peer message arrived before cancellation. These
+diagnostics leave failure priority, cleanup order and exit behavior unchanged.

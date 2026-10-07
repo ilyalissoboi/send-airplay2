@@ -133,5 +133,11 @@ struct SessionEvent {
  * time values accept numeric seconds or valid numeric CMTime (including zero).
  * This is observation only; it does not change playback or EOF decisions. */
 [[nodiscard]] std::string describe_buffering_values(const Bytes& body);
+/** Bounded remote-session observation only. Bare dictionaries and nested plist
+ * envelopes are accepted. Output uses fixed type/state/key labels and signed
+ * 32-bit reason/error/status codes only; unknown names, values, request targets
+ * and identifiers are never copied. Codes have no inferred terminal meaning.
+ * Malformed bodies throw TransportException(invalid_message). */
+[[nodiscard]] std::string describe_remote_event(const Bytes& body);
 } // namespace send_airplay2::detail
 #endif

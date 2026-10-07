@@ -137,6 +137,19 @@ struct ErasedRequest {
     ErasedRequest(ErasedRequest&&) = delete;
     ErasedRequest& operator=(ErasedRequest&&) = delete;
 };
+
+/// Acknowledged event plaintext is erased even if diagnostic decoding fails.
+struct ErasedEvent {
+    EventRequest request;
+    explicit ErasedEvent(EventRequest value) : request(std::move(value)) {}
+    ~ErasedEvent() {
+        cleanse(request.body.data(), request.body.size());
+    }
+    ErasedEvent(const ErasedEvent&) = delete;
+    ErasedEvent& operator=(const ErasedEvent&) = delete;
+    ErasedEvent(ErasedEvent&&) = delete;
+    ErasedEvent& operator=(ErasedEvent&&) = delete;
+};
 } // namespace
 
 SessionException::SessionException(SessionError reason, unsigned status)
@@ -393,11 +406,26 @@ void UrlPlaybackSession::remote_event_loop() {
     const auto operation = ReceiverOperation::until_cancelled(&remote_event_stop_);
     try {
         for (;;) {
-            auto request = remote_events_->receive(operation); // Answers before returning.
+            ErasedEvent owned(remote_events_->receive(operation)); // Answers before returning.
             // Remote notifications are not the URL session's playback state.
-            cleanse(request.body.data(), request.body.size());
+            std::string outline;
+            if (options_.record_event_structure) {
+                try {
+                    outline = describe_remote_event(owned.request.body);
+                } catch (const TransportException&) {
+                    // A malformed observation has already been acknowledged;
+                    // it does not make the authenticated channel unhealthy.
+                    outline = "remote unreadable=yes";
+                }
+            }
             std::lock_guard<std::mutex> lock(state_mutex_);
             ++status_.remote_events;
+            if (!outline.empty()) {
+                if (event_log_.size() == max_event_log) {
+                    event_log_.pop_front();
+                }
+                event_log_.push_back(std::move(outline));
+            }
         }
     } catch (...) {
         if (!remote_event_stop_) {

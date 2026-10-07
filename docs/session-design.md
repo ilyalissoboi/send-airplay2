@@ -313,6 +313,12 @@ administered one per session.
    Playing telemetry and EOF cleanup do not prove moving video.
    Normal stop classification, actual network loss/recovery and longer playback
    remain **Gate G3**; see the dated validation record.
+   D40 observes remote notifications using fixed labels and bounded numeric
+   codes in the shared 256-entry log, without updating URL state. Final MRP
+   diagnostics report retained received state after joined cleanup; received
+   elapsed time is distinct from extrapolated progress. These observations do
+   not change failure priority, end reasons or cleanup order. See
+   [mrp-controls.md](mrp-controls.md#remote-stop-diagnostics-d40) for the contract.
 
 Each step follows AGENTS.md: readability rules, clang-format, static/shared
 CTest, sanitizer CI. Each step is its own commit on the PR branch.

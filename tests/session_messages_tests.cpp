@@ -309,6 +309,35 @@ void buffering_diagnostic_tests() {
               "buffer root.rate=0.000 value.readyToPlay=yes value.stallCount=0",
           "bare root/value dictionaries use fixed scope labels and never output event type");
 }
+void remote_diagnostic_tests() {
+    group = "remote diagnostic redaction";
+    const auto envelope = [](const PlistValue& inner) {
+        return encode_binary_plist(
+            PlistDictionary{{"params", PlistDictionary{{"data", encode_binary_plist(inner)}}}});
+    };
+    const PlistDictionary event{
+        {"type", "private-type"},
+        {"name", "private-state"},
+        {"private-key", "private-value"},
+        {"reason", std::int64_t{-2147483648LL}},
+        {"error", std::int64_t{2147483647LL}},
+        {"status", std::int64_t{2147483648LL}},
+        {"params", PlistDictionary{{"reason", "private-reason"}, {"error", true}}}};
+    const auto expected = "remote type=other state=other root_keys=type,name,params,reason,error,"
+                          "status root.reason=-2147483648 root.error=2147483647 "
+                          "params_keys=reason,error value_keys=none";
+    check(describe_remote_event(encode_binary_plist(event)) == expected,
+          "unknown strings/keys and wrong or out-of-range codes are never emitted");
+    check(describe_remote_event(envelope(event)) == expected,
+          "wrapped and bare remote observations have the same fixed output");
+    check(describe_remote_event(encode_binary_plist(PlistDictionary{})) ==
+              "remote type=none state=none root_keys=none params_keys=none value_keys=none",
+          "generic remote dictionary does not require URL event type");
+    expect_invalid("malformed remote plist", [] { (void)describe_remote_event(Bytes{0xff}); });
+    expect_invalid("remote inner non-dictionary",
+                   [&] { (void)describe_remote_event(envelope(PlistArray{})); });
+}
+
 int hex_value(char ch) {
     return ch <= '9' ? ch - '0' : ch - 'A' + 10;
 }
@@ -361,6 +390,7 @@ int main(int argc, char** argv) {
         response_tests(directory);
         event_tests(directory);
         buffering_diagnostic_tests();
+        remote_diagnostic_tests();
         random_identifier_tests();
     } catch (const std::exception& error) {
         std::cerr << "Unexpected test exception [" << group << "]: " << error.what() << '\n';

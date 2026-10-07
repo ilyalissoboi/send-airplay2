@@ -3,6 +3,8 @@
 #define SEND_AIRPLAY2_MRP_MESSAGES_H
 #include "protobuf_wire.h"
 #include "session_messages.h"
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -47,6 +49,9 @@ struct MrpPlaybackStatus {
     bool at_end = false;
     std::string state;
     std::optional<double> position_seconds, duration_seconds, playback_rate;
+    /// Last receiver elapsed-time scalar, without wall-clock extrapolation or
+    /// duration clamping. Retained for diagnostics; never proves stop intent.
+    std::optional<double> reported_position_seconds;
     std::uint64_t messages = 0;
     std::uint64_t heartbeats = 0;
 };

@@ -14,6 +14,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -427,6 +428,79 @@ std::string describe_buffering_values(const Bytes& body) {
     }
     auto text = output.str();
     return text.empty() ? text : "buffer" + text;
+}
+
+std::string describe_remote_event(const Bytes& body) {
+    auto event = decode_body(body);
+    if (event.kind() != PlistKind::dictionary) {
+        invalid_body();
+    }
+    if (const auto* params = event.find("params")) {
+        if (const auto* data = params->find("data"); data && data->kind() == PlistKind::data) {
+            // Finish decoding before replacing the dictionary that owns data.
+            auto inner = decode_body(data->as_data());
+            if (inner.kind() != PlistKind::dictionary) {
+                invalid_body();
+            }
+            event = std::move(inner);
+        }
+    }
+    std::ostringstream output;
+    output.imbue(std::locale::classic());
+    output << "remote type=";
+    const auto* type = event.find("type");
+    const char* label = type ? "other" : "none";
+    if (type && type->kind() == PlistKind::string) {
+        for (const auto* known : {"playbackState", "updateInfo", "notification", "didPlayToEndTime",
+                                  "playbackEnded", "stop"}) {
+            if (type->as_string() == known) {
+                label = known;
+                break;
+            }
+        }
+    }
+    output << label;
+    const auto* params = event.find("params");
+    const auto* state = params ? params->find("playbackState") : nullptr;
+    if (!state) {
+        state = event.find("name");
+    }
+    const char* state_label = state ? "other" : "none";
+    if (state && state->kind() == PlistKind::string) {
+        const auto normalized = lower_ascii(state->as_string());
+        for (const auto* known : {"loading", "playing", "paused", "idle", "stopped", "ended"}) {
+            if (normalized == known) {
+                state_label = known;
+                break;
+            }
+        }
+    }
+    output << " state=" << state_label;
+    // Fixed scopes and a fixed key list bound output independently of peer input.
+    for (const auto* scope : {"root", "params", "value"}) {
+        const auto* container = std::string_view(scope) == "root" ? &event : event.find(scope);
+        output << ' ' << scope << "_keys=";
+        bool first = true;
+        for (const auto* key : {"type", "name", "params", "value", "data", "playbackState",
+                                "reason", "error", "status", "rate", "duration"}) {
+            if (container && container->find(key)) {
+                output << (first ? "" : ",") << key;
+                first = false;
+            }
+        }
+        if (first) {
+            output << "none";
+        }
+        for (const auto* key : {"reason", "error", "status"}) {
+            const auto* code = container ? container->find(key) : nullptr;
+            if (code && code->kind() == PlistKind::integer &&
+                code->as_integer() >= std::numeric_limits<std::int32_t>::min() &&
+                code->as_integer() <= std::numeric_limits<std::int32_t>::max()) {
+                output << ' ' << scope << '.' << key << '=' << code->as_integer();
+            }
+        }
+    }
+    return output.str();
 }
 
 SessionEvent parse_session_event(const Bytes& body) {

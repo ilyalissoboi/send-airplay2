@@ -358,6 +358,11 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         push_state_locked(state);
     }
+    /// Synthetic remote notification, including malformed bodies.
+    void push_event_body(const Bytes& body) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        push_event_body_locked(body);
+    }
     void end_event_channel() {
         std::lock_guard<std::mutex> lock(mutex_);
         end_events_locked();
@@ -525,6 +530,9 @@ private:
             PlistDictionary{{"type", "playbackState"}, {"params", std::move(params)}});
         const auto body =
             encode_binary_plist(PlistDictionary{{"params", PlistDictionary{{"data", inner}}}});
+        push_event_body_locked(body);
+    }
+    void push_event_body_locked(const Bytes& body) {
         auto event = text("POST /command RTSP/1.0\r\nCSeq: " + std::to_string(++event_sequence_) +
                           "\r\nContent-Type: application/x-apple-binary-plist\r\n"
                           "Content-Length: " +
@@ -1050,6 +1058,51 @@ void event_log_tests() {
     const auto quiet_credentials = quiet.credentials();
     auto quiet_session = UrlPlaybackSession::start(quiet_credentials, options_for(quiet));
     check(quiet_session->take_event_log().empty(), "no outlines unless enabled");
+    quiet.remote_control().push_state("Stopped");
+    check(eventually([&] { return quiet_session->status().remote_events == 1; }),
+          "disabled remote diagnostics still acknowledge events");
+    check(quiet_session->take_event_log().empty() &&
+              quiet_session->status().end_reason == SessionEnd::none,
+          "disabled remote diagnostics neither log nor terminate URL playback");
+}
+
+void remote_diagnostic_tests() {
+    group = "bounded remote observations";
+    FakeReceiver receiver({});
+    auto options = options_for(receiver);
+    options.record_event_structure = true;
+    auto session = UrlPlaybackSession::start(receiver.credentials(), std::move(options));
+    (void)session->take_event_log();
+    auto& remote = receiver.remote_control();
+    remote.push_state("Stopped");
+    remote.push_event_body(Bytes{0xff});
+    check(eventually([&] { return session->status().remote_events == 2; }),
+          "valid and malformed remote bodies are answered and counted");
+    const auto initial = session->take_event_log();
+    check(initial.size() == 2 &&
+              initial.front() == "remote type=playbackState state=stopped root_keys=type,params "
+                                 "params_keys=playbackState value_keys=none" &&
+              initial.back() == "remote unreadable=yes",
+          "fixed remote outline and malformed observation");
+    check(!session->status().failed && session->status().playback_state == "playing" &&
+              session->status().end_reason == SessionEnd::none,
+          "remote state and malformed diagnostics do not change URL lifecycle");
+    for (int index = 0; index < 300; ++index) {
+        remote.push_event_body(encode_binary_plist(PlistDictionary{
+            {"type", "private-type"}, {"private-key", "private-url"}, {"reason", index}}));
+    }
+    check(eventually([&] { return session->status().remote_events == 302; }),
+          "all 300 remote notifications consumed");
+    const auto bounded = session->take_event_log();
+    check(bounded.size() == 256 &&
+              bounded.front() == "remote type=other state=none root_keys=type,reason "
+                                 "root.reason=44 params_keys=none value_keys=none" &&
+              bounded.back() == "remote type=other state=none root_keys=type,reason "
+                                "root.reason=299 params_keys=none value_keys=none",
+          "literal 256-record bound drops oldest notifications and omits peer text");
+    session->stop();
+    check(session->status().end_reason == SessionEnd::sender_stop && session->status().cleaned_up,
+          "observation leaves explicit Stop and ordered cleanup intact");
 }
 
 void failure_after_start_tests() {
@@ -1219,6 +1272,7 @@ int main() {
         startup_trace_tests();
         remote_control_failure_tests();
         event_log_tests();
+        remote_diagnostic_tests();
         failure_after_start_tests();
         mrp_setup_failure_tests();
         terminal_event_tests();

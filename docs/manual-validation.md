@@ -41,3 +41,12 @@ it recurs in these or later playback tests. Any recurrence restores active
 investigation priority. Actual network disconnect/reconnect stays outside this
 batch: the user previously said that checkpoint is unavailable. Do not alter
 firewall/network/receiver settings or delete/re-pair credentials for these checks.
+
+D40 adds a separate remote-Stop/sleep comparison with fixed remote-event
+observations and retained final MRP state; see the dated
+[validation record](receiver-validation.md) and
+[artifact](validation/native-stop-diagnostics-windows-static-2026-10-07.json).
+Its first attempt was unobserved and cannot establish remote action or Home.
+The repeated Stop/Home result is separate from that trace. Classification
+remains conservative until receiver intent has a validated protocol signal;
+MRP ownership loss, pause or connection closure alone is insufficient.

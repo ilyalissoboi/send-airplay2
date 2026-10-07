@@ -435,6 +435,7 @@ MrpPlaybackStatus MrpPlaybackTracker::status() const {
         result.duration_seconds = player.duration;
         result.playback_rate = player.rate;
         result.position_seconds = player.elapsed;
+        result.reported_position_seconds = player.elapsed;
         result.at_end = player.elapsed && player.duration && *player.duration > 0 &&
                         *player.elapsed >= *player.duration &&
                         (player.state == "paused" || player.state == "stopped");

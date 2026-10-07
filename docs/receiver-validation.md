@@ -1015,3 +1015,48 @@ CI checks passed at both the [code head](https://github.com/ilyalissoboi/send-ai
 and [tested documentation head](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37565052646).
 Inspect the actual PR head for this documentation/evidence follow-up. Local/CI
 results remain separate from the receiver observations above.
+
+## Remote-Stop diagnostic comparison (D40, 2026-10-07)
+
+This slice adds bounded remote notification observations and retained final MRP
+state under `--event-log`; termination priority and exit behavior are unchanged.
+The selected host/receiver/media/profile and normal MRP/16-slot/30-second startup
+budget/one-second confirmation are the same as D39. Receiver firmware is assumed
+unchanged from the prior user report, not newly queried. Exact source blobs,
+executable/media fingerprints, scalar traces and observer scope are in the
+[D40 artifact](validation/native-stop-diagnostics-windows-static-2026-10-07.json).
+
+The first attempt was unobserved: the user requested repetition. Its pause/URL
+disconnect and owned/paused final MRP snapshot cannot be attributed to remote
+Stop or counted as a Home/presentation result. It is retained separately. That
+executable preceded a code-equivalent direct-standard-header adjustment; the
+final sources were rebuilt and tested in both configurations before the repeat.
+
+The repeated Stop, sleep and fresh post-wake cases used static CLI SHA-256
+`da3f85a3f4b8f0595834b0462250859ee56c3bab89c38acdd632434d889f6e83`.
+
+| Case | Native result after joined cleanup | Observer scope |
+|---|---|---|
+| Repeated remote Stop, stdin open | URL event disconnect while URL playing; final MRP unowned/unknown, at_end=false, 21 messages; connection_lost/exit 1, cleaned=yes | Home appeared normally in response to Stop cue; presentation before Stop was not separately answered |
+| Sleep, stdin open | URL paused; URL feedback disconnected first; final MRP owned/paused, received position 0 s, duration 131.567 s, rate 1, at_end=false, 24 messages; connection_lost/exit 1, cleaned=yes | Screen off confirmed in response to sleep cue |
+| Fresh cast after wake/Home, same credentials | Owned/playing; planned seek 124 s and Play accepted; media_end/exit 0, cleaned=yes; final MRP owned/paused at received position/duration 131.567 s, rate 0, at_end=true, 26 messages | Home before cast confirmed; normal video/audio and Home after EOF confirmed |
+
+Remote observations were fixed-label updateInfo outlines (five in the Stop case,
+six for sleep), without an allowlisted terminal state or reason/error/status code.
+Retained MRP is the last processed snapshot, not a fresh receiver query or proof
+that every final message arrived before cancellation. Loss of ownership and
+pause alone are not normal-stop signals. Independent socket/feedback ordering
+also changes which failure is observed first. This selected comparison therefore
+does not justify converting connection failure to normal Stop. Classification
+remains OPEN and conservative; actual network disconnect/reconnect remains
+NOT RUN. No new dependency, credential replacement or receiver/network/firewall
+setting change was introduced. Staged executables are restored after each run.
+Fresh playback after wake reused the existing credentials and passed observed
+video/audio/near-end EOF/Home. No new buffering or freeze was reported; D37's
+historical frozen-video issue remains low priority unless it recurs. This is a
+selected recovery observation, not an established-session network-loss proof.
+
+Final Windows Release static/shared CTest passed 23/23 each (15.67/15.53 s), offline
+runner contracts 10/10, touched C++ format checks and `git diff --check` passed.
+Inspect CI at the actual published D40 PR head. Those checks are separate from
+the selected receiver observations above.
