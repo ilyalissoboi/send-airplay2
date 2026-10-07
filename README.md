@@ -138,9 +138,10 @@ prints no private URL or receiver address. `--event-log` enables bounded event
 outlines for diagnostics. A `playing` event does not prove visible playback:
 G1 passed for the recorded native-only run, with user-observed video/audio and
 return to the home screen after sender stop. Native EOF cleanup with stdin held
-open and ten short start/stop cycles passed on the recorded receiver; receiver-side
-stop, sleep/wake, network interruption/recovery and visual confirmations remain
-separate gates. Native MRP controls are implemented; see the recorded
+open and ten short start/stop cycles passed on the recorded receiver; the user
+confirmed G2 controls and EOF video/audio/home. Receiver-remote stop and sleep
+triggered cleanup; normal stop classification and actual network-loss recovery
+remain open G3 work. Native MRP controls are implemented; see the recorded
 G2 result and [control contracts](docs/mrp-controls.md).
 See [session design and gates](docs/session-design.md) and
 [receiver results](docs/receiver-validation.md).

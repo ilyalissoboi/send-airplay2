@@ -290,8 +290,10 @@ administered one per session.
    receiver-validation.md, including failures.
 8. Robustness: automatic EOF/failure/ownership-loss cleanup is implemented.
    Native EOF and ten short start/stop cycles passed for the recorded receiver.
-   Receiver-side stop, sleep/wake, actual network loss/recovery and observer
-   confirmation remain **Gate G3**; see the dated validation record.
+   G2/EOF observations and sleep/wake recovery passed by user report.
+   Receiver-remote stop cleaned up but classified connection_lost/exit 1.
+   Normal stop classification, actual network loss/recovery and longer playback
+   remain **Gate G3**; see the dated validation record.
 
 Each step follows AGENTS.md: readability rules, clang-format, static/shared
 CTest, sanitizer CI. Each step is its own commit on the PR branch.

@@ -6,11 +6,12 @@ tvOS 26 incompatibility); reference playback PASSED with an unmerged pyatv fix
 fetching from `airplay2-cli serve`. Native `cast` initially failed G1 alone;
 the minimal native remote-control SETUP/event session then PASSED G1 without
 pyatv: video/audio and home-screen return after sender shutdown were user-observed.
-Native MRP command/telemetry checks passed; G2 visual confirmation is pending.
-Native automatic EOF cleanup and ten short start/stop cycles passed; manual
-receiver-side stop, sleep/wake, actual network-loss recovery and observer
-confirmation remain G3 gates. See the dated G1/G2/G3 observations below. Fill out one record per
-receiver firmware and sender platform.
+Native MRP command/telemetry checks passed; G2 visual confirmation passed by user report on 2026-10-07.
+Native automatic EOF cleanup and ten short cycles passed, with user-confirmed
+EOF video/audio/home and sleep/wake recovery. Receiver-remote stop returned home
+and automatically cleaned up but classified connection_lost/exit 1. Normal stop
+classification, buffering and actual network-loss recovery remain G3 work.
+See the dated observations below; record each receiver/firmware/platform separately.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
 static/shared builds; see [media-server.md](media-server.md). Apple TV HTTP
@@ -60,13 +61,13 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Profile/input guards | Existing/missing profiles and redirected PIN input are refused | PASS, automated native CLI static/shared runs |
 | Local forget | Local deletion and idempotence | Absent-profile no-op PASS; real disposable deletion SKIPPED (no opt-in) |
 | Start MP4 | Both audio and video play | Reference: pyatv 0.18.0 FAIL (no fetch); unmerged pyatv fix PASS, video and audio from `serve` (user-observed). Native: initially headless (FAIL); minimum native remote SETUP/event session then PASS without pyatv, video/audio user-observed |
-| Pause/resume | Receiver and host state agree | Reference (unmerged pyatv fix): PASS, `Paused` then `Playing`, user-observed. Native command/telemetry PASS; visual observation pending (dated G2 record) |
-| Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native command/telemetry PASS; visual observation pending (dated G2 record) |
+| Pause/resume | Receiver and host state agree | Reference (unmerged pyatv fix): PASS, `Paused` then `Playing`, user-observed. Native PASS: command/telemetry and user-observed pause/resume/audio (dated G2 record) |
+| Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native PASS: forward/backward command/telemetry and user-observed movement (dated G2 record) |
 | Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native PASS: duration 131.6 s and positions follow pause/forward/backward seek |
-| End-of-file | Correct ended state and resource cleanup | Native near-end seek/play: automatic media_end and joined cleanup, exit 0 with stdin held open; visual home-screen confirmation pending (dated lifecycle record) |
-| Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; native MRP Stop accepted followed by teardown (visual result pending); receiver-side stop and protocol idle NOT RUN |
+| End-of-file | Correct ended state and resource cleanup | Native near-end seek/play: automatic media_end and joined cleanup, exit 0 with stdin held open; user confirmed video/audio and home-screen return (dated lifecycle record) |
+| Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; native MRP Stop accepted followed by teardown and user-confirmed home return; receiver-remote stop returned home and automatically cleaned up, but classified connection_lost/exit 1; protocol idle unresolved |
 | Repeated casting | Ten start/stop cycles without stale sessions | Native PASS: ten short independent casts, alternating five MRP Stop and five direct teardown; owned playing status, exit 0, no session/failed-read errors in each. Long sessions and visible home-screen observation remain separate |
-| Receiver sleep/wake | Terminal cleanup; fresh cast works after waking | NOT RUN |
+| Receiver sleep/wake | Terminal cleanup; fresh cast works after waking | PASS: user-confirmed sleep, automatic connection_lost/exit 1 cleanup, fresh cast after wake without pairing, normal video/audio and EOF return home |
 | Network interruption | Bounded failure; next cast can recover | NOT RUN |
 | Large file | Seek beyond 4 GiB without integer truncation | NOT RUN |
 | Packaged Windows host | Discovery, native loading, file access, serving work | NOT RUN |
@@ -478,7 +479,7 @@ state is the last URL event, not proof of protocol idle. This was not EOF or a
 receiver-side stop test. Native controls, repeated casting, extended session
 lifetime and other firmware/hosts remain unvalidated.
 
-## Native MRP controls: command/telemetry PASS, G2 observer pending, 2026-10-07
+## Native MRP controls: G2 PASS, 2026-10-07
 
 Same Apple TV 4K / tvOS 26.6 (23L773), Windows 11 x64 and MP4 as G1. The
 normal native CLI now extends the independently verified remote session with
@@ -504,9 +505,10 @@ startup correlation; this firmware omitted our URL and queue UUID in MRP.
 Final summary: `state=paused events=71 remote_events=9 feedback=19 timing=18
 failed=no reads=1773 bytes=116021286 failed_reads=0 span=[0,53953926)`.
 Repeated range reads explain total bytes exceeding file size. Command results and
-telemetry pass for this run; visible pause/resume/seeks, resumed audio and home
-screen return await the user's observation. **G2 remains pending that observation.**
-The final paused URL event does not prove protocol idle or EOF.
+telemetry pass for this run; the user subsequently confirmed visible pause/resume, both seek directions,
+normal resumed audio and home-screen return after stop. **G2 PASS** for this
+recorded combination; the final paused URL event still does not prove protocol idle.
+This control run did not test EOF.
 
 Compatibility issues discovered and covered by independent synthetic fixtures:
 receiver replies can contain a plist body; an idle readiness poll must preserve
@@ -544,14 +546,31 @@ per-cycle results. This evidence covers this combination only.
   recognized owned receiver-reported terminal position and completed ordered
   cleanup. Summary: media_end, cleaned=yes, failed=no, failed_reads=0, exit 0;
   the receiver fetched the entire file span. This tests the end boundary after
-  a near-end seek, not uninterrupted full-duration playback. Home-screen/video/audio
-  observer confirmation is pending.
+  a near-end seek, not uninterrupted full-duration playback. The user confirmed
+  normal video/audio and return home both for the earlier native EOF checkpoint
+  and for repeated EOF after wake using the fingerprinted final executable.
 - **Ten short cycles:** each used a new process/session and existing credentials,
   reported owned playing status, then alternated five MRP Stops with five direct
   Enter teardowns. All exited 0, cleaned=yes, no session/failed-read errors and
   full-file read spans. Subsequent starts established fresh playback without
   observed stale ownership. These are protocol/process results; no long-session,
   simultaneous-sender or visual home-screen result is inferred.
+- **Receiver-remote stop:** the user exited playback and confirmed normal return
+  home. With stdin held open, the CLI automatically joined/closed its session
+  and media server. Last URL state paused; end=connection_lost, cleaned=yes,
+  failed=yes, exit 1. Cleanup passed, but a normal receiver_stop reason is
+  unresolved. Do not classify every paused-plus-disconnected session as normal
+  stop: that would conceal a real outage during pause.
+- **Sleep:** the user put the receiver to sleep and confirmed its screen was off.
+  The CLI automatically cleaned up with stdin open, connection_lost/exit 1,
+  cleaned=yes and no failed file reads. Before sleep, this run emitted repeated
+  loading/playing states; this is additional buffering evidence, not resolution.
+- **Wake recovery:** after the user woke the receiver to Home, a fresh native
+  cast reused the existing credentials and reported owned/playing at 4.1 s.
+  Near-end seek and Play were accepted; it automatically ended with media_end,
+  exit 0, cleaned=yes, failed=no and no failed file reads. The user confirmed
+  normal video/audio and EOF return home. Sleep cleanup plus fresh wake recovery
+  pass for this combination; this does not prove actual network-outage recovery.
 - **Automated fault tests:** scripted URL and remote-event EOF now trigger joined
   automatic cleanup without operator input. A silent established feedback peer
   exercises its 80 ms test deadline; stopping during blocked feedback cancels
@@ -573,25 +592,27 @@ Final Windows static/shared Release each passed 23/23 CTest targets
 and git diff --check. Actual-head CI is recorded in the handoff after publishing.
 Unit/CI results do not close G3 interoperability gates.
 
-**Not run / still pending:** receiver-remote stop, sleep/wake, actual established
-receiver network loss then fresh-cast recovery, EOF/home-screen observation,
-G2 visual confirmation, longer playback, other receiver firmware/hosts.
+**Still pending:** normal receiver-stop reason classification, actual established
+receiver network loss then fresh-cast recovery, longer playback and other
+receiver firmware/hosts. The user is available for remote/sleep checks but cannot
+perform network disconnect/reconnect in this session.
 A preliminary EOF probe paused near startup; seek preserved that pause and the
 probe needed explicit Play. Later cycles reported playing. That intermittent
 buffering/startup behavior remains unresolved; it is not evidence of EOF failure.
 
-Manual continuation uses the same paired profile and supplied local MP4:
+Completed remote-stop and sleep/wake checks are recorded above. The remaining
+network continuation uses the same paired profile and supplied local MP4:
 
-1. Start a fresh native cast, confirm video/audio and owned status, then use
-   the receiver remote to leave/stop playback. Keep sender stdin open and record
-   its automatic end reason, cleanup and whether the TV returns home.
-2. Start again, sleep the receiver during playback, and record bounded cleanup.
-   Wake it and start a fresh cast; confirm playback without new pairing.
-3. Start again, disconnect the receiver's network during playback and wait for
-   terminal failure/cleanup (a silent data-only peer may take about 35 seconds).
-   Restore the network, then start a fresh cast with the retained profile and
-   confirm playback. Record actual interruption/recovery separately from the
-   already passing scripted deadlines and short-cycle results.
+1. Start a fresh native cast, confirm video/audio and owned status, then
+   disconnect the receiver's network during playback. Keep stdin open and wait
+   for terminal failure/cleanup (a silent data-only peer may take about 35 seconds).
+2. Restore the network, start a fresh cast with the retained profile, and confirm
+   playback. Record actual interruption/recovery separately from scripted
+   deadlines, receiver sleep/wake and short-cycle results.
+3. Investigate receiver-stop classification with sanitized channel/event facts;
+   do not infer normal stop solely from pause followed by disconnect. Preserve
+   ordinary pause and genuine outage detection. Investigate repeated loading/
+   playing and startup pauses during longer playback.
 
 ## Automated CLI E2E observation: 2026-10-06
 

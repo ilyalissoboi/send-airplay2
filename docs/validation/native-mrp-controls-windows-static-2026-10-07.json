@@ -156,8 +156,8 @@
   "media_sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
   "media_size_bytes": 53953926,
   "g2_command_telemetry": "PASS",
-  "g2_visual_observation": "PENDING",
-  "g2": "PENDING visual observer confirmation",
+  "g2_visual_observation": "PASS",
+  "g2": "PASS for the recorded receiver/firmware/host",
   "time_origin": "Driver start; native playback began at 40.1 seconds",
   "ownership": "D32 cooperative startup: new selected TVAirPlay item, matching URL duration, bind once to explicit path/item",
   "shutdown": "Correlated MRP Stop accepted, then URL and remote teardown. Final URL state paused is not protocol idle.",
@@ -181,5 +181,13 @@
     "local_offline_runner": "10/10 PASS",
     "format": "Touched C++ clang-format dry-run/Werror and git diff --check PASS",
     "separate_from_receiver_observation": true
+  },
+  "observer_confirmation": {
+    "date": "2026-10-07",
+    "source": "user report in continuation chat",
+    "visible_pause_resume": true,
+    "forward_backward_seek": true,
+    "resumed_audio_normal": true,
+    "home_after_stop": true
   }
 }

@@ -1,6 +1,6 @@
 {
   "date": "2026-10-07",
-  "evidence_kind": "native receiver protocol/process lifecycle; visual observations pending",
+  "evidence_kind": "native receiver protocol/process lifecycle; user-confirmed EOF video/audio/home",
   "implementation_commit": "2f77f622acbaff3e6579cb8c997c927a6ea12206",
   "cli_build": "Windows 11 x64, MSVC 19.51, Release, static",
   "receiver": {
@@ -519,18 +519,255 @@
     }
   ],
   "not_run_or_pending": [
-    "receiver-remote stop",
-    "receiver sleep/wake",
     "actual established receiver network loss and recovery",
-    "EOF/home-screen/video/audio observer confirmation",
-    "G2 visual observer confirmation",
     "uninterrupted full-duration playback",
-    "other firmware/hosts"
+    "other firmware/hosts",
+    "normal receiver-stop classification (observed connection_lost / exit 1)"
   ],
   "limitations": [
     "Short-cycle protocol/process evidence does not prove visible presentation or long-session stability.",
     "EOF used near-end seek to 124 seconds and explicit Play; stdin remained open.",
     "Preliminary probe paused near startup; seek retained pause. Later successful cycles do not resolve intermittent buffering.",
-    "Silent MRP-only loss is bounded by the next 30-second heartbeat plus the default 5-second request deadline; actual interruption not tested."
-  ]
+    "Silent MRP-only loss is bounded by the next 30-second heartbeat plus the default 5-second request deadline; actual interruption not tested.",
+    "Receiver-remote stop returned home and automatically cleaned up but classified connection_lost/exit 1; normal stop classification is unresolved.",
+    "Sleep setup emitted repeated loading/playing URL states before the user slept the receiver; buffering remains unresolved."
+  ],
+  "observer_confirmation": {
+    "date": "2026-10-07",
+    "source": "user reports for earlier EOF and repeated EOF after wake with this executable",
+    "eof_returned_home": true,
+    "video_audio_normal": true,
+    "final_executable_wake_run_confirmed": true
+  },
+  "receiver_stop": {
+    "cli_sha256": "3e9e8559cae5f1e0e8edf6eec52caf7ef4b7104b10cb9435417fe96a8ae28df3",
+    "tested_source_blobs": {
+      "src\\cast_cli.cpp": "515b9c4b3ee64144c61cb0cf86a246812c22df8e",
+      "src\\cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+      "src\\cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+      "src\\cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+      "src\\control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+      "src\\control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+      "src\\mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+      "src\\mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+      "src\\mrp_messages.cpp": "af48753904bba3e5cd6d67a8fb08b341739ff7b3",
+      "src\\mrp_messages.h": "d25b152f72f541c88199f9df7d620fd2c23c84bc",
+      "src\\mrp_session.cpp": "1b055ae48120366f3a405f1c2e18c3825616a476",
+      "src\\mrp_session.h": "9d688e019f29eb545fac7baf3f2847d306c7424f",
+      "src\\protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+      "src\\protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+      "src\\receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+      "src\\receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+      "src\\session_messages.cpp": "f9eaf05c7745f77a170710f92399a85815cc05ec",
+      "src\\session_messages.h": "4f1094da381bc658190539a9a38da4518a22ad62",
+      "src\\url_playback_session.cpp": "2a28a752d7ae56418e534b8d8ac4c1c6b8851e09",
+      "src\\url_playback_session.h": "f6e90f7459a217db91811b416f6048b04da81db2"
+    },
+    "output": [
+      {
+        "time_seconds": 40.1,
+        "line": "Starting playback."
+      },
+      {
+        "time_seconds": 40.8,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 40.8,
+        "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+      },
+      {
+        "time_seconds": 44.9,
+        "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_seconds": 53.8,
+        "line": "State: loading"
+      },
+      {
+        "time_seconds": 59.7,
+        "line": "State: paused"
+      },
+      {
+        "time_seconds": 60.2,
+        "line": "Stopped. state=paused events=40 remote_events=5 feedback=9 timing=11 failed=yes reads=1091 bytes=71383608 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes"
+      }
+    ],
+    "exit_code": 1,
+    "stdin_held_open": true,
+    "summary": "Stopped. state=paused events=40 remote_events=5 feedback=9 timing=11 failed=yes reads=1091 bytes=71383608 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes",
+    "automatic_cleanup": true,
+    "observer_confirmed_home": true,
+    "classification": "connection_lost / exit 1; automatic cleanup passed, normal stop reason unresolved"
+  },
+  "sleep": {
+    "cli_sha256": "3e9e8559cae5f1e0e8edf6eec52caf7ef4b7104b10cb9435417fe96a8ae28df3",
+    "tested_source_blobs": {
+      "src\\cast_cli.cpp": "515b9c4b3ee64144c61cb0cf86a246812c22df8e",
+      "src\\cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+      "src\\cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+      "src\\cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+      "src\\control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+      "src\\control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+      "src\\mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+      "src\\mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+      "src\\mrp_messages.cpp": "af48753904bba3e5cd6d67a8fb08b341739ff7b3",
+      "src\\mrp_messages.h": "d25b152f72f541c88199f9df7d620fd2c23c84bc",
+      "src\\mrp_session.cpp": "1b055ae48120366f3a405f1c2e18c3825616a476",
+      "src\\mrp_session.h": "9d688e019f29eb545fac7baf3f2847d306c7424f",
+      "src\\protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+      "src\\protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+      "src\\receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+      "src\\receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+      "src\\session_messages.cpp": "f9eaf05c7745f77a170710f92399a85815cc05ec",
+      "src\\session_messages.h": "4f1094da381bc658190539a9a38da4518a22ad62",
+      "src\\url_playback_session.cpp": "2a28a752d7ae56418e534b8d8ac4c1c6b8851e09",
+      "src\\url_playback_session.h": "f6e90f7459a217db91811b416f6048b04da81db2"
+    },
+    "output": [
+      {
+        "time_seconds": 40.1,
+        "line": "Starting playback."
+      },
+      {
+        "time_seconds": 40.9,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 40.9,
+        "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+      },
+      {
+        "time_seconds": 44.9,
+        "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_seconds": 52.0,
+        "line": "State: loading"
+      },
+      {
+        "time_seconds": 52.5,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 53.1,
+        "line": "State: loading"
+      },
+      {
+        "time_seconds": 53.1,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 55.6,
+        "line": "State: loading"
+      },
+      {
+        "time_seconds": 55.7,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 56.2,
+        "line": "State: loading"
+      },
+      {
+        "time_seconds": 59.9,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 62.2,
+        "line": "State: loading"
+      },
+      {
+        "time_seconds": 66.7,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 81.8,
+        "line": "State: paused"
+      },
+      {
+        "time_seconds": 87.3,
+        "line": "Stopped. state=paused events=118 remote_events=6 feedback=23 timing=21 failed=yes reads=1384 bytes=90568280 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes"
+      }
+    ],
+    "exit_code": 1,
+    "stdin_held_open": true,
+    "summary": "Stopped. state=paused events=118 remote_events=6 feedback=23 timing=21 failed=yes reads=1384 bytes=90568280 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes",
+    "automatic_cleanup": true,
+    "observer_confirmed_asleep": true,
+    "classification": "connection_lost / exit 1 with automatic joined cleanup"
+  },
+  "wake_recovery": {
+    "cli_sha256": "3e9e8559cae5f1e0e8edf6eec52caf7ef4b7104b10cb9435417fe96a8ae28df3",
+    "tested_source_blobs": {
+      "src\\cast_cli.cpp": "515b9c4b3ee64144c61cb0cf86a246812c22df8e",
+      "src\\cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+      "src\\cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+      "src\\cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+      "src\\control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+      "src\\control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+      "src\\mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+      "src\\mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+      "src\\mrp_messages.cpp": "af48753904bba3e5cd6d67a8fb08b341739ff7b3",
+      "src\\mrp_messages.h": "d25b152f72f541c88199f9df7d620fd2c23c84bc",
+      "src\\mrp_session.cpp": "1b055ae48120366f3a405f1c2e18c3825616a476",
+      "src\\mrp_session.h": "9d688e019f29eb545fac7baf3f2847d306c7424f",
+      "src\\protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+      "src\\protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+      "src\\receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+      "src\\receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+      "src\\session_messages.cpp": "f9eaf05c7745f77a170710f92399a85815cc05ec",
+      "src\\session_messages.h": "4f1094da381bc658190539a9a38da4518a22ad62",
+      "src\\url_playback_session.cpp": "2a28a752d7ae56418e534b8d8ac4c1c6b8851e09",
+      "src\\url_playback_session.h": "f6e90f7459a217db91811b416f6048b04da81db2"
+    },
+    "output": [
+      {
+        "time_seconds": 40.1,
+        "line": "Starting playback."
+      },
+      {
+        "time_seconds": 40.8,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 40.8,
+        "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+      },
+      {
+        "time_seconds": 44.8,
+        "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_seconds": 50.9,
+        "line": "Control: accepted"
+      },
+      {
+        "time_seconds": 51.9,
+        "line": "State: loading"
+      },
+      {
+        "time_seconds": 51.9,
+        "line": "State: playing"
+      },
+      {
+        "time_seconds": 52.8,
+        "line": "Control: accepted"
+      },
+      {
+        "time_seconds": 67.8,
+        "line": "State: stopped"
+      },
+      {
+        "time_seconds": 68.6,
+        "line": "Stopped. state=stopped events=53 remote_events=5 feedback=13 timing=14 failed=no reads=1022 bytes=66803750 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes"
+      }
+    ],
+    "exit_code": 0,
+    "stdin_held_open": true,
+    "summary": "Stopped. state=stopped events=53 remote_events=5 feedback=13 timing=14 failed=no reads=1022 bytes=66803750 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes",
+    "automatic_cleanup": true,
+    "observer_confirmed_video_audio_and_eof_home": true
+  },
+  "sleep_wake": "PASS: user-confirmed sleep, automatic failure cleanup, fresh credential reuse after wake, normal video/audio and EOF home"
 }

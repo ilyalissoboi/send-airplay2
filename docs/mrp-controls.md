@@ -104,8 +104,10 @@ request deadlines (5 s by default). A silent MRP-only peer is detected by the
 next 30 s heartbeat plus its request deadline; this is distinct from immediate
 socket EOF. No automatic reconnect, resume, re-pairing or credential replacement
 is attempted: after restoring reachability, start a fresh cast with the existing
-profile. Actual receiver-side stop, sleep/wake and network-loss recovery remain
-manual G3 gates; see the dated lifecycle record. Public playback ABI is later work.
+profile. Receiver-remote stop and sleep caused automatic failure cleanup; fresh wake
+recovery and EOF video/audio/home passed by user report. Normal receiver-stop
+classification and actual network-loss recovery remain G3 work; see the dated
+lifecycle record. Public playback ABI is later work.
 
 ## CLI
 

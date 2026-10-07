@@ -36,7 +36,7 @@ Proposed components:
 | Secure transport | Bounded framing, authenticated encryption, counters, timeouts | Private HTTP/RTSP/TCP and record integration implemented; see receiver-transport.md |
 | Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Private URL/MRP sessions and automatic ordered cleanup implemented; selected G3 checks and remaining manual gates recorded |
 | Media server | GET/HEAD, byte sources, range responses, bounded streaming | Experimental Boost.Beast/Asio server implemented; loopback tested and Apple TV fetch observed; see media-server.md |
-| Playback | URL start, pause/resume, seek, status, stop | URL/MRP and automatic terminal cleanup implemented; G1 passed; native EOF and ten short cycles passed; G2 observation and remaining manual G3 checks pending |
+| Playback | URL start, pause/resume, seek, status, stop | URL/MRP and automatic terminal cleanup implemented; G1 passed; native EOF and ten short cycles passed; G2 passed by user report; remaining manual G3 checks pending |
 | Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; other stores, packaged hosts and media access pending |
 | Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
 
@@ -134,10 +134,12 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
 1. G1 passed for the recorded native-only run; retain the independently verified
    remote session through URL teardown. Broader presentation proof is separate.
 2. MRP framing, message mapping, handshake, correlation and heartbeat are implemented;
-   native status/control telemetry passed; G2 visual confirmation is pending.
+   native status/control telemetry passed; G2 visual confirmation passed by user report on 2026-10-07.
 3. Automatic terminal cleanup is implemented (D33); native EOF and ten short
-   start/stop cycles passed. Complete G3 with receiver-side stop, sleep/wake,
-   actual network-loss recovery and visual observations; investigate buffering.
+   start/stop cycles passed, as did user-confirmed sleep/wake recovery. Receiver
+   remote stop returned home and cleaned up but classified connection_lost/exit 1.
+   Complete G3 with actual network-loss recovery; investigate normal stop reason
+   and buffering.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

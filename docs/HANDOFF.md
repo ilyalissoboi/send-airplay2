@@ -13,8 +13,10 @@ Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
 Lifecycle implementation/code-test head:
 `2f77f622acbaff3e6579cb8c997c927a6ea12206` (D33). Native runtime source blobs
 and CLI SHA-256 are recorded in the [lifecycle artifact](validation/native-lifecycle-windows-static-2026-10-07.json).
-Its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37553605053)
-is separate from the hardware gates; inspect PR #12's actual head/checks,
+All ten checks passed in its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37553605053),
+and at code-equivalent documentation head `759de2d30043aa7bd6873f9e2700adceffa8e187`
+in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37553955465).
+CI is separate from hardware gates; inspect PR #12's actual head/checks,
 including documentation-only follow-ups. Step 2's final documentation head
 `dafb70a4bcec0236b8f20901d745a1546ff853ba` passed all ten checks before this work.
 
@@ -57,9 +59,15 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   teardown, first end reason, command cancellation and pollable CLI stdin. Native
   EOF exited with stdin held open; ten short native cycles passed. The sanitized
   lifecycle record fingerprints the executable and runtime sources.
-- **Next:** finish G3 manual checkpoints: receiver-side stop, sleep/wake, actual
-  network loss then a fresh cast after recovery, and visual observations. G2
-  observer confirmation is also pending. Preserve the existing credentials and
+- **G2 and EOF observation passed:** the user confirmed visible controls, both
+  seek directions, normal resumed audio and home after sender Stop; EOF also
+  returned home with normal video/audio. Receiver-remote stop returned home and
+  automatically cleaned up, but reported connection_lost/exit 1. Sleep likewise
+  triggered bounded cleanup. Fresh casting after wake reused credentials and
+  played normal video/audio; EOF again returned home (user-confirmed).
+- **Next:** investigate normal receiver-stop classification and buffering; run
+  actual network interruption/recovery when available. The user cannot perform
+  network disconnect/reconnect in this session. Preserve credentials and
   independent remote/URL sessions through ordered teardown.
 - **Current support:** private native casting/control experiment on Apple TV 4K /
   tvOS 26.6 (23L773) / Windows 11 x64. No public playback ABI or packaged-host
@@ -1252,8 +1260,8 @@ checks passed at code/test head `8dca4a55c831563be952a5b3d6c8a353ad8b7807` in
 ASan/UBSan and three offline runner jobs. Inspect the actual final PR head
 including any documentation-only follow-up.
 The final executable/source fingerprints and observer status are in the
-[dated G2 record](receiver-validation.md#native-mrp-controls-commandtelemetry-pass-g2-observer-pending-2026-10-07).
-G2 visual confirmation is pending. Do not substitute telemetry or CI for it.
+[dated G2 record](receiver-validation.md#native-mrp-controls-g2-pass-2026-10-07).
+G2 visual confirmation passed by user report on 2026-10-07. Do not substitute telemetry or CI for it.
 The final URL event was paused, not proof of protocol idle. Next: step 3 / G3.
 
 ### Native lifecycle implementation and selected G3 checks: 2026-10-07
@@ -1279,12 +1287,17 @@ open: media_end, cleaned=yes, failed=no, no failed reads, full-file fetch, exit 
 Ten short native casts alternated MRP Stop and direct teardown; all established
 owned playing telemetry and completed cleanup without errors. Exact build/source
 fingerprints and counts: [dated lifecycle record](receiver-validation.md#native-lifecycle-selected-g3-cases-pass-manual-gates-pending-2026-10-07).
-Manual receiver-side stop, sleep/wake, actual network interruption/recovery and
-visual observations remain pending, as does the G2 observer result. A preliminary
+G2 controls and EOF video/audio/home are user-confirmed. Receiver-side stop
+returned home and automatically cleaned up, but reported connection_lost/exit 1;
+normal stop classification remains unresolved. Sleep automatically cleaned up;
+fresh playback after wake reused credentials and EOF returned home with normal
+video/audio (user-confirmed). Actual network interruption/recovery is NOT RUN.
+The sleep setup also emitted repeated loading/playing states. A preliminary
 probe paused near startup; seek retained pause and explicit Play was necessary.
 Later passing cycles do not resolve intermittent buffering/startup behavior.
-Do not mark G3 or the standalone milestone complete. Next action is those manual
-checkpoints using the existing profile; recovery means a fresh explicit cast.
+Do not mark G3 or the standalone milestone complete. Next investigate normal
+receiver-stop classification and buffering, then actual network-loss recovery
+when available; recovery means a fresh explicit cast with the retained profile.
 
 ## 6. Screenbox integration findings
 
@@ -1320,12 +1333,15 @@ the recorded source snapshot is still current.
    a single video/audio/home-screen observation does not establish G2/G3.
 2. **MRP controls (D29/D31, G2):** implemented with bounded framing/codecs,
    independent fixtures, correlated handshake/commands/heartbeat and player
-   tracking. Native command/telemetry evidence is recorded; keep the visual
-   observer result separate. D32 fallback assumes cooperative AirPlay startup
+   tracking. Native command/telemetry evidence is recorded, and the user
+   confirmed the visual controls and home-screen result (G2 PASS).
+   D32 fallback assumes cooperative AirPlay startup
    and does not guarantee ownership against a concurrent same-duration cast.
 3. **Lifecycle (G3):** automatic EOF/terminal/failure cleanup implemented; native
-   EOF and ten short cycles passed. Finish receiver-side stop, sleep/wake, actual
-   network interruption/recovery and visual observations. Investigate the
+   EOF and ten short cycles passed, with user-confirmed EOF video/audio/home.
+   Receiver-remote stop and sleep triggered automatic cleanup; stop classified
+   connection_lost/exit 1, so normal stop reason remains unresolved. Finish actual
+   network interruption/recovery when available. Investigate the
    buffering pause and renewed loading seen in the mixed native/pyatv run; one
    preliminary native EOF probe paused at startup and needed explicit play.
    Successful later cycles do not resolve that intermittent behavior.
