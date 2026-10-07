@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Wire schema facts: pinned MIT pyatv .proto definitions; dependencies.md.
 #include "mrp_messages.h"
+#include "control_crypto.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -93,6 +94,23 @@ bool nonzero(const pb::Fields& fields, std::uint32_t number) {
     return field && field->integer != 0;
 }
 } // namespace
+MrpMessage::~MrpMessage() {
+    cleanse(payload.data(), payload.size());
+}
+MrpMessage::MrpMessage(MrpMessage&& other) noexcept {
+    *this = std::move(other);
+}
+MrpMessage& MrpMessage::operator=(MrpMessage&& other) noexcept {
+    if (this != &other) {
+        cleanse(payload.data(), payload.size());
+        type = other.type;
+        identifier = std::move(other.identifier);
+        error = other.error;
+        has_payload = other.has_payload;
+        payload = std::move(other.payload);
+    }
+    return *this;
+}
 Bytes encode_mrp(std::uint32_t type, const std::string& identifier,
                  const std::string& unique_identifier, const Bytes& payload) {
     Bytes output;

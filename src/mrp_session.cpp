@@ -64,6 +64,7 @@ void MrpSession::stop() noexcept {
     std::lock_guard<std::mutex> lock(mutex_);
     cleanse(outbound_.data(), outbound_.size());
     outbound_.clear();
+    response_.reset();
 }
 void MrpSession::fail(MrpError reason) {
     {
@@ -133,7 +134,6 @@ void MrpSession::handshake(const SenderIdentity& identity, const Bytes& pairing_
                            const std::atomic_bool* cancelled) {
     auto device = request(mrp::device_info, mrp_device_info(identity, pairing_id), mrp::device_info,
                           cancelled);
-    const EraseOnExit erased_device(device.payload);
     if (!device.has_payload) {
         fail(MrpError::malformed);
         throw MrpException(MrpError::malformed);
@@ -180,7 +180,6 @@ void MrpSession::command(PlaybackCommand command, double position,
     }
     auto response = request(mrp::send_command, mrp_command(command, path, position),
                             mrp::command_result, cancelled);
-    const EraseOnExit erased_response(response.payload);
     bool succeeded = false;
     try {
         succeeded = mrp_command_succeeded(response);
@@ -250,7 +249,6 @@ void MrpSession::run() {
             auto messages = decode_mrp_batch(batch);
             cleanse(batch.data(), batch.size());
             for (auto& message : messages) {
-                const EraseOnExit erased_message(message.payload);
                 std::lock_guard<std::mutex> lock(mutex_);
                 ++messages_;
                 if (!heartbeat_identifier.empty() && message.identifier == heartbeat_identifier) {

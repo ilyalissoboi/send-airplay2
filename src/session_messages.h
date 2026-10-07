@@ -107,8 +107,8 @@ struct StreamSetup {
 
 // ---- Receiver events ----
 
-/// A decoded event-channel message. `playback_state` is lower-cased and set
-/// only for "playbackState" events.
+/// A decoded event-channel message with fixed type/state labels; unknown
+/// strings become "other". State is set only for "playbackState" events.
 struct SessionEvent {
     std::string type;
     std::optional<std::string> playback_state;
@@ -121,10 +121,9 @@ struct SessionEvent {
 /// bare dictionary with a "type" (some receiver events are not wrapped).
 [[nodiscard]] SessionEvent parse_session_event(const Bytes& body);
 /**
- * A diagnostic, value-free outline of an event body: "type=<type>", the
- * playback state when present, then the key paths of the inner plist
- * (arrays as "name[]"). No other values are included, so identifiers, URLs and
- * metadata never appear. At most 48 paths, 4 levels deep.
+ * A diagnostic outline using fixed type/state labels and allowlisted key paths
+ * (arrays as "name[]"). Unknown keys and values are omitted. Identifiers, URLs,
+ * arbitrary peer text and metadata never appear. At most 48 paths, 4 levels deep.
  */
 [[nodiscard]] std::string describe_event_structure(const Bytes& body);
 /** Fixed-key numeric/boolean buffering diagnostics from the root, params and

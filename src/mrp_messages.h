@@ -18,7 +18,16 @@ constexpr std::uint32_t remove_client = 53, remove_player = 54;
 constexpr std::size_t max_batch_messages = 64;
 } // namespace mrp
 enum class PlaybackCommand : std::uint32_t { play = 1, pause = 2, stop = 4, seek = 45 };
+/// Owns decoded extension plaintext. Move transfers ownership; replacement,
+/// destruction and exception unwinding erase payload bytes before release.
+/// Correlation identifiers are private tokens, never diagnostic text.
 struct MrpMessage {
+    MrpMessage() = default;
+    ~MrpMessage();
+    MrpMessage(const MrpMessage&) = delete;
+    MrpMessage& operator=(const MrpMessage&) = delete;
+    MrpMessage(MrpMessage&& other) noexcept;
+    MrpMessage& operator=(MrpMessage&& other) noexcept;
     std::uint32_t type = 0;
     std::string identifier; // Private correlation token, never printed.
     std::uint64_t error = 0;

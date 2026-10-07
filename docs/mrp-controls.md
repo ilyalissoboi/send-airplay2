@@ -58,6 +58,14 @@ fields. Schema and fixture provenance is in [dependencies.md](dependencies.md).
 
 ## Threads, deadlines and cleanup
 
+Decoded extension payloads belong to move-only `MrpMessage` owners. Replacement,
+destruction and exception unwinding erase payload bytes before release, including
+earlier messages in a partially decoded batch and rejected correlated responses.
+Stopping also releases any pending response. D43's [review regressions](pr-review.md)
+observe erasure immediately before deallocation and inject an allocation failure.
+This contract covers the decoded extension buffers; it does not claim to erase
+every metadata copy in a decoded protobuf/plist tree.
+
 One worker owns the data socket and both record counters. Callers serialize
 requests with unique correlation IDs and explicit expected response types.
 tvOS 26.6 acknowledges update configuration with type 0 and the exact request

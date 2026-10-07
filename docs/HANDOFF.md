@@ -10,13 +10,18 @@ not a claim that the sender has been completed.
 Work continues in a local Codex session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
 Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
-Latest implementation/evidence head (D40):
+Latest runtime follow-up: D43's [PR review](pr-review.md) fixes URL diagnostic
+redaction and decoded MRP extension-payload erasure on exception paths. Windows
+static/shared Release passed 24/24 CTest targets each; runner contracts passed
+10/10; all 52 PR-changed C++ files passed formatting. Inspect the actual PR head
+and CI after publication. This follow-up has no new receiver observation.
+Latest receiver-tested implementation/evidence head (D40):
 `4a18b2662150768a00154ca17e222f2e701fd192`;
 [exact-head CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37577586084).
 It adds bounded remote-event/final MRP diagnostics with separate observed
 Stop/Home, sleep and fresh wake playback/EOF/Home evidence. Classification
-remains conservative. This documentation follow-up changes no runtime source;
-inspect the actual PR head/checks, including documentation-only follow-ups.
+remains conservative. D42 reused that runtime; D43 changes diagnostic/ownership
+source. Inspect the actual PR head/checks rather than reusing an earlier result.
 Lifecycle implementation/code-test head:
 `2f77f622acbaff3e6579cb8c997c927a6ea12206` (D33). Native runtime source blobs
 and CLI SHA-256 are recorded in the [lifecycle artifact](validation/native-lifecycle-windows-static-2026-10-07.json).
@@ -178,7 +183,11 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   explicit cast with the same credentials passed observed video/audio and Home
   at planned near-end EOF, exiting media_end/0. Pre-interruption presentation was
   asked about but not reported. See the [artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
-- **Next:** finish PR diff/readability review and actual-head CI. Keep ambiguous
+- **PR review complete locally (D43):** fixed two reproduced issues: raw peer
+  strings/keys/targets in URL output, and decoded MRP payload release without
+  erasure on error paths. See [scope, regressions and limits](pr-review.md).
+- **Next:** verify actual-head CI for the D43 fixes, then obtain user approval
+  before marking ready or merging. Keep ambiguous
   peer closure classified conservatively: the reference audit and single Ethernet
   comparison do not establish Stop intent. Investigate the unresolved receiver
   transition behind the intermittent startup pause using matched Home/idle
@@ -666,6 +675,28 @@ The user temporarily disconnected and restored the receiver's Ethernet connectio
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
 cancellation and errors before publishing production bindings.
+
+**D43 (PR review and engineering fixes, 2026-10-07):** reviewed draft PR #12
+against `origin/main` (`2b0e57c9d3ee44c5afc66418c23084ffada01d59`), beginning at
+verified head `439133239d7fe73a6d4fa3acbcbc930597e4fe04` (all ten CI checks passed).
+The [review record](pr-review.md) describes scope and the two reproduced findings.
+URL event outlines/status now use fixed type/state labels and allowlisted key
+paths, omitting peer request targets even for unreadable bodies. Event body
+ownership uses RAII through parsing/logging failures. Decoded MRP extension
+payloads now belong to move-only erasing owners, covering partially decoded
+batches, allocation failures, rejected responses and pending response cleanup.
+Known state handling, wire messages, commands, startup policy and end reasons
+remain unchanged. No third-party source/dependency was added.
+
+Regression tests failed against the previous behavior, then passed after the
+fixes. Windows static/shared Release each passed 24/24 CTest targets (15.76/15.34 s);
+runner contracts passed 10/10; all 52 PR-changed C++ files passed clang-format
+dry-run and whitespace checks. Loopback UDP and runner temporary-file checks
+required execution outside the restricted sandbox; no firewall/network policy
+was changed. Actual-head CI remains a publication gate. No receiver test was
+performed for this follow-up: D40/D42 source/binary fingerprints remain the
+hardware evidence. Remote-Stop intent, intermittent startup pause and broader
+reliability remain open; frozen video stays low priority unless it recurs (D37).
 
 ## 5. Implemented code and verification
 

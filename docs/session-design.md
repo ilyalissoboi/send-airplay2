@@ -241,8 +241,12 @@ administered one per session.
   size. Waits for `playing` and for command responses have explicit deadlines.
 - **Secrets:** shared-secret, channel-key and record-key owners erase
   themselves on success, failure and destruction, and are non-copyable.
+  Decoded MRP extension payloads also have move-only owners that erase bytes on
+  replacement/destruction, including partially decoded batches and rejected replies (D43).
 - **Logging:** never log the media URL, receiver identifiers, sender identifiers
   or raw event payloads. Diagnostics use categories and allowlisted fields.
+  URL type/state strings are fixed labels (`other` for unknown strings); URL
+  outlines omit unknown dictionary keys and request targets (D43).
 - **Network:** the sender process needs inbound UDP (timing) and inbound TCP
   (media) from the receiver only. On this host, the existing `airplay2-cli.exe`
   Allow rules cover both. Packaged Windows and Screenbox need their own proof.

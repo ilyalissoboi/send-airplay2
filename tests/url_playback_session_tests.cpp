@@ -359,9 +359,9 @@ public:
         push_state_locked(state);
     }
     /// Synthetic remote notification, including malformed bodies.
-    void push_event_body(const Bytes& body) {
+    void push_event_body(const Bytes& body, const std::string& target = "/command") {
         std::lock_guard<std::mutex> lock(mutex_);
-        push_event_body_locked(body);
+        push_event_body_locked(body, target);
     }
     void end_event_channel() {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -532,11 +532,12 @@ private:
             encode_binary_plist(PlistDictionary{{"params", PlistDictionary{{"data", inner}}}});
         push_event_body_locked(body);
     }
-    void push_event_body_locked(const Bytes& body) {
-        auto event = text("POST /command RTSP/1.0\r\nCSeq: " + std::to_string(++event_sequence_) +
-                          "\r\nContent-Type: application/x-apple-binary-plist\r\n"
-                          "Content-Length: " +
-                          std::to_string(body.size()) + "\r\n\r\n");
+    void push_event_body_locked(const Bytes& body, const std::string& target = "/command") {
+        auto event =
+            text("POST " + target + " RTSP/1.0\r\nCSeq: " + std::to_string(++event_sequence_) +
+                 "\r\nContent-Type: application/x-apple-binary-plist\r\n"
+                 "Content-Length: " +
+                 std::to_string(body.size()) + "\r\n\r\n");
         event.insert(event.end(), body.begin(), body.end());
         const auto wire = event_writer_->encrypt(event);
         std::lock_guard<std::mutex> lock(event_pipe_->mutex);
@@ -1048,10 +1049,26 @@ void event_log_tests() {
     options.record_event_structure = true;
     auto session = UrlPlaybackSession::start(credentials, std::move(options));
     const auto log = session->take_event_log();
-    check(log.size() == 2 && log.back() == "POST /command type=playbackState state=playing "
+    check(log.size() == 2 && log.back() == "URL type=playbackState state=playing "
                                            "keys=type,params,params.playbackState",
           "outlines of the start events");
     check(session->take_event_log().empty(), "taking the log empties it");
+    receiver.push_event_body(encode_binary_plist(PlistDictionary{{"type", "private-type"},
+                                                                 {"private-key", "private-value"}}),
+                             "/private-token?secret=private-value");
+    check(eventually([&] { return session->status().events == 3; }),
+          "private synthetic notification processed");
+    check(session->take_event_log() == std::vector<std::string>{"URL type=other keys=type"},
+          "URL log excludes private target, type and key text");
+    receiver.push_event_body(Bytes{0}, "/private-token");
+    check(eventually([&] { return session->status().unreadable_events == 1; }),
+          "malformed notification acknowledged without terminating session");
+    check(session->take_event_log() == std::vector<std::string>{"URL unreadable=yes"} &&
+              !session->status().failed,
+          "malformed-body diagnostics exclude request target and retain channel health");
+    receiver.push_state("PRIVATE-STATE\nforged-output");
+    check(session->wait_for_change("playing", 1000ms).playback_state == "other",
+          "URL status exposes a fixed label for unknown receiver state");
     session->stop();
 
     FakeReceiver quiet({});

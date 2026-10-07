@@ -493,22 +493,23 @@ void UrlPlaybackSession::event_loop() {
     const auto operation = ReceiverOperation::until_cancelled(&event_stop_);
     try {
         for (;;) {
-            auto request = events_->receive(operation);
+            ErasedEvent owned(events_->receive(operation));
+            const auto& request = owned.request;
             std::optional<SessionEvent> event;
             std::string outline;
             std::string buffering;
             try {
                 event = parse_session_event(request.body);
                 if (options_.record_event_structure) {
-                    outline = request.method + " " + request.target + " " +
-                              describe_event_structure(request.body);
+                    outline = "URL " + describe_event_structure(request.body);
                     buffering = describe_buffering_values(request.body);
                 }
             } catch (const TransportException&) {
                 // Answered already; an unreadable body does not end the session.
-                outline = request.method + " " + request.target + " unreadable";
+                if (options_.record_event_structure) {
+                    outline = "URL unreadable=yes";
+                }
             }
-            cleanse(request.body.data(), request.body.size());
             if (event && event->playback_state == playing_state && event->duration_seconds &&
                 mrp_) {
                 mrp_->confirm_url_playing(*event->duration_seconds);

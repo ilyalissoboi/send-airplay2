@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <limits>
 #include <iomanip>
+#include <iterator>
 #include <locale>
 #include <optional>
 #include <stdexcept>
@@ -319,6 +320,32 @@ constexpr std::size_t max_described_paths = 48;
 constexpr std::size_t max_described_depth = 4;
 constexpr std::int64_t time_valid = 1, time_rounded = 2;
 
+const char* event_type_label(std::string_view type) noexcept {
+    for (const auto* known : {"playbackState", "updateInfo", "notification", "didPlayToEndTime",
+                              "playbackEnded", "stop"}) {
+        if (type == known) {
+            return known;
+        }
+    }
+    return "other";
+}
+const char* playback_state_label(std::string_view state) noexcept {
+    for (const auto* known : {"loading", "playing", "paused", "idle", "stopped", "ended"}) {
+        if (state == known) {
+            return known;
+        }
+    }
+    return "other";
+}
+
+bool described_key(std::string_view key) noexcept {
+    constexpr std::string_view known[] = {
+        "type",     "name",      "params", "value",  "data",     "kind",        "playbackState",
+        "duration", "timescale", "flags",  "epoch",  "position", "currentTime", "elapsedTime",
+        "item",     "reason",    "error",  "status", "rate",     "readyToPlay", "stallCount"};
+    return std::find(std::begin(known), std::end(known), key) != std::end(known);
+}
+
 /// URL events can represent seconds as a number or as a CMTime dictionary.
 /// A rational duration must have a positive timescale and a valid numeric
 /// flag (bit 0); rounded values (bit 1) are allowed, infinities/indefinite are not.
@@ -388,6 +415,9 @@ void collect_key_paths(const PlistValue& value, const std::string& prefix, std::
         return;
     }
     for (const auto& entry : value.as_dictionary()) {
+        if (!described_key(entry.key)) {
+            continue; // Unknown keys can themselves contain private peer data.
+        }
         if (paths.size() >= max_described_paths) {
             return;
         }
@@ -451,13 +481,7 @@ std::string describe_remote_event(const Bytes& body) {
     const auto* type = event.find("type");
     const char* label = type ? "other" : "none";
     if (type && type->kind() == PlistKind::string) {
-        for (const auto* known : {"playbackState", "updateInfo", "notification", "didPlayToEndTime",
-                                  "playbackEnded", "stop"}) {
-            if (type->as_string() == known) {
-                label = known;
-                break;
-            }
-        }
+        label = event_type_label(type->as_string());
     }
     output << label;
     const auto* params = event.find("params");
@@ -468,12 +492,7 @@ std::string describe_remote_event(const Bytes& body) {
     const char* state_label = state ? "other" : "none";
     if (state && state->kind() == PlistKind::string) {
         const auto normalized = lower_ascii(state->as_string());
-        for (const auto* known : {"loading", "playing", "paused", "idle", "stopped", "ended"}) {
-            if (normalized == known) {
-                state_label = known;
-                break;
-            }
-        }
+        state_label = playback_state_label(normalized);
     }
     output << " state=" << state_label;
     // Fixed scopes and a fixed key list bound output independently of peer input.
@@ -506,7 +525,7 @@ std::string describe_remote_event(const Bytes& body) {
 SessionEvent parse_session_event(const Bytes& body) {
     const auto event = unwrap_envelope(body);
     SessionEvent output;
-    output.type = require(event, "type", PlistKind::string).as_string();
+    output.type = event_type_label(require(event, "type", PlistKind::string).as_string());
     if (output.type != "playbackState") {
         return output;
     }
@@ -519,7 +538,7 @@ SessionEvent parse_session_event(const Bytes& body) {
     if (state == nullptr || state->kind() != PlistKind::string) {
         invalid_body();
     }
-    output.playback_state = lower_ascii(state->as_string());
+    output.playback_state = playback_state_label(lower_ascii(state->as_string()));
     if (const auto* duration = params ? params->find("duration") : nullptr) {
         output.duration_seconds = duration_seconds(*duration);
     }

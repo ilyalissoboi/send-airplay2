@@ -143,9 +143,11 @@ prints no private URL or receiver address. `--event-log` enables bounded event
 outlines, allowlisted buffering values and a fixed startup phase/state/rate trace,
 including failed starts. It also records fixed-label remote notification
 observations (shared 256-entry event log) and the retained final MRP state after
-joined cleanup. Remote output omits arbitrary names/values and request targets;
-numeric reason/error/status
-codes have no inferred meaning. Final MRP reports the received position rather
+joined cleanup. URL and remote output omit arbitrary names/values and request targets;
+URL state/type labels use fixed allowlists, with unknown strings reported as `other`.
+URL outlines include only allowlisted key paths; malformed bodies report `URL unreadable=yes`.
+Numeric remote reason/error/status codes have no inferred meaning. Final MRP
+reports the received position rather
 than wall-clock progress and is not a fresh receiver query. These observations
 do not change terminal classification. Startup success requires one continuous
 second of URL playing without an explicitly zero/reverse rate, within the
@@ -193,6 +195,11 @@ remain open G3 work. Native MRP controls are implemented; see the recorded
 G2 result and [control contracts](docs/mrp-controls.md).
 See [session design and gates](docs/session-design.md) and
 [receiver results](docs/receiver-validation.md).
+
+The [D43 PR review](docs/pr-review.md) fixed URL diagnostic redaction and decoded
+MRP payload cleanup on exception paths. Windows static/shared Release each pass
+24 CTest targets; offline runner contracts pass 10 tests. These checks are
+separate from the dated receiver observations above.
 
 ## Milestones
 

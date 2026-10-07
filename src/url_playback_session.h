@@ -147,7 +147,7 @@ struct SessionStartDiagnostics {
 
 /// A snapshot of session progress, safe to read from any thread.
 struct SessionStatus {
-    std::string playback_state; // Lower-cased; empty before the first state event.
+    std::string playback_state; // Fixed lower-case label or "other"; initially empty.
     std::uint64_t events = 0;
     std::uint64_t remote_events = 0;     // Answered on the separate remote-control session.
     std::uint64_t unreadable_events = 0; // Answered, but not a decodable event body.

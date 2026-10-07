@@ -138,8 +138,8 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
 3. Automatic terminal cleanup is implemented (D33); native EOF and ten short
    start/stop cycles passed, as did user-confirmed sleep/wake recovery. Receiver
    remote stop returned home and cleaned up but classified connection_lost/exit 1.
-   Complete G3 with actual network-loss recovery; investigate normal stop reason
-   and buffering. D34 diagnostics reproduce URL event EOF during user-confirmed
+   Extend G3 beyond the selected D42 network-loss/fresh-recovery pass; investigate
+   normal stop reason and buffering. D34 diagnostics reproduce URL event EOF during user-confirmed
    remote Stop without a terminal state; retain failure classification until
    intent is validated. One full clip reached natural EOF, but the user observed
    video frozen after a buffering stop near 18 s while audio continued normally
@@ -170,6 +170,9 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    explicit same-credential playback after reconnection/Home, with user-confirmed
    video/audio/Home at near-end EOF. Connection failures retain their existing
    classification; normal Stop intent, startup pause and longer reliability remain open.
+   D43's [PR review](pr-review.md) fixed arbitrary peer text in URL diagnostics
+   and exception-path erasure of decoded MRP payloads. Static/shared and offline
+   checks passed; this follow-up has no new hardware observation.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

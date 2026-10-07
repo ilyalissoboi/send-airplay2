@@ -270,6 +270,25 @@ bool upper_hex(char ch) {
     return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F');
 }
 
+void url_diagnostic_redaction_tests() {
+    group = "URL diagnostic redaction";
+    const auto private_event = encode_binary_plist(
+        PlistDictionary{{"type", "private-event\nforged-output"},
+                        {"private-field", "private-value"},
+                        {"params", PlistDictionary{{"private-key", "private-metadata"}}}});
+    check(parse_session_event(private_event).type == "other", "unknown type becomes a fixed label");
+    check(describe_event_structure(private_event) == "type=other keys=type,params",
+          "unknown type text, keys and metadata never appear");
+    const auto private_state =
+        encode_binary_plist(PlistDictionary{{"type", "playbackState"},
+                                            {"name", "PRIVATE-STATE\nforged-output"},
+                                            {"private-key", "private-value"}});
+    check(parse_session_event(private_state).playback_state == "other",
+          "unknown state becomes a fixed label in public status");
+    check(describe_event_structure(private_state) ==
+              "type=playbackState state=other keys=type,name",
+          "unknown state cannot inject output lines");
+}
 void buffering_diagnostic_tests() {
     group = "allowlisted buffering values";
     const auto diagnostics = [](PlistDictionary fields) {
@@ -389,6 +408,7 @@ int main(int argc, char** argv) {
         header_tests();
         response_tests(directory);
         event_tests(directory);
+        url_diagnostic_redaction_tests();
         buffering_diagnostic_tests();
         remote_diagnostic_tests();
         random_identifier_tests();
