@@ -50,6 +50,11 @@ D39 documentation/evidence head `5a2c58d9eec880c81e96ef264a489a709a7fa4a9`
 passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37573362161).
 D40 code/evidence and its CI are identified above. Inspect the actual PR head
 after subsequent documentation-only updates rather than reusing an older run.
+The D41 [pyatv remote-Stop source audit](pyatv-stop-reference.md) changes no
+runtime behavior: upstream swallows URL polling connection loss as completion;
+the tvOS fork's event waiter does not finish on socket EOF alone. Neither
+provides a validated Stop-versus-network/sleep discriminator. This is offline
+reference evidence, not a new hardware pass.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -601,6 +606,22 @@ Next: review the current diff/readability and actual PR-head CI, then complete
 the available G3 network-loss/recovery check. Further normal-Stop classification
 needs validated receiver intent, potentially a fixed MRP message-kind/ownership
 transition trace; do not infer it from ownership loss plus socket closure.
+
+**D41 (source audit, 2026-10-07):** at the user's request, inspect pyatv before
+continuing lifecycle work. Pinned upstream `b277a4c` catches RuntimeError and
+ConnectionLostError from `/playback-info` and assumes playback stopped. The
+tvOS reference fork `8144c77` selects its event waiter, completing only after
+playing then idle/stopped; inherited URL-event socket closure only logs and
+retains state. Six isolated offline method probes confirmed polling-error
+completion, playing-to-idle/stopped completion, and pending waiters for paused
+or socket EOF while playing. They do not exercise a full client or receiver.
+The MRP transport distinguishes closure without an exception from an error,
+not a validated receiver Stop action. Native D40 policy remains unchanged;
+copying the upstream heuristic would be a deliberate API policy change.
+Complete the actual network interruption/recovery comparison when available,
+then decide how ambiguous peer closure should be exposed. See the
+[audit and provenance](pyatv-stop-reference.md); no source vendoring, dependency,
+runtime change or new hardware gate occurred.
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1681,6 +1702,9 @@ the recorded source snapshot is still current.
    but protocol intent remains unresolved. D40 adds bounded remote-event/final
    MRP observations; the repeated Stop/Home and sleep trace differ but do not
    establish a reliable normal-stop rule. The first D40 attempt was unobserved.
+   D41's [pyatv audit](pyatv-stop-reference.md) found a permissive legacy polling
+   heuristic and a fork event-waiter disconnect gap, with no validated Stop
+   discriminator. Separate any API termination-policy change from intent evidence.
    Per user decision D37, the original frozen-video failure is low priority:
    insufficient media connections are the likely cause; retain its evidence and
    raise priority if it recurs in later testing. Finish actual

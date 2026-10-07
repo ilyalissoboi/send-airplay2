@@ -239,3 +239,16 @@ URL event duration conversion follows Apple's [CMTime rational time contract](ht
 and [dictionary keys](https://developer.apple.com/documentation/coremedia/cmtime-dictionary-keys),
 inspected 2026-10-07. Only field/flag facts are used; no Apple implementation
 is copied and no Core Media runtime dependency is introduced.
+
+## pyatv remote-Stop source audit (D41)
+
+On 2026-10-07, we inspected pinned upstream `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`
+and tvOS reference fork `8144c77c6cecbed4f9ba2adb5a350ad86a8f6604` URL players,
+event channels, inherited HAP disconnect handler, HTTP connection behavior,
+MRP transport/feedback and AirPlay player tests. Both MIT license files were
+verified against blob `c27c9705f92fb19e805a82225f6f9ab5c17966f3`.
+Reference files remain ignored; no source was vendored or new dependency added.
+Twenty exact source/license blobs and six isolated offline observations are
+recorded in the [artifact](validation/pyatv-stop-source-audit-2026-10-07.json).
+The [analysis](pyatv-stop-reference.md) distinguishes the upstream polling
+heuristic, fork event-waiter gap and MRP transport callbacks from receiver intent.

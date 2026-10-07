@@ -168,3 +168,10 @@ An unowned item has unavailable scalar state; removal does not retain its privat
 metadata. This is the last processed MRP snapshot, not a fresh receiver query or
 a guarantee that every final peer message arrived before cancellation. These
 diagnostics leave failure priority, cleanup order and exit behavior unchanged.
+
+D41's [pyatv source audit](pyatv-stop-reference.md) found no validated remote-Stop
+discriminator in the inspected reference paths. Upstream's URL polling treats
+connection loss as completion; the tvOS fork instead waits for idle/stopped
+events, and its URL event-channel EOF alone leaves that waiter pending. MRP's
+closure/error callbacks describe transport state. Native classification remains
+unchanged pending network-loss evidence and an explicit termination-policy choice.
