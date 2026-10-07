@@ -480,6 +480,9 @@ Behavior with_mrp(const std::string& fixtures) {
     return behavior;
 }
 
+// Twenty-five of the session's 20 ms supervisor poll slices.
+constexpr auto supervisor_observation_time = 500ms;
+
 // Wire values of PlaybackCommand, independent of the enum under test.
 constexpr std::uint32_t wire_play = 1, wire_pause = 2, wire_stop = 4, wire_seek = 45;
 
@@ -558,6 +561,11 @@ void mrp_end_tests(const std::string& fixtures) {
                                   fake_receiver_dependencies(receiver, true));
         check(controller.start() == CastResult::ok, "scripted MRP receiver start");
         check(eventually([&] { return controller.snapshot().playback.owned; }), "owned");
+        // The session counts a loss only after its own 20 ms supervisor poll has
+        // seen ownership, so a momentary owner is never "lost". Keep ownership
+        // for many poll slices before replacing the item; on a slow runner an
+        // immediate replacement can precede the supervisor's next poll.
+        std::this_thread::sleep_for(supervisor_observation_time);
         check(receiver.remote_control().push_mrp_state(mrp_state_playing, 0, "another-item"),
               "replacement item pushed");
         check(eventually([&] { return controller.snapshot().session.cleaned_up; }),
