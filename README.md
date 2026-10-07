@@ -10,8 +10,9 @@ returned home after sender shutdown. The session retains a separate native
 remote-control session, now extended with native MRP status and controls. G2
 controls and selected G3 lifecycle cases passed on that combination, including
 Ethernet interruption cleanup and fresh same-credential playback after reconnection
-(D42). An experimental versioned C playback interface now exists (D46) but has
-not been receiver-tested; receiver-stop intent remains pending.
+(D42). An experimental versioned C playback interface (D46) passed its manual
+TV checks on that combination (D48), as did one seek past 4 GiB and E-AC-3 audio
+in a remuxed film; receiver-stop intent remains pending.
 A historical full-clip run failed sustained video: after buffering near 18 seconds,
 the picture froze while audio continued to EOF.**
 
@@ -222,7 +223,7 @@ The [D43 PR review](docs/pr-review.md) fixed URL diagnostic redaction and decode
 MRP/event plaintext cleanup on exception paths. With the D46 playback interface
 tests, Windows static/shared Release each pass 27 CTest targets; offline runner
 contracts pass 10 tests. These checks are separate from the dated receiver
-observations above; the C interface has no receiver observation yet.
+observations above; the C interface's receiver results are D48.
 
 ## Milestones
 

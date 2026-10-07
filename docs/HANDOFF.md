@@ -12,7 +12,8 @@ checkpoint, review disposition, validation commands and ordered development queu
 **Active slice: public playback interface (D46).** At the user's request PR #13
 (D45 handoff) was merged as `b0b0f86` after all ten checks passed, and the
 versioned C playback interface was started on `claude/public-playback-api` with
-its own PR. It is implemented and unit/CI-tested, **not receiver-tested**; see
+its own PR. Its manual plan **passed on the TV on 2026-10-08 (D48)** for one
+receiver/host, with D47's teardown fix; see
 [public-api.md](public-api.md) and the D46 record in section 4.
 
 **PR #12 is merged (D45).** The user merged
@@ -818,9 +819,8 @@ At the user's request the fake then gained an optional MRP data stream
 (`Behavior::mrp_fixtures`, `FakeMrpPeer`), and the controller tests now cover
 ownership, accepted pause/play/seek/stop reaching the receiver with their wire
 numbers, MRP-reported `media_end` and `ownership_lost`. That work found a
-session teardown ordering bug, fixed under D47 below. **No receiver cast has
-been run through the interface**; the CLI evidence does not transfer to it
-automatically. Contract, mapping tables, limits and next steps:
+session teardown ordering bug, fixed under D47 below. Receiver results for the
+interface are under D48. Contract, mapping tables, limits and next steps:
 [public-api.md](public-api.md).
 
 **D47 (remote feedback no longer cancelled at teardown, 2026-10-08):** the MRP
@@ -839,6 +839,22 @@ under 1.5 s with a 300 ms deadline, no failure reported). **This changes the
 runtime used by both `airplay2-cli cast` and the C interface:** every recorded
 hardware result predates it, so the next receiver run must use a build that
 contains D47.
+
+**D48 (public interface manual batch, 2026-10-08):** with the user at the TV,
+the [manual plan](public-api.md#manual-validation-plan) ran on source head
+`8a7050d` (D47 runtime) through `airplay2-api-host`, using a local driver that
+kept the receiver address out of all output and restored staged executables with
+hash checks. Checks 1-7 passed with observer confirmation: start/stop, controls,
+full clip to media_end, cancel during start (a few frames, then Home), remote
+Home button (connection_lost/exit 1, as known), receiver sleep then fresh cast
+after wake, and the shared build. Ten cycles in one process passed 10/10. A
+`cast --media-log` run with a user-provided 6.32 GB remuxed film passed a seek
+past 4 GiB (37 requests at offsets of 4,490,723,328 bytes and above, picture at
+about 1:20:00 with sound) and played E-AC-3 audio normally, without an Atmos
+indication. One receiver, firmware and host only; unreachable-address, handle
+counts and cable-pull checks were not run. Record:
+[receiver-validation.md](receiver-validation.md#public-playback-interface-manual-batch-d48-2026-10-08)
+and its [artifact](validation/native-api-host-manual-batch-windows-2026-10-08.json).
 
 ## 5. Implemented code and verification
 

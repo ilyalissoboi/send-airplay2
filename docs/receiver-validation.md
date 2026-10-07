@@ -24,13 +24,20 @@ later testing. Preserve its original FAIL evidence. Startup pause remains active
 See the dated observations below; record each receiver/firmware/platform separately.
 
 D43's [PR review](pr-review.md) changes diagnostic redaction and decoded MRP/event
-plaintext ownership. It passed offline checks only; the latest hardware artifact
-still fingerprints D40's runtime. No hardware pass is attributed to the D43 build.
+plaintext ownership. It passed offline checks only; no hardware pass is attributed
+to the D43 build on its own.
+
+**D48 (2026-10-08):** the experimental C playback interface passed its seven-check
+[manual plan](public-api.md#manual-validation-plan) through `airplay2-api-host`
+(static and shared), on the D47 teardown runtime at `8a7050d`. A `cast` CLI run
+on the same runtime played a user-provided remuxed film with E-AC-3 audio and
+served user-observed seeks past 4 GiB. See
+[the D48 record](#public-playback-interface-manual-batch-d48-2026-10-08).
 
 The Boost HTTP media server is implemented with loopback tests on Windows
 static/shared builds; see [media-server.md](media-server.md). Apple TV HTTP
 fetch and firewall reachability passed in later reference and native runs.
-Real-file >4-GiB seek remains NOT RUN. The original media-server slice itself
+Real-file >4-GiB seek passed later for one selected file (D48). The original media-server slice itself
 performed no receiver or credential operation. The development
 `airplay2-cli serve` command now exposes that server for the pyatv reference
 playback step. With pyatv 0.18.0 the receiver never connected to `serve`. With
@@ -38,7 +45,6 @@ an unmerged pyatv fix it fetched the whole file from `serve` while video and
 audio played. See
 [pyatv reference playback](#pyatv-reference-playback-2026-10-06) and
 [the fork result](#reference-playback-with-unmerged-pyatv-fix-2026-10-06).
-Real-file >4-GiB seek remains NOT RUN.
 
 The environment below was supplied by the user on 2026-10-06 (Asia/Tokyo).
 It identifies the intended test setup. A Windows discovery run subsequently
@@ -84,7 +90,9 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Repeated casting | Ten start/stop cycles without stale sessions | Native PASS: ten short independent casts, alternating five MRP Stop and five direct teardown; owned playing status, exit 0, no session/failed-read errors in each. Long sessions and visible home-screen observation remain separate |
 | Receiver sleep/wake | Terminal cleanup; fresh cast works after waking | PASS: user-confirmed sleep, automatic connection_lost/exit 1 cleanup, fresh cast after wake without pairing, normal video/audio and EOF return home |
 | Network interruption | Bounded failure; next cast can recover | PASS for the selected D42 Ethernet interruption: URL feedback timeout triggered automatic joined cleanup; a fresh explicit cast after reconnection/Home reused credentials and passed video/audio/near-end EOF/Home. See [D42](#ethernet-interruption-and-fresh-recovery-d42-2026-10-07). Broader network/reliability cases remain pending; automatic in-session reconnect/resume is not implemented. |
-| Large file | Seek beyond 4 GiB without integer truncation | NOT RUN |
+| Large file | Seek beyond 4 GiB without integer truncation | PASS for one selected file (D48): 6.32 GB remuxed film (64-bit `co64` offsets); after `seek 4800`, 37 range requests at offsets of 4,490,723,328 bytes and above were all answered 206; user saw the picture jump to about 1:20:00 with sound, then back to about 0:10:00. Other files, receivers and hosts untested |
+| Non-AAC audio | E-AC-3 audio plays | PASS for one selected file (D48): E-AC-3 5.1 (Atmos-flagged) in MP4 played normally by user report; no Atmos indication was shown, and whether the TV/AV chain can show one is unknown |
+| Public C interface | Start, controls, end, stop, recovery through `playback.h` | PASS (D48): all seven manual checks through `airplay2-api-host`, static and shared, plus ten cycles in one process; see the D48 record |
 | Packaged Windows host | Discovery, native loading, file access, serving work | NOT RUN |
 
 Use a personally owned or redistributable unprotected test clip. Capture sanitized
@@ -1111,3 +1119,44 @@ and `git diff --check` passed. All ten CI checks passed at tested head `72b3059`
 in [this run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37579365861).
 Inspect the actual PR head after publishing this evidence follow-up; CI remains
 separate from the selected receiver observations above.
+
+## Public playback interface manual batch (D48, 2026-10-08)
+
+First receiver runs through the experimental C interface
+([public-api.md](public-api.md)) and the first on the D47 teardown runtime.
+Source head `8a7050d8e17a7ec7684ef0dbcb3561c78731660c`; Windows 11 x64; the
+Living Room Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged from
+the prior report and not queried; stored profile, no pairing. A local driver
+discovered the receiver (address never printed), staged each tested executable
+at a path with an existing inbound firewall rule, and restored the original with
+SHA-256 equality. No firewall, network, credential or receiver setting changed.
+Normal MRP/16-slot/30-second-start/one-second-confirmation defaults applied.
+Executable hashes, tested source blobs, fixed-field output and observer answers
+are in the [artifact](validation/native-api-host-manual-batch-windows-2026-10-08.json).
+
+| Check | Native result | Observer |
+| --- | --- | --- |
+| 1. Start, 30 s, local stop (static host) | `Start: ok` in 1.8 s, owned/playing; sender_stop, cleaned, failed_reads=0, releases=1, exit 0 | Normal video/audio; Home after stop |
+| 2. Pause, play, seek 60, seek 10, MRP stop | All `Control: ok`; paused at 11.1 s rate 0; positions 61.7 s and 11.5 s after seeks; sender_stop, exit 0 | All visible as expected; Home after stop |
+| 3. Full clip, status only, stdin open | Positions 61.3/121.3 s on time; receiver stopped at end, media_end at 131.6/131.6 s; host exited by itself, exit 0 | Moving video throughout, including near 0:18; normal audio; Home at end |
+| 4. Stop 1 s into a blocking start | `start=cancelled` at 1,078 ms (93 reads already made); releases=1; follow-up cast started in 1.8 s and stopped cleanly | A few frames showed, then Home; follow-up played normally and returned Home |
+| 5. TV/Home button on the remote | URL events closed about 11.6 s into playback; connection_lost (url_events/disconnected), cleaned in 0.3 s, exit 1 (known classification) | Button pressed about 10 s in; Home |
+| 6. Receiver sleep, then fresh cast after wake | Paused, then URL events closed about 5.5 s later; connection_lost, exit 1; final MRP position 0.0. Fresh cast after wake: same credentials, started, sender_stop, exit 0 | Sleep (not a cable pull); woke to Home; fresh cast played video/audio, then Home |
+| 7. Check 1 with the shared build | `linkage=shared`; same results as check 1 | Normal video/audio; Home |
+| Ten cycles in one process | 10/10 PASS alternating MRP+local and local stop; 10,000 reads, failed_reads=0, releases=10, exit 0 | Telemetry only |
+| Film via `cast --media-log` | Seeks 4800/600 accepted, positions 4807.4/607.4 s of 6824.5 s; 94 requests all 206, 37 at offsets >= 4 GiB (about 82 MB served from there); 45 read-ahead requests closed by the receiver after seeks (`io_error`); failed_reads=0; MRP stop, sender_stop, exit 0 | E-AC-3 audio played normally; no Atmos indication; picture at about 1:20:00 with sound, then about 0:10:00; Home after stop |
+
+The film was remuxed by the user from MKV with ffmpeg stream copy: H.264 High
+level 4.0 1920x802 23.976 fps, E-AC-3 5.1 (Atmos extension flag set in `dec3`),
+`mov_text` subtitles, index before media data and 64-bit `co64` chunk offsets.
+It is personally held and not committed; the record identifies it by SHA-256,
+size and codecs only. Check 7's first attempt found no receiver in discovery and
+ran nothing. Not run: an unreachable-address check, Task Manager handle counts
+during the cycles, and a network-cable interruption on this runtime (check 6
+used sleep).
+
+These results cover one receiver, firmware and host. Remote Stop/Home still
+reports connection_lost/exit 1; no classifier change is implied. The original
+frozen-video FAIL keeps its D37 priority; no freeze recurred in this batch,
+including the full clip. Startup pause did not recur in this batch; that does not
+establish its cause.

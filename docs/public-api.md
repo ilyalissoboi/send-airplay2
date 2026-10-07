@@ -1,6 +1,6 @@
 # Public playback interface (version 1)
 
-Status: **implemented, experimental, not receiver-tested through this interface.**
+Status: **implemented, experimental; manual plan passed on one receiver/host (D48).**
 Snapshot 2026-10-07 (Asia/Tokyo), decision D46. The header is
 [`include/send_airplay2/playback.h`](../include/send_airplay2/playback.h); it is the
 authoritative contract. This page records why it has that shape and what it
@@ -8,8 +8,9 @@ does not cover yet.
 
 The interface wraps the private `UrlPlaybackSession` and `MediaServer` without
 changing the validated protocol sequence (session-design.md section 2, D28-D38).
-Unit/CI success here is not receiver interoperability: no cast has been run
-through the C interface on hardware yet.
+Unit/CI success here is not receiver interoperability. The D48 manual batch is the
+only receiver evidence for this interface: one Apple TV 4K (tvOS 26.6) and one
+Windows 11 x64 host; see [receiver-validation.md](receiver-validation.md#public-playback-interface-manual-batch-d48-2026-10-08).
 
 ## User decisions (D46)
 
@@ -94,7 +95,14 @@ plan must run on a build that contains this fix. New regression tests in
 
 ## Manual validation plan
 
-None of these checks has been run yet. They use `airplay2-api-host` (README), which
+**Result (D48, 2026-10-08): checks 1-7 and the ten-cycle check passed** on the D47
+runtime at `8a7050d`, with the observer confirming each TV result; see
+[the D48 record](receiver-validation.md#public-playback-interface-manual-batch-d48-2026-10-08).
+Check 6 used receiver sleep rather than a cable pull. The unreachable-address
+check and Task Manager handle counts were not run. The optional past-4-GiB
+seek passed through `cast --media-log` with a 6.32 GB remuxed film.
+
+The plan uses `airplay2-api-host` (README), which
 calls the library only through `playback.h`. Record each run's commit, host
 SHA-256 (`Get-FileHash`), static/shared linkage, receiver model and firmware,
 and a yes/no for every observation, in a sanitized `docs/validation/` artifact.
@@ -122,8 +130,9 @@ Telemetry only (no observer needed):
 
 ## Not covered yet
 
-1. **Receiver validation through the interface** (the plan above). Until it runs,
-   only the CLI path has hardware evidence.
+1. **Broader receiver validation.** D48 covers one receiver, firmware and host,
+   and the unreachable-address and cable-interruption cases were not run through
+   the interface.
 2. **Silent receiver during stop.** The session ordering issue the MRP fake
    found is fixed (D47 below), but one edge remains: if the receiver never
    answers a remote `/feedback` request that is in flight at stop, that request

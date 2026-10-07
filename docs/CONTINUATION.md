@@ -79,14 +79,16 @@ The public playback/session ABI and production bindings are not implemented.
 - Bounded opt-in startup, HTTP completion, buffering, fixed-label event and final
   received MRP diagnostics. Fixed URL state/type labels use `other` for unknown
   strings; peer targets/unknown keys/arbitrary descriptions do not enter output.
-- **D47, unit/CI-tested only:** at teardown, an in-flight remote `/feedback`
+- **D47, receiver-tested in D48:** at teardown, an in-flight remote `/feedback`
   request is waited for (bounded by its deadline) instead of cancelled, so
   remote control outlives the URL session.
-- **D46, unit/CI-tested only:** experimental C interface `playback.h` (API
+- **D46, receiver-tested in D48:** experimental C interface `playback.h` (API
   version 1). One `sap2_cast` handle owns the media server and session, loads
   credentials by profile, takes host `read_at` callbacks, and offers blocking
-  start, cancelling stop, polled/waited status and MRP commands. No receiver has
-  been cast to through it yet.
+  start, cancelling stop, polled/waited status and MRP commands. D48 passed its
+  seven manual checks and ten cycles on one Apple TV 4K / tvOS 26.6 / Windows 11.
+- **D48 also passed, for one selected file:** a seek past 4 GiB (37 range
+  requests above 4 GiB, user-observed picture) and E-AC-3 audio, via `cast`.
 
 D43 review fixes are in `d1011ab`, `880feb3` and `ab7ec01`: decoded MRP extension
 payloads have move-only erasing owners; event bodies are erased if acknowledgment
@@ -141,18 +143,18 @@ development, not retroactive gate failures.
 1. **In progress: versioned public playback interface (D46).** The user chose
    credentials by profile name (secrets stay inside the library) and a
    playback-only first slice. `include/send_airplay2/playback.h` and its
-   controller are implemented and unit/CI-tested only; see
-   [public-api.md](public-api.md). The development host `airplay2-api-host` drives
-   only that interface. Remaining in this item, in order: run the
-   [manual validation plan](public-api.md#manual-validation-plan) with the user
-   at the TV; finish the slice's PR review and get merge approval; then the C#
+   controller are implemented; see [public-api.md](public-api.md). The
+   development host `airplay2-api-host` drives only that interface. Its manual
+   validation plan **passed on 2026-10-08 (D48)**, on the D47 runtime, static and
+   shared, with the user observing; see receiver-validation.md. Remaining in this
+   item, in order: finish the slice's PR review and get merge approval; then the C#
    binding and packaged UWP proof under item 6. The fake receiver is now shared
    (`tests/fake_receiver.h`) and has an optional MRP data stream, so the
    controller's commands, ends and ownership loss are unit-tested. That work
    found a teardown ordering bug, now fixed (D47): an in-flight remote
    `/feedback` request is waited for at stop instead of cancelled. D47 changes
-   the session runtime shared with `cast`, so all recorded hardware results
-   predate it; run the manual plan on a D47 build. Related hardware-free work: a
+   the session runtime shared with `cast`; D48 is the first hardware batch on
+   it (including one `cast` CLI run). Related hardware-free work: a
    synthetic beyond-4-GiB byte-source/range test through the media server, and
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
 2. **Startup reliability.** Spontaneous pause at zero/first-frame-only occurred
