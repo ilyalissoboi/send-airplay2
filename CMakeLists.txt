@@ -50,6 +50,12 @@ if(WIN32)
   target_link_libraries(airplay2-cli PRIVATE ws2_32 advapi32)
 endif()
 sap2_warnings(airplay2-cli)
+# Development host for the public playback interface: library calls go through
+# send_airplay2/playback.h only; cli_input.cpp is a host-side stdin helper.
+add_executable(airplay2-api-host tools/airplay2_api_host.cpp src/cli_input.cpp)
+target_include_directories(airplay2-api-host PRIVATE src)
+target_link_libraries(airplay2-api-host PRIVATE send_airplay2 Threads::Threads)
+sap2_warnings(airplay2-api-host)
 
 include(CTest)
 if(BUILD_TESTING)
@@ -225,6 +231,10 @@ if(BUILD_TESTING)
     -DCLI=$<TARGET_FILE:airplay2-cli> -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_cast.cmake)
   set_tests_properties(cli_cast PROPERTIES TIMEOUT 30)
+  add_test(NAME api_host_arguments COMMAND ${CMAKE_COMMAND}
+    -DHOST=$<TARGET_FILE:airplay2-api-host> -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/api_host_arguments.cmake)
+  set_tests_properties(api_host_arguments PROPERTIES TIMEOUT 30)
   add_test(NAME cli_invalid_timeout COMMAND airplay2-cli discover --timeout-ms 0)
   set_tests_properties(cli_invalid_timeout PROPERTIES WILL_FAIL TRUE)
   add_executable(cli_fixture_tests src/cli.cpp tests/cli_fixture.cpp)

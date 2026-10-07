@@ -139,10 +139,12 @@ development, not retroactive gate failures.
    credentials by profile name (secrets stay inside the library) and a
    playback-only first slice. `include/send_airplay2/playback.h` and its
    controller are implemented and unit/CI-tested only; see
-   [public-api.md](public-api.md). Remaining in this item, in order: finish the
-   slice's PR review and get merge approval; extract the session tests' fake
-   receiver so the controller's active/command/end paths are tested; an observed
-   receiver cast through the C interface (needs the user at the TV); then the C#
+   [public-api.md](public-api.md). The development host `airplay2-api-host` drives
+   only that interface. Remaining in this item, in order: run the
+   [manual validation plan](public-api.md#manual-validation-plan) with the user
+   at the TV; extract the session tests' fake receiver so the controller's
+   active/command/end paths are unit-tested; finish the slice's PR review and get
+   merge approval; then the C#
    binding and packaged UWP proof under item 6. Related hardware-free work: a
    synthetic beyond-4-GiB byte-source/range test through the media server, and
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).

@@ -799,7 +799,12 @@ connection_lost; no Play/seek retry. `export.h` now holds `SAP2_API`, and the
 library includes the credential store sources and links `advapi32` on Windows.
 Implementation is in `src/cast_controller.*` and `src/playback_api.cpp`; tests
 are `cast_controller_tests` and the C-language `c_playback_smoke`. Windows
-static/shared Release passed 26/26 CTest targets each. **No receiver cast has
+static/shared Release passed 26/26 CTest targets each. At the user's request a
+development host, `airplay2-api-host` (`tools/airplay2_api_host.cpp`), was then
+added; it calls the library only through `playback.h`, offers interactive,
+cancel-during-start and repeated-cycle modes for the
+[manual validation plan](public-api.md#manual-validation-plan), and has its own
+offline `api_host_arguments` test (27/27 targets each). **No receiver cast has
 been run through the interface**; the CLI evidence does not transfer to it
 automatically. Contract, mapping tables, limits and next steps:
 [public-api.md](public-api.md).

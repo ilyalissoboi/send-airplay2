@@ -69,11 +69,38 @@ session ended or stop began, `COMMAND_FAILED` for a rejected or unanswered comma
   call any `sap2_cast_*` function for its own handle: `stop` joins those threads.
 - After `stop` returns, no `read_at` runs.
 
+## Manual validation plan
+
+None of these checks has been run yet. They use `airplay2-api-host` (README), which
+calls the library only through `playback.h`. Record each run's commit, host
+SHA-256 (`Get-FileHash`), static/shared linkage, receiver model and firmware,
+and a yes/no for every observation, in a sanitized `docs/validation/` artifact.
+Never record the receiver address, media URL or PIN. Results not confirmed on the
+TV are telemetry only.
+
+Observed on the TV (Apple TV 4K / tvOS 26.6, existing profile, `gas.mp4`):
+
+| # | Procedure | Expected | Observer confirms |
+|---|---|---|---|
+| 1 | Interactive start, about 30 s, Enter | `Start: ok`, active/playing/owned; summary end `sender_stop`, cleaned, `releases=1` | Video and audio; Home after stop |
+| 2 | `pause`, `play`, `seek` forward and back, then `stop` | Each `Control: ok`; position follows seeks | Visible pause/resume and seeks, audio returns, Home |
+| 3 | Full clip, `status` only, stdin left open | Host ends itself; end `media_end`; `releases=1` | Moving video to the end (D37 freeze watch), Home |
+| 4 | `--cancel-after-ms 1000` | `Cancel: start=cancelled`, start well under 30 s; a fresh cast then works | No stuck loading; Home |
+| 5 | Stop or Home on the Apple TV remote | Host ends itself; end `connection_lost` (known); `releases=1` | Home |
+| 6 | Sleep the TV or pull Ethernet once, then a fresh cast | End `connection_lost` with a failure channel; the fresh cast reaches `Start: ok` | Second cast plays and returns Home |
+| 7 | Repeat 1 with the shared build | `linkage=shared`, same results | Same as 1 |
+
+Telemetry only (no observer needed):
+
+- `--cycles 10 --hold-ms 5000`: `Cycles: passed=10/10`, every cycle released once,
+  no failed reads; Task Manager handle/thread counts return to the starting level.
+- An unused LAN address: `Start: connection` within the request timeout.
+- Optional, open gate: seek past 4 GiB in a larger unprotected H.264/AAC MP4.
+
 ## Not covered yet
 
-1. **Receiver validation through the interface.** It needs an observed cast on the
-   recorded Apple TV (start, controls, Stop/Home, natural EOF) with the binary's
-   fingerprint. Until then only the CLI path has hardware evidence.
+1. **Receiver validation through the interface** (the plan above). Until it runs,
+   only the CLI path has hardware evidence.
 2. **Happy-path tests through the controller.** The fake receiver lives inside
    `url_playback_session_tests.cpp`. Extracting it into a shared test header would
    let `cast_controller_tests` cover active status, commands and natural end.
@@ -87,8 +114,12 @@ session ended or stop began, `COMMAND_FAILED` for a rejected or unanswered comma
 
 ## Validation
 
-Windows 11 x64, MSVC (Visual Studio 18 2026), Release, static and shared: 26/26
+Windows 11 x64, MSVC (Visual Studio 18 2026), Release, static and shared: 27/27
 CTest targets each. New targets:
+
+- `api_host_arguments`: runs `airplay2-api-host` offline. Covers argument
+  refusals, range errors reported by `sap2_cast_create`, and an absent profile
+  that stops before any network work with `releases=1`.
 
 - `c_playback_smoke` (C): compiles the header as C and links the real library.
   Covers version and result names, option defaults, argument validation, source

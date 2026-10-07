@@ -129,6 +129,24 @@ counts. It sends no playback commands. See the
 [media server CLI notes](docs/media-server.md#development-cli-serve) for options
 and limits.
 
+## Public playback interface host (development)
+
+```powershell
+build/Release/airplay2-api-host.exe --address 192.0.2.10 --profile living-room --file C:\media\clip.mp4
+```
+
+`airplay2-api-host` drives the experimental C interface in
+[`playback.h`](include/send_airplay2/playback.h) and nothing else in the library,
+so it exercises the boundary a C# or JNI host would use. By default it is
+interactive, with the same commands as `cast` (`status`, `pause`, `play`,
+`seek SECONDS`, `stop`; Enter or EOF stops locally). It exits on its own when the
+session ends. `--cancel-after-ms N` stops a blocking start after N ms;
+`--cycles N [--hold-ms N]` runs N casts in one process, alternating MRP stop and
+local stop. The summary reports the API version, static/shared linkage, fixed
+status fields, read counts and how many times the library released the media
+source. It prints no address, profile, path or media URL. The manual procedures
+are in [the interface's validation plan](docs/public-api.md#manual-validation-plan).
+
 ## Native playback experiment (Windows desktop)
 
 ```powershell
@@ -202,7 +220,7 @@ See [session design and gates](docs/session-design.md) and
 
 The [D43 PR review](docs/pr-review.md) fixed URL diagnostic redaction and decoded
 MRP/event plaintext cleanup on exception paths. With the D46 playback interface
-tests, Windows static/shared Release each pass 26 CTest targets; offline runner
+tests, Windows static/shared Release each pass 27 CTest targets; offline runner
 contracts pass 10 tests. These checks are separate from the dated receiver
 observations above; the C interface has no receiver observation yet.
 
