@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifndef SEND_AIRPLAY2_RECEIVER_CONNECTION_H
 #define SEND_AIRPLAY2_RECEIVER_CONNECTION_H
+#include "channel_keys.h"
 #include "control_records.h"
 #include "pair_setup.h"
 #include "receiver_stream.h"
@@ -36,8 +37,16 @@ public:
     [[nodiscard]] std::unique_ptr<PairCredentials>
     finish_pairing(std::string_view pin, const ReceiverOperation& operation);
     /// Run M1..M4 with trusted credentials, then install fresh record keys at the
-    /// response boundary. Credentials are borrowed for this call only.
+    /// response boundary. Credentials are borrowed for this call only. The
+    /// verified shared secret is retained, erasably, for derive_channel_keys.
     void verify(const PairCredentials& credentials, const ReceiverOperation& operation);
+    /// Only available after verification. Derive the sender's write/read keys for
+    /// another encrypted channel of this session, such as the event channel or
+    /// a data stream; see channel_keys.h for the label sets. Outputs must be
+    /// distinct owners and are unchanged on failure. Like every method, a
+    /// failure closes this connection. close() erases the retained secret.
+    void derive_channel_keys(const ChannelKeyLabels& labels, Secret32& sender_write,
+                             Secret32& sender_read);
     /// Only available after verification. One request in flight, no pipelining.
     /// Non-200 responses are returned to the session caller for semantic handling.
     /// All network/framing/authentication failures are terminal. Caller owns body.
@@ -61,6 +70,7 @@ private:
     ReceiverResponse pending_m2_;
     std::unique_ptr<ControlWriter> writer_;
     std::unique_ptr<ControlReader> reader_;
+    ChannelKeySource channel_keys_;
 };
 } // namespace send_airplay2::detail
 #endif

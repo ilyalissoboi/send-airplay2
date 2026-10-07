@@ -60,7 +60,8 @@ struct ReceiverConnectionTestAccess {
     }
     static bool closed(const ReceiverConnection& connection) {
         return connection.state_ == ReceiverConnection::State::closed && !connection.setup_ &&
-               !connection.writer_ && !connection.reader_ && connection.pending_m2_.body.empty();
+               !connection.writer_ && !connection.reader_ && connection.pending_m2_.body.empty() &&
+               !connection.channel_keys_.available();
     }
     static void exhaust_sequence(ReceiverConnection& connection) {
         connection.sequence_ = UINT32_MAX;
@@ -542,9 +543,22 @@ void verification_transport_tests() {
         }
         check(observed->requests.size() == 4 && !observed->closed,
               "one connection preserves counters across exchanges");
+        // The accessory derives event keys from its side of the shared secret with
+        // literal labels; the sender's write key is the receiver's "Read" key.
+        Secret32 event_write, event_read;
+        connection.derive_channel_keys(event_channel_labels(), event_write, event_read);
+        const auto shared_secret = bytes(accessory.shared.bytes);
+        check(event_write.bytes == derive_control_key(shared_secret, "Events-Salt",
+                                                      "Events-Read-Encryption-Key") &&
+                  event_read.bytes == derive_control_key(shared_secret, "Events-Salt",
+                                                         "Events-Write-Encryption-Key"),
+              "event channel keys match the accessory, chunk " + std::to_string(chunk));
         connection.close();
         check(observed->closed && ReceiverConnectionTestAccess::closed(connection),
-              "close wipes both record directions");
+              "close wipes both record directions and the channel secret");
+        reject("channel keys after close", TransportError::closed, [&] {
+            connection.derive_channel_keys(event_channel_labels(), event_write, event_read);
+        });
     }
     for (unsigned scenario = 0; scenario < 4; ++scenario) {
         auto stream = std::make_unique<ScriptStream>();
@@ -751,6 +765,9 @@ void native_socket_tests() {
         auto stream = connect_receiver(listener.endpoint, ReceiverOperation::after(2s));
         TestSocketOwner peer(accept(listener.socket.value, nullptr, nullptr));
         stream->require_idle(ReceiverOperation::after(1s));
+        check(!stream->wait_readable(ReceiverOperation::after(20ms)),
+              "idle poll expires without closing native socket");
+        stream->require_idle(ReceiverOperation::after(1s));
         const auto request = text("loopback");
         std::size_t sent = 0;
         while (sent < request.size()) {
@@ -772,6 +789,8 @@ void native_socket_tests() {
             throw std::runtime_error("Test loopback send failed");
         }
         Bytes inbound(5);
+        check(stream->wait_readable(ReceiverOperation::after(1s)),
+              "native poll detects reply without consuming it");
         offset = 0;
         while (offset < inbound.size()) {
             offset += stream->read_some(inbound.data() + offset, inbound.size() - offset,

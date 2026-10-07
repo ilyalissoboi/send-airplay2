@@ -41,8 +41,17 @@ access sets a public synthetic seed and inspects erasure.
    another signed proof. Only then derive the sender's outbound/inbound keys with
    `Control-Salt` and `Control-Write-Encryption-Key`/`Control-Read-Encryption-Key`.
 5. `take_control_keys(write, read)` transfers keys into distinct caller-owned
-   secret buffers once and closes/erases the exchange. Outputs stay unchanged on
-   failure. A connection must install both directional record owners together.
+   secret buffers once and closes/erases the exchange, including the shared
+   secret. Outputs stay unchanged on failure. A connection must install both
+   directional record owners together.
+6. `take_session_keys(write, read, channels)` makes the same release but moves
+   the shared secret into an empty `ChannelKeySource`. That owner derives keys
+   for further channels of the same verified session (the event channel and
+   data streams, see `channel_keys.h`) and never returns the secret.
+   `ReceiverConnection::verify` uses this release, retains the owner while
+   verified, exposes `derive_channel_keys`, and erases the secret on `close()`.
+   Outputs and the destination stay unchanged on failure; an occupied
+   destination is refused.
 
 Responses are complete TLV bodies bounded at 1,024 bytes. The generic TLV fragment
 rules still apply. This state machine additionally rejects missing fields,
@@ -53,8 +62,10 @@ schema is a candidate receiver path; future extensions require explicit tests.
 
 Non-200 responses, authentication/backend errors, malformed messages and method
 order errors are terminal. Errors contain categories only. Ephemeral and handshake
-encryption keys are erased after M3; the shared secret is erased after deriving
-both directions; control keys remain private until one-time release.
+encryption keys are erased after M3. The shared secret stays in the verifier
+from M4 until the one-time release, which either erases it
+(`take_control_keys`) or moves it into the session's `ChannelKeySource`
+(`take_session_keys`). Control keys remain private until that release.
 
 The future HTTP/socket layer must correlate responses on the same connection,
 enforce status/body limits before buffering, handle partial writes exactly once,
@@ -82,23 +93,16 @@ jobs and Linux ASan/UBSan passed in the
 [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37427502668).
 Inspect checks for the actual final [PR #4](https://github.com/ilyalissoboi/send-airplay2/pull/4)
 head before merging, including documentation-only updates.
-No Apple TV 4K / tvOS 26.6 pairing or playback operation was attempted; hardware
-revocation, reconnect and interoperability remain NOT RUN.
+At that original slice, no Apple TV pairing or playback was attempted.
+Subsequent enrollment/reuse and URL traffic are linked below; hardware
+revocation and restart reconnect remain NOT RUN.
 
-Next implement first-time PIN/SRP provisioning with a vetted backend and verified
-server proofs/signatures, then credential storage and bounded HTTP/socket
-transport. Establish the pyatv hardware playback baseline and native authenticated
-connection before enabling URL playback. Wrong-PIN validation is pending because
-this slice consumes existing credentials and does not implement a PIN flow.
+Subsequent development implements authenticated PIN/SRP, bounded receiver transport
+and Windows credential storage/CLI. Live enrollment and separate-process reuse
+passed; wrong PIN/revocation/restart hardware checks remain pending. Native URL
+traffic and native-only G1 with the minimum remote session are observed;
+see receiver-validation.md.
 
-Subsequent development implements private [PIN/SRP provisioning](pin-pairing.md)
-with Botan and verified server proofs/signatures. Synthetic wrong-PIN tests now
-exist there. Subsequent [receiver transport](receiver-transport.md) implements
-bounded HTTP/socket I/O and the encrypted-record transition privately; receiver
-validation remains pending. Subsequent [credential storage/CLI authentication](credential-storage.md)
-implements a Windows desktop trusted store and commands; other OS stores remain pending.
-The shared Ed25519 verification adapter now rejects noncanonical encodings,
-identity points and keys outside the prime-order subgroup before accepting a
-signature. Botan supplies subgroup validation; OpenSSL alone can accept trivial
-forgeries under weak keys. This applies to pinned peer verification as well as
-new PIN enrollment; see the weak-key regression fixtures in pin-pairing.md.
+The shared Ed25519 adapter rejects noncanonical encodings, identity points and keys
+outside the prime-order subgroup using Botan validation before OpenSSL verification.
+See the weak-key regression fixtures in pin-pairing.md.

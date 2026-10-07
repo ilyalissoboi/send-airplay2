@@ -41,7 +41,7 @@ idempotent, and no callback runs after it returns. Hosts serialize stop/destruct
 the immutable owned string returned by `url()` can be read concurrently. A server
 cannot be restarted; create a new instance and bearer path for a new session.
 Shared-library users require a compatible C++ compiler/runtime; a versioned C ABI
-and file/StorageFile/content-URI adapters remain future work.
+and public file/StorageFile/content-URI adapters remain future work.
 
 ## Network and resource policy
 
@@ -62,7 +62,7 @@ and file/StorageFile/content-URI adapters remain future work.
   many source worker threads run. No unbounded application connection/task queue
   exists; acceptance pauses at the limit. The OS manages its bounded listen
   backlog. Cancelled sessions retain their admission slot until their source
-  callback finishes, so cancellation cannot create an unbounded callback queue.
+  callback and pending network operation finish, so cancellation cannot create an unbounded callback queue.
 - Headers are bounded to 8192 bytes, 64 fields, and 2048 bytes per parsed value
   and request target. Each active request has a fixed 64-KiB streaming buffer;
   no full representation is buffered. HTTP syntax/normalization, including folded
@@ -106,6 +106,59 @@ type/subtype (default `video/mp4`). Content is neither inspected, transcoded nor
 compressed; the host is responsible for accurate media metadata. Malformed,
 overflowing, unknown-unit and multipart ranges use the existing full-response
 policy, as documented in [design.md](design.md).
+
+## Opt-in request diagnostics
+
+Set `record_request_diagnostics=true` and drain `take_request_log()` to inspect
+closed requests. A fixed 256-record ring drops the oldest entries on overflow;
+recording allocates no memory. Draining is thread-safe, can allocate, and leaves
+the queue intact if allocation fails. Requests retain their admission slot until
+source and network callbacks finish, so a cancelled write's partial byte count
+is included before the record is emitted. `stop()` drains all accepted work.
+
+Records contain a local request number, GET/HEAD/other, numeric response status,
+selected offset, declared length, expected body length, body bytes reported by
+socket writes, header completion, active requests on acceptance, and steady-clock
+accept/last-body-write/close milliseconds since construction. No peer addresses,
+URLs, arbitrary headers, metadata or payloads are included. Terminal categories
+are complete, cancelled, timeout, I/O, source or internal error. HEAD declares the
+representation length but expects/writes no body. A source failure before headers
+can finish an empty HTTP 500 while still being classified as a source error.
+
+Socket-write completion means delivery to the local TCP stack. It proves neither
+receiver receipt nor video decoding; source read counts prove even less. The
+native `cast --media-log` flag prints these records. `--event-log` additionally
+prints only allowlisted finite numeric/boolean buffering values (rate, position,
+duration, readyToPlay, stallCount) from root/params/value dictionaries, separately
+from the existing event outlines. Diagnostic time values accept zero and valid
+numeric CMTime; values over 1e9 seconds and stall counts outside uint32 are omitted.
+Unknown strings/metadata never appear in the scalar records. No playback,
+retry, range or timeout policy is changed by enabling these logging flags.
+
+For the controlled receiver comparison, `cast --minimal-remote` selects the
+existing minimum-session experiment: independently verified remote SETUP/events
+remain open, but remote RECORD, the data stream, MRP handshake/subscription/
+heartbeat and remote feedback are omitted. The default still enables all MRP
+controls. This explicit diagnostic mode has no MRP ownership/position/control
+telemetry; a URL stopped/idle event is classified receiver_stop without MRP's
+EOF evidence. Require separate human video/audio/Home observations and keep its
+results separate from normal control-enabled casting. It is not a recovery mode.
+
+`cast --media-connections N` selects the bounded server limit (1..16). D36 makes
+16 the normal `cast` default after explicit 16-slot full-clip, control and selected
+lifecycle checks on the recorded Apple TV/tvOS/Windows combination. Four slots
+were occupied by long-lived read-ahead responses while needed ranges waited; the
+higher-capacity traces admitted five/six concurrent requests. This is a bounded
+admission choice, not a decoding guarantee or a fix for the intermittent startup
+pause. See the [receiver evidence](receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
+
+The option changes both active request slots and the maximum source-worker count.
+Each slot has one 64-KiB buffer: `cast` now permits up to 1 MiB of body buffers and
+16 source workers, versus 256 KiB/four workers before. There is no application
+connection queue or eviction/retry of active ranges. The 600,000-ms per-request
+cast budget is unchanged. Generic `MediaServerOptions` and `serve` still default
+to four; callers can explicitly request a lower `cast` budget. Independent URL/MRP
+sessions, credentials and URL-before-remote teardown remain unchanged.
 
 ## Development CLI (`serve`)
 
@@ -160,7 +213,11 @@ offline runner contracts on all three platforms. The macOS IP-restriction fixtur
 uses an ordinary loopback client with a different allowed peer IP, rather than
 binding an unconfigured loopback alias. Check the actual final PR head separately.
 Virtual >4-GiB sources verify offset/length arithmetic without claiming a real
-large-file adapter or Apple TV seek result. Reference pyatv playback of an owned
-H.264/AAC MP4, real receiver HTTP fetch/ranges, firewall reachability and native
-authenticated playback remain pending. Next add the authenticated playback
-session and host media adapter, using the same clip as the reference baseline.
+large-file or Apple TV seek result. The file adapter and `serve` are implemented;
+reference video/audio, receiver fetch and firewall reachability passed. Native
+`cast` initially fetched the full MP4 without visible presentation. The minimal
+native remote-control SETUP/event session then passed G1. Native MRP controls
+and automatic session cleanup are implemented; EOF and ten short native cycles
+have selected receiver evidence. Remaining manual G3 validation, packaged/brokered sources,
+real-file >4-GiB seeking and network-change checks remain pending; see the
+[receiver record](receiver-validation.md) and [session plan](session-design.md).

@@ -3,9 +3,12 @@
 Start with [docs/HANDOFF.md](docs/HANDOFF.md), then read
 [docs/design.md](docs/design.md) and [docs/receiver-validation.md](docs/receiver-validation.md).
 They preserve the user scope, decisions, evidence, current status and next steps.
+For the separate-session checkpoint and ordered work queue, also read
+[docs/CONTINUATION.md](docs/CONTINUATION.md).
 
 - Continue on the current PR branch while it is open; inspect its actual head
-  before writing. The initial API is experimental and the library cannot cast yet.
+  before writing. The API is experimental; native-only G1 passed for one recorded receiver/host.
+  Use the current PR handoff rather than assuming that casting code is absent.
 - Keep user requirements, engineering proposals and tested behavior distinct.
   Update the handoff when making a material decision or reaching a validation gate.
 - Build/test using CMake and CTest as described in README.md. Unit/CI success is

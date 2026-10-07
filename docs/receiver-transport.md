@@ -3,8 +3,10 @@
 This private C++17 slice connects the existing PIN setup, peer verification and
 control-record processors to synchronous native TCP I/O. It is not a public ABI,
 CLI pairing command, credential store, media server or playback implementation.
-Apple TV interoperability remains untested; loopback/fake receivers are the test
-gate for this PR.
+Loopback/fake receivers validate the transport contract. Later Windows desktop
+PIN/reconnect and native URL-session traffic were observed on Apple TV 4K / tvOS
+26.6. The minimum native remote-control SETUP/event session then passed G1.
+See receiver-validation.md for exact results and remaining gates.
 
 ## Connection and authentication lifecycle
 
@@ -59,7 +61,7 @@ Transfer-Encoding, upgrades/trailers, HEAD/CONNECT and close-delimited framing.
 Responses advertising Connection other than keep-alive are rejected. Extra bytes
 coalesced after a final response, queued input before a new request/key transition,
 or trailing partial encrypted records are terminal correlation failures. Event
-channels/server-initiated requests are future separate connections.
+channels/server-initiated requests use the separate EventChannel described below.
 
 HTTP peers need not echo CSeq. Ordering cannot cryptographically correlate an
 unlabelled plaintext HTTP response or eliminate a race with delayed unsolicited
@@ -83,6 +85,64 @@ are nonblocking/close-on-exec, and sends suppress SIGPIPE (SO_NOSIGPIPE on macOS
 MSG_NOSIGNAL on Linux/Android). EOF before a complete response is terminal; an
 incomplete encrypted record at EOF is rejected by the record codec. Errors expose
 sanitized transport/crypto categories, without endpoint, body or native error data.
+
+## Event channel (receiver to sender)
+
+A verified session also receives requests from the receiver on a separate TCP
+connection to the base SETUP's `eventPort`. `EventChannel` (`event_channel.*`)
+owns that stream and HAP records keyed with `event_channel_labels()` (see
+`channel_keys.h`). `EventRequestParser` and `encode_event_response`
+(`receiver_http.*`) frame this opposite direction:
+
+- **Request line:** `METHOD target RTSP/1.0` or `HTTP/1.1`. The method is a
+  token of at most 32 bytes; the target is visible ASCII.
+- **Fields:** the same rules as responses. Token names, visible values, unique
+  lower-cased names, at most 32 fields, an 8 KiB header block, and no
+  Transfer-Encoding, Upgrade or Trailer. `Content-Length` is at most 32 KiB and
+  an absent length means an empty body. `CSeq` must be decimal when present.
+- **Buffering:** requests may arrive back to back. The parser keeps at most one
+  maximal request plus one read chunk of unparsed input, and erases consumed
+  bytes.
+- **Replies:** each well-formed request gets `<protocol> 200 OK` with
+  `Content-Length: 0`, `Audio-Latency: 0` and the request's `Server` and `CSeq`
+  echoed. These are the fields of the reference sender's reply (pyatv 0.18.0
+  `channels.py`, MIT; constants only). The reply is sent before the request is
+  returned to the caller.
+- **Failures:** every error is terminal. A clean or partial end of input,
+  authentication or framing failure, deadline or cancellation closes the
+  stream and erases keys and buffered plaintext.
+- **Waiting:** a reader thread uses `ReceiverOperation::until_cancelled(flag)`.
+  The receiver may stay silent indefinitely, so only the session's
+  cancellation flag ends that wait; the native stream polls it in short slices.
+
+Tests use a scripted stream and literal request and reply bytes; see
+`event_channel_tests.cpp`. Later native G1 runs exercised encrypted event traffic
+on Apple TV 4K / tvOS 26.6; the minimal native remote session later passed standalone G1.
+
+## NTP timing responder
+
+A base SETUP with `timingProtocol` `NTP` announces a sender UDP port. The
+receiver sends timing requests there and stalls the SETUP until they are
+answered (observed on tvOS 26.6). `TimingResponder` (`ntp_timing.*`) does this:
+
+- **Socket:** binds a numeric local address (normally the local end of the
+  control connection) on an ephemeral port; `port()` supplies `timingPort`.
+- **Requests:** exactly 32 bytes, big-endian, type `0xd2`. Only datagrams from
+  the receiver's address are answered, from any source port. Anything else is
+  dropped and counted, and never ends the responder. That includes Windows
+  oversized-datagram and ICMP-reset errors.
+- **Reply:** the request's protocol byte, type `0xd3`, sequence 7, zero
+  padding. The reference time is the request's send time; receive and send
+  times come from the wall clock, at microsecond resolution (NTP seconds =
+  Unix seconds + 2,208,988,800, modulo 2^32).
+- **Lifecycle:** `serve()` runs on one thread until the operation is cancelled
+  (`ReceiverOperation::until_cancelled`), then throws that category. Socket
+  failures are terminal and close the socket.
+
+The native socket helpers (Winsock runtime, socket owner, numeric addresses,
+nonblocking setup, readiness polling) moved unchanged from `receiver_stream.cpp`
+into the private `native_socket.*`, so TCP and UDP share one deadline and
+cancellation model.
 
 ## Evidence and provenance
 
@@ -118,5 +178,6 @@ connection, PIN display/entry, credential change/save or playback was attempted.
 
 Subsequent [credential storage/CLI authentication](credential-storage.md) adds
 the private credential codec, Windows desktop store and hidden PIN/reconnect
-commands. Next validate the Apple TV 4K / tvOS 26.6 / Windows 11 x64 path.
+commands. Later receiver results include PIN/reuse, encrypted URL-session
+traffic and media fetch; the minimum native remote session subsequently passed presentation G1.
 Resolve the Botan UWP packaging constraint before Screenbox integration.

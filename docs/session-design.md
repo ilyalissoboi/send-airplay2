@@ -1,7 +1,12 @@
-# URL playback session: design proposal
+# URL playback session design and validation
 
-Status: **PROPOSAL, not implemented.** Written 2026-10-06 for PR #11. Nothing
-here is receiver-tested unless the evidence column says so.
+Status: **PARTIALLY IMPLEMENTED**, updated 2026-10-07 for PR #12 (ready for review).
+Channel keys, events, timing, messages, URL orchestration and `cast` are implemented.
+Standalone G1 initially failed. The minimal native remote-control SETUP/event
+session then passed G1 without pyatv, RECORD or MRP: video/audio played and the TV
+returned home after sender shutdown (user-observed). MRP and controls are now
+implemented; G2 evidence is recorded separately. See [MRP contracts](mrp-controls.md). Reference-derived details
+are hypotheses unless receiver-validation.md explicitly records native evidence.
 
 User decisions on 2026-10-06:
 
@@ -28,11 +33,12 @@ project's `MediaServer`, with explicit start, state, controls and teardown.
 | Playback state arrives as `playbackState` events (`loading`, `playing`) on the event channel | Observed: filtered event log of the fork run |
 | Seek, pause/resume and position work through pyatv's remote control | Observed, but that path is MRP over a separate data stream (`controlType` 2), **not** `/command` |
 | After the reference `stop`, the TV left playback, but the receiver reported `Paused` and the sender session stayed open | Observed |
-| Event-channel keys: HKDF-SHA512 over the pair-verify shared secret, salt `Events-Salt`; the sender writes with the key from info `Events-Read-Encryption-Key` and reads with `Events-Write-Encryption-Key` | pyatv 0.18.0 source (MIT), `ap2_session.py`/`airplayv2.py`; not yet exercised by this library |
+| Event-channel keys: HKDF-SHA512 over the pair-verify shared secret, salt `Events-Salt`; the sender writes with the key from info `Events-Read-Encryption-Key` and reads with `Events-Write-Encryption-Key` | Independent fixtures and native event traffic in the recorded G1 runs |
 | Event messages are RTSP-style requests from the receiver; the sender answers `200 OK` with `CSeq` echoed and an empty body | pyatv source; observed traffic shape |
 | `/command` body: `{"params": {"data": <bplist of the command>}}`, HTTP/1.1 on the control connection, with `X-Apple-Session-ID` and `X-Apple-StreamID` from the type-130 SETUP | Fork source; matched the successful run |
 
-Hypotheses to test on hardware, in this order:
+Historical hardware hypotheses (H5 passed for the recorded minimum; H1-H3
+remain optional, untested alternatives to the implemented MRP controls):
 
 - **H1:** `setRate` with rate 0 pauses and rate 1 resumes. Rate 1 is part of the
   validated start sequence.
@@ -43,12 +49,31 @@ Hypotheses to test on hardware, in this order:
   must come from evidence, not guessing. If none is found, seek waits for the
   control-path decision (decision 2).
 - **H4:** closing the control and event connections ends playback on the TV.
-  Explicit stop may also need a command or `TEARDOWN`.
+  Supported by the minimum native session run: the user observed home-screen
+  return after sender shutdown. Native EOF and selected receiver-side lifecycle
+  checks are now recorded in receiver-validation.md; normal remote-stop reason
+  classification remains unresolved.
+- **H5 (G1, 2026-10-07):** the receiver presents URL playback only while the
+  sender also holds a remote-control session. Our session alone played
+  headlessly (fetching the whole file, reporting `playing`); with pyatv's
+  remote-control session open, the same native session was visible. The
+  remote-control session therefore belongs to start, not only to controls.
+  The native minimum SETUP/event experiment subsequently passed G1 without
+  RECORD, feedback or MRP on this receiver. Broader firmware/lifetime validation
+  remains pending; D29 still requires MRP for controls.
 
 ## 2. Session sequence (reference-derived)
 
-Steps 1-9 reproduce the validated fork sequence without its separate
-remote-control session. That omission is itself a hypothesis: verify it first.
+The existing URL session implements steps 1-10 below. G1 showed that omitting
+the separate remote-control session prevents visible presentation on this receiver.
+The minimal native experiment now starts an independently verified
+remote-control-only SETUP/event connection before URL start and retains it until
+URL teardown. That historical minimum omitted remote RECORD, feedback and the data stream/MRP handshake
+to isolate the SETUP/event contribution. This minimum passed the recorded
+45-second native-only G1 run on tvOS 26.6; that does not validate prolonged
+session lifetime, other firmware or native playback controls. The normal CLI now
+extends it with RECORD, data SETUP and MRP; see [MRP contracts](mrp-controls.md)
+and the separate G2 record.
 
 1. Connect TCP to the receiver's AirPlay port and run pair-verify with stored
    credentials (existing `ReceiverConnection`). Record the route-selected local
@@ -75,20 +100,20 @@ remote-control session. That omission is itself a hypothesis: verify it first.
 
 Teardown order: mark the session stopping; send the stop command if H4 needs
 one; stop the feedback thread; close the event channel; close the control
-connection; stop the timing responder; stop `MediaServer`, which joins its
-callbacks. Each step runs even if an earlier one failed. No automatic
+connection; stop the timing responder; join/close MRP, then the remote event/control session;
+stop `MediaServer`, which joins its callbacks. Each step runs even if an earlier one failed. No automatic
 reconnect or re-pair.
 
 ## 3. Components
 
-| Component | Responsibility | Reuse / new |
+| Component | Responsibility | Implementation / remaining work |
 |---|---|---|
-| Channel key derivation | Derive named HKDF keys from the verified shared secret, then wipe it at session end | **Change:** today `PairVerifier` releases only control keys and wipes the secret. Proposed: `ReceiverConnection` keeps an erasing owner of the secret while verified and exposes `derive_channel_keys(salt, write_info, read_info)`. The secret is never returned to callers |
-| Event channel | TCP to `eventPort`; HAP records; parse receiver requests; reply `200`; decode plist envelopes | Reuse `ReceiverStream`, `ControlReader`/`ControlWriter`. **New:** a bounded request parser and response encoder (`receiver_http` handles only the opposite direction) |
-| Timing responder | Answer NTP-style timing requests | **New:** 32-byte packet codec and UDP socket adapter, with fixtures from an independent Python encoder |
-| Session messages | Build the SETUP and `/command` bodies; parse SETUP, `/info` and event replies | **New**, on the D27 plist codec |
-| `UrlPlaybackSession` | Private orchestrator: start, state, controls, teardown | **New** |
-| `airplay2-cli cast` | Development command: `--address --profile --file`; interactive stdin controls; sanitized state lines | **New**; the private URL, identifiers and payloads are never printed |
+| Channel key derivation | Derive named HKDF keys; erase the shared secret at session end | Implemented `ChannelKeySource` and `ReceiverConnection::derive_channel_keys`; secret never returned |
+| Event channel | TCP/HAP records; acknowledge requests; decode plist envelopes | Implemented `EventRequestParser`, response encoder and `EventChannel` |
+| Timing responder | Answer NTP-style timing requests | Implemented fixed packet codec and receiver-filtered UDP responder |
+| Session messages | SETUP and `/command` bodies, response and event parsing | Implemented on D27 with independent plistlib fixtures |
+| `UrlPlaybackSession` | URL start, state and teardown; retain remote control | Implemented URL/MRP flow; G1 passed; G2 controls, EOF and receiver-side stop validated separately |
+| `airplay2-cli cast` | File/profile start, state lines and Enter/EOF cleanup | Implemented status, pause/play, absolute seek and stop; URL/address/payload values never printed |
 
 ## 4. Threading model (D28)
 
@@ -100,36 +125,45 @@ cancellation polling.
 
 - **Control:** callers and the feedback thread share `ReceiverConnection`
   under one mutex. Each request holds it for at most its deadline (5 s
-  proposed), so one request is in flight, as the connection requires. Feedback
+  by default), so one request is in flight, as the connection requires. Feedback
   waits on a condition variable with a 2 s timeout; a late feedback is
   acceptable.
 - **Event reader thread:** owns the event socket and its record keys. It reads
-  with short deadlines so it can see cancellation, answers every request, and
-  publishes decoded state into a `SessionState` (mutex and condition variable).
+  until cancelled, with native waits polling in short slices, answers every
+  request, and publishes decoded state under a mutex and condition variable.
   Waiters, such as start waiting for `playing`, use deadlines.
 - **Timing thread:** owns the UDP socket. It is stateless per packet and
   bounded per packet.
+- **Remote event reader:** owns the separately keyed remote event channel. It
+  acknowledges requests and counts them without changing URL playback state.
+  Its unexpected failure marks the composite session failed.
 - **`MediaServer`:** unchanged; it owns its Boost threads.
-- **Failure:** any terminal control or event error moves the session to
-  `failed` with a sanitized category. Every thread stops and later calls throw.
-  Events never run user callbacks on internal threads in this slice; callers
-  poll or wait on state.
+- **Lifecycle supervisor (D33):** starts after all owners are initialized.
+  Detects terminal control/event/timing/MRP failure, URL terminal state,
+  receiver-reported owned-item EOF and loss of established ownership. It alone
+  joins workers and closes transports; readers signal state rather than joining
+  themselves. Concurrent stop calls serialize the supervisor join. Pending MRP
+  commands cancel before cleanup acquires their mutex. Status remains readable.
+  The first end reason is retained; cleaned_up follows joins/key erasure.
+  The CLI polls stdin and stops its media server after session cleanup.
+  Events never run user callbacks; callers poll or wait on state.
 
 *Alternative:* move the event channel, timing and feedback onto one Boost.Asio
 `io_context`, since Boost is already a dependency. That means fewer threads,
 but it needs an asynchronous rewrite of the record and framing layers, and two
 I/O models in one session. Not recommended for the first slice.
 
-## 5. Controls and status (D29)
+**D33 (engineering decision, 2026-10-07): automatic ordered cleanup.**
+Use one supervisor and the existing synchronous I/O deadlines. EOF requires
+owned receiver telemetry at its positive duration while paused/stopped, never
+extrapolated position. URL stopped/idle allows one second for the independently
+ordered final MRP position before classifying receiver_stop. A pause alone is
+not terminal. Failure takes priority if detected first. Do not reconnect or
+adopt a replacement player automatically; recovery is a fresh explicit cast
+with retained credentials. Detailed contracts: [mrp-controls.md](mrp-controls.md).
+Selected hardware EOF/cycle evidence does not close all G3 gates.
 
-- **Proposed: `/command` only for this slice.** Start, state events and, once
-  H1/H2 pass, pause/resume and status. Seek and stop ship only after H3/H4 are
-  confirmed on hardware.
-- **Alternative: implement the MRP data stream.** This is the path where seek,
-  pause and status are already validated. It needs a protobuf dependency or
-  codec, a second encrypted channel with `DataStream-Salt` plus seed, and
-  pyatv's remote-control session. That is a large surface; defer it unless
-  H1-H3 fail.
+## 5. Controls and status (D29)
 
 **Decision D29: MRP now.** `/command` is still used to start playback
 (validated). H1-H3 remain useful fallbacks but are no longer on the critical
@@ -180,11 +214,11 @@ heartbeat. Field numbers come from pyatv's `.proto` definitions (MIT, derived
 from reverse engineering); record that provenance in dependencies.md before
 use.
 
-**D31 (decided 2026-10-06): in-tree wire codec.** The options considered:
+**D31 (decided 2026-10-06): in-tree wire codec.** The historical options considered (the in-tree codec is selected):
 
 | Option | Licence and footprint | Notes |
 |---|---|---|
-| In-tree bounded wire codec (varint, length-delimited, fixed32/64; unknown fields skipped) plus hand-written mapping for the message set | Apache-2.0; no dependency | Same reasoning as D27. Fixtures generated in Python with the `protobuf` package and pyatv's compiled MRP messages, an independent oracle. Recommended |
+| In-tree bounded wire codec (varint, length-delimited, fixed32/64; unknown fields skipped) plus hand-written mapping for the message set | Apache-2.0; no dependency | Same reasoning as D27. Fixtures generated in Python with the `protobuf` package and pyatv's compiled MRP messages, an independent oracle. Selected (D31) |
 | protozero (header-only wire reader and writer) plus hand-written mapping | BSD-2-Clause; vcpkg | Removes the wire-codec work; mapping and bounds stay ours |
 | Google protobuf runtime with `protoc` code generation from pyatv's `.proto` files | BSD-3-Clause runtime; build-time `protoc`; vendored MIT `.proto` | Complete and generated, but adds a heavy runtime and code generation to the Windows, Android and UWP builds, and generated parsers need their own size limits |
 
@@ -207,8 +241,14 @@ administered one per session.
   size. Waits for `playing` and for command responses have explicit deadlines.
 - **Secrets:** shared-secret, channel-key and record-key owners erase
   themselves on success, failure and destruction, and are non-copyable.
+  Decoded MRP extension payloads also have move-only owners that erase bytes on
+  replacement/destruction, including partially decoded batches and rejected replies (D43).
+  Event bodies are protected through acknowledgment and then transferred to the
+  caller; failed replies erase the body before release.
 - **Logging:** never log the media URL, receiver identifiers, sender identifiers
   or raw event payloads. Diagnostics use categories and allowlisted fields.
+  URL type/state strings are fixed labels (`other` for unknown strings); URL
+  outlines omit unknown dictionary keys and request targets (D43).
 - **Network:** the sender process needs inbound UDP (timing) and inbound TCP
   (media) from the receiver only. On this host, the existing `airplay2-cli.exe`
   Allow rules cover both. Packaged Windows and Screenbox need their own proof.
@@ -216,27 +256,82 @@ administered one per session.
 ## 8. Implementation and validation plan
 
 1. Channel key derivation, with independent Python HKDF fixtures for the
-   Events labels. Unit only.
+   Events labels. Unit only. **Done** on `claude/url-playback-session`:
+   `channel_keys.*`, `PairVerifier::take_session_keys` and
+   `ReceiverConnection::derive_channel_keys`.
 2. Event request parser/encoder and event channel, tested against a loopback
    fake receiver with fragmented and coalesced records, bad tags, oversized
-   requests, cancellation and EOF.
+   requests, cancellation and EOF. **Done:** `EventRequestParser`,
+   `encode_event_response`, `EventChannel` and
+   `ReceiverOperation::until_cancelled`, tested with a scripted stream.
 3. Timing packet codec and responder: Python fixtures; source filtering;
-   malformed packets.
+   malformed packets. **Done:** `ntp_timing.*`, with literal-byte known answers
+   (conversion values computed with Python `datetime` and pyatv's fraction
+   formula) and real IPv4/IPv6 UDP loopback tests.
 4. Session message builders and parsers, with plistlib fixtures for SETUP and
    `/command` bodies. Field names must match the sanitized reference sequence.
+   **Done:** `session_messages.*`, byte-exact against the fixtures. The display
+   name is `send-airplay2` rather than the reference's `pyatv`; all
+   capability-relevant fields use reference values (D30).
 5. `UrlPlaybackSession` against a scripted fake receiver: the full sequence,
-   each step failing, start timeout, teardown order, and secret cleanup.
-6. `airplay2-cli cast`, start and stop only. Then MRP, after D31: wire codec
-   and message mapping with fixtures; data-stream framing; the
-   remote-control session against a fake receiver; then status and
-   controls. **Hardware gate G1:** the user
-   observes video and audio; `serve`-style read counts; teardown returns the
-   TV to idle (H4).
-7. Controls over MRP: status, pause/resume, seek, stop. **Hardware gate
-   G2.** Record each result in
+   representative step failures, start timeout, teardown order, and secret cleanup.
+   **Done:** `url_playback_session.*`. Additions:
+   - The RTSP request URI is `rtsp://<local address>/<random 32-bit number>`,
+     like the reference's.
+   - `/info` errors are tolerated, as in the reference.
+   - `/feedback` is best effort: a non-2xx answer is ignored, but a transport
+     failure marks the session failed.
+   - An unreadable event body is answered and counted, and does not end the
+     session.
+6. `airplay2-cli cast`, start and stop only. **Implemented** (`cast_cli.*`);
+   hardware gate G1 initially FAILED without a remote-control session. The
+   minimal native SETUP/event session then PASSED G1 without pyatv. The user
+   observed video/audio and return home after sender shutdown.
+   D29/D31 framing, message mapping, handshake and controls are implemented
+   with independent fixtures; native G2 telemetry is recorded separately.
+   **Hardware gate G1:** the user
+   observes video and audio; read counts demonstrate fetch; teardown returns
+   the TV home. Protocol idle, EOF/home-screen observation and receiver-side
+   stop are separate G3 checks; see the latest lifecycle record.
+7. Controls over MRP: status, pause/resume, seek, stop. **Implemented. Hardware gate
+   G2** is recorded separately. Record each result in
    receiver-validation.md, including failures.
-8. Robustness: 10 start/stop cycles, receiver sleep/wake, network loss
-   mid-play. **Gate G3.**
+8. Robustness: automatic EOF/failure/ownership-loss cleanup is implemented.
+   Native EOF and ten short start/stop cycles passed for the recorded receiver.
+   G2/EOF observations and sleep/wake recovery passed by user report.
+   Receiver-remote stop cleaned up but classified connection_lost/exit 1.
+   A separate full-clip run failed video presentation after buffering near 18 s:
+   video froze while audio continued normally through EOF (user-confirmed).
+   D35 HTTP/buffering diagnostics and controlled comparisons are implemented:
+   minimal/four and MRP/16 passed full video/audio/Home; default MRP/four buffered
+   but recovered. D36 passed user-observed controls, ten fresh-process Stop/Enter
+   cycles and natural EOF at 16 slots. Normal `cast` now defaults to 16 bounded
+   slots (override 1..16); generic server/`serve` defaults remain four. A 16-slot
+   attempt also paused at zero without transport commands or remote input, so
+   startup ordering/state is the next investigation. Per user decision D37, keep
+   the original frozen-video failure at low priority unless it recurs; insufficient
+   media connections are the likely cause, with evidence retained. Startup pause
+   remains active. D38 records startup phase/state/rate timing and requires one
+   continuous second of eligible playing before returning, without retrying Play
+   or extending the deadline. D39's [manual batch](manual-validation.md) passed
+   selected startup, controls/full EOF and sleep/wake presentation/Home; remote
+   Stop/Home cleaned automatically but normal protocol intent remains unresolved.
+   Playing telemetry and EOF cleanup do not prove moving video.
+   Normal stop classification and longer playback remain **Gate G3**; D42 passed
+   the selected Ethernet interruption/explicit fresh recovery check below.
+   See the dated validation record.
+   D40 observes remote notifications using fixed labels and bounded numeric
+   codes in the shared 256-entry log, without updating URL state. Final MRP
+   diagnostics report retained received state after joined cleanup; received
+   elapsed time is distinct from extrapolated progress. These observations do
+   not change failure priority, end reasons or cleanup order. See
+   [mrp-controls.md](mrp-controls.md#remote-stop-diagnostics-d40) for the contract.
+   D41's [reference audit](pyatv-stop-reference.md) found no validated remote-Stop
+   discriminator. D42's user-confirmed Ethernet removal triggered automatic
+   connection_lost/exit 1 cleanup on URL feedback timeout. Fresh casting after
+   reconnection/Home reused credentials and passed observed video/audio/near-end
+   EOF/Home with media_end/exit 0. The existing termination policy is unchanged;
+   this is fresh explicit recovery, not automatic reconnect or resume.
 
 Each step follows AGENTS.md: readability rules, clang-format, static/shared
 CTest, sanitizer CI. Each step is its own commit on the PR branch.

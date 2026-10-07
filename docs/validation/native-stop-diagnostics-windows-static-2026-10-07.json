@@ -1,0 +1,2068 @@
+{
+  "decision": "D40",
+  "published_code_head": "4a18b2662150768a00154ca17e222f2e701fd192",
+  "recorded_date": "2026-10-07",
+  "host": "Windows 11 x64 static Release",
+  "receiver": "Living Room / Apple TV 4K AppleTV14,1",
+  "firmware_scope": "Prior user report tvOS 26.6 (23L773), assumed unchanged; not newly queried.",
+  "purpose": "Bounded remote notifications and retained final MRP observations; classification unchanged.",
+  "wake_home_observation": {
+    "quote": "Home Screen is visible.",
+    "scope": "Home before fresh wake cast; playback/EOF observation is separate."
+  },
+  "cases": {
+    "unobserved-attempt": {
+      "experiment": "D40 remote-stop diagnostic comparison receiver_stop, no pyatv",
+      "cli_sha256": "56458c4920e1f5a09b1d2b43c9eb122267de3dfd3c4b9997ab46584e5f660fa3",
+      "output": [
+        {
+          "time_seconds": 40.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=0 phase=connecting state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1448 phase=insert_item state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1457 phase=insert_item state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1457 phase=date_range state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1465 phase=date_range state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1465 phase=item_end state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1473 phase=item_end state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1473 phase=rate state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1481 phase=rate state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1481 phase=waiting state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1538 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1545 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=1656 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=2312 phase=waiting state=playing status=0 rate=1.000000e+00"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup: elapsed_ms=3314 phase=ready state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Startup summary: records=15 truncated=no cleaned=no"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "State: playing"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=reason,type,name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=playbackState state=playing keys=params,params.position,params.position.flags,params.position.value,params.position.timescale,params.position.epoch,params.readyToPlay,params.stallCount,params.item,params.playbackState,params.duration,params.duration.flags,params.duration.value,params.duration.timescale,params.duration.epoch,params.rate,type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Buffer: buffer params.rate=1.000 params.position=0.000 params.duration=131.567 params.readyToPlay=yes params.stallCount=0"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Media: id=1 method=get status=206 offset=0 declared=2 expected=2 written=2 header=yes active=1 accepted_ms=1500 last_write_ms=1501 closed_ms=1501 end=complete"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Media: id=2 method=get status=206 offset=0 declared=53953926 expected=53953926 written=41943040 header=yes active=1 accepted_ms=1529 last_write_ms=2251 closed_ms=2261 end=io_error"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Media: id=3 method=get status=206 offset=31916032 declared=22037894 expected=22037894 written=786432 header=yes active=1 accepted_ms=2295 last_write_ms=2372 closed_ms=2382 end=io_error"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Media: id=4 method=get status=206 offset=31391744 declared=65536 expected=65536 written=65536 header=yes active=1 accepted_ms=2382 last_write_ms=2382 closed_ms=2382 end=complete"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Media: id=5 method=get status=206 offset=31522816 declared=393216 expected=393216 written=393216 header=yes active=1 accepted_ms=2424 last_write_ms=2487 closed_ms=2488 end=complete"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Media: id=7 method=get status=206 offset=1114112 declared=458752 expected=458752 written=458752 header=yes active=2 accepted_ms=3133 last_write_ms=3192 closed_ms=3192 end=complete"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Media: id=8 method=get status=206 offset=1638400 declared=131072 expected=131072 written=131072 header=yes active=2 accepted_ms=3224 last_write_ms=3236 closed_ms=3236 end=complete"
+        },
+        {
+          "time_seconds": 43.4,
+          "line": "Media: id=9 method=get status=206 offset=31916032 declared=524288 expected=524288 written=131072 header=yes active=2 accepted_ms=3292 last_write_ms=3300 closed_ms=3308 end=io_error"
+        },
+        {
+          "time_seconds": 43.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.7,
+          "line": "Media: id=10 method=get status=206 offset=31719424 declared=131072 expected=131072 written=131072 header=yes active=2 accepted_ms=3315 last_write_ms=3326 closed_ms=3326 end=complete"
+        },
+        {
+          "time_seconds": 43.7,
+          "line": "Media: id=11 method=get status=206 offset=31653888 declared=65536 expected=65536 written=65536 header=yes active=2 accepted_ms=3360 last_write_ms=3360 closed_ms=3360 end=complete"
+        },
+        {
+          "time_seconds": 43.7,
+          "line": "Media: id=12 method=get status=206 offset=31796168 declared=54328 expected=54328 written=54328 header=yes active=2 accepted_ms=3400 last_write_ms=3401 closed_ms=3402 end=complete"
+        },
+        {
+          "time_seconds": 43.7,
+          "line": "Media: id=13 method=get status=206 offset=31929064 declared=511256 expected=511256 written=196608 header=yes active=2 accepted_ms=3438 last_write_ms=3469 closed_ms=3482 end=io_error"
+        },
+        {
+          "time_seconds": 44.8,
+          "line": "Media: id=14 method=get status=206 offset=31981568 declared=458752 expected=458752 written=458752 header=yes active=2 accepted_ms=4497 last_write_ms=4579 closed_ms=4579 end=complete"
+        },
+        {
+          "time_seconds": 45.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 45.0,
+          "line": "Media: id=15 method=get status=206 offset=32505856 declared=21448070 expected=21448070 written=917504 header=yes active=2 accepted_ms=4604 last_write_ms=4690 closed_ms=4697 end=io_error"
+        },
+        {
+          "time_seconds": 47.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 47.4,
+          "line": "Playback: owned=yes state=playing position=5.1 duration=131.6 mrp_messages=23 heartbeats=0"
+        },
+        {
+          "time_seconds": 49.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 51.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.0,
+          "line": "Media: id=17 method=get status=206 offset=5439488 declared=131072 expected=131072 written=131072 header=yes active=3 accepted_ms=11780 last_write_ms=11795 closed_ms=11795 end=complete"
+        },
+        {
+          "time_seconds": 53.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 55.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 57.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 61.7,
+          "line": "Media: id=6 method=get status=206 offset=32453352 declared=21500574 expected=21500574 written=786432 header=yes active=1 accepted_ms=2516 last_write_ms=2595 closed_ms=21543 end=io_error"
+        },
+        {
+          "time_seconds": 62.2,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 63.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 63.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 64.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 65.1,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 66.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 67.2,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 68.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 70.3,
+          "line": "Media: id=16 method=get status=206 offset=32505856 declared=21448070 expected=21448070 written=4390912 header=yes active=2 accepted_ms=10940 last_write_ms=11123 closed_ms=30052 end=io_error"
+        },
+        {
+          "time_seconds": 71.1,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 72.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 72.4,
+          "line": "Media: id=18 method=get status=206 offset=35586048 declared=18367878 expected=18367878 written=786432 header=yes active=3 accepted_ms=12996 last_write_ms=13101 closed_ms=32078 end=io_error"
+        },
+        {
+          "time_seconds": 73.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 74.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 74.8,
+          "line": "State: paused"
+        },
+        {
+          "time_seconds": 74.8,
+          "line": "URL event shape: type=playbackState state=paused keys=type,name"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "URL event shape: type=other keys=type,value"
+        },
+        {
+          "time_seconds": 75.3,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 75.3,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 75.3,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 75.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 76.6,
+          "line": "Media: id=19 method=get status=206 offset=35717120 declared=18236806 expected=18236806 written=4325376 header=yes active=4 accepted_ms=17135 last_write_ms=17328 closed_ms=36284 end=io_error"
+        },
+        {
+          "time_seconds": 80.0,
+          "line": "Failure: channel=url_events reason=disconnected"
+        },
+        {
+          "time_seconds": 80.1,
+          "line": "Final MRP: enabled=yes owned=yes state=paused at_end=no reported_position=0.000000e+00 duration=1.315670e+02 rate=1.000000e+00 mrp_messages=27 heartbeats=1"
+        },
+        {
+          "time_seconds": 80.1,
+          "line": "Media: id=20 method=get status=206 offset=38600704 declared=15353222 expected=15353222 written=3866624 header=yes active=4 accepted_ms=23270 last_write_ms=23435 closed_ms=39953 end=cancelled"
+        },
+        {
+          "time_seconds": 80.1,
+          "line": "Media: id=21 method=get status=206 offset=41091072 declared=12862854 expected=12862854 written=3735552 header=yes active=4 accepted_ms=30620 last_write_ms=30793 closed_ms=39953 end=cancelled"
+        },
+        {
+          "time_seconds": 80.1,
+          "line": "Media: id=22 method=get status=206 offset=43384832 declared=10569094 expected=10569094 written=4849664 header=yes active=4 accepted_ms=34952 last_write_ms=35131 closed_ms=39953 end=cancelled"
+        },
+        {
+          "time_seconds": 80.1,
+          "line": "Stopped. state=paused events=71 remote_events=7 feedback=18 timing=18 failed=yes reads=1060 bytes=69391418 failed_reads=0 span=[0,48300032) end=connection_lost cleaned=yes failure_channel=url_events failure_reason=disconnected"
+        }
+      ],
+      "commands": [
+        {
+          "time_seconds": 47.4,
+          "command": "status"
+        }
+      ],
+      "cycles": [],
+      "trials": [],
+      "manual_observations": {
+        "status": "NOT OBSERVED",
+        "quote": "Repeat the playback process - I was not able to observe the initial attempt",
+        "scope": "No remote action or Home result is confirmed; its paused/disconnect trace cannot be attributed to remote Stop."
+      },
+      "tested_source_blobs": {
+        "src\\cast_cli.cpp": "8a32427c3c9acc20fd3ab2efe190eb07c41cb776",
+        "src\\cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+        "src\\cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+        "src\\cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+        "src\\control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+        "src\\control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+        "src\\file_media_source.cpp": "5e7402cca8fe624e59e6c4c602286f677dd0d28f",
+        "src\\file_media_source.h": "a05ef442a202332a0d500ab9e4b44acfefbf2bfe",
+        "src\\media_server.cpp": "621626fc6891503c22402a5b283a176114983e0c",
+        "src\\mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+        "src\\mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+        "src\\mrp_messages.cpp": "00e1fa70cf54080d7d7eb0ff53195baefc87409e",
+        "src\\mrp_messages.h": "c0e40eeecd4990f77917432e2d7e1279e5f240a2",
+        "src\\mrp_session.cpp": "2b4277f6cb458302ccadd5e4575ead5415c6f682",
+        "src\\mrp_session.h": "77271d1fd3242b802ba85a16c142db4f4200f45f",
+        "src\\protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+        "src\\protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+        "src\\receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+        "src\\receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+        "src\\session_messages.cpp": "f87466dada15ef82c85db4e61f7a8abf11fe2d0c",
+        "src\\session_messages.h": "d1b502e6d06b313a4a0020f00455110afea4127e",
+        "src\\url_playback_session.cpp": "8fed8c9004f58a311e3ef37e112a687b463c9ffc",
+        "src\\url_playback_session.h": "1a8b61330eb3aa56061adaf47c5142ed48b0e3f0",
+        "include/send_airplay2/media_server.h": "9fab99bd54d99873e8188b2501e1101c1ed4e543"
+      },
+      "media_sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+      "media_bytes": 53953926,
+      "source_head": "5a2c58d9eec880c81e96ef264a489a709a7fa4a9",
+      "normal_media_default": 16,
+      "normal_start_timeout_ms": 30000,
+      "start_confirmation_interval_ms": 1000,
+      "startup_returned": true,
+      "stdin_held_open": true,
+      "exit_code": 1,
+      "summaries": [
+        "Startup summary: records=15 truncated=no cleaned=no",
+        "Failure: channel=url_events reason=disconnected",
+        "Stopped. state=paused events=71 remote_events=7 feedback=18 timing=18 failed=yes reads=1060 bytes=69391418 failed_reads=0 span=[0,48300032) end=connection_lost cleaned=yes failure_channel=url_events failure_reason=disconnected"
+      ],
+      "session_cleaned_up": true,
+      "source_scope": "Uncommitted D40 sources above base source_head; exact blob hashes are authoritative. The first unobserved attempt preceded a code-equivalent direct cstddef/cstdint header adjustment; the final sources were rebuilt and static/shared tested."
+    },
+    "receiver_stop": {
+      "experiment": "D40 remote-stop diagnostic comparison receiver_stop, no pyatv",
+      "cli_sha256": "da3f85a3f4b8f0595834b0462250859ee56c3bab89c38acdd632434d889f6e83",
+      "output": [
+        {
+          "time_seconds": 40.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=0 phase=connecting state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=384 phase=insert_item state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=394 phase=insert_item state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=394 phase=date_range state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=402 phase=date_range state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=402 phase=item_end state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=408 phase=item_end state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=408 phase=rate state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=416 phase=rate state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=416 phase=waiting state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=482 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=490 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=667 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=775 phase=waiting state=playing status=0 rate=1.000000e+00"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=1789 phase=ready state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup summary: records=15 truncated=no cleaned=no"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "State: playing"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=reason,type,name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=playbackState state=playing keys=params,params.position,params.position.flags,params.position.value,params.position.timescale,params.position.epoch,params.readyToPlay,params.stallCount,params.item,params.playbackState,params.duration,params.duration.flags,params.duration.value,params.duration.timescale,params.duration.epoch,params.rate,type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer params.rate=1.000 params.position=0.000 params.duration=131.567 params.readyToPlay=yes params.stallCount=0"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Media: id=1 method=get status=206 offset=0 declared=2 expected=2 written=2 header=yes active=1 accepted_ms=429 last_write_ms=432 closed_ms=432 end=complete"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Media: id=3 method=get status=206 offset=27000832 declared=26953094 expected=26953094 written=26953094 header=yes active=2 accepted_ms=730 last_write_ms=1168 closed_ms=1168 end=complete"
+        },
+        {
+          "time_seconds": 42.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.4,
+          "line": "Media: id=4 method=get status=206 offset=4197200 declared=22803632 expected=22803632 written=22803632 header=yes active=2 accepted_ms=1758 last_write_ms=2153 closed_ms=2153 end=complete"
+        },
+        {
+          "time_seconds": 43.2,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 45.9,
+          "line": "Playback: owned=yes state=playing position=5.1 duration=131.6 mrp_messages=20 heartbeats=0"
+        },
+        {
+          "time_seconds": 47.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 48.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 48.4,
+          "line": "Media: id=7 method=get status=206 offset=4325376 declared=393216 expected=393216 written=393216 header=yes active=4 accepted_ms=8059 last_write_ms=8112 closed_ms=8112 end=complete"
+        },
+        {
+          "time_seconds": 50.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.1,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.6,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.6,
+          "line": "Media: id=9 method=get status=206 offset=6488064 declared=131072 expected=131072 written=131072 header=yes active=5 accepted_ms=12306 last_write_ms=12316 closed_ms=12316 end=complete"
+        },
+        {
+          "time_seconds": 54.2,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 54.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 54.7,
+          "line": "Media: id=11 method=get status=206 offset=7405568 declared=262144 expected=262144 written=262144 header=yes active=6 accepted_ms=14404 last_write_ms=14452 closed_ms=14452 end=complete"
+        },
+        {
+          "time_seconds": 56.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 56.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 56.8,
+          "line": "Media: id=13 method=get status=206 offset=8454144 declared=262144 expected=262144 written=262144 header=yes active=7 accepted_ms=16540 last_write_ms=16588 closed_ms=16588 end=complete"
+        },
+        {
+          "time_seconds": 58.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 58.4,
+          "line": "Media: id=14 method=get status=206 offset=38928384 declared=131072 expected=131072 written=131072 header=yes active=7 accepted_ms=18007 last_write_ms=18017 closed_ms=18017 end=complete"
+        },
+        {
+          "time_seconds": 60.0,
+          "line": "Media: id=2 method=get status=206 offset=0 declared=53953926 expected=53953926 written=6291456 header=yes active=1 accepted_ms=461 last_write_ms=712 closed_ms=19654 end=io_error"
+        },
+        {
+          "time_seconds": 60.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 61.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Failure: channel=url_events reason=disconnected"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Final MRP: enabled=yes owned=no state=unknown at_end=no reported_position=unknown duration=unknown rate=unknown mrp_messages=21 heartbeats=0"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Media: id=5 method=get status=206 offset=31129600 declared=22824326 expected=22824326 written=2228224 header=yes active=2 accepted_ms=2938 last_write_ms=3065 closed_ms=21984 end=cancelled"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Media: id=6 method=get status=206 offset=32571392 declared=21382534 expected=21382534 written=3211264 header=yes active=3 accepted_ms=7386 last_write_ms=7549 closed_ms=21984 end=cancelled"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Media: id=8 method=get status=206 offset=34340864 declared=19613062 expected=19613062 written=3735552 header=yes active=4 accepted_ms=11796 last_write_ms=11940 closed_ms=21984 end=cancelled"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Media: id=10 method=get status=206 offset=36831232 declared=17122694 expected=17122694 written=2883584 header=yes active=5 accepted_ms=13860 last_write_ms=13972 closed_ms=21984 end=cancelled"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Media: id=12 method=get status=206 offset=38010880 declared=15943046 expected=15943046 written=2818048 header=yes active=6 accepted_ms=15918 last_write_ms=16076 closed_ms=21984 end=cancelled"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Media: id=15 method=get status=206 offset=39190528 declared=14763398 expected=14763398 written=1114112 header=yes active=7 accepted_ms=18077 last_write_ms=18153 closed_ms=21984 end=cancelled"
+        },
+        {
+          "time_seconds": 62.1,
+          "line": "Stopped. state=playing events=37 remote_events=5 feedback=10 timing=11 failed=yes reads=1126 bytes=73677368 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes failure_channel=url_events failure_reason=disconnected"
+        }
+      ],
+      "commands": [
+        {
+          "time_seconds": 45.9,
+          "command": "status"
+        }
+      ],
+      "cycles": [],
+      "trials": [],
+      "manual_observations": {
+        "status": "Home CONFIRMED",
+        "quote": "Home appeared normally",
+        "scope": "Response to remote-Stop cue; presentation before Stop was not separately answered."
+      },
+      "tested_source_blobs": {
+        "src\\cast_cli.cpp": "8a32427c3c9acc20fd3ab2efe190eb07c41cb776",
+        "src\\cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+        "src\\cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+        "src\\cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+        "src\\control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+        "src\\control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+        "src\\file_media_source.cpp": "5e7402cca8fe624e59e6c4c602286f677dd0d28f",
+        "src\\file_media_source.h": "a05ef442a202332a0d500ab9e4b44acfefbf2bfe",
+        "src\\media_server.cpp": "621626fc6891503c22402a5b283a176114983e0c",
+        "src\\mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+        "src\\mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+        "src\\mrp_messages.cpp": "00e1fa70cf54080d7d7eb0ff53195baefc87409e",
+        "src\\mrp_messages.h": "ec2e7189ec6ac89efd7573b9ddda2ea9c3ad9517",
+        "src\\mrp_session.cpp": "2b4277f6cb458302ccadd5e4575ead5415c6f682",
+        "src\\mrp_session.h": "77271d1fd3242b802ba85a16c142db4f4200f45f",
+        "src\\protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+        "src\\protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+        "src\\receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+        "src\\receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+        "src\\session_messages.cpp": "f87466dada15ef82c85db4e61f7a8abf11fe2d0c",
+        "src\\session_messages.h": "d1b502e6d06b313a4a0020f00455110afea4127e",
+        "src\\url_playback_session.cpp": "8fed8c9004f58a311e3ef37e112a687b463c9ffc",
+        "src\\url_playback_session.h": "1a8b61330eb3aa56061adaf47c5142ed48b0e3f0",
+        "include/send_airplay2/media_server.h": "9fab99bd54d99873e8188b2501e1101c1ed4e543"
+      },
+      "media_sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+      "media_bytes": 53953926,
+      "source_head": "5a2c58d9eec880c81e96ef264a489a709a7fa4a9",
+      "normal_media_default": 16,
+      "normal_start_timeout_ms": 30000,
+      "start_confirmation_interval_ms": 1000,
+      "startup_returned": true,
+      "stdin_held_open": true,
+      "exit_code": 1,
+      "summaries": [
+        "Startup summary: records=15 truncated=no cleaned=no",
+        "Failure: channel=url_events reason=disconnected",
+        "Stopped. state=playing events=37 remote_events=5 feedback=10 timing=11 failed=yes reads=1126 bytes=73677368 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes failure_channel=url_events failure_reason=disconnected"
+      ],
+      "session_cleaned_up": true,
+      "source_scope": "Uncommitted D40 sources above base source_head; exact blob hashes are authoritative. The first unobserved attempt preceded a code-equivalent direct cstddef/cstdint header adjustment; the final sources were rebuilt and static/shared tested."
+    },
+    "sleep": {
+      "experiment": "D40 remote-stop diagnostic comparison sleep, no pyatv",
+      "cli_sha256": "da3f85a3f4b8f0595834b0462250859ee56c3bab89c38acdd632434d889f6e83",
+      "output": [
+        {
+          "time_seconds": 40.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=0 phase=connecting state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=377 phase=insert_item state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=391 phase=insert_item state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=391 phase=date_range state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=403 phase=date_range state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=403 phase=item_end state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=410 phase=item_end state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=410 phase=rate state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=418 phase=rate state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=418 phase=waiting state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=476 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=487 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=666 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=792 phase=waiting state=playing status=0 rate=1.000000e+00"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup: elapsed_ms=1810 phase=ready state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Startup summary: records=15 truncated=no cleaned=no"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "State: playing"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=reason,type,name"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=playbackState state=playing keys=params,params.position,params.position.flags,params.position.value,params.position.timescale,params.position.epoch,params.readyToPlay,params.stallCount,params.item,params.playbackState,params.duration,params.duration.flags,params.duration.value,params.duration.timescale,params.duration.epoch,params.rate,type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer params.rate=1.000 params.position=0.000 params.duration=131.567 params.readyToPlay=yes params.stallCount=0"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Media: id=1 method=get status=206 offset=0 declared=2 expected=2 written=2 header=yes active=1 accepted_ms=410 last_write_ms=412 closed_ms=412 end=complete"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Media: id=2 method=get status=206 offset=0 declared=53953926 expected=53953926 written=9633792 header=yes active=1 accepted_ms=480 last_write_ms=727 closed_ms=727 end=io_error"
+        },
+        {
+          "time_seconds": 41.9,
+          "line": "Media: id=3 method=get status=206 offset=27000832 declared=26953094 expected=26953094 written=26953094 header=yes active=1 accepted_ms=746 last_write_ms=1240 closed_ms=1240 end=complete"
+        },
+        {
+          "time_seconds": 42.2,
+          "line": "Media: id=4 method=get status=206 offset=1245184 declared=524288 expected=524288 written=524288 header=yes active=1 accepted_ms=1826 last_write_ms=1891 closed_ms=1892 end=complete"
+        },
+        {
+          "time_seconds": 42.2,
+          "line": "Media: id=5 method=get status=206 offset=3211264 declared=131072 expected=131072 written=131072 header=yes active=1 accepted_ms=1921 last_write_ms=1937 closed_ms=1937 end=complete"
+        },
+        {
+          "time_seconds": 42.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.5,
+          "line": "Media: id=6 method=get status=206 offset=6304488 declared=20696344 expected=20696344 written=20696344 header=yes active=1 accepted_ms=1991 last_write_ms=2338 closed_ms=2338 end=complete"
+        },
+        {
+          "time_seconds": 42.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.2,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.2,
+          "line": "Media: id=7 method=get status=206 offset=32636928 declared=21316998 expected=21316998 written=131072 header=yes active=1 accepted_ms=2951 last_write_ms=2961 closed_ms=2970 end=io_error"
+        },
+        {
+          "time_seconds": 43.2,
+          "line": "Media: id=8 method=get status=206 offset=32047104 declared=21906822 expected=21906822 written=131072 header=yes active=1 accepted_ms=2970 last_write_ms=2981 closed_ms=2993 end=io_error"
+        },
+        {
+          "time_seconds": 43.2,
+          "line": "Media: id=9 method=get status=206 offset=31916032 declared=22037894 expected=22037894 written=131072 header=yes active=1 accepted_ms=2994 last_write_ms=3003 closed_ms=3016 end=io_error"
+        },
+        {
+          "time_seconds": 45.9,
+          "line": "Playback: owned=yes state=playing position=5.2 duration=131.6 mrp_messages=20 heartbeats=0"
+        },
+        {
+          "time_seconds": 47.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 48.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 48.5,
+          "line": "Media: id=12 method=get status=206 offset=4456448 declared=262144 expected=262144 written=262144 header=yes active=3 accepted_ms=8201 last_write_ms=8256 closed_ms=8256 end=complete"
+        },
+        {
+          "time_seconds": 50.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.1,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 54.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 56.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 57.1,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 57.1,
+          "line": "Media: id=15 method=get status=206 offset=8519680 declared=65536 expected=65536 written=65536 header=yes active=5 accepted_ms=16719 last_write_ms=16720 closed_ms=16720 end=complete"
+        },
+        {
+          "time_seconds": 60.2,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 60.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 61.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 62.3,
+          "line": "Media: id=10 method=get status=206 offset=31850496 declared=22103430 expected=22103430 written=851968 header=yes active=1 accepted_ms=3017 last_write_ms=3100 closed_ms=22078 end=io_error"
+        },
+        {
+          "time_seconds": 62.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 63.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 64.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 66.8,
+          "line": "Media: id=11 method=get status=206 offset=31916032 declared=22037894 expected=22037894 written=3735552 header=yes active=2 accepted_ms=7395 last_write_ms=7536 closed_ms=26485 end=io_error"
+        },
+        {
+          "time_seconds": 67.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 68.1,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.5,
+          "line": "State: paused"
+        },
+        {
+          "time_seconds": 69.5,
+          "line": "URL event shape: type=playbackState state=paused keys=type,name"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.8,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": "URL event shape: type=other keys=type,value"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 70.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 71.3,
+          "line": "Media: id=13 method=get status=206 offset=34275328 declared=19678598 expected=19678598 written=3866624 header=yes active=3 accepted_ms=11811 last_write_ms=11965 closed_ms=30918 end=io_error"
+        },
+        {
+          "time_seconds": 74.9,
+          "line": "Failure: channel=url_feedback reason=disconnected"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "Final MRP: enabled=yes owned=yes state=paused at_end=no reported_position=0.000000e+00 duration=1.315670e+02 rate=1.000000e+00 mrp_messages=24 heartbeats=1"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "Media: id=17 method=get status=206 offset=40108032 declared=13845894 expected=13845894 written=3670016 header=yes active=4 accepted_ms=26500 last_write_ms=26649 closed_ms=34831 end=cancelled"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "Media: id=14 method=get status=206 offset=36634624 declared=17319302 expected=17319302 written=3276800 header=yes active=4 accepted_ms=15942 last_write_ms=16093 closed_ms=34831 end=cancelled"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "Media: id=16 method=get status=206 offset=38731776 declared=15222150 expected=15222150 written=3014656 header=yes active=5 accepted_ms=19918 last_write_ms=20037 closed_ms=34831 end=cancelled"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "Media: id=18 method=get status=206 offset=42401792 declared=11552134 expected=11552134 written=4325376 header=yes active=5 accepted_ms=29800 last_write_ms=29939 closed_ms=34831 end=cancelled"
+        },
+        {
+          "time_seconds": 75.0,
+          "line": "Stopped. state=paused events=58 remote_events=6 feedback=16 timing=16 failed=yes reads=1255 bytes=82121376 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes failure_channel=url_feedback failure_reason=disconnected"
+        }
+      ],
+      "commands": [
+        {
+          "time_seconds": 45.9,
+          "command": "status"
+        }
+      ],
+      "cycles": [],
+      "trials": [],
+      "manual_observations": {
+        "status": "Screen off CONFIRMED",
+        "quote": "Screen is off",
+        "scope": "Response to sleep cue; sender stdin stayed open for automatic cleanup."
+      },
+      "tested_source_blobs": {
+        "src\\cast_cli.cpp": "8a32427c3c9acc20fd3ab2efe190eb07c41cb776",
+        "src\\cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+        "src\\cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+        "src\\cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+        "src\\control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+        "src\\control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+        "src\\file_media_source.cpp": "5e7402cca8fe624e59e6c4c602286f677dd0d28f",
+        "src\\file_media_source.h": "a05ef442a202332a0d500ab9e4b44acfefbf2bfe",
+        "src\\media_server.cpp": "621626fc6891503c22402a5b283a176114983e0c",
+        "src\\mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+        "src\\mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+        "src\\mrp_messages.cpp": "00e1fa70cf54080d7d7eb0ff53195baefc87409e",
+        "src\\mrp_messages.h": "ec2e7189ec6ac89efd7573b9ddda2ea9c3ad9517",
+        "src\\mrp_session.cpp": "2b4277f6cb458302ccadd5e4575ead5415c6f682",
+        "src\\mrp_session.h": "77271d1fd3242b802ba85a16c142db4f4200f45f",
+        "src\\protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+        "src\\protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+        "src\\receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+        "src\\receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+        "src\\session_messages.cpp": "f87466dada15ef82c85db4e61f7a8abf11fe2d0c",
+        "src\\session_messages.h": "d1b502e6d06b313a4a0020f00455110afea4127e",
+        "src\\url_playback_session.cpp": "8fed8c9004f58a311e3ef37e112a687b463c9ffc",
+        "src\\url_playback_session.h": "1a8b61330eb3aa56061adaf47c5142ed48b0e3f0",
+        "include/send_airplay2/media_server.h": "9fab99bd54d99873e8188b2501e1101c1ed4e543"
+      },
+      "media_sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+      "media_bytes": 53953926,
+      "source_head": "5a2c58d9eec880c81e96ef264a489a709a7fa4a9",
+      "normal_media_default": 16,
+      "normal_start_timeout_ms": 30000,
+      "start_confirmation_interval_ms": 1000,
+      "startup_returned": true,
+      "stdin_held_open": true,
+      "exit_code": 1,
+      "summaries": [
+        "Startup summary: records=15 truncated=no cleaned=no",
+        "Failure: channel=url_feedback reason=disconnected",
+        "Stopped. state=paused events=58 remote_events=6 feedback=16 timing=16 failed=yes reads=1255 bytes=82121376 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes failure_channel=url_feedback failure_reason=disconnected"
+      ],
+      "session_cleaned_up": true,
+      "source_scope": "Uncommitted D40 sources above base source_head; exact blob hashes are authoritative. The first unobserved attempt preceded a code-equivalent direct cstddef/cstdint header adjustment; the final sources were rebuilt and static/shared tested."
+    },
+    "wake": {
+      "experiment": "D40 remote-stop diagnostic comparison wake, no pyatv",
+      "cli_sha256": "da3f85a3f4b8f0595834b0462250859ee56c3bab89c38acdd632434d889f6e83",
+      "output": [
+        {
+          "time_seconds": 40.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=0 phase=connecting state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=501 phase=insert_item state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=511 phase=insert_item state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=511 phase=date_range state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=519 phase=date_range state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=519 phase=item_end state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=527 phase=item_end state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=527 phase=rate state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=533 phase=rate state=none status=200 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=533 phase=waiting state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=593 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=606 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=772 phase=waiting state=loading status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=892 phase=waiting state=playing status=0 rate=1.000000e+00"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup: elapsed_ms=1903 phase=ready state=none status=0 rate=unknown"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Startup summary: records=15 truncated=no cleaned=no"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "State: playing"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=playbackState state=loading keys=type,name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=reason,type,name"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=playbackState state=playing keys=params,params.position,params.position.flags,params.position.value,params.position.timescale,params.position.epoch,params.readyToPlay,params.stallCount,params.item,params.playbackState,params.duration,params.duration.flags,params.duration.value,params.duration.timescale,params.duration.epoch,params.rate,type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Buffer: buffer params.rate=1.000 params.position=0.000 params.duration=131.567 params.readyToPlay=yes params.stallCount=0"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Buffer: buffer root.position=0.000"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Media: id=1 method=get status=206 offset=0 declared=2 expected=2 written=2 header=yes active=1 accepted_ms=542 last_write_ms=542 closed_ms=542 end=complete"
+        },
+        {
+          "time_seconds": 42.0,
+          "line": "Media: id=3 method=get status=206 offset=27000832 declared=26953094 expected=26953094 written=26953094 header=yes active=2 accepted_ms=835 last_write_ms=1269 closed_ms=1269 end=complete"
+        },
+        {
+          "time_seconds": 42.3,
+          "line": "Media: id=4 method=get status=206 offset=4207336 declared=22793496 expected=22793496 written=22793496 header=yes active=2 accepted_ms=1761 last_write_ms=2124 closed_ms=2124 end=complete"
+        },
+        {
+          "time_seconds": 42.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 43.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 46.0,
+          "line": "Playback: owned=yes state=playing position=5.2 duration=131.6 mrp_messages=20 heartbeats=0"
+        },
+        {
+          "time_seconds": 48.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 48.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 48.5,
+          "line": "Media: id=7 method=get status=206 offset=4325376 declared=393216 expected=393216 written=393216 header=yes active=4 accepted_ms=8144 last_write_ms=8207 closed_ms=8207 end=complete"
+        },
+        {
+          "time_seconds": 50.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.6,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 52.6,
+          "line": "Media: id=9 method=get status=206 offset=6422528 declared=131072 expected=131072 written=131072 header=yes active=5 accepted_ms=12313 last_write_ms=12325 closed_ms=12325 end=complete"
+        },
+        {
+          "time_seconds": 54.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 56.3,
+          "line": "Media: id=10 method=get status=206 offset=36831232 declared=17122694 expected=17122694 written=3276800 header=yes active=5 accepted_ms=16027 last_write_ms=16170 closed_ms=16175 end=io_error"
+        },
+        {
+          "time_seconds": 56.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 56.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 56.8,
+          "line": "Media: id=11 method=get status=206 offset=8388608 declared=196608 expected=196608 written=196608 header=yes active=5 accepted_ms=16549 last_write_ms=16574 closed_ms=16574 end=complete"
+        },
+        {
+          "time_seconds": 58.9,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 60.0,
+          "line": "Media: id=2 method=get status=206 offset=0 declared=53953926 expected=53953926 written=7405568 header=yes active=1 accepted_ms=566 last_write_ms=817 closed_ms=19761 end=io_error"
+        },
+        {
+          "time_seconds": 60.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 61.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 62.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 62.3,
+          "line": "Media: id=5 method=get status=206 offset=31129600 declared=22824326 expected=22824326 written=2162688 header=yes active=2 accepted_ms=3035 last_write_ms=3137 closed_ms=22091 end=io_error"
+        },
+        {
+          "time_seconds": 62.8,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 63.6,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 65.2,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 66.8,
+          "line": "Media: id=6 method=get status=206 offset=32571392 declared=21382534 expected=21382534 written=3211264 header=yes active=3 accepted_ms=7482 last_write_ms=7611 closed_ms=26568 end=io_error"
+        },
+        {
+          "time_seconds": 67.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 69.4,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 71.0,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 71.2,
+          "line": "Media: id=8 method=get status=206 offset=34340864 declared=19613062 expected=19613062 written=3735552 header=yes active=4 accepted_ms=11893 last_write_ms=12033 closed_ms=30988 end=io_error"
+        },
+        {
+          "time_seconds": 71.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 73.1,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 73.6,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.2,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.7,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 75.7,
+          "line": "Media: id=15 method=get status=206 offset=15269888 declared=65536 expected=65536 written=65536 header=yes active=4 accepted_ms=35459 last_write_ms=35460 closed_ms=35460 end=complete"
+        },
+        {
+          "time_seconds": 77.1,
+          "line": "Control: accepted"
+        },
+        {
+          "time_seconds": 77.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 77.3,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 77.3,
+          "line": "Media: id=16 method=get status=206 offset=46268416 declared=7685510 expected=7685510 written=131072 header=yes active=4 accepted_ms=36899 last_write_ms=36909 closed_ms=36920 end=io_error"
+        },
+        {
+          "time_seconds": 77.3,
+          "line": "Media: id=17 method=get status=206 offset=45940736 declared=8013190 expected=8013190 written=262144 header=yes active=4 accepted_ms=36924 last_write_ms=36974 closed_ms=36991 end=io_error"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "Buffer: buffer root.position=124.000"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "URL event shape: type=notification keys=value,type,name,item"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "URL event shape: type=notification keys=rate,item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "Buffer: buffer root.rate=1.000 root.position=124.000"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "Buffer: buffer root.position=124.000"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "Media: id=19 method=get status=206 offset=51183616 declared=1507328 expected=1507328 written=1507328 header=yes active=5 accepted_ms=37084 last_write_ms=37196 closed_ms=37196 end=complete"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "Media: id=20 method=get status=206 offset=53228264 declared=52504 expected=52504 written=52504 header=yes active=5 accepted_ms=37201 last_write_ms=37201 closed_ms=37201 end=complete"
+        },
+        {
+          "time_seconds": 77.5,
+          "line": "Media: id=21 method=get status=206 offset=53280768 declared=673158 expected=673158 written=673158 header=yes active=5 accepted_ms=37224 last_write_ms=37294 closed_ms=37294 end=complete"
+        },
+        {
+          "time_seconds": 78.1,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 79.1,
+          "line": "Control: accepted"
+        },
+        {
+          "time_seconds": 81.2,
+          "line": "Media: id=12 method=get status=206 offset=38928384 declared=15025542 expected=15025542 written=3801088 header=yes active=4 accepted_ms=21813 last_write_ms=21943 closed_ms=40888 end=io_error"
+        },
+        {
+          "time_seconds": 85.3,
+          "line": "State: stopped"
+        },
+        {
+          "time_seconds": 85.3,
+          "line": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch"
+        },
+        {
+          "time_seconds": 85.3,
+          "line": "Buffer: buffer root.position=131.567"
+        },
+        {
+          "time_seconds": 85.3,
+          "line": "URL event shape: type=notification keys=type,name"
+        },
+        {
+          "time_seconds": 85.3,
+          "line": "URL event shape: type=playbackState state=stopped keys=type,name,reason"
+        },
+        {
+          "time_seconds": 85.6,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 85.6,
+          "line": "URL event shape: type=notification keys=type,name,item"
+        },
+        {
+          "time_seconds": 85.6,
+          "line": "URL event shape: type=updateInfo keys=type,value,value.name"
+        },
+        {
+          "time_seconds": 86.2,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 86.2,
+          "line": "Event: remote type=updateInfo state=none root_keys=type,value params_keys=none value_keys=name"
+        },
+        {
+          "time_seconds": 86.2,
+          "line": "Final MRP: enabled=yes owned=yes state=paused at_end=yes reported_position=1.315670e+02 duration=1.315670e+02 rate=0.000000e+00 mrp_messages=26 heartbeats=1"
+        },
+        {
+          "time_seconds": 86.2,
+          "line": "Media: id=14 method=get status=206 offset=43450368 declared=10503558 expected=10503558 written=4390912 header=yes active=3 accepted_ms=34878 last_write_ms=35032 closed_ms=46070 end=cancelled"
+        },
+        {
+          "time_seconds": 86.2,
+          "line": "Media: id=13 method=get status=206 offset=41156608 declared=12797318 expected=12797318 written=3997696 header=yes active=3 accepted_ms=29078 last_write_ms=29226 closed_ms=46070 end=cancelled"
+        },
+        {
+          "time_seconds": 86.2,
+          "line": "Media: id=18 method=get status=206 offset=52690944 declared=1262982 expected=1262982 written=917504 header=yes active=4 accepted_ms=36992 last_write_ms=37070 closed_ms=46070 end=cancelled"
+        },
+        {
+          "time_seconds": 86.2,
+          "line": "Stopped. state=stopped events=62 remote_events=7 feedback=22 timing=22 failed=no reads=1327 bytes=86779198 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes failure_channel=none failure_reason=none"
+        }
+      ],
+      "commands": [
+        {
+          "time_seconds": 46.0,
+          "command": "status"
+        },
+        {
+          "time_seconds": 77.0,
+          "command": "seek 124"
+        },
+        {
+          "time_seconds": 79.0,
+          "command": "play"
+        }
+      ],
+      "cycles": [],
+      "trials": [],
+      "manual_observations": {
+        "status": "Video/audio/EOF/Home CONFIRMED",
+        "quote": "Video and audio played normally, then returned to Home Screen after EOF",
+        "scope": "Fresh cast after confirmed wake/Home with existing credentials and planned near-end seek/Play; no new buffering/freeze reported."
+      },
+      "tested_source_blobs": {
+        "src\\cast_cli.cpp": "8a32427c3c9acc20fd3ab2efe190eb07c41cb776",
+        "src\\cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+        "src\\cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+        "src\\cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+        "src\\control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+        "src\\control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+        "src\\file_media_source.cpp": "5e7402cca8fe624e59e6c4c602286f677dd0d28f",
+        "src\\file_media_source.h": "a05ef442a202332a0d500ab9e4b44acfefbf2bfe",
+        "src\\media_server.cpp": "621626fc6891503c22402a5b283a176114983e0c",
+        "src\\mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+        "src\\mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+        "src\\mrp_messages.cpp": "00e1fa70cf54080d7d7eb0ff53195baefc87409e",
+        "src\\mrp_messages.h": "ec2e7189ec6ac89efd7573b9ddda2ea9c3ad9517",
+        "src\\mrp_session.cpp": "2b4277f6cb458302ccadd5e4575ead5415c6f682",
+        "src\\mrp_session.h": "77271d1fd3242b802ba85a16c142db4f4200f45f",
+        "src\\protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+        "src\\protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+        "src\\receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+        "src\\receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+        "src\\session_messages.cpp": "f87466dada15ef82c85db4e61f7a8abf11fe2d0c",
+        "src\\session_messages.h": "d1b502e6d06b313a4a0020f00455110afea4127e",
+        "src\\url_playback_session.cpp": "8fed8c9004f58a311e3ef37e112a687b463c9ffc",
+        "src\\url_playback_session.h": "1a8b61330eb3aa56061adaf47c5142ed48b0e3f0",
+        "include/send_airplay2/media_server.h": "9fab99bd54d99873e8188b2501e1101c1ed4e543"
+      },
+      "media_sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+      "media_bytes": 53953926,
+      "source_head": "5a2c58d9eec880c81e96ef264a489a709a7fa4a9",
+      "normal_media_default": 16,
+      "normal_start_timeout_ms": 30000,
+      "start_confirmation_interval_ms": 1000,
+      "startup_returned": true,
+      "stdin_held_open": true,
+      "exit_code": 0,
+      "summaries": [
+        "Startup summary: records=15 truncated=no cleaned=no",
+        "Stopped. state=stopped events=62 remote_events=7 feedback=22 timing=22 failed=no reads=1327 bytes=86779198 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes failure_channel=none failure_reason=none"
+      ],
+      "session_cleaned_up": true,
+      "source_scope": "Uncommitted D40 sources above base source_head; exact blob hashes are authoritative. The first unobserved attempt preceded a code-equivalent direct cstddef/cstdint header adjustment; the final sources were rebuilt and static/shared tested."
+    }
+  },
+  "conclusion": "Observed Stop/Home lost MRP ownership; observed sleep retained paused ownership. Neither snapshot nor independent failure ordering validates normal-stop intent. Conservative classification is unchanged. Post-wake native EOF succeeded; its presentation observation is separate.",
+  "pending": [
+    "Actual network disconnect/reconnect when available",
+    "Validated normal-stop intent discriminator"
+  ],
+  "privacy": "Fixed labels/scalars only; no addresses, ports, identifiers, private URL, credential material or remote text."
+}

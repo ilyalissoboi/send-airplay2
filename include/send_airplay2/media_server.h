@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace send_airplay2 {
 /** Borrowed only for the duration of read_at. Callbacks must poll should_stop()
@@ -48,11 +49,36 @@ struct MediaServerOptions {
     std::uint32_t request_timeout_ms = 30000; // 1..600000, absolute per-request deadline.
     std::string content_type =
         "video/mp4"; // Plain type/subtype; no parameters or header injection.
+    bool record_request_diagnostics = false;
+};
+
+enum class MediaRequestMethod { other, get, head };
+enum class MediaRequestEnd { complete, cancelled, timeout, io_error, source_error, internal_error };
+
+/** Closed-request diagnostics contain no peer addresses, URLs, headers or payloads.
+ * Byte counts cover body writes reported by the local socket, including partial
+ * writes on failure; completion does not prove receiver receipt or decoding.
+ * Times are steady-clock milliseconds since server construction. HEAD declares
+ * a representation length but expects/writes zero body bytes. */
+struct MediaRequestDiagnostic {
+    std::uint64_t request_id = 0;
+    MediaRequestMethod method = MediaRequestMethod::other;
+    MediaRequestEnd end = MediaRequestEnd::cancelled;
+    unsigned status = 0; // HTTP status at header serialization; zero if not reached.
+    std::uint64_t offset = 0;
+    std::uint64_t declared_length = 0;
+    std::uint64_t expected_body_bytes = 0;
+    std::uint64_t body_bytes_written = 0;
+    std::uint64_t accepted_ms = 0;
+    std::uint64_t last_body_write_ms = 0; // Zero if no body progress was reported.
+    std::uint64_t closed_ms = 0;
+    std::uint32_t active_on_accept = 0;
+    bool header_completed = false;
 };
 
 /** Experimental C++17 media server, with no Boost types in its public interface.
  * Shared-library hosts require a compatible compiler/runtime. A versioned C ABI,
- * file adapters and playback integration are later gates.
+ * packaged-host adapters and public playback integration are later gates.
  *
  * The OS route selects one concrete bind address. No wildcard listener, DNS,
  * directory serving or firewall changes. Only the selected receiver's source IP
@@ -76,6 +102,12 @@ public:
 
     /// Owned URL copy, stable for the server lifetime; no logging or persistence.
     [[nodiscard]] SAP2_API std::string url() const;
+    /** Drain up to 256 closed-request records, oldest first; overflow drops the
+     * oldest record. Disabled by default. Thread-safe with serving and stop(),
+     * subject to the server's lifetime. Recording allocates no memory; draining
+     * may throw std::bad_alloc without discarding queued records. After stop(),
+     * all accepted requests have completed or been cancelled. */
+    [[nodiscard]] SAP2_API std::vector<MediaRequestDiagnostic> take_request_log();
     /** Idempotently cancel network work, signal callbacks and join all workers.
      * No callback runs after return. Calls/destruction must be serialized by the
      * host and run outside callbacks. Shutdown latency depends on cooperative

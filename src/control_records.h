@@ -7,6 +7,9 @@
 namespace send_airplay2::detail {
 namespace control_records {
 constexpr std::size_t max_plaintext = 1024;
+/// AirPlay MRP receive compatibility budget. tvOS 26.6 sent a 2363-byte
+/// authenticated record after subscription. Control/events retain 1024.
+constexpr std::size_t max_data_plaintext = 16384;
 constexpr std::size_t header_size = 2;
 constexpr std::size_t max_wire_record = header_size + max_plaintext + auth_tag_size;
 constexpr std::size_t max_call_input = 65536;
@@ -50,7 +53,10 @@ private:
  */
 class ControlReader {
 public:
-    explicit ControlReader(const ControlKey& key);
+    /// The default enforces 1024-byte HAP records. Only MRP explicitly opts
+    /// into larger AirPlay records, bounded at max_data_plaintext (16 KiB).
+    explicit ControlReader(const ControlKey& key,
+                           std::size_t max_plaintext = control_records::max_plaintext);
     ~ControlReader();
     ControlReader(const ControlReader&) = delete;
     ControlReader& operator=(const ControlReader&) = delete;
@@ -70,10 +76,11 @@ public:
 
 private:
     friend struct ControlRecordTestAccess;
-    ControlKey key_;
+    ControlKey key_{};
     std::uint64_t counter_ = 0;
     bool closed_ = false;
-    std::array<std::uint8_t, control_records::max_wire_record> pending_{};
+    Bytes pending_; // Allocated before the key is copied, then never resized.
+    std::size_t max_plaintext_ = control_records::max_plaintext;
     std::size_t pending_size_ = 0;
 };
 } // namespace send_airplay2::detail

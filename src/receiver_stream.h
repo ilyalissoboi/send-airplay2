@@ -20,6 +20,10 @@ struct ReceiverOperation {
     const std::atomic_bool* cancelled = nullptr;
     [[nodiscard]] static ReceiverOperation after(std::chrono::milliseconds timeout,
                                                  const std::atomic_bool* cancelled = nullptr);
+    /// No deadline: only the (required) cancellation flag ends the wait. For
+    /// long-lived readers, such as an event channel whose peer may stay silent
+    /// indefinitely. Throws TransportException(invalid_argument) without a flag.
+    [[nodiscard]] static ReceiverOperation until_cancelled(const std::atomic_bool* cancelled);
     void check() const;
 };
 struct ReceiverEndpoint {
@@ -49,6 +53,16 @@ public:
     virtual std::size_t read_some(std::uint8_t* data, std::size_t capacity,
                                   const ReceiverOperation& operation) = 0;
     virtual void require_idle(const ReceiverOperation& operation) = 0;
+    /** Wait for readable bytes/EOF without consuming input. A deadline with
+     * no readiness returns false and keeps the stream open. Other errors are
+     * terminal. Native streams override this; custom MRP streams must provide
+     * it too. The default rejects this optional capability, while existing
+     * HTTP/event streams continue to use read_some directly.
+     */
+    virtual bool wait_readable(const ReceiverOperation& operation) {
+        operation.check();
+        throw TransportException(TransportError::invalid_argument);
+    }
     virtual void close() noexcept = 0;
 };
 /// Connect a numeric TCP endpoint nonblockingly within one deadline; no retries/DNS.

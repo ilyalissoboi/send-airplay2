@@ -2,7 +2,11 @@
 #include "receiver_http.h"
 #include "control_crypto.h"
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <limits>
+#include <optional>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -69,6 +73,16 @@ const char* protocol_name(ReceiverProtocol protocol) {
         return "RTSP/1.0";
     }
     throw TransportException(TransportError::invalid_argument);
+}
+/// One "Name: value" field line: token name, visible value. Returns the
+/// lower-cased name and the value without surrounding whitespace.
+std::pair<std::string, std::string_view> parse_field_line(std::string_view line) {
+    const auto colon = line.find(':');
+    if (colon == std::string_view::npos || !token(line.substr(0, colon)) ||
+        !field_value(line.substr(colon + 1))) {
+        invalid();
+    }
+    return {lower(line.substr(0, colon)), trim(line.substr(colon + 1))};
 }
 void append_line(std::string& output, const std::string& line) {
     if (line.size() > receiver_http::max_line ||
@@ -182,14 +196,10 @@ void ReceiverResponseParser::parse_headers() {
             response_.headers.size() == receiver_http::max_fields) {
             invalid();
         }
-        const auto line = header.substr(offset, end - offset);
-        const auto colon = line.find(':');
-        if (colon == std::string_view::npos || !token(line.substr(0, colon)) ||
-            !field_value(line.substr(colon + 1))) {
-            invalid();
-        }
-        auto name = lower(line.substr(0, colon));
-        const auto value = trim(line.substr(colon + 1));
+        // Named members, not a structured binding: C++17 lambdas cannot capture those.
+        auto parsed = parse_field_line(header.substr(offset, end - offset));
+        auto& name = parsed.first;
+        const auto value = parsed.second;
         if (std::any_of(response_.headers.begin(), response_.headers.end(),
                         [&](const auto& field) { return field.first == name; })) {
             invalid();
@@ -283,5 +293,181 @@ ReceiverResponse ReceiverResponseParser::take() {
         close();
         throw;
     }
+}
+namespace {
+constexpr std::string_view header_terminator = "\r\n\r\n";
+constexpr std::size_t max_method_size = 32;
+
+ReceiverProtocol parse_protocol(std::string_view name) {
+    if (name == "RTSP/1.0") {
+        return ReceiverProtocol::rtsp;
+    }
+    if (name == "HTTP/1.1") {
+        return ReceiverProtocol::http;
+    }
+    invalid();
+}
+
+/// Parse "METHOD target PROTOCOL" and the field lines of one complete header
+/// block (ending in an empty line) into `request`. Returns the body length.
+std::size_t parse_event_header(std::string_view header, EventRequest& request) {
+    const auto first_end = header.find("\r\n");
+    if (first_end == std::string_view::npos || first_end > receiver_http::max_line) {
+        invalid();
+    }
+    const auto first = header.substr(0, first_end);
+    const auto method_end = first.find(' ');
+    if (method_end == std::string_view::npos) {
+        invalid();
+    }
+    const auto target_end = first.find(' ', method_end + 1);
+    if (target_end == std::string_view::npos) {
+        invalid();
+    }
+    const auto method = first.substr(0, method_end);
+    const auto target = first.substr(method_end + 1, target_end - method_end - 1);
+    if (method.size() > max_method_size || !token(method) || target.empty() ||
+        !std::all_of(target.begin(), target.end(),
+                     [](unsigned char ch) { return ch > 32 && ch <= 126; })) {
+        invalid();
+    }
+    request.method = std::string(method);
+    request.target = std::string(target);
+    request.protocol = parse_protocol(first.substr(target_end + 1));
+    std::size_t body_length = 0;
+    // Each field line ends in CRLF; the block ends with one more CRLF.
+    for (std::size_t offset = first_end + 2; offset + 2 < header.size();) {
+        const auto end = header.find("\r\n", offset);
+        if (end == std::string_view::npos || end - offset > receiver_http::max_line ||
+            request.headers.size() == receiver_http::max_fields) {
+            invalid();
+        }
+        // Named members, not a structured binding: C++17 lambdas cannot capture those.
+        auto parsed = parse_field_line(header.substr(offset, end - offset));
+        auto& name = parsed.first;
+        const auto value = parsed.second;
+        if (std::any_of(request.headers.begin(), request.headers.end(),
+                        [&](const auto& field) { return field.first == name; }) ||
+            name == "transfer-encoding" || name == "upgrade" || name == "trailer") {
+            invalid();
+        }
+        if (name == "content-length") {
+            body_length = decimal(value);
+            if (body_length > receiver_http::max_body) {
+                invalid();
+            }
+        }
+        if (name == "cseq") {
+            (void)decimal(value); // Echoed verbatim in the reply; must be a number.
+        }
+        request.headers.emplace_back(std::move(name), std::string(value));
+        offset = end + 2;
+    }
+    return body_length;
+}
+
+const std::string* find_field(const ReceiverHeaders& headers, std::string_view name) {
+    for (const auto& field : headers) {
+        if (field.first == name) {
+            return &field.second;
+        }
+    }
+    return nullptr;
+}
+
+/// Reply fields echoed from the request, in the reference reply's order.
+struct EchoedField {
+    std::string_view name; // Lower-case, as stored by the parser.
+    const char* display_name;
+};
+constexpr EchoedField echoed_fields[] = {{"server", "Server"}, {"cseq", "CSeq"}};
+} // namespace
+
+EventRequestParser::~EventRequestParser() {
+    close();
+}
+
+void EventRequestParser::close() noexcept {
+    cleanse(pending_.data(), pending_.size());
+    pending_.clear();
+    closed_ = true;
+}
+
+void EventRequestParser::append(const Bytes& plaintext) {
+    try {
+        if (closed_) {
+            throw TransportException(TransportError::closed);
+        }
+        if (plaintext.size() > receiver_http::max_pending_event_input - pending_.size()) {
+            invalid();
+        }
+        pending_.insert(pending_.end(), plaintext.begin(), plaintext.end());
+    } catch (...) {
+        close();
+        throw;
+    }
+}
+
+std::optional<EventRequest> EventRequestParser::next() {
+    try {
+        if (closed_) {
+            throw TransportException(TransportError::closed);
+        }
+        const std::string_view input(reinterpret_cast<const char*>(pending_.data()),
+                                     pending_.size());
+        const auto terminator = input.find(header_terminator);
+        if (terminator == std::string_view::npos) {
+            if (pending_.size() >= receiver_http::max_headers) {
+                invalid();
+            }
+            return std::nullopt;
+        }
+        const auto header_size = terminator + header_terminator.size();
+        if (header_size > receiver_http::max_headers) {
+            invalid();
+        }
+        EventRequest request;
+        const auto body_size = parse_event_header(input.substr(0, header_size), request);
+        if (pending_.size() - header_size < body_size) {
+            return std::nullopt; // Headers are parsed again once the body is complete.
+        }
+        const auto body_begin = pending_.begin() + static_cast<std::ptrdiff_t>(header_size);
+        request.body.assign(body_begin, body_begin + static_cast<std::ptrdiff_t>(body_size));
+        const auto consumed = header_size + body_size;
+        cleanse(pending_.data(), consumed);
+        pending_.erase(pending_.begin(), pending_.begin() + static_cast<std::ptrdiff_t>(consumed));
+        return request;
+    } catch (...) {
+        close();
+        throw;
+    }
+}
+
+void EventRequestParser::finish() {
+    if (closed_) {
+        throw TransportException(TransportError::closed);
+    }
+    const bool partial = !pending_.empty();
+    close();
+    if (partial) {
+        throw TransportException(TransportError::disconnected);
+    }
+}
+
+Bytes encode_event_response(const EventRequest& request) {
+    std::string header;
+    append_line(header, std::string(protocol_name(request.protocol)) + " 200 OK");
+    append_line(header, "Content-Length: 0");
+    append_line(header, "Audio-Latency: 0");
+    for (const auto& field : echoed_fields) {
+        if (const auto* value = find_field(request.headers, field.name)) {
+            if (!field_value(*value)) {
+                invalid();
+            }
+            append_line(header, std::string(field.display_name) + ": " + *value);
+        }
+    }
+    append_line(header, "");
+    return Bytes(header.begin(), header.end());
 }
 } // namespace send_airplay2::detail

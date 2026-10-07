@@ -124,8 +124,10 @@ Physical-console echo/mode restoration, host/receiver restart, wrong PIN and
 revocation remain pending. Record the exact
 build/access policy and additional results in
 [receiver-validation.md](receiver-validation.md).
-The next implementation slice is bounded media serving once the authentication
-gate is assessed; authenticated playback/session setup remains a separate step.
+Media serving, the file adapter and private URL session/`cast` are now implemented.
+The minimum native remote session passed G1; MRP controls are the next gate; see
+[session-design.md](session-design.md). Restart/revocation and other host stores
+remain separate authentication gates.
 
 ## Source and dependency provenance
 

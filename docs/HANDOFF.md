@@ -1,30 +1,222 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-06 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-07 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
+The focused [separate-session handoff](CONTINUATION.md) contains the current
+checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: continue PR #11 in a local session
+## 0. Resume here: native playback session on `claude/url-playback-session`
 
-The user intends to continue the current PR from a local Claude Code session on
-the Windows 11 host that shares a LAN with "Living Room". A cloud session cannot
-reach that LAN. Snapshot: 2026-10-06, ~13:10 UTC; local-session update ~13:40 UTC.
+Work continues in a local Codex session on the Windows 11 host that
+shares a LAN with "Living Room". A cloud session cannot reach that LAN.
+Current PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12), **ready for review**,
+open and unmerged. The user authorized marking ready, and the change was verified
+at `ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5`; merge is not authorized.
+That implementation/test head passed all ten
+[CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37584220175).
+D44 addresses the single automated review comment: README and the current
+network-observation table now consistently mark selected D42 Ethernet cleanup /
+fresh explicit recovery PASS, with broader network reliability pending and
+automatic reconnect/resume unimplemented. This is a documentation-only follow-up;
+inspect its actual head/checks and review-thread resolution before further work.
+Latest runtime follow-up: D43's [PR review](pr-review.md) fixes URL diagnostic
+redaction and decoded plaintext erasure on exception paths. Windows
+static/shared Release passed 24/24 CTest targets each; runner contracts passed
+10/10; all 52 PR-changed C++ files passed formatting. Inspect the actual PR head
+and CI after publication. This follow-up has no new receiver observation.
+Latest receiver-tested implementation/evidence head (D40):
+`4a18b2662150768a00154ca17e222f2e701fd192`;
+[exact-head CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37577586084).
+It adds bounded remote-event/final MRP diagnostics with separate observed
+Stop/Home, sleep and fresh wake playback/EOF/Home evidence. Classification
+remains conservative. D42 reused that runtime; D43 changes diagnostic/ownership
+source. Inspect the actual PR head/checks rather than reusing an earlier result.
+Lifecycle implementation/code-test head:
+`2f77f622acbaff3e6579cb8c997c927a6ea12206` (D33). Native runtime source blobs
+and CLI SHA-256 are recorded in the [lifecycle artifact](validation/native-lifecycle-windows-static-2026-10-07.json).
+All ten checks passed in its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37553605053),
+and at code-equivalent documentation head `759de2d30043aa7bd6873f9e2700adceffa8e187`
+in [CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37553955465).
+CI is separate from hardware gates; inspect PR #12's actual head/checks,
+including documentation-only follow-ups. Observer head `c13d59ff485bb5883d91f9e05cd7369bf4bf88ef`
+passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37557470097). Step 2's final documentation head
+`dafb70a4bcec0236b8f20901d745a1546ff853ba` passed all ten checks before this work.
+The observer-documentation head `3caad5ffedde8942102138ac774df23b015f5e94`
+also passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37555176050).
+The stop/buffering diagnostic code/test head
+`27356a8279c25da30821af5c708e5d4bbed7baf4` passed all ten
+[checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37556596080).
+The full-clip observer follow-up below changes presentation evidence, not that runtime.
+D35 code/evidence head `6ef958de3e8ff7a9968f9e247a3ec1739adf2441` passed all ten
+[checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37559957331).
+D36 below changes the normal cast admission budget; inspect its actual PR head
+and checks rather than reusing a prior CI result.
+The D37 documentation head `1d69560578fbbebafa5ab9c33d2cb56bd90b76cb` passed all ten
+[checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37562737055).
+D38 added startup code/tests below; CI remained a separate gate.
+D38 startup code/test head is `6bed9febffb857050a9370bc34533add9abcf547`;
+its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37564851802)
+passed all ten checks, as did tested documentation head
+`fa9b9189f599b0b6405b8c1b81327761900470c2` in
+[CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37565052646).
+Inspect the actual PR head, including subsequent documentation-only follow-ups.
+D39 documentation/evidence head `5a2c58d9eec880c81e96ef264a489a709a7fa4a9`
+passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37573362161).
+D40 code/evidence and its CI are identified above. Inspect the actual PR head
+after subsequent documentation-only updates rather than reusing an older run.
+The D41 [pyatv remote-Stop source audit](pyatv-stop-reference.md) changes no
+runtime behavior: upstream swallows URL polling connection loss as completion;
+the tvOS fork's event waiter does not finish on socket EOF alone. Neither
+provides a validated Stop-versus-network/sleep discriminator. This is offline
+reference evidence, not a new hardware pass.
+The subsequent D42 [Ethernet interruption/recovery check](validation/native-network-recovery-windows-static-2026-10-07.json)
+passed selected automatic timeout cleanup and fresh same-credential playback
+after reconnection/Home, with user-confirmed video/audio/Home at near-end EOF.
+It uses the unchanged D40 runtime. The tested D41 documentation head `72b3059`
+passed all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37579365861).
+Inspect the actual PR head after this evidence-only follow-up.
 
-- **PR:** [#11: feat: add serve command and pyatv reference baseline records](https://github.com/ilyalissoboi/send-airplay2/pull/11),
-  open as a **draft**, base `main`, head branch `claude/modest-cannon-xa79s5`.
-  Keep working on this branch while the PR is open; do not start a new branch
-  or PR for the playback baseline. Before writing, verify the actual head and
-  checks (`git fetch origin`, `gh pr view 11 --json headRefOid,statusCheckRollup`).
-- **Last validated code head:** `19a08d256fdd2092aecfc63438af2b6a07c95b8c`.
-  All ten checks passed in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37468229857).
-  Later commits on the branch are documentation only unless their messages say otherwise.
-- **What the PR contains:**
-  - this handoff refresh and the [pyatv reference runbook](reference-baseline.md);
-  - the sanitized pyatv pairing result and the tvOS build and access settings, in
-    [receiver-validation.md](receiver-validation.md);
-  - the development `airplay2-cli serve` command with its file-backed
-    `MediaSource` and tests (decision D26; see section 5).
+The user confirmed the Claude session is stopped; development continues in the
+Codex checkout on the same branch. Its former checkout is detached, with no changes.
+
+- **PR #11 is merged** into `main` as `2b0e57c9d3ee44c5afc66418c23084ffada01d59`.
+  Its final head `105a7b0ad8cbd179c3f06562e7ef9d2be3c126d8` passed all ten
+  checks ([CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37476606466)).
+  It contains `serve`, the reference playback records, the `bplist00` codec
+  (D27) and the session design with decisions D28-D31.
+- **Current branch:** `claude/url-playback-session`, created from that merge
+  for the session implementation in [session-design.md](session-design.md).
+  CI runs only for pull requests; PR #12 is open and ready for review on this branch.
+  Before writing, verify the actual head and checks.
+- **Done on this branch:** steps 1-6 and the minimum native remote session.
+  Channel key derivation, the event
+  channel, the NTP timing responder, the session messages, and the
+  `UrlPlaybackSession` orchestrator (section 5).
+- **Initial step-6 G1 failure (superseded by the pass below):** `cast` ran the
+  URL sequence on Living Room. The receiver fetched the full file and
+  reported `playing`, but showed nothing. With pyatv 0.18.0's remote-control
+  session held open (`atvremote push_updates`), the same native cast played
+  video and audio correctly (user-observed). That supports H5: the
+  remote-control session is required for presentation. See
+  receiver-validation.md, "Native cast, hardware gate G1".
+- **Native minimum now PASSED G1 (2026-10-07):** `cast` opens a separately
+  verified remote-control-only SETUP/event session before URL start, with its own
+  keys/counters/UUID. No remote RECORD, feedback, data stream, MRP or pyatv.
+  The user observed normal video/audio and return home after the 45-second run
+  was stopped by Enter. Full-file fetch, no failed reads, exit 0. See the new
+  receiver record and sanitized artifact for exact counts and executable hash.
+- **Step 2 implemented:** bounded in-tree protobuf/message codecs, data framing,
+  remote RECORD/data SETUP, MRP handshake/correlation/heartbeat, ownership tracking
+  and native status/pause/resume/absolute seek/stop. The native receiver accepted
+  the controls and telemetry followed both seek directions; see the dated G2
+  record for the observer status. D32 documents cooperative startup binding on
+  firmware that omits the URL/item UUID.
+- **Step 3 implemented (D33):** sole lifecycle supervisor, automatic ordered
+  teardown, first end reason, command cancellation and pollable CLI stdin. Native
+  EOF exited with stdin held open; ten short native cycles passed. The sanitized
+  lifecycle record fingerprints the executable and runtime sources.
+- **G2 and EOF observation passed:** the user confirmed visible controls, both
+  seek directions, normal resumed audio and home after sender Stop; EOF also
+  returned home with normal video/audio. Receiver-remote stop returned home and
+  automatically cleaned up, but reported connection_lost/exit 1. Sleep likewise
+  triggered bounded cleanup. Fresh casting after wake reused credentials and
+  played normal video/audio; EOF again returned home (user-confirmed).
+- **Stop/buffering investigation (D34):** fixed failure diagnostics identify URL
+  event socket EOF on a repeated, user-confirmed remote Stop, with last state
+  playing and no stopped/idle/ended event. Preserve failure classification until
+  receiver intent is validated. A fresh full 131.6-second clip, with status-only
+  input and no seek, reached natural media_end/exit 0 and four heartbeats. Two
+  brief loading/playing transitions occurred near 18 s. **Full-clip video FAIL:**
+  the user reports a short buffering stop around 18 s followed by frozen video
+  through clip end; audio continued normally. EOF cleanup passed, but sustained
+  video presentation did not. The original file plays normally past 18 s on the
+  PC (user-confirmed). Home return for this particular run is unconfirmed.
+  See the [stop/full-clip artifact](validation/native-stop-buffering-windows-static-2026-10-07.json).
+- **HTTP/buffering comparison (D35):** opt-in socket-write/completion and receiver
+  scalar diagnostics are implemented. A fresh default run paused at zero without
+  remote input (first frame visible). Minimal remote/four slots passed the whole
+  clip's video/audio/Home. A same-executable MRP/four-slot repeat buffered but
+  recovered normal video/audio/Home; slot release closely preceded new range
+  admission and playback resumption. MRP with 16 slots admitted up to six active
+  requests and passed full video/audio/Home with no recorded loading transition.
+  Admission starvation is a supported buffering hypothesis; the original
+  persistent freeze and startup pause are unresolved. D35 retained the four-slot
+  default pending the D36 checks below. See the [four-run artifact](validation/native-http-buffering-windows-static-2026-10-07.json).
+- **Bounded cast policy (D36):** explicit 16-slot controls passed by user observation
+  (pause/resume, forward/backward seek, resumed video/audio, Stop/Home). Ten new
+  processes alternated MRP Stop and Enter; all were owned/playing and exited 0
+  with joined cleanup, no session failure or failed file reads. A full-clip repeat
+  reached natural media_end/exit 0 with stdin held open, four heartbeats, no recorded
+  loading transition and up to five active media requests. The user confirmed
+  normal full-clip video/audio and Home at EOF. A separate first attempt at 16 slots paused at zero
+  before transport commands; user confirmed first frame and untouched remote.
+  Cleanup passed, but this startup failure remains explicit. Normal `cast` now
+  defaults to 16 bounded slots (override 1..16); generic server/`serve` remain four.
+  See the [new artifact](validation/native-capacity-controls-lifecycle-windows-static-2026-10-07.json).
+- **Frozen-video priority (user decision D37):** insufficient media admission
+  capacity is the likely cause of the original frozen-video run. Keep its FAIL
+  evidence and treat it as low priority for now; raise its priority and reopen
+  active investigation if frozen video recurs in later testing. This is a triage
+  decision, not a proven root cause or a retroactive playback PASS.
+- **Startup investigation (D38):** bounded startup timing now shows all four
+  queue-command acknowledgements preceding the first playing event. One unattended
+  MRP trial reported rate 1 then paused at zero about 0.4 s later; rejecting only
+  zero-rate playing was insufficient. `start()` now requires one continuous second
+  of eligible URL playing, resetting on loading/pause/zero/reverse-rate states.
+  The original deadline and cancellation still apply; there is no Play retry.
+  Fixed 64-entry startup traces survive failures and include successful queue
+  acknowledgements, allowlisted states/rates, relative times and cleanup status.
+  Six short confirmed-startup comparisons and one after 300 s of sender inactivity
+  returned successfully and cleaned up. Synthetic regressions pass; these native
+  runs are telemetry-only. Exact exploratory/final fingerprints and traces are in
+  the [startup artifact](validation/native-startup-confirmation-windows-static-2026-10-07.json).
+  Submitted Windows static/shared Release passed 23/23 CTest targets each
+  (15.41/15.22 s); offline runner contracts passed 10/10, format/diff checks passed.
+  Inspect CI at the actual PR head before finalizing.
+  The physical receiver pause remains unresolved.
+- **Observed manual batch (D39):** the user returned and completed startup,
+  controls/full EOF, remote Stop and sleep/wake checks on the submitted D38
+  runtime. All six native casts confirmed startup and joined cleanup. Initial
+  startup and fresh startup after sender Stop passed video/audio/Home; controls
+  passed visibly, and a separate full clip passed normal video/audio/Home at EOF.
+  Sleep was observed; wake reached Home, then fresh native playback reused
+  credentials and passed video/audio/near-end EOF/Home. Remote Stop returned Home
+  and cleaned automatically, but again had URL socket closure without a terminal
+  event: connection_lost/exit 1 remains explicit. No startup-pause/frozen-video
+  recurrence was reported in this selected batch; their historical evidence and
+  limits remain. See the [batch record](manual-validation.md) and
+  [exact runtime/observer artifact](validation/native-manual-batch-windows-static-2026-10-07.json).
+- **Observed network interruption/recovery (D42):** the user removed the Ethernet
+  cable during an owned/playing cast, then reconnected it and confirmed Home.
+  URL feedback timed out; automatic cleanup exited connection_lost/1. A fresh
+  explicit cast with the same credentials passed observed video/audio and Home
+  at planned near-end EOF, exiting media_end/0. Pre-interruption presentation was
+  asked about but not reported. See the [artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
+- **PR review complete locally (D43):** fixed two reproduced issues: raw peer
+  strings/keys/targets in URL output, and decoded plaintext release without
+  erasure on error paths. See [scope, regressions and limits](pr-review.md).
+- **Next:** verify the D44 documentation follow-up's actual-head CI and addressed
+  review thread, then obtain user approval before merging. Marking ready was
+  already authorized and completed. Continue development using the ordered queue
+  in [CONTINUATION.md](CONTINUATION.md). Keep ambiguous
+  peer closure classified conservatively: the reference audit and single Ethernet
+  comparison do not establish Stop intent. Investigate the unresolved receiver
+  transition behind the intermittent startup pause using matched Home/idle
+  comparisons if it recurs; selected successful starts do not establish its cause.
+  Broader lifecycle reliability and other host/receiver gates remain. Preserve credentials,
+  independent remote/URL sessions and ordered teardown; no automatic Play/seek.
+- **Current support:** private native casting/control experiment on Apple TV 4K /
+  tvOS 26.6 (23L773) / Windows 11 x64. No public playback ABI or packaged-host
+  proof. The temporary Python firewall rule remains from reference testing and
+  should be removed when that testing ends.
+
+### PR #11 record (merged; historical)
+
+The following dated actions and next-step notes describe the state at that merge.
+Section 0 and section 7 supersede them for current implementation work.
+
 - **Local session, 2026-10-06 (this update):** the branch was continued from a
   local Claude Code session on the Windows host. The user confirmed the cloud
   session had been stopped.
@@ -132,8 +324,8 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Credential-storage/CLI source commit | `37f5e3fe90136be25d89ede9c150bcd0f582969b`; subsequent documentation commits record checks |
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
-| Current PR | [#11: feat: add serve command and pyatv reference baseline records](https://github.com/ilyalissoboi/send-airplay2/pull/11), open draft; last validated code head `19a08d256fdd2092aecfc63438af2b6a07c95b8c`, all ten checks passed in [PR CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37468229857) |
-| Current branch | `claude/modest-cannon-xa79s5`, based on verified PR #10 merge `6b9680237184741100415aeb21d440825662ba37` on `main`; created by a cloud session, to be continued locally (section 0) |
+| Serve/baseline/codec PR | [#11: feat: add serve command, reference playback records, bplist codec and session design](https://github.com/ilyalissoboi/send-airplay2/pull/11), merged as `2b0e57c9d3ee44c5afc66418c23084ffada01d59`; final head `105a7b0ad8cbd179c3f06562e7ef9d2be3c126d8` passed all ten checks ([CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37476606466)) |
+| Current branch | `claude/url-playback-session`, from the PR #11 merge on `main`; native session implementation (section 0) |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -144,11 +336,11 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
-| Actual casting support | None yet |
-| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native playback not implemented |
+| Actual casting support | Private native URL start/CLI implemented in PR #12; native-only video/audio and sender stop/home-screen G1 PASS; native MRP controls implemented with dated G2 evidence; public API pending |
+| Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native-only URL playback with minimum native remote SETUP/event session G1 PASS, user-observed video/audio and return home after sender stop |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is open (section 0). Verify current GitHub and
+PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is merged; ready-for-review PR #12 contains the private session implementation (section 0). Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -167,7 +359,7 @@ User-provided on 2026-10-06 (Asia/Tokyo):
   with advertised `osvers`/`ov`. AirPlay `srcvers` is not a tvOS build identifier.
 - AirPlay access: limited to the same network (user-reported); no password;
   pairing mandatory per pyatv scan.
-- Intended testing host: **Windows 11 x64**; exact OS build not yet supplied.
+- Intended testing host: **Windows 11 x64**; observed build `10.0.26200`, AMD64.
 
 The host is on Wi-Fi classified by Windows as a Public network; see
 receiver-validation.md for firewall details. The pyatv 0.18.0 reference playback
@@ -251,10 +443,10 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D02 | Standalone library before Screenbox integration | User milestone order |
 | D03 | Portable C++ core, eventual stable/versioned C ABI | Proposed architecture; C++17 foundation and experimental C API implemented |
 | D04 | C# wrapper for Screenbox; JNI for Android | Planned; neither wrapper implemented |
-| D05 | Begin with local H.264/AAC MP4 on one specified Apple TV model/firmware | Proposed first vertical slice; user supplied Apple TV 4K / tvOS 26.6 / Windows 11 x64; generation and exact builds pending |
+| D05 | Begin with local H.264/AAC MP4 on one specified Apple TV model/firmware | Proposed first vertical slice; user supplied Apple TV 4K / tvOS 26.6 / Windows 11 x64; generation from pyatv model mapping; firmware build 23L773, host build 10.0.26200 recorded |
 | D06 | CLI plus minimal packaged Windows C# host before Screenbox changes | Planned validation gate; packaged networking/file/native-loading risks must be tested early |
-| D07 | Receiver-side URL playback with local HTTP serving | Planned first media path; current code only resolves ranges |
-| D08 | Media source size/read-at callbacks, not filesystem paths alone | Planned for Windows StorageFile and Android content URI access; callback ABI unfinished |
+| D07 | Receiver-side URL playback with local HTTP serving | Implemented private URL session and server; native-only presentation G1 passed |
+| D08 | Media source size/read-at callbacks, not filesystem paths alone | Experimental C++ callback contract and file adapter implemented; StorageFile/content URI adapters and public C ABI pending |
 | D09 | Keep standalone audio transport separate from first MP4 proof | Planned; audio backend pending |
 | D10 | AirPlay beside Chromecast through a provider-neutral boundary | Planned Screenbox integration; retain existing Chromecast behavior behind its adapter |
 | D11 | No initial DRM, mirroring, system-audio capture, synchronized multiroom, auto-transcoding or universal codec/receiver support | Initial scope limits from assessment; unsupported media should fail explicitly |
@@ -265,10 +457,10 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D16 | Keep protocol-specific records and merge only by matching normalized advertised device identity | Implemented; hostname/friendly name alone is insufficient, advertisements remain unauthenticated |
 | D17 | Experimental C++ discovery API plus CLI before versioned C discovery ABI/event API | Implemented; shared users require compatible C++ runtime, production bindings still pending |
 | D18 | OpenSSL 3.5+ EVP primitives, private bounded pairing/control codecs before receiver handshake | Engineering choice, implemented; no homegrown cryptography, public pairing API deferred until peer authentication and ownership contracts are complete |
-| D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Engineering choice, implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 schema and one-time control-key release. Credential storage and network correlation/deadlines remain gates |
+| D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 and one-time key release. Storage and bounded network transport are integrated; broader hardware authentication remains a gate |
 | D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP and Ed25519 key validation | Engineering choice, implemented privately; C++17 core, maintained SRP/subgroup checks, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
 | D21 | Private synchronous native TCP with one outstanding request and a strict bounded HTTP/RTSP profile | Engineering choice, merged in PR #6; absolute deadlines/cancellation, terminal cleanup, HTTP ordered correlation with optional validated CSeq, mandatory RTSP CSeq, verified record transition. Hardware remains a gate |
-| D22 | Private versioned credential envelope, trusted host store and Windows desktop CLI before a public auth ABI | Engineering choice, implemented on credential-cli branch; current-user/same-computer Credential Manager, create-only profile semantics for cooperating writers, no plaintext fallback or automatic re-pair. Other OS stores and packaged hosts remain gates |
+| D22 | Private versioned credential envelope, trusted host store and Windows desktop CLI before a public auth ABI | Implemented and merged in PR #7; current-user/same-computer Credential Manager, create-only profiles, no plaintext fallback or automatic re-pair. Other OS stores and packaged hosts remain gates |
 | D23 | Accept one optional opaque M6 type-17 metadata field, bounded to 0..256 bytes; discard and erase it | Live Apple TV M6 headers showed `17:159`. Required ID/key/signature, server proof, AEAD, duplicate and other unknown-field rejection remain enforced; metadata never influences trust, naming or storage. Sanitized phase/HTTP/TLV-header diagnostics retain no payloads |
 | D24 | Standard-library Python CLI E2E runner using an existing paired profile; explicit evidence kinds and opt-in disposable deletion | User requested unattended actions available now. No PIN collection/enrollment, credential export/clone, receiver changes or primary-profile deletion; ephemeral loopback fault peers and fresh live verification distinguish synthetic failures from hardware evidence |
 | D25 | Use Boost.Beast/Asio 1.92 for HTTP media serving behind an experimental C++ callback API | User explicitly selected Boost. Private Boost types, one concrete route-selected bind address, receiver-IP filtering, random per-session bearer URLs, bounded accepted connections/workers/buffers and absolute deadlines. No wildcard listener, scoped/link-local IPv6 URLs, firewall changes or playback commands; callbacks must cooperate with cancellation |
@@ -279,11 +471,292 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D30 | Sender identity: reference SETUP values first, configurable, then a hardware test of neutral values; random per-session device ID, never the host MAC | User decision 2026-10-06 |
 | D31 | MRP protobuf: in-tree bounded wire codec (varint, length-delimited, fixed32/64, unknown fields skipped) plus hand-written mapping of about 10 messages | User decision 2026-10-06 over protozero and Google protobuf/protoc. Apache-2.0, no dependency. Field numbers from pyatv's MIT `.proto` files, with provenance recorded before use; fixtures from Python `protobuf` with pyatv's compiled messages |
 
+**D32 (engineering decision, 2026-10-07):** retain an explicit MRP player
+path. Exact URL/queue UUID linkage is preferred; tvOS 26.6 omits those fields
+in the observed item. Use cooperative startup correlation only for a newly
+appeared item in the active TVAirPlay player after our URL start, with duration
+matching within 0.5 s. Capture the pre-start baseline, bind once and refuse
+stale, replacement or unrelated items. This is not proof against concurrent
+AirPlay senders; see [MRP contracts](mrp-controls.md).
+
+**D33 (engineering decision, 2026-10-07):** one lifecycle supervisor owns
+automatic cleanup after startup. Preserve the first terminal reason and expose
+completed joins/key erasure separately. Cancel pending commands before closing
+MRP; retain URL-before-remote cleanup. EOF requires owned receiver telemetry at
+duration while paused/stopped, never an extrapolated clock. URL stopped/idle
+allows one second for final MRP evidence. Do not automatically reconnect,
+resume, re-pair or adopt replacement players; a recovered network permits a
+fresh explicit cast. The host owns media-server shutdown. See [contracts](mrp-controls.md).
+
+**D34 (engineering decision, 2026-10-07):** retain fixed failure channel/operation
+and error category through cleanup. Expose MRP's first terminal category without
+peer descriptions, and distinguish URL/remote feedback and event failures.
+The diagnostic is the first failure recorded by the session, not a total ordering
+of independent socket events. Intentional normal-cleanup cancellation adds no
+failure. A repeated user-confirmed remote Stop closed the URL event connection
+with last state playing and no stopped/idle/ended event; preserve connection_lost
+until explicit, validated receiver intent is available. Pause or socket EOF alone
+must not be relabelled normal stop. Notification shapes are retained without their
+unmapped values; do not guess their semantics. No dependency or copied source.
+
+**D35 (engineering decision, 2026-10-07):** diagnose the sustained video freeze
+before changing receiver/session behavior. Add optional fixed-size HTTP completion
+records and allowlisted finite receiver scalar values. Count partial socket writes
+even after cancellation; publish each record after pending callbacks drain.
+Complete local TCP writes are not receiver receipt/decoding proof. Preserve the
+10-minute cast request budget, all queue commands, session/control topology and
+teardown order in the default mode. `--minimal-remote` explicitly selects the
+existing SETUP/event-only comparison (omitting remote RECORD/data/MRP/feedback),
+with no MRP ownership/control/EOF telemetry. It is not an automatic fallback.
+No automatic Play/seek workaround, dependency or copied source.
+Static/shared Release passed 23/23 CTest targets (13.74/13.39 s), offline runner
+contracts passed 10/10, and touched C++ format/diff checks passed. The instrumented
+normal-mode reproduction instead paused at zero without remote input; the user
+saw its first frame. Preserve this separate startup failure. The explicit minimal
+comparison subsequently played the full clip with normal video/audio/Home by
+user report. A same-executable default-mode repeat buffered but resumed normal
+video. HTTP admission/resume timing suggests comparing the bounded slot limit;
+`--media-connections 1..16` exposed that explicit test while D35 retained default 4.
+MRP/16 slots then passed full video/audio/Home with no recorded loading transition
+and up to six active requests. At the D35 gate the default remained four pending
+the additional control/lifecycle validation recorded under D36 below. The
+persistent freeze itself has not been reproduced by these new runs.
+
+**D36 (engineering decision, 2026-10-07):** choose a fixed, bounded 16-slot
+normal `cast` admission budget after the explicit higher-capacity control and
+selected lifecycle checks. Retain `--media-connections 1..16`; generic
+`MediaServerOptions` and `serve` keep their four-slot default. The prior D35
+full-clip video/audio/Home pass and D36 user-confirmed controls support this
+choice. Ten fresh processes and another natural EOF passed cleanup at 16;
+remote Stop and sleep/wake remain the earlier four-slot evidence, not new 16-slot
+claims. The new artifact identifies the explicit-override pre-policy executable
+and source blobs; rebuilt default-policy unit/CI results are separate.
+
+This permits at most 16 source workers and 1 MiB of 64-KiB body buffers rather
+than four workers/256 KiB, while preserving the 10-minute request deadline,
+range policy, independent authenticated sessions, credentials and teardown order.
+The new control trace used six active slots and the EOF trace five. No new queue,
+eviction, automatic Play/seek, retry, reconnect or dependency is introduced.
+Capacity does not fix every presentation failure: the first 16-slot attempt
+paused at zero about 0.1 s after the CLI playing line, with two active requests
+and no transport command. The user confirmed first frame/remote untouched.
+Preserve that failure and the original frozen-video run; investigate startup
+ordering/state next instead of interpreting successful telemetry as moving video.
+Static/shared Release passed 23/23 CTest targets each (13.48/13.44 s);
+offline runner contracts passed 10/10, and touched C++ format/diff checks passed.
+See [receiver validation](receiver-validation.md#bounded-cast-admission-policy-and-controlslifecycle-checks-2026-10-07).
+
+**D37 (user prioritization decision, 2026-10-07):** the user considers insufficient
+media connections the most likely cause of the original frozen-video failure
+and requests low priority unless it recurs in later testing. Retain the historical
+FAIL and capacity evidence without claiming proven causality or a resolved
+decoder fault. Monitor later playback tests; any recurrence restores active
+investigation priority. The separate startup pause remains the next task.
+
+**D38 (engineering decision and user testing constraint, 2026-10-07):** diagnose
+startup rather than automatically reissuing Play. Rate-zero playing events are
+not eligible startup. An unattended reproduction also played at rate 1 briefly
+then paused at zero, so require a continuous 1,000-ms confirmation interval before
+returning startup success. Reset it on every observed non-playing/zero/reverse
+state; do not extend the existing deadline or ignore cancellation. Missing rate
+retains compatibility with state-only receivers. This is a reporting/readiness
+contract, not a fix for receiver pausing, visual proof or a future-playback guarantee.
+The private option permits shorter synthetic intervals; normal `cast` uses 1 s.
+
+Add opt-in fixed 64-entry startup traces, copied to caller-owned diagnostics on
+return/rethrow; no user callback runs on transport threads. Keep only named
+phases, fixed state enums, successful command HTTP statuses, finite rates and
+steady elapsed milliseconds. Overflow drops new records without affecting
+state processing. Failed `cast --event-log` startup emits this trace after
+URL/remote cleanup, then stops/drains its media server before rethrowing. No
+identity, URL, credential, metadata or arbitrary receiver text enters these rows.
+All queue commands, MRP topology, media admission and ordered teardown remain.
+
+During D38 the user was unavailable for manual testing for approximately one
+hour and requested batched checkpoints afterward. At that gate, unattended
+native telemetry and local/CI results were separate from pending visual gates.
+The completed D39 batch is maintained in
+[manual-validation.md](manual-validation.md). Frozen-video triage stays D37:
+low priority unless it recurs; a paused-at-zero startup is a separate issue.
+
+**D39 (observed validation gate, 2026-10-07):** the user announced availability
+and completed the D38 manual batch. No runtime change. The submitted static CLI
+SHA-256 is `f5f7fcd3ef15307c7e64294875f405e115d4452c6c71760cda84c6ee56970309`;
+all recorded runtime source blobs match tested head
+`fa9b9189f599b0b6405b8c1b81327761900470c2` (D38 code head `6bed9fe`).
+Normal defaults were used: MRP, 16 media slots, 30,000-ms startup timeout,
+1,000-ms confirmation, existing credentials and no startup recovery command.
+Six starts confirmed after 1,011-1,027 ms of eligible playing. The user confirmed
+startup/controls/full-clip and post-wake presentation/Home results. Initial Home
+and untouched remote were not explicitly answered for the first run; the next
+cast followed user-confirmed sender Stop/Home. Keep that condition limit explicit.
+
+Remote Stop again returned Home but ended via URL socket EOF while still playing;
+normal protocol intent remains unresolved and classification is unchanged.
+Sleep reported paused then URL disconnect; cleanup completed, and fresh playback
+after wake reused credentials successfully. Neither scenario establishes actual
+network interruption/recovery. The physical startup pause was not reproduced
+in this selected batch, not proven fixed. Frozen video retains low priority under
+D37 unless it recurs; retain its original FAIL. Longer reliability, other hardware,
+public ABI and packaged-host gates remain open. Exact observer quotes, timing and
+HTTP completion facts are in the new [artifact](validation/native-manual-batch-windows-static-2026-10-07.json).
+
+**D40 (engineering decision, 2026-10-07):** remote Stop classification remains
+conservative while gathering bounded remote-event and final MRP observations.
+Remote bodies are acknowledged before inspection and erased by a noncopyable
+ownership guard. Opt-in logs use fixed type/state/key labels and signed 32-bit
+reason/error/status codes, share the 256-entry event bound and omit arbitrary
+peer text, names, targets, metadata and identifiers. Malformed observations do
+not end an otherwise healthy channel. Remote events never update URL state.
+The final CLI diagnostic runs after joined cleanup and exposes retained MRP
+ownership/state/EOF, received elapsed time (without extrapolation or clamping),
+duration/rate and message/heartbeat counts. It is not a fresh receiver query and
+cannot establish that every final message arrived before cancellation.
+
+Windows Release static/shared builds and CTest passed 23/23 each (15.67/15.53 s);
+offline runner contracts passed 10/10. Ten touched C++ files pass format checks.
+New scripted coverage verifies redaction/code bounds, malformed acknowledged
+observations, disabled logging, literal 256-entry overflow, remote/URL state
+separation and retained MRP elapsed-time state after cleanup. No dependency or
+copied implementation was introduced; Apache-2.0 remains unchanged.
+The native comparison and observer scope are recorded separately in the
+[D40 artifact](validation/native-stop-diagnostics-windows-static-2026-10-07.json).
+The user could not observe the first attempt and requested a repeat; preserve
+that attempt as unobserved, with no confirmed remote action or Home result.
+The repeated remote-Stop checkpoint returned Home (user-confirmed), closed URL
+events while last URL state was playing and retained MRP unowned/unknown.
+Sleep was separately confirmed screen-off; URL/MRP paused, MRP retained ownership
+with received elapsed time zero and at_end=false, and URL feedback disconnected
+first. Both cleaned automatically with connection_lost/exit 1. Remote events in
+these traces were allowlisted updateInfo outlines without terminal state/codes.
+This single comparison is not a validated normal-stop discriminator: ownership
+loss and independent first-failure ordering cannot establish intent. Do not
+change failure classification from these snapshots alone.
+Fresh playback after confirmed wake/Home reused existing credentials, accepted
+the planned near-end seek/Play and ended media_end/exit 0. Final owned MRP paused
+at received elapsed time/duration 131.567 s, rate zero, at_end=true. The user
+confirmed normal video/audio and Home after EOF. No new freeze was reported;
+D37 stays unchanged. Actual network interruption/recovery remains NOT RUN.
+Next: review the current diff/readability and actual PR-head CI, then complete
+the available G3 network-loss/recovery check. Further normal-Stop classification
+needs validated receiver intent, potentially a fixed MRP message-kind/ownership
+transition trace; do not infer it from ownership loss plus socket closure.
+
+**D41 (source audit, 2026-10-07):** at the user's request, inspect pyatv before
+continuing lifecycle work. Pinned upstream `b277a4c` catches RuntimeError and
+ConnectionLostError from `/playback-info` and assumes playback stopped. The
+tvOS reference fork `8144c77` selects its event waiter, completing only after
+playing then idle/stopped; inherited URL-event socket closure only logs and
+retains state. Six isolated offline method probes confirmed polling-error
+completion, playing-to-idle/stopped completion, and pending waiters for paused
+or socket EOF while playing. They do not exercise a full client or receiver.
+The MRP transport distinguishes closure without an exception from an error,
+not a validated receiver Stop action. Native D40 policy remains unchanged;
+copying the upstream heuristic would be a deliberate API policy change.
+Complete the actual network interruption/recovery comparison when available,
+then decide how ambiguous peer closure should be exposed. See the
+[audit and provenance](pyatv-stop-reference.md); no source vendoring, dependency,
+runtime change or new hardware gate occurred.
+
+**D42 (selected hardware gate and policy, 2026-10-07):** the user became available
+for actual network interruption/recovery and confirmed removal of the Ethernet
+network cable. The established cast had owned/playing telemetry before the cue;
+it later reported paused and a URL feedback timeout, automatically joined cleanup
+and exited connection_lost/1 with stdin held open and no sender Stop. Retained
+MRP remained owned/paused, received elapsed zero, rate one and at_end=false.
+The user confirmed Home after reconnection. A fresh process reused the stored
+credentials, accepted planned seek 124/Play and ended media_end/0; the user
+confirmed normal video/audio and Home after EOF. This is fresh explicit recovery,
+not automatic reconnect/resume or a separate full-clip proof. Pre-interruption
+video/audio was not reported; user action times were not synchronized with logs.
+Exact quotes, source/binary fingerprints and scalar traces are in the
+[artifact](validation/native-network-recovery-windows-static-2026-10-07.json).
+
+Keep the existing conservative termination policy: timeout, ownership loss,
+pause and connection closure are not remote-Stop intent. The observed network
+timeout differs from D40's remote-Stop event EOF but independent channel ordering
+and one sample per cause cannot validate a classifier. No pyatv polling heuristic
+is adopted. This selected network cleanup/fresh recovery check is PASS; normal
+Stop intent, intermittent startup pause and broader reliability remain open.
+No native source, dependency or credential changed. The existing D40 static/shared
+CTest 23/23 results remain applicable to this unchanged runtime; all ten CI checks
+passed at tested head `72b3059`, and all 51 PR-changed C++ files passed formatting.
+Inspect the evidence follow-up's actual head/checks. Every staged executable was
+restored with a SHA-256 equality check; no sender firewall/network setting changed.
+The user temporarily disconnected and restored the receiver's Ethernet connection.
+
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
 cancellation and errors before publishing production bindings.
 
+**D43 (PR review and engineering fixes, 2026-10-07):** reviewed draft PR #12
+against `origin/main` (`2b0e57c9d3ee44c5afc66418c23084ffada01d59`), beginning at
+verified head `439133239d7fe73a6d4fa3acbcbc930597e4fe04` (all ten CI checks passed).
+The [review record](pr-review.md) describes scope and the two reproduced findings.
+URL event outlines/status now use fixed type/state labels and allowlisted key
+paths, omitting peer request targets even for unreadable bodies. Event body
+ownership uses RAII through parsing/logging failures. Decoded MRP extension
+payloads now belong to move-only erasing owners, covering partially decoded
+batches, allocation failures, rejected responses and pending response cleanup.
+Event-channel body RAII also covers failed acknowledgments before caller ownership;
+the combined plaintext regression observes erasure immediately before release.
+Known state handling, wire messages, commands, startup policy and end reasons
+remain unchanged. No third-party source/dependency was added.
+
+Regression tests failed against the previous behavior, then passed after the
+fixes, including the independently reproduced event acknowledgment failure.
+Windows static/shared Release each passed 24/24 CTest targets (15.40/15.43 s);
+runner contracts passed 10/10; all 52 PR-changed C++ files passed clang-format
+dry-run and whitespace checks. Loopback UDP and runner temporary-file checks
+required execution outside the restricted sandbox; no firewall/network policy
+was changed. Initial D43 commit `d1011ab5b6a413f2e58a5e8587060d5866af6894`
+passed all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37582693970).
+The acknowledgment-guard head `880feb3` passed nine checks, including sanitizers;
+macOS shared exposed an existing silent-feedback test fault armed before startup.
+The fixture now arms silence after `start()` returns and waits for a new request;
+startup confirmation deliberately spans the old fault window (120 ms versus
+30 ms interval plus 80 ms timeout). Deadline and cleanup assertions stay intact.
+The revised session test passed five repetitions under concurrent local load.
+No production source changes in this test follow-up. Final D43 head
+`ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5` passed all ten
+[CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37584220175).
+No receiver test was
+performed for this follow-up: D40/D42 source/binary fingerprints remain the
+hardware evidence. Remote-Stop intent, intermittent startup pause and broader
+reliability remain open; frozen video stays low priority unless it recurs (D37).
+
+**D44 (review feedback and separate-session handoff, 2026-10-07):** the user
+approved marking PR #12 ready, then asked to address review comments and prepare
+a detailed continuation note. The actual open/ready head was verified as
+`ab7ec01`, with all ten CI checks passing and a clean worktree. The automated
+review had one unresolved P2 thread,
+[network-recovery gate consistency](https://github.com/ilyalissoboi/send-airplay2/pull/12#discussion_r4204085497).
+The README's current G3 summary and required-observations table now report the
+selected D42 Ethernet interruption cleanup/fresh same-credential recovery PASS.
+Automatic in-session reconnect/resume is still unimplemented; broader network
+cases and longer reliability are pending. Do not rewrite historical NOT RUN
+records or infer removal-detection latency from unsynchronized action cues.
+
+The detailed [CONTINUATION.md](CONTINUATION.md) records current authorization,
+branch/status, exact implementation/receiver-tested heads, D39-D43 evidence and
+limits, review disposition, ordered follow-up work, build/tool paths, sandbox
+behavior, privacy rules and a suggested next-session prompt. Live draft-status
+notes were updated to ready for review; **merging still needs user approval**.
+This follow-up adds no source/test/dependency changes or hardware run. Check
+whitespace, links and status consistency, then publish to the same branch,
+resolve the corrected thread and verify actual-head CI. The final PR description
+and task report identify that documentation commit and CI run.
+Local verification passed 141 documentation links/anchors and current gate/status
+consistency, all 52 unchanged PR C++ format checks, and `git diff --check`.
+Two pre-existing capacity-record links were corrected to the heading's actual
+anchor. No rebuild/CTest or receiver rerun was needed for unchanged implementation;
+the D43 results above remain tied to `ab7ec01`.
+
 ## 5. Implemented code and verification
+
+The table and section 0 summarize current components. Dated subsections preserve
+the exact evidence at each historical slice; their future-work notes are not the
+current task list. Current next steps are in section 7.
 
 | File | Purpose |
 |---|---|
@@ -294,10 +767,11 @@ cancellation and errors before publishing production bindings.
 | `CMakeLists.txt` | C++17 static/shared library and CTest targets |
 | `.github/workflows/build.yml` | Windows/Linux/macOS static/shared build-and-test matrix |
 | `docs/design.md` | Architecture, range contract, integration audit and implementation gates |
+| `docs/CONTINUATION.md` | Focused separate-session restart checkpoint, review disposition, evidence, commands and ordered development queue |
 | `docs/receiver-validation.md` | Per-platform/per-firmware hardware record; discovery, PIN enrollment and fresh-socket verification observed; remaining gates explicit |
 | `include/send_airplay2/discovery.h` | Experimental synchronous C++ discovery records/options/result API |
 | `src/discovery*.cpp` / internal headers | Bounded DNS-SD parser/cache, scan scheduler and native socket adapter |
-| `src/cli.cpp` | `airplay2-cli discover`, readable and JSON diagnostics |
+| `src/cli.cpp` | Dispatch for discover, auth, serve and cast; readable/JSON discovery diagnostics |
 | `tests/discovery_tests.cpp` / CLI fixtures | Synthetic parser/lifecycle/query tests, mutation corpus and CLI output validation |
 | `docs/discovery.md` | Discovery contract, adapter limits, source provenance and local LAN observations |
 | `src/pairing_tlv.*` | Bounded ordered TLV8 codec with strict fragment/separator handling |
@@ -313,7 +787,9 @@ cancellation and errors before publishing production bindings.
 | `tests/receiver_tests.cpp` / `docs/receiver-transport.md` | Fragmented fake receiver transcripts, dynamic authenticated peers, native loopback and lifecycle/framing contracts |
 | `src/credential_*`, `src/auth_*` / `tests/credential_tests.cpp` / `docs/credential-storage.md` | Private bounded credential codec, native Windows store, hidden-PIN CLI, enrollment/save/reload/reconnect orchestration and synthetic/OS persistence tests |
 | `src/file_media_source.*`, `src/serve_cli.*` / `tests/file_source_tests.cpp`, `tests/cli_serve.cmake` | Private file-backed `MediaSource` and development `serve` command; adapter, loopback and real-CLI tests |
-| `src/binary_plist.*` / `tests/plist_tests.cpp`, `tests/fixtures/plist` | Private bounded `bplist00` subset codec (D27); plistlib byte-exact fixtures, literal layouts, malformed/budget cases and mutation sweeps. Compiled into its test only until the session layer uses it |
+| `src/binary_plist.*` / `tests/plist_tests.cpp`, `tests/fixtures/plist` | Private bounded `bplist00` subset codec (D27); plistlib byte-exact fixtures, literal layouts, malformed/budget cases and mutation sweeps. Integrated into private session code and compiled into its fixture test |
+| `src/channel_keys.*`, `src/event_channel.*`, `src/ntp_timing.*` | Private session keys, receiver event requests and UDP timing, with fixture/stream/loopback tests |
+| `src/session_messages.*`, `src/url_playback_session.*`, `src/cast_cli.*` | Private URL start, state, local teardown and CLI; scripted receiver tests; native-only G1 PASS; MRP controls implemented, with separate G2 record |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete
@@ -330,7 +806,7 @@ Verified at foundation commit `dbd654b1d92057b3208953226186c5c2b206ccff`:
 - AddressSanitizer and UndefinedBehaviorSanitizer: pass with
   `ASAN_OPTIONS=detect_leaks=0`. Default LeakSanitizer failed to inspect processes
   in the execution environment; leak detection was not validated.
-- GitHub CI: all six Windows/Linux/macOS × static/shared jobs pass, confirmed
+- GitHub CI: all six Windows/Linux/macOS x static/shared jobs pass, confirmed
   2026-10-06. [PR run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37409502023)
   and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37409476906).
 - Android NDK build/device, packaged Windows host and receiver tests: not run.
@@ -886,6 +1362,414 @@ Noninteractive E2E runner slice on `codex/e2e-runner`, 2026-10-06:
 - This is a building block only. No receiver message is encoded or decoded
   by library code yet.
 
+### Session channel keys (step 1): 2026-10-06
+
+- **New:** `src/channel_keys.*`.
+  - `ChannelKeyLabels`, with factories for the control, event and data-stream
+    channels. The event infos are reversed for the sender; the data-stream
+    salt carries the decimal SETUP seed.
+  - `derive_session_key`.
+  - `ChannelKeySource`: a non-copyable, non-movable, erasing owner of the
+    verified shared secret. It hands out only derived keys.
+- **PairVerifier:** keeps the shared secret from M4 until the one-time
+  release. `take_control_keys` still erases it. The new `take_session_keys`
+  moves it into an empty `ChannelKeySource` and refuses an occupied one.
+  Outputs stay unchanged on failure.
+- **ReceiverConnection:** `verify` uses the session release and keeps the
+  owner. `derive_channel_keys` works only while verified, and a failure closes
+  the connection, like every other method. `close()` erases the secret.
+- **Tests:**
+  - Literal label strings, including unsigned decimal seed formatting.
+  - Session release equals the existing control-key fixtures.
+  - Event and data-stream keys equal new independent Python HKDF fixtures.
+  - Aliased outputs, an empty source, an occupied destination and
+    after-close derivation are all refused.
+  - In `receiver_tests`, keys derived after a real record transition match
+    the fake accessory's own literal-label HKDF.
+  - Regenerating with Python 3.11.9 / cryptography 50.0.2 kept every existing
+    pair-verify fixture byte-identical.
+- **Evidence:**
+  - Windows MSVC static/shared Release passed all 16 CTest targets.
+  - clang++ 22 `-Wall -Wextra -Wpedantic -Werror` syntax checks of the changed
+    sources passed.
+  - Swapping the two event-key fixtures failed with scenario-specific messages.
+  - clang-format and `git diff --check` passed.
+- **Provenance:** the label strings come from pyatv revision `b277a4c` (MIT);
+  blobs are recorded in dependencies.md.
+- **Not yet exercised:** no receiver traffic uses these keys yet. Event-channel
+  interoperability is untested.
+
+### Event channel (step 2): 2026-10-06
+
+- **Framing** (`receiver_http.*`): `EventRequestParser` handles
+  receiver-initiated requests, back to back, with bounded pending input.
+  `encode_event_response` builds the reference reply: `200 OK`,
+  `Content-Length: 0`, `Audio-Latency: 0`, with `Server` and `CSeq` echoed. The
+  per-line field check is now shared with the response parser, which behaves
+  as before (`receiver_tests` unchanged and passing).
+- **`EventChannel`** (`event_channel.*`) owns the stream, both record directions
+  and the parser. It answers each request before returning it. Every failure is
+  terminal and erases state. One owning thread; other threads stop a blocked
+  receive through the cancellation flag.
+- **`ReceiverOperation::until_cancelled(flag)`:** a no-deadline operation for
+  long-lived readers. `after()` stays capped at 60 s, and an expired deadline is
+  terminal, so a silent receiver must not time out the event reader.
+- **Tests** (`event_channel_tests`):
+  - Parser: literal requests, HTTP without a length, coalesced and split input,
+    byte-at-a-time input, and 14 rejection cases plus the pending limit and EOF
+    rules.
+  - Replies: literal bytes, and refusal of injected CRLF.
+  - Channel: read fragments of 1, 7 and 4096 bytes; requests across records;
+    3-byte partial writes; clean and partial EOF; truncated and tampered
+    records; an oversized body; cancellation; a deadline; construction checks.
+- **Evidence:**
+  - Windows MSVC static/shared Release passed all 17 CTest targets.
+  - clang++ 22 strict-warning syntax checks passed. They again caught a C++20-only
+    structured-binding lambda capture, now fixed.
+  - Reversing the reply field order failed six checks by name.
+  - clang-format and `git diff --check` passed.
+  - CI for step 1 (`c5a2734`) passed all checks.
+- **Not yet exercised:** no Apple TV traffic. Event-channel interoperability is
+  untested.
+
+### NTP timing responder (step 3): 2026-10-06
+
+- **Codec** (`ntp_timing.*`): `ntp_from_system_time`, `parse_timing_request`
+  (exactly 32 bytes, type `0xd2`) and `encode_timing_response`, matching the
+  reference reply (type `0xd3`, sequence 7, reference = request send time).
+- **`TimingResponder`:** binds a numeric local address on an ephemeral port and
+  answers only the receiver's host. Foreign or malformed datagrams are dropped
+  and counted, never fatal. `serve()` runs on one thread until cancelled.
+- **Refactor:** the native socket helpers moved unchanged from
+  `receiver_stream.cpp` to the private `native_socket.*`. Two additions: a
+  port-0 address parser and the shared poll-slice calculation.
+  `NativeReceiverStream` is unchanged in behavior; the existing native loopback
+  receiver tests pass.
+- **Tests** (`ntp_timing_tests`):
+  - Conversion known answers: epoch, 2026-10-06, fractions, and before 1970.
+  - Literal request and reply bytes, and size and type rejections.
+  - Real UDP loopback over IPv4 and IPv6: garbage ignored and counted; the
+    reply equals the codec output; a foreign host is ignored; cancellation and
+    serving after close; construction errors.
+- **Evidence:**
+  - Windows MSVC static/shared Release passed all 18 CTest targets.
+  - clang++ 22 strict-warning syntax checks passed for the Windows branches.
+  - Making the reply echo the wrong reference time failed the literal check.
+  - CI for steps 1 and 2 passed all checks.
+- **CI:** the first run at `094f91a` failed on Linux (GCC and the sanitizer
+  job). `static_cast<decltype(sent)>` cast to a `const` type
+  (`-Werror=ignored-qualifiers`), a warning neither MSVC nor clang raises.
+  It was fixed in `2f46e34` by comparing the signed result as a size; macOS
+  and Windows had passed. No Apple TV traffic yet; timing interoperability is
+  untested.
+
+### Session messages (step 4): 2026-10-06
+
+- **New:** `session_messages.*` on the D27 plist codec.
+  - `SenderIdentity` (D30): reference model and OS values, the display name
+    `send-airplay2`, and a random locally administered device ID.
+  - Random UUIDs, stream seeds below 2^63, and `SessionHeaders`: random
+    DACP-ID and Active-Remote, RTSP headers, and `/command` headers with the
+    `AirPlay/870.14.1` agent and session/stream IDs.
+  - SETUP builders: base, remote-control-only, URL control stream, data stream.
+  - Response parsers: `eventPort`; `streamID` and optional `dataPort`.
+  - `/command` envelope and the four start commands.
+  - `parse_session_event`: the event type, and the lower-cased playback state
+    from `params.playbackState` or `name`.
+- **Encoding rule:** RTSP plist bodies are sorted recursively by key, as
+  plistlib's default `sort_keys=True` does in the reference. Command payloads
+  keep the reference's key order.
+- **`public_random_bytes`:** added to `control_crypto` (OpenSSL `RAND_bytes`)
+  for non-secret identifiers.
+- **Tests** (`session_messages_tests`):
+  - Every builder is byte-exact against 14 plistlib fixtures.
+  - Literal header lists.
+  - Response and event parsing, with 16 rejection cases.
+  - Shape, version, locality and uniqueness checks of random identifiers.
+  - Without the recursive key sort, all four SETUP fixtures fail with byte
+    offsets.
+  - URL-stream (239 bytes) and data-stream (298 bytes) SETUP sizes match the
+    sanitized tvOS 26.6 request log exactly. The base SETUP differs only by the
+    longer display name.
+- **Evidence:** Windows MSVC static/shared Release passed all 19 CTest targets;
+  clang++ 22 strict syntax checks and clang-format passed.
+- **Scope:** the plist codec and session messages remain test-only until the
+  orchestrator uses them. No Apple TV traffic yet.
+
+### URL playback session (step 5): 2026-10-06
+
+- **New:** `url_playback_session.*`. `UrlPlaybackSession::start` runs the
+  reference sequence: connect and pair-verify; timing responder on the
+  route-selected local address; base SETUP; event channel with derived keys;
+  feedback every 2 s; `GET /info` (errors tolerated); RECORD; URL-stream SETUP;
+  the four `/command` start commands. It returns only when the receiver reports
+  `playing`; `loading` is not success.
+- **Threads (D28):** callers and the feedback thread share the control
+  connection under one mutex. An event thread answers events and publishes
+  state; a timing thread answers NTP.
+- **Failures:** `SessionException` categories are `rejected` (with the status),
+  `start_timeout` and `connection_lost`. Any start failure tears everything
+  down.
+- **Stop:** `stop()` runs in a fixed order (feedback, event channel, control
+  connection, timing responder). It is idempotent and also runs from the
+  destructor.
+- **Supporting changes:**
+  - `native::route_local_address`: a UDP connect plus `getsockname`, sending
+    nothing.
+  - `StreamConnector` injection for tests.
+  - The plist codec, session messages and session are now part of the library
+    (`sap2_session_sources`).
+- **Tests** (`url_playback_session_tests`), against a thread-safe fake receiver
+  that does accessory-side pair-verify, encrypted control responses, and
+  encrypted events derived from literal labels:
+  - Full happy path: request order, RTSP URI and session headers, `/command`
+    headers and command order, the media URL in the queued item, a live
+    timing port (a real UDP probe), periodic feedback, and every event
+    answered.
+  - Later state changes, ordered stop, and idempotent stop.
+  - Rejected base SETUP (500), rejected `insertPlayQueueItem` (400), never
+    `playing` (timeout), event channel lost during start, cancelled start, and
+    event channel lost after start.
+- **Evidence:**
+  - Windows MSVC static/shared Release passed all 20 CTest targets.
+  - 25 repeated runs of the threaded suite: no failures (0.6 s each).
+  - clang strict syntax checks and clang-format passed.
+  - Accepting any state as started failed three scenarios by name.
+  - One test bug was found and fixed during development: a pointer into a
+    temporary decoded plist.
+  - CI passed for `2f46e34` (step 3 fix) and `f2cfd23` (step 4).
+- **CI:** `5104f18`, `1630b61` and `ad6626b` failed on Linux, macOS and the
+  sanitizer job. The new test's local `native::NetworkRuntime` is an empty
+  struct on POSIX, so `-Wunused-variable` under `-Werror` rejected it; Windows
+  and local MSVC builds passed. Fixed in `6c61433` with `[[maybe_unused]]`,
+  matching the other runtime owners.
+- **Not yet exercised:** no Apple TV traffic. The first hardware run is gate G1
+  in step 6.
+
+### `airplay2-cli cast` (step 6): 2026-10-07
+
+- **New:** `cast_cli.*`. Steps, in order:
+  1. Open the media file (a bad path is exit 2).
+  2. Load the stored credential profile (absent: exit 1, before any network
+     work).
+  3. Start `MediaServer` for that receiver only, using the media server's
+     maximum per-request budget.
+  4. Run `UrlPlaybackSession::start`.
+  5. Print `State: <state>` lines from a reporter thread until Enter or
+     end-of-file.
+  6. Stop the session, then the server, and print a sanitized summary: state,
+     events, feedback, timing answers, whether the session failed, and the read
+     counts and span.
+- **Never printed:** the private URL, the receiver address, identifiers or
+  payloads. Session failures print a category and, if rejected, the status.
+- **Supporting change:** the credential error wording from the auth CLI is
+  shared (`describe_credential_error`). The usage text lists `cast`; the
+  `verify` success message the E2E runner pins is unchanged.
+- **Tests** (`cli_cast`): six argument refusals with exit 2; an absent profile
+  exits 1 with a `Credentials:` message; no output ever contains a URL.
+- **Evidence:** Windows MSVC static/shared Release passed all 21 CTest targets;
+  clang strict syntax checks and clang-format passed.
+
+### G1 diagnostics: 2026-10-07
+
+- **Event log:** `cast --event-log` prints value-free event outlines (method,
+  target, type, playback state and key paths), via
+  `UrlPlaybackOptions::record_event_structure`, `take_event_log()` and
+  `describe_event_structure()`.
+- **Parser fix:** bare-dictionary events (`updateInfo`) are now parsed instead
+  of counted as unreadable.
+- **Tests:** a literal outline for each fixture event; the session records
+  outlines only when enabled; and a bare-event fixture.
+- **Evidence:** Windows static/shared builds passed all 21 CTest targets.
+- **Hardware:** see receiver-validation.md. The native protocol sequence works;
+  presentation needs the remote-control session (H5).
+
+
+### Native minimum remote-control session: G1 PASS, 2026-10-07
+
+Same receiver, firmware, host and MP4 as the previous native runs. The new native
+session opens its own stored-credential pair-verify and `isRemoteControlOnly`
+SETUP (`timingProtocol=None`), connects the separately keyed event channel, then
+starts the URL session. It retains remote control until URL teardown. No remote
+RECORD, feedback, type-130 data stream, MRP or pyatv process was used.
+
+- Windows MSVC static Release, based on `66b8a94` with this native minimum change.
+  Implementation subsequently committed as `cd2c983`; source blobs in the record
+  identify the tested code independently of later documentation changes.
+  Tested CLI SHA-256 and sanitized output are in the
+  [machine-readable record](validation/native-minimum-session-windows-static-2026-10-07.json).
+- The agent ran native `cast` using the existing paired profile. Receiver address
+  and discovery output remained in driver memory; no credential file was read.
+- The user reported: video and audio played normally, and the device returned
+  to the home screen after playback finished.
+- The driver sent Enter after 45 seconds. Exit 0; summary:
+  `state=playing events=49 remote_events=0 feedback=22 timing=21 failed=no
+  reads=1317 bytes=86184608 failed_reads=0 span=[0,53953926)`.
+- Existing firewall rules were reused by temporarily staging the tested executable
+  in the stopped session's allowed build location. Its original executable was
+  restored; no firewall rule was added or changed.
+
+**G1 PASS for this run:** native-only visible video/audio, full-file fetch and
+user-observed home-screen return after sender shutdown. The minimum SETUP/event
+connection was sufficient on this receiver; an idle remote event channel is not
+an error. MRP remains the selected controls path (D29/D31). The printed final
+state is the last URL event, not proof of protocol idle. This was not EOF or a
+receiver-side stop test. Native controls, repeated casting, extended session
+lifetime and other firmware/hosts remain unvalidated.
+
+### Minimum remote-session implementation and automated validation: 2026-10-07
+
+- `UrlPlaybackSession` owns independent remote and URL control/event connections.
+  Remote SETUP is authenticated first. Its event reader answers requests without
+  overwriting URL state; event loss marks the composite session failed.
+- Remote keys/UUID/CSeq/counters are separate. The connection remains until URL
+  teardown, then the reader is cancelled/joined and remote secrets are erased.
+  This experiment deliberately omits remote RECORD/feedback/data stream/MRP.
+- Regression tests use distinct ephemeral secrets for the two fake sessions:
+  independent encrypted replies, SETUP fields/order, lifetime, state isolation,
+  remote SETUP rejection, event-connect failure, event loss during/after URL
+  start, URL failure cleanup, and URL-before-remote close order.
+- Windows MSVC 19.51 static/shared Release: 21/21 CTest targets passed in each
+  final build. Existing offline E2E runner: 10/10 tests passed. Touched C++ passes
+  clang-format dry-run/Werror and git diff --check. Native CI must be checked at
+  the newly published head; baseline CI is not evidence for this change.
+- No dependency, copied implementation, pairing change or firewall change.
+  Reference provenance is recorded in dependencies.md. Historical test records
+  are preserved; current summaries and the PR continuation instructions are updated.
+
+### Native MRP implementation and receiver controls: 2026-10-07
+
+Step 2 adds original bounded protobuf/frame codecs, correlated handshake,
+commands and heartbeat on a verified data stream. Full player paths accompany
+commands; stale/unrelated/replaced items are refused. D32 binds a new selected
+AirPlay item once when its duration matches our URL event; simultaneous
+same-duration AirPlay takeover remains outside that cooperative guarantee.
+
+Windows MSVC static/shared Release each passed 22/22 CTest targets
+(11.88/11.71 s), offline E2E contracts 10/10, clang-format dry-run/Werror and
+`git diff --check`. The native receiver accepted pause/resume, seek to 45 s,
+seek back to 15 s and Stop. Telemetry followed the changes and a heartbeat
+was acknowledged; exit 0, full file span fetched, no session/failed-read errors.
+Additional focused static/shared MRP tests passed for missing device payloads
+and malformed correlated command results. Initial implementation CI rejected a
+const vector copy in a test loop under GCC/Clang warnings-as-errors; the
+const-reference follow-up fixed it without changing runtime code. All ten
+checks passed at code/test head `8dca4a55c831563be952a5b3d6c8a353ad8b7807` in
+[CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37502438877): six native platform/static/shared jobs,
+ASan/UBSan and three offline runner jobs. Inspect the actual final PR head
+including any documentation-only follow-up.
+The final executable/source fingerprints and observer status are in the
+[dated G2 record](receiver-validation.md#native-mrp-controls-g2-pass-2026-10-07).
+G2 visual confirmation passed by user report on 2026-10-07. Do not substitute telemetry or CI for it.
+The final URL event was paused, not proof of protocol idle. Next: step 3 / G3.
+
+### Native lifecycle implementation and selected G3 checks: 2026-10-07
+
+D33 adds automatic cleanup for terminal URL state, owned receiver EOF, loss of
+ownership and connection failure. One supervisor starts after initialization,
+cancels commands and retains URL-before-remote closure. Concurrent stop calls
+join that owner; startup failures clean directly. CLI command input is polled
+without a detached stdin worker, so a terminal session closes its media server
+and exits even while stdin remains open. First end reason and completed cleanup
+are separate status facts. The stop path does not allocate a status string,
+including during allocation failures in startup.
+
+Final Windows MSVC static/shared Release passed 23/23 CTest targets
+(13.33/13.07 s), offline runner contracts 10/10, touched C++ formatting and
+git diff --check. New tests cover real native pipe input, partial/overlong/EOF
+lines, concurrent stops, silent established feedback deadlines, pending feedback
+and MRP cancellation, and independent receiver EOF boundaries. Scripted peers
+are not actual receiver outages.
+
+Native EOF after seek to 124 seconds/Play exited automatically with stdin held
+open: media_end, cleaned=yes, failed=no, no failed reads, full-file fetch, exit 0.
+Ten short native casts alternated MRP Stop and direct teardown; all established
+owned playing telemetry and completed cleanup without errors. Exact build/source
+fingerprints and counts: [dated lifecycle record](receiver-validation.md#native-lifecycle-selected-g3-cases-pass-manual-gates-pending-2026-10-07).
+G2 controls and EOF video/audio/home are user-confirmed. Receiver-side stop
+returned home and automatically cleaned up, but reported connection_lost/exit 1;
+normal stop classification remains unresolved. Sleep automatically cleaned up;
+fresh playback after wake reused credentials and EOF returned home with normal
+video/audio (user-confirmed). Actual network interruption/recovery is NOT RUN.
+The sleep setup also emitted repeated loading/playing states. A preliminary
+probe paused near startup; seek retained pause and explicit Play was necessary.
+Later passing cycles do not resolve intermittent buffering/startup behavior.
+Do not mark G3 or the standalone milestone complete. Next investigate normal
+receiver-stop classification and buffering, then actual network-loss recovery
+when available; recovery means a fresh explicit cast with the retained profile.
+
+### Receiver-stop diagnostics and full-clip playback: 2026-10-07
+
+D34 adds fixed failure channel/category snapshots and CLI output, preserving MRP's
+first category through stop. Tests distinguish URL/remote event EOF from URL
+feedback timeout and suppress intentional cleanup cancellation. An ordinary
+pause followed by event EOF still fails, protecting outage detection. Windows
+static/shared Release each passed 23/23 CTest targets (13.13/13.05 s), offline
+runner contracts 10/10, touched C++ clang-format dry-run/Werror and diff checks.
+No dependency or copied implementation was introduced.
+
+The repeated user-confirmed remote Stop returned Home; the native URL event
+connection closed without a terminal playback-state event. Summary:
+connection_lost, cleaned=yes, failed=yes, failure_channel=url_events,
+failure_reason=disconnected, exit 1. This narrows the cause beyond the previous
+paused snapshot. Unknown notification values were omitted, and the inspected
+reference handler ignores them; no terminal meaning was inferred from their shape.
+
+A fresh full clip reached EOF without seek/play/pause/stop commands while stdin
+remained open. Two brief loading/playing transitions occurred around 18 seconds
+after playing began, followed by advancing status snapshots and four acknowledged
+heartbeats. URL stopped at the natural end and cleanup returned media_end/exit 0,
+failed=no, failed_reads=0, full-file span. **Observer follow-up: full-clip video
+presentation FAIL.** The user reports a short buffering stop near 18 s, then video
+remained frozen while audio played normally until clip end. Home return for this
+run is unconfirmed. The loading/playing pairs correlate with that report; returned
+playing state, extrapolated positions, full-file read span, heartbeats and EOF
+cleanup do not prove advancing video frames. At this D34 gate, video recovery
+investigation took priority over broader support work; D37 subsequently
+lowers its priority unless it recurs. Earlier short/near-end
+video/audio/Home observations remain evidence for those separate runs.
+The user also confirmed that the original MP4 plays past 18 s with moving video
+on the PC. This supports investigating the casting/receiver path; it does not
+alone exclude a receiver-specific media/decoder problem.
+
+Read-only follow-up inspection found that `FileReadStats` counts source reads
+before `MediaServer::Session::write_chunk` completes asynchronous socket writes.
+Consequently zero failed reads and a full-file read span cannot prove complete
+HTTP responses or bytes received/decoded. `cast` already sets a 600000 ms absolute
+media-request deadline, longer than this run; the default 30 s server budget did
+not expire here. Startup queue commands match the pinned reference's reviewed
+sequence. Existing sanitized event traces omit buffer/stall values and request
+completion/write errors, so they cannot identify the cause. No behavior fix or
+automatic Play/seek retry is supported by this evidence.
+
+**Investigation implementation (D35):** bounded opt-in diagnostics with local request
+numbers, GET/HEAD, numeric selected ranges/status, bytes written, response
+completion and timeout/cancel/I/O categories, plus active-connection counts.
+Implemented `cast --media-log` and allowlisted `--event-log` rate/position/duration/
+readyToPlay/stallCount values. Correlate these finite receiver scalars; omit media URLs,
+identifiers and raw payloads. Use the unchanged supplied clip, first a natural
+reproduction, then controlled native-session comparisons. Require observed moving
+video past the stall through clip end before calling recovery successful.
+The [sanitized artifact](validation/native-stop-buffering-windows-static-2026-10-07.json)
+contains exact executable/source fingerprints and event/state/position facts.
+The initial missed remote-stop window was ended by the sender and contributes no
+remote-stop evidence. The allowed executable was restored after every run.
+
+### D35 instrumented HTTP/buffering follow-up
+
+See the dated [receiver record](receiver-validation.md#instrumented-httpbuffering-investigation-2026-10-07)
+and [four-run artifact](validation/native-http-buffering-windows-static-2026-10-07.json).
+Socket writes are now distinguished from source reads, including partial failures,
+with no addresses/URLs/metadata in scalar records. Four occupied slots coincided with new small range admission occurring only
+when older read-ahead requests ended, supporting an admission-delay hypothesis. Increasing the
+explicit limit to 16 while retaining MRP admitted up to six requests and passed
+full video/audio/Home without recorded loading. Abandoned read-ahead requests also
+occurred in successful runs, so I/O error counts alone are not a playback failure.
+`stallCount=0` did not exclude visible buffering. The same-source minimum session
+also passed; a default repeat buffered but recovered. Preserve the earlier video
+FAIL and this separate capacity candidate, without claiming MRP caused the freeze
+or declaring the startup pause solved. Default cast/server budget is still four.
+
 ## 6. Screenbox integration findings
 
 At the inspected Screenbox commit:
@@ -914,76 +1798,66 @@ the recorded source snapshot is still current.
 
 ## 7. What is missing and what to do next
 
-The milestone is unfinished. **Do not interpret missing hardware access as a
-reason to stop all implementation.** Build and mock/unit-test independent pieces
-while arranging the hardware baseline in parallel with that work.
+1. **Native presentation (G1):** minimum native remote-control-only SETUP/event
+   session implemented and PASS without pyatv. Keep its independently verified
+   connection until URL teardown. Expand lifetime/firmware and stop coverage;
+   a single video/audio/home-screen observation does not establish G2/G3.
+2. **MRP controls (D29/D31, G2):** implemented with bounded framing/codecs,
+   independent fixtures, correlated handshake/commands/heartbeat and player
+   tracking. Native command/telemetry evidence is recorded, and the user
+   confirmed the visual controls and home-screen result (G2 PASS).
+   D32 fallback assumes cooperative AirPlay startup
+   and does not guarantee ownership against a concurrent same-duration cast.
+3. **Lifecycle (G3):** automatic EOF/terminal/failure cleanup implemented; native
+   EOF and ten short cycles passed, with user-confirmed EOF video/audio/home.
+   Receiver-remote stop and sleep triggered automatic cleanup; stop classified
+   connection_lost/exit 1. D34 diagnostics reproduced URL event EOF while still
+   playing, without an explicit terminal state, so normal stop intent remains
+   unresolved. A full 131.6-second clip reached natural EOF without seeking, but
+   **video froze after buffering near 18 s while audio continued to clip end**
+   (user-confirmed); the same source file plays normally on the PC. D35 diagnostics and
+   controlled comparisons are implemented: minimal/four and MRP/16 passed full
+   video/audio/Home; MRP/four buffered but recovered. D36 passed user-observed
+   controls and selected lifecycle checks at 16 slots and selected 16 as normal
+   `cast` default (generic server/`serve` remain four). Another 16-slot attempt
+   paused at zero with only two active requests before transport commands;
+   D38 now traces command/event order and requires one second of eligible playing
+   before startup success; the spontaneous receiver pause remains active. D39
+   completed the [manual batch](manual-validation.md): startup, controls/full EOF
+   and post-wake presentation/Home passed; remote Stop/Home and cleanup passed
+   but protocol intent remains unresolved. D40 adds bounded remote-event/final
+   MRP observations; the repeated Stop/Home and sleep trace differ but do not
+   establish a reliable normal-stop rule. The first D40 attempt was unobserved.
+   D41's [pyatv audit](pyatv-stop-reference.md) found a permissive legacy polling
+   heuristic and a fork event-waiter disconnect gap, with no validated Stop
+   discriminator. Separate any API termination-policy change from intent evidence.
+   Per user decision D37, the original frozen-video failure is low priority:
+   insufficient media connections are the likely cause; retain its evidence and
+   raise priority if it recurs in later testing. D42 passed selected actual
+   Ethernet interruption cleanup and fresh explicit same-credential recovery
+   with observed video/audio/near-end EOF/Home. Broader network cases remain
+   untested; remote-Stop intent remains open under the conservative policy.
+   Investigate the
+   buffering pause and renewed loading seen in the mixed native/pyatv run; one
+   preliminary native EOF probe paused at startup and needed explicit play.
+   Successful later cycles/full-clip completion do not resolve that intermittent behavior.
+4. **Other hardware gates:** restart authentication, wrong PIN/revocation,
+   disposable-profile deletion only when opted in, departure/interface changes,
+   real-file >4-GiB seeking and neutral sender identities. Discovery, pairing/reuse,
+   reference playback and server fetch already have selected-combination evidence.
+5. **Library/hosts:** public versioned session ABI, bindings, other credential
+   stores, packaged Windows C# loading/brokered files/inbound networking and
+   Linux/macOS/Android device proofs. Botan UWP packaging remains unresolved.
+6. **Screenbox:** after the standalone gate, read current repository instructions,
+   introduce the provider/session boundary, and test Chromecast and local handoff.
+7. **Small diagnostic:** add aggregate connections/requests to `serve`'s summary.
 
-1. **Hardware baseline:** use the user-provided Apple TV 4K / tvOS 26.6 /
-   Windows 11 x64 setup (discovery model `AppleTV14,1`). Obtain the exact
-   tvOS build and AirPlay access settings without collecting secrets. Establish
-   reference playback with pyatv on that LAN and record the real session path.
-   Local discovery succeeded; reference and native playback have not been checked.
-   Follow [reference-baseline.md](reference-baseline.md): pyatv AirPlay pairing
-   first (passed), then `play_url` of one test MP4 served by
-   `airplay2-cli serve` (FAILED on tvOS 26.6: pyatv 0.18.0 uses the legacy
-   `/play` flow, which this firmware accepts but does not act on). The
-   unmerged pyatv fix (`/command` flow) then PASSED with video and audio
-   fetched from `serve`. Seek, pause/resume and position also passed with it;
-   `stop` closed playback on the TV, but the receiver reported `Paused` and
-   the sender's session stayed open. Cloud
-   sessions cannot reach the LAN, so these steps run on the user's host.
-2. **Discovery + diagnostics:** implemented on this branch. Complete real receiver
-   departure/interface-change checks and other platform/Android host coverage.
-   The Windows Apple TV discovery gate has passed; see discovery.md for limits.
-3. **Pairing + secure transport:** private TLV8, AEAD/HKDF and record framing are
-   implemented, along with existing-credential peer verification and PIN/SRP message
-   processing. Private bounded socket/deadline and framing integration is now
-   implemented. Private persistent credential format, Windows desktop trusted
-   storage and CLI pairing/reconnect are now implemented on the current branch.
-   Live enrollment and fresh-socket reconnect passed after the M6 metadata fix.
-   Separate-process `verify` passed with exit 0. Next validate restart reconnect,
-   wrong PIN, authentication failure,
-   counters/replay, timeouts and revocation before claiming interoperability.
-4. **HTTP media server:** bounded Boost callback server is implemented and loopback
-   tested on the current branch. The file adapter and `serve` now have
-   receiver-fetch evidence: the Apple TV read the full MP4 through the Windows
-   firewall on a Public network. Network-change checks and packaged/brokered
-   adapters remain. Virtual >4-GiB source tests
-   establish arithmetic, not real-file or Apple TV seeking interoperability.
-5. **Session/playback:** implement authenticated setup, event/timing/feedback
-   lifecycle, URL start, status, pause/resume, seek and stop. Treat receiver status
-   and disconnects explicitly. Use the same MP4 as the reference baseline.
-   On tvOS 26.6, legacy `/play` plus `/playback-info` polling does not start
-   playback (section 5, reference playback attempt). Design for the
-   `/command` queue flow on a type-130 stream, with playback state from the event
-   channel. The unmerged pyatv fix confirmed the start path on this receiver.
-   The `bplist00` codec (D27) is implemented. The session and threading
-   proposal is in [session-design.md](session-design.md), with decisions
-   pending.
-   Native stop must tear down the session and verify receiver state; after
-   the fork's `stop`, the TV left playback but reported `Paused` with the
-   session still open.
-   Prerequisite decisions: a binary-plist codec, and the session threading model.
-   For plist, a bounded in-tree `bplist00` subset tested against Python `plistlib`
-   fixtures is the proposed option; libplist is LGPL-2.1, so check licensing and
-   static linking before choosing it. For threading, `ReceiverConnection` is
-   serial with one request in flight, while the reference sequence needs a second
-   encrypted event connection and periodic `/feedback`. Re-inspect the pyatv event
-   channel key derivation before implementing it.
-6. **Host proofs:** implement the CLI and packaged Windows C# sample; test native
-   loading, brokered media access and inbound networking. Add macOS/Linux/Android
-   device coverage and bindings. Record failures separately from build success.
-7. **Screenbox:** after the standalone gate, create/use a dedicated fork, introduce
-   the casting adapter boundary, route active-session controls, and test Chromecast
-   regression and local/remote handoff.
-
-Remaining design choices: production OS discovery fallback/IPv6-only backend,
-plist libraries, session socket/event
-model, additional OS credential-storage adapters, asynchronous C API and bindings,
-timeouts/cancellation, capability policy, media-server access policy, unsupported
-codec handling, Android packaging and audio transport. These choices remain open;
-OpenSSL covers AEAD/HKDF/identity primitives and Botan covers SRP arithmetic. Keep decisions explicit
-in future updates to this record.
+D27-D31 are settled: in-tree plist, synchronous session threads, MRP controls,
+configurable reference identity and in-tree protobuf. Remaining choices concern
+further remote-sequence reduction, broader lifecycle behavior, public ABI/cancellation,
+other OS storage/discovery backends, capability/codec policy and packaging.
+Standalone audio, DRM, mirroring, multiroom and transcoding remain outside the
+first MP4 slice. Missing hardware access does not prevent independent implementation.
 
 ## 8. Continuation mechanics and known obstacles
 
@@ -1009,12 +1883,14 @@ the connector. In a carried-over workspace, inspect local versus remote history
 before attempting a push. A clean checkout of the PR branch avoids that divergence.
 Do not force-push over unfamiliar remote changes.
 
-Local continuation (planned): the user will continue PR #11 from a local Claude
-Code session on the Windows host (Claude Desktop app or `claude remote-control`
-in the local checkout). It can reach the LAN and, per section 2, the
-authenticated GitHub CLI. Start with section 0 and AGENTS.md. Check out the
-existing branch rather than creating one:
-`git fetch origin` then `git switch claude/modest-cannon-xa79s5`.
+Local continuation: keep using open PR #12's branch
+`claude/url-playback-session`. Inspect its actual head/checks before writing.
+The stopped Claude checkout was detached on 2026-10-07 so the branch could be
+checked out in the Codex worktree. Do not start another branch/PR or force-push.
+The user approved marking ready on 2026-10-07; that action is complete.
+Ask the user before merging. The Windows host can reach the LAN;
+hardware observations still need someone watching the receiver. Never read raw
+credential files or expose the address, identifiers, PIN or private URL.
 
 Claude Code cloud sessions (2026-10-06): the repository is cloned fresh into an
 isolated container. Pushes use the session's Git proxy; GitHub reads and PR

@@ -152,8 +152,9 @@ addresses (including a scoped link-local address). Features decoded to
 requirements remain unknown. No receiver identifiers, public keys or LAN addresses
 from these scans are stored in this record.
 
-No exact tvOS build was established; `srcvers=960.13.1` is an advertised AirPlay
+At the time of these discovery scans, no exact tvOS build was established; `srcvers=960.13.1` is an advertised AirPlay
 software version, not a verified tvOS build. No Mac firmware/build was established
 and no pairing/playback was attempted. An earlier sandboxed scan received zero
 responses. These are discovery observations only; all playback acceptance gates
-remain pending. See the receiver validation record.
+were pending at that slice. Later pairing, build/access settings and reference/native
+playback results are recorded in [receiver-validation.md](receiver-validation.md).

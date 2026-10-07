@@ -1,0 +1,39 @@
+{
+  "experiment": "remote SETUP/event only, no pyatv",
+  "cli_sha256": "9ad7afe242c55989abbec820ff0b406ca75f1a9794038733ba43eac930476760",
+  "exit_code": 0,
+  "sanitized_output": [
+    "Starting playback.",
+    "State: playing",
+    "Press Enter to stop.",
+    "Stopped. state=playing events=49 remote_events=0 feedback=22 timing=21 failed=no reads=1317 bytes=86184608 failed_reads=0 span=[0,53953926)"
+  ],
+  "date": "2026-10-07",
+  "timezone": "Asia/Tokyo",
+  "base_revision": "66b8a94cb85fe4397df7b478ee9aec1537ba0ccc",
+  "implementation_revision": "cd2c983279c81b43462815ba6ab81ec85825be8b",
+  "tested_source_blobs": {
+    "src/url_playback_session.cpp": "dab66bea23d36ec91dcfb3c08b657ca6404a1e92",
+    "src/cast_cli.cpp": "090bc5e8cc62fd839e040b578a161ecd9a5861b0"
+  },
+  "media_sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+  "media_size_bytes": 53953926,
+  "build": "Windows MSVC static Release with the native minimum session changes",
+  "receiver": "Apple TV 4K / advertised AppleTV14,1",
+  "firmware": "tvOS 26.6 (23L773)",
+  "sender": "Windows 11 x64",
+  "g1": "PASS",
+  "observation": "User observed normal video/audio and return to home screen after sender shutdown.",
+  "shutdown": "Driver sent Enter after 45 seconds; not an end-of-file test.",
+  "remote_session": "pair-verify, isRemoteControlOnly SETUP, encrypted event connection; no RECORD, remote feedback or MRP",
+  "pyatv": "not running in this experiment",
+  "not_tested": [
+    "protocol-reported idle",
+    "EOF",
+    "receiver-side stop",
+    "native controls",
+    "repeat casting",
+    "long-lived remote session"
+  ],
+  "firewall": "Existing application rules; tested binary temporarily staged at an already-allowed stopped-session build location and the original restored."
+}

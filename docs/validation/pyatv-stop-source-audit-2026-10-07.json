@@ -1,0 +1,154 @@
+{
+  "scope": "Offline isolated pinned methods, synthetic objects; no full-client or receiver assertion.",
+  "event_wait_timeout_scope": "Five-ms state wait slices and a fifty-ms observation budget; pending waiters explicitly cancelled by the probe.",
+  "source_records": [
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "LICENSE.md",
+      "git_blob": "c27c9705f92fb19e805a82225f6f9ab5c17966f3"
+    },
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "pyatv/protocols/airplay/player.py",
+      "git_blob": "e2c073cb0ba3e2a1c29f3882db88ed257bd9e2ef"
+    },
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "pyatv/protocols/airplay/channels.py",
+      "git_blob": "a5730293f53e62df54df5c5a4c7f713d3a49d917"
+    },
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "pyatv/protocols/airplay/mrp_connection.py",
+      "git_blob": "9c97600524ddc0efb12fba018a1254686d1345cd"
+    },
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "pyatv/protocols/airplay/ap2_session.py",
+      "git_blob": "aa5f1408f11d91a8be7545e9f706f28d2cde1424"
+    },
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "pyatv/auth/hap_channel.py",
+      "git_blob": "1cf14fe1ef4964b3582fc46fc7574b333a2823a7"
+    },
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "pyatv/core/protocol.py",
+      "git_blob": "5371b60e84291445f55f196f67e7a6eb83893dff"
+    },
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "pyatv/support/http.py",
+      "git_blob": "f7d2d74b4203f3597da4dd17eb03ffcf296e4ef2"
+    },
+    {
+      "repository": "postlund/pyatv",
+      "revision": "b277a4c8222ecdcbaab8a24e3e713ca44765adb4",
+      "path": "tests/protocols/airplay/test_airplay_player.py",
+      "git_blob": "96f65e1e3f2d67fc8b3a0715937967216cb5ba46"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "LICENSE.md",
+      "git_blob": "c27c9705f92fb19e805a82225f6f9ab5c17966f3"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "pyatv/protocols/airplay/player.py",
+      "git_blob": "e901be4410737ceb7dc109a155934c6c17aa5f5c"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "pyatv/protocols/airplay/channels.py",
+      "git_blob": "dd955b9e33c2deeb232984311c4671d5d3037d6c"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "pyatv/protocols/airplay/mrp_connection.py",
+      "git_blob": "9c97600524ddc0efb12fba018a1254686d1345cd"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "pyatv/protocols/airplay/ap2_session.py",
+      "git_blob": "aa5f1408f11d91a8be7545e9f706f28d2cde1424"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "pyatv/auth/hap_channel.py",
+      "git_blob": "1cf14fe1ef4964b3582fc46fc7574b333a2823a7"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "pyatv/core/protocol.py",
+      "git_blob": "5371b60e84291445f55f196f67e7a6eb83893dff"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "pyatv/support/http.py",
+      "git_blob": "f7d2d74b4203f3597da4dd17eb03ffcf296e4ef2"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "tests/protocols/airplay/test_airplay_player.py",
+      "git_blob": "96f65e1e3f2d67fc8b3a0715937967216cb5ba46"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "tests/protocols/airplay/test_airplay_v2_player.py",
+      "git_blob": "f552ce4881156c469afddfbf928ff3b9fd6925f8"
+    },
+    {
+      "repository": "robkochman/pyatv",
+      "revision": "8144c77c6cecbed4f9ba2adb5a350ad86a8f6604",
+      "path": "pyatv/protocols/raop/protocols/airplayv2.py",
+      "git_blob": "c4358ede5a0685fffe6bd7ec0817a190af4190f6"
+    }
+  ],
+  "cases": {
+    "legacy_runtime_error": "completed_without_error",
+    "legacy_connection_lost": "completed_without_error",
+    "fork_playing_then_stopped": {
+      "result": "completed",
+      "last_state": "stopped"
+    },
+    "fork_playing_then_idle": {
+      "result": "completed",
+      "last_state": "idle"
+    },
+    "fork_playing_then_paused": {
+      "result": "pending_until_probe_cancelled",
+      "last_state": "paused"
+    },
+    "fork_playing_then_event_eof": {
+      "result": "pending_until_probe_cancelled",
+      "last_state": "playing"
+    }
+  },
+  "audit_date": "2026-10-07",
+  "native_code_head": "4a18b2662150768a00154ca17e222f2e701fd192",
+  "pr_head_at_audit_start": "204ac4d027719e57c8f7b5dccd443ca47e988319",
+  "license": "MIT; reference only, no implementation source vendored or dependency introduced.",
+  "provenance_verification": "Each downloaded source checked against its Git blob SHA-1.",
+  "probe_harness_sha256": "5d283fffee8537e64738d0429cd523cc9deeb389ca329e27256209becdd662b5",
+  "probe_method": "AST-extracted pinned methods with synthetic RTSP errors and playback state objects. Inherited URL-event connection_lost(None) invoked directly; no full event transport or client exercised.",
+  "native_behavior_changed": false
+}

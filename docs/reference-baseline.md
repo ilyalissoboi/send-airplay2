@@ -14,8 +14,9 @@ These steps require the user's Windows host on the same LAN as "Living Room".
 A cloud session cannot reach that LAN.
 
 This baseline uses an existing sender to establish what the receiver accepts
-before native session code is written. It is reference evidence about the
-receiver, not evidence that this library can play media. pyatv is an external
+before native integration. It is reference evidence about the receiver.
+Native session code and the failed standalone G1 experiment now exist; see the
+receiver record. Further hypothesis tests should use native `cast`. pyatv is an external
 MIT-licensed development tool. It is not a build/runtime dependency, and no
 pyatv source is copied into this repository.
 

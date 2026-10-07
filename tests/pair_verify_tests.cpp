@@ -29,8 +29,13 @@ struct PairVerifyTestAccess {
                zero(verifier.shared_) && zero(verifier.session_key_) && zero(verifier.write_key_) &&
                zero(verifier.read_key_);
     }
+    /// After M4 the ephemeral seed and handshake key are gone; the shared secret
+    /// is retained until release so that take_session_keys can hand it over.
     static bool handshake_wiped(const PairVerifier& verifier) {
-        return zero(verifier.ephemeral_) && zero(verifier.shared_) && zero(verifier.session_key_);
+        return zero(verifier.ephemeral_) && zero(verifier.session_key_);
+    }
+    static bool holds_shared_secret(const PairVerifier& verifier) {
+        return !zero(verifier.shared_);
     }
 
 private:
@@ -200,6 +205,8 @@ void transcript_tests(const std::string& directory) {
     exchange.verifier.finish(200, fixture(directory, "m4"));
     check(PairVerifyTestAccess::handshake_wiped(exchange.verifier),
           "transient handshake keys wiped after M4");
+    check(PairVerifyTestAccess::holds_shared_secret(exchange.verifier),
+          "shared secret retained until key release");
     Secret32 write, read;
     exchange.verifier.take_control_keys(write, read);
     check(write.bytes == fixed<32>(fixture(directory, "write-key")), "sender write key oracle");
@@ -230,6 +237,126 @@ void transcript_tests(const std::string& directory) {
     check(write.bytes == saved_write && read.bytes == saved_read,
           "release failure preserves caller output");
 }
+template <typename Function> void expect_logic_error(const std::string& scenario, Function action) {
+    try {
+        action();
+        check(false, scenario + ": expected std::logic_error");
+    } catch (const std::logic_error&) {
+    }
+}
+/// Sentinel key bytes for checking that failed releases leave outputs alone.
+ControlKey filled_key(std::uint8_t value) {
+    ControlKey key{};
+    key.fill(value);
+    return key;
+}
+
+void channel_label_tests() {
+    active_group = "channel key labels";
+    // Literal receiver-defined names; the event infos are reversed for the sender.
+    const auto control = control_channel_labels();
+    check(control.salt == "Control-Salt" &&
+              control.sender_write_info == "Control-Write-Encryption-Key" &&
+              control.sender_read_info == "Control-Read-Encryption-Key",
+          "control labels");
+    const auto events = event_channel_labels();
+    check(events.salt == "Events-Salt" &&
+              events.sender_write_info == "Events-Read-Encryption-Key" &&
+              events.sender_read_info == "Events-Write-Encryption-Key",
+          "event labels are reversed from the sender's view");
+    const auto stream = data_stream_labels(0x0123456789ABCDEF);
+    check(stream.salt == "DataStream-Salt81985529216486895" &&
+              stream.sender_write_info == "DataStream-Output-Encryption-Key" &&
+              stream.sender_read_info == "DataStream-Input-Encryption-Key",
+          "data stream labels");
+    check(data_stream_labels(0).salt == "DataStream-Salt0", "zero seed in decimal");
+    check(data_stream_labels(UINT64_MAX).salt == "DataStream-Salt18446744073709551615",
+          "seed is unsigned decimal");
+}
+
+void session_channel_key_tests(const std::string& directory) {
+    active_group = "session channel keys";
+    Exchange exchange(directory);
+    exchange.respond(directory);
+    exchange.verifier.finish(200, fixture(directory, "m4"));
+    Secret32 write, read;
+    ChannelKeySource channels;
+    exchange.verifier.take_session_keys(write, read, channels);
+    check(write.bytes == fixed<32>(fixture(directory, "write-key")) &&
+              read.bytes == fixed<32>(fixture(directory, "read-key")),
+          "session release yields the same control keys");
+    check(channels.available() && PairVerifyTestAccess::wiped(exchange.verifier),
+          "secret moved to the session; exchange wiped");
+
+    const std::pair<const char*, ChannelKeyLabels> channels_under_test[] = {
+        {"events", event_channel_labels()},
+        {"datastream", data_stream_labels(0x0123456789ABCDEF)},
+    };
+    for (const auto& [name, labels] : channels_under_test) {
+        Secret32 sender_write, sender_read;
+        channels.derive(labels, sender_write, sender_read);
+        const std::string prefix(name);
+        check(sender_write.bytes == fixed<32>(fixture(directory, (prefix + "-write-key").c_str())),
+              prefix + " sender write key oracle");
+        check(sender_read.bytes == fixed<32>(fixture(directory, (prefix + "-read-key").c_str())),
+              prefix + " sender read key oracle");
+        check(sender_write.bytes != write.bytes, prefix + " keys differ from control keys");
+    }
+
+    Secret32 same;
+    expect_logic_error("aliased channel outputs",
+                       [&] { channels.derive(event_channel_labels(), same, same); });
+    check(channels.available(), "rejected derivation keeps the secret");
+    channels.clear();
+    check(!channels.available(), "clear releases the secret");
+    Secret32 untouched_write(filled_key(0x11));
+    Secret32 untouched_read(filled_key(0x22));
+    expect_logic_error("derive after clear", [&] {
+        channels.derive(event_channel_labels(), untouched_write, untouched_read);
+    });
+    check(untouched_write.bytes == filled_key(0x11) && untouched_read.bytes == filled_key(0x22),
+          "failed derivation leaves outputs unchanged");
+}
+
+void session_release_error_tests(const std::string& directory) {
+    active_group = "session key release errors";
+    // Fill a destination from one exchange, then refuse to overwrite it.
+    ChannelKeySource occupied;
+    {
+        Exchange first(directory);
+        first.respond(directory);
+        first.verifier.finish(200, fixture(directory, "m4"));
+        Secret32 write, read;
+        first.verifier.take_session_keys(write, read, occupied);
+    }
+    Exchange second(directory);
+    second.respond(directory);
+    second.verifier.finish(200, fixture(directory, "m4"));
+    Secret32 write(filled_key(0x33));
+    Secret32 read(filled_key(0x44));
+    expect_error(
+        second.verifier, "occupied channel key source",
+        [&] { second.verifier.take_session_keys(write, read, occupied); },
+        PairVerifyError::unexpected_state);
+    check(write.bytes == filled_key(0x33) && read.bytes == filled_key(0x44),
+          "failed release leaves outputs unchanged");
+    Secret32 events_write, events_read;
+    occupied.derive(event_channel_labels(), events_write, events_read);
+    check(events_write.bytes == fixed<32>(fixture(directory, "events-write-key")),
+          "failed release leaves the existing source intact");
+
+    Exchange aliased(directory);
+    aliased.respond(directory);
+    aliased.verifier.finish(200, fixture(directory, "m4"));
+    ChannelKeySource fresh;
+    Secret32 output;
+    expect_error(
+        aliased.verifier, "aliased session outputs",
+        [&] { aliased.verifier.take_session_keys(output, output, fresh); },
+        PairVerifyError::unexpected_state);
+    check(!fresh.available(), "aliased release moves no secret");
+}
+
 void credential_tests() {
     active_group = "credential bounds";
     Secret32 seed;
@@ -538,6 +665,9 @@ int main(int argc, char** argv) {
         x25519_tests();
         ed25519_tests();
         transcript_tests(directory);
+        channel_label_tests();
+        session_channel_key_tests(directory);
+        session_release_error_tests(directory);
         credential_tests();
         authentication_tests(directory);
         schema_tests(directory);

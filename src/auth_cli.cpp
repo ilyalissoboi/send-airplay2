@@ -170,7 +170,8 @@ public:
     }
 };
 #endif
-const char* credential_message(CredentialError error) {
+} // namespace
+const char* describe_credential_error(CredentialError error) {
     switch (error) {
     case CredentialError::already_exists:
         return "Profile already exists; use verify or explicitly forget before pairing again.";
@@ -186,7 +187,6 @@ const char* credential_message(CredentialError error) {
     }
     return "Credential operation failed.";
 }
-} // namespace
 int run_auth_cli(int argc, const char* const* argv) {
     try {
         const auto options = parse_auth_options(argc, argv);
@@ -204,7 +204,7 @@ int run_auth_cli(int argc, const char* const* argv) {
         std::cerr << "Arguments: " << error.what() << '\n';
         return 2;
     } catch (const CredentialException& error) {
-        std::cerr << "Credentials: " << credential_message(error.reason()) << '\n';
+        std::cerr << "Credentials: " << describe_credential_error(error.reason()) << '\n';
     } catch (const TransportException& error) {
         std::cerr << "Receiver: " << error.what() << '\n';
     } catch (const ControlException& error) {

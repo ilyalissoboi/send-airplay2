@@ -106,6 +106,60 @@ Inspected pyatv revision `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`:
   and sender/receiver control-key direction. Its omitted controller verification
   is not used as a cryptographic test oracle.
 
+Session channel keys (event channel and data streams) follow the same pyatv
+revision: `pyatv/protocols/airplay/ap2_session.py` (blob
+`aa5f1408f11d91a8be7545e9f706f28d2cde1424`) and
+`pyatv/protocols/raop/protocols/airplayv2.py` (blob
+`3d61a34e00559554477cd2ff97d9c337a9e7ccff`) give the salts and infos.
+`pyatv/auth/hap_channel.py` (blob `1cf14fe1ef4964b3582fc46fc7574b333a2823a7`)
+gives the `(salt, output_info, input_info)` order, from which the reversed
+event-channel direction follows. Only these label strings are used, as
+protocol constants.
+
+The session's event-channel reply and NTP timing responder follow the same
+revision:
+
+- `pyatv/protocols/airplay/channels.py` (blob
+  `a5730293f53e62df54df5c5a4c7f713d3a49d917`): the event reply fields
+  (`200 OK`, `Content-Length: 0`, `Audio-Latency: 0`, with `Server` and `CSeq`
+  echoed).
+- `pyatv/protocols/raop/packets.py` (blob
+  `2ff08f27917ee326a767aa0dae65d3cd5d02d88b`): the 32-byte big-endian timing
+  packet layout.
+- `pyatv/protocols/raop/protocols/__init__.py` (blob
+  `fbaefd44609807200fd2ef367bfd0df01b443b7e`): the reply fields (type 0xd3,
+  sequence 7, the reference time echoing the request's send time).
+- `pyatv/protocols/raop/timing.py` (blob
+  `91516688de86d263ef873743a91f692f2edd830c`): the NTP epoch offset and
+  microsecond fraction.
+
+Only these layouts and constants are used.
+
+The minimal native remote-control session reuses the existing original
+authentication, event and SETUP code. The pinned MIT `ap2_session.py` reference
+above was reinspected on 2026-10-07 before implementation. It orders remote
+SETUP/event, RECORD and data-stream SETUP; the first native H5 experiment omits
+the latter two to test the SETUP/event contribution. No source was copied or
+dependency added. That minimum is an engineering experiment, not a validated
+replacement for the reference's complete remote-control/MRP sequence.
+
+Session message shapes (`session_messages.*`) follow these sources; only body
+keys, fixed identifiers, header names and version strings are used:
+
+- `pyatv/protocols/raop/protocols/airplayv2.py` at the same pyatv revision: the
+  base SETUP body.
+- `pyatv/protocols/airplay/ap2_session.py` (blob
+  `aa5f1408f11d91a8be7545e9f706f28d2cde1424`): the remote-control-only SETUP
+  and the data-stream SETUP.
+- `pyatv/support/rtsp.py` (blob `56d7c6ed4a50ea38294a6180ecf4ce119a3a4cd6`):
+  the DACP-ID, Active-Remote and Client-Instance headers, `AirPlay/550.10`,
+  and plist bodies serialized with sorted keys.
+- The unmerged fix `robkochman/pyatv@8144c77c6cecbed4f9ba2adb5a350ad86a8f6604`
+  (MIT), `pyatv/protocols/raop/protocols/airplayv2.py` (blob
+  `c4358ede5a0685fffe6bd7ec0817a190af4190f6`): `sessionCorrelationUUID`, the
+  URL control stream, the `/command` envelope, commands and headers, and the
+  `AirPlay/870.14.1` agent.
+
 pyatv is MIT licensed. It is a reference only; no implementation source was
 copied or linked. Tests use independently generated, synthetic inputs; no receiver
 credentials or captured private transcripts are committed. These references
@@ -160,3 +214,41 @@ threading, sockets, JSON and hashing APIs as a developer tool. It adds no native
 runtime/build dependency or copied implementation. Offline tests use original
 public synthetic fixtures; live reports contain constructed sanitized facts only.
 See [runner contracts](e2e-runner.md) and [hardware evidence](receiver-validation.md).
+
+## Native MRP controls (D29/D31)
+
+Before implementation, the MIT protocol references were reinspected at
+`postlund/pyatv@b277a4c8222ecdcbaab8a24e3e713ca44765adb4` on 2026-10-07:
+`airplay/channels.py`, `airplay/ap2_session.py`, `mrp/protocol.py`,
+`mrp/messages.py`, `mrp/player_state.py` and `mrp/protobuf/*.proto` under
+`pyatv/protocols`. The repository's MIT `LICENSE.md` was also inspected.
+These supply wire field numbers, enum values, data-frame layout, channel labels
+and the handshake sequence. They are reverse-engineered protocol evidence.
+The native bounded wire/message codec and session are original Apache-2.0 code;
+no third-party implementation or schema source is vendored or linked.
+Synthetic fixtures use the pinned pyatv generated messages with Python protobuf
+as an independent developer-only oracle; no new native dependency is added.
+The pinned `airplay/__init__.py`, `airplay/mrp_connection.py`,
+`auth/hap_channel.py` and `auth/hap_session.py` were subsequently inspected for
+the tunnel, remote feedback and record bounds. The reference receives records
+using their two-byte lengths without enforcing the outgoing 1024-byte chunk
+size. Native MRP adds an explicit 16-KiB receive budget after observing a
+2363-byte advertised receiver record; control/event defaults remain 1024.
+
+URL event duration conversion follows Apple's [CMTime rational time contract](https://developer.apple.com/documentation/coremedia/cmtime-api)
+and [dictionary keys](https://developer.apple.com/documentation/coremedia/cmtime-dictionary-keys),
+inspected 2026-10-07. Only field/flag facts are used; no Apple implementation
+is copied and no Core Media runtime dependency is introduced.
+
+## pyatv remote-Stop source audit (D41)
+
+On 2026-10-07, we inspected pinned upstream `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`
+and tvOS reference fork `8144c77c6cecbed4f9ba2adb5a350ad86a8f6604` URL players,
+event channels, inherited HAP disconnect handler, HTTP connection behavior,
+MRP transport/feedback and AirPlay player tests. Both MIT license files were
+verified against blob `c27c9705f92fb19e805a82225f6f9ab5c17966f3`.
+Reference files remain ignored; no source was vendored or new dependency added.
+Twenty exact source/license blobs and six isolated offline observations are
+recorded in the [artifact](validation/pyatv-stop-source-audit-2026-10-07.json).
+The [analysis](pyatv-stop-reference.md) distinguishes the upstream polling
+heuristic, fork event-waiter gap and MRP transport callbacks from receiver intent.

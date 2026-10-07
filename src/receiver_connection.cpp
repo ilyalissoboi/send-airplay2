@@ -64,6 +64,7 @@ void ReceiverConnection::close() noexcept {
     }
     writer_.reset();
     reader_.reset();
+    channel_keys_.clear();
     setup_.reset();
     cleanse(pending_m2_.body.data(), pending_m2_.body.size());
     pending_m2_.body.clear();
@@ -183,11 +184,21 @@ void ReceiverConnection::verify(const PairCredentials& credentials,
         stream_->require_idle(operation);
         Secret32 write_key;
         Secret32 read_key;
-        verifier.take_control_keys(write_key, read_key);
+        verifier.take_session_keys(write_key, read_key, channel_keys_);
         writer_ = std::make_unique<ControlWriter>(write_key.bytes);
         reader_ = std::make_unique<ControlReader>(read_key.bytes);
         operation.check();
         state_ = State::verified;
+    } catch (...) {
+        close();
+        throw;
+    }
+}
+void ReceiverConnection::derive_channel_keys(const ChannelKeyLabels& labels, Secret32& sender_write,
+                                             Secret32& sender_read) {
+    try {
+        require_state(State::verified);
+        channel_keys_.derive(labels, sender_write, sender_read);
     } catch (...) {
         close();
         throw;

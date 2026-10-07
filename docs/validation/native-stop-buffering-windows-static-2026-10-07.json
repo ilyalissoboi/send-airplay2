@@ -1,0 +1,492 @@
+{
+  "date": "2026-10-07",
+  "evidence_kind": "native receiver stop diagnosis; full-clip EOF cleanup PASS but sustained video presentation FAIL by user observation; unit/CI evidence separate",
+  "cli_build": "Windows 11 x64, MSVC 19.51, Release, static",
+  "receiver": {
+    "model": "Apple TV 4K",
+    "advertised_model": "AppleTV14,1",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_source": "earlier user report; assumed unchanged"
+  },
+  "media": {
+    "type": "unprotected H.264/AAC MP4",
+    "duration_seconds": 131.6,
+    "file_size_bytes": 53953926,
+    "local_pc_playback": "PASS by user report: original file plays past 18 seconds with moving video",
+    "sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65"
+  },
+  "cli_sha256": "95aed1800ebf8c1d324b2c45fac04af5f46dd91bee1d54e56e6fc01a82bf81eb",
+  "tested_source_blobs": {
+    "src/cast_cli.cpp": "586239b8946e8215c0e6ce38f8c8d9b493b41f5d",
+    "src/cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+    "src/cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+    "src/cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+    "src/control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+    "src/control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+    "src/mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+    "src/mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+    "src/mrp_messages.cpp": "af48753904bba3e5cd6d67a8fb08b341739ff7b3",
+    "src/mrp_messages.h": "d25b152f72f541c88199f9df7d620fd2c23c84bc",
+    "src/mrp_session.cpp": "2b4277f6cb458302ccadd5e4575ead5415c6f682",
+    "src/mrp_session.h": "77271d1fd3242b802ba85a16c142db4f4200f45f",
+    "src/protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+    "src/protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+    "src/receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+    "src/receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+    "src/session_messages.cpp": "f9eaf05c7745f77a170710f92399a85815cc05ec",
+    "src/session_messages.h": "4f1094da381bc658190539a9a38da4518a22ad62",
+    "src/url_playback_session.cpp": "70c0a9f73e8133c3bef160936e55618e2fdf46a8",
+    "src/url_playback_session.h": "f4fddabf4315a89cf3727fe0e6cd05b625fa9bef"
+  },
+  "timestamp_contract": "Seconds from cast process starting output, rounded to tenths; event-log delivery may lag receipt. MRP positions may extrapolate receiver timestamps during playing.",
+  "native_only": true,
+  "existing_credentials_reused": true,
+  "allowed_executable_restored": true,
+  "receiver_remote_stop": {
+    "stdin_held_open": true,
+    "exit_code": 1,
+    "summary": "Stopped. state=playing events=32 remote_events=6 feedback=6 timing=8 failed=yes reads=1011 bytes=66130592 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes failure_channel=url_events failure_reason=disconnected",
+    "automatic_cleanup": true,
+    "commands": [
+      {
+        "time_since_cast_start_seconds": 4.7,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 5.7,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 10.7,
+        "command": "status"
+      }
+    ],
+    "url_state_events": [
+      {
+        "time_since_cast_start_seconds": 0.7,
+        "state": "loading"
+      },
+      {
+        "time_since_cast_start_seconds": 0.7,
+        "state": "loading"
+      },
+      {
+        "time_since_cast_start_seconds": 0.7,
+        "state": "loading"
+      },
+      {
+        "time_since_cast_start_seconds": 0.7,
+        "state": "playing"
+      }
+    ],
+    "event_shape_counts": [
+      {
+        "shape": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch",
+        "count": 4
+      },
+      {
+        "shape": "URL event shape: type=notification keys=reason,type,name",
+        "count": 1
+      },
+      {
+        "shape": "URL event shape: type=notification keys=type,name,item",
+        "count": 19
+      },
+      {
+        "shape": "URL event shape: type=notification keys=value,type,name,item",
+        "count": 2
+      },
+      {
+        "shape": "URL event shape: type=playbackState state=loading keys=type,name",
+        "count": 3
+      },
+      {
+        "shape": "URL event shape: type=playbackState state=playing keys=params,params.position,params.position.flags,params.position.value,params.position.timescale,params.position.epoch,params.item,params.playbackState,params.duration,params.duration.flags,params.duration.value,params.duration.timescale,params.duration.epoch,type,name,item",
+        "count": 1
+      },
+      {
+        "shape": "URL event shape: type=updateInfo keys=type,value,value.name",
+        "count": 2
+      }
+    ],
+    "scalar_trace": [
+      {
+        "time_since_cast_start_seconds": 0.7,
+        "line": "State: playing"
+      },
+      {
+        "time_since_cast_start_seconds": 4.7,
+        "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 5.7,
+        "line": "Playback: owned=yes state=playing position=5.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 10.7,
+        "line": "Playback: owned=yes state=playing position=10.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 13.9,
+        "line": "Failure: channel=url_events reason=disconnected"
+      },
+      {
+        "time_since_cast_start_seconds": 14.0,
+        "line": "Stopped. state=playing events=32 remote_events=6 feedback=6 timing=8 failed=yes reads=1011 bytes=66130592 failed_reads=0 span=[0,53953926) end=connection_lost cleaned=yes failure_channel=url_events failure_reason=disconnected"
+      }
+    ],
+    "observer": {
+      "remote_action": "user exited playback",
+      "home_screen_return": "PASS; user confirmed",
+      "normal_receiver_stop_classification": "UNRESOLVED; URL event EOF, last state playing, no terminal state event"
+    }
+  },
+  "full_clip_natural_eof": {
+    "stdin_held_open": true,
+    "exit_code": 0,
+    "summary": "Stopped. state=stopped events=85 remote_events=6 feedback=65 timing=56 failed=no reads=1652 bytes=108091430 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes failure_channel=none failure_reason=none",
+    "automatic_cleanup": true,
+    "commands": [
+      {
+        "time_since_cast_start_seconds": 4.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 5.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 10.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 15.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 20.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 25.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 30.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 35.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 40.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 45.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 50.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 55.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 60.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 65.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 70.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 75.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 80.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 85.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 90.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 95.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 100.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 105.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 110.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 115.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 120.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 125.9,
+        "command": "status"
+      },
+      {
+        "time_since_cast_start_seconds": 130.9,
+        "command": "status"
+      }
+    ],
+    "url_state_events": [
+      {
+        "time_since_cast_start_seconds": 0.9,
+        "state": "loading"
+      },
+      {
+        "time_since_cast_start_seconds": 0.9,
+        "state": "loading"
+      },
+      {
+        "time_since_cast_start_seconds": 0.9,
+        "state": "loading"
+      },
+      {
+        "time_since_cast_start_seconds": 0.9,
+        "state": "playing"
+      },
+      {
+        "time_since_cast_start_seconds": 18.2,
+        "state": "loading"
+      },
+      {
+        "time_since_cast_start_seconds": 18.6,
+        "state": "playing"
+      },
+      {
+        "time_since_cast_start_seconds": 19.2,
+        "state": "loading"
+      },
+      {
+        "time_since_cast_start_seconds": 19.2,
+        "state": "playing"
+      },
+      {
+        "time_since_cast_start_seconds": 133.1,
+        "state": "stopped"
+      }
+    ],
+    "event_shape_counts": [
+      {
+        "shape": "URL event shape: type=notification keys=item,type,name,position,position.flags,position.value,position.timescale,position.epoch",
+        "count": 7
+      },
+      {
+        "shape": "URL event shape: type=notification keys=reason,type,name",
+        "count": 1
+      },
+      {
+        "shape": "URL event shape: type=notification keys=type,name",
+        "count": 1
+      },
+      {
+        "shape": "URL event shape: type=notification keys=type,name,item",
+        "count": 55
+      },
+      {
+        "shape": "URL event shape: type=notification keys=value,type,name,item",
+        "count": 9
+      },
+      {
+        "shape": "URL event shape: type=playbackState state=loading keys=type,name",
+        "count": 5
+      },
+      {
+        "shape": "URL event shape: type=playbackState state=playing keys=params,params.position,params.position.flags,params.position.value,params.position.timescale,params.position.epoch,params.item,params.playbackState,params.duration,params.duration.flags,params.duration.value,params.duration.timescale,params.duration.epoch,type,name,item",
+        "count": 3
+      },
+      {
+        "shape": "URL event shape: type=playbackState state=stopped keys=type,name,reason",
+        "count": 1
+      },
+      {
+        "shape": "URL event shape: type=updateInfo keys=type,value,value.name",
+        "count": 3
+      }
+    ],
+    "scalar_trace": [
+      {
+        "time_since_cast_start_seconds": 0.9,
+        "line": "State: playing"
+      },
+      {
+        "time_since_cast_start_seconds": 4.9,
+        "line": "Playback: owned=yes state=playing position=4.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 5.9,
+        "line": "Playback: owned=yes state=playing position=5.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 10.9,
+        "line": "Playback: owned=yes state=playing position=10.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 15.9,
+        "line": "Playback: owned=yes state=playing position=15.1 duration=131.6 mrp_messages=17 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 18.2,
+        "line": "State: loading"
+      },
+      {
+        "time_since_cast_start_seconds": 18.6,
+        "line": "State: playing"
+      },
+      {
+        "time_since_cast_start_seconds": 19.2,
+        "line": "State: loading"
+      },
+      {
+        "time_since_cast_start_seconds": 19.2,
+        "line": "State: playing"
+      },
+      {
+        "time_since_cast_start_seconds": 20.9,
+        "line": "Playback: owned=yes state=playing position=19.5 duration=131.6 mrp_messages=18 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 25.9,
+        "line": "Playback: owned=yes state=playing position=24.5 duration=131.6 mrp_messages=18 heartbeats=0"
+      },
+      {
+        "time_since_cast_start_seconds": 30.9,
+        "line": "Playback: owned=yes state=playing position=29.5 duration=131.6 mrp_messages=19 heartbeats=1"
+      },
+      {
+        "time_since_cast_start_seconds": 35.9,
+        "line": "Playback: owned=yes state=playing position=34.5 duration=131.6 mrp_messages=19 heartbeats=1"
+      },
+      {
+        "time_since_cast_start_seconds": 40.9,
+        "line": "Playback: owned=yes state=playing position=39.5 duration=131.6 mrp_messages=19 heartbeats=1"
+      },
+      {
+        "time_since_cast_start_seconds": 45.9,
+        "line": "Playback: owned=yes state=playing position=44.5 duration=131.6 mrp_messages=19 heartbeats=1"
+      },
+      {
+        "time_since_cast_start_seconds": 50.9,
+        "line": "Playback: owned=yes state=playing position=49.5 duration=131.6 mrp_messages=19 heartbeats=1"
+      },
+      {
+        "time_since_cast_start_seconds": 55.9,
+        "line": "Playback: owned=yes state=playing position=54.5 duration=131.6 mrp_messages=19 heartbeats=1"
+      },
+      {
+        "time_since_cast_start_seconds": 60.9,
+        "line": "Playback: owned=yes state=playing position=59.5 duration=131.6 mrp_messages=20 heartbeats=2"
+      },
+      {
+        "time_since_cast_start_seconds": 65.9,
+        "line": "Playback: owned=yes state=playing position=64.5 duration=131.6 mrp_messages=20 heartbeats=2"
+      },
+      {
+        "time_since_cast_start_seconds": 70.9,
+        "line": "Playback: owned=yes state=playing position=69.5 duration=131.6 mrp_messages=20 heartbeats=2"
+      },
+      {
+        "time_since_cast_start_seconds": 75.9,
+        "line": "Playback: owned=yes state=playing position=74.5 duration=131.6 mrp_messages=20 heartbeats=2"
+      },
+      {
+        "time_since_cast_start_seconds": 80.9,
+        "line": "Playback: owned=yes state=playing position=79.5 duration=131.6 mrp_messages=20 heartbeats=2"
+      },
+      {
+        "time_since_cast_start_seconds": 85.9,
+        "line": "Playback: owned=yes state=playing position=84.5 duration=131.6 mrp_messages=20 heartbeats=2"
+      },
+      {
+        "time_since_cast_start_seconds": 90.9,
+        "line": "Playback: owned=yes state=playing position=89.5 duration=131.6 mrp_messages=21 heartbeats=3"
+      },
+      {
+        "time_since_cast_start_seconds": 95.9,
+        "line": "Playback: owned=yes state=playing position=94.5 duration=131.6 mrp_messages=21 heartbeats=3"
+      },
+      {
+        "time_since_cast_start_seconds": 100.9,
+        "line": "Playback: owned=yes state=playing position=99.5 duration=131.6 mrp_messages=21 heartbeats=3"
+      },
+      {
+        "time_since_cast_start_seconds": 105.9,
+        "line": "Playback: owned=yes state=playing position=104.5 duration=131.6 mrp_messages=21 heartbeats=3"
+      },
+      {
+        "time_since_cast_start_seconds": 110.9,
+        "line": "Playback: owned=yes state=playing position=109.5 duration=131.6 mrp_messages=21 heartbeats=3"
+      },
+      {
+        "time_since_cast_start_seconds": 115.9,
+        "line": "Playback: owned=yes state=playing position=114.5 duration=131.6 mrp_messages=21 heartbeats=3"
+      },
+      {
+        "time_since_cast_start_seconds": 120.9,
+        "line": "Playback: owned=yes state=playing position=119.5 duration=131.6 mrp_messages=22 heartbeats=4"
+      },
+      {
+        "time_since_cast_start_seconds": 125.9,
+        "line": "Playback: owned=yes state=playing position=124.5 duration=131.6 mrp_messages=22 heartbeats=4"
+      },
+      {
+        "time_since_cast_start_seconds": 130.9,
+        "line": "Playback: owned=yes state=playing position=129.5 duration=131.6 mrp_messages=22 heartbeats=4"
+      },
+      {
+        "time_since_cast_start_seconds": 133.1,
+        "line": "State: stopped"
+      },
+      {
+        "time_since_cast_start_seconds": 133.9,
+        "line": "Stopped. state=stopped events=85 remote_events=6 feedback=65 timing=56 failed=no reads=1652 bytes=108091430 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes failure_channel=none failure_reason=none"
+      }
+    ],
+    "observer": {
+      "video_audio": "FAIL: user reports video froze after a short buffering stop around 18 seconds; audio continued normally until clip end",
+      "video": "FAIL: frozen from approximately 18 seconds until clip end",
+      "audio": "PASS: user reports normal continuous audio after buffering through clip end",
+      "visible_buffering": "OBSERVED: short buffering stop around 18 seconds, followed by persistent video freeze",
+      "home_screen_return": "PENDING"
+    },
+    "presentation_result": "FAIL: video did not recover after buffering, despite playing telemetry, advancing position snapshots, heartbeats and successful EOF cleanup",
+    "protocol_result": "PASS: natural media_end, exit 0, cleaned=yes, failed=no, failed_reads=0; no seek/play/pause/stop commands; four acknowledged heartbeats"
+  },
+  "actual_network_interruption": "NOT RUN; user unavailable for disconnect/reconnect",
+  "limits": [
+    "Only this receiver/firmware/host/media combination.",
+    "Socket EOF without explicit terminal state remains connection_lost; no pause-plus-loss normal-stop inference.",
+    "Notification names/reason values remain unmapped and omitted; outlines are not semantic evidence.",
+    "File read counters and read span precede asynchronous socket writes; they do not prove completed HTTP response bodies or bytes received/decoded by the receiver.",
+    "Full-clip video presentation failed after buffering around 18 seconds; healthy telemetry and EOF cleanup did not detect the frozen picture.",
+    "This report does not confirm Home return for the full-clip run; earlier separate EOF/Home observations remain separate."
+  ]
+}

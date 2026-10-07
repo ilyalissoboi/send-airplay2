@@ -104,4 +104,5 @@ Live PIN enrollment and separate-process verification passed after the M6
 metadata fix; see the receiver record. Next assess restart, wrong PIN and revocation.
 UWP support is a packaging gate because the
 current vcpkg Botan port excludes that triplet. Public API, packaged Windows and
-Android loading, reference playback and native playback remain pending.
+Android loading remain pending. Reference playback passed with the unmerged
+pyatv fix; native-only G1 passed with the minimum remote session. See receiver-validation.md.
