@@ -139,7 +139,11 @@ automatic cleanup without command input. The summary reports the first terminal
 reason, whether cleanup finished and fixed failure channel/category; connection
 failure returns exit 1. It
 prints no private URL or receiver address. `--event-log` enables bounded event
-outlines and allowlisted numeric/boolean buffering values for diagnostics.
+outlines, allowlisted buffering values and a fixed startup phase/state/rate trace,
+including failed starts. Startup success requires one continuous second of URL
+playing without an explicitly zero/reverse rate, within the startup deadline.
+A transient playing event is insufficient; no automatic Play retry is sent.
+This confirmation is telemetry, not a proof of moving video.
 `--media-log` reports bounded HTTP range/status/socket-write/completion facts;
 socket completion does not prove receipt or decoding (see [diagnostic contracts](docs/media-server.md#opt-in-request-diagnostics)). A `playing` event does not prove visible playback:
 G1 passed for the recorded native-only run, with user-observed video/audio and

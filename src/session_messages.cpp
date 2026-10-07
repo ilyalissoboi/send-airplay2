@@ -449,6 +449,18 @@ SessionEvent parse_session_event(const Bytes& body) {
     if (const auto* duration = params ? params->find("duration") : nullptr) {
         output.duration_seconds = duration_seconds(*duration);
     }
+    const auto* rate = params ? params->find("rate") : nullptr;
+    if (!rate) {
+        rate = event.find("rate");
+    }
+    if (rate && (rate->kind() == PlistKind::integer || rate->kind() == PlistKind::real)) {
+        const auto number = rate->kind() == PlistKind::integer
+                                ? static_cast<double>(rate->as_integer())
+                                : rate->as_real();
+        if (std::isfinite(number)) {
+            output.playback_rate = number;
+        }
+    }
     return output;
 }
 } // namespace send_airplay2::detail

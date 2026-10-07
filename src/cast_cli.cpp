@@ -13,6 +13,7 @@
 #include <charconv>
 #include <chrono>
 #include <cstdint>
+#include <cstddef>
 #include <exception>
 #include <cmath>
 #include <iomanip>
@@ -155,6 +156,27 @@ void print_media_log(MediaServer& server) {
              << " end=" << media_end_name(entry.end) << '\n';
         std::cout << line.str() << std::flush;
     }
+}
+
+/// Fixed startup phases/statuses and finite scalars only, including failed starts.
+void print_start_diagnostics(const SessionStartDiagnostics& diagnostics) {
+    for (std::size_t index = 0; index < diagnostics.count; ++index) {
+        const auto& entry = diagnostics.entries[index];
+        std::ostringstream line;
+        line << "Startup: elapsed_ms=" << entry.elapsed_ms
+             << " phase=" << session_start_phase_name(entry.phase)
+             << " state=" << session_start_state_name(entry.state)
+             << " status=" << entry.response_status << " rate=";
+        if (entry.playback_rate) {
+            line << std::scientific << std::setprecision(6) << *entry.playback_rate;
+        } else {
+            line << "unknown";
+        }
+        std::cout << line.str() << '\n';
+    }
+    std::cout << "Startup summary: records=" << diagnostics.count
+              << " truncated=" << (diagnostics.truncated ? "yes" : "no")
+              << " cleaned=" << (diagnostics.cleaned_up ? "yes" : "no") << std::endl;
 }
 
 /// Prints playback-state changes and drained diagnostics from its own thread.
@@ -339,7 +361,24 @@ int cast(const CastArguments& arguments) {
     options.record_event_structure = arguments.event_log;
     options.enable_mrp = !arguments.minimal_remote;
     std::cout << "Starting playback." << std::endl;
-    auto session = UrlPlaybackSession::start(*credentials, std::move(options));
+    SessionStartDiagnostics diagnostics;
+    std::unique_ptr<UrlPlaybackSession> session;
+    try {
+        session = UrlPlaybackSession::start(*credentials, std::move(options), nullptr,
+                                            arguments.event_log ? &diagnostics : nullptr);
+    } catch (...) {
+        // start() has already joined URL/remote cleanup. Drain media writes only
+        // after that cleanup, including when a startup pause reaches its deadline.
+        server->stop();
+        if (arguments.event_log) {
+            print_start_diagnostics(diagnostics);
+        }
+        print_media_log(*server);
+        throw;
+    }
+    if (arguments.event_log) {
+        print_start_diagnostics(diagnostics);
+    }
     std::cout << "State: " << session->status().playback_state << std::endl;
     if (arguments.minimal_remote) {
         std::cout << "Minimal remote comparison: MRP controls unavailable. Press Enter to stop."

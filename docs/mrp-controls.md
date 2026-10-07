@@ -129,3 +129,19 @@ After `cast` reports playback, type `status`, `pause`, `play` (or `resume`),
 Controls refuse an unowned player. `Control: accepted` is a correlated command
 result, not a receiver observation. The status line reports `unknown` for
 unavailable telemetry. Seek direction depends on the requested absolute time.
+
+
+## Startup observation (D38)
+
+The independently acknowledged URL queue start remains unchanged. Private
+`UrlPlaybackSession::start()` now requires one continuous second of URL playing
+without an explicitly stationary/reverse rate. Non-playing and zero/reverse-rate
+events reset confirmation; the same deadline/cancellation still apply. Missing
+rate retains state-only compatibility. This does not prove decoder progress,
+resolve receiver pausing or guarantee future playback; no MRP Play fallback.
+
+`cast --event-log` also emits at most 64 fixed startup phase/state/status/rate
+records with relative steady milliseconds and truncation/cleanup flags, including
+failed startup after cleanup. Receiver text/metadata/IDs/URLs/credentials are
+excluded from these records. Visual checks are [queued as a batch](manual-validation.md)
+for the user's return; unattended status is separate evidence.

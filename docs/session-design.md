@@ -305,7 +305,10 @@ administered one per session.
    startup ordering/state is the next investigation. Per user decision D37, keep
    the original frozen-video failure at low priority unless it recurs; insufficient
    media connections are the likely cause, with evidence retained. Startup pause
-   remains active; playing telemetry and EOF cleanup do not prove moving video.
+   remains active. D38 records startup phase/state/rate timing and requires one
+   continuous second of eligible playing before returning, without retrying Play
+   or extending the deadline. Pending visual gates are [batched](manual-validation.md).
+   Playing telemetry and EOF cleanup do not prove moving video.
    Normal stop classification, actual network loss/recovery and longer playback
    remain **Gate G3**; see the dated validation record.
 

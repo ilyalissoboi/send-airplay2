@@ -30,6 +30,9 @@ D35 code/evidence head `6ef958de3e8ff7a9968f9e247a3ec1739adf2441` passed all ten
 [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37559957331).
 D36 below changes the normal cast admission budget; inspect its actual PR head
 and checks rather than reusing a prior CI result.
+The D37 documentation head `1d69560578fbbebafa5ab9c33d2cb56bd90b76cb` passed all ten
+[checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37562737055).
+D38 adds startup code/tests below; its current PR-head CI is a separate gate.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -113,8 +116,29 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   evidence and treat it as low priority for now; raise its priority and reopen
   active investigation if frozen video recurs in later testing. This is a triage
   decision, not a proven root cause or a retroactive playback PASS.
-- **Next:** investigate the intermittent startup pause, now also reproduced with
-  16 slots and only two active requests. Establish explicit receiver-stop intent, then
+- **Startup investigation (D38):** bounded startup timing now shows all four
+  queue-command acknowledgements preceding the first playing event. One unattended
+  MRP trial reported rate 1 then paused at zero about 0.4 s later; rejecting only
+  zero-rate playing was insufficient. `start()` now requires one continuous second
+  of eligible URL playing, resetting on loading/pause/zero/reverse-rate states.
+  The original deadline and cancellation still apply; there is no Play retry.
+  Fixed 64-entry startup traces survive failures and include successful queue
+  acknowledgements, allowlisted states/rates, relative times and cleanup status.
+  Six short confirmed-startup comparisons and one after 300 s of sender inactivity
+  returned successfully and cleaned up. Synthetic regressions pass; these native
+  runs are telemetry-only. Exact exploratory/final fingerprints and traces are in
+  the [startup artifact](validation/native-startup-confirmation-windows-static-2026-10-07.json).
+  Submitted Windows static/shared Release passed 23/23 CTest targets each
+  (15.41/15.22 s); offline runner contracts passed 10/10, format/diff checks passed.
+  Inspect CI at the actual PR head before finalizing.
+  The physical receiver pause remains unresolved.
+- **Manual batch:** the user is unavailable for approximately the next hour;
+  collect observations together when they announce availability. See
+  [manual-validation.md](manual-validation.md) for startup, controls/full EOF,
+  receiver Stop and sleep/wake checkpoints. Do not ask for observations during
+  that window or infer a visual PASS from unattended telemetry.
+- **Next:** complete the queued startup/receiver observations and investigate the
+  receiver transition that still pauses the item. Establish explicit receiver-stop intent, then
   test actual network interruption/recovery when available. The user cannot
   perform network disconnect/reconnect in this session. Preserve credentials,
   independent remote/URL sessions and ordered teardown; no automatic Play/seek.
@@ -463,6 +487,31 @@ and requests low priority unless it recurs in later testing. Retain the historic
 FAIL and capacity evidence without claiming proven causality or a resolved
 decoder fault. Monitor later playback tests; any recurrence restores active
 investigation priority. The separate startup pause remains the next task.
+
+**D38 (engineering decision and user testing constraint, 2026-10-07):** diagnose
+startup rather than automatically reissuing Play. Rate-zero playing events are
+not eligible startup. An unattended reproduction also played at rate 1 briefly
+then paused at zero, so require a continuous 1,000-ms confirmation interval before
+returning startup success. Reset it on every observed non-playing/zero/reverse
+state; do not extend the existing deadline or ignore cancellation. Missing rate
+retains compatibility with state-only receivers. This is a reporting/readiness
+contract, not a fix for receiver pausing, visual proof or a future-playback guarantee.
+The private option permits shorter synthetic intervals; normal `cast` uses 1 s.
+
+Add opt-in fixed 64-entry startup traces, copied to caller-owned diagnostics on
+return/rethrow; no user callback runs on transport threads. Keep only named
+phases, fixed state enums, successful command HTTP statuses, finite rates and
+steady elapsed milliseconds. Overflow drops new records without affecting
+state processing. Failed `cast --event-log` startup emits this trace after
+URL/remote cleanup, then stops/drains its media server before rethrowing. No
+identity, URL, credential, metadata or arbitrary receiver text enters these rows.
+All queue commands, MRP topology, media admission and ordered teardown remain.
+
+The user is unavailable for manual testing for approximately one hour and
+requests batched checkpoints afterward. Unattended native telemetry and local/CI
+results are separate from the pending visual gates. The batch is maintained in
+[manual-validation.md](manual-validation.md). Frozen-video triage stays D37:
+low priority unless it recurs; a paused-at-zero startup is a separate issue.
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1536,8 +1585,9 @@ the recorded source snapshot is still current.
    controls and selected lifecycle checks at 16 slots and selected 16 as normal
    `cast` default (generic server/`serve` remain four). Another 16-slot attempt
    paused at zero with only two active requests before transport commands;
-   investigate startup ordering/state next. The spontaneous startup pause remains
-   active. Per user decision D37, the original frozen-video failure is low priority:
+   D38 now traces command/event order and requires one second of eligible playing
+   before startup success; the spontaneous receiver pause remains active. Complete
+   [batched manual checks](manual-validation.md) after the user returns. Per user decision D37, the original frozen-video failure is low priority:
    insufficient media connections are the likely cause; retain its evidence and
    raise priority if it recurs in later testing. Finish actual
    network interruption/recovery when available. Investigate the

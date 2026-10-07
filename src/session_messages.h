@@ -113,6 +113,9 @@ struct SessionEvent {
     std::string type;
     std::optional<std::string> playback_state;
     std::optional<double> duration_seconds;
+    /// Finite numeric params.rate (or root rate), when supplied. Zero is a
+    /// stationary item even if the receiver labels the event "playing".
+    std::optional<double> playback_rate;
 };
 /// Decode an event body: the same {"params": {"data": ...}} envelope, or a
 /// bare dictionary with a "type" (some receiver events are not wrapped).

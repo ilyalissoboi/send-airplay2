@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -207,6 +208,9 @@ struct Behavior {
     bool reject_remote_event_connect = false;
     bool end_remote_events_on_rate = false;
     bool silent_feedback = false;
+    unsigned zero_rate_events = 0;
+    bool pause_after_zero_rate = false;
+    bool remain_stationary = false;
 };
 
 constexpr std::uint16_t control_port = 7000;
@@ -462,7 +466,16 @@ private:
                     end_events_locked();
                 } else if (behavior_.report_playing) {
                     push_state_locked("Loading");
-                    push_state_locked("Playing");
+                    for (unsigned event = 0; event < behavior_.zero_rate_events; ++event) {
+                        push_state_locked("Playing", 0.0);
+                    }
+                    if (behavior_.pause_after_zero_rate) {
+                        push_state_locked("Paused");
+                    } else if (!behavior_.remain_stationary) {
+                        push_state_locked("Playing", behavior_.zero_rate_events
+                                                         ? std::optional<double>{1.0}
+                                                         : std::nullopt);
+                    }
                 } else {
                     push_state_locked("Loading");
                 }
@@ -500,12 +513,16 @@ private:
         return reply;
     }
 
-    void push_state_locked(const std::string& state) {
+    void push_state_locked(const std::string& state, std::optional<double> rate = {}) {
         if (!event_pipe_) {
             return;
         }
-        const auto inner = encode_binary_plist(PlistDictionary{
-            {"type", "playbackState"}, {"params", PlistDictionary{{"playbackState", state}}}});
+        PlistDictionary params{{"playbackState", state}};
+        if (rate) {
+            params.push_back({"rate", *rate});
+        }
+        const auto inner = encode_binary_plist(
+            PlistDictionary{{"type", "playbackState"}, {"params", std::move(params)}});
         const auto body =
             encode_binary_plist(PlistDictionary{{"params", PlistDictionary{{"data", inner}}}});
         auto event = text("POST /command RTSP/1.0\r\nCSeq: " + std::to_string(++event_sequence_) +
@@ -586,6 +603,7 @@ UrlPlaybackOptions options_for(FakeReceiver& receiver) {
     options.media_url = media_url;
     options.request_timeout = 2000ms;
     options.start_timeout = 3000ms;
+    options.start_confirmation_interval = 20ms; // Keep scripted scenarios fast.
     options.feedback_interval = 30ms;
     options.connect = receiver.connector();
     return options;
@@ -837,6 +855,183 @@ void failure_tests() {
     }
 }
 
+void startup_readiness_tests() {
+    group = "stationary startup and bounded diagnostics";
+    for (const bool pause_after_zero : {false, true}) {
+        Behavior stationary;
+        stationary.zero_rate_events = 1;
+        stationary.pause_after_zero_rate = pause_after_zero;
+        stationary.remain_stationary = !pause_after_zero;
+        FakeReceiver paused(stationary);
+        auto options = options_for(paused);
+        options.start_timeout = 150ms;
+        SessionStartDiagnostics failed;
+        try {
+            (void)UrlPlaybackSession::start(paused.credentials(), options, nullptr, &failed);
+            check(false, "playing/rate zero then paused must not report startup success");
+        } catch (const SessionException& error) {
+            check(error.reason() == SessionError::start_timeout,
+                  "stationary startup expires without a recovery Play");
+        }
+        check(failed.cleaned_up && paused.control_was_closed() && paused.event_was_closed() &&
+                  paused.remote_control().control_was_closed(),
+              "startup deadline preserves ordered cleanup before diagnostics return");
+        const auto has_zero_rate = std::any_of(
+            failed.entries.begin(), failed.entries.begin() + failed.count,
+            [](const SessionStartTraceEntry& entry) {
+                return entry.state == SessionStartState::playing && entry.playback_rate == 0.0;
+            });
+        check(has_zero_rate && failed.count != 0 &&
+                  failed.entries[failed.count - 1].phase == SessionStartPhase::failed,
+              "failed trace retains contradictory playing/rate-zero event and deadline phase");
+        std::vector<std::string> commands;
+        for (const auto& request : paused.requests()) {
+            if (request.target == "/command") {
+                commands.push_back(command_type(request));
+            }
+        }
+        check(commands == std::vector<std::string>{"insertPlayQueueItem", "setProperty",
+                                                   "setProperty", "setRate"},
+              "startup pause does not trigger repeated queue commands or Play");
+    }
+}
+
+void startup_confirmation_tests() {
+    group = "positive startup interrupted during confirmation";
+    FakeReceiver receiver({});
+    auto options = options_for(receiver);
+    options.start_timeout = 500ms;
+    options.start_confirmation_interval = 250ms;
+    auto pause = std::async(std::launch::async, [&] {
+        const auto started = eventually([&] {
+            const auto requests = receiver.requests();
+            return std::any_of(requests.begin(), requests.end(), [](const ParsedRequest& request) {
+                return request.target == "/command" && command_type(request) == "setRate";
+            });
+        });
+        if (started) {
+            std::this_thread::sleep_for(10ms);
+            receiver.push_state("Paused");
+        }
+        return started;
+    });
+    SessionStartDiagnostics diagnostics;
+    try {
+        (void)UrlPlaybackSession::start(receiver.credentials(), options, nullptr, &diagnostics);
+        check(false, "short playing transition must not bypass startup confirmation");
+    } catch (const SessionException& error) {
+        check(error.reason() == SessionError::start_timeout,
+              "pause during confirmation retains the original deadline");
+    }
+    check(pause.get() && diagnostics.cleaned_up, "pause was sent after setRate and cleanup joined");
+    check(std::any_of(diagnostics.entries.begin(), diagnostics.entries.begin() + diagnostics.count,
+                      [](const SessionStartTraceEntry& entry) {
+                          return entry.state == SessionStartState::paused;
+                      }),
+          "startup trace retains pause before ready");
+}
+
+void startup_confirmation_deadline_tests() {
+    group = "startup confirmation budget";
+    FakeReceiver receiver({});
+    auto options = options_for(receiver);
+    options.start_timeout = 60ms;
+    options.start_confirmation_interval = 250ms;
+    SessionStartDiagnostics diagnostics;
+    try {
+        (void)UrlPlaybackSession::start(receiver.credentials(), options, nullptr, &diagnostics);
+        check(false, "confirmation must not extend a shorter startup deadline");
+    } catch (const SessionException& error) {
+        check(error.reason() == SessionError::start_timeout && diagnostics.cleaned_up,
+              "healthy playing still times out when confirmation exceeds the remaining budget");
+    }
+
+    FakeReceiver invalid({});
+    auto invalid_options = options_for(invalid);
+    invalid_options.start_confirmation_interval = -1ms;
+    diagnostics.count = 1; // A reused output must not retain previous startup records.
+    try {
+        (void)UrlPlaybackSession::start(invalid.credentials(), invalid_options, nullptr,
+                                        &diagnostics);
+        check(false, "negative confirmation interval accepted");
+    } catch (const std::invalid_argument&) {
+        check(diagnostics.count == 0 && invalid.requests().empty() &&
+                  invalid.remote_control().requests().empty(),
+              "invalid interval resets output and refuses startup before authentication/network "
+              "work");
+    }
+}
+
+void startup_confirmation_cancellation_tests() {
+    group = "startup confirmation cancellation";
+    FakeReceiver receiver({});
+    auto options = options_for(receiver);
+    options.start_timeout = 1000ms;
+    options.start_confirmation_interval = 500ms;
+    std::atomic_bool cancelled{false};
+    auto cancel = std::async(std::launch::async, [&] {
+        const auto command_observed = eventually([&] {
+            const auto requests = receiver.requests();
+            return std::any_of(requests.begin(), requests.end(), [](const ParsedRequest& request) {
+                return request.target == "/command" && command_type(request) == "setRate";
+            });
+        });
+        if (command_observed) {
+            cancelled = true;
+        }
+        return command_observed;
+    });
+    SessionStartDiagnostics diagnostics;
+    try {
+        (void)UrlPlaybackSession::start(receiver.credentials(), options, &cancelled, &diagnostics);
+        check(false, "cancellation during confirmation ignored");
+    } catch (const TransportException& error) {
+        check(error.reason() == TransportError::cancelled && diagnostics.cleaned_up,
+              "cancelled confirmation tears down before rethrowing cancellation");
+    }
+    check(cancel.get(), "cancellation requested after startup setRate");
+}
+
+void startup_trace_tests() {
+    group = "bounded startup diagnostics";
+    for (const unsigned zero_events : {1u, 80u}) {
+        Behavior progressing;
+        progressing.zero_rate_events = zero_events;
+        FakeReceiver receiver(progressing);
+        SessionStartDiagnostics diagnostics;
+        auto session = UrlPlaybackSession::start(receiver.credentials(), options_for(receiver),
+                                                 nullptr, &diagnostics);
+        check(session->status().playback_state == "playing",
+              "positive rate after stationary events permits startup, event count " +
+                  std::to_string(zero_events));
+        check(diagnostics.count <= 64 && !diagnostics.cleaned_up,
+              "startup trace bound and successful lifetime, event count " +
+                  std::to_string(zero_events));
+        if (zero_events == 80) {
+            check(diagnostics.count == 64 && diagnostics.truncated,
+                  "trace overflow drops new entries without suppressing the positive-rate event");
+        } else {
+            check(!diagnostics.truncated &&
+                      diagnostics.entries[diagnostics.count - 1].phase == SessionStartPhase::ready,
+                  "successful trace ends with ready");
+            unsigned acknowledged_commands = 0;
+            for (std::size_t index = 0; index < diagnostics.count; ++index) {
+                if (diagnostics.entries[index].response_status == 200) {
+                    ++acknowledged_commands;
+                }
+                if (index != 0) {
+                    check(diagnostics.entries[index].elapsed_ms >=
+                              diagnostics.entries[index - 1].elapsed_ms,
+                          "startup trace timestamps ordered at index " + std::to_string(index));
+                }
+            }
+            check(acknowledged_commands == 4,
+                  "four command acknowledgements recorded independently");
+        }
+        session->stop();
+    }
+}
+
 void event_log_tests() {
     group = "diagnostic event log";
     FakeReceiver receiver({});
@@ -1017,6 +1212,11 @@ int main() {
     try {
         happy_path_tests();
         failure_tests();
+        startup_readiness_tests();
+        startup_confirmation_tests();
+        startup_confirmation_deadline_tests();
+        startup_confirmation_cancellation_tests();
+        startup_trace_tests();
         remote_control_failure_tests();
         event_log_tests();
         failure_after_start_tests();

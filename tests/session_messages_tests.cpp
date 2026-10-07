@@ -221,6 +221,27 @@ void event_tests(const std::string& directory) {
     check(!duration_event(PlistDictionary{{"value", 100}, {"flags", 1}}).duration_seconds,
           "missing timescale");
     check(!duration_event("100").duration_seconds, "text duration is not parsed");
+    const auto rate_event = [&](PlistValue rate, bool root) {
+        PlistDictionary fields{{"type", "playbackState"}, {"name", "Playing"}};
+        if (root) {
+            fields.push_back({"rate", std::move(rate)});
+        } else {
+            fields.push_back({"params", PlistDictionary{{"rate", std::move(rate)}}});
+        }
+        return parse_session_event(envelope(std::move(fields)));
+    };
+    check(rate_event(0, false).playback_rate == 0.0,
+          "integer zero rate is explicit stationary telemetry");
+    check(rate_event(1.0, true).playback_rate == 1.0, "root numeric rate supported");
+    check(rate_event(-1.0, false).playback_rate == -1.0,
+          "reverse rate retained without implying forward startup");
+    for (const auto rate :
+         {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()}) {
+        check(!rate_event(rate, false).playback_rate, "nonfinite rate ignored");
+    }
+    check(!rate_event("private-rate", false).playback_rate,
+          "rate text is not interpreted or retained");
+    check(!rate_event(true, false).playback_rate, "boolean rate is not numeric");
     // Diagnostic outlines carry key names and the state, never other values.
     check(describe_event_structure(fixture(directory, "event-state-params")) ==
               "type=playbackState state=playing keys=type,params,params.playbackState",

@@ -9,11 +9,19 @@
 #include "mrp_session.h"
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
+#include <memory>
 #include <mutex>
+#include <optional>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
+#include <vector>
 
 namespace send_airplay2::detail {
 namespace {
@@ -21,6 +29,28 @@ namespace {
 constexpr std::chrono::milliseconds start_poll_slice{20};
 constexpr const char* playing_state = "playing";
 constexpr std::size_t max_event_log = 256;
+
+SessionStartState start_state(const std::string& state) noexcept {
+    if (state == "loading") {
+        return SessionStartState::loading;
+    }
+    if (state == "playing") {
+        return SessionStartState::playing;
+    }
+    if (state == "paused") {
+        return SessionStartState::paused;
+    }
+    if (state == "idle") {
+        return SessionStartState::idle;
+    }
+    if (state == "stopped") {
+        return SessionStartState::stopped;
+    }
+    if (state == "ended") {
+        return SessionStartState::ended;
+    }
+    return SessionStartState::other;
+}
 
 SessionFailureReason mrp_failure_reason(MrpError reason) noexcept {
     switch (reason) {
@@ -180,9 +210,15 @@ UrlPlaybackSession::UrlPlaybackSession(UrlPlaybackOptions options)
     : options_(std::move(options)), session_uuid_(random_uuid()),
       headers_(SessionHeaders::random()) {}
 
-std::unique_ptr<UrlPlaybackSession> UrlPlaybackSession::start(const PairCredentials& credentials,
-                                                              UrlPlaybackOptions options,
-                                                              const std::atomic_bool* cancelled) {
+std::unique_ptr<UrlPlaybackSession>
+UrlPlaybackSession::start(const PairCredentials& credentials, UrlPlaybackOptions options,
+                          const std::atomic_bool* cancelled, SessionStartDiagnostics* diagnostics) {
+    if (diagnostics) {
+        *diagnostics = {};
+    }
+    if (options.start_confirmation_interval < std::chrono::milliseconds::zero()) {
+        throw std::invalid_argument("Startup confirmation interval must be nonnegative");
+    }
     if (!options.connect) {
         options.connect = connect_receiver;
     }
@@ -190,12 +226,22 @@ std::unique_ptr<UrlPlaybackSession> UrlPlaybackSession::start(const PairCredenti
         options.identity.device_id = random_device_id();
     }
     std::unique_ptr<UrlPlaybackSession> session(new UrlPlaybackSession(std::move(options)));
+    session->capture_start_trace_ = diagnostics != nullptr;
     try {
+        session->trace_start_phase(SessionStartPhase::connecting);
         session->run_start(credentials, cancelled);
         // Owners are fully initialized before the cleanup thread can inspect them.
         session->supervisor_thread_ = std::thread([owner = session.get()] { owner->supervise(); });
+        session->trace_start_phase(SessionStartPhase::ready);
+        if (diagnostics) {
+            session->finish_start_trace(*diagnostics);
+        }
     } catch (...) {
+        session->trace_start_phase(SessionStartPhase::failed);
         session->stop();
+        if (diagnostics) {
+            session->finish_start_trace(*diagnostics);
+        }
         throw;
     }
     return session;
@@ -246,15 +292,22 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
         set_action_at_item_end(),
         set_rate(1.0),
     };
-    for (const auto& command : commands) {
+    constexpr SessionStartPhase phases[] = {SessionStartPhase::insert_item,
+                                            SessionStartPhase::date_range,
+                                            SessionStartPhase::item_end, SessionStartPhase::rate};
+    static_assert(std::size(commands) == std::size(phases));
+    for (std::size_t index = 0; index < std::size(commands); ++index) {
+        trace_start_phase(phases[index]);
         ReceiverRequest request;
         request.method = "POST";
         request.target = "/command";
         request.protocol = ReceiverProtocol::http;
         request.headers = headers_.command(session_uuid_, stream.stream_id);
-        request.body = command_body(command);
-        (void)control_request(std::move(request), cancelled, true);
+        request.body = command_body(commands[index]);
+        const auto response = control_request(std::move(request), cancelled, true);
+        trace_start_phase(phases[index], response.status);
     }
+    trace_start_phase(SessionStartPhase::waiting);
     wait_until_playing(cancelled);
 }
 
@@ -452,6 +505,15 @@ void UrlPlaybackSession::event_loop() {
                     ++status_.events;
                     if (event->playback_state) {
                         status_.playback_state = *event->playback_state;
+                        state_playback_rate_ = event->playback_rate;
+                        if (status_.playback_state != playing_state ||
+                            (state_playback_rate_ && *state_playback_rate_ <= 0)) {
+                            forward_playing_since_.reset();
+                        } else if (!forward_playing_since_) {
+                            forward_playing_since_ = std::chrono::steady_clock::now();
+                        }
+                        append_start_trace_locked(start_state(*event->playback_state), 0,
+                                                  event->playback_rate);
                     }
                 }
             }
@@ -516,11 +578,6 @@ void UrlPlaybackSession::wait_until_playing(const std::atomic_bool* cancelled) {
         if (status_.failed || (mrp_ && mrp_->failed())) {
             throw SessionException(SessionError::connection_lost);
         }
-        // Both sessions must remain healthy; a URL event alone cannot hide a
-        // concurrent remote-control failure. "loading" is never success.
-        if (status_.playback_state == playing_state) {
-            return;
-        }
         if (cancelled != nullptr && cancelled->load()) {
             throw TransportException(TransportError::cancelled);
         }
@@ -528,10 +585,96 @@ void UrlPlaybackSession::wait_until_playing(const std::atomic_bool* cancelled) {
         if (now >= deadline) {
             throw SessionException(SessionError::start_timeout);
         }
+        // Both sessions must remain healthy throughout the confirmation interval.
+        // tvOS has reported positive-rate playing then paused about 0.4 s later;
+        // zero-rate playing also occurs. Event processing resets this interval
+        // on every observed interruption. Missing rate preserves compatibility.
+        if (forward_playing_since_ &&
+            now - *forward_playing_since_ >= options_.start_confirmation_interval) {
+            return;
+        }
         const auto remaining =
             std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
         state_changed_.wait_for(lock, std::min(remaining, start_poll_slice));
     }
+}
+
+const char* session_start_phase_name(SessionStartPhase phase) noexcept {
+    switch (phase) {
+    case SessionStartPhase::connecting:
+        return "connecting";
+    case SessionStartPhase::insert_item:
+        return "insert_item";
+    case SessionStartPhase::date_range:
+        return "date_range";
+    case SessionStartPhase::item_end:
+        return "item_end";
+    case SessionStartPhase::rate:
+        return "rate";
+    case SessionStartPhase::waiting:
+        return "waiting";
+    case SessionStartPhase::ready:
+        return "ready";
+    case SessionStartPhase::failed:
+        return "failed";
+    }
+    return "failed";
+}
+
+const char* session_start_state_name(SessionStartState state) noexcept {
+    switch (state) {
+    case SessionStartState::none:
+        return "none";
+    case SessionStartState::loading:
+        return "loading";
+    case SessionStartState::playing:
+        return "playing";
+    case SessionStartState::paused:
+        return "paused";
+    case SessionStartState::idle:
+        return "idle";
+    case SessionStartState::stopped:
+        return "stopped";
+    case SessionStartState::ended:
+        return "ended";
+    case SessionStartState::other:
+        return "other";
+    }
+    return "other";
+}
+
+void UrlPlaybackSession::trace_start_phase(SessionStartPhase phase, unsigned response_status) {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    start_trace_phase_ = phase;
+    append_start_trace_locked(SessionStartState::none, response_status);
+}
+
+void UrlPlaybackSession::append_start_trace_locked(SessionStartState state,
+                                                   unsigned response_status,
+                                                   std::optional<double> playback_rate) {
+    if (!capture_start_trace_) {
+        return;
+    }
+    if (start_trace_.count == start_trace_.entries.size()) {
+        start_trace_.truncated = true;
+        return;
+    }
+    auto& entry = start_trace_.entries[start_trace_.count++];
+    entry.elapsed_ms =
+        static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::steady_clock::now() - start_trace_origin_)
+                                       .count());
+    entry.phase = start_trace_phase_;
+    entry.state = state;
+    entry.response_status = response_status;
+    entry.playback_rate = playback_rate;
+}
+
+void UrlPlaybackSession::finish_start_trace(SessionStartDiagnostics& diagnostics) {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    capture_start_trace_ = false;
+    start_trace_.cleaned_up = status_.cleaned_up;
+    diagnostics = start_trace_;
 }
 
 SessionStatus UrlPlaybackSession::status() const {

@@ -881,3 +881,69 @@ record is retained. Monitor later playback tests and raise priority if video
 freezes again. The separate paused-at-zero startup failure remains active and
 is the next investigation. This changes task priority only; no runtime or
 receiver behavior changed and no new hardware result is inferred.
+
+
+### Startup confirmation and deferred manual batch, D38, 2026-10-07
+
+The user is unavailable for manual observation for approximately the next hour.
+These new native runs therefore record **telemetry only**; moving video, audio
+and Home return are NOT RUN. The existing Apple TV 4K/tvOS/Windows combination
+and 53,953,926-byte MP4 are unchanged to our knowledge. All runs used the normal
+16-slot media default and an explicit 10,000-ms startup deadline. Only native
+status and Enter were sent; there was no Play/seek retry or pyatv control.
+
+The first instrumented candidate rejected explicitly stationary/reverse-rate
+playing, but still returned immediately on positive-rate playing. Twelve short
+trials alternated MRP and minimal remote. In the first MRP trial, all four queue
+commands had been acknowledged by 450 ms; playing/rate 1 arrived at 767 ms and
+was immediately accepted. Paused followed about 0.4 s later, and owned status
+remained paused at position zero. Enter cleaned up normally. The other five MRP
+and six minimal-remote samples remained playing during short observations.
+Rate-only readiness is therefore insufficient. Order/idle/transient-state
+confounding prevents a conclusion that MRP causes the pause. All four command
+acknowledgements preceded first playing in these and the final samples; this
+does not exclude other receiver races.
+
+D38 now requires 1,000 ms of continuous eligible URL playing before `start()`
+returns. Every observed loading/pause/zero/reverse-rate state resets the interval;
+missing rate retains state-only compatibility. Confirmation consumes the original
+startup deadline and respects cancellation, with ordered cleanup on failure.
+It neither resumes the receiver nor guarantees playback after startup returns.
+`--event-log` retains a fixed 64-record startup trace, including failed starts:
+relative steady times, local phases, successful queue-command HTTP statuses,
+allowlisted states, finite numeric rates, truncation and cleanup status. No peer
+metadata, URLs or authentication material are added to those records.
+
+| Candidate / sample | Automated result | New human observation |
+|---|---|---|
+| Exploratory rate-only, six MRP/six minimal | First MRP returned then paused; other short samples remained playing; all Enter cleanups exited 0 | NOT RUN |
+| Final 1,000-ms confirmation, three MRP/three minimal | All six returned after 1,002-1,025 ms of eligible playing and cleaned up with exit 0 | NOT RUN |
+| Same final candidate, one MRP after 300 s without a native session | First playing/rate 1 at 1,138 ms, ready at 2,159 ms; short status/Enter cleanup passed | NOT RUN |
+
+Every process ended by sender Enter with cleaned=yes, failed=no and no failed
+source reads. These are short samples, not new full-clip EOF or lifecycle passes.
+The final CLI SHA-256 was
+`0e67c6e03dd09c4cdacf37678949b0fcd4c4f4e02305d4a228fac5a2903e22ae`;
+the exploratory CLI had a distinct fingerprint. The
+[sanitized artifact](validation/native-startup-confirmation-windows-static-2026-10-07.json)
+preserves exact runtime/source fingerprints, per-trial scalar traces and the
+variant distinction. After sampling, seven direct standard includes were added
+to the final runtime source and regression timing/names were finalized; the
+include-only runtime difference was verified against the recorded blob hashes.
+The rebuilt submitted code is tested separately below. Every staged allowed
+executable was restored; no firewall, credentials or receiver settings changed.
+
+Windows static/shared Release passed 23/23 CTest targets each (15.41/15.22 s),
+offline runner contracts 10/10, and touched C++ clang-format dry-run/Werror plus
+git diff --check passed. New scripted cases cover stationary playing, positive
+playing interrupted during confirmation, original deadline, cancellation,
+invalid interval, positive recovery after zero-rate states and fixed-log overflow.
+CI must be checked at the actual PR head; none of these checks establishes visible
+receiver presentation.
+
+The physical startup pause remains unresolved. Complete the
+[deferred manual batch](manual-validation.md) when the user announces availability:
+fresh startup, controls/full EOF, remote Stop and sleep/wake. New results remain
+PENDING until observed. Network interruption remains NOT RUN because the user
+cannot perform it this session. D37's frozen-video issue stays low priority
+unless it recurs; healthy scalar telemetry cannot establish that it did not recur.

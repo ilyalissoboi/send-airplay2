@@ -7,6 +7,8 @@
 #include "receiver_stream.h"
 #include "session_messages.h"
 #include <atomic>
+#include <array>
+#include <cstddef>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -61,6 +63,10 @@ struct UrlPlaybackOptions {
     SenderIdentity identity; // A random device ID is used when empty.
     std::chrono::milliseconds request_timeout{5000};
     std::chrono::milliseconds start_timeout{30000}; // Until the receiver reports "playing".
+    /// Require this continuous eligible URL playing interval before returning.
+    /// Reset on every observed non-playing/zero/reverse-rate state; no retry is
+    /// sent. Must be nonnegative. It consumes the existing start_timeout budget.
+    std::chrono::milliseconds start_confirmation_interval{1000};
     std::chrono::milliseconds feedback_interval{2000};
     StreamConnector connect; // Defaults to connect_receiver.
     /// Diagnostic: keep event outlines and allowlisted numeric/boolean buffering
@@ -108,6 +114,37 @@ enum class SessionFailureReason {
 [[nodiscard]] const char* session_failure_channel_name(SessionFailureChannel channel) noexcept;
 [[nodiscard]] const char* session_failure_reason_name(SessionFailureReason reason) noexcept;
 
+/// Local startup phases and allowlisted receiver states; no peer text or IDs.
+enum class SessionStartPhase {
+    connecting,
+    insert_item,
+    date_range,
+    item_end,
+    rate,
+    waiting,
+    ready,
+    failed
+};
+enum class SessionStartState { none, loading, playing, paused, idle, stopped, ended, other };
+[[nodiscard]] const char* session_start_phase_name(SessionStartPhase phase) noexcept;
+[[nodiscard]] const char* session_start_state_name(SessionStartState state) noexcept;
+struct SessionStartTraceEntry {
+    std::uint64_t elapsed_ms = 0; // Steady time since this session was constructed.
+    SessionStartPhase phase = SessionStartPhase::connecting;
+    SessionStartState state = SessionStartState::none;
+    unsigned response_status = 0;        // Zero for phase/event records, otherwise HTTP status.
+    std::optional<double> playback_rate; // Finite receiver scalar, not inferred progress.
+};
+/// First 64 startup records, preserved on success/failure. Overflow drops new
+/// records without changing startup behavior; no allocation or secret payloads.
+constexpr std::size_t max_start_trace_entries = 64;
+struct SessionStartDiagnostics {
+    std::array<SessionStartTraceEntry, max_start_trace_entries> entries{};
+    std::size_t count = 0;
+    bool truncated = false;
+    bool cleaned_up = false;
+};
+
 /// A snapshot of session progress, safe to read from any thread.
 struct SessionStatus {
     std::string playback_state; // Lower-cased; empty before the first state event.
@@ -132,7 +169,10 @@ struct SessionStatus {
  * pair-verify, timing responder, base SETUP, event channel, periodic
  * /feedback, GET /info, RECORD, the URL control stream SETUP, then the four
  * /command start commands. start() returns once the receiver reports
- * "playing".
+ * "playing" without an explicitly stationary/reverse rate for the configured
+ * confirmation interval. Missing rate keeps state-only compatibility. This
+ * filters short startup transitions; it is not decoder/visual proof or a
+ * guarantee that the receiver will continue playing after start() returns.
  *
  * Threads (D28): the control connection is shared by the caller and the
  * feedback thread under one mutex, so one request is in flight at a time. An
@@ -153,10 +193,14 @@ public:
      * Throws SessionException, TransportException, PairVerifyException or
      * ControlException or MrpException; every failure tears down what was started.
      * `cancelled`, when given, aborts the start at the next check.
+     * Optional `diagnostics` is borrowed only for this call and written by the
+     * caller thread before return/rethrow, after cleanup on failure. It never
+     * receives peer text, URLs, identifiers or authentication material.
      */
     [[nodiscard]] static std::unique_ptr<UrlPlaybackSession>
     start(const PairCredentials& credentials, UrlPlaybackOptions options,
-          const std::atomic_bool* cancelled = nullptr);
+          const std::atomic_bool* cancelled = nullptr,
+          SessionStartDiagnostics* diagnostics = nullptr);
     ~UrlPlaybackSession();
     UrlPlaybackSession(const UrlPlaybackSession&) = delete;
     UrlPlaybackSession& operator=(const UrlPlaybackSession&) = delete;
@@ -202,6 +246,11 @@ private:
     void open_event_channel(std::uint16_t event_port, const std::atomic_bool* cancelled);
     void start_feedback();
     void wait_until_playing(const std::atomic_bool* cancelled);
+    void trace_start_phase(SessionStartPhase phase, unsigned response_status = 0);
+    /// Requires state_mutex_; recording uses fixed storage only.
+    void append_start_trace_locked(SessionStartState state, unsigned response_status,
+                                   std::optional<double> playback_rate = {});
+    void finish_start_trace(SessionStartDiagnostics& diagnostics);
     void event_loop();
     void feedback_loop();
     void mark_failed(SessionFailureChannel channel, SessionFailureReason reason);
@@ -239,6 +288,13 @@ private:
     mutable std::mutex state_mutex_; // Guards status_ and the stop flags' waits.
     mutable std::condition_variable state_changed_;
     SessionStatus status_;
+    std::optional<double> state_playback_rate_; // Rate on the latest URL state event.
+    std::optional<std::chrono::steady_clock::time_point> forward_playing_since_;
+    const std::chrono::steady_clock::time_point start_trace_origin_ =
+        std::chrono::steady_clock::now();
+    bool capture_start_trace_ = false; // Guarded by state_mutex_ once threads start.
+    SessionStartPhase start_trace_phase_ = SessionStartPhase::connecting;
+    SessionStartDiagnostics start_trace_;
     std::deque<std::string> event_log_;
     std::atomic_bool stopping_{false}; // Also cancels a pending MRP command.
     std::mutex command_mutex_;         // Prevents teardown racing a callable command.

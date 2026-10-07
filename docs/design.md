@@ -154,6 +154,10 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    investigate startup ordering/state before further reliability claims. Per user
    decision D37, frozen video is low priority for now, with insufficient media
    connections the likely cause; raise priority if it recurs in later testing.
+   D38 adds bounded startup traces and a one-second eligible-playing confirmation
+   within the original deadline, with synthetic interruption/cancellation tests.
+   This improves readiness reporting; the physical startup pause remains unresolved.
+   Complete the [batched manual checks](manual-validation.md) when the user returns.
    Startup pause and longer reliability remain active work.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
