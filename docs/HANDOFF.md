@@ -817,16 +817,28 @@ lets `cast_controller_tests` drive it with MRP disabled: start, pause through
 At the user's request the fake then gained an optional MRP data stream
 (`Behavior::mrp_fixtures`, `FakeMrpPeer`), and the controller tests now cover
 ownership, accepted pause/play/seek/stop reaching the receiver with their wire
-numbers, MRP-reported `media_end` and `ownership_lost`. That work **found a
-session ordering issue, not yet fixed:** cleanup cancels feedback first, and a
-cancelled remote `/feedback` request closes the remote connection before the
-URL connection, contrary to "retain remote control through URL teardown". It
-reproduced 3/3 deterministically; it is timing-dependent on hardware (2 s
-feedback interval). Fixing it changes receiver-validated session code, so it
-awaits a user decision; details in public-api.md. **No receiver cast has
+numbers, MRP-reported `media_end` and `ownership_lost`. That work found a
+session teardown ordering bug, fixed under D47 below. **No receiver cast has
 been run through the interface**; the CLI evidence does not transfer to it
 automatically. Contract, mapping tables, limits and next steps:
 [public-api.md](public-api.md).
+
+**D47 (remote feedback no longer cancelled at teardown, 2026-10-08):** the MRP
+fake showed that cleanup, which stops feedback first, cancelled any remote
+`/feedback` request in flight. `ReceiverConnection::request` closes its
+connection on any exception, so the remote session closed before the URL
+session, contrary to "retain remote control through URL teardown". It
+reproduced 3/3 with a held request and broke 7 of 18 loaded MRP controller
+runs. The user chose to fix it in PR #14. The feedback loop now skips the
+remote request once stop has begun and does not cancel one already in flight;
+its request deadline (5 s default) bounds the wait. A remote request that fails
+at that deadline still closes its connection first; that is accepted for an
+unresponsive receiver. New `url_playback_session_tests` cases cover a held
+request (fails as `[remote,URL]` without the fix) and an unanswered one (stop
+under 1.5 s with a 300 ms deadline, no failure reported). **This changes the
+runtime used by both `airplay2-cli cast` and the C interface:** every recorded
+hardware result predates it, so the next receiver run must use a build that
+contains D47.
 
 ## 5. Implemented code and verification
 

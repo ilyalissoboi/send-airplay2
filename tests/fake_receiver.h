@@ -576,6 +576,33 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         end_events_locked();
     }
+    /// Hold the next /feedback request unanswered until release_held_feedback(),
+    /// like a slow receiver; return the count of earlier feedback requests.
+    int hold_feedback() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        hold_feedback_ = true;
+        return feedback_;
+    }
+    [[nodiscard]] bool feedback_held() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return held_feedback_.has_value();
+    }
+    /// Answer the held request with 200 and stop holding. Feedback is the only
+    /// request in flight on this connection while held, so record order holds.
+    bool release_held_feedback() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!held_feedback_) {
+            return false;
+        }
+        auto reply = response(*held_feedback_, 200);
+        if (control_writer_) {
+            reply = control_writer_->encrypt(reply);
+        }
+        control_output_.insert(control_output_.end(), reply.begin(), reply.end());
+        held_feedback_.reset();
+        hold_feedback_ = false;
+        return true;
+    }
     /// Remote session only: push SET_STATE for the URL item, or for `item`.
     /// Returns false when no MRP data stream or URL item exists yet.
     bool push_mrp_state(std::uint64_t state, double elapsed_seconds, const std::string& item = {}) {
@@ -706,6 +733,10 @@ private:
         }
         if (request.method == "POST" && request.target == "/feedback") {
             ++feedback_;
+            if (hold_feedback_) {
+                held_feedback_ = request; // Answered later by release_held_feedback().
+                return {};
+            }
             if (behavior_.silent_feedback) {
                 return {};
             }
@@ -844,6 +875,8 @@ private:
     bool control_closed_ = false;
     std::vector<ParsedRequest> requests_;
     int feedback_ = 0;
+    bool hold_feedback_ = false;
+    std::optional<ParsedRequest> held_feedback_;
     int commands_ = 0;
     std::uint16_t timing_port_ = 0;
     std::shared_ptr<EventPipe> event_pipe_;

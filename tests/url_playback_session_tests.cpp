@@ -731,7 +731,71 @@ void mrp_setup_failure_tests() {
 }
 } // namespace
 
-int main() {
+/// Observed control-connection close order, for failure messages.
+std::string close_order_text(const FakeReceiver& receiver) {
+    std::string text;
+    for (const auto& session : receiver.control_close_order()) {
+        text += (text.empty() ? "" : ",") + session;
+    }
+    return "[" + text + "]";
+}
+
+/// Remote control must outlive the URL session even when stop finds a remote
+/// /feedback request in flight: cleanup waits for it rather than cancelling it,
+/// because an interrupted request closes its connection.
+void remote_feedback_stop_tests(const std::string& mrp_fixtures) {
+    group = "stop with remote feedback in flight";
+    Behavior behavior;
+    behavior.mrp_fixtures = mrp_fixtures;
+    {
+        FakeReceiver receiver(behavior);
+        auto options = options_for(receiver);
+        options.enable_mrp = true;
+        auto session = UrlPlaybackSession::start(receiver.credentials(), options);
+        auto& remote = receiver.remote_control();
+        (void)remote.hold_feedback();
+        check(eventually([&] { return remote.feedback_held(); }),
+              "a remote feedback request is held in flight");
+        auto stopping = std::async(std::launch::async, [&] { session->stop(); });
+        check(stopping.wait_for(100ms) == std::future_status::timeout &&
+                  !receiver.control_was_closed() && !remote.control_was_closed(),
+              "stop waits for the in-flight remote request without closing either session");
+        check(remote.release_held_feedback(), "the receiver answers the held request");
+        check(stopping.wait_for(2s) == std::future_status::ready,
+              "stop finishes once the receiver answers");
+        check(receiver.control_close_order() == std::vector<std::string>{"URL", "remote"},
+              "remote control closes after the URL session (closed " + close_order_text(receiver) +
+                  ")");
+        const auto status = session->status();
+        check(status.cleaned_up && !status.failed && status.end_reason == SessionEnd::sender_stop,
+              "a waited-for remote request ends as an ordinary sender stop");
+    }
+    {
+        FakeReceiver receiver(behavior);
+        auto options = options_for(receiver);
+        options.enable_mrp = true;
+        options.request_timeout = 300ms;
+        auto session = UrlPlaybackSession::start(receiver.credentials(), options);
+        auto& remote = receiver.remote_control();
+        (void)remote.hold_feedback();
+        check(eventually([&] { return remote.feedback_held(); }),
+              "an unanswered remote feedback request is in flight");
+        const auto started = std::chrono::steady_clock::now();
+        session->stop();
+        check(std::chrono::steady_clock::now() - started < 1500ms,
+              "a silent receiver delays stop by at most the 300 ms request deadline");
+        const auto status = session->status();
+        check(status.cleaned_up && !status.failed && status.end_reason == SessionEnd::sender_stop,
+              "an unanswered request during stop is not reported as a session failure");
+    }
+}
+
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "usage: url_playback_session_tests MRP_FIXTURE_DIRECTORY\n";
+        return 2;
+    }
+    const std::string mrp_fixtures = argv[1];
     try {
         happy_path_tests();
         failure_tests();
@@ -750,6 +814,7 @@ int main() {
         concurrent_stop_tests();
         feedback_deadline_tests();
         feedback_cancel_tests();
+        remote_feedback_stop_tests(mrp_fixtures);
     } catch (const std::exception& error) {
         std::cerr << "Unexpected test exception [" << group << "]: " << error.what() << '\n';
         return 1;

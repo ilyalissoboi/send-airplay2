@@ -245,6 +245,11 @@ administered one per session.
   replacement/destruction, including partially decoded batches and rejected replies (D43).
   Event bodies are protected through acknowledgment and then transferred to the
   caller; failed replies erase the body before release.
+- **Teardown order:** feedback, URL events, URL control, timing, then MRP and
+  remote events/control. An interrupted request closes its connection, so the
+  remote `/feedback` request is not cancelled at stop: cleanup waits for it,
+  bounded by its deadline, and remote control outlives the URL session (D47). A
+  remote request that times out at an unresponsive receiver still closes first.
 - **Logging:** never log the media URL, receiver identifiers, sender identifiers
   or raw event payloads. Diagnostics use categories and allowlisted fields.
   URL type/state strings are fixed labels (`other` for unknown strings); URL

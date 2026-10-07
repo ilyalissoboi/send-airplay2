@@ -79,6 +79,9 @@ The public playback/session ABI and production bindings are not implemented.
 - Bounded opt-in startup, HTTP completion, buffering, fixed-label event and final
   received MRP diagnostics. Fixed URL state/type labels use `other` for unknown
   strings; peer targets/unknown keys/arbitrary descriptions do not enter output.
+- **D47, unit/CI-tested only:** at teardown, an in-flight remote `/feedback`
+  request is waited for (bounded by its deadline) instead of cancelled, so
+  remote control outlives the URL session.
 - **D46, unit/CI-tested only:** experimental C interface `playback.h` (API
   version 1). One `sap2_cast` handle owns the media server and session, loads
   credentials by profile, takes host `read_at` callbacks, and offers blocking
@@ -145,10 +148,11 @@ development, not retroactive gate failures.
    at the TV; finish the slice's PR review and get merge approval; then the C#
    binding and packaged UWP proof under item 6. The fake receiver is now shared
    (`tests/fake_receiver.h`) and has an optional MRP data stream, so the
-   controller's commands, ends and ownership loss are unit-tested. **Open
-   finding (needs a user decision):** a remote `/feedback` request in flight at
-   stop closes the remote session before the URL session, contrary to the
-   documented order; see public-api.md, "Not covered yet". Related hardware-free work: a
+   controller's commands, ends and ownership loss are unit-tested. That work
+   found a teardown ordering bug, now fixed (D47): an in-flight remote
+   `/feedback` request is waited for at stop instead of cancelled. D47 changes
+   the session runtime shared with `cast`, so all recorded hardware results
+   predate it; run the manual plan on a D47 build. Related hardware-free work: a
    synthetic beyond-4-GiB byte-source/range test through the media server, and
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
 2. **Startup reliability.** Spontaneous pause at zero/first-frame-only occurred

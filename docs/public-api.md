@@ -60,6 +60,29 @@ text, address, identifier or URL is exposed.
 Commands: `NOT_OWNED` when the receiver no longer plays our item, `ENDED` once the
 session ended or stop began, `COMMAND_FAILED` for a rejected or unanswered command.
 
+## Session teardown fix (D47)
+
+The MRP fake exposed a session ordering bug that predates this interface. With
+MRP on, the feedback loop also posts `/feedback` on the remote connection.
+Cleanup cancels feedback first, and `ReceiverConnection::request` closes its
+connection on any exception, cancellation included. So a remote request in
+flight at stop closed the remote session *before* the URL session, contrary to
+"retain remote control through URL teardown". It reproduced 3/3 with a held
+request, and it made the MRP controller tests fail 7 of 18 runs under load.
+
+At the user's request it is fixed in this PR: the loop no longer starts a remote
+request once stop has begun, and an in-flight remote request is waited for, not
+cancelled. Its request deadline bounds the wait. This changes receiver-validated
+session code: every earlier hardware record used the old teardown, so the manual
+plan must run on a build that contains this fix. New regression tests in
+`url_playback_session_tests` cover both cases:
+
+- A held request at stop: stop waits without closing either session, then closes
+  URL then remote once the receiver answers. Without the fix this test fails
+  with `[remote,URL]`.
+- An unanswered request at stop: stop takes under 1.5 s with a 300 ms deadline,
+  and is not reported as a failure.
+
 ## Threading and lifetime
 
 - `start` blocks its caller. `get_status`, `wait_for_change`, `command` and `stop`
@@ -101,17 +124,13 @@ Telemetry only (no observer needed):
 
 1. **Receiver validation through the interface** (the plan above). Until it runs,
    only the CLI path has hardware evidence.
-2. **Session ordering issue found by the MRP fake (not fixed).** With MRP on,
-   the feedback loop also posts `/feedback` on the remote connection. Cleanup
-   cancels feedback first, and `ReceiverConnection::request` closes its
-   connection on any exception, cancellation included. So a remote feedback
-   request in flight at stop closes the remote session *before* the URL
-   session. That contradicts the documented "retain remote control through URL
-   teardown" order. A test that silences remote feedback and stops while a
-   request is pending reproduced `[remote, URL]` 3/3; at the 2 s production
-   interval it needs stop to overlap a request. Fixing it changes
-   hardware-validated session code and needs a decision; the MRP controller
-   tests use a 60 s feedback interval meanwhile.
+2. **Silent receiver during stop.** The session ordering issue the MRP fake
+   found is fixed (D47 below), but one edge remains: if the receiver never
+   answers a remote `/feedback` request that is in flight at stop, that request
+   reaches its deadline. `ReceiverConnection` closes on that failure, so the
+   remote connection still closes before the URL session. Stop is delayed by at
+   most the request timeout (5 s by default). The receiver is unresponsive by
+   then, so no ordering guarantee is claimed for that case.
 3. **C# binding and packaged UWP proof:** P/Invoke over this header, native loading,
    brokered file reads and inbound serving in a packaged app.
 4. **Credential stores for other platforms** (Keychain, libsecret, Android
@@ -152,7 +171,9 @@ CTest targets each. New targets:
   receiver, state following pause and play, MRP-reported end (paused at the
   duration gives `media_end`) and ownership loss to another item
   (`ownership_lost`). A deliberate mutation of the expected command order was
-  caught. It passed 10 sequential runs and 30 runs as six concurrent copies.
+  caught. After the D47 fix, `cast_controller_tests` and
+  `url_playback_session_tests` each passed 10 sequential runs and 30 runs as six
+  concurrent copies, with the normal 30 ms test feedback interval.
 
 These are synthetic loopback checks. They establish neither receiver behavior nor
 packaged-host behavior.

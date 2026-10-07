@@ -338,12 +338,7 @@ CastDependencies fake_receiver_dependencies(FakeReceiver& receiver, bool mrp = f
     dependencies.adjust_session = [mrp](UrlPlaybackOptions& options) {
         options.enable_mrp = mrp;
         options.start_confirmation_interval = 20ms; // Keep scripted scenarios fast.
-        // With MRP the feedback loop also posts on the remote connection, and
-        // cancelling that request at stop closes the remote session before the
-        // URL session (a known session ordering issue, docs/public-api.md).
-        // Keep loop feedback out of MRP scenarios so they test commands and
-        // ends deterministically; the non-MRP scenarios keep fast feedback.
-        options.feedback_interval = mrp ? 60s : 30ms;
+        options.feedback_interval = 30ms;
     };
     return dependencies;
 }

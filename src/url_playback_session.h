@@ -183,6 +183,10 @@ struct SessionStatus {
  * Automatic cleanup and stop() use the same fixed order, even after failures: feedback,
  * URL event channel, URL control connection, timing responder, then remote
  * MRP data and remote event/control connections. Remote events do not update URL playback state.
+ * A remote /feedback request already in flight is not cancelled, because an
+ * interrupted request closes its connection; cleanup waits for it, bounded by
+ * request_timeout. If that request fails (for example, a silent receiver
+ * reaches the deadline), its connection closes before the URL session.
  * stop() is idempotent and runs from the destructor and when start() fails.
  * The host owns its media server and must stop it after session cleanup.
  * Credentials are borrowed for start() only. Noncopyable, nonmovable.
