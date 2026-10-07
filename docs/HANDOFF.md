@@ -692,13 +692,20 @@ remain unchanged. No third-party source/dependency was added.
 
 Regression tests failed against the previous behavior, then passed after the
 fixes, including the independently reproduced event acknowledgment failure.
-Windows static/shared Release each passed 24/24 CTest targets (15.88/15.72 s);
+Windows static/shared Release each passed 24/24 CTest targets (15.40/15.43 s);
 runner contracts passed 10/10; all 52 PR-changed C++ files passed clang-format
 dry-run and whitespace checks. Loopback UDP and runner temporary-file checks
 required execution outside the restricted sandbox; no firewall/network policy
 was changed. Initial D43 commit `d1011ab5b6a413f2e58a5e8587060d5866af6894`
 passed all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37582693970).
-Inspect actual-head CI including the acknowledgment-guard follow-up. No receiver test was
+The acknowledgment-guard head `880feb3` passed nine checks, including sanitizers;
+macOS shared exposed an existing silent-feedback test fault armed before startup.
+The fixture now arms silence after `start()` returns and waits for a new request;
+startup confirmation deliberately spans the old fault window (120 ms versus
+30 ms interval plus 80 ms timeout). Deadline and cleanup assertions stay intact.
+The revised session test passed five repetitions under concurrent local load.
+No production source changes in this test follow-up. Inspect actual-head CI.
+No receiver test was
 performed for this follow-up: D40/D42 source/binary fingerprints remain the
 hardware evidence. Remote-Stop intent, intermittent startup pause and broader
 reliability remain open; frozen video stays low priority unless it recurs (D37).

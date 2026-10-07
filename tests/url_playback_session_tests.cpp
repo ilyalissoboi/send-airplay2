@@ -363,6 +363,12 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         push_event_body_locked(body, target);
     }
+    /// Arm the fault after startup; return the count of earlier answered requests.
+    int silence_feedback() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        behavior_.silent_feedback = true;
+        return feedback_;
+    }
     void end_event_channel() {
         std::lock_guard<std::mutex> lock(mutex_);
         end_events_locked();
@@ -1210,13 +1216,16 @@ void concurrent_stop_tests() {
 }
 void feedback_deadline_tests() {
     group = "silent feedback deadline";
-    Behavior behavior;
-    behavior.silent_feedback = true;
-    FakeReceiver receiver(behavior);
+    FakeReceiver receiver({});
     auto options = options_for(receiver);
     options.request_timeout = 80ms;
+    // Deliberately span a feedback interval plus its failure deadline: startup
+    // must stay healthy until the established-session fault is armed.
+    options.start_confirmation_interval = 120ms;
     auto session = UrlPlaybackSession::start(receiver.credentials(), options);
     const auto started = std::chrono::steady_clock::now();
+    const auto answered_feedback = receiver.silence_feedback();
+    check(answered_feedback > 0, "healthy feedback was answered during startup confirmation");
     check(eventually([&] { return session->status().cleaned_up; }),
           "silent established control peer triggers automatic cleanup");
     check(session->status().failed && session->status().end_reason == SessionEnd::connection_lost &&
@@ -1227,14 +1236,15 @@ void feedback_deadline_tests() {
     check(session->status().failure_channel == SessionFailureChannel::url_feedback &&
               session->status().failure_reason == SessionFailureReason::timeout,
           "silent URL feedback preserves deadline failure through cleanup cancellation");
+    check(receiver.feedback_count() > answered_feedback,
+          "a post-start feedback request reached the armed silent peer");
 }
 void feedback_cancel_tests() {
     group = "stop during pending feedback";
-    Behavior behavior;
-    behavior.silent_feedback = true;
-    FakeReceiver receiver(behavior);
+    FakeReceiver receiver({});
     auto session = UrlPlaybackSession::start(receiver.credentials(), options_for(receiver));
-    check(eventually([&] { return receiver.feedback_count() > 0; }),
+    const auto answered_feedback = receiver.silence_feedback();
+    check(eventually([&] { return receiver.feedback_count() > answered_feedback; }),
           "feedback request in flight before stop");
     const auto started = std::chrono::steady_clock::now();
     session->stop();

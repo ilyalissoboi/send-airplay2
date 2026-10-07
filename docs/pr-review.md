@@ -12,7 +12,7 @@ Inspected channel key/record ownership, framing and parser bounds, URL and MRP
 startup/correlation, ownership and received EOF rules, cancellation and lock
 ordering, supervisor teardown, timing sockets, media serving and CLI diagnostics.
 Checked the fixtures, test contracts, documentation and provenance against the
-implementation. Two concrete issues were reproduced and fixed:
+implementation. Two runtime issues were reproduced and fixed:
 
 | Finding | Trigger and effect | Fix and regression evidence |
 |---|---|---|
@@ -28,6 +28,18 @@ without terminating playback. URL event-body RAII now covers exceptions while
 constructing diagnostics. The payload-erasure contract covers decoded extension
 buffers, not all metadata copies in generic protobuf/plist objects.
 
+Final CI at `880feb3a652f655ed8586e7ba53c8ba47e355667` passed nine checks,
+including sanitizers, but macOS shared failed in the existing `silent feedback
+deadline` fixture. Its silent peer was armed before startup: feedback could time
+out while startup still held/waited for the control mutex or confirmed playing.
+The fixture now answers feedback through startup, then arms the fault under its
+mutex and checks a new post-arm request. Startup confirmation deliberately lasts
+120 ms, beyond the 30 ms interval plus 80 ms timeout, so the previous setup fails
+this phase separation. The production deadline and 500 ms cleanup assertion are
+unchanged. The pending-feedback cancellation fixture uses the same phase boundary.
+This is a test scheduling fix, not a playback policy change; see the
+[failed CI record](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37583326138).
+
 No additional blocker was identified in this review of the private experimental
 slice. Known protocol states, message bytes, controls, startup policy and lifecycle
 end reasons are preserved. Diagnostic text for unknown states/keys/targets changes
@@ -38,7 +50,9 @@ Apache-2.0 and existing provenance remain intact.
 
 - Windows 11 x64 / MSVC Release: full static and shared builds succeeded;
   CTest passed **24/24 each** on the final acknowledgment-guard source
-  (15.88/15.72 seconds).
+  and feedback-fixture source (15.40/15.43 seconds).
+- The session test passed five consecutive repetitions under concurrent local
+  test load (21.18 seconds), including deadline and pending-feedback cancellation.
 - Offline runner contracts passed **10/10** (13.045 seconds).
 - All **52 PR-changed C++ files** passed `clang-format --dry-run --Werror`;
   `git diff --check` passed.
