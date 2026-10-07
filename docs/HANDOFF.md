@@ -7,20 +7,26 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: native playback session on `claude/url-playback-session`
+## 0. Resume here: native playback session merged into `main`
 
-Work continues in a local Codex session on the Windows 11 host that
+**PR #12 is merged (D45).** The user merged
+[#12](https://github.com/ilyalissoboi/send-airplay2/pull/12) into `main` on
+2026-10-07 as `2bb25df4b4f58ef0a2c6936ed6f44161b815890c`. Its final head
+`923d8efbee066a5a7ce37dd6e83cb891ede58a06` (D44, documentation only) passed all
+ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37587291158)
+and its single review thread was resolved. No PR is open at this checkpoint.
+Start each new slice on a fresh branch from `origin/main` with its own PR; ask
+the user before merging. The rest of this section is the PR #12 record, kept for
+its evidence; its branch and "open PR" instructions are superseded.
+
+Work continues in a local session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
-Current PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12), **ready for review**,
-open and unmerged. The user authorized marking ready, and the change was verified
-at `ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5`; merge is not authorized.
-That implementation/test head passed all ten
+Implementation/test head `ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5` passed all ten
 [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37584220175).
-D44 addresses the single automated review comment: README and the current
+D44 addressed the single automated review comment: README and the current
 network-observation table now consistently mark selected D42 Ethernet cleanup /
 fresh explicit recovery PASS, with broader network reliability pending and
-automatic reconnect/resume unimplemented. This is a documentation-only follow-up;
-inspect its actual head/checks and review-thread resolution before further work.
+automatic reconnect/resume unimplemented.
 Latest runtime follow-up: D43's [PR review](pr-review.md) fixes URL diagnostic
 redaction and decoded plaintext erasure on exception paths. Windows
 static/shared Release passed 24/24 CTest targets each; runner contracts passed
@@ -78,18 +84,19 @@ It uses the unchanged D40 runtime. The tested D41 documentation head `72b3059`
 passed all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37579365861).
 Inspect the actual PR head after this evidence-only follow-up.
 
-The user confirmed the Claude session is stopped; development continues in the
-Codex checkout on the same branch. Its former checkout is detached, with no changes.
+PR #12 was developed first in a Claude session and then in a Codex checkout on
+the same branch. Both checkouts are now detached with no changes, and the merged
+branch was deleted locally (D45).
 
 - **PR #11 is merged** into `main` as `2b0e57c9d3ee44c5afc66418c23084ffada01d59`.
   Its final head `105a7b0ad8cbd179c3f06562e7ef9d2be3c126d8` passed all ten
   checks ([CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37476606466)).
   It contains `serve`, the reference playback records, the `bplist00` codec
   (D27) and the session design with decisions D28-D31.
-- **Current branch:** `claude/url-playback-session`, created from that merge
+- **PR #12 branch (merged):** `claude/url-playback-session`, created from that merge
   for the session implementation in [session-design.md](session-design.md).
-  CI runs only for pull requests; PR #12 is open and ready for review on this branch.
-  Before writing, verify the actual head and checks.
+  CI runs only for pull requests. PR #12 merged as `2bb25df`; new work uses a
+  fresh branch from `main`.
 - **Done on this branch:** steps 1-6 and the minimum native remote session.
   Channel key derivation, the event
   channel, the NTP timing responder, the session messages, and the
@@ -197,10 +204,11 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
 - **PR review complete locally (D43):** fixed two reproduced issues: raw peer
   strings/keys/targets in URL output, and decoded plaintext release without
   erasure on error paths. See [scope, regressions and limits](pr-review.md).
-- **Next:** verify the D44 documentation follow-up's actual-head CI and addressed
-  review thread, then obtain user approval before merging. Marking ready was
-  already authorized and completed. Continue development using the ordered queue
-  in [CONTINUATION.md](CONTINUATION.md). Keep ambiguous
+- **Merged (D45):** D44's actual head passed all ten checks with the review
+  thread resolved, and the user merged PR #12.
+- **Next:** continue development using the ordered queue in
+  [CONTINUATION.md](CONTINUATION.md); its first item, a versioned public playback
+  API design, is a proposal to confirm with the user. Keep ambiguous
   peer closure classified conservatively: the reference audit and single Ethernet
   comparison do not establish Stop intent. Investigate the unresolved receiver
   transition behind the intermittent startup pause using matched Home/idle
@@ -325,7 +333,8 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver-transport implementation commit | `ffbe86f3e5d4aa6bc590d30c61ec70d42720615f`; subsequent IPv6 authority fix at `979ef0829248203684939274eb3864b8241845cc` |
 | Target | `main` |
 | Serve/baseline/codec PR | [#11: feat: add serve command, reference playback records, bplist codec and session design](https://github.com/ilyalissoboi/send-airplay2/pull/11), merged as `2b0e57c9d3ee44c5afc66418c23084ffada01d59`; final head `105a7b0ad8cbd179c3f06562e7ef9d2be3c126d8` passed all ten checks ([CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37476606466)) |
-| Current branch | `claude/url-playback-session`, from the PR #11 merge on `main`; native session implementation (section 0) |
+| Native session PR | [#12: feat: native URL playback, MRP controls and lifecycle cleanup](https://github.com/ilyalissoboi/send-airplay2/pull/12), merged as `2bb25df4b4f58ef0a2c6936ed6f44161b815890c`; final head `923d8efbee066a5a7ce37dd6e83cb891ede58a06` passed all ten checks ([CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37587291158)) |
+| Current branch | None open; start each slice on a fresh branch from `main` (D45) |
 | Pairing/control implementation commit | `ee4afa80172d38300078fad0b5a2332898e95cd5`; later documentation commits record checks |
 | Peer-verification implementation commit | `7b572a7b24d7242200e0cb1321c366a83932b3da`; all six platform/static/shared jobs and Linux ASan/UBSan passed |
 | PIN-pairing implementation commit | `8770909ce66239c03664c324d966420b3a18adc0`; local static/shared checks passed; CI evidence below |
@@ -336,11 +345,11 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Original main commit | `8c77b15d391e14b53a3591eea7d0ac6e28376813` (LICENSE only) |
 | Foundation commit | `dbd654b1d92057b3208953226186c5c2b206ccff` |
 | Crypto dependencies | OpenSSL 3.5+ libcrypto and Botan 3.12+ C FFI for private SRP; pinned vcpkg supplies 3.6.5/3.12.0. Public authenticated-session/packaged runtime loading is pending |
-| Actual casting support | Private native URL start/CLI implemented in PR #12; native-only video/audio and sender stop/home-screen G1 PASS; native MRP controls implemented with dated G2 evidence; public API pending |
+| Actual casting support | Private native URL start/CLI implemented in merged PR #12; native-only video/audio and sender stop/home-screen G1 PASS; native MRP controls implemented with dated G2 evidence; public API pending |
 | Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native-only URL playback with minimum native remote SETUP/event session G1 PASS, user-observed video/audio and return home after sender stop |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is merged; ready-for-review PR #12 contains the private session implementation (section 0). Verify current GitHub and
+PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PRs #11 and #12 are merged; `main` now also contains the private native session, MRP controls and lifecycle cleanup (section 0). Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -751,6 +760,21 @@ consistency, all 52 unchanged PR C++ format checks, and `git diff --check`.
 Two pre-existing capacity-record links were corrected to the heading's actual
 anchor. No rebuild/CTest or receiver rerun was needed for unchanged implementation;
 the D43 results above remain tied to `ab7ec01`.
+
+**D45 (post-merge handoff and branch workflow, 2026-10-07):** the user merged
+PR #12 as `2bb25df4b4f58ef0a2c6936ed6f44161b815890c` after D44's head `923d8ef`
+passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37587291158)
+with the review thread resolved. A new Claude session found the handoff still
+describing an open PR and, at the user's request, reconciled the current-status
+text and cleaned up stale branches. All twelve local feature branches were verified
+as ancestors of `origin/main` before deletion; the main checkout was switched to
+`main` and the idle Codex checkout detached at `923d8ef`, both with no local
+changes. Remote merged branches were left for the user to delete. Workflow
+decision: start each new slice on a fresh branch from `origin/main` with its own
+PR, because the prior "continue on the open PR branch" rule no longer applies; ask
+before merging. The ordered queue in [CONTINUATION.md](CONTINUATION.md) now
+proposes a versioned public playback API design as the next slice, pending user
+confirmation. Documentation only: no source, test, dependency or receiver change.
 
 ## 5. Implemented code and verification
 
@@ -1883,12 +1907,10 @@ the connector. In a carried-over workspace, inspect local versus remote history
 before attempting a push. A clean checkout of the PR branch avoids that divergence.
 Do not force-push over unfamiliar remote changes.
 
-Local continuation: keep using open PR #12's branch
-`claude/url-playback-session`. Inspect its actual head/checks before writing.
-The stopped Claude checkout was detached on 2026-10-07 so the branch could be
-checked out in the Codex worktree. Do not start another branch/PR or force-push.
-The user approved marking ready on 2026-10-07; that action is complete.
-Ask the user before merging. The Windows host can reach the LAN;
+Local continuation (D45): PR #12 is merged and its branch deleted locally. Start
+each new slice on a fresh descriptive branch from `origin/main` and open its own
+PR; CI runs only for pull requests. Inspect the actual PR head/checks before
+reporting results. Do not force-push. Ask the user before merging. The Windows host can reach the LAN;
 hardware observations still need someone watching the receiver. Never read raw
 credential files or expose the address, identifiers, PIN or private URL.
 
