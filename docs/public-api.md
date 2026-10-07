@@ -101,12 +101,17 @@ Telemetry only (no observer needed):
 
 1. **Receiver validation through the interface** (the plan above). Until it runs,
    only the CLI path has hardware evidence.
-2. **Command success through the controller.** The shared fake receiver
-   (`tests/fake_receiver.h`) has no MRP data stream, so controller tests run the
-   session with MRP disabled and see commands return `NOT_OWNED`. Testing
-   pause/play/seek/stop acceptance needs an MRP-capable fake: data-stream SETUP
-   with derived keys, the MRP peer now inside `mrp_tests.cpp`, and ownership
-   fixtures that bind to the media server's random URL.
+2. **Session ordering issue found by the MRP fake (not fixed).** With MRP on,
+   the feedback loop also posts `/feedback` on the remote connection. Cleanup
+   cancels feedback first, and `ReceiverConnection::request` closes its
+   connection on any exception, cancellation included. So a remote feedback
+   request in flight at stop closes the remote session *before* the URL
+   session. That contradicts the documented "retain remote control through URL
+   teardown" order. A test that silences remote feedback and stops while a
+   request is pending reproduced `[remote, URL]` 3/3; at the 2 s production
+   interval it needs stop to overlap a request. Fixing it changes
+   hardware-validated session code and needs a decision; the MRP controller
+   tests use a 60 s feedback interval meanwhile.
 3. **C# binding and packaged UWP proof:** P/Invoke over this header, native loading,
    brokered file reads and inbound serving in a packaged app.
 4. **Credential stores for other platforms** (Keychain, libsecret, Android
@@ -138,8 +143,16 @@ CTest targets each. New targets:
   successful start, a receiver pause seen through `wait_for_change`, stop with
   URL-then-remote closure, natural end (`media_end`), event-channel loss
   (`connection_lost` on `url_events`), concurrent stops, and commands returning
-  `ENDED` after each end. It passed 10 sequential runs and 18 runs as six
-  concurrent copies.
+  `ENDED` after each end. With `Behavior::mrp_fixtures` the fake also runs an
+  encrypted MRP data stream (`FakeMrpPeer`): data-stream SETUP with the seed,
+  keys derived from the `DataStream-Salt<seed>` labels, the handshake, and
+  SET_STATE for the session's inserted item UUID on the fixture player path.
+  Against it the controller tests cover ownership, accepted pause/play/seek/stop
+  with their wire numbers (2, 1, 45, 45, 4) and seek positions (30.5, 0) at the
+  receiver, state following pause and play, MRP-reported end (paused at the
+  duration gives `media_end`) and ownership loss to another item
+  (`ownership_lost`). A deliberate mutation of the expected command order was
+  caught. It passed 10 sequential runs and 30 runs as six concurrent copies.
 
 These are synthetic loopback checks. They establish neither receiver behavior nor
 packaged-host behavior.

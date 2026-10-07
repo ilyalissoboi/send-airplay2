@@ -2,8 +2,9 @@
 // Scripted fake AirPlay receiver for session-level tests, shared by the
 // UrlPlaybackSession and CastController tests. Public synthetic identities and
 // secrets only; the fake derives its keys from literal labels. It implements
-// the URL and remote-control SETUP/event sequence without the MRP data stream,
-// so sessions using it must run with UrlPlaybackOptions::enable_mrp = false.
+// the URL and remote-control SETUP/event sequence. By default it has no MRP
+// data stream, so sessions must run with UrlPlaybackOptions::enable_mrp = false;
+// Behavior::mrp_fixtures enables a scripted MRP peer (see FakeMrpPeer).
 #ifndef SEND_AIRPLAY2_TESTS_FAKE_RECEIVER_H
 #define SEND_AIRPLAY2_TESTS_FAKE_RECEIVER_H
 #include "url_playback_session.h"
@@ -11,7 +12,10 @@
 #include "control_crypto.h"
 #include "control_records.h"
 #include "identity_crypto.h"
+#include "mrp_channel.h"
+#include "mrp_messages.h"
 #include "pairing_tlv.h"
+#include "protobuf_wire.h"
 #include "receiver_http.h"
 #include "receiver_stream.h"
 #include <algorithm>
@@ -21,6 +25,8 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <iterator>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -188,6 +194,191 @@ private:
     std::shared_ptr<EventPipe> pipe_;
 };
 
+// ---- Fake MRP data stream ----
+
+/// Public synthetic fixture from tests/fixtures/mrp (generate_mrp_fixtures.py).
+inline Bytes load_mrp_fixture(const std::string& root, const char* name) {
+    std::ifstream file(root + "/" + name + ".bin", std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("Missing public MRP fixture");
+    }
+    return Bytes(std::istreambuf_iterator<char>(file), {});
+}
+
+/// MRP playback states on the wire (SetStateMessage.playbackState).
+inline constexpr std::uint64_t mrp_state_playing = 1;
+inline constexpr std::uint64_t mrp_state_paused = 2;
+/// Duration the fake reports for the URL item, matching the public fixtures.
+inline constexpr double fake_item_duration_seconds = 131.6;
+inline constexpr double fake_item_elapsed_seconds = 17.0;
+
+/**
+ * Receiver side of one encrypted MRP data stream, modeled on mrp_tests.cpp's
+ * peer. It answers the handshake, replies to every SEND_COMMAND with the
+ * fixture's success result, records each command, and pushes SET_STATE for the
+ * URL item once the URL session has inserted it. The player path and command
+ * result are independent fixture bytes; pushed SET_STATE messages are built
+ * here because ownership must name the session's random item UUID.
+ * All members are guarded by `mutex`; the stream adapter takes it per call.
+ */
+struct FakeMrpPeer {
+    FakeMrpPeer(const std::string& fixtures, const ControlKey& read_key,
+                const ControlKey& write_key)
+        : decrypt(std::make_unique<ControlReader>(read_key)),
+          encrypt(std::make_unique<ControlWriter>(write_key)),
+          player_path(load_mrp_fixture(fixtures, "path")),
+          command_result(
+              decode_mrp(protobuf_wire::view(load_mrp_fixture(fixtures, "result"))).payload) {}
+
+    /// Queue one receiver message as a sync frame (the sender acknowledges it).
+    void push_locked(const Bytes& message) {
+        constexpr std::uint64_t receiver_sequence = 17; // Fixed per stream, like the reference.
+        const auto wire =
+            encrypt->encrypt(encode_mrp_frame(true, receiver_sequence, mrp_frame_payload(message)));
+        incoming.insert(incoming.end(), wire.begin(), wire.end());
+    }
+    /// SET_STATE for one queue item on the fixture player path. `item` defaults
+    /// to the URL item, which is what makes the sender treat it as owned.
+    void push_state_locked(std::uint64_t state, double elapsed_seconds,
+                           const std::string& item = {}) {
+        namespace pb = protobuf_wire;
+        Bytes metadata;
+        pb::real64(metadata, 14, fake_item_duration_seconds); // duration
+        pb::real64(metadata, 35, elapsed_seconds);            // elapsedTime
+        Bytes content;
+        pb::data(content, 1, item.empty() ? item_uuid : item); // identifier
+        pb::data(content, 2, metadata);
+        Bytes queue;
+        pb::integer(queue, 1, 0); // location: the first content item is current
+        pb::data(queue, 2, content);
+        Bytes payload;
+        pb::data(payload, 3, queue);       // playbackQueue
+        pb::integer(payload, 6, state);    // playbackState
+        pb::data(payload, 9, player_path); // playerPath
+        push_locked(encode_mrp(mrp::set_state, {}, "synthetic-peer", payload));
+    }
+
+    /// Decrypt sender bytes and answer each complete request.
+    void accept_locked(const std::uint8_t* data, std::size_t size) {
+        namespace pb = protobuf_wire;
+        const auto plain = decrypt->feed(Bytes(data, data + size));
+        pending.insert(pending.end(), plain.begin(), plain.end());
+        while (auto frame = take_mrp_frame(pending)) {
+            if (!frame->sync) {
+                continue; // The sender's acknowledgement of a pushed frame.
+            }
+            for (const auto& message : decode_mrp_batch(mrp_frame_protobufs(frame->payload))) {
+                if (message.type == mrp::connection_state) {
+                    continue; // No response is defined.
+                }
+                auto type = message.type;
+                Bytes reply;
+                if (type == mrp::updates_config || type == mrp::heartbeat) {
+                    type = 0; // Generic acknowledgement, as the reference peer sends.
+                }
+                if (message.type == mrp::send_command) {
+                    const auto fields = pb::decode(pb::view(message.payload));
+                    const auto command = pb::find(fields, 1, 0)->integer;
+                    commands.push_back(static_cast<std::uint32_t>(command));
+                    if (command == static_cast<std::uint64_t>(PlaybackCommand::seek)) {
+                        const auto options = pb::decode(pb::find(fields, 2, 2)->data);
+                        seek_positions.push_back(pb::real64(*pb::find(options, 9, 1)));
+                    }
+                    type = mrp::command_result;
+                    reply = command_result;
+                }
+                push_locked(encode_mrp(type, message.identifier, "synthetic-peer", reply));
+                // Reflect accepted transport commands in the reported state.
+                if (message.type == mrp::send_command && !item_uuid.empty()) {
+                    const auto command = commands.back();
+                    if (command == static_cast<std::uint32_t>(PlaybackCommand::pause)) {
+                        push_state_locked(mrp_state_paused, fake_item_elapsed_seconds);
+                    } else if (command == static_cast<std::uint32_t>(PlaybackCommand::play)) {
+                        push_state_locked(mrp_state_playing, fake_item_elapsed_seconds);
+                    }
+                }
+            }
+        }
+    }
+
+    std::mutex mutex;
+    Bytes incoming, pending;
+    std::unique_ptr<ControlReader> decrypt;
+    std::unique_ptr<ControlWriter> encrypt;
+    Bytes player_path, command_result;
+    std::string item_uuid; // Set from the URL session's insertPlayQueueItem.
+    std::vector<std::uint32_t> commands;
+    std::vector<double> seek_positions;
+    bool closed = false;
+};
+
+/// Byte stream over a FakeMrpPeer. Writes and reads are split into small
+/// chunks so the sender's framing handles partial records, as in mrp_tests.
+class FakeMrpStream final : public ReceiverStream {
+public:
+    explicit FakeMrpStream(std::shared_ptr<FakeMrpPeer> peer) : peer_(std::move(peer)) {}
+    std::size_t write_some(const std::uint8_t* data, std::size_t size,
+                           const ReceiverOperation& operation) override {
+        operation.check();
+        std::lock_guard<std::mutex> lock(peer_->mutex);
+        if (peer_->closed) {
+            throw TransportException(TransportError::closed);
+        }
+        const auto count = std::min(size, std::size_t{7});
+        peer_->accept_locked(data, count);
+        return count;
+    }
+    std::size_t read_some(std::uint8_t* data, std::size_t capacity,
+                          const ReceiverOperation& operation) override {
+        for (;;) {
+            operation.check();
+            {
+                std::lock_guard<std::mutex> lock(peer_->mutex);
+                if (peer_->closed) {
+                    throw TransportException(TransportError::closed);
+                }
+                if (!peer_->incoming.empty()) {
+                    const auto count =
+                        std::min({capacity, peer_->incoming.size(), std::size_t{13}});
+                    std::copy_n(peer_->incoming.begin(), count, data);
+                    peer_->incoming.erase(peer_->incoming.begin(),
+                                          peer_->incoming.begin() +
+                                              static_cast<std::ptrdiff_t>(count));
+                    return count;
+                }
+            }
+            std::this_thread::sleep_for(1ms);
+        }
+    }
+    void require_idle(const ReceiverOperation&) override {}
+    bool wait_readable(const ReceiverOperation& operation) override {
+        try {
+            for (;;) {
+                operation.check();
+                {
+                    std::lock_guard<std::mutex> lock(peer_->mutex);
+                    if (!peer_->incoming.empty() || peer_->closed) {
+                        return true;
+                    }
+                }
+                std::this_thread::sleep_for(1ms);
+            }
+        } catch (const TransportException& error) {
+            if (error.reason() == TransportError::timeout) {
+                return false;
+            }
+            throw;
+        }
+    }
+    void close() noexcept override {
+        std::lock_guard<std::mutex> lock(peer_->mutex);
+        peer_->closed = true;
+    }
+
+private:
+    std::shared_ptr<FakeMrpPeer> peer_;
+};
+
 // ---- Fake receiver ----
 
 struct Behavior {
@@ -203,12 +394,16 @@ struct Behavior {
     unsigned zero_rate_events = 0;
     bool pause_after_zero_rate = false;
     bool remain_stationary = false;
+    /// Directory of the public MRP fixtures. Non-empty enables the remote
+    /// session's MRP data stream (FakeMrpPeer); empty keeps the minimum sequence.
+    std::string mrp_fixtures;
 };
 
 inline constexpr std::uint16_t control_port = 7000;
 inline constexpr std::uint16_t event_port = 49213;
 inline constexpr std::uint16_t remote_event_port = 49214;
 inline constexpr std::int64_t stream_id = 1;
+inline constexpr std::uint16_t data_port = 49215; // MRP data stream, remote session only.
 
 struct ControlCloseOrder {
     std::mutex mutex;
@@ -250,6 +445,7 @@ public:
         Behavior remote_behavior;
         remote_behavior.remote_control_only = true;
         remote_behavior.base_setup_status = behavior_.remote_setup_status;
+        remote_behavior.mrp_fixtures = behavior_.mrp_fixtures;
         remote_receiver_ = std::make_unique<FakeReceiver>(remote_behavior);
         remote_receiver_->close_order_ = close_order_;
         // Different ephemeral secrets make accidental key sharing fail authentication.
@@ -262,6 +458,9 @@ public:
                    const ReceiverOperation& operation) mutable -> std::unique_ptr<ReceiverStream> {
             if (endpoint.port == control_port && !remote_connected) {
                 remote_connected = true;
+                return remote_connector(endpoint, operation);
+            }
+            if (endpoint.port == data_port) {
                 return remote_connector(endpoint, operation);
             }
             if (endpoint.port == remote_event_port) {
@@ -301,6 +500,18 @@ private:
                     derive_control_key(secret, "Events-Salt", "Events-Read-Encryption-Key"));
                 event_pipe_ = std::make_shared<EventPipe>();
                 return std::make_unique<FakeEventStream>(event_pipe_);
+            }
+            if (endpoint.port == data_port && behavior_.remote_control_only &&
+                !behavior_.mrp_fixtures.empty() && verified_ && data_seed_) {
+                // The receiver reads what the sender writes ("Output") and
+                // writes what the sender reads ("Input"), salted by the seed.
+                const auto secret = bytes(shared_.bytes);
+                const auto salt = "DataStream-Salt" + std::to_string(*data_seed_);
+                mrp_peer_ = std::make_shared<FakeMrpPeer>(
+                    behavior_.mrp_fixtures,
+                    derive_control_key(secret, salt, "DataStream-Output-Encryption-Key"),
+                    derive_control_key(secret, salt, "DataStream-Input-Encryption-Key"));
+                return std::make_unique<FakeMrpStream>(mrp_peer_);
             }
             throw TransportException(TransportError::network);
         };
@@ -365,8 +576,44 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         end_events_locked();
     }
+    /// Remote session only: push SET_STATE for the URL item, or for `item`.
+    /// Returns false when no MRP data stream or URL item exists yet.
+    bool push_mrp_state(std::uint64_t state, double elapsed_seconds, const std::string& item = {}) {
+        const auto peer = mrp_peer();
+        if (!peer) {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        if (peer->item_uuid.empty()) {
+            return false;
+        }
+        peer->push_state_locked(state, elapsed_seconds, item);
+        return true;
+    }
+    /// Remote session only: MRP command numbers received, oldest first.
+    std::vector<std::uint32_t> mrp_commands() const {
+        const auto peer = mrp_peer();
+        if (!peer) {
+            return {};
+        }
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        return peer->commands;
+    }
+    /// Remote session only: absolute seek positions received, oldest first.
+    std::vector<double> mrp_seek_positions() const {
+        const auto peer = mrp_peer();
+        if (!peer) {
+            return {};
+        }
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        return peer->seek_positions;
+    }
 
     // ---- Inspection ----
+    std::shared_ptr<FakeMrpPeer> mrp_peer() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return mrp_peer_;
+    }
     std::vector<ParsedRequest> requests() const {
         std::lock_guard<std::mutex> lock(mutex_);
         return requests_;
@@ -423,6 +670,17 @@ private:
         requests_.push_back(request);
         if (request.method == "SETUP") {
             const auto body = decode_binary_plist(request.body);
+            if (body.find("streams") != nullptr && behavior_.remote_control_only &&
+                !behavior_.mrp_fixtures.empty()) {
+                const auto& stream = body.find("streams")->as_array().front();
+                data_seed_ = static_cast<std::uint64_t>(stream.find("seed")->as_integer());
+                return response(
+                    request, 200,
+                    encode_binary_plist(PlistDictionary{
+                        {"streams",
+                         PlistArray{PlistDictionary{
+                             {"type", 130}, {"streamID", stream_id}, {"dataPort", data_port}}}}}));
+            }
             if (body.find("streams") != nullptr) {
                 return response(request, 200,
                                 encode_binary_plist(PlistDictionary{
@@ -461,7 +719,15 @@ private:
             const auto envelope = decode_binary_plist(request.body);
             const auto command =
                 decode_binary_plist(envelope.find("params")->find("data")->as_data());
+            if (command.find("type")->as_string() == "insertPlayQueueItem" && remote_receiver_) {
+                remote_receiver_->set_mrp_item(command.find("item")->find("uuid")->as_string());
+            }
             if (command.find("type")->as_string() == "setRate") {
+                if (remote_receiver_) {
+                    // The receiver reports our item playing on MRP as it starts.
+                    (void)remote_receiver_->push_mrp_state(mrp_state_playing,
+                                                           fake_item_elapsed_seconds);
+                }
                 if (behavior_.end_remote_events_on_rate) {
                     remote_receiver_->end_event_channel();
                 }
@@ -514,6 +780,14 @@ private:
         verified_ = true;
         auto reply = response(request, 200, encode_tlv({{6, {4}}}));
         return reply;
+    }
+
+    void set_mrp_item(const std::string& uuid) {
+        const auto peer = mrp_peer();
+        if (peer) {
+            std::lock_guard<std::mutex> lock(peer->mutex);
+            peer->item_uuid = uuid;
+        }
     }
 
     void push_state_locked(const std::string& state, std::optional<double> rate = {}) {
@@ -573,6 +847,8 @@ private:
     int commands_ = 0;
     std::uint16_t timing_port_ = 0;
     std::shared_ptr<EventPipe> event_pipe_;
+    std::optional<std::uint64_t> data_seed_;
+    std::shared_ptr<FakeMrpPeer> mrp_peer_;
     std::unique_ptr<ControlWriter> event_writer_;
     std::unique_ptr<ControlReader> event_reader_;
     unsigned event_sequence_ = 0;

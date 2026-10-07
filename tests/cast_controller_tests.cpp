@@ -325,9 +325,9 @@ void cancellation_tests() {
 }
 
 /// Credentials, connector and session timing for one scripted fake receiver.
-/// The fake has no MRP data stream, so the session runs without MRP and its
-/// commands report not_owned; command success needs an MRP-capable fake.
-CastDependencies fake_receiver_dependencies(FakeReceiver& receiver) {
+/// Without Behavior::mrp_fixtures the fake has no MRP data stream, so the
+/// session runs without MRP and its commands report not_owned.
+CastDependencies fake_receiver_dependencies(FakeReceiver& receiver, bool mrp = false) {
     CastDependencies dependencies;
     dependencies.load_credentials = [&receiver](std::string_view) {
         // Direct initialization from the returned prvalue; PairCredentials is
@@ -335,15 +335,29 @@ CastDependencies fake_receiver_dependencies(FakeReceiver& receiver) {
         return std::unique_ptr<PairCredentials>(new PairCredentials(receiver.credentials()));
     };
     dependencies.connect = receiver.connector();
-    dependencies.adjust_session = [](UrlPlaybackOptions& options) {
-        options.enable_mrp = false;
+    dependencies.adjust_session = [mrp](UrlPlaybackOptions& options) {
+        options.enable_mrp = mrp;
         options.start_confirmation_interval = 20ms; // Keep scripted scenarios fast.
-        options.feedback_interval = 30ms;
+        // With MRP the feedback loop also posts on the remote connection, and
+        // cancelling that request at stop closes the remote session before the
+        // URL session (a known session ordering issue, docs/public-api.md).
+        // Keep loop feedback out of MRP scenarios so they test commands and
+        // ends deterministically; the non-MRP scenarios keep fast feedback.
+        options.feedback_interval = mrp ? 60s : 30ms;
     };
     return dependencies;
 }
 
 const std::vector<std::string> url_then_remote{"URL", "remote"};
+
+/// Observed control-connection close order, for failure messages.
+std::string close_order_text(const FakeReceiver& receiver) {
+    std::string text;
+    for (const auto& session : receiver.control_close_order()) {
+        text += (text.empty() ? "" : ",") + session;
+    }
+    return "[" + text + "]";
+}
 
 void active_session_tests() {
     group = "active session";
@@ -374,7 +388,8 @@ void active_session_tests() {
                   snapshot.session.cleaned_up && !snapshot.session.failed,
               "stop records sender_stop after joined cleanup");
         check(receiver.control_close_order() == url_then_remote,
-              "stop closes the URL session before the remote session");
+              std::string("stop closes the URL session before the remote session") + " (closed " +
+                  close_order_text(receiver) + ")");
         check(controller.command(PlaybackCommand::play, 0) == CastResult::ended,
               "command after stop");
         controller.stop();
@@ -458,9 +473,107 @@ void concurrent_stop_tests() {
                   snapshot.session.end_reason == SessionEnd::sender_stop,
               "concurrent stops finish one teardown");
         check(receiver.control_close_order() == url_then_remote,
-              "concurrent stops close each session once, in order");
+              std::string("concurrent stops close each session once, in order") + " (closed " +
+                  close_order_text(receiver) + ")");
     }
     check(probe->releases == 1, "concurrent stops release the source exactly once");
+}
+
+Behavior with_mrp(const std::string& fixtures) {
+    Behavior behavior;
+    behavior.mrp_fixtures = fixtures;
+    return behavior;
+}
+
+// Wire values of PlaybackCommand, independent of the enum under test.
+constexpr std::uint32_t wire_play = 1, wire_pause = 2, wire_stop = 4, wire_seek = 45;
+
+void mrp_command_tests(const std::string& fixtures) {
+    group = "MRP commands";
+    auto probe = std::make_shared<SourceProbe>();
+    FakeReceiver receiver(with_mrp(fixtures));
+    {
+        CastController controller(loopback_settings(), probed_source(probe),
+                                  fake_receiver_dependencies(receiver, true));
+        check(controller.start() == CastResult::ok, "scripted MRP receiver start");
+        check(eventually([&] { return controller.snapshot().playback.owned; }),
+              "MRP state for the inserted item establishes ownership");
+        auto snapshot = controller.snapshot();
+        check(snapshot.playback.state == "playing" && snapshot.playback.duration_seconds &&
+                  std::abs(*snapshot.playback.duration_seconds - 131.6) < 1e-9,
+              "owned status reports the receiver's state and duration");
+
+        check(controller.command(PlaybackCommand::pause, 0) == CastResult::ok, "pause accepted");
+        check(eventually([&] { return controller.snapshot().playback.state == "paused"; }),
+              "receiver pause state follows the command");
+        check(controller.command(PlaybackCommand::play, 0) == CastResult::ok, "play accepted");
+        check(eventually([&] { return controller.snapshot().playback.state == "playing"; }),
+              "receiver playing state follows the command");
+        check(controller.command(PlaybackCommand::seek, 30.5) == CastResult::ok,
+              "forward seek accepted");
+        check(controller.command(PlaybackCommand::seek, 0) == CastResult::ok,
+              "seek to the start accepted");
+        check(controller.command(PlaybackCommand::stop, 0) == CastResult::ok, "MRP stop accepted");
+
+        const auto& remote = receiver.remote_control();
+        check(remote.mrp_commands() == std::vector<std::uint32_t>{wire_pause, wire_play, wire_seek,
+                                                                  wire_seek, wire_stop},
+              "commands reach the receiver in order with their wire numbers");
+        check(remote.mrp_seek_positions() == std::vector<double>{30.5, 0.0},
+              "seek positions reach the receiver unchanged");
+
+        controller.stop();
+        snapshot = controller.snapshot();
+        check(snapshot.phase == CastPhase::stopped && snapshot.session.cleaned_up &&
+                  snapshot.session.end_reason == SessionEnd::sender_stop,
+              "local stop after MRP commands records sender_stop");
+        check(receiver.control_close_order() == url_then_remote,
+              std::string("MRP session closes the URL session before the remote session") +
+                  " (closed " + close_order_text(receiver) + ")");
+    }
+    check(probe->releases == 1, "MRP session releases the source exactly once");
+}
+
+void mrp_end_tests(const std::string& fixtures) {
+    group = "MRP-reported end";
+    {
+        FakeReceiver receiver(with_mrp(fixtures));
+        CastController controller(loopback_settings(),
+                                  probed_source(std::make_shared<SourceProbe>()),
+                                  fake_receiver_dependencies(receiver, true));
+        check(controller.start() == CastResult::ok, "scripted MRP receiver start");
+        check(eventually([&] { return controller.snapshot().playback.owned; }), "owned");
+        // Paused exactly at the item's duration is the receiver's EOF report.
+        check(receiver.remote_control().push_mrp_state(mrp_state_paused, 131.6),
+              "end state pushed");
+        check(eventually([&] { return controller.snapshot().session.cleaned_up; }),
+              "MRP end cleans the session without host input");
+        const auto ended = controller.snapshot();
+        check(ended.phase == CastPhase::ended &&
+                  ended.session.end_reason == SessionEnd::media_end && !ended.session.failed,
+              "MRP paused-at-duration ends with media_end");
+        check(controller.command(PlaybackCommand::play, 0) == CastResult::ended,
+              "command after MRP end");
+    }
+    group = "MRP ownership loss";
+    {
+        FakeReceiver receiver(with_mrp(fixtures));
+        CastController controller(loopback_settings(),
+                                  probed_source(std::make_shared<SourceProbe>()),
+                                  fake_receiver_dependencies(receiver, true));
+        check(controller.start() == CastResult::ok, "scripted MRP receiver start");
+        check(eventually([&] { return controller.snapshot().playback.owned; }), "owned");
+        check(receiver.remote_control().push_mrp_state(mrp_state_playing, 0, "another-item"),
+              "replacement item pushed");
+        check(eventually([&] { return controller.snapshot().session.cleaned_up; }),
+              "ownership loss cleans the session without host input");
+        const auto lost = controller.snapshot();
+        check(lost.phase == CastPhase::ended &&
+                  lost.session.end_reason == SessionEnd::ownership_lost && !lost.playback.owned,
+              "another item on our player ends with ownership_lost");
+        check(controller.command(PlaybackCommand::pause, 0) == CastResult::ended,
+              "command after ownership loss");
+    }
 }
 
 void command_argument_tests() {
@@ -480,7 +593,12 @@ void command_argument_tests() {
 }
 } // namespace
 
-int main() {
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "usage: cast_controller_tests MRP_FIXTURE_DIRECTORY\n";
+        return 2;
+    }
+    const std::string mrp_fixtures = argv[1];
     start_mapping_tests();
     command_mapping_tests();
     created_phase_tests();
@@ -491,6 +609,8 @@ int main() {
     natural_end_tests();
     connection_loss_tests();
     concurrent_stop_tests();
+    mrp_command_tests(mrp_fixtures);
+    mrp_end_tests(mrp_fixtures);
     if (failures != 0) {
         std::cerr << failures << " failure(s)\n";
         return 1;

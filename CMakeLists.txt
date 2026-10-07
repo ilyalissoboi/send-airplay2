@@ -109,7 +109,7 @@ if(BUILD_TESTING)
   endif()
   target_compile_features(cast_controller_tests PRIVATE cxx_std_17)
   sap2_warnings(cast_controller_tests)
-  add_test(NAME cast_controller_tests COMMAND cast_controller_tests)
+  add_test(NAME cast_controller_tests COMMAND cast_controller_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/mrp)
   set_tests_properties(cast_controller_tests PROPERTIES TIMEOUT 60)
   # Exercise the same core without exporting internal C++ symbols from the DLL.
   add_executable(discovery_tests tests/discovery_tests.cpp src/discovery_core.cpp)

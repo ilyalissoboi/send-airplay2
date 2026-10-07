@@ -144,9 +144,11 @@ development, not retroactive gate failures.
    [manual validation plan](public-api.md#manual-validation-plan) with the user
    at the TV; finish the slice's PR review and get merge approval; then the C#
    binding and packaged UWP proof under item 6. The fake receiver is now shared
-   (`tests/fake_receiver.h`) and the controller's active, end and loss paths are
-   unit-tested with MRP disabled; command acceptance through the controller still
-   needs an MRP-capable fake (public-api.md, "Not covered yet"). Related hardware-free work: a
+   (`tests/fake_receiver.h`) and has an optional MRP data stream, so the
+   controller's commands, ends and ownership loss are unit-tested. **Open
+   finding (needs a user decision):** a remote `/feedback` request in flight at
+   stop closes the remote session before the URL session, contrary to the
+   documented order; see public-api.md, "Not covered yet". Related hardware-free work: a
    synthetic beyond-4-GiB byte-source/range test through the media server, and
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
 2. **Startup reliability.** Spontaneous pause at zero/first-frame-only occurred

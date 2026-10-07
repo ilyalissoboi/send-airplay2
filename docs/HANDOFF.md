@@ -814,8 +814,16 @@ session tests' scripted fake receiver then moved unchanged into
 `tests/fake_receiver.h`, and a test-only `CastDependencies::adjust_session` hook
 lets `cast_controller_tests` drive it with MRP disabled: start, pause through
 `wait_for_change`, stop ordering, natural end, event loss and concurrent stops.
-The fake has no MRP data stream, so command acceptance through the controller
-remains untested. **No receiver cast has
+At the user's request the fake then gained an optional MRP data stream
+(`Behavior::mrp_fixtures`, `FakeMrpPeer`), and the controller tests now cover
+ownership, accepted pause/play/seek/stop reaching the receiver with their wire
+numbers, MRP-reported `media_end` and `ownership_lost`. That work **found a
+session ordering issue, not yet fixed:** cleanup cancels feedback first, and a
+cancelled remote `/feedback` request closes the remote connection before the
+URL connection, contrary to "retain remote control through URL teardown". It
+reproduced 3/3 deterministically; it is timing-dependent on hardware (2 s
+feedback interval). Fixing it changes receiver-validated session code, so it
+awaits a user decision; details in public-api.md. **No receiver cast has
 been run through the interface**; the CLI evidence does not transfer to it
 automatically. Contract, mapping tables, limits and next steps:
 [public-api.md](public-api.md).
