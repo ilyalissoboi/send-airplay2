@@ -1,6 +1,6 @@
 {
   "date": "2026-10-07",
-  "evidence_kind": "native receiver stop diagnosis and full-clip natural EOF; unit/CI evidence separate",
+  "evidence_kind": "native receiver stop diagnosis; full-clip EOF cleanup PASS but sustained video presentation FAIL by user observation; unit/CI evidence separate",
   "cli_build": "Windows 11 x64, MSVC 19.51, Release, static",
   "receiver": {
     "model": "Apple TV 4K",
@@ -12,6 +12,7 @@
     "type": "unprotected H.264/AAC MP4",
     "duration_seconds": 131.6,
     "file_size_bytes": 53953926,
+    "local_pc_playback": "PASS by user report: original file plays past 18 seconds with moving video",
     "sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65"
   },
   "cli_sha256": "95aed1800ebf8c1d324b2c45fac04af5f46dd91bee1d54e56e6fc01a82bf81eb",
@@ -470,10 +471,13 @@
       }
     ],
     "observer": {
-      "video_audio": "PENDING",
-      "visible_buffering": "PENDING",
+      "video_audio": "FAIL: user reports video froze after a short buffering stop around 18 seconds; audio continued normally until clip end",
+      "video": "FAIL: frozen from approximately 18 seconds until clip end",
+      "audio": "PASS: user reports normal continuous audio after buffering through clip end",
+      "visible_buffering": "OBSERVED: short buffering stop around 18 seconds, followed by persistent video freeze",
       "home_screen_return": "PENDING"
     },
+    "presentation_result": "FAIL: video did not recover after buffering, despite playing telemetry, advancing position snapshots, heartbeats and successful EOF cleanup",
     "protocol_result": "PASS: natural media_end, exit 0, cleaned=yes, failed=no, failed_reads=0; no seek/play/pause/stop commands; four acknowledged heartbeats"
   },
   "actual_network_interruption": "NOT RUN; user unavailable for disconnect/reconnect",
@@ -481,6 +485,8 @@
     "Only this receiver/firmware/host/media combination.",
     "Socket EOF without explicit terminal state remains connection_lost; no pause-plus-loss normal-stop inference.",
     "Notification names/reason values remain unmapped and omitted; outlines are not semantic evidence.",
-    "One full clip does not establish longer-session reliability or eliminate intermittent startup buffering."
+    "File read counters and read span precede asynchronous socket writes; they do not prove completed HTTP response bodies or bytes received/decoded by the receiver.",
+    "Full-clip video presentation failed after buffering around 18 seconds; healthy telemetry and EOF cleanup did not detect the frozen picture.",
+    "This report does not confirm Home return for the full-clip run; earlier separate EOF/Home observations remain separate."
   ]
 }

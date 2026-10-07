@@ -10,7 +10,9 @@ Native MRP command/telemetry checks passed; G2 visual confirmation passed by use
 Native automatic EOF cleanup and ten short cycles passed, with user-confirmed
 EOF video/audio/home and sleep/wake recovery. Receiver-remote stop returned home
 and automatically cleaned up but classified connection_lost/exit 1. Normal stop
-classification, buffering and actual network-loss recovery remain G3 work.
+classification and actual network-loss recovery remain G3 work. A full 132-second
+native run reached EOF cleanup but **failed sustained video presentation**:
+buffering near 18 s was followed by frozen video while audio continued to clip end.
 See the dated observations below; record each receiver/firmware/platform separately.
 
 The Boost HTTP media server is implemented with loopback tests on Windows
@@ -65,6 +67,7 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Seek forward/back | Playback moves to requested position | Reference: forward seek to 30 s PASS (position 36 s about 7 s later), user-observed; backward NOT RUN. Native PASS: forward/backward command/telemetry and user-observed movement (dated G2 record) |
 | Position/duration | Values follow receiver playback | Reference: PASS, positions 17/36/37/46 s against duration 131 s, consistent with timing. Native PASS: duration 131.6 s and positions follow pause/forward/backward seek |
 | End-of-file | Correct ended state and resource cleanup | Native near-end seek/play: automatic media_end and joined cleanup, exit 0 with stdin held open; user confirmed video/audio and home-screen return (dated lifecycle record) |
+| Sustained full-clip video | Moving video and normal audio through the full clip | FAIL: buffering near 18 s, then video frozen through clip end while audio continued normally; telemetry/EOF cleanup still passed (dated stop/buffering record) |
 | Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; native MRP Stop accepted followed by teardown and user-confirmed home return; receiver-remote stop returned home and automatically cleaned up, but classified connection_lost/exit 1; protocol idle unresolved |
 | Repeated casting | Ten start/stop cycles without stale sessions | Native PASS: ten short independent casts, alternating five MRP Stop and five direct teardown; owned playing status, exit 0, no session/failed-read errors in each. Long sessions and visible home-screen observation remain separate |
 | Receiver sleep/wake | Terminal cleanup; fresh cast works after waking | PASS: user-confirmed sleep, automatic connection_lost/exit 1 cleanup, fresh cast after wake without pairing, normal video/audio and EOF return home |
@@ -614,7 +617,7 @@ network continuation uses the same paired profile and supplied local MP4:
    ordinary pause and genuine outage detection. Investigate repeated loading/
    playing and startup pauses during longer playback.
 
-## Native receiver-stop diagnosis and full-clip EOF: 2026-10-07
+## Native receiver-stop diagnosis: EOF cleanup PASS, full-clip video FAIL, 2026-10-07
 
 Same receiver/firmware, Windows static Release and supplied 131.6-second MP4.
 The [sanitized artifact](validation/native-stop-buffering-windows-static-2026-10-07.json)
@@ -648,14 +651,38 @@ paused state events in this run. URL stopped at 133.1 s after cast start, and
 cleanup finished at 133.9 s: media_end, cleaned=yes, failed=no, exit 0,
 reads=1652, bytes=108091430, failed_reads=0, full span [0,53953926).
 That is a complete clip, rather than the earlier near-end seek experiment.
-Video/audio, visible buffering and Home return are pending user observation.
-One completion does not resolve earlier intermittent startup pause or prove
-longer playback, other media, hosts or firmware.
+**Observer follow-up: sustained video presentation FAIL.** Around the 18-second
+mark the user observed a short buffering stop. Afterwards the video remained
+frozen, while audio continued playing normally until clip end. This agrees in
+timing with the loading/playing pairs, but does not establish their cause. Returned
+playing state, advancing/extrapolated position, full-file fetch and successful
+heartbeats did not reveal the frozen picture. Natural EOF/cleanup remains a
+protocol/process PASS; this run is not successful full-clip video playback.
+Home return for this particular run remains unconfirmed. Earlier separate
+near-end EOF and short-session observations remain unchanged. Prioritize the
+video-freeze-after-buffering investigation; no automatic retry/resume workaround
+has been validated.
+The user confirmed moving video past 18 s during normal local PC playback of
+the same original file. A receiver-specific media/decoder issue is still possible;
+this comparison does not prove a particular casting fault.
+
+**Diagnostic limits and next experiment:** file counters are updated before
+asynchronous TCP writes complete. Full-file read span and failed_reads=0 therefore
+do not establish completed HTTP bodies or successful receiver decoding. The
+600000 ms media-request deadline used by `cast` exceeds this full run, so the
+default 30 s server deadline is not an explanation. The recorded outlines omit
+buffer/stall values and per-request completions/write failures. Next add bounded
+numeric range/status/write/completion and concurrency facts, and reviewed buffer/
+stall scalars, then correlate a controlled reproduction with visible video.
+No root cause or recovery behavior is established by the current trace.
 
 Final Windows static/shared Release each passed 23/23 CTest targets
 (13.13/13.05 s), offline runner contracts 10/10, touched C++ formatting and
-git diff --check. Actual-head CI must be inspected after publishing. G3 remains
-open for explicit normal-stop classification, actual network interruption and
+git diff --check. All ten checks passed at diagnostic code/test head
+`27356a8279c25da30821af5c708e5d4bbed7baf4` in
+[CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37556596080).
+Inspect actual-head CI after this documentation-only observer follow-up. G3 remains
+open for sustained video recovery, explicit normal-stop classification, actual network interruption and
 fresh-cast recovery; the user cannot perform the network checkpoint this session.
 
 ## Automated CLI E2E observation: 2026-10-06

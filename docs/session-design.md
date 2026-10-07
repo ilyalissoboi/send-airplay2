@@ -294,6 +294,9 @@ administered one per session.
    Native EOF and ten short start/stop cycles passed for the recorded receiver.
    G2/EOF observations and sleep/wake recovery passed by user report.
    Receiver-remote stop cleaned up but classified connection_lost/exit 1.
+   A separate full-clip run failed video presentation after buffering near 18 s:
+   video froze while audio continued normally through EOF (user-confirmed).
+   Prioritize video recovery; playing telemetry and EOF cleanup do not prove it.
    Normal stop classification, actual network loss/recovery and longer playback
    remain **Gate G3**; see the dated validation record.
 

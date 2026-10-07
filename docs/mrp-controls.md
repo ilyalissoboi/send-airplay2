@@ -117,6 +117,10 @@ profile. Receiver-remote stop and sleep caused automatic failure cleanup; fresh 
 recovery and EOF video/audio/home passed by user report. Normal receiver-stop
 classification and actual network-loss recovery remain G3 work; see the dated
 lifecycle record. Public playback ABI is later work.
+In the separate full-clip run, video froze after buffering near 18 s while audio
+continued normally to EOF (user-confirmed). MRP playing/position and healthy
+heartbeats did not detect the frozen video; sustained presentation remains a
+failed hardware gate despite successful automatic EOF cleanup.
 
 ## CLI
 

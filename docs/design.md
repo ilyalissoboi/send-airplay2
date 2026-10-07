@@ -141,8 +141,10 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    Complete G3 with actual network-loss recovery; investigate normal stop reason
    and buffering. D34 diagnostics reproduce URL event EOF during user-confirmed
    remote Stop without a terminal state; retain failure classification until
-   intent is validated. One full clip reached natural EOF, with brief loading
-   transitions and visual confirmation pending; longer reliability remains open.
+   intent is validated. One full clip reached natural EOF, but the user observed
+   video frozen after a buffering stop near 18 s while audio continued normally
+   through clip end. Prioritize this video presentation failure; playing telemetry
+   and cleanup success do not prove moving video. Longer reliability remains open.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

@@ -21,6 +21,10 @@ including documentation-only follow-ups. Step 2's final documentation head
 `dafb70a4bcec0236b8f20901d745a1546ff853ba` passed all ten checks before this work.
 The observer-documentation head `3caad5ffedde8942102138ac774df23b015f5e94`
 also passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37555176050).
+The stop/buffering diagnostic code/test head
+`27356a8279c25da30821af5c708e5d4bbed7baf4` passed all ten
+[checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37556596080).
+The full-clip observer follow-up below changes presentation evidence, not that runtime.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -72,10 +76,16 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   playing and no stopped/idle/ended event. Preserve failure classification until
   receiver intent is validated. A fresh full 131.6-second clip, with status-only
   input and no seek, reached natural media_end/exit 0 and four heartbeats. Two
-  brief loading/playing transitions occurred near 18 s; visual observation is
-  pending. See the [stop/full-clip artifact](validation/native-stop-buffering-windows-static-2026-10-07.json).
-- **Next:** establish explicit receiver-stop intent and investigate remaining
-  intermittent startup/buffering behavior; run
+  brief loading/playing transitions occurred near 18 s. **Full-clip video FAIL:**
+  the user reports a short buffering stop around 18 s followed by frozen video
+  through clip end; audio continued normally. EOF cleanup passed, but sustained
+  video presentation did not. The original file plays normally past 18 s on the
+  PC (user-confirmed). Home return for this particular run is unconfirmed.
+  See the [stop/full-clip artifact](validation/native-stop-buffering-windows-static-2026-10-07.json).
+- **Next:** prioritize the video-freeze-after-buffering failure, then establish
+  explicit receiver-stop intent. Add bounded HTTP per-request completion/write
+  diagnostics and correlate reviewed receiver buffer/stall scalars; current source
+  read counters do not prove completed response bodies. Then run
   actual network interruption/recovery when available. The user cannot perform
   network disconnect/reconnect in this session. Preserve credentials and
   independent remote/URL sessions through ordered teardown.
@@ -1341,8 +1351,35 @@ A fresh full clip reached EOF without seek/play/pause/stop commands while stdin
 remained open. Two brief loading/playing transitions occurred around 18 seconds
 after playing began, followed by advancing status snapshots and four acknowledged
 heartbeats. URL stopped at the natural end and cleanup returned media_end/exit 0,
-failed=no, failed_reads=0, full-file span. This is full-clip protocol/process proof,
-with visual confirmation pending, not a claim that intermittent buffering is fixed.
+failed=no, failed_reads=0, full-file span. **Observer follow-up: full-clip video
+presentation FAIL.** The user reports a short buffering stop near 18 s, then video
+remained frozen while audio played normally until clip end. Home return for this
+run is unconfirmed. The loading/playing pairs correlate with that report; returned
+playing state, extrapolated positions, full-file read span, heartbeats and EOF
+cleanup do not prove advancing video frames. Root cause is unresolved; prioritize
+video recovery investigation over broader support work. Earlier short/near-end
+video/audio/Home observations remain evidence for those separate runs.
+The user also confirmed that the original MP4 plays past 18 s with moving video
+on the PC. This supports investigating the casting/receiver path; it does not
+alone exclude a receiver-specific media/decoder problem.
+
+Read-only follow-up inspection found that `FileReadStats` counts source reads
+before `MediaServer::Session::write_chunk` completes asynchronous socket writes.
+Consequently zero failed reads and a full-file read span cannot prove complete
+HTTP responses or bytes received/decoded. `cast` already sets a 600000 ms absolute
+media-request deadline, longer than this run; the default 30 s server budget did
+not expire here. Startup queue commands match the pinned reference's reviewed
+sequence. Existing sanitized event traces omit buffer/stall values and request
+completion/write errors, so they cannot identify the cause. No behavior fix or
+automatic Play/seek retry is supported by this evidence.
+
+**Proposed next investigation:** bounded opt-in diagnostics with local request
+numbers, GET/HEAD, numeric selected ranges/status, bytes written, response
+completion and timeout/cancel/I/O categories, plus active-connection counts.
+Correlate only reviewed finite receiver buffer/stall fields; omit media URLs,
+identifiers and raw payloads. Use the unchanged supplied clip, first a natural
+reproduction, then controlled native-session comparisons. Require observed moving
+video past the stall through clip end before calling recovery successful.
 The [sanitized artifact](validation/native-stop-buffering-windows-static-2026-10-07.json)
 contains exact executable/source fingerprints and event/state/position facts.
 The initial missed remote-stop window was ended by the sender and contributes no
@@ -1391,8 +1428,11 @@ the recorded source snapshot is still current.
    Receiver-remote stop and sleep triggered automatic cleanup; stop classified
    connection_lost/exit 1. D34 diagnostics reproduced URL event EOF while still
    playing, without an explicit terminal state, so normal stop intent remains
-   unresolved. A full 131.6-second clip now reached natural EOF without seeking,
-   with two brief loading transitions; visual observation is pending. Finish actual
+   unresolved. A full 131.6-second clip reached natural EOF without seeking, but
+   **video froze after buffering near 18 s while audio continued to clip end**
+   (user-confirmed); the same source file plays normally on the PC. Prioritize
+   response-completion/write and receiver-buffer diagnostics for this sustained
+   video presentation failure. Finish actual
    network interruption/recovery when available. Investigate the
    buffering pause and renewed loading seen in the mixed native/pyatv run; one
    preliminary native EOF probe paused at startup and needed explicit play.

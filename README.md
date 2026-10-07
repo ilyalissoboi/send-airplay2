@@ -10,7 +10,8 @@ returned home after sender shutdown. The session retains a separate native
 remote-control session, now extended with native MRP status and controls. G2
 controls and selected G3 lifecycle cases passed on that combination; receiver-stop
 classification, actual network-loss recovery and the public playback API remain
-pending.**
+pending. A full-clip run failed sustained video: after buffering near 18 seconds,
+the picture froze while audio continued to EOF.**
 
 The C++17 core includes a byte-range resolver with a C interface
 and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
@@ -142,7 +143,9 @@ outlines for diagnostics. A `playing` event does not prove visible playback:
 G1 passed for the recorded native-only run, with user-observed video/audio and
 return to the home screen after sender stop. Native EOF cleanup with stdin held
 open and ten short start/stop cycles passed on the recorded receiver; the user
-confirmed G2 controls and EOF video/audio/home. Receiver-remote stop and sleep
+confirmed G2 controls and near-end EOF video/audio/home. A separate full-clip run
+froze video after buffering near 18 s while audio continued normally; its EOF
+cleanup still passed. Receiver-remote stop and sleep
 triggered cleanup; normal stop classification and actual network-loss recovery
 remain open G3 work. Native MRP controls are implemented; see the recorded
 G2 result and [control contracts](docs/mrp-controls.md).
