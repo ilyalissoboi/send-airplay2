@@ -30,4 +30,9 @@ run_host(2 "Create: invalid_argument" "invalid profile" --address 127.0.0.1 --pr
 # start before the media server or any receiver connection; the source is
 # still released exactly once.
 run_host(1 "Start: (profile_not_found|unsupported).*releases=1" "absent profile" --address 127.0.0.1 --profile api-host-test-absent-5d2e8b --file "${media}")
+# Pairing mode: --file is refused, and an unreachable receiver fails before any
+# PIN prompt (the built-in store reports the profile absent on Windows and is
+# unsupported elsewhere; both stop without a PIN request).
+run_host(2 "--pair requires --address and --profile only" "pair with file" --pair --address 127.0.0.1 --profile p --file "${media}")
+run_host(1 "Pair: (connection|unsupported)" "pair unreachable" --pair --address 127.0.0.1 --port 9 --profile api-host-pair-absent-3c1d)
 file(REMOVE "${media}")

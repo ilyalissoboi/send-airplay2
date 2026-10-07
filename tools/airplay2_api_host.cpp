@@ -4,7 +4,8 @@
 // Every library call goes through send_airplay2/playback.h only, so this is
 // the same boundary a C# or JNI host sees. Stdin polling reuses the CLI's
 // host-side helper. Output is fixed fields only: never the receiver address,
-// profile, media URL, file path or receiver-provided text.
+// profile, media URL, file path, PIN or receiver-provided text.
+#include "send_airplay2/pairing.h"
 #include "send_airplay2/playback.h"
 #include "cli_input.h"
 
@@ -16,6 +17,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <cstdio>
+#include <cwchar>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -30,6 +32,12 @@
 #include <string_view>
 #include <system_error>
 #include <thread>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 namespace {
 using namespace std::chrono_literals;
@@ -50,7 +58,10 @@ const char* usage =
     "         [--start-position SECONDS] [--cancel-after-ms N | --cycles N [--hold-ms N]]\n"
     "Interactive (default): status, pause, play, seek SECONDS, stop; Enter stops locally.\n"
     "--cancel-after-ms: call sap2_cast_stop() N ms into a blocking start.\n"
-    "--cycles: N casts in one process, alternating MRP stop and local stop.\n";
+    "--cycles: N casts in one process, alternating MRP stop and local stop.\n"
+    "       airplay2-api-host --pair --address IP --profile NAME [--port 7000]\n"
+    "--pair: sap2_pair() into the built-in store; the PIN is typed hidden in this\n"
+    "        process's console window (Windows).\n";
 
 struct HostArguments {
     std::string address;
@@ -64,6 +75,7 @@ struct HostArguments {
     std::optional<std::uint32_t> cancel_after_ms;
     std::optional<std::uint32_t> cycles;
     std::uint32_t hold_ms = 5000; // Playing time per cycle before stopping.
+    bool pair = false;            // Pair a new profile instead of casting.
 };
 
 std::uint32_t parse_unsigned(std::string_view value, const char* name) {
@@ -91,6 +103,10 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
     HostArguments arguments;
     for (int index = 1; index < argc; ++index) {
         const std::string_view option = argv[index];
+        if (option == "--pair") {
+            arguments.pair = true;
+            continue;
+        }
         if (index + 1 >= argc) {
             throw std::invalid_argument("unknown or incomplete option: " + std::string(option));
         }
@@ -124,6 +140,13 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
         } else {
             throw std::invalid_argument("unknown option: " + std::string(option));
         }
+    }
+    if (arguments.pair) {
+        if (arguments.address.empty() || arguments.profile.empty() || !arguments.file.empty() ||
+            arguments.cancel_after_ms || arguments.cycles) {
+            throw std::invalid_argument("--pair requires --address and --profile only");
+        }
+        return arguments;
     }
     if (arguments.address.empty() || arguments.profile.empty() || arguments.file.empty()) {
         throw std::invalid_argument("requires --address, --profile and --file");
@@ -700,6 +723,141 @@ int run_cycles(const HostArguments& arguments, HostFile& file) {
               << file.read_summary() << std::endl;
     return passed == cycles ? exit_success : exit_failure;
 }
+
+#ifdef _WIN32
+/**
+ * Hidden PIN entry for sap2_pair_options::read_pin, written against the public
+ * callback contract only. It reads the process's own console through CONIN$
+ * and CONOUT$, so it works while stdout is redirected to a log, and it restores
+ * the console mode and drops queued keystrokes on every path. Esc cancels; any
+ * printable non-digit or a ninth digit makes the entry invalid, which the
+ * library rejects. Key events are erased after use; nothing is echoed.
+ */
+class ConsolePin {
+public:
+    ConsolePin()
+        : input_(CreateFileW(L"CONIN$", GENERIC_READ | GENERIC_WRITE,
+                             FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0,
+                             nullptr)),
+          output_(CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0,
+                              nullptr)) {}
+    ~ConsolePin() {
+        if (mode_saved_) {
+            FlushConsoleInputBuffer(input_);
+            SetConsoleMode(input_, original_mode_);
+        }
+        if (input_ != INVALID_HANDLE_VALUE) {
+            CloseHandle(input_);
+        }
+        if (output_ != INVALID_HANDLE_VALUE) {
+            CloseHandle(output_);
+        }
+    }
+    ConsolePin(const ConsolePin&) = delete;
+    ConsolePin& operator=(const ConsolePin&) = delete;
+    ConsolePin(ConsolePin&&) = delete;
+    ConsolePin& operator=(ConsolePin&&) = delete;
+
+    /// Returns SAP2_OK with the digits typed, or SAP2_ERROR_CANCELLED.
+    int32_t read(char* digits, std::size_t capacity, std::size_t* length) {
+        if (input_ == INVALID_HANDLE_VALUE || output_ == INVALID_HANDLE_VALUE ||
+            !GetConsoleMode(input_, &original_mode_)) {
+            return SAP2_ERROR_CANCELLED; // No interactive console to read from.
+        }
+        mode_saved_ = true;
+        const DWORD hidden = (original_mode_ | ENABLE_EXTENDED_FLAGS | ENABLE_PROCESSED_INPUT) &
+                             ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE |
+                               ENABLE_VIRTUAL_TERMINAL_INPUT);
+        if (!SetConsoleMode(input_, hidden)) {
+            return SAP2_ERROR_CANCELLED;
+        }
+        FlushConsoleInputBuffer(input_);
+        write(L"Enter the PIN shown on the TV (hidden), then Enter; Esc cancels: ");
+        std::size_t count = 0;
+        bool invalid = false;
+        for (;;) {
+            INPUT_RECORD event{};
+            DWORD read = 0;
+            if (!ReadConsoleInputW(input_, &event, 1, &read) || read != 1) {
+                SecureZeroMemory(&event, sizeof(event));
+                return SAP2_ERROR_CANCELLED;
+            }
+            const bool key_down = event.EventType == KEY_EVENT && event.Event.KeyEvent.bKeyDown;
+            const auto key = event.Event.KeyEvent.wVirtualKeyCode;
+            const auto character = event.Event.KeyEvent.uChar.UnicodeChar;
+            SecureZeroMemory(&event, sizeof(event)); // The record holds the typed digit.
+            if (!key_down) {
+                continue;
+            }
+            if (key == VK_ESCAPE) {
+                write(L"\r\n");
+                return SAP2_ERROR_CANCELLED;
+            }
+            if (key == VK_RETURN) {
+                write(L"\r\n");
+                *length = invalid ? 0 : count;
+                return SAP2_OK;
+            }
+            if (key == VK_BACK) {
+                if (count > 0) {
+                    digits[--count] = 0;
+                }
+                continue;
+            }
+            if (character == 0) {
+                continue; // Modifier or navigation key.
+            }
+            if (character < L'0' || character > L'9' || count == capacity) {
+                invalid = true;
+                continue;
+            }
+            digits[count++] = static_cast<char>(character);
+        }
+    }
+
+private:
+    void write(const wchar_t* text) {
+        DWORD written = 0;
+        WriteConsoleW(output_, text, static_cast<DWORD>(std::wcslen(text)), &written, nullptr);
+    }
+
+    HANDLE input_;
+    HANDLE output_;
+    DWORD original_mode_ = 0;
+    bool mode_saved_ = false;
+};
+
+int32_t read_pin_from_console(void*, char* digits, std::size_t capacity, std::size_t* length) {
+    ConsolePin console;
+    return console.read(digits, capacity, length);
+}
+#else
+int32_t read_pin_from_console(void*, char*, std::size_t, std::size_t*) {
+    std::cerr << "Pair: hidden PIN entry is implemented for Windows consoles only\n";
+    return SAP2_ERROR_CANCELLED;
+}
+#endif
+
+/// Pair a new profile into the built-in store with hidden console PIN entry.
+int run_pair(const HostArguments& arguments) {
+    sap2_pair_options options;
+    sap2_pair_options_init(&options);
+    options.receiver_address = arguments.address.c_str();
+    options.receiver_port = arguments.port;
+    options.profile = arguments.profile.c_str();
+    options.read_pin = &read_pin_from_console;
+    std::cout << "Pairing: starting; type the PIN in this console once the TV shows it."
+              << std::endl;
+    const auto result = sap2_pair(&options);
+    std::cout << "Pair: " << sap2_result_name(result)
+              << " api_version=" << sap2_playback_api_version() << " linkage=" << linkage()
+              << std::endl;
+    if (result == SAP2_ERROR_INVALID_ARGUMENT) {
+        return exit_arguments;
+    }
+    return result == SAP2_OK ? exit_success : exit_failure;
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -711,7 +869,9 @@ int main(int argc, char** argv) {
             return exit_success;
         }
         arguments = parse_arguments(argc, argv);
-        file = std::make_unique<HostFile>(arguments.file);
+        if (!arguments.pair) {
+            file = std::make_unique<HostFile>(arguments.file);
+        }
     } catch (const std::invalid_argument& error) {
         std::cerr << "Arguments: " << error.what() << '\n' << usage;
         return exit_arguments;
@@ -720,6 +880,9 @@ int main(int argc, char** argv) {
         if (sap2_playback_api_version() != SAP2_PLAYBACK_API_VERSION) {
             std::cerr << "Library: playback interface version mismatch\n";
             return exit_failure;
+        }
+        if (arguments.pair) {
+            return run_pair(arguments);
         }
         if (arguments.cancel_after_ms) {
             return run_cancel(arguments, *file);
