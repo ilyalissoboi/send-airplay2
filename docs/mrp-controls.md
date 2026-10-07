@@ -1,6 +1,6 @@
 # Native MRP controls
 
-Private C++ implementation in draft PR #12, under decisions D29/D31. The CLI
+Private C++ implementation in PR #12 (ready for review), under decisions D29/D31. The CLI
 uses MRP over a separately verified remote-control AirPlay data stream; URL
 start continues to use the previously validated `/command` path. Hardware
 results belong in [receiver-validation.md](receiver-validation.md).

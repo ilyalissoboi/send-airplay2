@@ -63,7 +63,10 @@ Apache-2.0 and existing provenance remain intact.
   platform/static/shared builds. An earlier head's success is not this gate.
   Initial D43 commit `d1011ab5b6a413f2e58a5e8587060d5866af6894` passed all ten
   [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37582693970);
-  inspect the acknowledgment-guard follow-up's own results on PR #12.
+  the final D43 implementation/test head
+  `ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5` passed all ten
+  [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37584220175),
+  including the previously failing macOS shared fixture. Inspect subsequent PR heads separately.
 
 This review performed **no new receiver test**. D40's runtime and the D42 Ethernet
 artifact retain their exact source/binary fingerprints and selected hardware
@@ -76,5 +79,21 @@ priority per D37 unless it recurs. Cooperative duration-based ownership does not
 guarantee protection against concurrent same-duration takeover. Broader lifecycle,
 other receiver/host, packaged application and public ABI gates remain pending.
 
-Keep PR #12 draft until the user approves marking it ready or merging, as required
-by [HANDOFF.md](HANDOFF.md#8-continuation-mechanics-and-known-obstacles).
+The user approved marking PR #12 ready, and that status change was verified on
+2026-10-07 at `ab7ec01`. It is open and unmerged. Merge still requires user approval.
+
+## Review feedback follow-up (D44)
+
+The automated review of `ab7ec01` raised one
+[P2 documentation comment](https://github.com/ilyalissoboi/send-airplay2/pull/12#discussion_r4204085497):
+the README and current required-observations table contradicted D42 by leaving
+network recovery open/NOT RUN. Both now report the selected Ethernet interruption
+cleanup and fresh explicit same-credential recovery as PASS. Broader network and
+longer reliability remain pending, and automatic in-session reconnect/resume
+remains unimplemented. Historical dated records retain their original NOT RUN
+status and are superseded by D42 for this selected check.
+
+This follow-up changes documentation only, adds the detailed
+[separate-session note](CONTINUATION.md), and updates the live ready-for-review
+status. It adds no runtime, test, dependency or receiver evidence. Inspect CI and
+the review thread at the actual published head before merging.

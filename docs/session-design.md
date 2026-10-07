@@ -1,6 +1,6 @@
 # URL playback session design and validation
 
-Status: **PARTIALLY IMPLEMENTED**, updated 2026-10-07 for draft PR #12.
+Status: **PARTIALLY IMPLEMENTED**, updated 2026-10-07 for PR #12 (ready for review).
 Channel keys, events, timing, messages, URL orchestration and `cast` are implemented.
 Standalone G1 initially failed. The minimal native remote-control SETUP/event
 session then passed G1 without pyatv, RECORD or MRP: video/audio played and the TV

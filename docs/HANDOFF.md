@@ -4,12 +4,23 @@ Snapshot: 2026-10-07 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
+The focused [separate-session handoff](CONTINUATION.md) contains the current
+checkpoint, review disposition, validation commands and ordered development queue.
 
 ## 0. Resume here: native playback session on `claude/url-playback-session`
 
 Work continues in a local Codex session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
-Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
+Current PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12), **ready for review**,
+open and unmerged. The user authorized marking ready, and the change was verified
+at `ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5`; merge is not authorized.
+That implementation/test head passed all ten
+[CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37584220175).
+D44 addresses the single automated review comment: README and the current
+network-observation table now consistently mark selected D42 Ethernet cleanup /
+fresh explicit recovery PASS, with broader network reliability pending and
+automatic reconnect/resume unimplemented. This is a documentation-only follow-up;
+inspect its actual head/checks and review-thread resolution before further work.
 Latest runtime follow-up: D43's [PR review](pr-review.md) fixes URL diagnostic
 redaction and decoded plaintext erasure on exception paths. Windows
 static/shared Release passed 24/24 CTest targets each; runner contracts passed
@@ -77,7 +88,7 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   (D27) and the session design with decisions D28-D31.
 - **Current branch:** `claude/url-playback-session`, created from that merge
   for the session implementation in [session-design.md](session-design.md).
-  CI runs only for pull requests, so keep a draft PR open for this branch.
+  CI runs only for pull requests; PR #12 is open and ready for review on this branch.
   Before writing, verify the actual head and checks.
 - **Done on this branch:** steps 1-6 and the minimum native remote session.
   Channel key derivation, the event
@@ -186,8 +197,10 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
 - **PR review complete locally (D43):** fixed two reproduced issues: raw peer
   strings/keys/targets in URL output, and decoded plaintext release without
   erasure on error paths. See [scope, regressions and limits](pr-review.md).
-- **Next:** after actual-head CI passes, obtain user approval before marking
-  ready or merging. Keep ambiguous
+- **Next:** verify the D44 documentation follow-up's actual-head CI and addressed
+  review thread, then obtain user approval before merging. Marking ready was
+  already authorized and completed. Continue development using the ordered queue
+  in [CONTINUATION.md](CONTINUATION.md). Keep ambiguous
   peer closure classified conservatively: the reference audit and single Ethernet
   comparison do not establish Stop intent. Investigate the unresolved receiver
   transition behind the intermittent startup pause using matched Home/idle
@@ -327,7 +340,7 @@ It was created with an Apache-2.0 LICENSE before implementation began.
 | Receiver validation | Windows discovery observed; user confirmed authenticated PIN enrollment, credential save/reload, fresh-socket and separate-process verification on Apple TV 4K / tvOS 26.6 (verify exit 0); pyatv 0.18.0 reference AirPlay pairing passed; pyatv 0.18.0 reference playback FAILED on tvOS 26.6 (known upstream issue, no media fetch); unmerged pyatv fix played video and audio fetched from `airplay2-cli serve`; native-only URL playback with minimum native remote SETUP/event session G1 PASS, user-observed video/audio and return home after sender stop |
 | Screenbox changes | None; source audit only, no integration fork created in this session |
 
-PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is merged; draft PR #12 contains the private session implementation (section 0). Verify current GitHub and
+PRs #1 through #10 are merged and `main` contains the foundation/discovery/control codecs, peer verification, PIN setup, bounded receiver transport and Windows credential CLI, including M6 metadata compatibility, the noninteractive E2E runner and the bounded Boost media server. PR #11 is merged; ready-for-review PR #12 contains the private session implementation (section 0). Verify current GitHub and
 local branch state before further development; the original foundation SHA is
 not the final PR head.
 
@@ -531,7 +544,7 @@ Preserve that failure and the original frozen-video run; investigate startup
 ordering/state next instead of interpreting successful telemetry as moving video.
 Static/shared Release passed 23/23 CTest targets each (13.48/13.44 s);
 offline runner contracts passed 10/10, and touched C++ format/diff checks passed.
-See [receiver validation](receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
+See [receiver validation](receiver-validation.md#bounded-cast-admission-policy-and-controlslifecycle-checks-2026-10-07).
 
 **D37 (user prioritization decision, 2026-10-07):** the user considers insufficient
 media connections the most likely cause of the original frozen-video failure
@@ -704,11 +717,40 @@ The fixture now arms silence after `start()` returns and waits for a new request
 startup confirmation deliberately spans the old fault window (120 ms versus
 30 ms interval plus 80 ms timeout). Deadline and cleanup assertions stay intact.
 The revised session test passed five repetitions under concurrent local load.
-No production source changes in this test follow-up. Inspect actual-head CI.
+No production source changes in this test follow-up. Final D43 head
+`ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5` passed all ten
+[CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37584220175).
 No receiver test was
 performed for this follow-up: D40/D42 source/binary fingerprints remain the
 hardware evidence. Remote-Stop intent, intermittent startup pause and broader
 reliability remain open; frozen video stays low priority unless it recurs (D37).
+
+**D44 (review feedback and separate-session handoff, 2026-10-07):** the user
+approved marking PR #12 ready, then asked to address review comments and prepare
+a detailed continuation note. The actual open/ready head was verified as
+`ab7ec01`, with all ten CI checks passing and a clean worktree. The automated
+review had one unresolved P2 thread,
+[network-recovery gate consistency](https://github.com/ilyalissoboi/send-airplay2/pull/12#discussion_r4204085497).
+The README's current G3 summary and required-observations table now report the
+selected D42 Ethernet interruption cleanup/fresh same-credential recovery PASS.
+Automatic in-session reconnect/resume is still unimplemented; broader network
+cases and longer reliability are pending. Do not rewrite historical NOT RUN
+records or infer removal-detection latency from unsynchronized action cues.
+
+The detailed [CONTINUATION.md](CONTINUATION.md) records current authorization,
+branch/status, exact implementation/receiver-tested heads, D39-D43 evidence and
+limits, review disposition, ordered follow-up work, build/tool paths, sandbox
+behavior, privacy rules and a suggested next-session prompt. Live draft-status
+notes were updated to ready for review; **merging still needs user approval**.
+This follow-up adds no source/test/dependency changes or hardware run. Check
+whitespace, links and status consistency, then publish to the same branch,
+resolve the corrected thread and verify actual-head CI. The final PR description
+and task report identify that documentation commit and CI run.
+Local verification passed 141 documentation links/anchors and current gate/status
+consistency, all 52 unchanged PR C++ format checks, and `git diff --check`.
+Two pre-existing capacity-record links were corrected to the heading's actual
+anchor. No rebuild/CTest or receiver rerun was needed for unchanged implementation;
+the D43 results above remain tied to `ab7ec01`.
 
 ## 5. Implemented code and verification
 
@@ -725,6 +767,7 @@ current task list. Current next steps are in section 7.
 | `CMakeLists.txt` | C++17 static/shared library and CTest targets |
 | `.github/workflows/build.yml` | Windows/Linux/macOS static/shared build-and-test matrix |
 | `docs/design.md` | Architecture, range contract, integration audit and implementation gates |
+| `docs/CONTINUATION.md` | Focused separate-session restart checkpoint, review disposition, evidence, commands and ordered development queue |
 | `docs/receiver-validation.md` | Per-platform/per-firmware hardware record; discovery, PIN enrollment and fresh-socket verification observed; remaining gates explicit |
 | `include/send_airplay2/discovery.h` | Experimental synchronous C++ discovery records/options/result API |
 | `src/discovery*.cpp` / internal headers | Bounded DNS-SD parser/cache, scan scheduler and native socket adapter |
@@ -1840,11 +1883,12 @@ the connector. In a carried-over workspace, inspect local versus remote history
 before attempting a push. A clean checkout of the PR branch avoids that divergence.
 Do not force-push over unfamiliar remote changes.
 
-Local continuation: keep using draft PR #12's branch
+Local continuation: keep using open PR #12's branch
 `claude/url-playback-session`. Inspect its actual head/checks before writing.
 The stopped Claude checkout was detached on 2026-10-07 so the branch could be
 checked out in the Codex worktree. Do not start another branch/PR or force-push.
-Ask the user before marking ready or merging. The Windows host can reach the LAN;
+The user approved marking ready on 2026-10-07; that action is complete.
+Ask the user before merging. The Windows host can reach the LAN;
 hardware observations still need someone watching the receiver. Never read raw
 credential files or expose the address, identifiers, PIN or private URL.
 

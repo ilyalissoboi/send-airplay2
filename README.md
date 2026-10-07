@@ -187,11 +187,12 @@ The generic server and `serve` still default to four. The original freeze is low
 priority unless it recurs in later testing; insufficient media connections are
 the likely cause (user triage decision). The intermittent startup pause remains
 active: another 16-slot run paused at zero
-without transport commands or remote input. See the [capacity validation record](docs/receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
+without transport commands or remote input. See the [capacity validation record](docs/receiver-validation.md#bounded-cast-admission-policy-and-controlslifecycle-checks-2026-10-07).
 `--minimal-remote` is a separate diagnostic comparison without MRP controls.
-Receiver-remote stop and sleep
-triggered cleanup; normal stop classification and actual network-loss recovery
-remain open G3 work. Native MRP controls are implemented; see the recorded
+Receiver-remote stop and sleep triggered cleanup. D42 passed the selected
+Ethernet interruption and fresh explicit recovery check. Normal stop classification
+and broader network/lifecycle reliability remain open G3 work; automatic in-session
+reconnect/resume is not implemented. Native MRP controls are implemented; see the recorded
 G2 result and [control contracts](docs/mrp-controls.md).
 See [session design and gates](docs/session-design.md) and
 [receiver results](docs/receiver-validation.md).

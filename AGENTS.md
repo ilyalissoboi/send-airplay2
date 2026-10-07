@@ -3,6 +3,8 @@
 Start with [docs/HANDOFF.md](docs/HANDOFF.md), then read
 [docs/design.md](docs/design.md) and [docs/receiver-validation.md](docs/receiver-validation.md).
 They preserve the user scope, decisions, evidence, current status and next steps.
+For the separate-session checkpoint and ordered work queue, also read
+[docs/CONTINUATION.md](docs/CONTINUATION.md).
 
 - Continue on the current PR branch while it is open; inspect its actual head
   before writing. The API is experimental; native-only G1 passed for one recorded receiver/host.
