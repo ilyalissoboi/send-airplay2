@@ -15,17 +15,20 @@ Windows 11 x64 host; see [receiver-validation.md](receiver-validation.md#public-
 ## User decisions (D46)
 
 **Revised by D49 (2026-10-08):** credentials may also come from a host-provided
-store passed through the C interface, and pairing will join the interface. The
-"secrets never cross the ABI" guarantee below then holds for built-in stores
-only. See [credential-interface.md](credential-interface.md).
+store passed through the C interface, and pairing will join the interface. See
+[credential-interface.md](credential-interface.md). The D46 bullets below are
+kept as recorded, with the superseded statements marked.
 
 - **Credentials by profile name.** The host passes a profile name. The library
   loads it from its own platform store (Windows Credential Manager today), so
-  pairing secrets never cross the ABI. Packaged UWP and Android hosts therefore
-  need store adapters inside the library; other platforms report
-  `SAP2_ERROR_UNSUPPORTED` until one exists.
+  pairing secrets never cross the ABI. *Superseded by D49:* the guarantee now
+  holds for built-in stores only, and packaged UWP and Android hosts supply a
+  host-provided store instead of needing adapters inside the library. Platforms
+  with neither still report `SAP2_ERROR_UNSUPPORTED`.
 - **Playback only for the first slice.** Discovery already has a C++ interface.
-  Pairing, profile deletion and diagnostics stay in the CLI for now.
+  Diagnostics stay in the CLI for now. *Superseded by D49:* pairing and local
+  profile removal will join the C interface; until that is implemented they
+  remain CLI-only.
 
 ## Engineering choices
 
@@ -147,10 +150,13 @@ Telemetry only (no observer needed):
    then, so no ordering guarantee is claimed for that case.
 3. **C# binding and packaged UWP proof:** P/Invoke over this header, native loading,
    brokered file reads and inbound serving in a packaged app.
-4. **Credential stores for other platforms** (Keychain, libsecret, Android
-   Keystore, UWP PasswordVault), and the Botan UWP packaging question.
-5. **Pairing, profile deletion and diagnostics** (start trace, event and media
-   logs) in a later interface version, if hosts need them.
+4. **Credential stores for other platforms**, per D49
+   ([credential-interface.md](credential-interface.md)): built-in macOS Keychain
+   and Linux Secret Service adapters, and host-provided stores for UWP
+   (`PasswordVault`) and Android (Keystore). Plus the Botan UWP packaging question.
+5. **Pairing and profile removal** in the C interface (planned by D49), and
+   diagnostics (start trace, event and media logs) in a later interface version,
+   if hosts need them.
 6. **IPv6 link-local receivers** (scope IDs): the media server rejects them today.
 
 ## Validation

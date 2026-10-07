@@ -58,6 +58,18 @@ reviewed with that PR.
 - **Callback table** `sap2_credential_store`: `struct_size`, `context`, `load`,
   `save_new`, `erase`, each taking the profile name. Supplied through the options
   of the calls that need credentials (cast start, pairing, removal).
+- **Lifetime.** The library copies the table (the function pointers and the
+  `context` value) when the call that receives it validates its options; the
+  host's own struct can be discarded after that call returns. The callbacks and
+  whatever `context` points to must stay valid for as long as the library may
+  call them:
+  - for a cast, from `sap2_cast_create()` until `sap2_cast_destroy()` returns,
+    because credentials are loaded later, inside `sap2_cast_start()`;
+  - for one-shot calls such as pairing and profile removal, until that call
+    returns.
+  The library never calls the store after those points. A C# binding therefore
+  keeps its delegates and any `GCHandle` for `context` alive until the handle is
+  destroyed (or the one-shot call returns), and releases them only then.
 - **Opaque record.** The host stores the library's encoded record without parsing
   it. It contains the controller's Ed25519 signing seed, so it belongs only in
   secure storage, never in plain files, logs or app settings. Hosts whose store
