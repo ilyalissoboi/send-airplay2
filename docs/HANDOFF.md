@@ -10,6 +10,13 @@ not a claim that the sender has been completed.
 Work continues in a local Codex session on the Windows 11 host that
 shares a LAN with "Living Room". A cloud session cannot reach that LAN.
 Current draft PR: [#12](https://github.com/ilyalissoboi/send-airplay2/pull/12).
+Latest implementation/evidence head (D40):
+`4a18b2662150768a00154ca17e222f2e701fd192`;
+[exact-head CI](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37577586084).
+It adds bounded remote-event/final MRP diagnostics with separate observed
+Stop/Home, sleep and fresh wake playback/EOF/Home evidence. Classification
+remains conservative. This documentation follow-up changes no runtime source;
+inspect the actual PR head/checks, including documentation-only follow-ups.
 Lifecycle implementation/code-test head:
 `2f77f622acbaff3e6579cb8c997c927a6ea12206` (D33). Native runtime source blobs
 and CLI SHA-256 are recorded in the [lifecycle artifact](validation/native-lifecycle-windows-static-2026-10-07.json).
@@ -32,7 +39,7 @@ D36 below changes the normal cast admission budget; inspect its actual PR head
 and checks rather than reusing a prior CI result.
 The D37 documentation head `1d69560578fbbebafa5ab9c33d2cb56bd90b76cb` passed all ten
 [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37562737055).
-D38 adds startup code/tests below; its current PR-head CI is a separate gate.
+D38 added startup code/tests below; CI remained a separate gate.
 D38 startup code/test head is `6bed9febffb857050a9370bc34533add9abcf547`;
 its [CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37564851802)
 passed all ten checks, as did tested documentation head
@@ -41,8 +48,8 @@ passed all ten checks, as did tested documentation head
 Inspect the actual PR head, including subsequent documentation-only follow-ups.
 D39 documentation/evidence head `5a2c58d9eec880c81e96ef264a489a709a7fa4a9`
 passed all ten [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37573362161).
-D40 below adds diagnostic code and a separate native comparison; its actual
-PR-head CI must be checked after publication.
+D40 code/evidence and its CI are identified above. Inspect the actual PR head
+after subsequent documentation-only updates rather than reusing an older run.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
