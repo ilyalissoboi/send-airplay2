@@ -85,7 +85,8 @@ passed all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions
 Inspect the actual PR head after this evidence-only follow-up.
 
 PR #12 was developed first in a Claude session and then in a Codex checkout on
-the same branch. Both checkouts are now detached with no changes, and the merged
+the same branch. The idle Codex checkout is now detached at `923d8ef` with no
+changes, the main checkout `E:\work\send-airplay2` tracks `main`, and the merged
 branch was deleted locally (D45).
 
 - **PR #11 is merged** into `main` as `2b0e57c9d3ee44c5afc66418c23084ffada01d59`.
