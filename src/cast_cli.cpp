@@ -30,6 +30,9 @@ namespace {
 constexpr std::uint32_t max_port = 65535;
 constexpr std::uint32_t max_start_timeout_ms = 120000;
 constexpr std::uint32_t max_media_connections = 16; // MediaServer's documented bound.
+// The receiver retains read-ahead ranges while requesting smaller playback ranges.
+// Use the bounded budget validated with native controls and lifecycle checks (D36).
+constexpr std::uint32_t default_cast_media_connections = 16;
 // The receiver keeps open-ended range requests while it buffers; use the media
 // server's maximum per-request budget, as `serve` does.
 constexpr std::uint32_t media_request_timeout_ms = 600000;
@@ -42,7 +45,7 @@ struct CastArguments {
     std::string file;
     std::string content_type = "video/mp4";
     std::uint32_t start_timeout_ms = 30000;
-    std::uint32_t media_connections = 4;
+    std::uint32_t media_connections = default_cast_media_connections;
     bool event_log = false;      // Diagnostic: print value-free event outlines.
     bool media_log = false;      // Diagnostic: bounded HTTP completion facts.
     bool minimal_remote = false; // Comparison only: remote SETUP/events without MRP.

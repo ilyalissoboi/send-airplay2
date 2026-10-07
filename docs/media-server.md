@@ -144,12 +144,21 @@ telemetry; a URL stopped/idle event is classified receiver_stop without MRP's
 EOF evidence. Require separate human video/audio/Home observations and keep its
 results separate from normal control-enabled casting. It is not a recovery mode.
 
-`cast --media-connections N` selects the existing bounded server limit (1..16,
-default 4) for an explicit admission-capacity comparison. It changes both active
-request slots and source-worker count. Each slot still has one 64-KiB buffer;
-there is no application connection queue and no eviction/retry of active ranges.
-Keep the default and timeout policy unchanged until receiver evidence supports
-an engineering decision. More slots are not a general decoding guarantee.
+`cast --media-connections N` selects the bounded server limit (1..16). D36 makes
+16 the normal `cast` default after explicit 16-slot full-clip, control and selected
+lifecycle checks on the recorded Apple TV/tvOS/Windows combination. Four slots
+were occupied by long-lived read-ahead responses while needed ranges waited; the
+higher-capacity traces admitted five/six concurrent requests. This is a bounded
+admission choice, not a decoding guarantee or a fix for the intermittent startup
+pause. See the [receiver evidence](receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
+
+The option changes both active request slots and the maximum source-worker count.
+Each slot has one 64-KiB buffer: `cast` now permits up to 1 MiB of body buffers and
+16 source workers, versus 256 KiB/four workers before. There is no application
+connection queue or eviction/retry of active ranges. The 600,000-ms per-request
+cast budget is unchanged. Generic `MediaServerOptions` and `serve` still default
+to four; callers can explicitly request a lower `cast` budget. Independent URL/MRP
+sessions, credentials and URL-before-remote teardown remain unchanged.
 
 ## Development CLI (`serve`)
 

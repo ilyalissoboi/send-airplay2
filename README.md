@@ -149,8 +149,13 @@ confirmed G2 controls and near-end EOF video/audio/home. A separate full-clip ru
 froze video after buffering near 18 s while audio continued normally; its EOF
 cleanup still passed. D35 diagnostics support media admission capacity as a
 buffering cause: an explicit `--media-connections 16` comparison retained MRP and
-passed full video/audio/Home with no recorded loading transition. The default
-remains four; the original freeze and intermittent startup pause remain unresolved.
+passed full video/audio/Home with no recorded loading transition. D36 then passed
+user-observed controls and ten fresh-process stop/teardown cycles at that budget;
+a full-clip repeat reached automatic EOF with no recorded loading transition.
+`cast` now defaults to 16 media connections; `--media-connections N` accepts 1..16.
+The generic server and `serve` still default to four. The original freeze and
+intermittent startup pause remain unresolved: another 16-slot run paused at zero
+without transport commands or remote input. See the [capacity validation record](docs/receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
 `--minimal-remote` is a separate diagnostic comparison without MRP controls.
 Receiver-remote stop and sleep
 triggered cleanup; normal stop classification and actual network-loss recovery

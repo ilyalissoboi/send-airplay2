@@ -26,6 +26,10 @@ The stop/buffering diagnostic code/test head
 `27356a8279c25da30821af5c708e5d4bbed7baf4` passed all ten
 [checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37556596080).
 The full-clip observer follow-up below changes presentation evidence, not that runtime.
+D35 code/evidence head `6ef958de3e8ff7a9968f9e247a3ec1739adf2441` passed all ten
+[checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37559957331).
+D36 below changes the normal cast admission budget; inspect its actual PR head
+and checks rather than reusing a prior CI result.
 
 The user confirmed the Claude session is stopped; development continues in the
 Codex checkout on the same branch. Its former checkout is detached, with no changes.
@@ -91,11 +95,21 @@ Codex checkout on the same branch. Its former checkout is detached, with no chan
   admission and playback resumption. MRP with 16 slots admitted up to six active
   requests and passed full video/audio/Home with no recorded loading transition.
   Admission starvation is a supported buffering hypothesis; the original
-  persistent freeze and startup pause are unresolved. The default remains four;
-  comparison flags are explicit. See the [four-run artifact](validation/native-http-buffering-windows-static-2026-10-07.json).
-- **Next:** repeat the explicit `--media-connections 16` comparison with controls
-  and lifecycle coverage, then choose a bounded normal-cast admission policy.
-  Investigate the intermittent startup pause and require moving-video proof for
+  persistent freeze and startup pause are unresolved. D35 retained the four-slot
+  default pending the D36 checks below. See the [four-run artifact](validation/native-http-buffering-windows-static-2026-10-07.json).
+- **Bounded cast policy (D36):** explicit 16-slot controls passed by user observation
+  (pause/resume, forward/backward seek, resumed video/audio, Stop/Home). Ten new
+  processes alternated MRP Stop and Enter; all were owned/playing and exited 0
+  with joined cleanup, no session failure or failed file reads. A full-clip repeat
+  reached natural media_end/exit 0 with stdin held open, four heartbeats, no recorded
+  loading transition and up to five active media requests. Its final visual
+  observation is pending. A separate first attempt at 16 slots paused at zero
+  before transport commands; user confirmed first frame and untouched remote.
+  Cleanup passed, but this startup failure remains explicit. Normal `cast` now
+  defaults to 16 bounded slots (override 1..16); generic server/`serve` remain four.
+  See the [new artifact](validation/native-capacity-controls-lifecycle-windows-static-2026-10-07.json).
+- **Next:** investigate the intermittent startup pause, now also reproduced with
+  16 slots and only two active requests, and require moving-video proof for
   persistent-freeze resolution. Establish explicit receiver-stop intent, then
   test actual network interruption/recovery when available. The user cannot
   perform network disconnect/reconnect in this session. Preserve credentials,
@@ -409,11 +423,35 @@ saw its first frame. Preserve this separate startup failure. The explicit minima
 comparison subsequently played the full clip with normal video/audio/Home by
 user report. A same-executable default-mode repeat buffered but resumed normal
 video. HTTP admission/resume timing suggests comparing the bounded slot limit;
-`--media-connections 1..16` exposes that explicit test while the default remains 4.
+`--media-connections 1..16` exposed that explicit test while D35 retained default 4.
 MRP/16 slots then passed full video/audio/Home with no recorded loading transition
-and up to six active requests. The default remains four until a normal-cast budget
-is chosen after additional control/lifecycle validation. The persistent freeze
-itself has not been reproduced by these new runs.
+and up to six active requests. At the D35 gate the default remained four pending
+the additional control/lifecycle validation recorded under D36 below. The
+persistent freeze itself has not been reproduced by these new runs.
+
+**D36 (engineering decision, 2026-10-07):** choose a fixed, bounded 16-slot
+normal `cast` admission budget after the explicit higher-capacity control and
+selected lifecycle checks. Retain `--media-connections 1..16`; generic
+`MediaServerOptions` and `serve` keep their four-slot default. The prior D35
+full-clip video/audio/Home pass and D36 user-confirmed controls support this
+choice. Ten fresh processes and another natural EOF passed cleanup at 16;
+remote Stop and sleep/wake remain the earlier four-slot evidence, not new 16-slot
+claims. The new artifact identifies the explicit-override pre-policy executable
+and source blobs; rebuilt default-policy unit/CI results are separate.
+
+This permits at most 16 source workers and 1 MiB of 64-KiB body buffers rather
+than four workers/256 KiB, while preserving the 10-minute request deadline,
+range policy, independent authenticated sessions, credentials and teardown order.
+The new control trace used six active slots and the EOF trace five. No new queue,
+eviction, automatic Play/seek, retry, reconnect or dependency is introduced.
+Capacity does not fix every presentation failure: the first 16-slot attempt
+paused at zero about 0.1 s after the CLI playing line, with two active requests
+and no transport command. The user confirmed first frame/remote untouched.
+Preserve that failure and the original frozen-video run; investigate startup
+ordering/state next instead of interpreting successful telemetry as moving video.
+Static/shared Release passed 23/23 CTest targets each (13.48/13.44 s);
+offline runner contracts passed 10/10, and touched C++ format/diff checks passed.
+See [receiver validation](receiver-validation.md#bounded-cast-admission-policy-and-controls-lifecycle-checks-2026-10-07).
 
 The C API is pre-1.0 and explicitly experimental. "Stable C ABI" is a target,
 not a promise about the current header. Define versioning, ownership, threading,
@@ -1482,9 +1520,12 @@ the recorded source snapshot is still current.
    **video froze after buffering near 18 s while audio continued to clip end**
    (user-confirmed); the same source file plays normally on the PC. D35 diagnostics and
    controlled comparisons are implemented: minimal/four and MRP/16 passed full
-   video/audio/Home; MRP/four buffered but recovered. Repeat the higher-capacity
-   control/lifecycle case before choosing a normal cast budget. The original
-   persistent freeze and spontaneous startup pause remain unresolved. Finish actual
+   video/audio/Home; MRP/four buffered but recovered. D36 passed user-observed
+   controls and selected lifecycle checks at 16 slots and selected 16 as normal
+   `cast` default (generic server/`serve` remain four). Another 16-slot attempt
+   paused at zero with only two active requests before transport commands;
+   investigate startup ordering/state next. The original persistent freeze and
+   spontaneous startup pause remain unresolved. Finish actual
    network interruption/recovery when available. Investigate the
    buffering pause and renewed loading seen in the mixed native/pyatv run; one
    preliminary native EOF probe paused at startup and needed explicit play.

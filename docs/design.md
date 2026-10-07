@@ -147,9 +147,12 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    and cleanup success do not prove moving video. D35 diagnostics now correlate
    stalled read-ahead requests occupying four slots with buffering. Minimal/four
    and MRP/16 comparisons passed full video/audio/Home; a default MRP/four repeat
-   buffered but recovered. Repeat the explicit higher-capacity control/lifecycle
-   case before choosing the normal cast budget (currently four). Persistent freeze,
-   spontaneous startup pause and longer reliability remain open.
+   buffered but recovered. D36 passed user-observed controls, ten fresh-process
+   stop/teardown cycles and a natural-EOF repeat at 16 slots; normal `cast` now
+   defaults to 16 (override 1..16), while generic server/`serve` defaults stay four.
+   Another 16-slot run paused at zero without transport commands or remote input;
+   investigate startup ordering/state before further reliability claims. Persistent
+   freeze, spontaneous startup pause and longer reliability remain open.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
 5. Expose the versioned session API and bindings; prove packaged Windows C#

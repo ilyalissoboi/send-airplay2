@@ -298,9 +298,12 @@ administered one per session.
    video froze while audio continued normally through EOF (user-confirmed).
    D35 HTTP/buffering diagnostics and controlled comparisons are implemented:
    minimal/four and MRP/16 passed full video/audio/Home; default MRP/four buffered
-   but recovered. Repeat the higher-capacity control/lifecycle case before choosing
-   a normal cast budget. Persistent freeze and spontaneous startup pause remain
-   unresolved; playing telemetry and EOF cleanup do not prove moving video.
+   but recovered. D36 passed user-observed controls, ten fresh-process Stop/Enter
+   cycles and natural EOF at 16 slots. Normal `cast` now defaults to 16 bounded
+   slots (override 1..16); generic server/`serve` defaults remain four. A 16-slot
+   attempt also paused at zero without transport commands or remote input, so
+   startup ordering/state is the next investigation. Persistent freeze and startup
+   pause remain unresolved; playing telemetry and EOF cleanup do not prove moving video.
    Normal stop classification, actual network loss/recovery and longer playback
    remain **Gate G3**; see the dated validation record.
 

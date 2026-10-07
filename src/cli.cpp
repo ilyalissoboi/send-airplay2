@@ -228,7 +228,8 @@ void write_usage() {
                  "[--listen-port 0..65535] [--timeout-ms 1..600000] [--max-connections 1..16] "
                  "[--content-type video/mp4]\n"
                  "       airplay2-cli cast --address IP --profile NAME --file PATH [--port 7000] "
-                 "[--content-type video/mp4] [--start-timeout-ms 1..120000]\n"
+                 "[--content-type video/mp4] [--start-timeout-ms 1..120000] "
+                 "[--media-connections 1..16] [--event-log] [--media-log] [--minimal-remote]\n"
                  "Auth storage supports Windows desktop; pair prompts for a hidden PIN. serve "
                  "hosts one file for a receiver to fetch. cast plays one file on a paired "
                  "receiver; type status, pause, play, seek SECONDS or stop. Enter tears down.\n";

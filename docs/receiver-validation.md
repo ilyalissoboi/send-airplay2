@@ -793,7 +793,8 @@ media_end, exit 0 and cleanup passed. This supports admission-capacity starvatio
 as a cause of the buffering pauses: long-lived read-ahead transfers consume the
 four-slot budget while new requests wait for acceptance. Backlog arrival times
 are not measured, so the timing remains inference, not a packet-level proof.
-The default remains four; `--media-connections 16` is an explicit comparison.
+At this D35 gate the default remained four; `--media-connections 16` was an
+explicit comparison. D36 below records the subsequent policy decision.
 
 | Run | HTTP requests | Complete / I/O / cancelled | Local body bytes written | Presentation / end |
 |---|---:|---|---:|---|
@@ -805,11 +806,63 @@ The default remains four; `--media-connections 16` is an explicit comparison.
 No request hit its server deadline and no source read failed. Successful playback
 also had I/O errors on abandoned read-ahead requests; those alone do not establish
 failure. The original frozen-video/audio-continuing run remains a separate FAIL,
-and the spontaneous startup pause remains unresolved. Next repeat the capacity
-comparison with controls/lifecycle checks before choosing the normal cast budget;
+and the spontaneous startup pause remains unresolved. The next action at this
+D35 gate was the controls/lifecycle capacity comparison recorded under D36 below;
 do not reduce MRP functionality or add automatic Play/seek to conceal failures.
 Static/shared Release passed 23/23 CTest targets (13.74/13.39 s), offline runner
 contracts 10/10, touched C++ clang-format and diff checks passed. CI is separate
 and must be inspected at PR #12's actual head. The four exact runtime/source and
 observer records are in the [sanitized artifact](validation/native-http-buffering-windows-static-2026-10-07.json).
 Each staged allowed executable was restored; no firewall or receiver settings changed.
+
+
+### Bounded cast admission policy and controls/lifecycle checks, 2026-10-07
+
+D36 repeats the explicit `--media-connections 16` configuration with MRP enabled
+on the same receiver/firmware/host and 53,953,926-byte MP4. The native static CLI
+SHA-256 was `0d77c4719c05a8d90ad36e1609c0be5ad6da3fac82276ecd8132bfd36e009641`.
+The [sanitized artifact](validation/native-capacity-controls-lifecycle-windows-static-2026-10-07.json)
+fingerprints its pre-policy source blobs and records scalar events, commands and
+HTTP completion facts. These checks use an explicit override before changing
+the default; rebuilt default-policy CTest/CI results are separate.
+
+| Case | Automated result | Human observation |
+|---|---|---|
+| First 16-slot attempt | Playing line then paused at zero, before any transport command; status owned/paused; Enter cleanup, exit 0 | FAIL: first frame only; remote untouched |
+| Fresh 16-slot controls | Six accepted commands; pause, Play, seek 65, seek 15, Play, Stop; owned positions 25.2, 26.0 paused, 34.1, 72.7, 22.7, 31.7; sender_stop/exit 0, joined cleanup | PASS: all requested operations performed as expected, including video/audio and Home after Stop |
+| Ten fresh short processes | Five MRP Stop/five Enter; each owned/playing around 4.2-4.3 s, sender_stop/exit 0, cleaned=yes, failed=no, no failed file reads | Individual visual results not asserted for these ten cycles |
+| Full 131.6-second repeat | No transport command; stdin open; natural media_end/exit 0, cleaned=yes, failed=no, four heartbeats, full-file source span, no loading transition | Final video/audio/Home observation pending |
+
+The startup failure used only two active media requests; it appeared about 0.1 s
+after the playing line, and receiver scalar rate was zero. The test did not
+send Play to conceal it. Higher admission capacity does not eliminate this
+intermittent failure. The original 18-second buffering/frozen-video failure also
+remains in its earlier record. Successful selected runs do not establish longer
+reliability or decoder progress from status alone.
+
+The successful control run recorded 26 media requests (13 complete, 11 I/O ends,
+two cancelled), with up to six active slots and 147,806,246 locally written body
+bytes. The full-clip repeat recorded 38 (18 complete, 20 I/O ends), up to five
+active slots and 125,148,588 locally written bytes. No media deadline or source
+read failed. Abandoned read-ahead I/O ends also occur in successful runs. Socket
+completion remains distinct from receiver receipt/decoding; request arrival in
+the backlog is not measured.
+
+Normal `cast` now defaults to 16 bounded media slots; an explicit 1..16 override
+remains available. Generic `MediaServerOptions` and `serve` retain their four-slot
+default. This allows at most 16 source workers and 1 MiB of body buffers, with
+the existing 600,000-ms request budget and range/cleanup behavior. The choice
+uses the earlier D35 full video/audio/Home pass, confirmed D36 controls and
+selected lifecycle coverage; it is not a claim that capacity fixes the original
+persistent freeze or startup pause. No automatic Play/seek, retry or new dependency.
+
+The allowed executable was restored after every run; no receiver/firewall setting
+changed. Receiver remote Stop and sleep/wake are the earlier four-slot evidence,
+not repeated 16-slot observations. Normal receiver-stop intent remains open;
+actual network interruption remains NOT RUN because the user cannot perform it
+this session. Investigate startup ordering/state and sustained moving-video
+reliability next. Local tests and actual PR-head CI remain separate from hardware.
+
+Windows static/shared Release passed 23/23 CTest targets each (13.48/13.44 s),
+offline runner contracts 10/10, touched C++ clang-format dry-run/Werror and
+git diff --check passed. Inspect CI at the actual PR head.
