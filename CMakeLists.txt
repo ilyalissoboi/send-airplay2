@@ -106,6 +106,22 @@ if(BUILD_TESTING)
   set_target_properties(c_credentials_smoke PROPERTIES LINKER_LANGUAGE CXX)
   add_test(NAME c_credentials_smoke COMMAND c_credentials_smoke)
   set_tests_properties(c_credentials_smoke PROPERTIES TIMEOUT 30)
+  # The C# binding is tested against the shared library when a .NET SDK exists.
+  # Its build output goes to the build tree; restore needs NuGet access once.
+  option(SAP2_DOTNET_TESTS "Run the C# binding tests on shared builds when dotnet is found" ON)
+  if(BUILD_SHARED_LIBS AND SAP2_DOTNET_TESTS)
+    find_program(SAP2_DOTNET dotnet)
+    if(SAP2_DOTNET)
+      add_test(NAME csharp_binding_tests COMMAND ${SAP2_DOTNET} run
+        --project ${CMAKE_CURRENT_SOURCE_DIR}/bindings/csharp/SendAirPlay2.Tests/SendAirPlay2.Tests.csproj
+        -c Release --artifacts-path ${CMAKE_CURRENT_BINARY_DIR}/dotnet
+        -- $<TARGET_FILE:send_airplay2>)
+      set_tests_properties(csharp_binding_tests PROPERTIES TIMEOUT 600
+        ENVIRONMENT "DOTNET_CLI_TELEMETRY_OPTOUT=1;DOTNET_NOLOGO=1;DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1")
+    else()
+      message(STATUS "dotnet not found: C# binding tests are skipped")
+    endif()
+  endif()
   # Host stores and pairing are compiled directly so tests can script sessions.
   add_executable(host_credential_tests tests/host_credential_tests.cpp src/host_credentials.cpp src/auth_workflow.cpp src/cast_controller.cpp ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
   target_include_directories(host_credential_tests PRIVATE src)

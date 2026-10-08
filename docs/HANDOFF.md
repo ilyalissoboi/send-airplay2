@@ -7,15 +7,19 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: host credential stores and pairing in the C interface
+## 0. Resume here: C# binding (D49 step 2a)
 
-**Active slice: D49 step 1 (D50).** The user merged PR #15 (the D49 credential
-design) as `4c03c0a` and asked to proceed. Branch `claude/host-credential-store`
-adds host-provided credential stores and pairing to the C interface (API
-version 2); see [public-api.md](public-api.md#credential-stores-and-pairing-api-version-2-d50)
-and the D50 record in section 4. With the user at the TV, `sap2_pair()` paired
-the Apple TV into the built-in store and a cast with the new profile passed
-(D51).
+**Active slice: the C# binding (D52).** The user merged PR #16 (host credential
+stores and pairing, D50-D51) as `0b65912` and asked to proceed with the C#
+binding as its own PR. Branch `claude/csharp-binding` adds `bindings/csharp`
+(a `netstandard2.0` library and a `net8.0` test runner run by CTest on shared
+builds); see [csharp-binding.md](csharp-binding.md) and the D52 record in
+section 4. Offline-tested only. The packaged UWP test app (step 2b) follows as a
+separate PR.
+
+D49 step 1 (D50, API version 2: host credential stores and pairing) is merged;
+`sap2_pair()` paired the Apple TV into the built-in store and a cast with the new
+profile passed (D51).
 
 D49 (common credential design) is recorded in
 [credential-interface.md](credential-interface.md).
@@ -911,6 +915,22 @@ cleanly; the user confirmed the PIN prompt and normal video/audio/Home. One new
 pairing entry now exists on the Apple TV. Not run on hardware: a host-store
 pairing, a wrong or cancelled PIN, profile removal. Record:
 [receiver-validation.md](receiver-validation.md#pairing-through-the-public-interface-d51-2026-10-08).
+
+**D52 (C# binding, 2026-10-08):** the user merged PR #16 and approved splitting
+D49 step 2 into PR A (binding, no TV) and PR B (packaged UWP test app). The
+binding (`bindings/csharp/SendAirPlay2`, `netstandard2.0`, no package
+dependencies) wraps casts in a `SafeHandle` that owns the callback delegates
+until `sap2_cast_destroy` returns, releases media sources exactly once (also on a
+failed create), contains every callback exception, clears its temporary record
+and PIN arrays, takes the PIN as a `char[]`, and refuses a library older than API
+version 2. Engineering choices: abstract `MediaSource` with a managed read
+buffer per thread; `ICredentialStore` over byte arrays; `PinReader` delegate. A
+`net8.0` runner (`csharp_binding_tests`, CTest on shared builds when dotnet is
+found) checks layout through the native initializers, ownership, delegate
+lifetime under forced collection and finalization, store results and pairing
+refusals; removing the keep-alive fails it. Windows static 29/29 and shared
+30/30. No receiver use through C# yet. Build-time .NET reference packages are
+recorded in dependencies.md.
 
 ## 5. Implemented code and verification
 

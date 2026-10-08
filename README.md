@@ -27,7 +27,9 @@ source to a paired profile; see [its design record](docs/public-api.md). Since A
 version 2 it also accepts a host-provided credential store and can pair by PIN
 ([`credentials.h`](include/send_airplay2/credentials.h),
 [`pairing.h`](include/send_airplay2/pairing.h)). One real pairing through it
-passed on the recorded Apple TV (D51).
+passed on the recorded Apple TV (D51). An experimental C# binding over these
+headers is in [`bindings/csharp`](bindings/csharp); see
+[the binding notes](docs/csharp-binding.md).
 See [media serving contracts and validation](docs/media-server.md).
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
