@@ -9,6 +9,13 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here: casting to a sleeping receiver (D56)
 
+**Standalone items (D57-D59).** After PR #21 the user asked to finish the
+standalone items except remote-Stop detection (deferred). D58 (branch
+`claude/macos-keychain`) adds the macOS login-keychain built-in store, which
+passed its native-store tests on CI's macOS runner; the Linux Secret Service
+store (D59) is stacked on it, and UWP x86/ARM64 with a certification kit run
+(D57) has its own PR. See the D58 record in section 4.
+
 **Active slice: wake before play (D56).** The user asked whether a cast can wake
 the receiver and chose the order: reproduce, check pyatv, fix. Branch
 `claude/receiver-wake` records the receiver's MRP power reports in the start
@@ -1009,6 +1016,19 @@ with Asio's select reactor forced (32/32). Not run: WACK (needs elevation),
 x86/ARM64, a device without VCLibs, Public networks with this build, pairing
 through it. Record:
 [receiver-validation.md](receiver-validation.md#uwp-native-build-d55-2026-10-08).
+
+**D58 (macOS Keychain built-in store, 2026-10-08):** part of the standalone
+items. Research (Apple TN3137 and the SecItem reference): the SecItem API
+targets the file-based keychain by default; the data protection keychain needs
+keychain-access-group entitlements from a provisioning profile, and library
+code inherits the host's. Engineering choices: generic password items in the
+login keychain (service `send-airplay2/v1`, account = profile), create-only
+through `SecItemAdd`'s duplicate refusal, every other status unavailable;
+signed hosts that want the data protection keychain pass their own store. The
+native-store tests now run on macOS too and passed on CI's `macos-26-arm64`
+image, static and shared. Not run: a developer Mac, rebuilt-binary prompts,
+Intel Macs. Record:
+[credential-storage.md](credential-storage.md#macos-login-keychain-d58).
 
 **D56 (casting to a sleeping receiver, 2026-10-08):** the user asked whether a
 cast can wake the receiver remotely and chose the suggested order. Reproduced:
