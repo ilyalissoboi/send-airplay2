@@ -105,14 +105,20 @@ double parse_seconds(std::string_view value) {
     return parsed;
 }
 
-/// Syntax only. Option ranges are left to sap2_cast_create(), which is what
-/// this host exercises; its SAP2_ERROR_INVALID_ARGUMENT also exits 2.
+/// Syntax only. Option ranges are left to sap2_cast_create() and
+/// sap2_discover(), which is what this host exercises; their
+/// SAP2_ERROR_INVALID_ARGUMENT also exits 2. Options are tracked by presence,
+/// not value, so an option outside the selected mode is refused even when it
+/// repeats a default.
 HostArguments parse_arguments(int argc, const char* const* argv) {
     HostArguments arguments;
+    bool discover_option_given = false; // --discover-ms or --expect-name.
+    bool other_option_given = false;    // Any cast or pairing option, or --pair.
     for (int index = 1; index < argc; ++index) {
         const std::string_view option = argv[index];
         if (option == "--pair") {
             arguments.pair = true;
+            other_option_given = true;
             continue;
         }
         if (option == "--discover") {
@@ -123,6 +129,9 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
             throw std::invalid_argument("unknown or incomplete option: " + std::string(option));
         }
         const std::string_view value = argv[++index];
+        const bool is_discover_option = option == "--discover-ms" || option == "--expect-name";
+        discover_option_given = discover_option_given || is_discover_option;
+        other_option_given = other_option_given || !is_discover_option;
         if (option == "--address") {
             arguments.address = std::string(value);
         } else if (option == "--port") {
@@ -157,16 +166,13 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
             throw std::invalid_argument("unknown option: " + std::string(option));
         }
     }
-    const bool discover_options =
-        arguments.discover_ms != SAP2_DEFAULT_DISCOVERY_MS || arguments.expect_name;
     if (arguments.discover) {
-        if (arguments.pair || !arguments.address.empty() || !arguments.profile.empty() ||
-            !arguments.file.empty() || arguments.cancel_after_ms || arguments.cycles) {
+        if (other_option_given) {
             throw std::invalid_argument("--discover accepts only --discover-ms and --expect-name");
         }
         return arguments;
     }
-    if (discover_options) {
+    if (discover_option_given) {
         throw std::invalid_argument("--discover-ms and --expect-name require --discover");
     }
     if (arguments.pair) {

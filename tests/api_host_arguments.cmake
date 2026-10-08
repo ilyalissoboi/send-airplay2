@@ -39,7 +39,13 @@ run_host(1 "Pair: (connection|unsupported)" "pair unreachable" --pair --address 
 # Discovery mode: cast options are refused, and out-of-range durations are
 # refused by sap2_discover() itself before any socket is opened.
 run_host(2 "--discover accepts only" "discover with address" --discover --address 127.0.0.1)
+# Options are refused by presence, so defaults and cast-only tuning count too.
+run_host(2 "--discover accepts only" "discover with port" --discover --port 9)
+run_host(2 "--discover accepts only" "discover with hold time" --discover --hold-ms 1)
+run_host(2 "--discover accepts only" "discover with pair" --discover --pair)
 run_host(2 "require --discover" "expect-name without discover" --address 127.0.0.1 --profile p --file "${media}" --expect-name TV)
+run_host(2 "require --discover" "default scan time without discover" --address 127.0.0.1 --profile p --file "${media}" --discover-ms 5000)
+run_host(2 "require --discover" "scan time in pair mode" --pair --address 127.0.0.1 --profile p --discover-ms 5000)
 run_host(2 "Discover: invalid_argument receivers=0" "zero scan time" --discover --discover-ms 0)
 run_host(2 "Discover: invalid_argument receivers=0" "scan time above the maximum" --discover --discover-ms 60001)
 file(REMOVE "${media}")

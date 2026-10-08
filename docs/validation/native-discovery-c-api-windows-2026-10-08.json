@@ -23,6 +23,7 @@
     "tools/uwp-host/MainPage.xaml.cs": "378d7ea9900b318aefef011d9fac656b2a8bd165",
     "tools/uwp-host/Package.appxmanifest": "927ca822ec8136ec1d3378bff71faa3082c03510"
   },
+  "source_note": "After these runs, review feedback made airplay2-api-host refuse options outside the selected mode by presence; only argument refusals changed, not the scan or its output.",
   "binaries_sha256": {
     "airplay2-api-host.exe (static)": "3f84c2264add1d1eb454a276e55e6280475e006a65816a5a4692e267806deebf",
     "airplay2-api-host.exe (shared)": "eadc907757cb805f8c6edc7a59a149f301812c6ffea6f7fddd0e8aa4c2465204",
