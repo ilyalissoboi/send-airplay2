@@ -108,14 +108,16 @@ public:
         if (!runtime || runtime[0] != '/') {
             unavailable();
         }
-        std::string path(runtime);
-        path += "/send-airplay2.";
-        path += space;
-        path += '.';
-        path += profile;
-        path += ".lock";
-        std::replace(path.begin() + static_cast<std::ptrdiff_t>(std::string_view(runtime).size()),
-                     path.end(), '/', '.');
+        // One file name per namespace and profile, such as
+        // "send-airplay2.tests.v1.<profile>.lock": the namespace's '/' becomes
+        // '.', and validated profiles never contain '/'.
+        std::string name = "send-airplay2.";
+        name += space;
+        name += '.';
+        name += profile;
+        name += ".lock";
+        std::replace(name.begin(), name.end(), '/', '.');
+        const std::string path = std::string(runtime) + '/' + name;
         descriptor_ = ::open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
         if (descriptor_ < 0) {
             unavailable();
