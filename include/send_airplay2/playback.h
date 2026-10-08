@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #ifndef SEND_AIRPLAY2_PLAYBACK_H
 #define SEND_AIRPLAY2_PLAYBACK_H
+#include "send_airplay2/credentials.h"
 #include "send_airplay2/export.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -14,14 +15,18 @@ extern "C" {
  *
  * Scope: one URL playback session per handle, served by a library-owned HTTP
  * media server from host read callbacks, with MRP pause/play/seek/stop, status
- * and an end reason. Pairing is not exposed; credentials are loaded by profile
- * name from the library's platform store and never cross this interface.
+ * and an end reason. Credentials are loaded by profile name, from a host-provided
+ * store (credentials.h) when one is given and otherwise from the library's
+ * built-in platform store; built-in records never cross this interface.
+ * Pairing and profile removal are in pairing.h.
  *
  * Conventions:
  * - No C++ exceptions or objects cross this boundary. Every function returns a
  *   SAP2_* result unless documented otherwise.
  * - Extensible structures begin with struct_size. Initialize options with
- *   sap2_cast_options_init() and set status/source struct_size to sizeof.
+ *   sap2_cast_options_init_sized(&options, sizeof options) and set status/source
+ *   struct_size to sizeof. Initializers never write beyond the size the caller
+ *   passes, so a host built against an older header stays within its struct.
  * - Strings are NUL-terminated UTF-8/ASCII, borrowed for the call and copied.
  * - Receiver-provided text, addresses, identifiers, URLs and credentials are
  *   never returned through this interface.
@@ -29,8 +34,11 @@ extern "C" {
  *   docs/receiver-validation.md. A successful result is not a compatibility claim.
  */
 
-/* Incremented for every incompatible change while the interface is experimental. */
-#define SAP2_PLAYBACK_API_VERSION 1u
+/* Incremented whenever the interface changes while it is experimental.
+ * 1: playback. 2: host credential stores, pairing, profile removal, and the
+ *    PROFILE_EXISTS and PIN_TIMEOUT results. Version 1 option structs (shorter
+ *    struct_size) are still accepted. */
+#define SAP2_PLAYBACK_API_VERSION 2u
 
 /* Results. Fixed-width values for foreign-function bindings. */
 #define SAP2_OK 0
@@ -50,7 +58,9 @@ extern "C" {
 #define SAP2_ERROR_COMMAND_FAILED 14   /* The receiver rejected or did not answer a command. */
 #define SAP2_ERROR_ENDED 15            /* The session already ended or is being stopped. */
 #define SAP2_ERROR_OUT_OF_MEMORY 16
-#define SAP2_ERROR_INTERNAL 17 /* Unexpected backend failure; details are not exposed. */
+#define SAP2_ERROR_INTERNAL 17       /* Unexpected backend failure; details are not exposed. */
+#define SAP2_ERROR_PROFILE_EXISTS 18 /* Pairing refused: the profile already has credentials. */
+#define SAP2_ERROR_PIN_TIMEOUT 19    /* read_pin returned after pin_timeout_ms. */
 
 /* Handle phases. ENDED means the session cleaned itself up after an end reason;
  * the media server keeps its listener until sap2_cast_stop() or destroy. */
@@ -164,9 +174,24 @@ typedef struct sap2_cast_options {
     uint32_t start_timeout_ms;     /* 1..SAP2_MAX_START_TIMEOUT_MS. */
     uint32_t media_connections;    /* 1..SAP2_MAX_MEDIA_CONNECTIONS concurrent HTTP requests. */
     double start_position_seconds; /* Finite and >= 0. */
+    /* Version 2. NULL selects the built-in platform store. The table is copied by
+     * sap2_cast_create(); its callbacks and context must stay valid until
+     * sap2_cast_destroy() returns (see credentials.h). */
+    const sap2_credential_store* credential_store;
 } sap2_cast_options;
 
-/** Fill defaults and struct_size. Addresses and profile are left NULL. No-op for NULL. */
+/** Fill defaults for a struct of `struct_size` bytes, the caller's sizeof.
+ * Clears and fills at most min(struct_size, this library's sizeof) bytes and
+ * stores that size in struct_size, so a host can read back which fields the
+ * library knows; fields beyond it are left untouched and ignored. Strings and
+ * the credential store are left NULL. No-op for NULL or a size smaller than the
+ * version 1 struct. */
+SAP2_API void sap2_cast_options_init_sized(sap2_cast_options* options, size_t struct_size);
+
+/** Version 1 initializer, kept for hosts built against version 1. It writes only
+ * the version 1 fields and sets struct_size to their size, so the library then
+ * ignores credential_store; hosts that use a credential store must call
+ * sap2_cast_options_init_sized(). No-op for NULL. */
 SAP2_API void sap2_cast_options_init(sap2_cast_options* options);
 
 /** Snapshot of one handle. Phase and start fields are read together; session
@@ -202,7 +227,8 @@ typedef struct sap2_cast sap2_cast;
 SAP2_API int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_media_source* source,
                                   sap2_cast** cast);
 
-/** Load the profile's credentials, start the media server, authenticate both
+/** Load the profile's credentials (a host store's load runs once, on this
+ * thread, before any network work), start the media server, authenticate both
  * receiver sessions and start playback. Blocks until playback is confirmed (one
  * continuous second of forward playing within start_timeout_ms), failure, or
  * cancellation by sap2_cast_stop() from another thread. There is no automatic

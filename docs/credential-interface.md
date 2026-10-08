@@ -1,6 +1,7 @@
 # Common credential interface (D49)
 
-Status: **decided, not implemented.** Snapshot 2026-10-08 (Asia/Tokyo). This record
+Status: **decided; step 1 implemented in D50 (unit/CI-tested only).** Snapshot
+2026-10-08 (Asia/Tokyo). This record
 revises part of D46 so the library can eventually authenticate on every target
 host (Windows desktop, packaged Windows/UWP, Linux, macOS, Android). It keeps
 the three kinds of statement separate: user decisions, engineering proposals and
@@ -50,10 +51,12 @@ The user approved recording this common credential design:
 7. **No silent plaintext fallback** on any platform: no store means
    `SAP2_ERROR_UNSUPPORTED`. This rule already applies.
 
-## Proposed host-store contract
+## Host-store contract
 
-Engineering proposal for the next slice; the exact C declarations will be
-reviewed with that PR.
+Proposed with D49 and implemented in D50 as
+[`credentials.h`](../include/send_airplay2/credentials.h) and
+[`pairing.h`](../include/send_airplay2/pairing.h); see
+[public-api.md](public-api.md#credential-stores-and-pairing-api-version-2-d50).
 
 - **Callback table** `sap2_credential_store`: `struct_size`, `context`, `load`,
   `save_new`, `erase`, each taking the profile name. Supplied through the options
@@ -130,8 +133,10 @@ implementation; dependencies such as libsecret are recorded in
 
 ## Order of work
 
-1. Host-store callbacks and pairing in the C interface, with a test store, so CI
-   covers them on Windows, Linux and macOS.
+1. **Done (D50, unit/CI-tested):** host-store callbacks and pairing in the C
+   interface, with test stores, so CI covers them on Windows, Linux and macOS.
+   A real pairing through `sap2_pair()` into the built-in store passed on
+   2026-10-08 (D51); pairing into a host store on hardware comes with step 2.
 2. The C# binding and the packaged UWP test app with a C# `PasswordVault` host
    store; measure the unverified items above.
 3. The UWP library build without the Credential Manager adapter.

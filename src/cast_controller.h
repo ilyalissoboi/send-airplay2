@@ -37,7 +37,9 @@ enum class CastResult : std::int32_t {
     command_failed = 14,
     ended = 15,
     out_of_memory = 16,
-    internal = 17
+    internal = 17,
+    profile_exists = 18,
+    pin_timeout = 19
 };
 
 /// Handle lifecycle. `ended` is derived from the session's own end reason while
@@ -142,8 +144,9 @@ private:
     std::mutex teardown_mutex_; // Serializes session/server stop between stop() callers.
 };
 
-/// Map a failure raised while starting a cast. `rejected_status` receives the
-/// HTTP status of a SessionError::rejected failure and is otherwise left at 0.
+/// Map a failure raised while starting a cast, pairing or removing a profile.
+/// `rejected_status` receives the HTTP status of a SessionError::rejected
+/// failure and is otherwise left at 0.
 [[nodiscard]] CastResult cast_start_result(const std::exception_ptr& failure,
                                            unsigned& rejected_status) noexcept;
 /// Map a failure raised by an MRP command on an active session.

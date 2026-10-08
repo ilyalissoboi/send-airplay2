@@ -1,8 +1,8 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12, #13 and #14 are merged; `main`
-contains the receiver-tested public playback interface (D46-D48). The D49 common
-credential design is recorded on `claude/credential-interface-decision`.
+Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#15 are merged; `main` contains the
+receiver-tested public playback interface (D46-D48) and the D49 credential
+design. D49 step 1 (host stores and pairing, D50) is on `claude/host-credential-store`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -10,10 +10,14 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D49):** the common credential interface decision record,
-  [credential-interface.md](credential-interface.md), on branch
-  `claude/credential-interface-decision` with its own PR (find it with
-  `gh pr list --state open`). Documentation only.
+- **Active slice (D50):** host-provided credential stores, `sap2_pair()` and
+  `sap2_forget_profile()` in the C interface (API version 2), on branch
+  `claude/host-credential-store` with its own PR (find it with
+  `gh pr list --state open`). A real pairing through `sap2_pair()` into the
+  built-in store, then a cast with the new profile `living-room-api`, passed
+  on the TV (D51).
+- [PR #15](https://github.com/ilyalissoboi/send-airplay2/pull/15), the D49 design
+  record, was merged by the user as `4c03c0a`.
 - [PR #14](https://github.com/ilyalissoboi/send-airplay2/pull/14), the public
   playback interface (D46-D48), was merged by the user as `9c8869e` after all
   ten checks passed at its head `d84a365`.
@@ -189,8 +193,9 @@ development, not retroactive gate failures.
    it has never run. Cooperative duration-based ownership can misidentify a
    concurrent same-duration takeover and does not guarantee exclusive ownership.
 6. **Public library/host work, next implementation (D49 order).** Follow
-   [credential-interface.md](credential-interface.md): (a) host-store callbacks
-   and pairing in the C interface, with a test store on all CI platforms; (b) the
+   [credential-interface.md](credential-interface.md): (a) **done in D50:**
+   host-store callbacks and pairing in the C interface, with test stores on all
+   CI platforms, and one real pairing into the built-in store (D51); (b) the
    C# binding and a packaged UWP test app with a C# `PasswordVault` host store,
    also proving native loading, discovery, brokered file reads and inbound
    serving, and measuring D49's unverified items; (c) a UWP library build without

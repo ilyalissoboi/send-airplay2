@@ -1,0 +1,178 @@
+{
+  "date": "2026-10-08",
+  "decision": "D51",
+  "scope": "First receiver pairing through the public C interface: sap2_pair() via airplay2-api-host --pair into the built-in Windows store, then a cast with the new profile. Observer answers are recorded separately from protocol results.",
+  "receiver": {
+    "name": "Living Room",
+    "hardware": "Apple TV 4K (AppleTV14,1)",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_scope": "Prior user report, assumed unchanged; not queried during this test."
+  },
+  "host": "Windows 11 x64",
+  "source_head": "b87e1ae8366e569c757d12b6d6ef7548822821a9",
+  "tested_source_blobs": {
+    "include/send_airplay2/credentials.h": "e0bbde9ed063465477d021f712c5a8d6e0b6f67d",
+    "include/send_airplay2/discovery.h": "093c02ff9b9b1f19c1869889cd6df3d9b09ddc8b",
+    "include/send_airplay2/export.h": "65d9e3b1ce02495a484d8c29e25d11f21904ef8a",
+    "include/send_airplay2/http_range.h": "931acac8000afffdfb9764ff2a433a666ace529e",
+    "include/send_airplay2/media_server.h": "9fab99bd54d99873e8188b2501e1101c1ed4e543",
+    "include/send_airplay2/pairing.h": "05f0db2e79d7e9ecdfffdb3b8bba777059da2446",
+    "include/send_airplay2/playback.h": "821f8cd9812fdb90220d15e9932ebe83bfc4c112",
+    "src/auth_cli.cpp": "0267a44443745d673f7b61dc2a1c93be9b84dfc9",
+    "src/auth_cli.h": "8d1b99bc003e2a9520a2de3bba81c74549da89f2",
+    "src/auth_workflow.cpp": "fc2197e71444c5ec6b38f56a22e4f2247a1215be",
+    "src/auth_workflow.h": "c6c612705a66bb6242cb8adf4abd6ae6f5606e8b",
+    "src/binary_plist.cpp": "410811189536ae1bf65ca118e136e3ffe2450c95",
+    "src/binary_plist.h": "a5240c63aa69a251682ff5bcb5f4d280c7d8c9c6",
+    "src/cast_cli.cpp": "8a32427c3c9acc20fd3ab2efe190eb07c41cb776",
+    "src/cast_cli.h": "d0b07aadbf7f9ade883d55a288231f00957f0056",
+    "src/cast_controller.cpp": "377fb8c52ed75e231d82a9f44bb44cf92a7709d3",
+    "src/cast_controller.h": "9d6d384612e3c725263aa919c281324988e469f0",
+    "src/channel_keys.cpp": "adecb919bccdf5e25ac263a1215a997a7ba3c2da",
+    "src/channel_keys.h": "de40d7d3c8025a1286a22b1f042e87f35d3a5ad9",
+    "src/cli.cpp": "76a9f28d5a0a83ac0710ae85f3426a570bea7121",
+    "src/cli_input.cpp": "445be14d41f83aa061924dbcf2270494449ed0d8",
+    "src/cli_input.h": "2976cb72b4e7cac38f29ec432f0cb40cb354806b",
+    "src/control_crypto.cpp": "5bc9b89f05bf599012424022408d7cb70926f361",
+    "src/control_crypto.h": "207d4a0cca5904303f09ec21be500a208cd089ef",
+    "src/control_records.cpp": "16654f5344a8c7114d98e9ee592318ae85a69772",
+    "src/control_records.h": "6a54e5d64f8d23a4b652f5ec92bd1edb42b82432",
+    "src/credential_codec.cpp": "e5807d18914efc0d5f04c87060e6a914ad5d7106",
+    "src/credential_store.cpp": "cdf6808d49ac4fa0e423541bbf5f5c5288136b63",
+    "src/credential_store.h": "598478c2cda6b157a537ea604b0524ac1904d1db",
+    "src/discovery.cpp": "c42d8e3eecb0629ae97ea5877cfd58488b615504",
+    "src/discovery_core.cpp": "ca35d93a08d31d44dbef0fca906691b1ba927885",
+    "src/discovery_core.h": "6f73a607c8038c80ba32d5e9a794f21c15124e66",
+    "src/discovery_transport.cpp": "a836dd94c33bb438f4f535a2bcc38d0f14e578d8",
+    "src/discovery_transport.h": "64479c4ea33e4e71606862a042575000628f2180",
+    "src/event_channel.cpp": "9f4b59ebffd968257793361064c70e8606bef1c5",
+    "src/event_channel.h": "27e41ba61b3047185d5e4e0bdbdda990fc5fbf02",
+    "src/file_media_source.cpp": "5e7402cca8fe624e59e6c4c602286f677dd0d28f",
+    "src/file_media_source.h": "a05ef442a202332a0d500ab9e4b44acfefbf2bfe",
+    "src/host_credentials.cpp": "e0d34aa58b3cd37e0d28a490815dd896214a92d0",
+    "src/host_credentials.h": "7dffd723882d8d9532f21b455181a1882c79e29a",
+    "src/http_range.cpp": "1fc7e2fabc379527e9f7fb97efc1f6ea5af30543",
+    "src/identity_crypto.cpp": "b0b02696e16c56e266bac4fac809ee8b64521520",
+    "src/identity_crypto.h": "0c52c26b6b1ffbae6bd8fa5bbe420d8d4a8e2b58",
+    "src/media_server.cpp": "621626fc6891503c22402a5b283a176114983e0c",
+    "src/mrp_channel.cpp": "30392e2e383938efc35b1d333db4ddf629c5f478",
+    "src/mrp_channel.h": "8637686e1b07ce70ae90d5dc63d61f79b4e82a28",
+    "src/mrp_messages.cpp": "dae191cb28fede0c8a8f67ce5e1deeb802b1d84e",
+    "src/mrp_messages.h": "49f2f041346c97d6d74d353bb7da57a26c61ddd0",
+    "src/mrp_session.cpp": "f75f292fcd880901524ff3154fe402fc2a626a9f",
+    "src/mrp_session.h": "77271d1fd3242b802ba85a16c142db4f4200f45f",
+    "src/native_socket.cpp": "dc5b83638de6f3040fbfa3aaf10e997753b109b4",
+    "src/native_socket.h": "d1eebfc0f7defa70389778a0d68f07a9766cadbe",
+    "src/ntp_timing.cpp": "f294d8ed63a4a05ea49cb37d8401bd50929fa891",
+    "src/ntp_timing.h": "c6acbdc070535895560f133dd49b86575f390e5a",
+    "src/pair_setup.cpp": "ed1ee763503ca64ffab81e4d98f17ce405b6e431",
+    "src/pair_setup.h": "1c1044b0fdce8e42945dbb9aa09b8ca2652e410c",
+    "src/pair_setup_crypto.cpp": "601929d94a09026c8e7c26d822150fe09d77d3c9",
+    "src/pair_setup_crypto.h": "cd8ca1ca064b939d4baa1768da3e33539d4600b8",
+    "src/pair_verify.cpp": "aa90b30dd20274b1936eff5e7f484c29c59136a8",
+    "src/pair_verify.h": "5fd52a51db6b29ca6e940e697ca33fa6b905f1db",
+    "src/pairing_tlv.cpp": "dd3f90f9bcff2711c6f5fb03d32c00785ffe84df",
+    "src/pairing_tlv.h": "4ef114ba678a9d592dbef833d029e0e913c6ea8b",
+    "src/playback_api.cpp": "d0cf3167bda72ab5e4c3d0cbee5f91ac9590e848",
+    "src/protobuf_wire.cpp": "2a3d71c50cd2901baaf7f03eaf71ad049f428c3e",
+    "src/protobuf_wire.h": "9b9c04acfec460893cc17c26581b5000a7707b16",
+    "src/receiver_connection.cpp": "98b0ca621fb530651fefcc5fcd08e45bd9167b97",
+    "src/receiver_connection.h": "cfc541d8f0f393bad7eee8a7859344266f2b5bca",
+    "src/receiver_http.cpp": "995f71500fbaeb91616fbd1560f7f7cd195568a7",
+    "src/receiver_http.h": "f2a0713ba73f5d81b2ed4ef52ed63f51cfcd6395",
+    "src/receiver_stream.cpp": "d2d15c2c8d57499d8d37812d9946896617d68f41",
+    "src/receiver_stream.h": "b3d8758d0d9a2652473046c643ff5a0dfacf4e7c",
+    "src/serve_cli.cpp": "0952c7c26371b78dc4b53c00f11374ec58a4f211",
+    "src/serve_cli.h": "94eb75017201a849317df5112fb57ed01884f493",
+    "src/session_messages.cpp": "c03f3e1c312c456bfef560e88f12bf4f19d7ae6f",
+    "src/session_messages.h": "a7a91fa27ea4ca49857ba99c14d2c0cf228412a3",
+    "src/url_playback_session.cpp": "ed6c8975fb405b614ae681e1ca555788cc3f9ff3",
+    "src/url_playback_session.h": "1478ce24f19b9a4a96c7c2227da94182c1e2d87b",
+    "tools/airplay2_api_host.cpp": "7a5e75b061a8fbfb592e1db94015872c67038727"
+  },
+  "binaries": {
+    "api_host_static_sha256": "eb20a5c68aab9fee2809596fe7cb8c79209c7d4d115901b95246708656e8ecc7",
+    "note": "The same static executable ran both steps. Pairing connects out only and ran from its build path; the cast was staged at the firewall-allowed path and the original restored with SHA-256 equality."
+  },
+  "profile": {
+    "name": "living-room-api",
+    "store": "Windows Credential Manager (built-in store; host store not used on hardware)",
+    "existing_profiles": "living-room-test left untouched"
+  },
+  "pin_handling": "The user typed the PIN in a separate console window with echo off (CONIN$/CONOUT$); it never reached stdout, the driver log, chat or this record.",
+  "cases": {
+    "pair": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: pair-static. Media: none. Profile: living-room-api"
+        },
+        {
+          "time_seconds": 10.0,
+          "line": "Tested binary SHA-256: eb20a5c68aab9fee2809596fe7cb8c79209c7d4d115901b95246708656e8ecc7"
+        },
+        {
+          "time_seconds": 10.2,
+          "line": "Pairing: starting; type the PIN in this console once the TV shows it."
+        },
+        {
+          "time_seconds": 55.2,
+          "line": "Pair: ok api_version=2 linkage=static"
+        },
+        {
+          "time_seconds": 55.2,
+          "line": "Exit code: 0"
+        }
+      ],
+      "observer": "The TV showed a PIN; the console window accepted it hidden and closed after pairing: yes.",
+      "note": "sap2_pair() returned ok: authenticated enrollment, save_new into the built-in store, reload, and verification on a fresh connection. The roughly 45 s between start and result is mostly the user reading and typing the PIN."
+    },
+    "cast_with_new_profile": {
+      "output": [
+        {
+          "time_seconds": 10.0,
+          "line": "Receiver: 'Living Room' selected (address withheld). Variant: host-static. Media: gas.mp4. Profile: living-room-api"
+        },
+        {
+          "time_seconds": 10.0,
+          "line": "Tested binary SHA-256: eb20a5c68aab9fee2809596fe7cb8c79209c7d4d115901b95246708656e8ecc7"
+        },
+        {
+          "time_seconds": 10.1,
+          "line": "Starting playback."
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.1 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "time_seconds": 11.9,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "time_seconds": 31.9,
+          "line": ">>> sending Enter"
+        },
+        {
+          "time_seconds": 32.3,
+          "line": "Summary: api_version=2 linkage=static start=ok phase=stopped state=playing end=sender_stop owned=yes position=21.5 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=1150 bytes=75240096 failed_reads=0 releases=1"
+        },
+        {
+          "time_seconds": 32.3,
+          "line": "Exit code: 0"
+        },
+        {
+          "time_seconds": 32.4,
+          "line": "Restored the original files at the allowed path (hashes verified)."
+        }
+      ],
+      "observer": "Normal video and audio for about 20 s, then Home: yes."
+    }
+  },
+  "receiver_side_effect": "One new pairing entry on the Apple TV for the living-room-api controller identity. The library cannot revoke it remotely; removing it is done in the Apple TV's settings.",
+  "not_run": [
+    "Pairing into a host-provided store on hardware (unit-tested only).",
+    "Wrong PIN and cancelled PIN entry on hardware (unit-tested only).",
+    "sap2_forget_profile() on the new profile (left in place for later use)."
+  ]
+}

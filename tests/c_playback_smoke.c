@@ -5,6 +5,7 @@
  * is read; nothing is written to any credential store and no receiver is used. */
 #include "send_airplay2/playback.h"
 #include <math.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -67,25 +68,67 @@ static int create_result(const sap2_cast_options* options) {
 
 static void version_and_names(void) {
     check(sap2_playback_api_version() == SAP2_PLAYBACK_API_VERSION, "runtime version");
+    check(SAP2_PLAYBACK_API_VERSION == 2, "credential stores and pairing are version 2");
     check(strcmp(sap2_result_name(SAP2_OK), "ok") == 0, "ok name");
     check(strcmp(sap2_result_name(SAP2_ERROR_CONNECTION), "connection") == 0, "connection name");
     check(strcmp(sap2_result_name(-1), "unknown") == 0, "unknown name");
     check(sap2_read_should_stop(NULL) != 0, "NULL read control stops");
 }
 
+/* Nonzero when every byte of `bytes` still holds the fill pattern. */
+static int untouched(const unsigned char* bytes, size_t count) {
+    size_t index;
+    for (index = 0; index < count; ++index) {
+        if (bytes[index] != 0xA5) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void check_defaults(const sap2_cast_options* options, const char* initializer) {
+    char scenario[96];
+    snprintf(scenario, sizeof(scenario), "%s: defaults", initializer);
+    check(options->receiver_port == 7000 && options->start_timeout_ms == 30000 &&
+              options->media_connections == 16 && options->start_position_seconds == 0 &&
+              options->receiver_address == NULL && options->profile == NULL &&
+              options->content_type == NULL,
+          scenario);
+}
+
 static void option_defaults(void) {
+    /* Version 1 fields end where credential_store begins (API version 2). */
+    const size_t v1_size = offsetof(sap2_cast_options, credential_store);
     sap2_cast_options options;
+
+    memset(&options, 0xA5, sizeof(options));
+    sap2_cast_options_init_sized(&options, sizeof(options));
+    check(options.struct_size == sizeof(options), "sized init: full struct size");
+    check(options.credential_store == NULL, "sized init: no credential store");
+    check_defaults(&options, "sized init");
+
+    /* A host built against version 1 owns only v1_size bytes: the legacy
+     * initializer must not write past them. */
     memset(&options, 0xA5, sizeof(options));
     sap2_cast_options_init(&options);
-    check(options.struct_size == sizeof(options), "options struct size");
-    check(options.receiver_port == 7000, "default receiver port");
-    check(options.start_timeout_ms == 30000, "default start timeout");
-    check(options.media_connections == 16, "default media connections");
-    check(options.receiver_address == NULL && options.profile == NULL &&
-              options.content_type == NULL,
-          "strings default to NULL");
-    check(options.start_position_seconds == 0, "default start position");
+    check(options.struct_size == v1_size, "legacy init: version 1 struct size");
+    check(untouched((const unsigned char*)&options + v1_size, sizeof(options) - v1_size),
+          "legacy init writes nothing past the version 1 fields");
+    check_defaults(&options, "legacy init");
+
+    /* The same holds when a version 1 host's size is passed explicitly. */
+    memset(&options, 0xA5, sizeof(options));
+    sap2_cast_options_init_sized(&options, v1_size);
+    check(options.struct_size == v1_size &&
+              untouched((const unsigned char*)&options + v1_size, sizeof(options) - v1_size),
+          "sized init with the version 1 size stays within it");
+
+    memset(&options, 0xA5, sizeof(options));
+    sap2_cast_options_init_sized(&options, v1_size - 1);
+    check(untouched((const unsigned char*)&options, sizeof(options)),
+          "sized init ignores a struct smaller than version 1");
     sap2_cast_options_init(NULL);
+    sap2_cast_options_init_sized(NULL, sizeof(options));
 }
 
 static void argument_validation(void) {
@@ -107,8 +150,12 @@ static void argument_validation(void) {
           "truncated source struct");
     check(probe.releases == 0, "rejected sources are not released");
 
-    options.struct_size = sizeof(options) - 1;
-    check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "truncated options struct");
+    /* Version 1 options end before credential_store and stay accepted (API 2). */
+    options.struct_size = (uint32_t)offsetof(sap2_cast_options, credential_store) - 1;
+    check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT,
+          "options struct shorter than version 1");
+    options.struct_size = (uint32_t)offsetof(sap2_cast_options, credential_store);
+    check(create_result(&options) == SAP2_OK, "version 1 options struct is still accepted");
     options = valid_options();
     options.receiver_address = NULL;
     check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "NULL address");
