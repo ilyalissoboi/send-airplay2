@@ -89,6 +89,7 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Stop from sender/receiver | Correct state and resource cleanup | Reference sender `stop`: exit 0 and the TV returned to the home screen (user-observed), but `device_state` then reported `Paused` and the sender's URL session stayed open; see observation. Native sender shutdown: user observed home-screen return after minimum SETUP/event run; native MRP Stop accepted followed by teardown and user-confirmed home return; receiver-remote stop returned home and automatically cleaned up, but classified connection_lost/exit 1; protocol idle unresolved |
 | Repeated casting | Ten start/stop cycles without stale sessions | Native PASS: ten short independent casts, alternating five MRP Stop and five direct teardown; owned playing status, exit 0, no session/failed-read errors in each. Long sessions and visible home-screen observation remain separate |
 | Receiver sleep/wake | Terminal cleanup; fresh cast works after waking | PASS: user-confirmed sleep, automatic connection_lost/exit 1 cleanup, fresh cast after wake without pairing, normal video/audio and EOF return home |
+| Cast to a sleeping receiver | The cast wakes the receiver and plays | PASS for one run (D56): with MRP `WAKE_DEVICE` before play, normal video/audio and Home after stop. Without it the receiver showed one frame and returned Home (start timeout). See [D56](#casting-to-a-sleeping-receiver-d56-2026-10-08) |
 | Network interruption | Bounded failure; next cast can recover | PASS for the selected D42 Ethernet interruption: URL feedback timeout triggered automatic joined cleanup; a fresh explicit cast after reconnection/Home reused credentials and passed video/audio/near-end EOF/Home. See [D42](#ethernet-interruption-and-fresh-recovery-d42-2026-10-07). Broader network/reliability cases remain pending; automatic in-session reconnect/resume is not implemented. |
 | Large file | Seek beyond 4 GiB without integer truncation | PASS for one selected file (D48): 6.32 GB remuxed film (64-bit `co64` offsets); after `seek 4800`, 37 range requests at offsets of 4,490,723,328 bytes and above were all answered 206; user saw the picture jump to about 1:20:00 with sound, then back to about 0:10:00. Other files, receivers and hosts untested |
 | Non-AAC audio | E-AC-3 audio plays | PASS for one selected file (D48): E-AC-3 5.1 (Atmos-flagged) in MP4 played normally by user report; no Atmos indication was shown, and whether the TV/AV chain can show one is unknown |
@@ -1232,3 +1233,31 @@ Public networks or `internetClientServer` for discovery, a cast to the discovere
 address inside the app (its PasswordVault was empty after the fresh
 registration), departure and interface changes, several receivers, IPv6-only
 networks and other platforms.
+
+## Casting to a sleeping receiver (D56, 2026-10-08)
+
+The user asked whether a cast can wake the receiver remotely and then chose the
+order: reproduce, check pyatv's wake, then fix. All runs used `airplay2-cli
+cast --event-log` (Windows 11 x64, MSVC Release static, on top of `ac7717f`)
+with the existing built-in-store profile, `gas.mp4` and this worktree's existing
+firewall Allow rule; the Living Room Apple TV 4K (AppleTV14,1), tvOS 26.6
+(23L773) assumed unchanged and not queried. The user put the receiver to sleep
+from the remote and waited about two minutes before each asleep run. Logs,
+hashes and tested blobs are in the [artifact](validation/native-receiver-wake-windows-2026-10-08.json).
+
+| Run | Build | Native result | Observer |
+| --- | --- | --- | --- |
+| 1, asleep | `main` | Session set up; `playing` at 885 ms, `paused` at 1272 ms; start timeout at 30.5 s, cleaned, exit 1 | First frame, then Home |
+| 2, awake | power diagnostic | Handshake `logical_devices=1` at 138 ms, update 1 at 300 ms; `ready` at 1.8 s; local stop, exit 0 | Not observed |
+| 3, asleep | power diagnostic | Handshake 0 at 169 ms, 0 at 312 ms; `insert_item` at 369 ms; `playing` at 684 ms; 1 at 712 ms; `stopped` at 1625 ms; 0 at 1787 ms; 1 at 2619 ms; start timeout, exit 1 | First frame, then Home; afterwards awake on Home |
+| 4, awake | wake before play | No `waking` phase; `insert_item` at 354 ms; `ready` at 1.7 s; local stop, exit 0 | Not observed |
+| 5, asleep | wake before play | Handshake 0 at 142 ms; `waking` at 198 ms; 1 at 757 ms, 0 at 1192 ms, 1 at 2639 ms; `insert_item` at 5338 ms; `playing` at 5693 ms; `ready` at 6.7 s; played 45 s; local stop, cleaned, exit 0 | Video played normally; Home after the stop |
+
+**PASS for run 5 on this receiver and host.** The receiver stays reachable while
+asleep and accepts the whole session; the failure was starting playback while
+tvOS was still waking. Not run: repeated sleep cycles, the C interface or UWP
+host on a sleeping receiver (same session code), deeper sleep or an unreachable
+receiver, a TV without HDMI-CEC power control, other receivers and firmware.
+The intermittent startup pause recorded since D38 also showed a first frame and
+a pause at zero; whether those runs began from sleep was not recorded, so D56
+does not claim to explain them.

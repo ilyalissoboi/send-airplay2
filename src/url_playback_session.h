@@ -74,6 +74,14 @@ struct UrlPlaybackOptions {
     bool record_event_structure = false;
     /// Keep false only for the recorded minimum-session experiment/tests.
     bool enable_mrp = true;
+    /// Wake a sleeping receiver before playback (D56). When the MRP handshake
+    /// reports logicalDeviceCount 0, send WAKE_DEVICE and wait until it reports
+    /// awake and unchanged for wake_settle, at most wake_timeout; then start as
+    /// usual. Starting while tvOS is still waking lets its return to Home stop
+    /// the item. The wait is best effort and separate from start_timeout.
+    bool wake_receiver = true;
+    std::chrono::milliseconds wake_settle{2500};
+    std::chrono::milliseconds wake_timeout{10000};
 };
 
 /// First terminal reason; retained after cleanup and subsequent stop() calls.
@@ -117,6 +125,7 @@ enum class SessionFailureReason {
 /// Local startup phases and allowlisted receiver states; no peer text or IDs.
 enum class SessionStartPhase {
     connecting,
+    waking, // WAKE_DEVICE sent; waiting for the receiver to report awake.
     insert_item,
     date_range,
     item_end,
@@ -138,11 +147,21 @@ struct SessionStartTraceEntry {
 /// First 64 startup records, preserved on success/failure. Overflow drops new
 /// records without changing startup behavior; no allocation or secret payloads.
 constexpr std::size_t max_start_trace_entries = 64;
+/// One receiver power report (MRP logicalDeviceCount) seen during startup.
+/// The MRP session keeps the same number of reports (max_power_observations).
+constexpr std::size_t max_start_power_entries = 16;
+struct SessionPowerTraceEntry {
+    std::uint64_t elapsed_ms = 0; // Same origin as SessionStartTraceEntry.
+    std::uint32_t logical_devices = 0;
+};
 struct SessionStartDiagnostics {
     std::array<SessionStartTraceEntry, max_start_trace_entries> entries{};
     std::size_t count = 0;
     bool truncated = false;
     bool cleaned_up = false;
+    /// Reports from the MRP handshake onward, until the trace finished.
+    std::array<SessionPowerTraceEntry, max_start_power_entries> power{};
+    std::size_t power_count = 0;
 };
 
 /// A snapshot of session progress, safe to read from any thread.
@@ -255,6 +274,7 @@ private:
     void append_start_trace_locked(SessionStartState state, unsigned response_status,
                                    std::optional<double> playback_rate = {});
     void finish_start_trace(SessionStartDiagnostics& diagnostics);
+    void wake_receiver_if_asleep(const std::atomic_bool* cancelled);
     void event_loop();
     void feedback_loop();
     void mark_failed(SessionFailureChannel channel, SessionFailureReason reason);

@@ -158,6 +158,31 @@ submitted runtime. Remote Stop returned Home and cleaned automatically, but URL
 socket EOF without a terminal event remains connection_lost/exit 1. Startup
 pausing was not reproduced in six selected casts; it is not proven fixed.
 
+## Receiver power and wake (D56)
+
+The receiver reports its power state in `DEVICE_INFO` (the handshake reply) and
+in later `DEVICE_INFO_UPDATE` messages (type 37, the same `DeviceInfoMessage`
+extension 20): `logicalDeviceCount`, field 22. pyatv reads one or more as on
+and zero as off. `MrpSession` keeps the latest count and up to 16 timed reports,
+and `cast --event-log` prints them as `Receiver power: elapsed_ms=...
+logical_devices=...` after the startup records. An unreadable report is
+dropped and does not fail the session, since these updates were ignored before.
+
+When the handshake reports 0, `UrlPlaybackSession` sends `WAKE_DEVICE_MESSAGE`
+(type 41, no extension, no identifier, no response; as pyatv's MRP `turn_on`)
+before opening the URL session, then waits until the count is at least 1 and
+unchanged for 2.5 s, at most 10 s (`wake_receiver`, `wake_settle`,
+`wake_timeout` in `UrlPlaybackOptions`; startup phase `waking`). The wait is
+best effort: a receiver that never reports awake still gets the play request.
+An awake receiver, or one that sends no count, starts exactly as before.
+
+Why: on the recorded Apple TV a cast to a sleeping receiver reported `playing`,
+then paused or stopped within about 1.6 s while tvOS finished waking and returned
+to Home (the user saw the first frame, then Home). Its count went 0, then 1
+when our playback woke it, then 0 and 1 again within about 2 s. Waking first and
+starting after the count settled played normally
+([D56 record](receiver-validation.md#casting-to-a-sleeping-receiver-d56-2026-10-08)).
+
 ## Remote-Stop diagnostics (D40)
 
 `--event-log` observes the separate remote event channel using fixed type/state

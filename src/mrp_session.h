@@ -10,6 +10,7 @@
 #include <optional>
 #include <stdexcept>
 #include <thread>
+#include <vector>
 namespace send_airplay2::detail {
 enum class MrpError {
     malformed,
@@ -20,6 +21,14 @@ enum class MrpError {
     cancelled,
     not_owned
 };
+/// One receiver power report: logicalDeviceCount from the handshake's
+/// DEVICE_INFO or a later DEVICE_INFO_UPDATE, and when it arrived.
+struct MrpPowerObservation {
+    std::chrono::steady_clock::time_point received{};
+    std::uint32_t logical_devices = 0;
+};
+/// Reports kept per session; later ones are dropped (diagnostics only).
+constexpr std::size_t max_power_observations = 16;
 /// Fixed category text only: no receiver descriptions or identifiers.
 class MrpException : public std::runtime_error {
 public:
@@ -59,6 +68,22 @@ public:
     [[nodiscard]] bool failed() const;
     /// First terminal category, retained after stop(); safe alongside status/commands.
     [[nodiscard]] std::optional<MrpError> failure() const;
+    /// Receiver power reports so far, oldest first (at most max_power_observations).
+    [[nodiscard]] std::vector<MrpPowerObservation> power_observations() const;
+    /// The latest logicalDeviceCount, from every report (not only the kept ones).
+    [[nodiscard]] std::optional<std::uint32_t> logical_devices() const;
+    /// Send WAKE_DEVICE and return once the worker has taken it for sending; no
+    /// response is defined. Cancellation or failure is terminal, as in handshake().
+    void wake(const std::atomic_bool* cancelled = nullptr);
+    /**
+     * Wait until the receiver reports at least one logical device and no report
+     * has changed the count for `settle` (tvOS reports a short 1-0-1 sequence
+     * while the TV comes up). Returns false at `deadline`, on cancellation, stop
+     * or session failure; waking is best effort, so these are not exceptions.
+     */
+    [[nodiscard]] bool wait_until_awake(std::chrono::milliseconds settle,
+                                        std::chrono::steady_clock::time_point deadline,
+                                        const std::atomic_bool* cancelled = nullptr);
     void stop() noexcept;
 
 private:
@@ -67,6 +92,8 @@ private:
     void enqueue(std::uint32_t type, Bytes payload, const std::string& identifier);
     void run();
     void fail(MrpError reason);
+    void record_power_locked(const MrpMessage& message);
+    void send_unanswered(std::uint32_t type, Bytes payload, const std::atomic_bool* cancelled);
     std::unique_ptr<MrpChannel> channel_;
     std::chrono::milliseconds request_timeout_, heartbeat_interval_;
     mutable std::mutex mutex_;
@@ -80,6 +107,9 @@ private:
     MrpPlaybackTracker tracker_;
     std::uint64_t messages_ = 0, heartbeats_ = 0;
     bool ready_ = false;
+    std::vector<MrpPowerObservation> power_observations_;   // Guarded by mutex_.
+    std::optional<std::uint32_t> logical_devices_;          // Latest report; mutex_.
+    std::chrono::steady_clock::time_point power_changed_{}; // Last count change; mutex_.
     std::atomic_bool stop_{false};
     std::thread worker_;
 };

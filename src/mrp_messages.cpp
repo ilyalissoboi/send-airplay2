@@ -27,6 +27,7 @@ std::uint32_t extension(std::uint32_t type) {
     case mrp::set_state:
         return 9;
     case mrp::device_info:
+    case mrp::device_info_update: // Both carry DeviceInfoMessage (pyatv's mapping).
         return 20;
     case mrp::updates_config:
         return 21;
@@ -146,6 +147,22 @@ MrpMessage decode_mrp(std::string_view bytes) {
         }
     }
     return message;
+}
+std::optional<std::uint32_t> mrp_logical_device_count(const MrpMessage& message) {
+    if ((message.type != mrp::device_info && message.type != mrp::device_info_update) ||
+        !message.has_payload) {
+        return std::nullopt;
+    }
+    constexpr std::uint32_t logical_device_count_field = 22;
+    const auto fields = pb::decode(pb::view(message.payload));
+    const auto* count = pb::find(fields, logical_device_count_field, 0);
+    if (!count) {
+        return std::nullopt;
+    }
+    if (count->integer > std::numeric_limits<std::uint32_t>::max()) {
+        malformed();
+    }
+    return static_cast<std::uint32_t>(count->integer);
 }
 std::vector<MrpMessage> decode_mrp_batch(const Bytes& bytes) {
     const auto input = pb::view(bytes);

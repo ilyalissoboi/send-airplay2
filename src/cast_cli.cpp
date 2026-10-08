@@ -176,6 +176,11 @@ void print_start_diagnostics(const SessionStartDiagnostics& diagnostics) {
         }
         std::cout << line.str() << '\n';
     }
+    for (std::size_t index = 0; index < diagnostics.power_count; ++index) {
+        const auto& entry = diagnostics.power[index];
+        std::cout << "Receiver power: elapsed_ms=" << entry.elapsed_ms
+                  << " logical_devices=" << entry.logical_devices << '\n';
+    }
     std::cout << "Startup summary: records=" << diagnostics.count
               << " truncated=" << (diagnostics.truncated ? "yes" : "no")
               << " cleaned=" << (diagnostics.cleaned_up ? "yes" : "no") << std::endl;

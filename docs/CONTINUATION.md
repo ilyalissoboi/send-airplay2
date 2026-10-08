@@ -1,9 +1,11 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#18 are merged; `main` contains the
+Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#19 are merged; `main` contains the
 receiver-tested public playback interface (D46-D48), the D49 credential design,
 host stores plus pairing (D50-D51), the C# binding (D52) and the packaged UWP
-test host (D53). The C discovery interface (D54) is on `claude/discovery-c-api`.
+test host (D53). PR #19, the C discovery interface (D54), is merged as `ac7717f`.
+The UWP native build (D55) has its own PR; wake before play (D56) is on
+`claude/receiver-wake`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -171,7 +173,10 @@ development, not retroactive gate failures.
    it (including one `cast` CLI run). Related hardware-free work: a
    synthetic beyond-4-GiB byte-source/range test through the media server, and
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
-2. **Startup reliability.** Spontaneous pause at zero/first-frame-only occurred
+2. **Startup reliability.** D56 reproduced first-frame-then-Home when casting to
+   a sleeping receiver and fixed that case by waking it over MRP before play
+   (one run); whether earlier pauses began from sleep was not recorded.
+   Spontaneous pause at zero/first-frame-only occurred
    without remote input, including a 16-slot run. One-second confirmation improves
    readiness reporting but does not explain or cure the receiver transition.
    If it recurs, retain failed-start traces/cleanup and compare normal MRP versus

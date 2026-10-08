@@ -44,6 +44,7 @@ interface leaves experimental status; record a new decision if they do.
 | Source ownership moves to the handle only on `SAP2_OK`; `release` runs exactly once, after the last read, from `sap2_cast_destroy()` | No double free on failed create; no read after release. |
 | Status by polling (`get_status`) and blocking `wait_for_change`, no event callbacks | Keeps D28: no host code runs on session threads. Media reads are the only host callbacks, as before. A C# binding can wrap the wait in a task. |
 | `sap2_cast_start()` blocks; `sap2_cast_stop()` from another thread cancels it | Reuses the session's existing cancellation flag. Stop waits for the cancelled start to return, so after stop nothing is running. |
+| A sleeping receiver is woken first (D56) | When MRP reports no logical devices, start sends `WAKE_DEVICE` and waits up to 10 s, outside `start_timeout_ms`, for the receiver to settle; casting into a waking receiver lost the item to tvOS's return to Home ([mrp-controls.md](mrp-controls.md#receiver-power-and-wake-d56)). Not a host option. |
 | `SAP2_PHASE_ENDED` keeps the media listener until `stop`/`destroy` | Avoids an extra supervisor thread. Hosts must call `sap2_cast_stop()` or destroy after seeing an end reason. |
 | End reasons are reported as-is; no reclassification | A remote Stop/Home still arrives as `SAP2_END_CONNECTION_LOST` (D34/D40/D41). Any termination policy needs its own user decision. |
 | No automatic Play/seek retry; start confirmation unchanged (one second of forward playing) | Same as D38. |

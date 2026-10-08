@@ -139,26 +139,56 @@ void MrpSession::handshake(const SenderIdentity& identity, const Bytes& pairing_
         throw MrpException(MrpError::malformed);
     }
     {
-        std::lock_guard<std::mutex> serial(request_mutex_);
-        std::unique_lock<std::mutex> lock(mutex_);
-        enqueue(mrp::connection_state, mrp_connection_state(), {});
-        // Ensure this send precedes the subscription; the worker consumes one
-        // bounded slot. No response is defined for SET_CONNECTION_STATE.
-        while (!outbound_.empty()) {
-            if (failure_) {
-                throw MrpException(*failure_);
-            }
-            if (stop_ || (cancelled && cancelled->load())) {
-                lock.unlock();
-                fail(MrpError::cancelled);
-                throw MrpException(MrpError::cancelled);
-            }
-            changed_.wait_for(lock, poll_slice);
-        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        record_power_locked(device);
     }
+    // Sent before the subscription. No response is defined for SET_CONNECTION_STATE.
+    send_unanswered(mrp::connection_state, mrp_connection_state(), cancelled);
     (void)request(mrp::updates_config, mrp_updates_config(), mrp::updates_config, cancelled);
     std::lock_guard<std::mutex> lock(mutex_);
     ready_ = true;
+}
+/// The worker consumes the single bounded outbound slot; an empty slot means
+/// this message has been taken for sending, in order before any later request.
+void MrpSession::send_unanswered(std::uint32_t type, Bytes payload,
+                                 const std::atomic_bool* cancelled) {
+    std::lock_guard<std::mutex> serial(request_mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
+    enqueue(type, std::move(payload), {});
+    while (!outbound_.empty()) {
+        if (failure_) {
+            throw MrpException(*failure_);
+        }
+        if (stop_ || (cancelled && cancelled->load())) {
+            lock.unlock();
+            fail(MrpError::cancelled);
+            throw MrpException(MrpError::cancelled);
+        }
+        changed_.wait_for(lock, poll_slice);
+    }
+}
+void MrpSession::wake(const std::atomic_bool* cancelled) {
+    send_unanswered(mrp::wake_device, {}, cancelled);
+}
+bool MrpSession::wait_until_awake(std::chrono::milliseconds settle,
+                                  std::chrono::steady_clock::time_point deadline,
+                                  const std::atomic_bool* cancelled) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    for (;;) {
+        if (failure_ || stop_ || (cancelled && cancelled->load())) {
+            return false;
+        }
+        const auto now = std::chrono::steady_clock::now();
+        const bool awake = logical_devices_ && *logical_devices_ >= 1;
+        if (awake && now - power_changed_ >= settle) {
+            return true;
+        }
+        if (now >= deadline) {
+            return false;
+        }
+        const auto settled = awake ? power_changed_ + settle : deadline;
+        changed_.wait_until(lock, std::min({deadline, settled, now + poll_slice}));
+    }
 }
 void MrpSession::expect_item(std::string uuid, std::string url) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -204,6 +234,36 @@ bool MrpSession::failed() const {
 std::optional<MrpError> MrpSession::failure() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return failure_;
+}
+std::vector<MrpPowerObservation> MrpSession::power_observations() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return power_observations_;
+}
+std::optional<std::uint32_t> MrpSession::logical_devices() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return logical_devices_;
+}
+void MrpSession::record_power_locked(const MrpMessage& message) {
+    std::optional<std::uint32_t> count;
+    try {
+        count = mrp_logical_device_count(message);
+    } catch (const std::invalid_argument&) {
+        // DEVICE_INFO_UPDATE was ignored before power reports were recorded;
+        // an unreadable report is dropped rather than failing the session.
+        return;
+    }
+    if (!count) {
+        return;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (!logical_devices_ || *logical_devices_ != *count) {
+        power_changed_ = now;
+    }
+    logical_devices_ = count;
+    changed_.notify_all();
+    if (power_observations_.size() < max_power_observations) {
+        power_observations_.push_back({now, *count});
+    }
 }
 void MrpSession::run() {
     auto heartbeat_due = std::chrono::steady_clock::now() + heartbeat_interval_;
@@ -272,6 +332,7 @@ void MrpSession::run() {
                     response_ = std::move(message);
                     changed_.notify_all();
                 } else {
+                    record_power_locked(message);
                     tracker_.apply(message);
                 }
                 cleanse(message.payload.data(), message.payload.size());

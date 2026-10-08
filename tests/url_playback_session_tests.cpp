@@ -790,6 +790,134 @@ void remote_feedback_stop_tests(const std::string& mrp_fixtures) {
     }
 }
 
+/// The receiver's power report (MRP DEVICE_INFO logicalDeviceCount) arrives
+/// with the MRP handshake, before the play queue item is inserted, so a start
+/// policy can act on it before playback begins.
+void startup_power_report_tests(const std::string& mrp_fixtures) {
+    group = "startup receiver power report";
+    Behavior behavior;
+    behavior.mrp_fixtures = mrp_fixtures;
+    behavior.mrp_logical_devices = 0;
+    FakeReceiver receiver(behavior);
+    auto options = options_for(receiver);
+    options.enable_mrp = true;
+    SessionStartDiagnostics diagnostics;
+    auto session =
+        UrlPlaybackSession::start(receiver.credentials(), options, nullptr, &diagnostics);
+    session->stop();
+    check(diagnostics.power_count == 1 && diagnostics.power[0].logical_devices == 0,
+          "handshake logicalDeviceCount 0 is in the start trace (count " +
+              std::to_string(diagnostics.power_count) + ")");
+    const auto recorded = diagnostics.entries.begin() + diagnostics.count;
+    const auto insert = std::find_if(diagnostics.entries.begin(), recorded,
+                                     [](const SessionStartTraceEntry& entry) {
+                                         return entry.phase == SessionStartPhase::insert_item;
+                                     });
+    check(insert != recorded && diagnostics.power_count == 1 &&
+              diagnostics.power[0].elapsed_ms <= insert->elapsed_ms,
+          "the power report precedes insert_item");
+
+    Behavior without_count;
+    without_count.mrp_fixtures = mrp_fixtures;
+    FakeReceiver silent(without_count);
+    auto silent_options = options_for(silent);
+    silent_options.enable_mrp = true;
+    SessionStartDiagnostics none;
+    auto quiet = UrlPlaybackSession::start(silent.credentials(), silent_options, nullptr, &none);
+    quiet->stop();
+    check(none.power_count == 0, "DEVICE_INFO without logicalDeviceCount reports nothing");
+}
+
+/// Index of the first trace entry in `phase`, or the record count when absent.
+std::size_t first_phase(const SessionStartDiagnostics& diagnostics, SessionStartPhase phase) {
+    for (std::size_t index = 0; index < diagnostics.count; ++index) {
+        if (diagnostics.entries[index].phase == phase) {
+            return index;
+        }
+    }
+    return diagnostics.count;
+}
+
+/// D56: a receiver whose handshake reports no logical devices is woken and
+/// given time to settle before the play queue item is inserted.
+void wake_before_play_tests(const std::string& mrp_fixtures) {
+    group = "wake before play";
+    {
+        Behavior behavior;
+        behavior.mrp_fixtures = mrp_fixtures;
+        behavior.mrp_logical_devices = 0;
+        behavior.mrp_wake_reports_awake = true;
+        FakeReceiver receiver(behavior);
+        auto options = options_for(receiver);
+        options.enable_mrp = true;
+        options.wake_settle = 100ms;
+        SessionStartDiagnostics diagnostics;
+        auto session =
+            UrlPlaybackSession::start(receiver.credentials(), options, nullptr, &diagnostics);
+        session->stop();
+        const auto& remote = receiver.remote_control();
+        const auto waking = first_phase(diagnostics, SessionStartPhase::waking);
+        const auto insert = first_phase(diagnostics, SessionStartPhase::insert_item);
+        check(remote.mrp_wakes() == 1, "one WAKE_DEVICE for a sleeping receiver");
+        check(waking < insert && insert < diagnostics.count &&
+                  diagnostics.entries[insert].elapsed_ms - diagnostics.entries[waking].elapsed_ms >=
+                      100,
+              "insert_item waits at least the 100 ms settle after waking (waking at " +
+                  std::to_string(waking) + ", insert at " + std::to_string(insert) + ")");
+        check(diagnostics.power_count == 2 && diagnostics.power[0].logical_devices == 0 &&
+                  diagnostics.power[1].logical_devices == 1,
+              "trace shows asleep then awake");
+    }
+    {
+        Behavior behavior;
+        behavior.mrp_fixtures = mrp_fixtures;
+        behavior.mrp_logical_devices = 0; // Never reports awake.
+        FakeReceiver receiver(behavior);
+        auto options = options_for(receiver);
+        options.enable_mrp = true;
+        options.wake_timeout = 150ms;
+        SessionStartDiagnostics diagnostics;
+        const auto started = std::chrono::steady_clock::now();
+        auto session =
+            UrlPlaybackSession::start(receiver.credentials(), options, nullptr, &diagnostics);
+        session->stop();
+        check(receiver.remote_control().mrp_wakes() == 1 &&
+                  first_phase(diagnostics, SessionStartPhase::insert_item) < diagnostics.count,
+              "a receiver that never reports awake still gets the play request");
+        check(std::chrono::steady_clock::now() - started < 5s, "the wake wait is bounded");
+    }
+    for (const bool awake_report : {true, false}) {
+        Behavior behavior;
+        behavior.mrp_fixtures = mrp_fixtures;
+        if (awake_report) {
+            behavior.mrp_logical_devices = 1;
+        }
+        FakeReceiver receiver(behavior);
+        auto options = options_for(receiver);
+        options.enable_mrp = true;
+        SessionStartDiagnostics diagnostics;
+        auto session =
+            UrlPlaybackSession::start(receiver.credentials(), options, nullptr, &diagnostics);
+        session->stop();
+        check(receiver.remote_control().mrp_wakes() == 0 &&
+                  first_phase(diagnostics, SessionStartPhase::waking) == diagnostics.count,
+              std::string(awake_report ? "an awake receiver" : "a receiver without a report") +
+                  " is not woken");
+    }
+    {
+        Behavior behavior;
+        behavior.mrp_fixtures = mrp_fixtures;
+        behavior.mrp_logical_devices = 0;
+        FakeReceiver receiver(behavior);
+        auto options = options_for(receiver);
+        options.enable_mrp = true;
+        options.wake_receiver = false;
+        auto session = UrlPlaybackSession::start(receiver.credentials(), options);
+        session->stop();
+        check(receiver.remote_control().mrp_wakes() == 0, "wake_receiver=false sends no wake");
+    }
+}
+
 int main(int argc, char** argv) {
     if (argc != 2) {
         std::cerr << "usage: url_playback_session_tests MRP_FIXTURE_DIRECTORY\n";
@@ -815,6 +943,8 @@ int main(int argc, char** argv) {
         feedback_deadline_tests();
         feedback_cancel_tests();
         remote_feedback_stop_tests(mrp_fixtures);
+        startup_power_report_tests(mrp_fixtures);
+        wake_before_play_tests(mrp_fixtures);
     } catch (const std::exception& error) {
         std::cerr << "Unexpected test exception [" << group << "]: " << error.what() << '\n';
         return 1;

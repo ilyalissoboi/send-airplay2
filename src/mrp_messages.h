@@ -12,6 +12,9 @@ namespace send_airplay2::detail {
 namespace mrp {
 constexpr std::uint32_t send_command = 1, command_result = 2, set_state = 4;
 constexpr std::uint32_t device_info = 15, updates_config = 16, connection_state = 38;
+constexpr std::uint32_t device_info_update = 37;
+/// WAKE_DEVICE_MESSAGE: no extension and no response (pyatv's MRP turn_on).
+constexpr std::uint32_t wake_device = 41;
 constexpr std::uint32_t keyboard_session = 24, heartbeat = 42;
 constexpr std::uint32_t now_playing_client = 46, now_playing_player = 47, update_content = 56;
 constexpr std::uint32_t remove_client = 53, remove_player = 54;
@@ -46,6 +49,14 @@ struct MrpMessage {
 /// Explicit playerPath prevents a command targeting an unrelated active app.
 [[nodiscard]] Bytes mrp_command(PlaybackCommand command, const Bytes& player_path,
                                 double position_seconds = 0);
+/**
+ * Receiver power report from DEVICE_INFO or DEVICE_INFO_UPDATE: the
+ * DeviceInfoMessage logicalDeviceCount (field 22). pyatv treats one or more as
+ * on and zero as off. Empty for other message types and when the field is
+ * absent. Throws std::invalid_argument for a malformed payload or a count
+ * outside uint32.
+ */
+[[nodiscard]] std::optional<std::uint32_t> mrp_logical_device_count(const MrpMessage& message);
 /// False for any receiver protocol/send/handler/nested status error. Missing
 /// command result extension is malformed, rather than an implicit success.
 [[nodiscard]] bool mrp_command_succeeded(const MrpMessage& message);

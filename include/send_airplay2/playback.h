@@ -231,7 +231,9 @@ SAP2_API int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_m
  * thread, before any network work), start the media server, authenticate both
  * receiver sessions and start playback. Blocks until playback is confirmed (one
  * continuous second of forward playing within start_timeout_ms), failure, or
- * cancellation by sap2_cast_stop() from another thread. There is no automatic
+ * cancellation by sap2_cast_stop() from another thread. If the receiver
+ * reports itself asleep, start first wakes it and waits up to 10 s for it to
+ * settle; that wait is in addition to start_timeout_ms. There is no automatic
  * Play or seek retry. Valid once per handle, in SAP2_PHASE_CREATED; afterwards
  * the phase is ACTIVE or START_FAILED. Every failure has already torn down what
  * was started, including the media server. */
