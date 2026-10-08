@@ -7,11 +7,18 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: casting to a sleeping receiver (D56)
+## 0. Resume here: standalone items (D57 onward)
 
-**Active slice: wake before play (D56).** The user asked whether a cast can wake
-the receiver and chose the order: reproduce, check pyatv, fix. Branch
-`claude/receiver-wake` records the receiver's MRP power reports in the start
+**Active slices: the standalone items.** The user merged PR #21 (D56) as
+`99942d1` and asked to finish the standalone items except remote-Stop detection
+(deferred): UWP for other architectures with a certification kit run (D57,
+branch `claude/uwp-arm64-x86`), then built-in macOS Keychain and Linux Secret
+Service stores, each in its own PR. D57: x86 passed on the TV, ARM64 is built in
+CI only, and the kit failed only Supported APIs for the .NET AOT runtime in the
+host executable; see the D57 record in section 4.
+
+**Wake before play (D56) is merged.** The user had asked whether a cast can wake
+the receiver and chose the order: reproduce, check pyatv, fix. It records the receiver's MRP power reports in the start
 trace and, when the handshake reports it asleep, sends `WAKE_DEVICE` and waits
 for it to settle before starting playback. A cast to the sleeping Apple TV then
 played normally; see the D56 record in section 4 and
@@ -1009,6 +1016,20 @@ with Asio's select reactor forced (32/32). Not run: WACK (needs elevation),
 x86/ARM64, a device without VCLibs, Public networks with this build, pairing
 through it. Record:
 [receiver-validation.md](receiver-validation.md#uwp-native-build-d55-2026-10-08).
+
+**D57 (UWP architectures and certification kit, 2026-10-08):** the user merged
+PR #21 and asked to finish the standalone items except remote-Stop detection,
+which is deferred. Engineering choices: CI builds the UWP library for x64, x86
+and ARM64 (matrix) and the check script verifies each binary's architecture;
+the UWP host builds for the three platforms, packaging `build-uwp`,
+`build-uwp-x86` or `build-uwp-arm64`, and takes OpenSSL's DLL by pattern. This
+Visual Studio has no ARM64 tools (installing them is the user's choice), so
+ARM64 is CI-only. The x86 host 0.1.14.0 loaded the x86 library and app runtime
+and passed discover, cast, controls and Stop on the TV (user: everything worked
+as expected). The user ran the certification kit on the x64 host 0.1.12.0: 26 of
+27 tests pass; Supported APIs fails for six kernel32 calls in the host
+executable's .NET Native AOT runtime, none in the library. Record:
+[receiver-validation.md](receiver-validation.md#uwp-architectures-and-certification-kit-d57-2026-10-08).
 
 **D56 (casting to a sleeping receiver, 2026-10-08):** the user asked whether a
 cast can wake the receiver remotely and chose the suggested order. Reproduced:
