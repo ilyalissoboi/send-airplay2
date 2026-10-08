@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-08",
+  "decision": "D57",
+  "scope": "Standalone UWP items: the library built for x86 (and ARM64 in CI only), the x86 packaged test host on the recorded Apple TV, and a Windows App Certification Kit run on the installed x64 test host 0.1.12.0. Observer answers are recorded separately from telemetry.",
+  "receiver": {
+    "name": "Living Room",
+    "hardware": "Apple TV 4K (AppleTV14,1)",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_scope": "Prior user report, assumed unchanged; not queried during this test."
+  },
+  "host": "Windows 11 Enterprise x64 (10.0.26200), Private network (read, not changed); Visual Studio 2026 18.10.2 (MSVC 14.51, x64 and x86 tools; no ARM64 tools installed), Windows SDK 10.0.28000.0, .NET SDK 10.0.401",
+  "source_base": "99942d1 (main with PR #21)",
+  "tested_source_blobs": {
+    "scripts/check_uwp_binaries.ps1": "864a82fdc42787e91868e35f2266820f5cb4713c",
+    "tools/uwp-host/SendAirPlay2.UwpHost.csproj": "491c2cdf5f73a2efb63b1a6e77798d990cf2e197",
+    "tools/uwp-host/Package.appxmanifest": "3173e3834eea08cc4cf8d1517292df55e8f2b10a",
+    ".github/workflows/build.yml": "380e6519c74d18bc0b52693ea3e3e69fedd29b7b"
+  },
+  "x86": {
+    "triplet": "x86-uwp (vcpkg community triplet; Botan through the repository overlay port, static)",
+    "static_checks": "scripts/check_uwp_binaries.ps1 -Machine x86: send_airplay2.dll and libcrypto-3.dll are x86, AppContainer, link VCRUNTIME140_APP; no ADVAPI32, no Botan DLL",
+    "runtime_modules": "In the running x86 app (32-bit module list): send_airplay2.dll and libcrypto-3.dll from the package; VCRUNTIME140_APP.dll and MSVCP140_APP.dll from Microsoft.VCLibs.140.00 14.0.33519.0 x86",
+    "binaries_sha256": {
+      "send_airplay2.dll (x86-uwp, Release)": "c3b2a34dee6a2a3c1b3a91e88aaf4c11b7f6d34904b8587647236cb8164f50e3",
+      "libcrypto-3.dll (x86-uwp)": "57a834766e7b6656de539ebb8777c5e4d750d988e6862a874c5a95c7ac4f53e9",
+      "SendAirPlay2.UwpHost.exe 0.1.14.0 x86 (AOT)": "c1bf50921b1a23f00e6e47770d6a37c8f7eccfd2c26283b6e39cbc59b38c9800"
+    },
+    "log": [
+      "14:26:04.339 Native library loaded: API version 2",
+      "14:26:04.370 Package capabilities: internetClientServer=no privateNetworkClientServer=yes",
+      "14:30:00.957 Discover: ok receivers=1",
+      "14:30:00.961 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+      "14:30:08.161 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.2 failure=None/None cleaned=no",
+      "14:30:26.313 Control pause: ok",
+      "14:30:40.318 Control play: ok",
+      "14:30:56.165 Control seek 60: ok",
+      "14:31:10.092 Control seek 10: ok",
+      "14:31:26.156 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=25.6 failure=None/None cleaned=yes",
+      "14:31:26.159 Cast disposed; media source released"
+    ],
+    "event_log": "No application error",
+    "credential": "The existing living-room-uwp PasswordVault credential (same package family); no pairing",
+    "observer": "Everything worked as expected (video and audio, controls, Home after Stop, app stayed open)."
+  },
+  "arm64": "Not built locally: the ARM64 MSVC build tools are not installed in this Visual Studio. The CI uwp job builds arm64-uwp and runs the binary check with -Machine ARM64; no ARM64 device run.",
+  "wack": {
+    "kit": "Windows App Certification Kit 10.0.28000.2526, run by the user in an elevated shell: appcert.exe test -packagefullname SendAirPlay2.UwpHost_0.1.12.0_x64__dbzctnqak9cwp",
+    "package": "x64 test host 0.1.12.0 registered from an unsigned development layout; send_airplay2.dll sha256 522a48f7fb268b5e97f06bc0242e5e9e95621b4fad772ba8f5f74aaed0a77f79, host exe 16e7522947c5b6a03df7684821824b126da43c48ce06c2301fcedb7ab0435a92",
+    "report_sha256": "29469e4d79355b69f07eed5e4a0c92d52c19222fbf156050e90af565a7366ee6",
+    "overall": "FAIL (26 of 27 tests pass)",
+    "failed": {
+      "test": "Supported APIs",
+      "binary": "SendAirPlay2.UwpHost.exe only (the .NET Native AOT runtime compiled into the app)",
+      "apis": ["CreateMemoryResourceNotification", "GetProcessGroupAffinity", "IsProcessInJob", "QueryInformationJobObject", "SetXStateFeaturesMask", "VirtualAllocExNuma"]
+    },
+    "passed_highlights": "Deployment and launch (including crashes and hangs), package compliance, binary analyzer, banned file analyzer, debug configuration, special-use capabilities, Windows Runtime metadata, package sanity",
+    "library_findings": "None: no test reports send_airplay2.dll or libcrypto-3-x64.dll"
+  },
+  "not_run": [
+    "ARM64 build locally and any ARM64 device run",
+    "WACK on the x86 package or a signed Store-style package",
+    "Whether the Microsoft Store accepts the .NET Native AOT runtime APIs flagged by the kit (a Screenbox/toolchain question)"
+  ],
+  "handling": "Receiver address only in the app's address box; logs hold fixed fields. No firewall, network, credential or receiver setting changed."
+}

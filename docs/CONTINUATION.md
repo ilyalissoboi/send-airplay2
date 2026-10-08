@@ -1,10 +1,12 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#20 are merged; `main` contains the
+Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#22 are merged; `main` contains the
 receiver-tested public playback interface (D46-D48), the D49 credential design,
 host stores plus pairing (D50-D51), the C# binding (D52), the packaged UWP test
-host (D53), the C discovery interface (D54) and the UWP native build (D55).
-Wake before play (D56) is on `claude/receiver-wake`.
+host (D53), the C discovery interface (D54), the UWP native build (D55), wake
+before play (D56) and UWP x86/ARM64 with a certification kit run (D57). The
+macOS Keychain store (D58) is on `claude/macos-keychain`; the Linux Secret
+Service store (D59) is stacked on it as `claude/linux-secret-service`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -12,10 +14,15 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D56):** wake before play
-  ([mrp-controls.md](mrp-controls.md#receiver-power-and-wake-d56)), on branch
-  `claude/receiver-wake` with its own PR (find it with `gh pr list --state open`).
-  Receiver-tested in three sleep cycles (CLI, C interface static and shared).
+- **Active slices (D58-D59):** the rest of the standalone items (remote-Stop
+  detection is deferred by the user): the macOS Keychain store (D58,
+  `claude/macos-keychain`) and the Linux Secret Service store (D59,
+  `claude/linux-secret-service`, stacked on D58), each with its own PR (find
+  them with `gh pr list --state open`).
+- [PR #22](https://github.com/ilyalissoboi/send-airplay2/pull/22), UWP x86/ARM64
+  and a certification kit run (D57), was merged by the user as `8ecb8b0`.
+- [PR #21](https://github.com/ilyalissoboi/send-airplay2/pull/21), wake before
+  play (D56), was merged by the user as `99942d1`.
 - [PR #20](https://github.com/ilyalissoboi/send-airplay2/pull/20), the UWP native
   build (D55), was merged by the user as `796a595`.
 - [PR #19](https://github.com/ilyalissoboi/send-airplay2/pull/19), the C
@@ -218,7 +225,8 @@ development, not retroactive gate failures.
    networks only), and receiver discovery through C and C# is **done in D54**
    (found inside the AppContainer on a Private network); (c) the UWP library
    build without the Credential Manager adapter, against the app C runtime, is
-   **done in D55** (Botan static through an overlay port; WACK and x86/ARM64 not
+   **done in D55** (Botan static through an overlay port; D57 added x86, ARM64 in CI
+   and a certification kit run; formerly WACK and x86/ARM64 not
    run); (d) macOS Keychain and Linux Secret Service
    adapters, then Linux/macOS/Android device support. Botan UWP packaging is
    resolved for x64 by the D55 overlay port; desktop/CI success is not

@@ -1,7 +1,7 @@
 # UWP native build (D55)
 
 Status: **implemented; receiver-tested in the packaged UWP test host on one Apple
-TV / Windows host, 2026-10-08.** This is D49 step 3: the native library built
+TV / Windows host, 2026-10-08 (x64 D55, x86 D57; ARM64 built in CI only).** This is D49 step 3: the native library built
 for app (UWP) packages, against the app C runtime and without the desktop-only
 Credential Manager adapter. Record:
 [receiver-validation.md](receiver-validation.md#uwp-native-build-d55-2026-10-08)
@@ -38,8 +38,17 @@ Quote every `-D` argument in Windows PowerShell 5.1: unquoted, it splits
 
 `build-uwp/Release` then holds `send_airplay2.dll` and `libcrypto-3-x64.dll`,
 everything a package needs. The UWP test host packages that directory by
-default (`Sap2NativeDir`, [uwp-host.md](uwp-host.md)). CI builds the same
-configuration and runs the binary check (job `uwp`).
+default (`Sap2NativeDir`, [uwp-host.md](uwp-host.md)).
+
+### Other architectures (D57)
+
+The same configuration builds for x86 (`-A Win32`, `x86-uwp`, OpenSSL's DLL is
+`libcrypto-3.dll`) and ARM64 (`-A ARM64`, `arm64-uwp`, `libcrypto-3-arm64.dll`).
+Use one build and installed directory per architecture (`build-uwp-x86`,
+`build-uwp-arm64` and matching `installed-uwp-*`), and pass `-Machine x86` or
+`-Machine ARM64` to the check script, which also verifies the binaries'
+architecture. ARM64 needs Visual Studio's ARM64 build tools component. CI builds
+all three and runs the check (job `uwp`, one matrix entry per architecture).
 
 ## What differs from the desktop build
 
@@ -83,13 +92,30 @@ lets queued reads finish, then joins). Nothing else in the library uses
 Asio-owned threads. Desktop tests cover the pool's behavior; only a packaged run
 covers the app-mode difference.
 
+## Certification kit (D57)
+
+The user ran the Windows App Certification Kit (10.0.28000.2526) in an elevated
+shell on the installed x64 test host 0.1.12.0, which packages this build:
+
+```powershell
+appcert.exe test -packagefullname <PackageFullName> -reportoutputpath <report.xml>
+```
+
+26 of 27 tests passed, including deployment and launch, crashes and hangs, the
+binary analyzer and package sanity. **Supported APIs failed only for the host
+executable**: six kernel32 functions (`CreateMemoryResourceNotification`,
+`GetProcessGroupAffinity`, `IsProcessInJob`, `QueryInformationJobObject`,
+`SetXStateFeaturesMask`, `VirtualAllocExNuma`) used by the .NET Native AOT
+runtime compiled into `SendAirPlay2.UwpHost.exe`. No test reported
+`send_airplay2.dll` or `libcrypto-3-x64.dll`. Whether the Store accepts those
+runtime calls is a question for Screenbox's .NET toolchain, not the library.
+Record: [artifact](validation/native-uwp-architectures-wack-windows-2026-10-08.json).
+
 ## Not covered
 
-- Windows App Certification Kit: needs an elevated shell. Run
-  `appcert.exe test -appxpackagepath <msix> -reportoutputpath <xml>` from an
-  administrator prompt to check API use and packaging.
-- x86 and ARM64 (`x86-uwp`, `arm64-uwp`); whether Botan's `uwp` target builds
-  for them is untested.
+- ARM64 on a device: CI builds and checks `arm64-uwp`; no ARM64 run (D57).
+- A Store-style certification of a signed package: D57 ran the kit on the
+  sideloaded test host (below).
 - A device without the VCLibs framework installed beforehand (sideloading
   normally installs it from the package's `Dependencies` folder).
 - The upstream Asio report or fix; the workaround does not depend on one.

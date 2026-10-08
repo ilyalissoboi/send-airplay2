@@ -65,6 +65,13 @@ jobs:
     # The AppContainer library for packaged hosts (docs/uwp-native-build.md):
     # build only. Its programs cannot run outside a package; receiver use is
     # validated through the packaged UWP test host, not here.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x64, platform: x64, machine: x64 }
+          - { arch: x86, platform: Win32, machine: x86 }
+          - { arch: arm64, platform: ARM64, machine: ARM64 }
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,8 +79,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build-vcpkg-cache
-          key: vcpkg-uwp-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-overlays/**') }}
-          restore-keys: vcpkg-uwp-${{ runner.arch }}-
+          key: vcpkg-uwp-${{ matrix.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-overlays/**') }}
+          restore-keys: vcpkg-uwp-${{ matrix.arch }}-
       - name: Bootstrap pinned vcpkg
         shell: bash
         run: |
@@ -81,12 +88,12 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git build-tools/vcpkg
           git -C build-tools/vcpkg checkout 434307da09bc05b2c86996dccc8b2351fc0d5d37
           MSYS_NO_PATHCONV=1 cmd.exe /c 'build-tools\vcpkg\bootstrap-vcpkg.bat' -disableMetrics
-      - name: Configure (WindowsStore, x64-uwp)
-        run: cmake -S . -B build-uwp -A x64 "-DCMAKE_SYSTEM_NAME=WindowsStore" "-DCMAKE_SYSTEM_VERSION=10.0" -DBUILD_SHARED_LIBS=ON "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-uwp "-DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/vcpkg-overlays/ports"
+      - name: Configure (WindowsStore, ${{ matrix.arch }}-uwp)
+        run: cmake -S . -B build-uwp -A ${{ matrix.platform }} "-DCMAKE_SYSTEM_NAME=WindowsStore" "-DCMAKE_SYSTEM_VERSION=10.0" -DBUILD_SHARED_LIBS=ON "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.arch }}-uwp "-DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/vcpkg-overlays/ports"
       - name: Build
         run: cmake --build build-uwp --config Release
       - name: Check AppContainer, app C runtime and imports
-        run: ./scripts/check_uwp_binaries.ps1 -Directory build-uwp/Release
+        run: ./scripts/check_uwp_binaries.ps1 -Directory build-uwp/Release -Machine ${{ matrix.machine }}
   sanitizers:
     runs-on: ubuntu-latest
     steps:

@@ -235,7 +235,7 @@ Telemetry only (no observer needed):
    then, so no ordering guarantee is claimed for that case.
 3. **C# binding and packaged UWP proof:** done for one receiver and host (D52-D55,
    [uwp-host.md](uwp-host.md)), including a UWP-built library; Store certification
-   and x86/ARM64 remain.
+   and an ARM64 device run remain (x86 passed in D57).
 4. **Credential stores for other platforms**, per D49
    ([credential-interface.md](credential-interface.md)): built-in macOS Keychain
    and Linux Secret Service adapters, and host-provided stores for UWP
