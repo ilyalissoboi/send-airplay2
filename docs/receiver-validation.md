@@ -20,7 +20,10 @@ returned Home, with no recorded loading transition. Admission capacity is a
 supported candidate, not proof that the original persistent freeze is fixed.
 User decision D37 lowers that frozen-video issue to low priority for now, with
 insufficient media connections the likely cause; raise priority if it recurs in
-later testing. Preserve its original FAIL evidence. Startup pause remains active.
+later testing. Preserve its original FAIL evidence. The intermittent startup
+pause was observed while the Apple TV was waking from sleep (user report,
+2026-10-08); D56 reproduced it from sleep and wake-before-play fixed it in one
+run, so sleep-wake is its likely cause. The original runs were not repeated.
 See the dated observations below; record each receiver/firmware/platform separately.
 
 D43's [PR review](pr-review.md) changes diagnostic redaction and decoded MRP/event
@@ -1259,5 +1262,7 @@ tvOS was still waking. Not run: repeated sleep cycles, the C interface or UWP
 host on a sleeping receiver (same session code), deeper sleep or an unreachable
 receiver, a TV without HDMI-CEC power control, other receivers and firmware.
 The intermittent startup pause recorded since D38 also showed a first frame and
-a pause at zero; whether those runs began from sleep was not recorded, so D56
-does not claim to explain them.
+a pause at zero. After this run the user reported that it was observed when the
+Apple TV was waking from sleep. The same condition and symptom make D56's cause
+its likely explanation and wake-before-play its likely fix; the earlier runs
+themselves were not repeated, and their traces predate the power reports.

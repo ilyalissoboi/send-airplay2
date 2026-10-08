@@ -999,7 +999,9 @@ On hardware the count went 0, 1, 0, 1 within about 2.5 s of the wake; playback
 started 2.5 s after the last change and played normally (user observed), and an
 awake receiver is not delayed. Windows static 31/31 and shared 32/32. One run
 each; repeated sleep cycles and the C/UWP path on a sleeping receiver are not
-run. Record:
+run. After the run the user reported that the intermittent startup pause seen
+since D38 was observed when the Apple TV was waking from sleep, which makes D56
+its likely cause and fix; the earlier runs were not repeated. Record:
 [receiver-validation.md](receiver-validation.md#casting-to-a-sleeping-receiver-d56-2026-10-08).
 
 ## 5. Implemented code and verification

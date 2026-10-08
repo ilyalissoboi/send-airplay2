@@ -187,5 +187,6 @@
     "Deeper sleep states, a receiver that is unreachable while asleep, or a TV without HDMI-CEC power control",
     "Other receivers, firmware or hosts"
   ],
-  "handling": "The driver kept the receiver address and id in memory and withheld any output line containing them or a URL (none was withheld). No firewall, network, credential or receiver setting changed; the existing Allow rule for this worktree's airplay2-cli path was used."
+  "handling": "The driver kept the receiver address and id in memory and withheld any output line containing them or a URL (none was withheld). No firewall, network, credential or receiver setting changed; the existing Allow rule for this worktree's airplay2-cli path was used.",
+  "user_report_after_runs": "The user reported that the intermittent startup pause recorded since D38 was observed when the Apple TV was waking from sleep. Same condition and symptom as runs 1 and 3; the earlier runs were not repeated."
 }
