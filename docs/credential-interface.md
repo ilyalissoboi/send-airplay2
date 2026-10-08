@@ -125,7 +125,7 @@ provision a specific app's locker. None of these changes the decisions above.
 | Platform | Planned store | Notes |
 | --- | --- | --- |
 | macOS | Built-in Keychain adapter (Security framework, C API), implemented in D58 | Generic password items in the file-based login keychain; the data protection keychain needs entitlements a library cannot assume (TN3137) |
-| Linux desktop | Built-in Secret Service adapter (libsecret over D-Bus) | Needs a session bus and an unlocked keyring; report unavailable otherwise |
+| Linux desktop | Built-in Secret Service adapter (libsecret over D-Bus), implemented in D59 when libsecret is found | Needs a session bus and an unlocked keyring; reports unavailable otherwise; per-user lock for create-only saves |
 | Linux headless or embedded | Host store | No desktop keyring is assumed |
 | Android | Host store (Kotlin) | Keystore key encrypting the record in app storage |
 | Windows packaged (UWP) | Host store (C# `PasswordVault`) | 20-credential limit and roaming as above |
@@ -146,9 +146,11 @@ implementation; dependencies such as libsecret are recorded in
    linked against the app C runtime ([uwp-native-build.md](uwp-native-build.md)).
    D53 had found the desktop-built DLLs depend on the desktop C runtime, which a
    clean UWP device may not have. Botan is linked statically there.
-4. **macOS done (D58):** the login-keychain adapter
-   ([credential-storage.md](credential-storage.md#macos-login-keychain-d58)); the
-   Linux Secret Service adapter follows (D59).
+4. **Done (D58, D59):** the macOS login-keychain adapter
+   ([credential-storage.md](credential-storage.md#macos-login-keychain-d58)) and
+   the Linux Secret Service adapter when libsecret is present
+   ([credential-storage.md](credential-storage.md#linux-secret-service-d59));
+   both CI-tested only.
 
 ## Sources
 

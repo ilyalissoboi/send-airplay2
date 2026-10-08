@@ -28,7 +28,9 @@ option(SAP2_SECRET_SERVICE "Use libsecret for the Linux built-in credential stor
 if(APPLE)
   list(APPEND sap2_credential_sources src/keychain_credential_store.cpp)
   set(sap2_credential_libraries "-framework Security" "-framework CoreFoundation")
-elseif(UNIX AND SAP2_SECRET_SERVICE)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SAP2_SECRET_SERVICE)
+  # Linux targets only: Android and other Unix targets are also UNIX, and a
+  # cross-build must not pick up the host's libsecret.
   find_package(PkgConfig QUIET)
   if(PkgConfig_FOUND)
     pkg_check_modules(SAP2_LIBSECRET QUIET IMPORTED_TARGET libsecret-1>=0.19)
