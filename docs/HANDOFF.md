@@ -997,10 +997,10 @@ unchanged for 2.5 s, at most 10 s and outside `start_timeout`, then start as
 before; best effort, default on, not a host option (`UrlPlaybackOptions` only).
 On hardware the count went 0, 1, 0, 1 within about 2.5 s of the wake; playback
 started 2.5 s after the last change and played normally (user observed), and an
-awake receiver is not delayed. A second sleep cycle through the C interface
-(`airplay2-api-host`) also passed (user: everything worked as expected).
-Windows static 31/31 and shared 32/32. Not run: more sleep cycles, the UWP host
-or shared library on a sleeping receiver. After the run the user reported that the intermittent startup pause seen
+awake receiver is not delayed. Second and third sleep cycles through the C
+interface (`airplay2-api-host`, static and shared) also passed (user: everything
+worked as expected). Windows static 31/31 and shared 32/32. Not run: more sleep
+cycles, the UWP host on a sleeping receiver. After the run the user reported that the intermittent startup pause seen
 since D38 was observed when the Apple TV was waking from sleep, which makes D56
 its likely cause and fix; the earlier runs were not repeated. Record:
 [receiver-validation.md](receiver-validation.md#casting-to-a-sleeping-receiver-d56-2026-10-08).

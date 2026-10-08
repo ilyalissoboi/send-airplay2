@@ -180,8 +180,8 @@ Why: on the recorded Apple TV a cast to a sleeping receiver reported `playing`,
 then paused or stopped within about 1.6 s while tvOS finished waking and returned
 to Home (the user saw the first frame, then Home). Its count went 0, then 1
 when our playback woke it, then 0 and 1 again within about 2 s. Waking first and
-starting after the count settled played normally in two sleep cycles, through the
-CLI and the C interface ([D56 record](receiver-validation.md#casting-to-a-sleeping-receiver-d56-2026-10-08)).
+starting after the count settled played normally in three sleep cycles, through the
+CLI and the C interface (static and shared) ([D56 record](receiver-validation.md#casting-to-a-sleeping-receiver-d56-2026-10-08)).
 
 ## Remote-Stop diagnostics (D40)
 
