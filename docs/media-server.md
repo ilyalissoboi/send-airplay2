@@ -59,7 +59,9 @@ and public file/StorageFile/content-URI adapters remain future work.
   uses plaintext HTTP: these restrictions do not authenticate peers or encrypt
   media, and IP spoofing/proxies/NAT are outside this access policy.
 - `max_connections` is 1..16 (default 4). One network executor and at most that
-  many source worker threads run. No unbounded application connection/task queue
+  many source worker threads run. The workers are the server's own `std::thread`
+  pool over one `io_context`, not `asio::thread_pool`, which aborts on join in
+  UWP builds (D55, [uwp-native-build.md](uwp-native-build.md)). No unbounded application connection/task queue
   exists; acceptance pauses at the limit. The OS manages its bounded listen
   backlog. Cancelled sessions retain their admission slot until their source
   callback and pending network operation finish, so cancellation cannot create an unbounded callback queue.

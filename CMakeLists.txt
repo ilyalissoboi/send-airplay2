@@ -7,6 +7,11 @@ if(TARGET botan::botan)
   set(sap2_botan_target botan::botan)
 else()
   set(sap2_botan_target botan::botan-static)
+  # On MSVC, Botan's ffi.h declares functions dllimport unless BOTAN_DLL is
+  # defined; static Botan (the UWP build, D55) needs plain declarations.
+  if(MSVC)
+    set_property(TARGET botan::botan-static APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "BOTAN_DLL=")
+  endif()
 endif()
 find_package(Threads REQUIRED)
 find_package(Boost 1.92 CONFIG REQUIRED COMPONENTS beast asio)
@@ -35,7 +40,15 @@ if(BUILD_SHARED_LIBS)
 endif()
 if(WIN32)
   target_compile_definitions(send_airplay2 PRIVATE _WIN32_WINNT=0x0A00)
-  target_link_libraries(send_airplay2 PRIVATE ws2_32 iphlpapi advapi32)
+  target_link_libraries(send_airplay2 PRIVATE ws2_32 iphlpapi)
+  # Credential Manager is desktop-only; app (UWP) builds compile it out (D49, D55).
+  if(NOT WINDOWS_STORE)
+    target_link_libraries(send_airplay2 PRIVATE advapi32)
+  else()
+    # Beast's Win32 file backend uses desktop-only CreateFileW; the library
+    # serves host callbacks and never opens files through Beast.
+    target_compile_definitions(send_airplay2 PRIVATE BOOST_BEAST_USE_WIN32_FILE=0)
+  endif()
 endif()
 function(sap2_warnings target)
   if(MSVC)
@@ -45,6 +58,24 @@ function(sap2_warnings target)
   endif()
 endfunction()
 sap2_warnings(send_airplay2)
+# A UWP (WindowsStore) build produces the AppContainer library only: its
+# programs and tests could not run outside a package (docs/uwp-native-build.md).
+if(WINDOWS_STORE)
+  # vcpkg copies dependency DLLs only next to programs. Stage OpenSSL's
+  # libcrypto, the library's only dependency DLL (Botan is static), beside it
+  # so one directory holds everything a package needs.
+  if(BUILD_SHARED_LIBS AND DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+    file(GLOB sap2_store_release_dlls "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/libcrypto-*.dll")
+    file(GLOB sap2_store_debug_dlls "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/libcrypto-*.dll")
+    add_custom_command(TARGET send_airplay2 POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<IF:$<CONFIG:Debug>,${sap2_store_debug_dlls},${sap2_store_release_dlls}>"
+        "$<TARGET_FILE_DIR:send_airplay2>"
+      COMMAND_EXPAND_LISTS)
+  endif()
+  message(STATUS "WindowsStore build: library only; tools and tests are skipped")
+  return()
+endif()
 # Host auth is private C++; compile it directly, without exporting secrets through the DLL ABI.
 add_executable(airplay2-cli src/cli.cpp src/auth_cli.cpp src/serve_cli.cpp src/cast_cli.cpp src/cli_input.cpp src/file_media_source.cpp ${sap2_auth_sources} ${sap2_session_sources})
 target_include_directories(airplay2-cli PRIVATE src)

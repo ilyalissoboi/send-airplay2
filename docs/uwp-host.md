@@ -1,7 +1,7 @@
 # Packaged UWP test host (D53)
 
 Status: **receiver-tested on one Apple TV / Windows host, 2026-10-08** (D53; discovery
-D54). D49 step 2b:
+D54; UWP-built native library D55). D49 step 2b:
 the [C# binding](csharp-binding.md) inside a packaged UWP app built the way
 Screenbox is, to measure what Screenbox would meet. Sideloaded locally; not part
 of CI. Record: [receiver-validation.md](receiver-validation.md#packaged-uwp-host-d53-2026-10-08)
@@ -12,8 +12,10 @@ and its [artifact](validation/native-uwp-host-windows-2026-10-08.json).
 `tools/uwp-host` is a modern .NET UWP app (`net10.0-windows10.0.26100.0`,
 `UseUwp`, Native AOT, `DisableRuntimeMarshalling`, MSIX tooling, CsWinRT 2.3.1,
 x64), matching the toolchain settings of Screenbox's project. It packages the
-shared native library (`send_airplay2.dll`, `libcrypto-3-x64.dll`, `botan-3.dll`)
-and provides:
+UWP-built native library (`send_airplay2.dll` and `libcrypto-3-x64.dll` from
+`build-uwp\Release`, [uwp-native-build.md](uwp-native-build.md)); pass
+`/p:Sap2NativeDir=<dir>` to package another build, such as the desktop shared one
+(which also needs `botan-3.dll`). It provides:
 
 - a **PasswordVault host store** (`PasswordVaultStore`): one credential per
   profile under the resource `send-airplay2`, the record as Base64;
@@ -25,7 +27,13 @@ and provides:
   receiver whose name equals "Receiver name to find" fills the address box.
   Names and addresses are compared, never logged;
 - a fixed-field log in `LocalState\host-log.txt` (no address, PIN, path, URL or
-  receiver name), so a run can be read back from outside the app.
+  receiver name), so a run can be read back from outside the app;
+- a **native abort trace** (D55, `NativeAbortTrace`): a `SIGABRT` handler that
+  logs the native stack as module+offset frames when anything calls `abort()`
+  (including `std::terminate`), since a packaged app gets no crash dump without
+  machine-wide settings. Resolve the offsets with a linker map of the same build;
+- a cast that ends by itself (end of media, receiver Stop/Home, connection loss)
+  frees the app's single cast slot, so the next Cast works without Stop.
 
 Two manifests share one identity (and so one PasswordVault locker):
 `Package.appxmanifest` with Screenbox's network capabilities (`internetClient`,
@@ -34,16 +42,16 @@ adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
 Switching variants keeps the app's data only as an in-place update, which
 Windows allows only to a higher version. Before building the other variant,
 raise its `Version` above the installed one (the committed manifests are
-0.1.4.0 and 0.1.5.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, and D54
-used 0.1.4.0).
+0.1.12.0 and 0.1.13.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
+0.1.4.0 and D55 used 0.1.6.0, 0.1.8.0, 0.1.10.0 and 0.1.12.0).
 Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
 registers a lower version over a higher one (untested here).
 
 ## Build and install (Windows, Developer Mode)
 
-Build the shared native library first (`build-shared`, Release). Then, from a
-shell where `vswhere.exe` is on `PATH` (the Native AOT linker step calls it by
-name):
+Build the UWP native library first (`build-uwp`, Release; see
+[uwp-native-build.md](uwp-native-build.md)). Then, from a shell where
+`vswhere.exe` is on `PATH` (the Native AOT linker step calls it by name):
 
 ```powershell
 $env:PATH += ';C:\Program Files (x86)\Microsoft Visual Studio\Installer'
@@ -55,8 +63,11 @@ $env:PATH += ';C:\Program Files (x86)\Microsoft Visual Studio\Installer'
 
 The unsigned `.msix` lands in `tools/uwp-host/AppPackages`. Extract it to a folder
 and register that layout with `Add-AppxPackage -Register <folder>\AppxManifest.xml`.
-Remove it afterwards with `Get-AppxPackage SendAirPlay2.UwpHost | Remove-AppxPackage`
-(this also deletes the app's data, including its PasswordVault locker entries).
+Remove it afterwards with `Get-AppxPackage SendAirPlay2.UwpHost | Remove-AppxPackage`.
+That deletes `LocalState`, but the D55 session found the D53 PasswordVault
+credential still present after D54's registration had started with an empty
+`LocalState`, so removal apparently leaves the app's locker entries. Remove them
+with `Pairing.ForgetProfile` before uninstalling if they should go.
 
 Toolchain notes found while building: an AOT publish needs `SelfContained=true`;
 the ILCompiler link step needs `vswhere.exe` on `PATH`; the MSIX tooling declares a
@@ -74,6 +85,8 @@ warnings for the binding.
 | Cast, PasswordVault | Public | plus `internetClientServer` | **Pass**: normal video and audio |
 | Cast and controls, PasswordVault | Private | Screenbox's set | **Pass**: video and audio, pause, both seeks, Home after Stop |
 | Discover (D54, 0.1.4.0, fresh registration) | Private | Screenbox's set | **Pass**: one receiver, the expected name, IPv4 address filled in |
+| UWP-built library (D55, 0.1.6.0) | Private | Screenbox's set | Loads with the app C runtime from VCLibs; built-in store `unsupported`; discover and cast pass, but the app **crashed at every Stop** (Asio `winapp_thread`) |
+| UWP-built library with the reader-pool fix (D55, 0.1.10.0, 0.1.12.0) | Private | Screenbox's set | **Pass**: cast, pause, play, both seeks, Stop and a second cast in one process; a cast ended by remote Home frees the slot; Home after Stop |
 
 ## What this means for Screenbox
 
@@ -83,14 +96,14 @@ warnings for the binding.
   need `internetClientServer`, a capability decision for the Screenbox fork.
 - A UWP host cannot use the library's Credential Manager store at all, so it
   needs a host store such as `PasswordVaultStore`, as D49 decided.
-- The native library was built for the desktop C runtime and loaded only because
-  that runtime is installed system-wide. A UWP-correct build (D49 step 3) must
-  target the app C runtime and leave out the Credential Manager adapter.
+- The UWP-built library (D55) links the app C runtime, carries the AppContainer
+  flag and has no Credential Manager; D53's desktop-built DLLs had loaded only
+  because the desktop C runtime is installed system-wide.
 
 - Multicast discovery works inside the AppContainer with
   `privateNetworkClientServer` on a Private network (D54). Public networks were
   not measured for discovery.
 
-Not covered: discovery on a Public network, a cast to the discovered address
-inside the app, PasswordVault roaming, desktop provisioning of the app's locker,
+Not covered: discovery on a Public network, pairing through the UWP-built
+library, PasswordVault roaming, desktop provisioning of the app's locker,
 Store certification (WACK), and x86/ARM64.

@@ -7,17 +7,19 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: C discovery interface (D54)
+## 0. Resume here: UWP native build (D55, D49 step 3)
 
-**Active slice: the C discovery interface (D54).** The user merged PR #18 (the
-packaged UWP test host, D53) as `271d1e0` and asked to proceed with the C
-discovery API. Branch `claude/discovery-c-api` adds
-[`receivers.h`](../include/send_airplay2/receivers.h), the C#
-`Receivers.Discover` wrapper, `airplay2-api-host --discover` and a Discover
-button in the UWP host. Scans found the recorded Apple TV from native hosts and
-inside the AppContainer (Private network); see
-[public-api.md](public-api.md#receiver-discovery-d54) and the D54 record in
-section 4.
+**Active slice: the UWP native build (D55).** The user merged PR #19 (the C
+discovery interface, D54) as `ac7717f` and asked to proceed with the UWP native
+build. Branch `claude/uwp-native-build` builds the library for app packages
+(CMake WindowsStore, vcpkg `x64-uwp`, a Botan overlay port), compiles out
+Credential Manager, fixes a Stop crash specific to app builds and adds a CI
+build check. The packaged UWP host cast, controlled and stopped repeatedly with
+it on the recorded Apple TV; see [uwp-native-build.md](uwp-native-build.md) and
+the D55 record in section 4.
+
+The C discovery interface (D54) is merged; see
+[public-api.md](public-api.md#receiver-discovery-d54).
 
 The packaged UWP test host (D53) is merged; see [uwp-host.md](uwp-host.md).
 
@@ -973,6 +975,32 @@ the user saw the app's address box fill. Not run: Public networks, a cast from
 the discovered address inside the app, departure/interface changes, several
 receivers, other platforms. Record:
 [receiver-validation.md](receiver-validation.md#c-discovery-interface-d54-2026-10-08).
+*Corrected by D55:* the app's PasswordVault was not empty; the D53 credential
+had survived.
+
+**D55 (UWP native build, 2026-10-08):** the user merged PR #19 and asked to
+proceed with the UWP native build (D49 step 3); for the hardware run they chose
+the full procedure. Engineering choices: CMake `WindowsStore` with vcpkg's
+community `x64-uwp` triplet and a separate installed directory; library only
+(tools and tests skipped); a `vcpkg-overlays/ports/botan` overlay (vcpkg's port
+plus, for UWP only, `--os=uwp`, a minimized module set and static linkage,
+because Botan's uwp target has no shared libraries); `BOTAN_DLL=` for static
+Botan on MSVC; Credential Manager compiled out by the `WINAPI_PARTITION_DESKTOP`
+check, so the built-in store reports unsupported; `BOOST_BEAST_USE_WIN32_FILE=0`;
+`libcrypto` staged beside the library; the UWP host packages `build-uwp\Release`
+by default. Static checks: AppContainer flag, `VCRUNTIME140_APP`, no `ADVAPI32`
+or Botan DLL (`scripts/check_uwp_binaries.ps1`, also a new CI job). **Found on
+hardware:** every Stop aborted the app. A `SIGABRT` stack trace added to the
+host resolved it to `asio::thread_pool::join`: Boost 1.92's app-mode
+`winapp_thread::join()` leaves the thread joinable and its destructor calls
+`std::terminate`. The media server now uses its own `std::thread` reader pool.
+After the fix, casts with pause/play/seeks, repeated Stops in one process and a
+remote-Home end all passed, and the host now frees the slot of a cast that ended
+by itself. Windows static 31/31 and shared 32/32; the desktop suite also passed
+with Asio's select reactor forced (32/32). Not run: WACK (needs elevation),
+x86/ARM64, a device without VCLibs, Public networks with this build, pairing
+through it. Record:
+[receiver-validation.md](receiver-validation.md#uwp-native-build-d55-2026-10-08).
 
 ## 5. Implemented code and verification
 

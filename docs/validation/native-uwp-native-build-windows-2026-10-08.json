@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-08",
+  "decision": "D55",
+  "scope": "D49 step 3: the native library built for UWP (CMake WindowsStore, vcpkg x64-uwp with a Botan overlay port), packaged in the UWP test host and used on the recorded Apple TV. Includes the diagnosis and fix of a Stop crash specific to app builds. Observer answers are recorded separately from telemetry.",
+  "receiver": {
+    "name": "Living Room",
+    "hardware": "Apple TV 4K (AppleTV14,1)",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_scope": "Prior user report, assumed unchanged; not queried during this test."
+  },
+  "host": "Windows 11 x64 (10.0.26200), Developer Mode on, network category Private (read, not changed); Visual Studio 2026 18.10.2, Windows SDK 10.0.28000.0, .NET SDK 10.0.401",
+  "source_base": "ac7717f6d1eb140b2530ec226c5954488db4d211",
+  "tested_source_blobs": {
+    "CMakeLists.txt": "93faffe82e3f5f5f1399077ae2357fdf7f8c253f",
+    "src/credential_store.cpp": "83b5d94ebe682fb3108f19bfea38983c6f7f640b",
+    "src/media_server.cpp": "213473507d995feb33af2a530a691d37346aad86",
+    "vcpkg-overlays/ports/botan/portfile.cmake": "81f091eb95ccfa52342fe0d44c753f71332c3592",
+    "vcpkg-overlays/ports/botan/vcpkg.json": "a8b30b2e500469a8010b57bed59186696f6a4956",
+    "tools/uwp-host/App.xaml.cs": "24645cc8b5081e889530fd7df33c01c0cfb2f589",
+    "tools/uwp-host/MainPage.xaml.cs": "2fab767f70cd00efdbcdffb9ca0b1ecfac32e398",
+    "tools/uwp-host/NativeAbortTrace.cs": "f0588a87f083dc3385d364225dfa3fcf2a62e803",
+    "tools/uwp-host/SendAirPlay2.UwpHost.csproj": "22d51c8b0da23f27de3f58402f7d8ea53f5937ae",
+    "tools/uwp-host/Package.appxmanifest": "e1eccee4fbeae4b7b102ed1282ba15e6e1860a3a",
+    "scripts/check_uwp_binaries.ps1": "ab53de010fa5cf2d2709d77bdc22c84be3b98803"
+  },
+  "dependencies": {
+    "triplet": "x64-uwp (vcpkg community triplet, dynamic CRT and libraries)",
+    "openssl": "3.6.5 (vcpkg port, DLL libcrypto-3-x64.dll)",
+    "botan": "3.12.0#1 (repository overlay port: --os=uwp, minimized to ffi,srp6,sha2_64,system_rng,ed25519, static)",
+    "boost": "1.92.0 headers (Asio, Beast)"
+  },
+  "static_checks": {
+    "tool": "scripts/check_uwp_binaries.ps1 (dumpbin)",
+    "send_airplay2.dll": "App Container flag; links VCRUNTIME140_APP.dll, VCRUNTIME140_1_APP.dll and MSVCP140_APP.dll; no ADVAPI32.dll, no Credential Manager imports, no Botan DLL",
+    "libcrypto-3-x64.dll": "App Container flag; links VCRUNTIME140_APP.dll",
+    "negative_control": "The same script fails on the desktop shared build (no AppContainer flag, desktop VCRUNTIME140.dll, ADVAPI32 and botan-3.dll)",
+    "runtime_modules": "Inside the running 0.1.6.0 app, VCRUNTIME140_APP.dll, VCRUNTIME140_1_APP.dll and MSVCP140_APP.dll were loaded from the Microsoft.VCLibs.140.00 14.0.33519.0 framework package; send_airplay2.dll and libcrypto-3-x64.dll from the package; no desktop VCRUNTIME140.dll or botan-3.dll"
+  },
+  "binaries_sha256": {
+    "send_airplay2.dll before the Stop fix (0.1.6.0)": "8f36ae3746d0f01b1b208a9c2ca89d75c7f6038ab26b98a73995c601c2848953",
+    "send_airplay2.dll RelWithDebInfo with linker map, before the fix (0.1.8.0)": "7b73944efd9a41301dda1066fcbc25e637d1c7d5521ccf608fc9ee45fcdc5e45",
+    "send_airplay2.dll Release with the fix (0.1.10.0 and 0.1.12.0)": "522a48f7fb268b5e97f06bc0242e5e9e95621b4fad772ba8f5f74aaed0a77f79",
+    "libcrypto-3-x64.dll (x64-uwp)": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+    "SendAirPlay2.UwpHost.exe 0.1.6.0": "d0019eb7394b3370f45f93cbc8bb921f1bf1495d8045736c7c170c123708d13f",
+    "SendAirPlay2.UwpHost.exe 0.1.12.0": "16e7522947c5b6a03df7684821824b126da43c48ce06c2301fcedb7ab0435a92"
+  },
+  "runs": [
+    {
+      "variant": "0.1.6.0: UWP-built library before the fix",
+      "log": [
+        "06:24:39.426 Native library loaded: API version 2",
+        "06:26:04.480 Built-in store probe (remove absent profile): unsupported",
+        "06:26:04.481 PasswordVault credentials under 'send-airplay2': 1",
+        "06:26:14.887 Discover: ok receivers=1",
+        "06:26:18.587 Pair: profile_exists",
+        "06:26:39.424 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no",
+        "06:26:57.389 State: Paused",
+        "06:27:02.630 Ended: phase=Ended state=Paused end=ConnectionLost owned=yes position=0.4 failure=UrlEvents/Disconnected cleaned=no",
+        "06:28:11.339 Cast: stop the current cast first",
+        "(relaunched)",
+        "06:29:32.062 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no",
+        "06:29:48.972 Control pause: ok",
+        "06:30:02.439 Control play: ok",
+        "06:30:14.987 Control seek 60: ok",
+        "06:30:28.089 Control seek 10: ok",
+        "06:30:44.189 Ended: phase=Ended state=Playing end=SenderStop owned=yes position=25.4 failure=None/None cleaned=no"
+      ],
+      "event_log": "Application Error 1000 at 06:28:14 and 06:30:44 UTC: SendAirPlay2.UwpHost.exe, faulting module ucrtbase.dll 10.0.26100.9444, exception 0xc0000409, offset 0xa527e (abort+0x4e)",
+      "observer": "The user reported that the initial cast attempt failed because the receiver was asleep, and that after waking it manually the procedure worked normally: video played, pause, play and seek worked, and the TV went to Home after Stop. The user relaunched the app after the first session; it had closed (see event_log)."
+    },
+    {
+      "variant": "0.1.8.0: RelWithDebInfo library with a linker map, plus the host's SIGABRT stack trace",
+      "abort_trace_resolved": [
+        "send_airplay2.DLL+0xa040 boost::asio::detail::deallocate_object<thread_group::item> (media_server.obj)",
+        "send_airplay2.DLL+0x28b46 boost::asio::thread_pool::join (media_server.obj)",
+        "send_airplay2.DLL+0x38735 send_airplay2::MediaServer::Impl::stop (media_server.obj)",
+        "send_airplay2.DLL+0x7cb8b send_airplay2::detail::CastController::stop (cast_controller.obj)",
+        "send_airplay2.DLL+0x7e648 sap2_cast_stop (playback_api.obj)"
+      ],
+      "cause": "Boost 1.92 Asio in WINAPI_FAMILY_APP builds uses winapp_thread, whose join() waits but leaves arg_ set; its destructor then calls std::terminate. Every joined asio::thread_pool therefore aborts in app builds. Desktop builds use win_thread.",
+      "observer": "The app closed again after Stop."
+    },
+    {
+      "variant": "0.1.10.0: Release library with the media server's own reader pool (std::thread over one io_context)",
+      "log": [
+        "09:35:18.122 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no",
+        "09:36:04.486 Control pause: ok",
+        "09:36:14.169 Control play: ok",
+        "09:36:28.786 Control seek 60: ok",
+        "09:36:41.079 Control seek 10: ok",
+        "09:36:45.700 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=14.0 failure=None/None cleaned=yes",
+        "09:36:45.701 Cast disposed; media source released",
+        "09:36:57.281 Cast: stop the current cast first",
+        "09:36:57.680 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no",
+        "09:37:03.638 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=7.1 failure=None/None cleaned=yes",
+        "09:37:03.639 Cast disposed; media source released"
+      ],
+      "event_log": "No application error",
+      "observer": "The app stayed open after both Stops; video and audio normal; Home after Stop."
+    },
+    {
+      "variant": "0.1.12.0: as 0.1.10.0, and the host frees the slot of a cast that ended by itself",
+      "log": [
+        "09:41:34.138 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.6 failure=None/None cleaned=no",
+        "09:42:17.625 Ended: phase=Ended state=Playing end=ConnectionLost owned=yes position=44.3 failure=UrlEvents/Disconnected cleaned=no",
+        "09:42:17.649 Ended cast released; media source released",
+        "09:42:54.272 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no",
+        "09:43:13.010 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=19.8 failure=None/None cleaned=yes",
+        "09:43:13.011 Cast disposed; media source released"
+      ],
+      "event_log": "No application error",
+      "observer": "The user pressed TV/Home on the remote during the first cast; the second cast started without pressing Stop; the app stayed open; video and audio normal; Home after Stop."
+    }
+  ],
+  "result": "PASS for these runs: the UWP-built library loads in the AppContainer with the app C runtime from the VCLibs framework, reports the built-in store as unsupported, discovers, casts with PasswordVault credentials, controls and stops repeatedly in one process after the reader-pool fix.",
+  "correction_to_d54": "D54 recorded that the app's PasswordVault was empty after a fresh registration. In this session the vault still held one credential and pairing the D53 profile was refused with profile_exists, so the D53 credential had survived. Casts here used that D53 credential; no new pairing was made.",
+  "not_run": [
+    "Windows App Certification Kit (needs an elevated shell)",
+    "x86 and ARM64 builds (vcpkg arm-uwp triplets; Botan's ARM32 UWP support is unknown)",
+    "A clean device without the VCLibs framework installed beforehand",
+    "Public networks or internetClientServer with the UWP-built library",
+    "Pairing through the UWP-built library (the profile already existed)",
+    "Natural end of media with the slot release (only remote Home was used)"
+  ],
+  "handling": "The receiver address stayed in the app's address box; logs hold fixed fields only. No firewall, network, credential or receiver setting changed by the agent; the user woke the receiver."
+}
