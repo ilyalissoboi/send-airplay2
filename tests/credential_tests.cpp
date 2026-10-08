@@ -20,6 +20,24 @@
 #endif
 #include <windows.h>
 #include <wincred.h>
+#elif defined(__APPLE__)
+#include <TargetConditionals.h>
+#if TARGET_OS_OSX
+#define SAP2_TEST_KEYCHAIN 1
+#include <CoreFoundation/CoreFoundation.h>
+#include <Security/Security.h>
+#include <mach-o/dyld.h>
+#include <signal.h>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <chrono>
+#include <cstring>
+#include <thread>
+extern char** environ;
+#endif
+#endif
+#if defined(_WIN32) || defined(SAP2_TEST_KEYCHAIN)
+#define SAP2_TEST_NATIVE_STORE 1
 #endif
 
 using namespace send_airplay2::detail;
@@ -357,7 +375,7 @@ void workflow_tests() {
     require(scenario.loads == 1, "pre-cancel does not read storage");
 }
 
-#ifdef _WIN32
+#ifdef SAP2_TEST_NATIVE_STORE
 // Tests use only random, synthetic namespace entries, never application credentials.
 class TestSlot {
     CredentialStore& store_;
@@ -389,6 +407,7 @@ public:
     TestSlot(TestSlot&&) = delete;
     TestSlot& operator=(TestSlot&&) = delete;
 };
+#ifdef _WIN32
 void verify_in_child_process(const std::string& profile) {
     std::wstring path(32768, L'\0');
     const auto size = GetModuleFileNameW(nullptr, path.data(), static_cast<DWORD>(path.size()));
@@ -422,6 +441,86 @@ void verify_in_child_process(const std::string& profile) {
     require(GetExitCodeProcess(child.hProcess, &exit_code) && exit_code == 0,
             "credentials persist across independent process");
 }
+/// A one-byte record where the store expects an encoded credential.
+void write_malformed_slot(const std::string& profile) {
+    auto target = L"send-airplay2/tests/v1/" + std::wstring(profile.begin(), profile.end());
+    unsigned char invalid[] = {0xff};
+    wchar_t marker[] = L"send-airplay2-v1";
+    CREDENTIALW record{};
+    record.Type = CRED_TYPE_GENERIC;
+    record.TargetName = target.data();
+    record.UserName = marker;
+    record.Persist = CRED_PERSIST_LOCAL_MACHINE;
+    record.CredentialBlob = invalid;
+    record.CredentialBlobSize = 1;
+    require(CredWriteW(&record, 0) != 0, "write owned malformed synthetic slot");
+}
+#else
+/// The same test binary re-run as a separate process (posix_spawn), so the item
+/// is read back without any in-process state.
+void verify_in_child_process(const std::string& profile) {
+    std::uint32_t capacity = 0;
+    (void)_NSGetExecutablePath(nullptr, &capacity);
+    std::string path(capacity, '\0');
+    require(_NSGetExecutablePath(path.data(), &capacity) == 0, "child executable path");
+    path.resize(std::strlen(path.c_str()));
+    std::string flag = "--load-synthetic";
+    std::string slot = profile;
+    char* arguments[] = {path.data(), flag.data(), slot.data(), nullptr};
+    pid_t child = 0;
+    require(posix_spawn(&child, path.c_str(), nullptr, nullptr, arguments, environ) == 0,
+            "launch independent credential reader");
+    using namespace std::chrono_literals;
+    const auto deadline = std::chrono::steady_clock::now() + 10s;
+    int status = 0;
+    for (;;) {
+        const auto done = waitpid(child, &status, WNOHANG);
+        if (done == child) {
+            break;
+        }
+        require(done == 0, "wait for independent credential reader");
+        if (std::chrono::steady_clock::now() >= deadline) {
+            (void)kill(child, SIGKILL);
+            (void)waitpid(child, &status, 0);
+            throw std::runtime_error("independent credential reader timed out");
+        }
+        std::this_thread::sleep_for(20ms);
+    }
+    require(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+            "credentials persist across independent process");
+}
+/// A one-byte item where the store expects an encoded credential, in the test
+/// service the synthetic namespace uses.
+void write_malformed_slot(const std::string& profile) {
+    const auto release = [](CFTypeRef value) {
+        if (value) {
+            CFRelease(value);
+        }
+    };
+    const auto service = CFStringCreateWithCString(kCFAllocatorDefault, "send-airplay2/tests/v1",
+                                                   kCFStringEncodingUTF8);
+    const auto account =
+        CFStringCreateWithCString(kCFAllocatorDefault, profile.c_str(), kCFStringEncodingUTF8);
+    const UInt8 invalid[] = {0xff};
+    const auto data = CFDataCreate(kCFAllocatorDefault, invalid, sizeof(invalid));
+    const auto item = CFDictionaryCreateMutable(
+        kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    OSStatus status = errSecParam;
+    if (service && account && data && item) {
+        CFDictionarySetValue(item, kSecClass, kSecClassGenericPassword);
+        CFDictionarySetValue(item, kSecAttrService, service);
+        CFDictionarySetValue(item, kSecAttrAccount, account);
+        CFDictionarySetValue(item, kSecValueData, data);
+        status = SecItemAdd(item, nullptr);
+    }
+    release(item);
+    release(data);
+    release(account);
+    release(service);
+    require(status == errSecSuccess,
+            "write owned malformed synthetic slot (status " + std::to_string(status) + ")");
+}
+#endif
 void native_store_tests() {
     auto store = native_credential_store(CredentialNamespace::synthetic_test);
     TestSlot slot(*store);
@@ -462,18 +561,7 @@ void native_store_tests() {
     same_credentials(*reloaded, *credentials, "winning native write intact");
 
     TestSlot malformed(*store);
-    auto target = L"send-airplay2/tests/v1/" +
-                  std::wstring(malformed.profile.begin(), malformed.profile.end());
-    unsigned char invalid[] = {0xff};
-    wchar_t marker[] = L"send-airplay2-v1";
-    CREDENTIALW record{};
-    record.Type = CRED_TYPE_GENERIC;
-    record.TargetName = target.data();
-    record.UserName = marker;
-    record.Persist = CRED_PERSIST_LOCAL_MACHINE;
-    record.CredentialBlob = invalid;
-    record.CredentialBlobSize = 1;
-    require(CredWriteW(&record, 0) != 0, "write owned malformed synthetic slot");
+    write_malformed_slot(malformed.profile);
     malformed.owned = true;
     rejects<CredentialException>([&] { (void)store->load(malformed.profile); },
                                  "native malformed record rejected");
@@ -498,7 +586,7 @@ void native_store_tests() {
 } // namespace
 int main(int argc, char** argv) {
     try {
-#ifdef _WIN32
+#ifdef SAP2_TEST_NATIVE_STORE
         if (argc == 3 && std::string_view(argv[1]) == "--load-synthetic") {
             auto store = native_credential_store(CredentialNamespace::synthetic_test);
             auto credentials = store->load(argv[2]);

@@ -37,6 +37,13 @@ OpenSSL package. Keep the dependency on a supported release; 3.5 is the upstream
 LTS series, while the pinned 3.6 series requires an update before its November
 2026 end of support. [Upstream release lifecycle](https://openssl-library.org/source/)
 
+## macOS Security framework (D58)
+
+The macOS built-in credential store uses the system Security and CoreFoundation
+frameworks (`-framework Security -framework CoreFoundation`), which ship with
+macOS. No package, source or license file is added; see
+[credential-storage.md](credential-storage.md#macos-login-keychain-d58).
+
 ## UWP builds: Botan overlay port (D55)
 
 `vcpkg-overlays/ports/botan` copies vcpkg's MIT-licensed `botan` port files

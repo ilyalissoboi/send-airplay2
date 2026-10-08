@@ -1,9 +1,11 @@
 # Credential storage and authentication CLI
 
-Implemented as private host code on Windows desktop. The library's public ABI
-does not expose signing seeds or credential serialization. Linux/macOS builds
-exercise the portable codec/workflow but native storage reports unsupported;
-Android and packaged Windows/UWP storage/loading are unvalidated. This slice
+Implemented as private host code. The built-in stores are Windows desktop
+Credential Manager and, since D58, the macOS login keychain; the library's
+public ABI does not expose signing seeds or credential serialization. Linux
+builds exercise the portable codec/workflow but native storage reports
+unsupported; packaged Windows/UWP and Android hosts supply their own store
+(D49). This slice
 does not implement playback or establish Apple TV compatibility.
 
 The planned design for other platforms and packaged hosts (built-in stores plus a
@@ -56,6 +58,43 @@ writes. Cooperating writers cannot overwrite one another, including malformed
 entries. The mutex wait is bounded at five seconds; OS storage calls themselves
 are synchronous and are not cancellable. Other same-user applications are inside
 the trust boundary and can alter the store independently of this mutex.
+
+## macOS login keychain (D58)
+
+On macOS the built-in store keeps one generic password item per profile in the
+user's default keychain (normally the login keychain), through the SecItem API
+(`src/keychain_credential_store.cpp`). The item's service is `send-airplay2/v1`
+(`send-airplay2/tests/v1` for synthetic tests) and its account is the profile;
+the value is the version-1 envelope above, labelled "send-airplay2 credential".
+
+| Behavior | Implementation |
+| --- | --- |
+| Create only | `SecItemAdd` fails with `errSecDuplicateItem` for an existing service/account pair, including a malformed item, so no lock is needed |
+| Absent | `errSecItemNotFound` from `SecItemCopyMatching` or `SecItemDelete` |
+| Unavailable | Any other status (locked keychain without UI, access denied, no keychain); native messages are not surfaced |
+| Malformed | A value larger than 203 bytes or empty is `invalid_record`; the decoder checks the rest |
+| One keychain | Every operation names the default keychain (`kSecUseKeychain` for adds, `kSecMatchSearchList` for reads and deletes); otherwise reads and deletes would search the whole keychain search list while adds go to the default one (TN3137). `SecKeychainCopyDefault` is deprecated with no SecItem equivalent, so its warning is suppressed for that call |
+| Secret handling | The value passed to `SecItemAdd` is our own fixed-capacity mutable copy, erased before release; the CFData Security returns on load is immutable and cannot be erased by us, and Security's stored copy is outside our control |
+
+Engineering choice (D58): the **file-based keychain**, not the data protection
+keychain. Apple's TN3137 recommends the data protection keychain for new code,
+but it requires keychain-access-group entitlements authorized by a provisioning
+profile, and for library code the host process's entitlements decide. The CLI,
+tests and unsigned hosts have none. A signed macOS host that wants the data
+protection keychain can pass its own store through the C interface (D49). The
+file-based keychain is "on the road to deprecation" (not deprecated) and uses
+per-item access lists: the binary that created an item reads it without a
+prompt, and a different or rebuilt binary may get an "allow access" prompt.
+Items stay on this Mac; nothing synchronizes. Calls block the calling thread.
+
+Evidence (CI only): at `aa77c6d` the native-store tests ran against the real
+login keychain on GitHub's `macos-26-arm64` runner image, static and shared,
+and passed: roundtrip, a read from a separately spawned process, overwrite
+refusal, idempotent erase, exactly one winner of two racing writers, and a
+one-byte malformed item that loads as invalid and stays occupied. They create
+only random synthetic profiles in the test service and remove them. Not run: a
+developer Mac with prompts, a rebuilt binary reading an earlier item, Mac
+hardware casting, and Intel Macs.
 
 ## CLI workflow
 
@@ -138,7 +177,8 @@ remain separate authentication gates.
 
 All new adapters/code are original Apache-2.0 project code. No third-party
 implementation was copied and no runtime dependency was added. Windows uses
-the OS `Advapi32` credential/token APIs and kernel/console APIs; crypto remains
+the OS `Advapi32` credential/token APIs and kernel/console APIs; macOS uses the
+system Security and CoreFoundation frameworks (D58); crypto remains
 OpenSSL/Botan as recorded in [dependencies.md](dependencies.md).
 Primary contracts consulted:
 
@@ -149,3 +189,8 @@ Primary contracts consulted:
 - [Console modes](https://learn.microsoft.com/en-us/windows/console/setconsolemode)
   and [low-level input](https://learn.microsoft.com/en-us/windows/console/low-level-console-input-functions).
 - [Kernel object namespaces](https://learn.microsoft.com/en-us/windows/win32/termserv/kernel-object-namespaces).
+- [TN3137: On Mac keychain APIs and implementations](https://developer.apple.com/documentation/technotes/tn3137-on-mac-keychains),
+  [SecItemAdd](https://developer.apple.com/documentation/security/secitemadd(_:_:)),
+  [errSecDuplicateItem](https://developer.apple.com/documentation/security/errsecduplicateitem)
+  and [kSecUseDataProtectionKeychain](https://developer.apple.com/documentation/security/ksecusedataprotectionkeychain)
+  (read 2026-10-08 through Apple's documentation JSON).

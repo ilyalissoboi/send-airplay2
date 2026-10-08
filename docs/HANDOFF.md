@@ -7,15 +7,17 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: standalone items (D57 onward)
+## 0. Resume here: standalone items (D58-D59)
 
 **Active slices: the standalone items.** The user merged PR #21 (D56) as
 `99942d1` and asked to finish the standalone items except remote-Stop detection
-(deferred): UWP for other architectures with a certification kit run (D57,
-branch `claude/uwp-arm64-x86`), then built-in macOS Keychain and Linux Secret
-Service stores, each in its own PR. D57: x86 passed on the TV, ARM64 is built in
-CI only, and the kit failed only Supported APIs for the .NET AOT runtime in the
-host executable; see the D57 record in section 4.
+(deferred). UWP for other architectures with a certification kit run (D57) is
+merged (PR #22, `8ecb8b0`): x86 passed on the TV, ARM64 is built in CI only, and
+the kit failed only Supported APIs for the .NET AOT runtime in the host
+executable. D58 (branch `claude/macos-keychain`) adds the macOS login-keychain
+built-in store, which passed its native-store tests on CI's macOS runner; the
+Linux Secret Service store (D59) is stacked on it. See the D57 and D58 records
+in section 4.
 
 **Wake before play (D56) is merged.** The user had asked whether a cast can wake
 the receiver and chose the order: reproduce, check pyatv, fix. It records the receiver's MRP power reports in the start
@@ -1030,6 +1032,19 @@ as expected). The user ran the certification kit on the x64 host 0.1.12.0: 26 of
 27 tests pass; Supported APIs fails for six kernel32 calls in the host
 executable's .NET Native AOT runtime, none in the library. Record:
 [receiver-validation.md](receiver-validation.md#uwp-architectures-and-certification-kit-d57-2026-10-08).
+
+**D58 (macOS Keychain built-in store, 2026-10-08):** part of the standalone
+items. Research (Apple TN3137 and the SecItem reference): the SecItem API
+targets the file-based keychain by default; the data protection keychain needs
+keychain-access-group entitlements from a provisioning profile, and library
+code inherits the host's. Engineering choices: generic password items in the
+login keychain (service `send-airplay2/v1`, account = profile), create-only
+through `SecItemAdd`'s duplicate refusal, every other status unavailable;
+signed hosts that want the data protection keychain pass their own store. The
+native-store tests now run on macOS too and passed on CI's `macos-26-arm64`
+image, static and shared. Not run: a developer Mac, rebuilt-binary prompts,
+Intel Macs. Record:
+[credential-storage.md](credential-storage.md#macos-login-keychain-d58).
 
 **D56 (casting to a sleeping receiver, 2026-10-08):** the user asked whether a
 cast can wake the receiver remotely and chose the suggested order. Reproduced:

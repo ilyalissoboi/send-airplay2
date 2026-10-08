@@ -16,6 +16,13 @@
 #define SAP2_HAS_CREDENTIAL_MANAGER 1
 #endif
 #endif
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#if TARGET_OS_OSX
+#define SAP2_HAS_KEYCHAIN 1
+#include "keychain_credential_store.h"
+#endif
+#endif
 #ifdef SAP2_HAS_CREDENTIAL_MANAGER
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -194,8 +201,10 @@ std::unique_ptr<CredentialStore> native_credential_store(CredentialNamespace spa
     if (space != CredentialNamespace::application && space != CredentialNamespace::synthetic_test) {
         throw CredentialException(CredentialError::invalid_profile);
     }
-#ifdef SAP2_HAS_CREDENTIAL_MANAGER
+#if defined(SAP2_HAS_CREDENTIAL_MANAGER)
     return std::make_unique<WindowsCredentialStore>(space);
+#elif defined(SAP2_HAS_KEYCHAIN)
+    return keychain_credential_store(space);
 #else
     (void)space;
     throw CredentialException(CredentialError::unsupported);

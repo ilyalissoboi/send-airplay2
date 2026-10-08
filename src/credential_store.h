@@ -79,8 +79,9 @@ public:
     virtual bool erase(std::string_view profile) = 0;
 };
 enum class CredentialNamespace { application, synthetic_test };
-/// Windows desktop Credential Manager adapter (current user, same machine).
-/// Other platforms throw unsupported until a trusted adapter is implemented.
+/// Built-in store: Windows desktop Credential Manager (current user, same
+/// machine) or the macOS login keychain (keychain_credential_store.h). Other
+/// platforms, and UWP builds, throw unsupported; hosts there supply a store.
 /// Test namespace is separate and cannot be selected through CLI arguments.
 [[nodiscard]] std::unique_ptr<CredentialStore>
 native_credential_store(CredentialNamespace space = CredentialNamespace::application);

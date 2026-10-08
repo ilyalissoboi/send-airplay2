@@ -1,10 +1,12 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#21 are merged; `main` contains the
+Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#22 are merged; `main` contains the
 receiver-tested public playback interface (D46-D48), the D49 credential design,
 host stores plus pairing (D50-D51), the C# binding (D52), the packaged UWP test
-host (D53), the C discovery interface (D54), the UWP native build (D55) and wake
-before play (D56). UWP x86/ARM64 (D57) is on `claude/uwp-arm64-x86`.
+host (D53), the C discovery interface (D54), the UWP native build (D55), wake
+before play (D56) and UWP x86/ARM64 with a certification kit run (D57). The
+macOS Keychain store (D58) is on `claude/macos-keychain`; the Linux Secret
+Service store (D59) is stacked on it as `claude/linux-secret-service`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -12,10 +14,13 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slices (D57 onward):** the standalone items except remote-Stop
-  detection (deferred by the user): UWP x86/ARM64 and a certification kit run
-  (D57, `claude/uwp-arm64-x86`), then macOS Keychain and Linux Secret Service
-  stores, each with its own PR (find them with `gh pr list --state open`).
+- **Active slices (D58-D59):** the rest of the standalone items (remote-Stop
+  detection is deferred by the user): the macOS Keychain store (D58,
+  `claude/macos-keychain`) and the Linux Secret Service store (D59,
+  `claude/linux-secret-service`, stacked on D58), each with its own PR (find
+  them with `gh pr list --state open`).
+- [PR #22](https://github.com/ilyalissoboi/send-airplay2/pull/22), UWP x86/ARM64
+  and a certification kit run (D57), was merged by the user as `8ecb8b0`.
 - [PR #21](https://github.com/ilyalissoboi/send-airplay2/pull/21), wake before
   play (D56), was merged by the user as `99942d1`.
 - [PR #20](https://github.com/ilyalissoboi/send-airplay2/pull/20), the UWP native
