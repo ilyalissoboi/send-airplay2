@@ -43,8 +43,11 @@ LTS series, while the pinned 3.6 series requires an update before its November
 from the pinned vcpkg commit `434307da09bc05b2c86996dccc8b2351fc0d5d37` and
 changes them only for UWP targets: static linkage, Botan's `--os=uwp`, a
 minimized module set (`ffi`, `srp6`, `sha2_64`, `system_rng`, `ed25519`) and no
-`botan-cli`. Botan's source and version are unchanged (3.12.0, BSD-2-Clause);
-only UWP builds pass the overlay. See [uwp-native-build.md](uwp-native-build.md).
+`botan-cli`. vcpkg's copyright and MIT permission notice is reproduced in
+[`vcpkg-overlays/LICENSE-vcpkg.txt`](../vcpkg-overlays/LICENSE-vcpkg.txt)
+(vcpkg's `LICENSE.txt` at that commit, unchanged); the repository's Apache-2.0
+license does not cover those files. Botan's source and version are unchanged
+(3.12.0, BSD-2-Clause); only UWP builds pass the overlay. See [uwp-native-build.md](uwp-native-build.md).
 Those builds also use vcpkg's community `x64-uwp` triplet for OpenSSL and Boost.
 
 ## Botan SRP and key validation

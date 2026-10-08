@@ -55,8 +55,8 @@ configuration and runs the binary check (job `uwp`).
 ### Botan overlay port
 
 `vcpkg-overlays/ports/botan` is vcpkg's `botan` port at the pinned vcpkg commit
-`434307da09bc05b2c86996dccc8b2351fc0d5d37` (MIT-licensed port files; Botan
-itself is BSD-2-Clause), with changes that apply only when the target is UWP:
+`434307da09bc05b2c86996dccc8b2351fc0d5d37` (MIT-licensed port files, notice in
+`vcpkg-overlays/LICENSE-vcpkg.txt`; Botan itself is BSD-2-Clause), with changes that apply only when the target is UWP:
 `"supports": "!uwp"` removed, `port-version` 1, static linkage forced,
 `--os=uwp`, a minimized build of the modules the library uses (`ffi`, `srp6`,
 `sha2_64`, `system_rng`, `ed25519`) and no `botan-cli`. Botan's `uwp` target
