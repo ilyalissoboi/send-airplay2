@@ -41,7 +41,9 @@ These follow the C contracts (public-api.md, credentials.h, pairing.h):
 - **Destroy waits for in-flight calls.** Every cast call passes the `SafeHandle`,
   so P/Invoke reference counting delays destroy until other calls return.
 - **A media source is released exactly once:** when its cast is disposed, or at
-  once if `Cast.Create` fails (the C library never took ownership then).
+  once if `Cast.Create` fails for any reason before the native create succeeds
+  (a missing or older native library, invalid options, a throwing `Size`); the C
+  library never took ownership then.
 - **Exceptions never reach native code.** A throwing `Read` fails that request;
   a throwing store reports Unavailable; a throwing PIN reader cancels.
 - **Secrets in managed memory cannot be wiped reliably.** The binding clears its
@@ -58,16 +60,18 @@ These follow the C contracts (public-api.md, credentials.h, pairing.h):
 
 ## Validation
 
-`csharp_binding_tests` runs in CTest on shared builds when a .NET SDK is found
-(option `SAP2_DOTNET_TESTS`, default on), building into the CMake build tree.
+`csharp_binding_tests` runs in CTest on shared builds when `dotnet --list-sdks`
+reports an SDK of version 8 or later (option `SAP2_DOTNET_TESTS`, default on);
+an older SDK alone skips it. It builds into the CMake build tree.
 Windows 11 x64, MSVC Release: static 29/29 (the C# test needs the shared library),
 shared 30/30. The runner covers:
 
 - runtime API version and version 2 result names;
 - struct sizes and field offsets, checked through the native initializers
   (size read back, defaults on the expected fields);
-- source ownership: release once on failed create, on dispose, and for
-  `FileMediaSource` (stream closed);
+- source ownership: release once on a failed native create, on a managed
+  failure before it (a throwing `Size`), on dispose, and for `FileMediaSource`
+  (stream closed);
 - callback lifetime: a store and source referenced only by the cast still work
   after forced collections, and an undisposed cast is destroyed by its finalizer.
   Removing the `SafeHandle` keep-alive makes the runtime fail fast with a

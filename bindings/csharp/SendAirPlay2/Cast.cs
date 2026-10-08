@@ -83,7 +83,8 @@ namespace SendAirPlay2
         /// <summary>
         /// Validates options and creates the cast; no network, credential or file
         /// access. The cast owns <paramref name="source"/> from here on; if creation
-        /// fails, the source is released at once.
+        /// fails for any reason, including a missing or older native library, the
+        /// source is released at once.
         /// </summary>
         public static Cast Create(CastOptions options, MediaSource source)
         {
@@ -95,42 +96,58 @@ namespace SendAirPlay2
             {
                 throw new ArgumentNullException(nameof(source));
             }
-            SendAirPlay2Library.RequireCompatibleLibrary();
-            var store = options.CredentialStore == null
-                            ? null
-                            : new CredentialStoreThunks(options.CredentialStore);
-            var nativeOptions = new Native.CastOptions();
-            Native.sap2_cast_options_init_sized(
-                ref nativeOptions, new UIntPtr((uint)Marshal.SizeOf<Native.CastOptions>()));
-            if (store != null && nativeOptions.StructSize < Marshal.SizeOf<Native.CastOptions>())
+            // Until sap2_cast_create succeeds the caller still owns the source; every
+            // failure before that (a missing or older native library, invalid options,
+            // a throwing Size) releases it here, so it is released exactly once.
+            var transferred = false;
+            try
             {
-                source.ReleaseUnowned();
-                throw new NotSupportedException("The loaded library has no credential store support.");
-            }
-            using (var address = new Native.Utf8String(options.ReceiverAddress))
-            using (var profile = new Native.Utf8String(options.Profile))
-            using (var contentType = new Native.Utf8String(options.ContentType))
-            using (var storeTable = new CredentialStoreThunks.NativeTable(store))
-            {
-                nativeOptions.ReceiverAddress = address.Pointer;
-                nativeOptions.ReceiverPort = options.ReceiverPort;
-                nativeOptions.Profile = profile.Pointer;
-                nativeOptions.ContentType = contentType.Pointer;
-                nativeOptions.StartTimeoutMs = Milliseconds(options.StartTimeout);
-                nativeOptions.MediaConnections = (uint)Math.Max(0, options.MediaConnections);
-                nativeOptions.StartPositionSeconds = options.StartPositionSeconds;
-                nativeOptions.CredentialStore = storeTable.Pointer;
-                var nativeSource = source.ToNative();
-                var result = Native.sap2_cast_create(ref nativeOptions, ref nativeSource,
-                                                     out var created);
-                if (result != (int)ResultCode.Ok)
+                SendAirPlay2Library.RequireCompatibleLibrary();
+                var store = options.CredentialStore == null
+                                ? null
+                                : new CredentialStoreThunks(options.CredentialStore);
+                var nativeOptions = new Native.CastOptions();
+                Native.sap2_cast_options_init_sized(
+                    ref nativeOptions, new UIntPtr((uint)Marshal.SizeOf<Native.CastOptions>()));
+                if (store != null &&
+                    nativeOptions.StructSize < Marshal.SizeOf<Native.CastOptions>())
                 {
-                    created.SetHandleAsInvalid();
-                    source.ReleaseUnowned();
-                    throw new SendAirPlay2Exception((ResultCode)result);
+                    throw new NotSupportedException(
+                        "The loaded library has no credential store support.");
                 }
-                created.KeepAlive(new object?[] { source.Callbacks, store });
-                return new Cast(created);
+                using (var address = new Native.Utf8String(options.ReceiverAddress))
+                using (var profile = new Native.Utf8String(options.Profile))
+                using (var contentType = new Native.Utf8String(options.ContentType))
+                using (var storeTable = new CredentialStoreThunks.NativeTable(store))
+                {
+                    nativeOptions.ReceiverAddress = address.Pointer;
+                    nativeOptions.ReceiverPort = options.ReceiverPort;
+                    nativeOptions.Profile = profile.Pointer;
+                    nativeOptions.ContentType = contentType.Pointer;
+                    nativeOptions.StartTimeoutMs = Milliseconds(options.StartTimeout);
+                    nativeOptions.MediaConnections = (uint)Math.Max(0, options.MediaConnections);
+                    nativeOptions.StartPositionSeconds = options.StartPositionSeconds;
+                    nativeOptions.CredentialStore = storeTable.Pointer;
+                    var nativeSource = source.ToNative();
+                    var result = Native.sap2_cast_create(ref nativeOptions, ref nativeSource,
+                                                         out var created);
+                    if (result != (int)ResultCode.Ok)
+                    {
+                        created.SetHandleAsInvalid();
+                        throw new SendAirPlay2Exception((ResultCode)result);
+                    }
+                    // The native cast owns the source now; its destroy releases it.
+                    transferred = true;
+                    created.KeepAlive(new object?[] { source.Callbacks, store });
+                    return new Cast(created);
+                }
+            }
+            finally
+            {
+                if (!transferred)
+                {
+                    source.ReleaseUnowned();
+                }
             }
         }
 

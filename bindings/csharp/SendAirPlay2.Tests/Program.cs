@@ -48,6 +48,15 @@ internal static class Program
         protected override void OnReleased() => Interlocked.Increment(ref Releases);
     }
 
+    /// <summary>A source whose Size throws: creation fails before any native call.</summary>
+    private sealed class ThrowingSizeSource : MediaSource
+    {
+        public int Releases;
+        public override long Size => throw new IOException("synthetic size failure");
+        protected override int Read(long offset, byte[] buffer, int count, ReadControl control) => 0;
+        protected override void OnReleased() => Interlocked.Increment(ref Releases);
+    }
+
     /// <summary>One-slot in-memory store with scripted behavior. Synthetic records only.</summary>
     private sealed class MemoryStore : ICredentialStore
     {
@@ -165,6 +174,19 @@ internal static class Program
         Check(result == ResultCode.InvalidArgument, "empty address is refused");
         Check(rejected.Releases == 1 && rejected.IsReleased,
               "a source is released once when create fails");
+
+        var throwing = new ThrowingSizeSource();
+        var thrown = false;
+        try
+        {
+            Cast.Create(LoopbackOptions(new MemoryStore()), throwing).Dispose();
+        }
+        catch (IOException)
+        {
+            thrown = true;
+        }
+        Check(thrown && throwing.Releases == 1,
+              "a managed failure before the native create still releases the source once");
 
         var source = new CountingSource();
         using (var cast = Cast.Create(LoopbackOptions(new MemoryStore()), source))
