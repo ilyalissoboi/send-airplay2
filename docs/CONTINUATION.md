@@ -1,10 +1,10 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#19 are merged; `main` contains the
+Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#20 are merged; `main` contains the
 receiver-tested public playback interface (D46-D48), the D49 credential design,
 host stores plus pairing (D50-D51), the C# binding (D52), the packaged UWP test
-host (D53) and the C discovery interface (D54). The UWP native build (D55, D49
-step 3) is on `claude/uwp-native-build`.
+host (D53), the C discovery interface (D54) and the UWP native build (D55).
+Wake before play (D56) is on `claude/receiver-wake`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -12,10 +12,12 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D55):** the UWP native build ([uwp-native-build.md](uwp-native-build.md)),
-  on branch `claude/uwp-native-build` with its own PR (find it with
-  `gh pr list --state open`). Receiver-tested in the packaged host, including
-  the fix for a Stop crash specific to app builds.
+- **Active slice (D56):** wake before play
+  ([mrp-controls.md](mrp-controls.md#receiver-power-and-wake-d56)), on branch
+  `claude/receiver-wake` with its own PR (find it with `gh pr list --state open`).
+  Receiver-tested in three sleep cycles (CLI, C interface static and shared).
+- [PR #20](https://github.com/ilyalissoboi/send-airplay2/pull/20), the UWP native
+  build (D55), was merged by the user as `796a595`.
 - [PR #19](https://github.com/ilyalissoboi/send-airplay2/pull/19), the C
   discovery interface (D54), was merged by the user as `ac7717f`.
 - [PR #18](https://github.com/ilyalissoboi/send-airplay2/pull/18), the packaged
@@ -173,7 +175,12 @@ development, not retroactive gate failures.
    it (including one `cast` CLI run). Related hardware-free work: a
    synthetic beyond-4-GiB byte-source/range test through the media server, and
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
-2. **Startup reliability.** Spontaneous pause at zero/first-frame-only occurred
+2. **Startup reliability.** D56 reproduced first-frame-then-Home when casting to
+   a sleeping receiver and fixed that case by waking it over MRP before play
+   (three sleep cycles: CLI, C interface static and shared). The user reported that the earlier intermittent pause was observed
+   while the Apple TV was waking from sleep, so D56 is its likely cause and fix;
+   watch for any recurrence from an awake receiver. Historical notes, which follow:
+   spontaneous pause at zero/first-frame-only occurred
    without remote input, including a 16-slot run. One-second confirmation improves
    readiness reporting but does not explain or cure the receiver transition.
    If it recurs, retain failed-start traces/cleanup and compare normal MRP versus

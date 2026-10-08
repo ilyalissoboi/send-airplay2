@@ -7,11 +7,19 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: UWP native build (D55, D49 step 3)
+## 0. Resume here: casting to a sleeping receiver (D56)
 
-**Active slice: the UWP native build (D55).** The user merged PR #19 (the C
-discovery interface, D54) as `ac7717f` and asked to proceed with the UWP native
-build. Branch `claude/uwp-native-build` builds the library for app packages
+**Active slice: wake before play (D56).** The user asked whether a cast can wake
+the receiver and chose the order: reproduce, check pyatv, fix. Branch
+`claude/receiver-wake` records the receiver's MRP power reports in the start
+trace and, when the handshake reports it asleep, sends `WAKE_DEVICE` and waits
+for it to settle before starting playback. A cast to the sleeping Apple TV then
+played normally; see the D56 record in section 4 and
+[mrp-controls.md](mrp-controls.md#receiver-power-and-wake-d56).
+
+**The UWP native build (D55, D49 step 3) is merged** (PR #20, `796a595`). The
+user had merged PR #19 (the C discovery interface, D54) as `ac7717f` and asked
+for it. It builds the library for app packages
 (CMake WindowsStore, vcpkg `x64-uwp`, a Botan overlay port), compiles out
 Credential Manager, fixes a Stop crash specific to app builds and adds a CI
 build check. The packaged UWP host cast, controlled and stopped repeatedly with
@@ -1001,6 +1009,27 @@ with Asio's select reactor forced (32/32). Not run: WACK (needs elevation),
 x86/ARM64, a device without VCLibs, Public networks with this build, pairing
 through it. Record:
 [receiver-validation.md](receiver-validation.md#uwp-native-build-d55-2026-10-08).
+
+**D56 (casting to a sleeping receiver, 2026-10-08):** the user asked whether a
+cast can wake the receiver remotely and chose the suggested order. Reproduced:
+the sleeping Apple TV accepted the session, reported `playing`, then paused or
+stopped within about 1.6 s as tvOS returned to Home (user: first frame, then
+Home). pyatv (`postlund/pyatv@b277a4c`) wakes over MRP with `WAKE_DEVICE_MESSAGE`
+(type 41) and reads power from `DeviceInfoMessage.logicalDeviceCount` (field
+22). Engineering choices: record that count from the handshake and from
+`DEVICE_INFO_UPDATE` (type 37) as a startup diagnostic; when the handshake
+reports 0, send `WAKE_DEVICE` and wait until the count is at least 1 and
+unchanged for 2.5 s, at most 10 s and outside `start_timeout`, then start as
+before; best effort, default on, not a host option (`UrlPlaybackOptions` only).
+On hardware the count went 0, 1, 0, 1 within about 2.5 s of the wake; playback
+started 2.5 s after the last change and played normally (user observed), and an
+awake receiver is not delayed. Second and third sleep cycles through the C
+interface (`airplay2-api-host`, static and shared) also passed (user: everything
+worked as expected). Windows static 31/31 and shared 32/32. Not run: more sleep
+cycles, the UWP host on a sleeping receiver. After the run the user reported that the intermittent startup pause seen
+since D38 was observed when the Apple TV was waking from sleep, which makes D56
+its likely cause and fix; the earlier runs were not repeated. Record:
+[receiver-validation.md](receiver-validation.md#casting-to-a-sleeping-receiver-d56-2026-10-08).
 
 ## 5. Implemented code and verification
 

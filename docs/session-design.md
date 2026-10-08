@@ -98,6 +98,12 @@ and the separate G2 record.
     alone is not success. A timeout or an error event fails the start with a
     sanitized reason.
 
+Before step 1 the remote-control session and its MRP handshake run (section
+5a). Since D56, if that handshake reports the receiver asleep
+(`logicalDeviceCount` 0), the session sends MRP `WAKE_DEVICE` and waits, at most
+10 s, for the receiver to report awake and settle before step 1; see
+[mrp-controls.md](mrp-controls.md#receiver-power-and-wake-d56).
+
 Teardown order: mark the session stopping; send the stop command if H4 needs
 one; stop the feedback thread; close the event channel; close the control
 connection; stop the timing responder; join/close MRP, then the remote event/control session;

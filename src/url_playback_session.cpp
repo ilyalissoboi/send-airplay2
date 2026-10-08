@@ -273,6 +273,7 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
     const auto local_address = native::route_local_address(options_.receiver);
     rtsp_uri_ = rtsp_uri(local_address);
     open_remote_control(credentials, cancelled);
+    wake_receiver_if_asleep(cancelled);
     control_ = std::make_unique<ReceiverConnection>(
         options_.connect(options_.receiver, operation(cancelled)), options_.receiver.authority());
     control_->verify(credentials, operation(cancelled));
@@ -322,6 +323,24 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
     }
     trace_start_phase(SessionStartPhase::waiting);
     wait_until_playing(cancelled);
+}
+
+void UrlPlaybackSession::wake_receiver_if_asleep(const std::atomic_bool* cancelled) {
+    if (!mrp_ || !options_.wake_receiver) {
+        return;
+    }
+    // Only an explicit "no logical devices" report means asleep. An awake
+    // receiver, or one that sends no report, starts exactly as before D56.
+    const auto devices = mrp_->logical_devices();
+    if (!devices || *devices != 0) {
+        return;
+    }
+    trace_start_phase(SessionStartPhase::waking);
+    mrp_->wake(cancelled);
+    // Best effort: a receiver that never reports awake still gets the request.
+    // Cancellation surfaces at the next receiver operation.
+    (void)mrp_->wait_until_awake(
+        options_.wake_settle, std::chrono::steady_clock::now() + options_.wake_timeout, cancelled);
 }
 
 void UrlPlaybackSession::open_remote_control(const PairCredentials& credentials,
@@ -636,6 +655,8 @@ const char* session_start_phase_name(SessionStartPhase phase) noexcept {
     switch (phase) {
     case SessionStartPhase::connecting:
         return "connecting";
+    case SessionStartPhase::waking:
+        return "waking";
     case SessionStartPhase::insert_item:
         return "insert_item";
     case SessionStartPhase::date_range:
@@ -703,10 +724,28 @@ void UrlPlaybackSession::append_start_trace_locked(SessionStartState state,
     entry.playback_rate = playback_rate;
 }
 
+static_assert(max_start_power_entries == max_power_observations,
+              "the start trace holds every MRP power report");
+
 void UrlPlaybackSession::finish_start_trace(SessionStartDiagnostics& diagnostics) {
+    // Read MRP outside state_mutex_: the MRP worker never takes that lock, but
+    // keeping the two locks unnested avoids any ordering question.
+    const auto power = mrp_ ? mrp_->power_observations() : std::vector<MrpPowerObservation>{};
     std::lock_guard<std::mutex> lock(state_mutex_);
     capture_start_trace_ = false;
     start_trace_.cleaned_up = status_.cleaned_up;
+    start_trace_.power_count = 0;
+    for (const auto& observation : power) {
+        if (start_trace_.power_count == start_trace_.power.size()) {
+            break;
+        }
+        auto& entry = start_trace_.power[start_trace_.power_count++];
+        entry.elapsed_ms =
+            static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           observation.received - start_trace_origin_)
+                                           .count());
+        entry.logical_devices = observation.logical_devices;
+    }
     diagnostics = start_trace_;
 }
 

@@ -223,8 +223,11 @@ inline constexpr double fake_item_elapsed_seconds = 17.0;
  */
 struct FakeMrpPeer {
     FakeMrpPeer(const std::string& fixtures, const ControlKey& read_key,
-                const ControlKey& write_key)
-        : decrypt(std::make_unique<ControlReader>(read_key)),
+                const ControlKey& write_key,
+                std::optional<std::uint32_t> device_logical_devices = std::nullopt,
+                bool wake_reports_awake = false)
+        : logical_devices(device_logical_devices), report_awake_on_wake(wake_reports_awake),
+          decrypt(std::make_unique<ControlReader>(read_key)),
           encrypt(std::make_unique<ControlWriter>(write_key)),
           player_path(load_mrp_fixture(fixtures, "path")),
           command_result(
@@ -271,10 +274,23 @@ struct FakeMrpPeer {
                 if (message.type == mrp::connection_state) {
                     continue; // No response is defined.
                 }
+                if (message.type == mrp::wake_device) {
+                    ++wakes; // No response is defined.
+                    if (report_awake_on_wake) {
+                        Bytes awake;
+                        pb::integer(awake, 22, 1); // logicalDeviceCount
+                        push_locked(
+                            encode_mrp(mrp::device_info_update, {}, "synthetic-peer", awake));
+                    }
+                    continue;
+                }
                 auto type = message.type;
                 Bytes reply;
                 if (type == mrp::updates_config || type == mrp::heartbeat) {
                     type = 0; // Generic acknowledgement, as the reference peer sends.
+                }
+                if (message.type == mrp::device_info && logical_devices) {
+                    pb::integer(reply, 22, *logical_devices); // logicalDeviceCount
                 }
                 if (message.type == mrp::send_command) {
                     const auto fields = pb::decode(pb::view(message.payload));
@@ -301,6 +317,9 @@ struct FakeMrpPeer {
         }
     }
 
+    std::optional<std::uint32_t> logical_devices; // DEVICE_INFO logicalDeviceCount.
+    bool report_awake_on_wake = false;
+    unsigned wakes = 0; // WAKE_DEVICE messages received.
     std::mutex mutex;
     Bytes incoming, pending;
     std::unique_ptr<ControlReader> decrypt;
@@ -397,6 +416,11 @@ struct Behavior {
     /// Directory of the public MRP fixtures. Non-empty enables the remote
     /// session's MRP data stream (FakeMrpPeer); empty keeps the minimum sequence.
     std::string mrp_fixtures;
+    /// logicalDeviceCount (DeviceInfoMessage field 22) in the DEVICE_INFO reply;
+    /// empty sends DEVICE_INFO without it, as before.
+    std::optional<std::uint32_t> mrp_logical_devices;
+    /// After WAKE_DEVICE, push DEVICE_INFO_UPDATE with logicalDeviceCount 1.
+    bool mrp_wake_reports_awake = false;
 };
 
 inline constexpr std::uint16_t control_port = 7000;
@@ -446,6 +470,8 @@ public:
         remote_behavior.remote_control_only = true;
         remote_behavior.base_setup_status = behavior_.remote_setup_status;
         remote_behavior.mrp_fixtures = behavior_.mrp_fixtures;
+        remote_behavior.mrp_logical_devices = behavior_.mrp_logical_devices;
+        remote_behavior.mrp_wake_reports_awake = behavior_.mrp_wake_reports_awake;
         remote_receiver_ = std::make_unique<FakeReceiver>(remote_behavior);
         remote_receiver_->close_order_ = close_order_;
         // Different ephemeral secrets make accidental key sharing fail authentication.
@@ -510,7 +536,8 @@ private:
                 mrp_peer_ = std::make_shared<FakeMrpPeer>(
                     behavior_.mrp_fixtures,
                     derive_control_key(secret, salt, "DataStream-Output-Encryption-Key"),
-                    derive_control_key(secret, salt, "DataStream-Input-Encryption-Key"));
+                    derive_control_key(secret, salt, "DataStream-Input-Encryption-Key"),
+                    behavior_.mrp_logical_devices, behavior_.mrp_wake_reports_awake);
                 return std::make_unique<FakeMrpStream>(mrp_peer_);
             }
             throw TransportException(TransportError::network);
@@ -625,6 +652,15 @@ public:
         }
         std::lock_guard<std::mutex> lock(peer->mutex);
         return peer->commands;
+    }
+    /// Remote session only: WAKE_DEVICE messages received.
+    unsigned mrp_wakes() const {
+        const auto peer = mrp_peer();
+        if (!peer) {
+            return 0;
+        }
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        return peer->wakes;
     }
     /// Remote session only: absolute seek positions received, oldest first.
     std::vector<double> mrp_seek_positions() const {

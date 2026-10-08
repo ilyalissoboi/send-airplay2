@@ -157,6 +157,33 @@ void malformed_inputs() {
     check(!mrp_command_succeeded(decode_mrp(pb::view(envelope(mrp::command_result, result)))),
           "handler error rejected");
 }
+/// DeviceInfoMessage.logicalDeviceCount is field 22, a varint: tag (22 << 3) | 0
+/// = 176, encoded 0xb0 0x01. Its ProtocolMessage extension is field 20 (tag 162,
+/// 0xa2 0x01, length-delimited) for both DEVICE_INFO and DEVICE_INFO_UPDATE.
+void power_reports() {
+    group = "receiver power reports";
+    const Bytes update_asleep{0x08, 0x25, 0xa2, 0x01, 0x03, 0xb0, 0x01, 0x00};
+    const auto asleep = decode_mrp(pb::view(update_asleep));
+    check(asleep.type == mrp::device_info_update && asleep.has_payload &&
+              mrp_logical_device_count(asleep) == 0u,
+          "literal DEVICE_INFO_UPDATE (type 37) with logicalDeviceCount 0");
+    const Bytes info_awake{0x08, 0x0f, 0xa2, 0x01, 0x03, 0xb0, 0x01, 0x01};
+    check(mrp_logical_device_count(decode_mrp(pb::view(info_awake))) == 1u,
+          "literal DEVICE_INFO (type 15) with logicalDeviceCount 1");
+    const Bytes without_count{0x08, 0x0f, 0xa2, 0x01, 0x02, 0x10, 0x01}; // Field 2 only.
+    check(!mrp_logical_device_count(decode_mrp(pb::view(without_count))),
+          "DEVICE_INFO without logicalDeviceCount reports nothing");
+    const Bytes other_type{0x08, 0x04, 0x4a, 0x03, 0xb0, 0x01, 0x01}; // SET_STATE, extension 9.
+    check(!mrp_logical_device_count(decode_mrp(pb::view(other_type))),
+          "field 22 in another message type is not a power report");
+    // 2^32 as a varint: 0x80 0x80 0x80 0x80 0x10.
+    const Bytes too_large{0x08, 0x25, 0xa2, 0x01, 0x07, 0xb0, 0x01, 0x80, 0x80, 0x80, 0x80, 0x10};
+    invalid([&] { (void)mrp_logical_device_count(decode_mrp(pb::view(too_large))); },
+            "logicalDeviceCount above uint32");
+    const Bytes truncated{0x08, 0x25, 0xa2, 0x01, 0x02, 0xb0, 0x01}; // Tag without value.
+    invalid([&] { (void)mrp_logical_device_count(decode_mrp(pb::view(truncated))); },
+            "truncated logicalDeviceCount");
+}
 void large_data_records(const std::string& root) {
     group = "AirPlay data record bounds";
     const auto wire = load(root, "large-record");
@@ -296,6 +323,8 @@ struct Peer {
     bool closed = false, eof = false, silent = false, wrong_type = false, wrong_identifier = false;
     bool corrupt_tag = false, reject = false;
     bool missing_device_payload = false, malformed_result = false;
+    Bytes device_info_payload; // DEVICE_INFO reply extension; empty by default.
+    bool wake_had_extension = false, wake_had_identifier = false;
     std::size_t acknowledgements = 0;
     explicit Peer(const std::string& root)
         : state(load(root, "state")), result(load(root, "result")) {
@@ -327,6 +356,11 @@ struct Peer {
                 if (message.type == mrp::connection_state) {
                     continue;
                 }
+                if (message.type == mrp::wake_device) {
+                    wake_had_extension = message.has_payload;
+                    wake_had_identifier = !message.identifier.empty();
+                    continue; // No response is defined.
+                }
                 if (silent) {
                     continue;
                 }
@@ -342,6 +376,9 @@ struct Peer {
                     type = 0;
                 }
                 Bytes payload;
+                if (message.type == mrp::device_info) {
+                    payload = device_info_payload;
+                }
                 if (message.type == mrp::send_command) {
                     const auto fields = pb::decode(pb::view(message.payload));
                     const auto* path = pb::find(fields, 3, 2);
@@ -432,6 +469,104 @@ std::unique_ptr<MrpChannel> channel(std::shared_ptr<Peer> peer) {
     write.bytes.fill(0x11);
     read.bytes.fill(0x22);
     return std::make_unique<MrpChannel>(std::make_unique<PeerStream>(std::move(peer)), write, read);
+}
+/// DeviceInfoMessage carrying only logicalDeviceCount (field 22).
+Bytes device_count_payload(std::uint64_t count) {
+    Bytes payload;
+    pb::integer(payload, 22, count);
+    return payload;
+}
+void session_power_reports(const std::string& root) {
+    group = "MRP session power reports";
+    auto peer = std::make_shared<Peer>(root);
+    peer->device_info_payload = device_count_payload(0);
+    MrpSession session(channel(peer), 1s, 100ms);
+    session.handshake(SenderIdentity{}, text("synthetic-controller"));
+    const auto handshake = session.power_observations();
+    check(handshake.size() == 1 && handshake.front().logical_devices == 0,
+          "handshake DEVICE_INFO records logicalDeviceCount 0");
+    {
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        peer->push(encode_mrp(mrp::device_info_update, {}, "synthetic-peer", {0x80}));
+        peer->push(
+            encode_mrp(mrp::device_info_update, {}, "synthetic-peer", device_count_payload(1)));
+    }
+    check(eventually([&] { return session.power_observations().size() == 2; }),
+          "unsolicited DEVICE_INFO_UPDATE recorded after an unreadable one");
+    const auto updated = session.power_observations();
+    check(updated.size() == 2 && updated.back().logical_devices == 1 &&
+              updated.back().received >= updated.front().received,
+          "update order and logicalDeviceCount 1");
+    check(!session.failed(), "an unreadable power report does not fail the session");
+    {
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        for (std::size_t index = 0; index < max_power_observations + 4; ++index) {
+            peer->push(encode_mrp(mrp::device_info_update, {}, "synthetic-peer",
+                                  device_count_payload(index % 2)));
+        }
+    }
+    check(eventually([&] { return session.status().messages >= max_power_observations + 6; }),
+          "updates beyond the bound are received");
+    check(session.power_observations().size() == max_power_observations,
+          "reports stop at max_power_observations (" + std::to_string(max_power_observations) +
+              ")");
+    session.stop();
+}
+void session_wake(const std::string& root) {
+    group = "MRP wake and awake wait";
+    auto peer = std::make_shared<Peer>(root);
+    peer->device_info_payload = device_count_payload(0);
+    MrpSession session(channel(peer), 1s, 100ms);
+    session.handshake(SenderIdentity{}, text("synthetic-controller"));
+    check(session.logical_devices() == 0u, "handshake reports the receiver asleep");
+    session.wake(); // Returns once the worker took it; the peer may still be reading.
+    const auto wakes = [&] {
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        return std::count(peer->types.begin(), peer->types.end(), mrp::wake_device);
+    };
+    check(eventually([&] { return wakes() == 1; }), "one WAKE_DEVICE (type 41) reaches the peer");
+    {
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        check(!peer->wake_had_extension && !peer->wake_had_identifier,
+              "WAKE_DEVICE has no extension or identifier, as pyatv sends it");
+    }
+    const auto asleep_started = std::chrono::steady_clock::now();
+    check(!session.wait_until_awake(50ms, asleep_started + 150ms),
+          "an asleep receiver times out at the deadline");
+    check(std::chrono::steady_clock::now() - asleep_started < 1s, "the deadline bounds the wait");
+
+    {
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        peer->push(
+            encode_mrp(mrp::device_info_update, {}, "synthetic-peer", device_count_payload(1)));
+    }
+    check(eventually([&] { return session.logical_devices() == 1u; }), "update reports awake");
+    const auto awake_started = std::chrono::steady_clock::now();
+    check(session.wait_until_awake(200ms, awake_started + 2s),
+          "awake and unchanged for the settle interval");
+    check(std::chrono::steady_clock::now() - awake_started < 1s,
+          "settle counts from the last change, not from the wait");
+
+    {
+        std::lock_guard<std::mutex> lock(peer->mutex);
+        peer->push(
+            encode_mrp(mrp::device_info_update, {}, "synthetic-peer", device_count_payload(0)));
+        peer->push(
+            encode_mrp(mrp::device_info_update, {}, "synthetic-peer", device_count_payload(1)));
+    }
+    check(eventually([&] { return session.power_observations().size() == 4; }),
+          "1-0 changes are recorded");
+    const auto flipped = std::chrono::steady_clock::now();
+    check(session.wait_until_awake(300ms, flipped + 2s) &&
+              std::chrono::steady_clock::now() - flipped >= 250ms,
+          "a 0-1 change restarts the settle interval");
+
+    std::atomic_bool cancelled{true};
+    check(!session.wait_until_awake(10s, std::chrono::steady_clock::now() + 10s, &cancelled),
+          "cancellation ends the wait at once");
+    session.stop();
+    check(!session.wait_until_awake(0ms, std::chrono::steady_clock::now() + 10s),
+          "a stopped session never reports awake");
 }
 void session_success(const std::string& root) {
     group = "encrypted MRP session";
@@ -611,12 +746,15 @@ int main(int argc, char** argv) {
         }
         fixtures(argv[1]);
         malformed_inputs();
+        power_reports();
         large_data_records(argv[1]);
         ownership(argv[1]);
         startup_binding(argv[1]);
         end_of_media(argv[1]);
         pending_command_cancel(argv[1]);
         session_success(argv[1]);
+        session_power_reports(argv[1]);
+        session_wake(argv[1]);
         failures_and_cancel(argv[1]);
         malformed_response_contracts(argv[1]);
     } catch (const std::exception& error) {
