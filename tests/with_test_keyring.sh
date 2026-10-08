@@ -7,10 +7,23 @@
 # secret-tool, so a broken keyring setup fails here with its own message.
 set -euo pipefail
 
-printf '%s' 'ci-test-keyring' | gnome-keyring-daemon --unlock --components=secrets > /dev/null
-dbus-send --session --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus \
-    org.freedesktop.DBus.ListNames | grep -q 'org.freedesktop.secrets' \
+# --unlock starts the daemon and creates/unlocks the login keyring; --start then
+# initializes the Secret Service component in that running daemon, which is
+# what registers org.freedesktop.secrets on the bus.
+printf '%s' 'ci-test-keyring' | gnome-keyring-daemon --unlock > /dev/null
+gnome-keyring-daemon --start --components=secrets > /dev/null
+
+secrets_on_bus() {
+    dbus-send --session --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus \
+        org.freedesktop.DBus.ListNames | grep -q 'org.freedesktop.secrets'
+}
+for _ in $(seq 1 50); do # Up to about five seconds for the name to appear.
+    secrets_on_bus && break
+    sleep 0.1
+done
+secrets_on_bus \
     || { echo 'with_test_keyring: org.freedesktop.secrets is not on the session bus' >&2; exit 1; }
+
 printf '%s' 'probe' | secret-tool store --label='send-airplay2 CI probe' sap2-ci probe
 test "$(secret-tool lookup sap2-ci probe)" = 'probe' \
     || { echo 'with_test_keyring: probe secret did not round-trip' >&2; exit 1; }
