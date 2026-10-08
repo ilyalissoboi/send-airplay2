@@ -1,9 +1,10 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#18 are merged; `main` contains the
+Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#19 are merged; `main` contains the
 receiver-tested public playback interface (D46-D48), the D49 credential design,
-host stores plus pairing (D50-D51), the C# binding (D52) and the packaged UWP
-test host (D53). The C discovery interface (D54) is on `claude/discovery-c-api`.
+host stores plus pairing (D50-D51), the C# binding (D52), the packaged UWP test
+host (D53) and the C discovery interface (D54). The UWP native build (D55, D49
+step 3) is on `claude/uwp-native-build`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -11,11 +12,12 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D54):** the C discovery interface (`receivers.h`, C#
-  `Receivers.Discover`, `airplay2-api-host --discover`, the UWP host's Discover
-  button), on branch `claude/discovery-c-api` with its own PR (find it with
-  `gh pr list --state open`). Receiver-tested from native hosts and inside the
-  AppContainer; see [public-api.md](public-api.md#receiver-discovery-d54).
+- **Active slice (D55):** the UWP native build ([uwp-native-build.md](uwp-native-build.md)),
+  on branch `claude/uwp-native-build` with its own PR (find it with
+  `gh pr list --state open`). Receiver-tested in the packaged host, including
+  the fix for a Stop crash specific to app builds.
+- [PR #19](https://github.com/ilyalissoboi/send-airplay2/pull/19), the C
+  discovery interface (D54), was merged by the user as `ac7717f`.
 - [PR #18](https://github.com/ilyalissoboi/send-airplay2/pull/18), the packaged
   UWP test host (D53), was merged by the user as `271d1e0`.
 - [PR #17](https://github.com/ilyalissoboi/send-airplay2/pull/17), the C# binding
@@ -207,10 +209,13 @@ development, not retroactive gate failures.
    `PasswordVault` store is **done in D53** (native loading, PasswordVault
    pairing, StorageFile serving, casts; Screenbox's capability works on Private
    networks only), and receiver discovery through C and C# is **done in D54**
-   (found inside the AppContainer on a Private network); (c) a UWP library build without the Credential Manager
-   adapter, against the app C runtime; (d) macOS Keychain and Linux Secret Service
-   adapters, then Linux/macOS/Android device support. Botan UWP packaging remains
-   unresolved; desktop/CI success is not packaged-host proof.
+   (found inside the AppContainer on a Private network); (c) the UWP library
+   build without the Credential Manager adapter, against the app C runtime, is
+   **done in D55** (Botan static through an overlay port; WACK and x86/ARM64 not
+   run); (d) macOS Keychain and Linux Secret Service
+   adapters, then Linux/macOS/Android device support. Botan UWP packaging is
+   resolved for x64 by the D55 overlay port; desktop/CI success is not
+   packaged-host proof.
 7. **Screenbox integration.** After the standalone gate, re-read that repository's
    current instructions and work in its dedicated fork. Test Chromecast regressions
    and local/remote handoff. This session changed no Screenbox source or project.

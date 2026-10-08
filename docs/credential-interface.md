@@ -142,9 +142,10 @@ implementation; dependencies such as libsecret are recorded in
    2026-10-08 (D51); pairing into a host store on hardware comes with step 2.
 2. **Done (D52, D53):** the C# binding, and a packaged UWP test app with a C#
    `PasswordVault` host store, receiver-tested on one Apple TV and Windows host.
-3. The UWP library build without the Credential Manager adapter, linked against
-   the app C runtime (D53 found the desktop-built DLLs depend on the desktop C
-   runtime, which a clean UWP device may not have).
+3. **Done (D55):** the UWP library build without the Credential Manager adapter,
+   linked against the app C runtime ([uwp-native-build.md](uwp-native-build.md)).
+   D53 had found the desktop-built DLLs depend on the desktop C runtime, which a
+   clean UWP device may not have. Botan is linked statically there.
 4. Built-in macOS Keychain and Linux Secret Service adapters.
 
 ## Sources

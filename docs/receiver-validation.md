@@ -93,7 +93,7 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Large file | Seek beyond 4 GiB without integer truncation | PASS for one selected file (D48): 6.32 GB remuxed film (64-bit `co64` offsets); after `seek 4800`, 37 range requests at offsets of 4,490,723,328 bytes and above were all answered 206; user saw the picture jump to about 1:20:00 with sound, then back to about 0:10:00. Other files, receivers and hosts untested |
 | Non-AAC audio | E-AC-3 audio plays | PASS for one selected file (D48): E-AC-3 5.1 (Atmos-flagged) in MP4 played normally by user report; no Atmos indication was shown, and whether the TV/AV chain can show one is unknown |
 | Public C interface | Start, controls, end, stop, recovery through `playback.h` | PASS (D48): all seven manual checks through `airplay2-api-host`, static and shared, plus ten cycles in one process; see the D48 record |
-| Packaged Windows host | Discovery, native loading, file access, serving work | PARTIAL (D53, D54): passed for one sideloaded AOT UWP app: discovery through the C interface (Private network, Screenbox's capabilities; Public not measured), native loading, PasswordVault pairing, StorageFile serving, casts and controls. Casting with Screenbox's `privateNetworkClientServer` fails on a Public network and passes on a Private one; `internetClientServer` passes on Public. The built-in Credential Manager store fails inside the AppContainer. Store certification and x86/ARM64 not run |
+| Packaged Windows host | Discovery, native loading, file access, serving work | PARTIAL (D53-D55): passed for one sideloaded AOT UWP app: the UWP-built library (app C runtime, AppContainer, no Credential Manager; D55) casting with controls and repeated Stops, discovery through the C interface (Private network, Screenbox's capabilities; Public not measured), native loading, PasswordVault pairing, StorageFile serving, casts and controls. Casting with Screenbox's `privateNetworkClientServer` fails on a Public network and passes on a Private one; `internetClientServer` passes on Public. The built-in Credential Manager store fails inside the AppContainer. Store certification and x86/ARM64 not run |
 
 Use a personally owned or redistributable unprotected test clip. Capture sanitized
 diagnostics: timestamps, state transitions, status codes and range requests.
@@ -1229,6 +1229,38 @@ compared in memory; hosts printed fixed fields only.
 **PASS for these runs:** multicast discovery works from native hosts and inside
 the AppContainer with `privateNetworkClientServer` on a Private network. Not run:
 Public networks or `internetClientServer` for discovery, a cast to the discovered
-address inside the app (its PasswordVault was empty after the fresh
-registration), departure and interface changes, several receivers, IPv6-only
-networks and other platforms.
+address inside the app, departure and interface changes, several receivers,
+IPv6-only networks and other platforms. *Corrected in D55:* the reason first
+given for not casting, that the app's PasswordVault was empty after the fresh
+registration, was wrong; the D53 credential was still there.
+
+## UWP native build (D55, 2026-10-08)
+
+The native library built for app packages ([uwp-native-build.md](uwp-native-build.md))
+ran in the packaged UWP test host on top of `ac7717f` with the D55 working tree
+(tested blobs, hashes, logs and the resolved crash stack in the
+[artifact](validation/native-uwp-native-build-windows-2026-10-08.json)).
+Windows 11 x64 on a Private network (read, not changed); the Living Room Apple
+TV 4K (AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged and not queried.
+Screenbox's capabilities. Casts used the D53 `living-room-uwp` PasswordVault
+credential; pairing it again was refused with `profile_exists`, so no new pairing
+was made.
+
+Static checks (`scripts/check_uwp_binaries.ps1`): `send_airplay2.dll` and
+`libcrypto-3-x64.dll` carry the AppContainer flag and link `VCRUNTIME140_APP`;
+the library has no `ADVAPI32` import and no Botan DLL. In the running app the
+`_APP` runtime DLLs loaded from the `Microsoft.VCLibs.140.00` framework package.
+
+| Host build | Native result | Observer |
+| --- | --- | --- |
+| 0.1.6.0, first UWP-built library | Loads; built-in store probe `unsupported`; discover ok; cast starts in about 1.8 s; pause, play, seek 60 and seek 10 ok; **every Stop ends the process** (`0xc0000409` in `ucrtbase!abort`, Application Error 1000) | Initial attempt failed while the receiver was asleep; after waking it, video played, controls worked and the TV returned Home after Stop; the app closed after Stop |
+| 0.1.8.0, RelWithDebInfo plus the host's abort trace | Stack resolved with the linker map: `sap2_cast_stop` → `CastController::stop` → `MediaServer::Impl::stop` → `asio::thread_pool::join` → `std::terminate` (Asio `winapp_thread`) | The app closed after Stop |
+| 0.1.10.0, Release with the media server's own reader pool | Cast, pause, play, seek 60, seek 10; Stop in about 80 ms with `cleaned=yes`, source released; a second cast and Stop in the same process; no Application Error | Video and audio normal; app stayed open after both Stops; Home after Stop |
+| 0.1.12.0, ended casts free the host's slot | Remote Home ended the cast (`connection_lost`, UrlEvents/Disconnected); slot released 24 ms later; next Cast started without Stop; Stop cleaned up | Second cast started; app stayed open; video and audio normal; Home after Stop |
+
+**PASS for these runs** on one receiver and host. The Stop crash was specific to
+app builds and is fixed in the library (D55). Remote Stop/Home still ends as
+`connection_lost` (known). Not run: Windows App Certification Kit (needs
+elevation), x86/ARM64, a device without VCLibs preinstalled, Public networks
+with this build, pairing through the UWP-built library, and the slot release at
+a natural end of media.

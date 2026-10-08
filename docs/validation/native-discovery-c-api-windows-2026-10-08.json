@@ -69,5 +69,6 @@
     "Departure, interface changes, multiple receivers, IPv6-only networks",
     "Linux/macOS/Android discovery through the C interface"
   ],
+  "correction": "D55 (2026-10-08): the app's PasswordVault was not empty; it still held the D53 living-room-uwp credential. The not-run reason above is wrong; the cast was simply not attempted. See native-uwp-native-build-windows-2026-10-08.json.",
   "handling": "Receiver address, identity and name stayed in memory and in the app's address box; hosts printed fixed fields only. No firewall, network, credential or receiver setting changed."
 }
