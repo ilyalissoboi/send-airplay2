@@ -1,0 +1,332 @@
+// SPDX-License-Identifier: Apache-2.0
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Windows.ApplicationModel;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using Windows.UI.Core;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+
+namespace SendAirPlay2.UwpHost
+{
+    /// <summary>
+    /// D49 step 2b measurements: native loading, the built-in store inside an
+    /// AppContainer, pairing into PasswordVault, and casting a brokered StorageFile
+    /// whose media server the receiver must reach. Library calls run off the UI
+    /// thread; the log holds fixed fields only (no address, PIN, path or URL).
+    /// </summary>
+    public sealed partial class MainPage : Page
+    {
+        private const string AbsentProbeProfile = "uwp-probe-absent-profile";
+
+        private readonly object castGate = new object();
+        private StorageFile? mediaFile;
+        private Cast? cast;
+        private CancellationTokenSource? watcher;
+
+        public MainPage()
+        {
+            InitializeComponent();
+            string status;
+            try
+            {
+                status = "Native library loaded: API version " + SendAirPlay2Library.ApiVersion;
+            }
+            catch (Exception error)
+            {
+                // Type name only: messages could contain local paths.
+                status = "Native library failed to load: " + error.GetType().Name;
+            }
+            LibraryStatus.Text = status;
+            Log(status);
+            Log("Package capabilities: internetClientServer=" +
+                (ManifestDeclares("internetClientServer") ? "yes" : "no") +
+                " privateNetworkClientServer=" +
+                (ManifestDeclares("privateNetworkClientServer") ? "yes" : "no"));
+        }
+
+        private static bool ManifestDeclares(string capability)
+        {
+            var manifest = Path.Combine(Package.Current.InstalledLocation.Path, "AppxManifest.xml");
+            return File.ReadAllText(manifest).Contains("Name=\"" + capability + "\"");
+        }
+
+        private void Log(string line)
+        {
+            HostLog.Write(line);
+            _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                LogText.Text += line + Environment.NewLine;
+                LogScroller.ChangeView(null, LogScroller.ScrollableHeight, null);
+            });
+        }
+
+        private static string Describe(CastStatus status)
+        {
+            return "phase=" + status.Phase + " state=" + status.PlaybackState + " end=" +
+                   status.EndReason + " owned=" + (status.Owned ? "yes" : "no") + " position=" +
+                   (status.PositionSeconds.HasValue ? status.PositionSeconds.Value.ToString("F1") : "unknown") +
+                   " failure=" + status.FailureChannel + "/" + status.FailureReason +
+                   " cleaned=" + (status.CleanedUp ? "yes" : "no");
+        }
+
+        private static string Failure(Exception error)
+        {
+            return error is SendAirPlay2Exception library
+                       ? SendAirPlay2Library.ResultName(library.Result)
+                       : error.GetType().Name;
+        }
+
+        private void OnProbeBuiltIn(object sender, RoutedEventArgs e)
+        {
+            Task.Run(() =>
+            {
+                // Removing a profile that does not exist touches the built-in store
+                // (Credential Manager) without changing anything.
+                try
+                {
+                    var deleted = Pairing.ForgetProfile(AbsentProbeProfile);
+                    Log("Built-in store probe (remove absent profile): " +
+                        (deleted ? "deleted (unexpected)" : "profile_not_found"));
+                }
+                catch (Exception error)
+                {
+                    Log("Built-in store probe (remove absent profile): " + Failure(error));
+                }
+                Log("PasswordVault credentials under '" + PasswordVaultStore.Resource + "': " +
+                    new PasswordVaultStore().Count());
+            });
+        }
+
+        private void OnPair(object sender, RoutedEventArgs e)
+        {
+            var options = new PairOptions
+            {
+                ReceiverAddress = AddressBox.Text.Trim(),
+                Profile = ProfileBox.Text.Trim(),
+                CredentialStore = new PasswordVaultStore(),
+            };
+            Log("Pair: starting (PasswordVault store)");
+            Task.Run(() =>
+            {
+                try
+                {
+                    Pairing.Pair(options, ReadPin);
+                    Log("Pair: ok");
+                }
+                catch (Exception error)
+                {
+                    Log("Pair: " + Failure(error));
+                }
+                Log("PasswordVault credentials under '" + PasswordVaultStore.Resource + "': " +
+                    new PasswordVaultStore().Count());
+            });
+        }
+
+        /// <summary>Runs on the pairing thread: shows the PIN dialog on the UI thread
+        /// and waits for it.</summary>
+        private bool ReadPin(char[] digits, out int length)
+        {
+            var answer = new TaskCompletionSource<string?>();
+            _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+            {
+                var box = new PasswordBox { MaxLength = 8 };
+                var dialog = new ContentDialog
+                {
+                    Title = "Enter the PIN shown on the TV",
+                    Content = box,
+                    PrimaryButtonText = "Pair",
+                    CloseButtonText = "Cancel",
+                };
+                var result = await dialog.ShowAsync();
+                answer.TrySetResult(result == ContentDialogResult.Primary ? box.Password : null);
+                box.Password = string.Empty;
+            });
+            var pin = answer.Task.Result;
+            if (pin == null)
+            {
+                length = 0;
+                return false;
+            }
+            var count = Math.Min(pin.Length, digits.Length);
+            pin.CopyTo(0, digits, 0, count);
+            length = pin.Length; // Above 8 is passed through so the library rejects it.
+            return true;
+        }
+
+        private async void OnPickFile(object sender, RoutedEventArgs e)
+        {
+            var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.VideosLibrary };
+            picker.FileTypeFilter.Add(".mp4");
+            picker.FileTypeFilter.Add(".m4v");
+            picker.FileTypeFilter.Add(".mov");
+            var file = await picker.PickSingleFileAsync();
+            if (file != null)
+            {
+                mediaFile = file;
+                var size = (await file.GetBasicPropertiesAsync()).Size;
+                Log("Media file picked: " + size + " bytes");
+            }
+        }
+
+        private void OnCastVault(object sender, RoutedEventArgs e) =>
+            StartCast(ProfileBox.Text.Trim(), new PasswordVaultStore(), "PasswordVault");
+
+        private void OnCastBuiltIn(object sender, RoutedEventArgs e) =>
+            StartCast(BuiltInProfileBox.Text.Trim(), null, "built-in");
+
+        private void StartCast(string profile, ICredentialStore? store, string storeName)
+        {
+            var file = mediaFile;
+            if (file == null)
+            {
+                Log("Cast: pick a media file first");
+                return;
+            }
+            lock (castGate)
+            {
+                if (cast != null)
+                {
+                    Log("Cast: stop the current cast first");
+                    return;
+                }
+            }
+            var address = AddressBox.Text.Trim();
+            Log("Cast: starting (" + storeName + " store)");
+            Task.Run(async () =>
+            {
+                Cast created;
+                try
+                {
+                    var source = await StorageFileMediaSource.OpenAsync(file);
+                    created = Cast.Create(new CastOptions
+                    {
+                        ReceiverAddress = address,
+                        Profile = profile,
+                        CredentialStore = store,
+                    }, source);
+                }
+                catch (Exception error)
+                {
+                    Log("Cast create: " + Failure(error));
+                    return;
+                }
+                lock (castGate)
+                {
+                    cast = created;
+                }
+                try
+                {
+                    created.Start();
+                    Log("Cast start: ok " + Describe(created.GetStatus()));
+                    Watch(created);
+                }
+                catch (Exception error)
+                {
+                    Log("Cast start: " + Failure(error) + " " + Describe(created.GetStatus()));
+                    // A failed start has already torn down; free it so the next cast can run.
+                    lock (castGate)
+                    {
+                        if (cast == created)
+                        {
+                            cast = null;
+                        }
+                    }
+                    created.Dispose();
+                    Log("Cast disposed; media source released");
+                }
+            });
+        }
+
+        /// <summary>Logs state changes and the end reason until the cast ends or stops.</summary>
+        private void Watch(Cast active)
+        {
+            var token = new CancellationTokenSource();
+            watcher = token;
+            Task.Run(() =>
+            {
+                var last = active.GetStatus();
+                while (!token.IsCancellationRequested)
+                {
+                    var current = active.WaitForChange(last.PlaybackState, TimeSpan.FromMilliseconds(500));
+                    if (current.PlaybackState != last.PlaybackState)
+                    {
+                        Log("State: " + current.PlaybackState);
+                    }
+                    if (current.Phase == CastPhase.Ended && last.Phase != CastPhase.Ended)
+                    {
+                        Log("Ended: " + Describe(current));
+                    }
+                    if (current.Phase == CastPhase.Ended || current.Phase == CastPhase.Stopped)
+                    {
+                        return;
+                    }
+                    last = current;
+                }
+            });
+        }
+
+        private void Control(string name, Action<Cast> action)
+        {
+            Cast? active;
+            lock (castGate)
+            {
+                active = cast;
+            }
+            if (active == null)
+            {
+                Log("Control " + name + ": no cast");
+                return;
+            }
+            Task.Run(() =>
+            {
+                try
+                {
+                    action(active);
+                    Log("Control " + name + ": ok");
+                }
+                catch (Exception error)
+                {
+                    Log("Control " + name + ": " + Failure(error));
+                }
+            });
+        }
+
+        private void OnPause(object sender, RoutedEventArgs e) => Control("pause", c => c.Pause());
+
+        private void OnPlay(object sender, RoutedEventArgs e) => Control("play", c => c.Play());
+
+        private void OnSeekForward(object sender, RoutedEventArgs e) => Control("seek 60", c => c.Seek(60));
+
+        private void OnSeekBack(object sender, RoutedEventArgs e) => Control("seek 10", c => c.Seek(10));
+
+        private void OnStatus(object sender, RoutedEventArgs e) =>
+            Control("status", c => Log("Status: " + Describe(c.GetStatus())));
+
+        private void OnStop(object sender, RoutedEventArgs e)
+        {
+            Cast? active;
+            lock (castGate)
+            {
+                active = cast;
+                cast = null;
+            }
+            if (active == null)
+            {
+                Log("Stop: no cast");
+                return;
+            }
+            watcher?.Cancel();
+            Task.Run(() =>
+            {
+                active.Stop();
+                Log("Stopped: " + Describe(active.GetStatus()));
+                active.Dispose();
+                Log("Cast disposed; media source released");
+            });
+        }
+    }
+}

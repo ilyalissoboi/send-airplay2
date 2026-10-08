@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Variant of Package.appxmanifest that adds internetClientServer, which allows
+     inbound connections on networks Windows classifies as Public. Same identity,
+     so the same PasswordVault locker; see Package.appxmanifest for versions. -->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  IgnorableNamespaces="uap">
+  <Identity Name="SendAirPlay2.UwpHost" Publisher="CN=send-airplay2 test" Version="0.1.1.0" />
+  <Properties>
+    <DisplayName>send-airplay2 UWP test host</DisplayName>
+    <PublisherDisplayName>send-airplay2 (test)</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.18362.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="SendAirPlay2.UwpHost.App">
+      <uap:VisualElements DisplayName="send-airplay2 UWP test host" Description="Test host for the send-airplay2 C# binding"
+        BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <Capability Name="internetClientServer" />
+    <Capability Name="privateNetworkClientServer" />
+  </Capabilities>
+</Package>

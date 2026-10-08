@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Packaged UWP test host for the C# binding (D49 step 2b). Built the way
+       Screenbox is (modern .NET UWP, Native AOT, MSIX tooling), so it measures
+       what Screenbox would meet. Sideloaded locally; not part of CI.
+
+       InternetServerCapability=true selects Package.InternetServer.appxmanifest,
+       which adds internetClientServer to Screenbox's capability set. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.18362.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion>10.0.18362.0</TargetPlatformMinVersion>
+    <UseUwp>true</UseUwp>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <PublishAot>true</PublishAot>
+    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>SendAirPlay2.UwpHost</RootNamespace>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
+    <GenerateTestArtifacts>false</GenerateTestArtifacts>
+    <InternetServerCapability Condition="'$(InternetServerCapability)' == ''">false</InternetServerCapability>
+    <!-- Directory holding send_airplay2.dll and its dependencies (shared build). -->
+    <Sap2NativeDir Condition="'$(Sap2NativeDir)' == ''">$(MSBuildThisFileDirectory)..\..\build-shared\Release</Sap2NativeDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" Condition="'$(InternetServerCapability)' != 'true'" />
+    <AppxManifest Include="Package.InternetServer.appxmanifest" Condition="'$(InternetServerCapability)' == 'true'" />
+    <None Remove="Package.appxmanifest;Package.InternetServer.appxmanifest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\bindings\csharp\SendAirPlay2\SendAirPlay2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The native library and its OpenSSL/Botan DLLs, placed in the package root. -->
+    <Content Include="$(Sap2NativeDir)\send_airplay2.dll;$(Sap2NativeDir)\libcrypto-3-x64.dll;$(Sap2NativeDir)\botan-3.dll">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>
