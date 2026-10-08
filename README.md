@@ -31,7 +31,9 @@ passed on the recorded Apple TV (D51). An experimental C# binding over these
 headers is in [`bindings/csharp`](bindings/csharp); see
 [the binding notes](docs/csharp-binding.md). A packaged UWP test host built like
 Screenbox ([`tools/uwp-host`](tools/uwp-host), [notes](docs/uwp-host.md)) paired
-and cast through it on the recorded Apple TV (D53).
+and cast through it on the recorded Apple TV (D53). Receiver discovery also has a
+C interface, [`receivers.h`](include/send_airplay2/receivers.h) (D54), used by
+the C# binding and that host.
 See [media serving contracts and validation](docs/media-server.md).
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
@@ -155,6 +157,9 @@ local stop. The summary reports the API version, static/shared linkage, fixed
 status fields, read counts and how many times the library released the media
 source. It prints no address, profile, path or media URL. The manual procedures
 are in [the interface's validation plan](docs/public-api.md#manual-validation-plan).
+`--discover [--discover-ms N] [--expect-name NAME]` runs one
+[`receivers.h`](include/send_airplay2/receivers.h) scan instead and prints only
+counts, address families and whether a receiver of exactly that name was found.
 
 ## Native playback experiment (Windows desktop)
 

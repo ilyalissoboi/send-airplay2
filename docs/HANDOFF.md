@@ -7,13 +7,19 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: packaged UWP test host (D49 step 2b)
+## 0. Resume here: C discovery interface (D54)
 
-**Active slice: the packaged UWP test host (D53).** The user merged PR #17 (the
-C# binding, D52) as `623d411` and asked to proceed with PR B. Branch
-`claude/uwp-test-host` adds `tools/uwp-host`, a sideloaded modern .NET UWP app
-built like Screenbox (Native AOT, MSIX). It was receiver-tested on 2026-10-08;
-see [uwp-host.md](uwp-host.md) and the D53 record in section 4.
+**Active slice: the C discovery interface (D54).** The user merged PR #18 (the
+packaged UWP test host, D53) as `271d1e0` and asked to proceed with the C
+discovery API. Branch `claude/discovery-c-api` adds
+[`receivers.h`](../include/send_airplay2/receivers.h), the C#
+`Receivers.Discover` wrapper, `airplay2-api-host --discover` and a Discover
+button in the UWP host. Scans found the recorded Apple TV from native hosts and
+inside the AppContainer (Private network); see
+[public-api.md](public-api.md#receiver-discovery-d54) and the D54 record in
+section 4.
+
+The packaged UWP test host (D53) is merged; see [uwp-host.md](uwp-host.md).
 
 The C# binding (D52) is merged; see [csharp-binding.md](csharp-binding.md).
 
@@ -484,7 +490,7 @@ foundation; it did not establish hardware compatibility or freeze the API.
 | D14 | Ignore unsupported multipart/invalid Range fields and serve full content | Implemented resolver policy; documented in design.md |
 | D15 | Bounded native IPv4 mDNS scan, portable DNS-SD cache/parser, no new third-party runtime dependency | Implemented; adapter isolated, IPv6-only discovery and Android device validation pending |
 | D16 | Keep protocol-specific records and merge only by matching normalized advertised device identity | Implemented; hostname/friendly name alone is insufficient, advertisements remain unauthenticated |
-| D17 | Experimental C++ discovery API plus CLI before versioned C discovery ABI/event API | Implemented; shared users require compatible C++ runtime, production bindings still pending |
+| D17 | Experimental C++ discovery API plus CLI before versioned C discovery ABI/event API | Implemented; shared users require compatible C++ runtime. A C snapshot interface followed in D54; an event API is still pending |
 | D18 | OpenSSL 3.5+ EVP primitives, private bounded pairing/control codecs before receiver handshake | Engineering choice, implemented; no homegrown cryptography, public pairing API deferred until peer authentication and ownership contracts are complete |
 | D19 | Implement existing-credential HAP peer verification before first-time PIN provisioning | Implemented privately with EVP X25519/Ed25519; pinned ID/key, strict M2/M4 and one-time key release. Storage and bounded network transport are integrated; broader hardware authentication remains a gate |
 | D20 | Botan 3.12 C FFI for fixed-profile HAP PIN/SRP and Ed25519 key validation | Engineering choice, implemented privately; C++17 core, maintained SRP/subgroup checks, mandatory server proof and accessory signature. vcpkg excludes UWP; resolve packaged-host integration before Screenbox work |
@@ -948,6 +954,25 @@ whether to add `internetClientServer` for Public networks. Findings for D49 step
 3: the native DLLs depend on the desktop C runtime. Not run: roaming, desktop
 provisioning of the locker, Store certification, x86/ARM64. Record:
 [receiver-validation.md](receiver-validation.md#packaged-uwp-host-d53-2026-10-08).
+
+**D54 (C discovery interface, 2026-10-08):** the user merged PR #18 and asked to
+proceed with the C discovery API. `receivers.h` adds `sap2_discover` (one
+blocking bounded scan, 1..60000 ms, default 5000) returning an opaque owning
+`sap2_receiver_list`, read with `sap2_receiver_list_count`/`_get` (caller-set
+`struct_size`) and freed with `sap2_receiver_list_free`. Engineering choices:
+only devices with an AirPlay video service; one castable address per receiver
+(IPv4 first, else non-link-local, unscoped IPv6; empty when neither); names as
+length-delimited bytes; advertised data labelled unauthenticated; playback API
+version unchanged (new symbols only). `castable_receivers()` is a pure
+function; `receiver_list_tests` runs the C boundary against a scripted
+`discover()`. C# `Receivers.Discover(TimeSpan)` copies the list. Windows static
+31/31 and shared 32/32. Receiver evidence: `airplay2-api-host --discover`
+(static and shared) and the UWP host's Discover button (0.1.4.0, Screenbox's
+capabilities, Private network) each found "Living Room" with an IPv4 address;
+the user saw the app's address box fill. Not run: Public networks, a cast from
+the discovered address inside the app, departure/interface changes, several
+receivers, other platforms. Record:
+[receiver-validation.md](receiver-validation.md#c-discovery-interface-d54-2026-10-08).
 
 ## 5. Implemented code and verification
 

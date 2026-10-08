@@ -138,6 +138,43 @@ cancellation besides `read_pin`; each network phase is bounded by `timeout_ms`.
 On a platform without a built-in store, a NULL store reports
 `SAP2_ERROR_UNSUPPORTED`.
 
+## Receiver discovery (D54)
+
+The user asked for a C discovery interface after the D53 host, which still
+needed a pasted address. [`receivers.h`](../include/send_airplay2/receivers.h)
+wraps the C++ `discover()` (discovery.md) without changing the scanner:
+
+- `sap2_discover(duration_ms, &list)` blocks for one bounded scan
+  (1..`SAP2_MAX_DISCOVERY_MS`, default `SAP2_DEFAULT_DISCOVERY_MS` = 5000, as in
+  C++). It starts no background work and touches no credentials.
+- The result is an opaque `sap2_receiver_list` that owns every string;
+  `sap2_receiver_list_count`, `sap2_receiver_list_get(list, index, &info)` with a
+  caller-set `struct_size`, and `sap2_receiver_list_free`.
+- `sap2_receiver_info`: `flags` (`PASSWORD_REQUIRED`, `HAS_FEATURES`), `id`,
+  `name` with `name_length` (advertised bytes, possibly not UTF-8 and possibly
+  with NULs), `model`, `address`, `port` and `features`.
+- Results: argument refusals are `SAP2_ERROR_INVALID_ARGUMENT` before any socket
+  opens; a transport failure (`std::runtime_error`) is `SAP2_ERROR_CONNECTION`;
+  allocation failure is `OUT_OF_MEMORY`; anything else is `INTERNAL`.
+
+Engineering choices (proposals, not user decisions):
+
+| Choice | Reason |
+|---|---|
+| Only devices with an `_airplay._tcp` service with a nonzero port | The interface casts video; RAOP-only devices are speakers. |
+| One address per receiver: the first IPv4 of the first AirPlay service that has a castable address, else its first IPv6 that is neither `fe80::/10` nor scoped | The media server rejects link-local IPv6, and a scope id is meaningless to the receiver. A device with no castable address is kept with `address = ""`, so hosts can still show it. |
+| A snapshot list, not callbacks | Matches the C++ scan; no library threads call host code (D28), and bindings need no delegates. |
+| Separate header, same result codes; `SAP2_PLAYBACK_API_VERSION` unchanged | The additions are new symbols only; a host checks for them by linking. A future version bump can name them. |
+| Advertised data is labelled unauthenticated | Pairing pins identity; a name or id from the network proves nothing. |
+
+Tests: `receiver_list_tests` compiles the C boundary with a scripted
+`discover()` (no network): address and service selection, metadata and
+byte-exact names, failure mapping, list ownership after the snapshot is gone,
+bounds and short-struct refusals. `c_receivers_smoke` compiles the header as C
+and checks the layout size and refusals. `api_host_arguments` covers the
+host's `--discover` refusals. Receiver evidence:
+[the D54 record](receiver-validation.md#c-discovery-interface-d54-2026-10-08).
+
 ## Threading and lifetime
 
 - `start` blocks its caller. `get_status`, `wait_for_change`, `command` and `stop`
@@ -203,7 +240,10 @@ Telemetry only (no observer needed):
 5. **Pairing on hardware beyond D51's single pairing:** into a host-provided
    store, and wrong or cancelled PINs. Diagnostics (start trace, event and media
    logs) may come in a later interface version, if hosts need them.
-6. **IPv6 link-local receivers** (scope IDs): the media server rejects them today.
+6. **IPv6 link-local receivers** (scope IDs): the media server rejects them today,
+   so discovery reports such a receiver with an empty address.
+7. **Discovery beyond one snapshot (D54):** no live updates, departure events or
+   IPv6-only networks; one receiver and host observed.
 
 ## Validation
 

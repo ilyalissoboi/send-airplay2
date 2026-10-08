@@ -7,6 +7,7 @@
 // profile, media URL, file path, PIN or receiver-provided text.
 #include "send_airplay2/pairing.h"
 #include "send_airplay2/playback.h"
+#include "send_airplay2/receivers.h"
 #include "cli_input.h"
 
 #include <algorithm>
@@ -17,6 +18,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <cwchar>
 #include <exception>
 #include <filesystem>
@@ -61,7 +63,10 @@ const char* usage =
     "--cycles: N casts in one process, alternating MRP stop and local stop.\n"
     "       airplay2-api-host --pair --address IP --profile NAME [--port 7000]\n"
     "--pair: sap2_pair() into the built-in store; the PIN is typed hidden in this\n"
-    "        process's console window (Windows).\n";
+    "        process's console window (Windows).\n"
+    "       airplay2-api-host --discover [--discover-ms N] [--expect-name NAME]\n"
+    "--discover: one sap2_discover() scan; prints counts and address families only,\n"
+    "        and with --expect-name whether a receiver of exactly that name was found.\n";
 
 struct HostArguments {
     std::string address;
@@ -76,6 +81,9 @@ struct HostArguments {
     std::optional<std::uint32_t> cycles;
     std::uint32_t hold_ms = 5000; // Playing time per cycle before stopping.
     bool pair = false;            // Pair a new profile instead of casting.
+    bool discover = false;        // Scan for receivers instead of casting.
+    std::uint32_t discover_ms = SAP2_DEFAULT_DISCOVERY_MS;
+    std::optional<std::string> expect_name; // Compared, never printed.
 };
 
 std::uint32_t parse_unsigned(std::string_view value, const char* name) {
@@ -97,20 +105,33 @@ double parse_seconds(std::string_view value) {
     return parsed;
 }
 
-/// Syntax only. Option ranges are left to sap2_cast_create(), which is what
-/// this host exercises; its SAP2_ERROR_INVALID_ARGUMENT also exits 2.
+/// Syntax only. Option ranges are left to sap2_cast_create() and
+/// sap2_discover(), which is what this host exercises; their
+/// SAP2_ERROR_INVALID_ARGUMENT also exits 2. Options are tracked by presence,
+/// not value, so an option outside the selected mode is refused even when it
+/// repeats a default.
 HostArguments parse_arguments(int argc, const char* const* argv) {
     HostArguments arguments;
+    bool discover_option_given = false; // --discover-ms or --expect-name.
+    bool other_option_given = false;    // Any cast or pairing option, or --pair.
     for (int index = 1; index < argc; ++index) {
         const std::string_view option = argv[index];
         if (option == "--pair") {
             arguments.pair = true;
+            other_option_given = true;
+            continue;
+        }
+        if (option == "--discover") {
+            arguments.discover = true;
             continue;
         }
         if (index + 1 >= argc) {
             throw std::invalid_argument("unknown or incomplete option: " + std::string(option));
         }
         const std::string_view value = argv[++index];
+        const bool is_discover_option = option == "--discover-ms" || option == "--expect-name";
+        discover_option_given = discover_option_given || is_discover_option;
+        other_option_given = other_option_given || !is_discover_option;
         if (option == "--address") {
             arguments.address = std::string(value);
         } else if (option == "--port") {
@@ -137,9 +158,22 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
             arguments.cycles = parse_unsigned(value, "cycles");
         } else if (option == "--hold-ms") {
             arguments.hold_ms = parse_unsigned(value, "hold time");
+        } else if (option == "--discover-ms") {
+            arguments.discover_ms = parse_unsigned(value, "discover time");
+        } else if (option == "--expect-name") {
+            arguments.expect_name = std::string(value);
         } else {
             throw std::invalid_argument("unknown option: " + std::string(option));
         }
+    }
+    if (arguments.discover) {
+        if (other_option_given) {
+            throw std::invalid_argument("--discover accepts only --discover-ms and --expect-name");
+        }
+        return arguments;
+    }
+    if (discover_option_given) {
+        throw std::invalid_argument("--discover-ms and --expect-name require --discover");
     }
     if (arguments.pair) {
         if (arguments.address.empty() || arguments.profile.empty() || !arguments.file.empty() ||
@@ -858,6 +892,51 @@ int run_pair(const HostArguments& arguments) {
     }
     return result == SAP2_OK ? exit_success : exit_failure;
 }
+const char* address_family(const char* address) {
+    if (address[0] == '\0') {
+        return "none";
+    }
+    return std::strchr(address, ':') ? "ipv6" : "ipv4";
+}
+
+/// One scan. Receiver names, identities and addresses are compared or
+/// classified here but never printed (see the file comment).
+int run_discover(const HostArguments& arguments) {
+    sap2_receiver_list* list = nullptr;
+    const auto result = sap2_discover(arguments.discover_ms, &list);
+    const auto count = sap2_receiver_list_count(list);
+    std::cout << "Discover: " << sap2_result_name(result) << " receivers=" << count
+              << " linkage=" << linkage() << std::endl;
+    bool found = false;
+    for (std::size_t index = 0; index < count; ++index) {
+        sap2_receiver_info info{};
+        info.struct_size = sizeof(info);
+        if (sap2_receiver_list_get(list, index, &info) != SAP2_OK) {
+            std::cout << "Receiver: index=" << index << " get_failed" << std::endl;
+            continue;
+        }
+        const bool matches =
+            arguments.expect_name &&
+            std::string_view(info.name, info.name_length) == *arguments.expect_name;
+        found = found || matches;
+        std::cout << "Receiver: index=" << index << " address=" << address_family(info.address)
+                  << " port_set=" << (info.port != 0 ? "yes" : "no")
+                  << " password=" << ((info.flags & SAP2_RECEIVER_PASSWORD_REQUIRED) ? "yes" : "no")
+                  << " features=" << ((info.flags & SAP2_RECEIVER_HAS_FEATURES) ? "yes" : "no");
+        if (arguments.expect_name) {
+            std::cout << " expected=" << (matches ? "yes" : "no");
+        }
+        std::cout << std::endl;
+    }
+    sap2_receiver_list_free(list);
+    if (arguments.expect_name) {
+        std::cout << "Expected: " << (found ? "found" : "not_found") << std::endl;
+    }
+    if (result == SAP2_ERROR_INVALID_ARGUMENT) {
+        return exit_arguments;
+    }
+    return result == SAP2_OK && (!arguments.expect_name || found) ? exit_success : exit_failure;
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -869,7 +948,7 @@ int main(int argc, char** argv) {
             return exit_success;
         }
         arguments = parse_arguments(argc, argv);
-        if (!arguments.pair) {
+        if (!arguments.pair && !arguments.discover) {
             file = std::make_unique<HostFile>(arguments.file);
         }
     } catch (const std::invalid_argument& error) {
@@ -880,6 +959,9 @@ int main(int argc, char** argv) {
         if (sap2_playback_api_version() != SAP2_PLAYBACK_API_VERSION) {
             std::cerr << "Library: playback interface version mismatch\n";
             return exit_failure;
+        }
+        if (arguments.discover) {
+            return run_discover(arguments);
         }
         if (arguments.pair) {
             return run_pair(arguments);

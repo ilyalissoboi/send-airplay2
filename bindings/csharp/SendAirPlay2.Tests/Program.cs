@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Offline tests for the C# binding: layout, ownership and lifetime, exception
-// containment, credential stores and pairing refusals. Loopback and synthetic
+// containment, credential stores, pairing and discovery refusals. Loopback and synthetic
 // data only; the only built-in store access is one removal of an absent profile.
 using System;
 using System.Collections.Generic;
@@ -358,6 +358,25 @@ internal static class Program
               "no PIN is requested and nothing is saved before the receiver answers");
     }
 
+    /// <summary>Layout and duration refusals only: no scan starts, so nothing is sent.</summary>
+    private static void DiscoveryRefusals()
+    {
+        group = "discovery refusals";
+        // sap2_receiver_info: two uint32, five pointer-sized fields, a uint16 and a
+        // uint64 at its natural alignment (offset 48 on 64-bit, 32 on 32-bit).
+        var expectedInfoSize = IntPtr.Size == 8 ? 64 : 40;
+        var infoSize = Marshal.SizeOf<SendAirPlay2.Native.ReceiverInfo>();
+        Check(infoSize == expectedInfoSize, $"receiver info size {infoSize} is {expectedInfoSize}");
+        Check(ResultOf(() => Receivers.Discover(TimeSpan.Zero)) == ResultCode.InvalidArgument,
+              "zero duration refused");
+        Check(ResultOf(() => Receivers.Discover(Receivers.MaxDuration + TimeSpan.FromMilliseconds(1))) ==
+                  ResultCode.InvalidArgument,
+              "duration above the maximum refused");
+        Check(ResultOf(() => Receivers.Discover(TimeSpan.FromMilliseconds(-5))) ==
+                  ResultCode.InvalidArgument,
+              "negative duration refused");
+    }
+
     private static int Main(string[] args)
     {
         if (args.Length != 1 || !File.Exists(args[0]))
@@ -376,6 +395,7 @@ internal static class Program
             CastWithStore();
             ProfileRemoval();
             PairingRefusals();
+            DiscoveryRefusals();
         }
         catch (Exception error)
         {

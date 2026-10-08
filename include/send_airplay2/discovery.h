@@ -14,7 +14,7 @@ namespace send_airplay2 {
  *
  * Records own their strings/buffers; they remain valid after discover() returns.
  * This is an experimental C++17 API. Shared-library callers must use a compatible
- * compiler/runtime ABI. A versioned C discovery interface is a later gate.
+ * compiler/runtime ABI. Other hosts use the C interface in receivers.h (D54).
  */
 struct Service {
     std::string type;     // _airplay._tcp.local. or _raop._tcp.local.

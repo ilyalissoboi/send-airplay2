@@ -14,11 +14,13 @@
         <TextBlock Grid.Row="0" Text="send-airplay2 UWP test host" FontSize="20" />
         <TextBlock Grid.Row="1" x:Name="LibraryStatus" Text="Loading the native library..." />
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12">
-            <TextBox x:Name="AddressBox" Header="Receiver address (paste it)" Width="240" />
+            <TextBox x:Name="ExpectedNameBox" Header="Receiver name to find" Width="200" Text="Living Room" />
+            <TextBox x:Name="AddressBox" Header="Receiver address (discover or paste)" Width="240" />
             <TextBox x:Name="ProfileBox" Header="PasswordVault profile" Width="200" Text="living-room-uwp" />
             <TextBox x:Name="BuiltInProfileBox" Header="Built-in store profile" Width="200" Text="living-room-test" />
         </StackPanel>
         <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
+            <Button Content="0. Discover" Click="OnDiscover" />
             <Button Content="1. Probe built-in store" Click="OnProbeBuiltIn" />
             <Button Content="2. Pair into PasswordVault" Click="OnPair" />
             <Button Content="3. Pick media file" Click="OnPickFile" />

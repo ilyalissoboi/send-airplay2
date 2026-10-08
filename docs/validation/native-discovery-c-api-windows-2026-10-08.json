@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-08",
+  "decision": "D54",
+  "scope": "The C discovery interface (receivers.h) on the recorded LAN: one scan each from the native API host (static and shared) and from the packaged UWP test host through the C# binding inside its AppContainer. Discovery only; no pairing, cast or credential access in these runs. Observer answers are recorded separately.",
+  "receiver": {
+    "name": "Living Room",
+    "hardware": "Apple TV 4K (AppleTV14,1)",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_scope": "Prior user report, assumed unchanged; not queried during this test."
+  },
+  "host": "Windows 11 x64 (10.0.26200), Developer Mode on; Visual Studio 2026 18.10.2, .NET SDK 10.0.401",
+  "network_category": "Private (read with Get-NetConnectionProfile before the UWP run; not changed by the agent)",
+  "source_base": "271d1e099de9345536365144402483759c7605d1",
+  "tested_source_blobs": {
+    "include/send_airplay2/receivers.h": "ee264a85bb4296843c655c8187dfa2d7e38efbc7",
+    "src/discovery_api.cpp": "b5bae74e6822331f4dc6cb87c1d09ebc9f92b946",
+    "src/receiver_list.cpp": "72e61035ccd9d46cd0a325a42a4d5153197087c5",
+    "src/receiver_list.h": "f85c7008bc2bb35daec67315ecb4fdb37a27e136",
+    "tools/airplay2_api_host.cpp": "ed1c080a34def4a7fe7b07084aa3d5089d73b16f",
+    "bindings/csharp/SendAirPlay2/Native.cs": "408240f61c3b0983e27f5beca4863b5487e0f420",
+    "bindings/csharp/SendAirPlay2/Receivers.cs": "17b8db7469322163a319fb12653fb94048b2a573",
+    "tools/uwp-host/MainPage.xaml": "e58dad53f3d84791ace244db1b061fb234a9768b",
+    "tools/uwp-host/MainPage.xaml.cs": "378d7ea9900b318aefef011d9fac656b2a8bd165",
+    "tools/uwp-host/Package.appxmanifest": "927ca822ec8136ec1d3378bff71faa3082c03510"
+  },
+  "source_note": "After these runs, review feedback made airplay2-api-host refuse options outside the selected mode by presence; only argument refusals changed, not the scan or its output.",
+  "binaries_sha256": {
+    "airplay2-api-host.exe (static)": "3f84c2264add1d1eb454a276e55e6280475e006a65816a5a4692e267806deebf",
+    "airplay2-api-host.exe (shared)": "eadc907757cb805f8c6edc7a59a149f301812c6ffea6f7fddd0e8aa4c2465204",
+    "send_airplay2.dll (shared, also packaged)": "e0122866cf3a28333aaf39fa4724383ef648f633d204b977603bfd077e4acdc2",
+    "SendAirPlay2.UwpHost.exe 0.1.4.0 (AOT)": "5c9892b234450754fd87c8fccd52f1c70e91ea254de25e0fd6dd38e31553c397"
+  },
+  "runs": [
+    {
+      "host": "airplay2-api-host --discover --discover-ms 3000 --expect-name \"Living Room\" (static), run from its build directory",
+      "output": [
+        "Discover: ok receivers=1 linkage=static",
+        "Receiver: index=0 address=ipv4 port_set=yes password=no features=yes expected=yes",
+        "Expected: found"
+      ],
+      "exit": 0
+    },
+    {
+      "host": "Same command, shared build",
+      "output": [
+        "Discover: ok receivers=1 linkage=shared",
+        "Receiver: index=0 address=ipv4 port_set=yes password=no features=yes expected=yes",
+        "Expected: found"
+      ],
+      "exit": 0
+    },
+    {
+      "host": "Packaged UWP host 0.1.4.0, Screenbox's capability set (internetClient + privateNetworkClientServer), fresh registration of the unsigned layout; button '0. Discover' with the expected name 'Living Room'",
+      "log": [
+        "05:15:31.739 Native library loaded: API version 2",
+        "05:15:31.753 Package capabilities: internetClientServer=no privateNetworkClientServer=yes",
+        "05:15:56.720 Discover: starting (5 s)",
+        "05:16:01.731 Discover: ok receivers=1",
+        "05:16:01.732 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+        "05:16:01.732 Discover: expected receiver found; address box filled"
+      ],
+      "observer": "The address box filled in."
+    }
+  ],
+  "result": "PASS for these runs: the C interface found the named receiver with a castable IPv4 address from native static and shared hosts and from inside the AppContainer with privateNetworkClientServer on a Private network.",
+  "not_run": [
+    "UWP discovery on a Public network or with internetClientServer",
+    "A cast to the discovered address inside the app (its PasswordVault was empty after the fresh registration; no new pairing was requested)",
+    "Departure, interface changes, multiple receivers, IPv6-only networks",
+    "Linux/macOS/Android discovery through the C interface"
+  ],
+  "handling": "Receiver address, identity and name stayed in memory and in the app's address box; hosts printed fixed fields only. No firewall, network, credential or receiver setting changed."
+}

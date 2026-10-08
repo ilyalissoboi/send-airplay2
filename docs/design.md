@@ -123,6 +123,9 @@ D53's packaged test host measured the network side: Screenbox's
 `privateNetworkClientServer` lets the receiver reach the app's media server on a
 Private network but not on a Public one, where `internetClientServer` is needed
 ([uwp-host.md](uwp-host.md)). Choosing that capability is a decision for the fork.
+D54 added a C discovery snapshot (`receivers.h`) that a RendererWatcher-style
+AirPlay source can poll. Its scan found the receiver inside the same
+AppContainer with Screenbox's capabilities on a Private network.
 
 Screenbox's current agent instructions require Visual Studio 2026 MSBuild for UWP
 builds. A desktop C# console success is insufficient: validate native loading,

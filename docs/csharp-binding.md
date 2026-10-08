@@ -26,6 +26,7 @@ The library loads `send_airplay2` (`send_airplay2.dll`, `libsend_airplay2.so` or
 | `sap2_media_source` | abstract `MediaSource` (`Size`, `Read`, `OnReleased`); `FileMediaSource` for desktop files |
 | `sap2_credential_store` | `ICredentialStore` (`Load`, `SaveNew`, `Erase`) |
 | `sap2_pair`, `sap2_forget_profile` | `Pairing.Pair(PairOptions, PinReader)`, `Pairing.ForgetProfile` |
+| `sap2_discover`, `sap2_receiver_list_*` (D54) | `Receivers.Discover(TimeSpan)` returning `Receiver` copies (`Id`, `Name`, `GetNameBytes()`, `Model`, `Address`, `Port`, `PasswordRequired`, nullable `Features`); the native list is freed before it returns |
 | `sap2_cast_status` | `CastStatus` with nullable scalars |
 | `SAP2_*` results | `ResultCode`; failures throw `SendAirPlay2Exception` with fixed text only |
 
@@ -79,10 +80,12 @@ shared 30/30. The runner covers:
 - a cast with a host store: absent, unavailable, throwing and malformed stores;
 - profile removal, including an absent profile in the built-in store;
 - pairing refusals: invalid options, a malformed existing record and an
-  unreachable receiver, with no PIN request and no save.
+  unreachable receiver, with no PIN request and no save;
+- discovery (D54): the `sap2_receiver_info` layout size and duration refusals
+  (zero, negative, above the maximum). No scan runs in CTest.
 
 Receiver use through C# is covered by the packaged UWP test host (D53,
 [uwp-host.md](uwp-host.md)): Native AOT loading, PasswordVault pairing, a
 `StorageFile` source, casts and controls all passed on one Apple TV and Windows
-host. Not covered: classic .NET Native, and the binding in a desktop .NET app
+host, and `Receivers.Discover` found that receiver inside the AppContainer (D54). Not covered: classic .NET Native, and the binding in a desktop .NET app
 against a receiver.

@@ -1,6 +1,7 @@
 # Packaged UWP test host (D53)
 
-Status: **receiver-tested on one Apple TV / Windows host, 2026-10-08.** D49 step 2b:
+Status: **receiver-tested on one Apple TV / Windows host, 2026-10-08** (D53; discovery
+D54). D49 step 2b:
 the [C# binding](csharp-binding.md) inside a packaged UWP app built the way
 Screenbox is, to measure what Screenbox would meet. Sideloaded locally; not part
 of CI. Record: [receiver-validation.md](receiver-validation.md#packaged-uwp-host-d53-2026-10-08)
@@ -20,8 +21,11 @@ and provides:
   the file picker;
 - pairing with a PIN dialog, casts with the PasswordVault store or the built-in
   store, MRP controls, and a probe of the built-in store;
-- a fixed-field log in `LocalState\host-log.txt` (no address, PIN, path or URL),
-  so a run can be read back from outside the app.
+- a **Discover** button (D54): one 5-second `Receivers.Discover` scan; the
+  receiver whose name equals "Receiver name to find" fills the address box.
+  Names and addresses are compared, never logged;
+- a fixed-field log in `LocalState\host-log.txt` (no address, PIN, path, URL or
+  receiver name), so a run can be read back from outside the app.
 
 Two manifests share one identity (and so one PasswordVault locker):
 `Package.appxmanifest` with Screenbox's network capabilities (`internetClient`,
@@ -30,7 +34,8 @@ adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
 Switching variants keeps the app's data only as an in-place update, which
 Windows allows only to a higher version. Before building the other variant,
 raise its `Version` above the installed one (the committed manifests are
-0.1.2.0 and 0.1.3.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0).
+0.1.4.0 and 0.1.5.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, and D54
+used 0.1.4.0).
 Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
 registers a lower version over a higher one (untested here).
 
@@ -68,6 +73,7 @@ warnings for the binding.
 | Cast, PasswordVault | Public | Screenbox's set | **Fails**: `connection` after about 5 s; the TV played nothing (inbound blocked) |
 | Cast, PasswordVault | Public | plus `internetClientServer` | **Pass**: normal video and audio |
 | Cast and controls, PasswordVault | Private | Screenbox's set | **Pass**: video and audio, pause, both seeks, Home after Stop |
+| Discover (D54, 0.1.4.0, fresh registration) | Private | Screenbox's set | **Pass**: one receiver, the expected name, IPv4 address filled in |
 
 ## What this means for Screenbox
 
@@ -81,5 +87,10 @@ warnings for the binding.
   that runtime is installed system-wide. A UWP-correct build (D49 step 3) must
   target the app C runtime and leave out the Credential Manager adapter.
 
-Not covered: PasswordVault roaming, desktop provisioning of the app's locker,
+- Multicast discovery works inside the AppContainer with
+  `privateNetworkClientServer` on a Private network (D54). Public networks were
+  not measured for discovery.
+
+Not covered: discovery on a Public network, a cast to the discovered address
+inside the app, PasswordVault roaming, desktop provisioning of the app's locker,
 Store certification (WACK), and x86/ARM64.

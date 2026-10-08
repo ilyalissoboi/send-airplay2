@@ -4,7 +4,12 @@ Implemented slice: bounded synchronous mDNS/DNS-SD discovery of
 `_airplay._tcp.local.` and `_raop._tcp.local.`. No pairing, authentication or
 playback is performed. The API in `include/send_airplay2/discovery.h` is
 experimental C++17; shared-library users need a compatible compiler/runtime.
-A versioned C discovery ABI, cancellation and event callbacks remain future work.
+A versioned C snapshot interface exists since D54 (below); cancellation and event
+callbacks remain future work.
+
+C hosts and bindings use [`receivers.h`](../include/send_airplay2/receivers.h)
+(D54), a snapshot list over this scanner; see
+[public-api.md](public-api.md#receiver-discovery-d54).
 
 ## Architecture and provenance
 
