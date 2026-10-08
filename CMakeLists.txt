@@ -106,6 +106,40 @@ if(BUILD_TESTING)
   set_target_properties(c_credentials_smoke PROPERTIES LINKER_LANGUAGE CXX)
   add_test(NAME c_credentials_smoke COMMAND c_credentials_smoke)
   set_tests_properties(c_credentials_smoke PROPERTIES TIMEOUT 30)
+  # The C# binding is tested against the shared library when a .NET SDK exists.
+  # Its build output goes to the build tree; restore needs NuGet access once.
+  option(SAP2_DOTNET_TESTS "Run the C# binding tests on shared builds when dotnet is found" ON)
+  if(BUILD_SHARED_LIBS AND SAP2_DOTNET_TESTS)
+    find_program(SAP2_DOTNET dotnet)
+    # The runner targets net8.0 and uses --artifacts-path, both needing an SDK
+    # of version 8 or later; an older dotnet alone does not register the test.
+    set(sap2_dotnet_sdk8 FALSE)
+    if(SAP2_DOTNET)
+      execute_process(COMMAND ${SAP2_DOTNET} --list-sdks OUTPUT_VARIABLE sap2_dotnet_sdks
+        ERROR_QUIET RESULT_VARIABLE sap2_dotnet_status)
+      if(sap2_dotnet_status EQUAL 0)
+        # One SDK per line, such as "10.0.401 [path]"; compare each major version.
+        string(REPLACE "\n" ";" sap2_dotnet_sdk_lines "${sap2_dotnet_sdks}")
+        foreach(sap2_sdk IN LISTS sap2_dotnet_sdk_lines)
+          if(sap2_sdk MATCHES "^([0-9]+)\\.")
+            if(CMAKE_MATCH_1 GREATER_EQUAL 8)
+              set(sap2_dotnet_sdk8 TRUE)
+            endif()
+          endif()
+        endforeach()
+      endif()
+    endif()
+    if(sap2_dotnet_sdk8)
+      add_test(NAME csharp_binding_tests COMMAND ${SAP2_DOTNET} run
+        --project ${CMAKE_CURRENT_SOURCE_DIR}/bindings/csharp/SendAirPlay2.Tests/SendAirPlay2.Tests.csproj
+        -c Release --artifacts-path ${CMAKE_CURRENT_BINARY_DIR}/dotnet
+        -- $<TARGET_FILE:send_airplay2>)
+      set_tests_properties(csharp_binding_tests PROPERTIES TIMEOUT 600
+        ENVIRONMENT "DOTNET_CLI_TELEMETRY_OPTOUT=1;DOTNET_NOLOGO=1;DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1")
+    else()
+      message(STATUS "No .NET 8 or later SDK found: C# binding tests are skipped")
+    endif()
+  endif()
   # Host stores and pairing are compiled directly so tests can script sessions.
   add_executable(host_credential_tests tests/host_credential_tests.cpp src/host_credentials.cpp src/auth_workflow.cpp src/cast_controller.cpp ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
   target_include_directories(host_credential_tests PRIVATE src)

@@ -252,3 +252,13 @@ Twenty exact source/license blobs and six isolated offline observations are
 recorded in the [artifact](validation/pyatv-stop-source-audit-2026-10-07.json).
 The [analysis](pyatv-stop-reference.md) distinguishes the upstream polling
 heuristic, fork event-waiter gap and MRP transport callbacks from receiver intent.
+
+## C# binding build (D52)
+
+The C# binding and its test runner ([csharp-binding.md](csharp-binding.md)) are
+original Apache-2.0 code with no `PackageReference`. Building them uses the .NET
+SDK's implicit reference packages, restored from nuget.org: `NETStandard.Library`
+(MIT) for the `netstandard2.0` library and the `Microsoft.NETCore.App.Ref`
+targeting pack (MIT) for the `net8.0` runner. These are compile-time reference
+assemblies only; nothing from them is copied into the repository or shipped with
+the native library. Hosts bring their own .NET runtime.

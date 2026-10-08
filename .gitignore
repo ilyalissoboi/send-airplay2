@@ -1,3 +1,6 @@
 /build*/
 /vcpkg_installed/
 __pycache__/
+# .NET build output if the binding is built in place.
+bindings/csharp/**/bin/
+bindings/csharp/**/obj/
