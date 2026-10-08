@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-08",
+  "decision": "D53",
+  "scope": "D49 step 2b: the C# binding in a packaged, sideloaded UWP app built like Screenbox (modern .NET UWP, Native AOT, DisableRuntimeMarshalling, MSIX), on the recorded Apple TV. Network category and capability set varied per run. Observer answers are recorded separately.",
+  "receiver": {
+    "name": "Living Room",
+    "hardware": "Apple TV 4K (AppleTV14,1)",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_scope": "Prior user report, assumed unchanged; not queried during this test."
+  },
+  "host": "Windows 11 x64 (10.0.26200), Developer Mode on; Visual Studio 2026 18.10.2, .NET SDK 10.0.401",
+  "source_head": "fe4162c3692536a02eae19cd09374304b2d1a4a6",
+  "tested_source_blobs": {
+    "bindings/csharp/SendAirPlay2/AssemblyInfo.cs": "0f2721e02c147212b71392c27c024e6b31968c9e",
+    "bindings/csharp/SendAirPlay2/Cast.cs": "2732ecae47154f0d052665780b86484930ef1a54",
+    "bindings/csharp/SendAirPlay2/CredentialStore.cs": "dd30f94ea6541950732a4f9997e6a5d8353dac7c",
+    "bindings/csharp/SendAirPlay2/MediaSource.cs": "50297ff02fc6c1aa82f3894b4c542ba7016b6689",
+    "bindings/csharp/SendAirPlay2/Native.cs": "93f2213dee224eb7edb34201a2707dcc241a08ec",
+    "bindings/csharp/SendAirPlay2/Pairing.cs": "d82fee6f6020bcac914bef2ad6d8125f4e722f07",
+    "bindings/csharp/SendAirPlay2/Results.cs": "4deaa74c73c1a3c666e8a9f2204dca0d7134fd4b",
+    "bindings/csharp/SendAirPlay2/SendAirPlay2.csproj": "36ba3f0e80329073f804cf5514e08138cedb8d4e",
+    "tools/uwp-host/App.xaml": "e7c24a7a484d7ddff0fcbc887f6426f3b4e31c21",
+    "tools/uwp-host/App.xaml.cs": "3d9495591fcd38bcd08f092aece92a3a4a30e561",
+    "tools/uwp-host/HostLog.cs": "5d871e7b502bdbefa76ed918171ffacf3463e254",
+    "tools/uwp-host/MainPage.xaml": "348b265cb3468512146efa599045a42097f1ae31",
+    "tools/uwp-host/MainPage.xaml.cs": "0f0b82b4cf3ff0616fe3a345f04104ffe2c24874",
+    "tools/uwp-host/Package.InternetServer.appxmanifest": "0c74de28e2933551ff4677e5864a0b024146d5c5",
+    "tools/uwp-host/Package.appxmanifest": "9ac2bb62cf206990b6b1e78cabf296f6a5200b65",
+    "tools/uwp-host/PasswordVaultStore.cs": "95c7815fdea6378cfc777c3850e5b063f9a3ec98",
+    "tools/uwp-host/SendAirPlay2.UwpHost.csproj": "40d59c74f969e1cb41a634d666e8452d0d8d52a6",
+    "tools/uwp-host/StorageFileMediaSource.cs": "61e73430721fbe26739c90fe45e65132cc76d8fe"
+  },
+  "source_note": "After the last build only the two manifests' XML comments and a UTF-8 byte-order mark changed; code, capabilities and versions are as tested.",
+  "package": {
+    "identity": "SendAirPlay2.UwpHost (sideloaded test identity, unsigned layout registered)",
+    "target_framework": "net10.0-windows10.0.26100.0, UseUwp, PublishAot, SelfContained, win-x64",
+    "native_library": "send_airplay2.dll from the shared Windows Release build of main at 623d411 (D52)",
+    "native_dll_sha256": "87f34d6041952383afeb6da0c8eab2610bb32be85faffbf58fca6d2bd32b892f",
+    "aot_exe_sha256": {
+      "0.1.0.0 and 0.1.1.0": "9e15048072f2d61c69e2924b5bb6516c88c2fc615e86a35a7eb74c0aa02984f8",
+      "0.1.2.0": "3131ecc136af61d192f7bc24e56529aa8426ff8803ea4df0f689b312a92d408b"
+    },
+    "aot_and_trim_warnings": 0,
+    "declared_dependency": "Microsoft.VCLibs.140.00 (added by the MSIX tooling)"
+  },
+  "runs": [
+    {
+      "variant": "0.1.0.0: internetClient + privateNetworkClientServer (Screenbox's set)",
+      "network_category": "Public",
+      "log": [
+        "04:03:26.443 Native library loaded: API version 2",
+        "04:03:26.456 Package capabilities: internetClientServer=no privateNetworkClientServer=yes",
+        "04:04:02.217 Built-in store probe (remove absent profile): credential_store",
+        "04:04:02.220 PasswordVault credentials under 'send-airplay2': 0",
+        "04:04:07.076 Pair: starting (PasswordVault store)",
+        "04:04:55.995 Pair: ok",
+        "04:04:55.996 PasswordVault credentials under 'send-airplay2': 1",
+        "04:05:09.366 Media file picked: 53953926 bytes",
+        "04:05:18.703 Cast: starting (PasswordVault store)",
+        "04:05:24.048 Cast start: connection phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no"
+      ],
+      "observer": "During the PasswordVault cast the TV played nothing."
+    },
+    {
+      "variant": "0.1.1.0: adds internetClientServer (in-place update)",
+      "network_category": "Public",
+      "log": [
+        "---- update to internetClientServer variant ----",
+        "04:07:30.482 Native library loaded: API version 2",
+        "04:07:30.496 Package capabilities: internetClientServer=yes privateNetworkClientServer=yes",
+        "04:07:54.125 Built-in store probe (remove absent profile): credential_store",
+        "04:07:54.127 PasswordVault credentials under 'send-airplay2': 1",
+        "04:08:02.948 Media file picked: 53953926 bytes",
+        "04:08:09.744 Cast: starting (built-in store)",
+        "04:08:09.750 Cast start: credential_store phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no",
+        "04:08:19.776 Cast: stop the current cast first",
+        "04:08:22.251 Stopped: phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no",
+        "04:08:22.252 Cast disposed; media source released",
+        "04:08:23.912 Cast: starting (PasswordVault store)",
+        "04:08:25.726 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.2 failure=None/None cleaned=no",
+        "04:09:07.590 Ended: phase=Ended state=Playing end=SenderStop owned=yes position=43.0 failure=None/None cleaned=no",
+        "04:09:07.660 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=43.1 failure=None/None cleaned=yes",
+        "04:09:07.662 Cast disposed; media source released"
+      ],
+      "observer": "PasswordVault cast: normal video and audio. Built-in-store cast failed immediately. Controls were not exercised in this run."
+    },
+    {
+      "variant": "0.1.2.0: internetClient + privateNetworkClientServer (in-place update)",
+      "network_category": "Private (switched by the user in Windows Settings)",
+      "log": [
+        "---- update to privateNetworkClientServer variant 0.1.2.0, network Private ----",
+        "04:15:14.188 Native library loaded: API version 2",
+        "04:15:14.201 Package capabilities: internetClientServer=no privateNetworkClientServer=yes",
+        "04:15:37.156 Built-in store probe (remove absent profile): credential_store",
+        "04:15:37.158 PasswordVault credentials under 'send-airplay2': 1",
+        "04:15:46.105 Media file picked: 53953926 bytes",
+        "04:15:52.523 Cast: starting (PasswordVault store)",
+        "04:15:54.303 Cast start: ok phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no",
+        "04:16:41.076 State: Paused",
+        "04:16:41.076 Control pause: ok",
+        "04:16:58.011 Control play: ok",
+        "04:16:58.013 State: Loading",
+        "04:16:58.057 State: Playing",
+        "04:17:12.563 Control seek 60: ok",
+        "04:17:27.974 Control seek 10: ok",
+        "04:17:48.279 Ended: phase=Ended state=Playing end=SenderStop owned=yes position=29.3 failure=None/None cleaned=no",
+        "04:17:48.380 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=29.4 failure=None/None cleaned=yes",
+        "04:17:48.381 Cast disposed; media source released"
+      ],
+      "observer": "Normal video and audio; pause and both seeks worked; Home after Stop."
+    }
+  ],
+  "findings": [
+    "The packaged AOT app loads send_airplay2.dll with its OpenSSL and Botan DLLs inside the AppContainer.",
+    "The built-in Credential Manager store is unusable inside the AppContainer at runtime: removing an absent profile and loading an existing profile both report credential_store.",
+    "Pairing into a C# PasswordVault host store works (first hardware pairing into a host store); the credential survived two in-place package updates.",
+    "Brokered StorageFile reads serve the receiver.",
+    "With privateNetworkClientServer only, casting fails on a Public network (start reports connection after about the 5 s request timeout; inbound traffic from the receiver is blocked) and works on a Private network.",
+    "internetClientServer makes casting work on a Public network.",
+    "The native DLLs are linked against the desktop C runtime; they loaded because the desktop runtime is installed system-wide. A UWP-correct native build must target the app C runtime (part of D49 step 3)."
+  ],
+  "not_run": [
+    "PasswordVault roaming across devices.",
+    "Provisioning the app's locker from a desktop process.",
+    "Store certification (WACK) of the package.",
+    "x86 and ARM64 builds."
+  ],
+  "receiver_side_effect": "One new Apple TV pairing entry for the living-room-uwp controller identity."
+}

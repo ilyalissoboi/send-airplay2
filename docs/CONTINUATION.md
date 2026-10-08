@@ -2,8 +2,8 @@
 
 Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#16 are merged; `main` contains the
 receiver-tested public playback interface (D46-D48), the D49 credential design,
-and host stores plus pairing (D50-D51). The C# binding (D52, D49 step 2a) is on
-`claude/csharp-binding`.
+host stores plus pairing (D50-D51) and the C# binding (D52). The packaged UWP
+test host (D53, D49 step 2b) is on `claude/uwp-test-host`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -11,9 +11,11 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D52):** the C# binding in `bindings/csharp`, on branch
-  `claude/csharp-binding` with its own PR (find it with `gh pr list --state
-  open`). Offline-tested only; see [csharp-binding.md](csharp-binding.md).
+- **Active slice (D53):** the packaged UWP test host in `tools/uwp-host`, on
+  branch `claude/uwp-test-host` with its own PR (find it with `gh pr list
+  --state open`). Receiver-tested; see [uwp-host.md](uwp-host.md).
+- [PR #17](https://github.com/ilyalissoboi/send-airplay2/pull/17), the C# binding
+  (D52), was merged by the user as `623d411`.
 - [PR #16](https://github.com/ilyalissoboi/send-airplay2/pull/16), host stores and
   pairing (D50-D51), was merged by the user as `0b65912`. Its real pairing used
   the new profile `living-room-api`.
@@ -197,11 +199,11 @@ development, not retroactive gate failures.
    [credential-interface.md](credential-interface.md): (a) **done in D50:**
    host-store callbacks and pairing in the C interface, with test stores on all
    CI platforms, and one real pairing into the built-in store (D51); (b) the C#
-   binding is **done in D52** (offline-tested), and next is a packaged UWP test
-   app with a C# `PasswordVault` host store,
-   also proving native loading, discovery, brokered file reads and inbound
-   serving, and measuring D49's unverified items; (c) a UWP library build without
-   the Credential Manager adapter; (d) macOS Keychain and Linux Secret Service
+   binding is **done in D52**, and the packaged UWP test app with a C#
+   `PasswordVault` store is **done in D53** (native loading, PasswordVault
+   pairing, StorageFile serving, casts; Screenbox's capability works on Private
+   networks only); (c) a UWP library build without the Credential Manager
+   adapter, against the app C runtime; (d) macOS Keychain and Linux Secret Service
    adapters, then Linux/macOS/Android device support. Botan UWP packaging remains
    unresolved; desktop/CI success is not packaged-host proof.
 7. **Screenbox integration.** After the standalone gate, re-read that repository's

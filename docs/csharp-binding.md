@@ -81,6 +81,8 @@ shared 30/30. The runner covers:
 - pairing refusals: invalid options, a malformed existing record and an
   unreachable receiver, with no PIN request and no save.
 
-Not covered: receiver casts or pairing through C#, packaged UWP loading,
-`PasswordVault`, `StorageFile` sources, and .NET Native compilation. Those are
-step 2b.
+Receiver use through C# is covered by the packaged UWP test host (D53,
+[uwp-host.md](uwp-host.md)): Native AOT loading, PasswordVault pairing, a
+`StorageFile` source, casts and controls all passed on one Apple TV and Windows
+host. Not covered: classic .NET Native, and the binding in a desktop .NET app
+against a receiver.

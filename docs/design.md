@@ -119,6 +119,11 @@ position for handoff and disconnect recovery. UI and lifetime changes require
 inspection of RendererWatcher, CastContext, CastControlViewModel and playback
 coordination before modifying Screenbox.
 
+D53's packaged test host measured the network side: Screenbox's
+`privateNetworkClientServer` lets the receiver reach the app's media server on a
+Private network but not on a Public one, where `internetClientServer` is needed
+([uwp-host.md](uwp-host.md)). Choosing that capability is a decision for the fork.
+
 Screenbox's current agent instructions require Visual Studio 2026 MSBuild for UWP
 builds. A desktop C# console success is insufficient: validate native loading,
 brokered file access and inbound network serving in a packaged UWP host early.

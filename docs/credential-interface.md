@@ -111,11 +111,14 @@ runtime tests.
 The version-1 record is at most 203 bytes (272 characters as Base64), which is
 password-sized. An earlier estimate of 139 bytes in conversation was wrong.
 
-**Unverified, to measure in the packaged UWP test app:** whether `CredRead` works
-at runtime in a sideloaded AppContainer app; whether the locker roams on Windows
-11 and under which setting (Windows backup's "Remember my preferences" appears
-related, unconfirmed); whether a desktop tool can provision a specific app's
-locker. None of these changes the decisions above.
+**Measured in the packaged UWP test app (D53):** Credential Manager does **not**
+work at runtime inside a sideloaded AppContainer app (removing an absent profile
+and loading an existing one both report `credential_store`), and pairing into a
+`PasswordVault` host store works, with the credential kept across in-place
+package updates; see [uwp-host.md](uwp-host.md). **Still unverified:** whether the
+locker roams on Windows 11 and under which setting (Windows backup's "Remember my
+preferences" appears related, unconfirmed), and whether a desktop tool can
+provision a specific app's locker. None of these changes the decisions above.
 
 ## Other platforms (planned, not researched in depth)
 
@@ -137,9 +140,11 @@ implementation; dependencies such as libsecret are recorded in
    interface, with test stores, so CI covers them on Windows, Linux and macOS.
    A real pairing through `sap2_pair()` into the built-in store passed on
    2026-10-08 (D51); pairing into a host store on hardware comes with step 2.
-2. The C# binding and the packaged UWP test app with a C# `PasswordVault` host
-   store; measure the unverified items above.
-3. The UWP library build without the Credential Manager adapter.
+2. **Done (D52, D53):** the C# binding, and a packaged UWP test app with a C#
+   `PasswordVault` host store, receiver-tested on one Apple TV and Windows host.
+3. The UWP library build without the Credential Manager adapter, linked against
+   the app C runtime (D53 found the desktop-built DLLs depend on the desktop C
+   runtime, which a clean UWP device may not have).
 4. Built-in macOS Keychain and Linux Secret Service adapters.
 
 ## Sources
