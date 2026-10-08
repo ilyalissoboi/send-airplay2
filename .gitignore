@@ -4,3 +4,7 @@ __pycache__/
 # .NET build output if the binding is built in place.
 bindings/csharp/**/bin/
 bindings/csharp/**/obj/
+# UWP test host build output.
+tools/uwp-host/bin/
+tools/uwp-host/obj/
+tools/uwp-host/AppPackages/

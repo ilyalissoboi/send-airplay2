@@ -93,7 +93,7 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Large file | Seek beyond 4 GiB without integer truncation | PASS for one selected file (D48): 6.32 GB remuxed film (64-bit `co64` offsets); after `seek 4800`, 37 range requests at offsets of 4,490,723,328 bytes and above were all answered 206; user saw the picture jump to about 1:20:00 with sound, then back to about 0:10:00. Other files, receivers and hosts untested |
 | Non-AAC audio | E-AC-3 audio plays | PASS for one selected file (D48): E-AC-3 5.1 (Atmos-flagged) in MP4 played normally by user report; no Atmos indication was shown, and whether the TV/AV chain can show one is unknown |
 | Public C interface | Start, controls, end, stop, recovery through `playback.h` | PASS (D48): all seven manual checks through `airplay2-api-host`, static and shared, plus ten cycles in one process; see the D48 record |
-| Packaged Windows host | Discovery, native loading, file access, serving work | NOT RUN |
+| Packaged Windows host | Discovery, native loading, file access, serving work | PARTIAL (D53): discovery not run (no C discovery API yet). Passed for one sideloaded AOT UWP app: native loading, PasswordVault pairing, StorageFile serving, casts and controls. Casting with Screenbox's `privateNetworkClientServer` fails on a Public network and passes on a Private one; `internetClientServer` passes on Public. The built-in Credential Manager store fails inside the AppContainer. Store certification and x86/ARM64 not run |
 
 Use a personally owned or redistributable unprotected test clip. Capture sanitized
 diagnostics: timestamps, state transitions, status codes and range requests.
@@ -1182,3 +1182,29 @@ This adds one pairing entry on the Apple TV, which only its settings can remove.
 Not run on hardware: pairing into a host-provided store, a wrong or cancelled
 PIN, and `sap2_forget_profile()`; those remain unit-tested only. One receiver,
 firmware and host.
+
+## Packaged UWP host (D53, 2026-10-08)
+
+The [C# binding](csharp-binding.md) ran inside a sideloaded, packaged UWP app
+built like Screenbox (modern .NET UWP, Native AOT, `DisableRuntimeMarshalling`,
+MSIX), at source head `fe4162c3692536a02eae19cd09374304b2d1a4a6`, on Windows 11
+x64 with the Living Room Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773) assumed
+unchanged and not queried. See [uwp-host.md](uwp-host.md) for the app and the
+[artifact](validation/native-uwp-host-windows-2026-10-08.json) for hashes, tested
+source blobs and the app's fixed-field log. The receiver address reached the app
+through the clipboard and never appeared in any output.
+
+| Run | Network | Capabilities | Native result | Observer |
+| --- | --- | --- | --- | --- |
+| Native load | Public | `internetClient`, `privateNetworkClientServer` | API version 2 inside the AppContainer | |
+| Built-in store | Public, Private | either | `credential_store` for removing an absent profile and for casting with the existing `living-room-test` | |
+| Pair into PasswordVault | Public | Screenbox's set | `Pair: ok`; one credential, kept across two in-place updates | PIN entered in the app's dialog |
+| Cast, PasswordVault | Public | Screenbox's set | `connection` after about 5.3 s (about the request timeout) | TV played nothing |
+| Cast, PasswordVault | Public | adds `internetClientServer` | `Start: ok` in 1.8 s; sender_stop after 42 s, cleaned | Normal video and audio |
+| Cast and controls, PasswordVault | Private | Screenbox's set | `Start: ok` in 1.8 s; pause, play, seek 60, seek 10 ok; sender_stop, cleaned, source released | Video and audio, pause and seeks visible, Home after Stop |
+
+The user switched the network to Private in Windows Settings for the last run.
+One new Apple TV pairing entry exists for the `living-room-uwp` identity. Not run:
+PasswordVault roaming, desktop provisioning of the app's locker, Store
+certification, x86/ARM64 and discovery inside the app. The native DLLs were built
+for the desktop C runtime and loaded because it is installed system-wide.

@@ -7,15 +7,15 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: C# binding (D49 step 2a)
+## 0. Resume here: packaged UWP test host (D49 step 2b)
 
-**Active slice: the C# binding (D52).** The user merged PR #16 (host credential
-stores and pairing, D50-D51) as `0b65912` and asked to proceed with the C#
-binding as its own PR. Branch `claude/csharp-binding` adds `bindings/csharp`
-(a `netstandard2.0` library and a `net8.0` test runner run by CTest on shared
-builds); see [csharp-binding.md](csharp-binding.md) and the D52 record in
-section 4. Offline-tested only. The packaged UWP test app (step 2b) follows as a
-separate PR.
+**Active slice: the packaged UWP test host (D53).** The user merged PR #17 (the
+C# binding, D52) as `623d411` and asked to proceed with PR B. Branch
+`claude/uwp-test-host` adds `tools/uwp-host`, a sideloaded modern .NET UWP app
+built like Screenbox (Native AOT, MSIX). It was receiver-tested on 2026-10-08;
+see [uwp-host.md](uwp-host.md) and the D53 record in section 4.
+
+The C# binding (D52) is merged; see [csharp-binding.md](csharp-binding.md).
 
 D49 step 1 (D50, API version 2: host credential stores and pairing) is merged;
 `sap2_pair()` paired the Apple TV into the built-in store and a cast with the new
@@ -931,6 +931,23 @@ lifetime under forced collection and finalization, store results and pairing
 refusals; removing the keep-alive fails it. Windows static 29/29 and shared
 30/30. No receiver use through C# yet. Build-time .NET reference packages are
 recorded in dependencies.md.
+
+**D53 (packaged UWP host, 2026-10-08):** the user merged PR #17 and asked for PR
+B; for the Public network question they chose to measure both capability sets,
+and later switched the network to Private themselves for a third run.
+`tools/uwp-host` matches Screenbox's toolchain settings (`UseUwp`,
+`net10.0-windows10.0.26100.0`, Native AOT, `DisableRuntimeMarshalling`, MSIX,
+CsWinRT 2.3.1) and holds a C# `PasswordVault` host store, a `StorageFile`
+source, a PIN dialog and a fixed-field log. Results on the recorded Apple TV: the
+AOT app loads the native DLLs; Credential Manager fails inside the AppContainer;
+pairing into PasswordVault passes and survives in-place updates; with Screenbox's
+`privateNetworkClientServer`, casting fails on a Public network (inbound blocked)
+and passes on a Private one, including controls and Home after Stop;
+`internetClientServer` passes on Public. **Open decision for the Screenbox fork:**
+whether to add `internetClientServer` for Public networks. Findings for D49 step
+3: the native DLLs depend on the desktop C runtime. Not run: roaming, desktop
+provisioning of the locker, Store certification, x86/ARM64. Record:
+[receiver-validation.md](receiver-validation.md#packaged-uwp-host-d53-2026-10-08).
 
 ## 5. Implemented code and verification
 
