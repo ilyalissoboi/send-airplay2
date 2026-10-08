@@ -3,8 +3,12 @@
 # DLL is marked AppContainer and links the app C runtime (VCRUNTIME140_APP)
 # rather than the desktop one; send_airplay2.dll has no ADVAPI32 import (the
 # Credential Manager adapter is compiled out) and no Botan DLL (Botan is static).
-# Static properties only: this is not Store certification (WACK) or a run test.
-param([Parameter(Mandatory = $true)][string]$Directory)
+# -Machine names the expected architecture (dumpbin's machine field). Static
+# properties only: this is not Store certification (WACK) or a run test.
+param(
+    [Parameter(Mandatory = $true)][string]$Directory,
+    [ValidateSet('x64', 'x86', 'ARM64')][string]$Machine = 'x64'
+)
 
 $ErrorActionPreference = 'Stop'
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
@@ -35,6 +39,9 @@ foreach ($dll in @($library, $crypto.FullName) | Where-Object { $_ }) {
     if ($headers -notmatch 'App Container') {
         Fail "$name is not marked AppContainer"
     }
+    if ($headers -notmatch "machine \($Machine\)") {
+        Fail "$name is not built for $Machine"
+    }
     $dependents = (& $dumpbin /nologo /dependents $dll) -join "`n"
     if ($dependents -notmatch '(?im)^\s*VCRUNTIME140_APP\.dll\s*$') {
         Fail "$name does not link VCRUNTIME140_APP.dll"
@@ -42,7 +49,7 @@ foreach ($dll in @($library, $crypto.FullName) | Where-Object { $_ }) {
     if ($dependents -match '(?im)^\s*VCRUNTIME140\.dll\s*$') {
         Fail "$name links the desktop VCRUNTIME140.dll"
     }
-    Write-Host "checked $name"
+    Write-Host "inspected $name (expected $Machine)"
 }
 
 $libraryDependents = (& $dumpbin /nologo /dependents $library) -join "`n"

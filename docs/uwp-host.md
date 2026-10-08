@@ -42,12 +42,17 @@ adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
 Switching variants keeps the app's data only as an in-place update, which
 Windows allows only to a higher version. Before building the other variant,
 raise its `Version` above the installed one (the committed manifests are
-0.1.12.0 and 0.1.13.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
+0.1.14.0 and 0.1.15.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
 0.1.4.0 and D55 used 0.1.6.0, 0.1.8.0, 0.1.10.0 and 0.1.12.0).
 Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
 registers a lower version over a higher one (untested here).
 
 ## Build and install (Windows, Developer Mode)
+
+The project builds for `x64`, `x86` and `ARM64` (`/p:Platform=x86
+/p:RuntimeIdentifier=win-x86`, and so on); each packages the UWP native build for
+that platform (`build-uwp`, `build-uwp-x86`, `build-uwp-arm64`). An x86 package
+runs on x64 Windows; ARM64 packaging needs the ARM64 build tools.
 
 Build the UWP native library first (`build-uwp`, Release; see
 [uwp-native-build.md](uwp-native-build.md)). Then, from a shell where
@@ -87,6 +92,7 @@ warnings for the binding.
 | Discover (D54, 0.1.4.0, fresh registration) | Private | Screenbox's set | **Pass**: one receiver, the expected name, IPv4 address filled in |
 | UWP-built library (D55, 0.1.6.0) | Private | Screenbox's set | Loads with the app C runtime from VCLibs; built-in store `unsupported`; discover and cast pass, but the app **crashed at every Stop** (Asio `winapp_thread`) |
 | UWP-built library with the reader-pool fix (D55, 0.1.10.0, 0.1.12.0) | Private | Screenbox's set | **Pass**: cast, pause, play, both seeks, Stop and a second cast in one process; a cast ended by remote Home frees the slot; Home after Stop |
+| x86 package with the x86 UWP-built library (D57, 0.1.14.0) | Private | Screenbox's set | **Pass**: x86 app runtime from VCLibs; discover, cast, pause, play, both seeks, Stop; app stayed open |
 
 ## What this means for Screenbox
 
@@ -106,4 +112,7 @@ warnings for the binding.
 
 Not covered: discovery on a Public network, pairing through the UWP-built
 library, PasswordVault roaming, desktop provisioning of the app's locker,
-Store certification (WACK), and x86/ARM64.
+an ARM64 run, and Store certification of a signed package (the D57 kit run
+on the sideloaded package failed only Supported APIs, for the .NET Native AOT
+runtime in the host executable; see
+[uwp-native-build.md](uwp-native-build.md#certification-kit-d57)).
