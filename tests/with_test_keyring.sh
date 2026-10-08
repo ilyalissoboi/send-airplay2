@@ -7,6 +7,17 @@
 # secret-tool, so a broken keyring setup fails here with its own message.
 set -euo pipefail
 
+# The store's save/erase lock lives in $XDG_RUNTIME_DIR, which desktop sessions
+# provide and CI runners may not; give this session a private one if missing.
+if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+    XDG_RUNTIME_DIR="$(mktemp -d)"
+    chmod 700 "$XDG_RUNTIME_DIR"
+    export XDG_RUNTIME_DIR
+    echo 'with_test_keyring: XDG_RUNTIME_DIR was unset; using a private temporary directory'
+else
+    echo 'with_test_keyring: XDG_RUNTIME_DIR is set'
+fi
+
 # --unlock starts the daemon and creates/unlocks the login keyring; --start then
 # initializes the Secret Service component in that running daemon, which is
 # what registers org.freedesktop.secrets on the bus.
