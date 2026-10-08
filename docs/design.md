@@ -167,7 +167,7 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    within the original deadline, with synthetic interruption/cancellation tests.
    This improves readiness reporting; the physical startup pause remained unresolved
    until D56: it was observed while the receiver was waking from sleep (user
-   report), and waking it over MRP before play fixed that case in one run.
+   report), and waking it over MRP before play fixed that case in two sleep cycles.
    D39 completed the [manual batch](manual-validation.md): startup, controls/full
    EOF and post-wake presentation/Home passed. Remote Stop/Home and automatic
    cleanup passed, but protocol intent still reports connection_lost/exit 1.

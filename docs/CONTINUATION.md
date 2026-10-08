@@ -175,9 +175,9 @@ development, not retroactive gate failures.
    aggregate connection/request counts in `serve`'s summary (HANDOFF section 7).
 2. **Startup reliability.** D56 reproduced first-frame-then-Home when casting to
    a sleeping receiver and fixed that case by waking it over MRP before play
-   (one run). The user reported that the earlier intermittent pause was observed
+   (two sleep cycles: CLI and C interface). The user reported that the earlier intermittent pause was observed
    while the Apple TV was waking from sleep, so D56 is its likely cause and fix;
-   confirm with repeated sleep cycles. Historical notes, which follow:
+   watch for any recurrence from an awake receiver. Historical notes, which follow:
    spontaneous pause at zero/first-frame-only occurred
    without remote input, including a 16-slot run. One-second confirmation improves
    readiness reporting but does not explain or cure the receiver transition.

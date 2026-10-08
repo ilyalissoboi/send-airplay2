@@ -1,7 +1,7 @@
 {
   "date": "2026-10-08",
   "decision": "D56",
-  "scope": "Casting to a sleeping receiver: reproduction, MRP power diagnostic and the wake-before-play fix, through airplay2-cli cast --event-log (desktop, static) with the existing built-in-store profile and gas.mp4. Observer answers are recorded separately from telemetry.",
+  "scope": "Casting to a sleeping receiver: reproduction, MRP power diagnostic and the wake-before-play fix, through airplay2-cli cast --event-log and, for run 6, airplay2-api-host over the C interface (desktop, static) with the existing built-in-store profile and gas.mp4. Observer answers are recorded separately from telemetry.",
   "receiver": {
     "name": "Living Room",
     "hardware": "Apple TV 4K (AppleTV14,1)",
@@ -178,15 +178,28 @@
       "event_lines": 65,
       "build": "wake-before-play",
       "observer": "Video played normally, then went to the Home screen after the 45 s local stop."
+    },
+    {
+      "label": "run 6: asleep, wake build, C interface (airplay2-api-host static) 13:39:49Z",
+      "lines": [
+        "Start: ok phase=active state=playing end=none owned=yes position=1.2 duration=131.6 rate=1.0 failure=none/none cleaned=no",
+        "driver: sending Enter (local stop)",
+        "Summary: api_version=2 linkage=static start=ok phase=stopped state=playing end=sender_stop owned=yes position=39.7 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=1307 bytes=85529248 failed_reads=0 releases=1",
+        "driver: cast exited with 0"
+      ],
+      "event_lines": 0,
+      "build": "wake-before-play, C interface (airplay2-api-host, static)",
+      "observer": "Everything worked as expected (video played normally after the wake; Home after the stop)."
     }
   ],
-  "result": "PASS for this receiver and host: when the MRP handshake reports logicalDeviceCount 0, sending WAKE_DEVICE and waiting until the count is 1 and unchanged for 2.5 s lets playback start and continue normally. Without it, the receiver reported playing and then paused or stopped within about 1.6 s while tvOS returned to Home.",
+  "result": "PASS for this receiver and host in two sleep cycles (CLI run 5, C interface run 6): when the MRP handshake reports logicalDeviceCount 0, sending WAKE_DEVICE and waiting until the count is 1 and unchanged for 2.5 s lets playback start and continue normally. Without it, the receiver reported playing and then paused or stopped within about 1.6 s while tvOS returned to Home.",
   "not_run": [
-    "Repeated sleep cycles (one fixed run)",
-    "The C interface or the UWP host on a sleeping receiver (they use the same session code)",
+    "More than two sleep cycles with the fix",
+    "The UWP host or the shared library on a sleeping receiver (same session code)",
     "Deeper sleep states, a receiver that is unreachable while asleep, or a TV without HDMI-CEC power control",
     "Other receivers, firmware or hosts"
   ],
   "handling": "The driver kept the receiver address and id in memory and withheld any output line containing them or a URL (none was withheld). No firewall, network, credential or receiver setting changed; the existing Allow rule for this worktree's airplay2-cli path was used.",
-  "user_report_after_runs": "The user reported that the intermittent startup pause recorded since D38 was observed when the Apple TV was waking from sleep. Same condition and symptom as runs 1 and 3; the earlier runs were not repeated."
+  "user_report_after_runs": "The user reported that the intermittent startup pause recorded since D38 was observed when the Apple TV was waking from sleep. Same condition and symptom as runs 1 and 3; the earlier runs were not repeated.",
+  "api_host_sha256_wake_build": "144d893cd587a936b79c5944e1636cabdee58699bd12699be31b062007b94fd8"
 }
