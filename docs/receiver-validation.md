@@ -97,7 +97,7 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Large file | Seek beyond 4 GiB without integer truncation | PASS for one selected file (D48): 6.32 GB remuxed film (64-bit `co64` offsets); after `seek 4800`, 37 range requests at offsets of 4,490,723,328 bytes and above were all answered 206; user saw the picture jump to about 1:20:00 with sound, then back to about 0:10:00. Other files, receivers and hosts untested |
 | Non-AAC audio | E-AC-3 audio plays | PASS for one selected file (D48): E-AC-3 5.1 (Atmos-flagged) in MP4 played normally by user report; no Atmos indication was shown, and whether the TV/AV chain can show one is unknown |
 | Public C interface | Start, controls, end, stop, recovery through `playback.h` | PASS (D48): all seven manual checks through `airplay2-api-host`, static and shared, plus ten cycles in one process; see the D48 record |
-| Packaged Windows host | Discovery, native loading, file access, serving work | PARTIAL (D53-D55): passed for one sideloaded AOT UWP app: the UWP-built library (app C runtime, AppContainer, no Credential Manager; D55) casting with controls and repeated Stops, discovery through the C interface (Private network, Screenbox's capabilities; Public not measured), native loading, PasswordVault pairing, StorageFile serving, casts and controls. Casting with Screenbox's `privateNetworkClientServer` fails on a Public network and passes on a Private one; `internetClientServer` passes on Public. The built-in Credential Manager store fails inside the AppContainer. Store certification and x86/ARM64 not run |
+| Packaged Windows host | Discovery, native loading, file access, serving work | PARTIAL (D53-D55): passed for one sideloaded AOT UWP app: the UWP-built library (app C runtime, AppContainer, no Credential Manager; D55) casting with controls and repeated Stops, discovery through the C interface (Private network, Screenbox's capabilities; Public not measured), native loading, PasswordVault pairing, StorageFile serving, casts and controls. Casting with Screenbox's `privateNetworkClientServer` fails on a Public network and passes on a Private one; `internetClientServer` passes on Public. The built-in Credential Manager store fails inside the AppContainer. D57: an x86 package with the x86 library passed casting and controls; the certification kit passed 26 of 27 tests, failing Supported APIs only for the .NET AOT runtime in the host executable. ARM64 built in CI only |
 
 Use a personally owned or redistributable unprotected test clip. Capture sanitized
 diagnostics: timestamps, state transitions, status codes and range requests.
@@ -1301,3 +1301,19 @@ a pause at zero. After this run the user reported that it was observed when the
 Apple TV was waking from sleep. The same condition and symptom make D56's cause
 its likely explanation and wake-before-play its likely fix; the earlier runs
 themselves were not repeated, and their traces predate the power reports.
+
+## UWP architectures and certification kit (D57, 2026-10-08)
+
+The user asked to finish the standalone items except remote-Stop detection.
+On top of `99942d1`, the library built for x86 UWP and passed the binary check
+(x86, AppContainer, `VCRUNTIME140_APP`, no `ADVAPI32` or Botan DLL); ARM64 is
+built and checked in CI only, since this Visual Studio lacks the ARM64 tools.
+Details, hashes and logs: [artifact](validation/native-uwp-architectures-wack-windows-2026-10-08.json).
+
+| Run | Result | Observer |
+| --- | --- | --- |
+| x86 test host 0.1.14.0 (x86 library, existing PasswordVault credential, Private network, Screenbox's capabilities) | x86 `_APP` runtime from VCLibs; discover ok; cast in 1.8 s; pause, play, seek 60, seek 10 ok; Stop `cleaned=yes`, source released; no Application Error | Everything worked as expected |
+| Certification kit 10.0.28000.2526 on x64 test host 0.1.12.0 (run by the user, elevated) | 26 of 27 tests pass; Supported APIs fails for six kernel32 calls in `SendAirPlay2.UwpHost.exe` (the .NET Native AOT runtime); nothing reported for `send_airplay2.dll` or `libcrypto` | |
+
+Not run: ARM64 locally or on a device, the kit on the x86 package or on a
+signed Store-style package.
