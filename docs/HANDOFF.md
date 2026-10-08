@@ -885,11 +885,14 @@ engineering proposal for the next slice. Details, sources and unverified items:
 **D50 (host credential stores and pairing, 2026-10-08):** the user merged PR #15
 and asked to proceed with D49 step 1. New public headers `credentials.h`
 (`sap2_credential_store` callbacks, `SAP2_STORE_*` results, 203-byte record
-bound) and `pairing.h` (`sap2_pair`, `sap2_pair_options_init`,
+bound) and `pairing.h` (`sap2_pair`, a size-aware `sap2_pair_options_init`,
 `sap2_forget_profile`); `sap2_cast_options.credential_store` as a new last field,
 with version 1 structs still accepted; results `PROFILE_EXISTS` and
 `PIN_TIMEOUT`; `SAP2_PLAYBACK_API_VERSION` 2. `sap2_pair` drives the existing
-`run_auth_workflow` through a host-store adapter and a PIN-callback prompt, so
+`run_auth_workflow` through a host-store adapter and a PIN-callback prompt
+(review follow-up: `sap2_cast_options_init_sized()` added and the version 1
+initializer limited to the version 1 fields, so an older host's struct is
+never overrun; callbacks must not re-enter the library), so
 the CLI's save/reload/verify order and refusals are reused, not reimplemented.
 Engineering choices: a synchronous `read_pin` callback whose deadline is checked
 on return; no pairing cancellation besides `read_pin`; the shared result mapping

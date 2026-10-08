@@ -118,7 +118,7 @@ static int start_with_store(const sap2_credential_store* table) {
     sap2_media_source source;
     sap2_cast* cast = NULL;
     int result;
-    sap2_cast_options_init(&options);
+    sap2_cast_options_init_sized(&options, sizeof(options));
     options.receiver_address = "127.0.0.1";
     options.profile = profile_name;
     options.credential_store = table;
@@ -181,6 +181,33 @@ static void cast_load_results(void) {
           "length above capacity reports credential_store");
 }
 
+/* The legacy initializer declares a version 1 struct, which ends before
+ * credential_store, so the library must ignore the field and never call it. */
+static void legacy_init_ignores_store(void) {
+    struct memory_store store;
+    sap2_credential_store table;
+    sap2_cast_options options;
+    sap2_media_source source;
+    sap2_cast* cast = NULL;
+    int result;
+    memset(&store, 0, sizeof(store));
+    table = table_for(&store);
+    sap2_cast_options_init(&options);
+    options.receiver_address = "127.0.0.1";
+    options.profile = "sap2-c-credentials-absent-profile";
+    options.credential_store = &table;
+    memset(&source, 0, sizeof(source));
+    source.struct_size = sizeof(source);
+    source.size = 10;
+    source.read_at = never_read;
+    check(sap2_cast_create(&options, &source, &cast) == SAP2_OK, "legacy-initialized create");
+    result = sap2_cast_start(cast);
+    sap2_cast_destroy(cast);
+    check(result == SAP2_ERROR_PROFILE_NOT_FOUND || result == SAP2_ERROR_UNSUPPORTED,
+          "legacy-initialized options use the built-in store");
+    check(store.loads == 0, "the host store beyond a version 1 struct is never called");
+}
+
 static void profile_removal(void) {
     struct memory_store store;
     sap2_credential_store table;
@@ -217,7 +244,7 @@ static int32_t record_pin_call(void* context, char* digits, size_t capacity, siz
 static sap2_pair_options pair_options_for(const sap2_credential_store* table,
                                           struct pin_probe* pin) {
     sap2_pair_options options;
-    sap2_pair_options_init(&options);
+    sap2_pair_options_init(&options, sizeof(options));
     options.receiver_address = "127.0.0.1";
     options.receiver_port = 9; /* Discard port: nothing listens on loopback. */
     options.profile = profile_name;
@@ -231,14 +258,16 @@ static sap2_pair_options pair_options_for(const sap2_credential_store* table,
 static void pair_defaults(void) {
     sap2_pair_options options;
     memset(&options, 0xA5, sizeof(options));
-    sap2_pair_options_init(&options);
+    sap2_pair_options_init(&options, sizeof(options) - 1);
+    check(options.struct_size == 0xA5A5A5A5u, "pair init refuses a struct smaller than v2");
+    sap2_pair_options_init(&options, sizeof(options));
     check(options.struct_size == sizeof(options), "pair options struct size");
     check(options.receiver_port == 7000, "default pair port");
     check(options.timeout_ms == 10000 && options.pin_timeout_ms == 60000, "default pair timeouts");
     check(!options.receiver_address && !options.profile && !options.credential_store &&
               !options.read_pin,
           "pair pointers default to NULL");
-    sap2_pair_options_init(NULL);
+    sap2_pair_options_init(NULL, sizeof(options));
 }
 
 static void pair_refusals(void) {
@@ -284,6 +313,7 @@ static void pair_refusals(void) {
 int main(void) {
     table_validation();
     cast_load_results();
+    legacy_init_ignores_store();
     profile_removal();
     pair_defaults();
     pair_refusals();

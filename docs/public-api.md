@@ -120,6 +120,15 @@ Host stores, wrong and cancelled PINs, and profile removal are unit-tested only.
 - Threading and lifetime follow credentials.h: callbacks run on the calling
   thread; a cast's store must stay valid until `sap2_cast_destroy()` returns,
   and a pairing call's store and `read_pin` until it returns.
+  Callbacks must not re-enter the library for the operation that invoked them
+  (for example `sap2_cast_stop()` from a cast's store would wait for the very
+  start that is calling it); stop a cast from another thread.
+- **Size-aware initializers.** `sap2_cast_options_init_sized(&options,
+  sizeof options)` writes at most the caller's size and stores what the library
+  knows in `struct_size`. The version 1 `sap2_cast_options_init()` now writes
+  only the version 1 fields, so a host built against version 1 can never be
+  overrun by a newer library; the library then ignores `credential_store`.
+  `sap2_pair_options_init(&options, sizeof options)` is sized from the start.
 
 Engineering choices made while implementing: `read_pin` is a synchronous
 callback rather than a two-step API, because the existing workflow keeps the

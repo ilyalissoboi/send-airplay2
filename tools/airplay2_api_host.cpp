@@ -469,7 +469,7 @@ struct CastHandle {
 
 sap2_cast_options options_for(const HostArguments& arguments) {
     sap2_cast_options options;
-    sap2_cast_options_init(&options);
+    sap2_cast_options_init_sized(&options, sizeof(options));
     options.receiver_address = arguments.address.c_str();
     options.receiver_port = arguments.port;
     options.profile = arguments.profile.c_str();
@@ -842,7 +842,7 @@ int32_t read_pin_from_console(void*, char*, std::size_t, std::size_t*) {
 /// Pair a new profile into the built-in store with hidden console PIN entry.
 int run_pair(const HostArguments& arguments) {
     sap2_pair_options options;
-    sap2_pair_options_init(&options);
+    sap2_pair_options_init(&options, sizeof(options));
     options.receiver_address = arguments.address.c_str();
     options.receiver_port = arguments.port;
     options.profile = arguments.profile.c_str();

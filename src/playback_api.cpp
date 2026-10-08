@@ -9,6 +9,7 @@
 #include "host_credentials.h"
 
 #include <chrono>
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -384,15 +385,22 @@ int sap2_read_should_stop(const sap2_read_control* control) {
     return !control || !control->context || control->context->should_stop() ? 1 : 0;
 }
 
-void sap2_cast_options_init(sap2_cast_options* options) {
-    if (!options) {
+void sap2_cast_options_init_sized(sap2_cast_options* options, size_t struct_size) {
+    if (!options || struct_size < cast_options_v1_size) {
         return;
     }
-    std::memset(options, 0, sizeof(*options));
-    options->struct_size = sizeof(sap2_cast_options);
+    // Never write past the caller's struct: an older host's struct is smaller.
+    const auto known = std::min(struct_size, sizeof(sap2_cast_options));
+    std::memset(options, 0, known);
+    options->struct_size = static_cast<uint32_t>(known);
     options->receiver_port = SAP2_DEFAULT_RECEIVER_PORT;
     options->start_timeout_ms = SAP2_DEFAULT_START_TIMEOUT_MS;
     options->media_connections = SAP2_DEFAULT_MEDIA_CONNECTIONS;
+}
+
+void sap2_cast_options_init(sap2_cast_options* options) {
+    // The version 1 entry point: its callers allocated a version 1 struct.
+    sap2_cast_options_init_sized(options, cast_options_v1_size);
 }
 
 int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_media_source* source,
@@ -505,11 +513,12 @@ int32_t sap2_cast_stop(sap2_cast* cast) {
 void sap2_cast_destroy(sap2_cast* cast) {
     delete cast; // The controller destructor stops; the last source copy releases.
 }
-void sap2_pair_options_init(sap2_pair_options* options) {
-    if (!options) {
-        return;
+void sap2_pair_options_init(sap2_pair_options* options, size_t struct_size) {
+    if (!options || struct_size < sizeof(sap2_pair_options)) {
+        return; // Only one pairing struct version exists; nothing smaller is valid.
     }
-    std::memset(options, 0, sizeof(*options));
+    // A later, larger struct keeps its own extra fields; only known bytes are set.
+    std::memset(options, 0, sizeof(sap2_pair_options));
     options->struct_size = sizeof(sap2_pair_options);
     options->receiver_port = SAP2_DEFAULT_RECEIVER_PORT;
     options->timeout_ms = SAP2_DEFAULT_PAIR_TIMEOUT_MS;

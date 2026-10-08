@@ -39,13 +39,16 @@ typedef struct sap2_pair_options {
      * `digits` (capacity SAP2_MAX_PIN_DIGITS, no terminator needed), set
      * `*length` and return SAP2_OK; return SAP2_ERROR_CANCELLED if the user
      * cancels. Leading zeros are significant. The library erases `digits`
-     * after use; never log the PIN. */
+     * after use; never log the PIN. It must not call sap2_pair() or
+     * sap2_forget_profile(): the pairing call is still in progress. */
     int32_t (*read_pin)(void* context, char* digits, size_t capacity, size_t* length);
 } sap2_pair_options;
 
-/** Fill defaults and struct_size; strings, store and callback are left NULL.
- * No-op for NULL. */
-SAP2_API void sap2_pair_options_init(sap2_pair_options* options);
+/** Fill defaults for a struct of `struct_size` bytes, the caller's sizeof,
+ * writing at most min(struct_size, this library's sizeof) bytes and storing
+ * that size in struct_size. Strings, store and callback are left NULL. No-op
+ * for NULL or a size smaller than this version's struct. */
+SAP2_API void sap2_pair_options_init(sap2_pair_options* options, size_t struct_size);
 
 /** Pair with a receiver by PIN and save the credentials under a new profile.
  *

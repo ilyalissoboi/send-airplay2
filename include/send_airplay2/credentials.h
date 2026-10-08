@@ -34,7 +34,13 @@ extern "C" {
  * whatever `context` points to must stay valid from sap2_cast_create() until
  * sap2_cast_destroy() returns, or until a sap2_pair()/sap2_forget_profile()
  * call returns. Buffers passed to callbacks are borrowed for that call only and
- * erased by the library afterwards. */
+ * erased by the library afterwards.
+ *
+ * No re-entry: a callback must not call back into the library for the
+ * operation that invoked it. From a cast's store, call no sap2_cast_* function
+ * on that handle (sap2_cast_stop() would wait for the very start that is
+ * calling the store, and deadlock); from a pairing or removal call's store, call
+ * no sap2_pair() or sap2_forget_profile(). Stop a cast from another thread. */
 
 /* Store callback results. */
 #define SAP2_STORE_OK 0

@@ -24,7 +24,9 @@ extern "C" {
  * - No C++ exceptions or objects cross this boundary. Every function returns a
  *   SAP2_* result unless documented otherwise.
  * - Extensible structures begin with struct_size. Initialize options with
- *   sap2_cast_options_init() and set status/source struct_size to sizeof.
+ *   sap2_cast_options_init_sized(&options, sizeof options) and set status/source
+ *   struct_size to sizeof. Initializers never write beyond the size the caller
+ *   passes, so a host built against an older header stays within its struct.
  * - Strings are NUL-terminated UTF-8/ASCII, borrowed for the call and copied.
  * - Receiver-provided text, addresses, identifiers, URLs and credentials are
  *   never returned through this interface.
@@ -178,7 +180,18 @@ typedef struct sap2_cast_options {
     const sap2_credential_store* credential_store;
 } sap2_cast_options;
 
-/** Fill defaults and struct_size. Addresses and profile are left NULL. No-op for NULL. */
+/** Fill defaults for a struct of `struct_size` bytes, the caller's sizeof.
+ * Clears and fills at most min(struct_size, this library's sizeof) bytes and
+ * stores that size in struct_size, so a host can read back which fields the
+ * library knows; fields beyond it are left untouched and ignored. Strings and
+ * the credential store are left NULL. No-op for NULL or a size smaller than the
+ * version 1 struct. */
+SAP2_API void sap2_cast_options_init_sized(sap2_cast_options* options, size_t struct_size);
+
+/** Version 1 initializer, kept for hosts built against version 1. It writes only
+ * the version 1 fields and sets struct_size to their size, so the library then
+ * ignores credential_store; hosts that use a credential store must call
+ * sap2_cast_options_init_sized(). No-op for NULL. */
 SAP2_API void sap2_cast_options_init(sap2_cast_options* options);
 
 /** Snapshot of one handle. Phase and start fields are read together; session
