@@ -9,13 +9,18 @@ set -euo pipefail
 
 # The store's save/erase lock lives in $XDG_RUNTIME_DIR, which desktop sessions
 # provide and CI runners may not; give this session a private one if missing.
-if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+if [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -d "$XDG_RUNTIME_DIR" ] && [ -w "$XDG_RUNTIME_DIR" ]; then
+    echo 'with_test_keyring: XDG_RUNTIME_DIR is a writable directory'
+else
+    if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+        echo 'with_test_keyring: XDG_RUNTIME_DIR was unset'
+    else
+        echo 'with_test_keyring: XDG_RUNTIME_DIR is set but missing or not writable'
+    fi
     XDG_RUNTIME_DIR="$(mktemp -d)"
     chmod 700 "$XDG_RUNTIME_DIR"
     export XDG_RUNTIME_DIR
-    echo 'with_test_keyring: XDG_RUNTIME_DIR was unset; using a private temporary directory'
-else
-    echo 'with_test_keyring: XDG_RUNTIME_DIR is set'
+    echo 'with_test_keyring: using a private temporary directory instead'
 fi
 
 # --unlock starts the daemon and creates/unlocks the login keyring; --start then

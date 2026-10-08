@@ -388,6 +388,15 @@ void workflow_tests() {
 }
 
 #ifdef SAP2_TEST_NATIVE_STORE
+/// Runs one native-store operation and names it if the store throws: the
+/// exception itself carries only a fixed category.
+template <class Action> auto store_step(const char* step, Action action) -> decltype(action()) {
+    try {
+        return action();
+    } catch (const CredentialException& error) {
+        throw std::runtime_error(std::string("native store, ") + step + ": " + error.what());
+    }
+}
 // Tests use only random, synthetic namespace entries, never application credentials.
 class TestSlot {
     CredentialStore& store_;
@@ -404,7 +413,8 @@ public:
             profile += hex[random.bytes[index] >> 4];
             profile += hex[random.bytes[index] & 15];
         }
-        require(!store_.load(profile), "synthetic slot must be absent before ownership");
+        require(!store_step("slot absence check", [&] { return store_.load(profile); }),
+                "synthetic slot must be absent before ownership");
     }
     ~TestSlot() {
         if (owned) {
@@ -593,7 +603,8 @@ bool native_store_reachable(CredentialStore& store) {
         const char* required = std::getenv("SAP2_REQUIRE_SECRET_SERVICE");
         if (error.reason() != CredentialError::unavailable ||
             (required && std::string_view(required) == "1")) {
-            throw;
+            throw std::runtime_error(std::string("native store, reachability probe (load): ") +
+                                     error.what());
         }
         std::cout << "SKIP: Secret Service unavailable (no session bus or unlocked keyring); "
                      "set SAP2_REQUIRE_SECRET_SERVICE=1 to fail instead.\n";
@@ -611,15 +622,19 @@ void native_store_tests() {
     }
     TestSlot slot(*store);
     auto credentials = fixture_credentials();
-    store->save_new(slot.profile, *credentials);
+    store_step("first save_new", [&] { store->save_new(slot.profile, *credentials); });
     slot.owned = true;
-    auto reloaded = store->load(slot.profile);
+    auto reloaded = store_step("reload", [&] { return store->load(slot.profile); });
     require(static_cast<bool>(reloaded), "native load exists");
     same_credentials(*reloaded, *credentials, "native credential roundtrip");
     verify_in_child_process(slot.profile);
     rejects<CredentialException>([&] { store->save_new(slot.profile, *credentials); },
                                  "native overwrite refusal");
-    require(store->erase(slot.profile) && !store->erase(slot.profile) && !store->load(slot.profile),
+    require(store_step("erase",
+                       [&] {
+                           return store->erase(slot.profile) && !store->erase(slot.profile) &&
+                                  !store->load(slot.profile);
+                       }),
             "native idempotent erase");
     slot.owned = false;
 
