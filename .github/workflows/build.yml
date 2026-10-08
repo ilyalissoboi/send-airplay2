@@ -48,7 +48,7 @@ jobs:
         # libsecret enables the Linux built-in credential store (D59); GNOME
         # Keyring and a session bus let its tests reach a real Secret Service.
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libsecret-1-dev gnome-keyring dbus
+        run: sudo apt-get update && sudo apt-get install -y libsecret-1-dev libsecret-tools gnome-keyring dbus
       - name: Configure
         run: cmake -S . -B build -DBUILD_TESTING=ON -DBUILD_SHARED_LIBS=${{ matrix.shared }} -DCMAKE_BUILD_TYPE=Release "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake"
       - name: Build
@@ -60,10 +60,7 @@ jobs:
         if: runner.os == 'Linux'
         env:
           SAP2_REQUIRE_SECRET_SERVICE: '1'
-        run: >-
-          dbus-run-session -- bash -c
-          'printf "%s" "ci-keyring" | gnome-keyring-daemon --unlock --components=secrets > /dev/null
-          && ctest --test-dir build -C Release --output-on-failure'
+        run: dbus-run-session -- bash ./tests/with_test_keyring.sh ctest --test-dir build -C Release --output-on-failure
   uwp:
     # The AppContainer library for packaged hosts (docs/uwp-native-build.md):
     # build only. Its programs cannot run outside a package; receiver use is
