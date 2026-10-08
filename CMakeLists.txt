@@ -22,7 +22,9 @@ set(sap2_auth_sources src/auth_workflow.cpp ${sap2_credential_sources} ${sap2_re
 # secret or C++ type crosses its exported boundary (docs/public-api.md).
 # Host credential stores and pairing (D49) reuse the CLI's auth workflow.
 set(sap2_playback_api_sources src/cast_controller.cpp src/playback_api.cpp src/host_credentials.cpp src/auth_workflow.cpp ${sap2_credential_sources})
-add_library(send_airplay2 src/http_range.cpp src/media_server.cpp src/discovery.cpp src/discovery_core.cpp src/discovery_transport.cpp ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources} ${sap2_receiver_sources} ${sap2_session_sources} ${sap2_playback_api_sources})
+# The C discovery interface (D54) wraps discover() for non-C++ hosts.
+set(sap2_receivers_api_sources src/discovery_api.cpp src/receiver_list.cpp)
+add_library(send_airplay2 src/http_range.cpp src/media_server.cpp src/discovery.cpp src/discovery_core.cpp src/discovery_transport.cpp ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources} ${sap2_receiver_sources} ${sap2_session_sources} ${sap2_playback_api_sources} ${sap2_receivers_api_sources})
 target_link_libraries(send_airplay2 PRIVATE OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS} Boost::beast Boost::asio)
 target_compile_features(send_airplay2 PUBLIC cxx_std_17)
 target_include_directories(send_airplay2 PUBLIC
@@ -106,6 +108,11 @@ if(BUILD_TESTING)
   set_target_properties(c_credentials_smoke PROPERTIES LINKER_LANGUAGE CXX)
   add_test(NAME c_credentials_smoke COMMAND c_credentials_smoke)
   set_tests_properties(c_credentials_smoke PROPERTIES TIMEOUT 30)
+  add_executable(c_receivers_smoke tests/c_receivers_smoke.c)
+  target_link_libraries(c_receivers_smoke PRIVATE send_airplay2)
+  set_target_properties(c_receivers_smoke PROPERTIES LINKER_LANGUAGE CXX)
+  add_test(NAME c_receivers_smoke COMMAND c_receivers_smoke)
+  set_tests_properties(c_receivers_smoke PROPERTIES TIMEOUT 30)
   # The C# binding is tested against the shared library when a .NET SDK exists.
   # Its build output goes to the build tree; restore needs NuGet access once.
   option(SAP2_DOTNET_TESTS "Run the C# binding tests on shared builds when dotnet is found" ON)
@@ -168,6 +175,13 @@ if(BUILD_TESTING)
   target_compile_features(discovery_tests PRIVATE cxx_std_17)
   sap2_warnings(discovery_tests)
   add_test(NAME discovery_tests COMMAND discovery_tests)
+  # The C boundary is compiled with a scripted discover(): no network, no library.
+  add_executable(receiver_list_tests tests/receiver_list_tests.cpp ${sap2_receivers_api_sources})
+  target_include_directories(receiver_list_tests PRIVATE include src)
+  target_compile_features(receiver_list_tests PRIVATE cxx_std_17)
+  sap2_warnings(receiver_list_tests)
+  add_test(NAME receiver_list_tests COMMAND receiver_list_tests)
+  set_tests_properties(receiver_list_tests PROPERTIES TIMEOUT 30)
   # Private codecs are compiled directly: no internal symbols enter the DLL ABI.
   add_executable(control_tests tests/control_tests.cpp ${sap2_pairing_sources})
   target_include_directories(control_tests PRIVATE src)

@@ -93,7 +93,7 @@ Reference playback, the initial native failure and the subsequent native-only G1
 | Large file | Seek beyond 4 GiB without integer truncation | PASS for one selected file (D48): 6.32 GB remuxed film (64-bit `co64` offsets); after `seek 4800`, 37 range requests at offsets of 4,490,723,328 bytes and above were all answered 206; user saw the picture jump to about 1:20:00 with sound, then back to about 0:10:00. Other files, receivers and hosts untested |
 | Non-AAC audio | E-AC-3 audio plays | PASS for one selected file (D48): E-AC-3 5.1 (Atmos-flagged) in MP4 played normally by user report; no Atmos indication was shown, and whether the TV/AV chain can show one is unknown |
 | Public C interface | Start, controls, end, stop, recovery through `playback.h` | PASS (D48): all seven manual checks through `airplay2-api-host`, static and shared, plus ten cycles in one process; see the D48 record |
-| Packaged Windows host | Discovery, native loading, file access, serving work | PARTIAL (D53): discovery not run (no C discovery API yet). Passed for one sideloaded AOT UWP app: native loading, PasswordVault pairing, StorageFile serving, casts and controls. Casting with Screenbox's `privateNetworkClientServer` fails on a Public network and passes on a Private one; `internetClientServer` passes on Public. The built-in Credential Manager store fails inside the AppContainer. Store certification and x86/ARM64 not run |
+| Packaged Windows host | Discovery, native loading, file access, serving work | PARTIAL (D53, D54): passed for one sideloaded AOT UWP app: discovery through the C interface (Private network, Screenbox's capabilities; Public not measured), native loading, PasswordVault pairing, StorageFile serving, casts and controls. Casting with Screenbox's `privateNetworkClientServer` fails on a Public network and passes on a Private one; `internetClientServer` passes on Public. The built-in Credential Manager store fails inside the AppContainer. Store certification and x86/ARM64 not run |
 
 Use a personally owned or redistributable unprotected test clip. Capture sanitized
 diagnostics: timestamps, state transitions, status codes and range requests.
@@ -1206,5 +1206,29 @@ through the clipboard and never appeared in any output.
 The user switched the network to Private in Windows Settings for the last run.
 One new Apple TV pairing entry exists for the `living-room-uwp` identity. Not run:
 PasswordVault roaming, desktop provisioning of the app's locker, Store
-certification, x86/ARM64 and discovery inside the app. The native DLLs were built
-for the desktop C runtime and loaded because it is installed system-wide.
+certification, x86/ARM64 and discovery inside the app (since run, D54 below). The
+native DLLs were built for the desktop C runtime and loaded because it is
+installed system-wide.
+
+## C discovery interface (D54, 2026-10-08)
+
+First scans through [`receivers.h`](../include/send_airplay2/receivers.h), on top
+of `271d1e0` with the D54 working tree (tested blobs, binary hashes and outputs in
+the [artifact](validation/native-discovery-c-api-windows-2026-10-08.json)).
+Windows 11 x64 on a Private network (read, not changed); the Living Room Apple TV
+4K (AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged and not queried.
+Discovery only: no pairing, cast or credential access. Names and addresses were
+compared in memory; hosts printed fixed fields only.
+
+| Run | Result | Observer |
+| --- | --- | --- |
+| `airplay2-api-host --discover --discover-ms 3000 --expect-name "Living Room"`, static | `Discover: ok receivers=1`; IPv4 address, port, features; expected found; exit 0 | |
+| Same, shared build | Same | |
+| Packaged UWP host 0.1.4.0, Screenbox's capabilities, **0. Discover** (5 s) | `Discover: ok receivers=1`; IPv4, port, features; expected found; address box filled | The address box filled in |
+
+**PASS for these runs:** multicast discovery works from native hosts and inside
+the AppContainer with `privateNetworkClientServer` on a Private network. Not run:
+Public networks or `internetClientServer` for discovery, a cast to the discovered
+address inside the app (its PasswordVault was empty after the fresh
+registration), departure and interface changes, several receivers, IPv6-only
+networks and other platforms.

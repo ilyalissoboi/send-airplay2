@@ -6,7 +6,8 @@ using System.Text;
 namespace SendAirPlay2
 {
     /// <summary>
-    /// P/Invoke declarations mirroring include/send_airplay2/*.h (API version 2).
+    /// P/Invoke declarations mirroring include/send_airplay2/*.h (API version 2,
+    /// plus receivers.h).
     /// Struct layouts follow the C declarations field for field with natural
     /// alignment; every callback uses the C calling convention.
     /// </summary>
@@ -23,6 +24,12 @@ namespace SendAirPlay2
 
         /// <summary>SAP2_MAX_PIN_DIGITS.</summary>
         internal const int MaxPinDigits = 8;
+
+        /// <summary>SAP2_RECEIVER_PASSWORD_REQUIRED.</summary>
+        internal const uint ReceiverPasswordRequired = 1;
+
+        /// <summary>SAP2_RECEIVER_HAS_FEATURES.</summary>
+        internal const uint ReceiverHasFeatures = 2;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate UIntPtr ReadAtCallback(IntPtr context, ulong offset, IntPtr buffer,
@@ -116,6 +123,20 @@ namespace SendAirPlay2
             internal IntPtr ReadPin;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct ReceiverInfo
+        {
+            internal uint StructSize;
+            internal uint Flags;
+            internal IntPtr Id;
+            internal IntPtr Name;
+            internal UIntPtr NameLength;
+            internal IntPtr Model;
+            internal IntPtr Address;
+            internal ushort Port;
+            internal ulong Features;
+        }
+
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint sap2_playback_api_version();
 
@@ -163,6 +184,19 @@ namespace SendAirPlay2
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int sap2_forget_profile(IntPtr profile, IntPtr credentialStore);
 
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int sap2_discover(uint durationMs, out IntPtr list);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern UIntPtr sap2_receiver_list_count(IntPtr list);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int sap2_receiver_list_get(IntPtr list, UIntPtr index,
+                                                          ref ReceiverInfo info);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void sap2_receiver_list_free(IntPtr list);
+
         /// <summary>
         /// A NUL-terminated UTF-8 copy in unmanaged memory, freed on dispose. The
         /// library copies the strings it is given, so the copy only has to live
@@ -209,6 +243,17 @@ namespace SendAirPlay2
             var bytes = new byte[length];
             Marshal.Copy(pointer, bytes, 0, length);
             return Encoding.UTF8.GetString(bytes);
+        }
+
+        /// <summary>A copy of <paramref name="length"/> bytes the library owns.</summary>
+        internal static byte[] CopyBytes(IntPtr pointer, int length)
+        {
+            var bytes = new byte[length];
+            if (length > 0)
+            {
+                Marshal.Copy(pointer, bytes, 0, length);
+            }
+            return bytes;
         }
 
         /// <summary>Writes a size_t through a pointer the library passed in.</summary>

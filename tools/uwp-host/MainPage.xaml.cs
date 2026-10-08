@@ -15,8 +15,9 @@ namespace SendAirPlay2.UwpHost
     /// <summary>
     /// D49 step 2b measurements: native loading, the built-in store inside an
     /// AppContainer, pairing into PasswordVault, and casting a brokered StorageFile
-    /// whose media server the receiver must reach. Library calls run off the UI
-    /// thread; the log holds fixed fields only (no address, PIN, path or URL).
+    /// whose media server the receiver must reach; D54 adds multicast discovery
+    /// inside the AppContainer. Library calls run off the UI thread; the log holds
+    /// fixed fields only (no address, PIN, path, URL or receiver name).
     /// </summary>
     public sealed partial class MainPage : Page
     {
@@ -79,6 +80,54 @@ namespace SendAirPlay2.UwpHost
             return error is SendAirPlay2Exception library
                        ? SendAirPlay2Library.ResultName(library.Result)
                        : error.GetType().Name;
+        }
+
+        private static string AddressFamily(string address) =>
+            address.Length == 0 ? "none" : address.Contains(":") ? "ipv6" : "ipv4";
+
+        /// <summary>
+        /// One default-length scan. The receiver whose advertised name equals the
+        /// expected name fills the address box; names and addresses are compared
+        /// and shown in the box, never logged.
+        /// </summary>
+        private void OnDiscover(object sender, RoutedEventArgs e)
+        {
+            var expected = ExpectedNameBox.Text;
+            Log("Discover: starting (" + Receivers.DefaultDuration.TotalSeconds + " s)");
+            Task.Run(() =>
+            {
+                try
+                {
+                    var receivers = Receivers.Discover(Receivers.DefaultDuration);
+                    Log("Discover: ok receivers=" + receivers.Count);
+                    Receiver? match = null;
+                    for (var index = 0; index < receivers.Count; ++index)
+                    {
+                        var receiver = receivers[index];
+                        var matches = receiver.Name == expected;
+                        if (matches && match == null)
+                        {
+                            match = receiver;
+                        }
+                        Log("Receiver: index=" + index + " address=" + AddressFamily(receiver.Address) +
+                            " port_set=" + (receiver.Port != 0 ? "yes" : "no") +
+                            " features=" + (receiver.Features.HasValue ? "yes" : "no") +
+                            " expected=" + (matches ? "yes" : "no"));
+                    }
+                    if (match == null || match.Address.Length == 0)
+                    {
+                        Log("Discover: expected receiver " + (match == null ? "not found" : "has no castable address"));
+                        return;
+                    }
+                    var address = match.Address;
+                    _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => AddressBox.Text = address);
+                    Log("Discover: expected receiver found; address box filled");
+                }
+                catch (Exception error)
+                {
+                    Log("Discover: " + Failure(error));
+                }
+            });
         }
 
         private void OnProbeBuiltIn(object sender, RoutedEventArgs e)

@@ -1,9 +1,9 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#16 are merged; `main` contains the
+Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#18 are merged; `main` contains the
 receiver-tested public playback interface (D46-D48), the D49 credential design,
-host stores plus pairing (D50-D51) and the C# binding (D52). The packaged UWP
-test host (D53, D49 step 2b) is on `claude/uwp-test-host`.
+host stores plus pairing (D50-D51), the C# binding (D52) and the packaged UWP
+test host (D53). The C discovery interface (D54) is on `claude/discovery-c-api`.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -11,9 +11,13 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D53):** the packaged UWP test host in `tools/uwp-host`, on
-  branch `claude/uwp-test-host` with its own PR (find it with `gh pr list
-  --state open`). Receiver-tested; see [uwp-host.md](uwp-host.md).
+- **Active slice (D54):** the C discovery interface (`receivers.h`, C#
+  `Receivers.Discover`, `airplay2-api-host --discover`, the UWP host's Discover
+  button), on branch `claude/discovery-c-api` with its own PR (find it with
+  `gh pr list --state open`). Receiver-tested from native hosts and inside the
+  AppContainer; see [public-api.md](public-api.md#receiver-discovery-d54).
+- [PR #18](https://github.com/ilyalissoboi/send-airplay2/pull/18), the packaged
+  UWP test host (D53), was merged by the user as `271d1e0`.
 - [PR #17](https://github.com/ilyalissoboi/send-airplay2/pull/17), the C# binding
   (D52), was merged by the user as `623d411`.
 - [PR #16](https://github.com/ilyalissoboi/send-airplay2/pull/16), host stores and
@@ -202,7 +206,8 @@ development, not retroactive gate failures.
    binding is **done in D52**, and the packaged UWP test app with a C#
    `PasswordVault` store is **done in D53** (native loading, PasswordVault
    pairing, StorageFile serving, casts; Screenbox's capability works on Private
-   networks only); (c) a UWP library build without the Credential Manager
+   networks only), and receiver discovery through C and C# is **done in D54**
+   (found inside the AppContainer on a Private network); (c) a UWP library build without the Credential Manager
    adapter, against the app C runtime; (d) macOS Keychain and Linux Secret Service
    adapters, then Linux/macOS/Android device support. Botan UWP packaging remains
    unresolved; desktop/CI success is not packaged-host proof.
