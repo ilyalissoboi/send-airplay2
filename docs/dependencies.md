@@ -37,6 +37,19 @@ OpenSSL package. Keep the dependency on a supported release; 3.5 is the upstream
 LTS series, while the pinned 3.6 series requires an update before its November
 2026 end of support. [Upstream release lifecycle](https://openssl-library.org/source/)
 
+## UWP builds: Botan overlay port (D55)
+
+`vcpkg-overlays/ports/botan` copies vcpkg's MIT-licensed `botan` port files
+from the pinned vcpkg commit `434307da09bc05b2c86996dccc8b2351fc0d5d37` and
+changes them only for UWP targets: static linkage, Botan's `--os=uwp`, a
+minimized module set (`ffi`, `srp6`, `sha2_64`, `system_rng`, `ed25519`) and no
+`botan-cli`. vcpkg's copyright and MIT permission notice is reproduced in
+[`vcpkg-overlays/LICENSE-vcpkg.txt`](../vcpkg-overlays/LICENSE-vcpkg.txt)
+(vcpkg's `LICENSE.txt` at that commit, unchanged); the repository's Apache-2.0
+license does not cover those files. Botan's source and version are unchanged
+(3.12.0, BSD-2-Clause); only UWP builds pass the overlay. See [uwp-native-build.md](uwp-native-build.md).
+Those builds also use vcpkg's community `x64-uwp` triplet for OpenSSL and Boost.
+
 ## Botan SRP and key validation
 
 The PIN-pairing slice selects Botan 3.12.0 through its C FFI (`ffi`, `srp6`,
@@ -66,7 +79,8 @@ license, but inspected code has unchecked allocation/arithmetic returns and
 non-constant-time proof comparison requiring broader hardening). That candidate
 was inspected at `fa0f79190142bc309307967c058f89c1b36eb6b8`, not copied or linked.
 Windows UWP/Android packaging and hardware interoperability remain validation
-gates; vcpkg's Botan port excludes the UWP triplet, so a packaged-host proof must
+gates (UWP: built through the overlay port above and receiver-tested in D55);
+vcpkg's curated Botan port excludes the UWP triplet, so a packaged-host proof must
 resolve that integration constraint before Screenbox work.
 
 ## Boost HTTP media serving

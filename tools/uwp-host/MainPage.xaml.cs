@@ -332,11 +332,35 @@ namespace SendAirPlay2.UwpHost
                     }
                     if (current.Phase == CastPhase.Ended || current.Phase == CastPhase.Stopped)
                     {
+                        if (current.Phase == CastPhase.Ended)
+                        {
+                            ReleaseEnded(active);
+                        }
                         return;
                     }
                     last = current;
                 }
             });
+        }
+
+        /// <summary>
+        /// Frees the slot of a cast that ended by itself (end of media, receiver stop,
+        /// connection loss), so the next Cast works without pressing Stop first. Stop
+        /// takes the slot before stopping, so only one of the two disposes a cast.
+        /// </summary>
+        private void ReleaseEnded(Cast ended)
+        {
+            lock (castGate)
+            {
+                if (cast != ended)
+                {
+                    return;
+                }
+                cast = null;
+            }
+            ended.Stop();
+            ended.Dispose();
+            Log("Ended cast released; media source released");
         }
 
         private void Control(string name, Action<Cast> action)

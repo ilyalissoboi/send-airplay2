@@ -16,6 +16,8 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <PublishAot>true</PublishAot>
     <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+    <!-- Function pointers for the native abort trace (NativeAbortTrace.cs). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -24,8 +26,11 @@
     <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
     <GenerateTestArtifacts>false</GenerateTestArtifacts>
     <InternetServerCapability Condition="'$(InternetServerCapability)' == ''">false</InternetServerCapability>
-    <!-- Directory holding send_airplay2.dll and its dependencies (shared build). -->
-    <Sap2NativeDir Condition="'$(Sap2NativeDir)' == ''">$(MSBuildThisFileDirectory)..\..\build-shared\Release</Sap2NativeDir>
+    <!-- Directory holding send_airplay2.dll and its dependencies: the UWP
+         (WindowsStore) build, which links the app C runtime and statically links
+         Botan (docs/uwp-native-build.md). A desktop shared build (with botan-3.dll)
+         also loads, but only where the desktop C runtime is installed. -->
+    <Sap2NativeDir Condition="'$(Sap2NativeDir)' == ''">$(MSBuildThisFileDirectory)..\..\build-uwp\Release</Sap2NativeDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,8 +48,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The native library and its OpenSSL/Botan DLLs, placed in the package root. -->
-    <Content Include="$(Sap2NativeDir)\send_airplay2.dll;$(Sap2NativeDir)\libcrypto-3-x64.dll;$(Sap2NativeDir)\botan-3.dll">
+    <!-- The native library and its OpenSSL DLL, placed in the package root;
+         botan-3.dll exists only in desktop shared builds. -->
+    <Content Include="$(Sap2NativeDir)\send_airplay2.dll;$(Sap2NativeDir)\libcrypto-3-x64.dll">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(Sap2NativeDir)\botan-3.dll" Condition="Exists('$(Sap2NativeDir)\botan-3.dll')">
       <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -52,4 +62,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <Target Name="Sap2CheckNativeDir" BeforeTargets="Build">
+    <Error Condition="!Exists('$(Sap2NativeDir)\send_airplay2.dll')"
+           Text="send_airplay2.dll not found in $(Sap2NativeDir). Build the UWP native library first (docs/uwp-native-build.md) or set Sap2NativeDir." />
+  </Target>
 </Project>

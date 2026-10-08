@@ -10,6 +10,7 @@ namespace SendAirPlay2.UwpHost
     {
         public App()
         {
+            NativeAbortTrace.Install();
             InitializeComponent();
         }
 

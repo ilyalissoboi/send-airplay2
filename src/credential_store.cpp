@@ -7,6 +7,16 @@
 #include <string_view>
 #include <vector>
 #ifdef _WIN32
+#include <winapifamily.h>
+// Credential Manager (wincred.h) exists for desktop apps only. App-partition
+// (UWP) builds leave it out, so the binary has no desktop-only credential
+// imports and the built-in store reports unsupported, as on other platforms
+// without one; packaged hosts supply their own store (D49).
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#define SAP2_HAS_CREDENTIAL_MANAGER 1
+#endif
+#endif
+#ifdef SAP2_HAS_CREDENTIAL_MANAGER
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -17,7 +27,7 @@
 #endif
 
 namespace send_airplay2::detail {
-#ifdef _WIN32
+#ifdef SAP2_HAS_CREDENTIAL_MANAGER
 namespace {
 [[noreturn]] void unavailable() {
     throw CredentialException(CredentialError::unavailable);
@@ -184,7 +194,7 @@ std::unique_ptr<CredentialStore> native_credential_store(CredentialNamespace spa
     if (space != CredentialNamespace::application && space != CredentialNamespace::synthetic_test) {
         throw CredentialException(CredentialError::invalid_profile);
     }
-#ifdef _WIN32
+#ifdef SAP2_HAS_CREDENTIAL_MANAGER
     return std::make_unique<WindowsCredentialStore>(space);
 #else
     (void)space;

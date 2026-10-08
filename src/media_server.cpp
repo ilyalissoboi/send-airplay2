@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <future>
 #include <memory>
 #include <mutex>
@@ -86,6 +87,68 @@ std::string random_path() {
     }
     return path;
 }
+
+/**
+ * Runs blocking MediaSource reads off the network thread: a fixed set of
+ * std::threads drains one io_context. join() lets queued reads finish, then
+ * joins every thread; it is idempotent and the destructor calls it.
+ *
+ * asio::thread_pool is deliberately not used. In app (UWP) builds Boost 1.92
+ * implements its threads with winapp_thread, whose join() leaves the thread
+ * marked joinable, so destroying a joined pool calls std::terminate (D55).
+ * Construction joins any threads already started if a later one fails.
+ */
+class ReaderPool {
+public:
+    explicit ReaderPool(std::size_t thread_count) {
+        workers_.reserve(thread_count);
+        try {
+            for (std::size_t index = 0; index < thread_count; ++index) {
+                workers_.emplace_back([this] { run(); });
+            }
+        } catch (...) {
+            join();
+            throw;
+        }
+    }
+    ~ReaderPool() {
+        join();
+    }
+    ReaderPool(const ReaderPool&) = delete;
+    ReaderPool& operator=(const ReaderPool&) = delete;
+    ReaderPool(ReaderPool&&) = delete;
+    ReaderPool& operator=(ReaderPool&&) = delete;
+
+    [[nodiscard]] asio::io_context::executor_type get_executor() noexcept {
+        return context_.get_executor();
+    }
+    /// Lets queued work finish, then joins. Call from a thread outside the pool.
+    void join() {
+        work_.reset();
+        for (auto& worker : workers_) {
+            if (worker.joinable()) {
+                worker.join();
+            }
+        }
+    }
+
+private:
+    void run() {
+        for (;;) {
+            try {
+                context_.run();
+                return;
+            } catch (...) {
+                // Read handlers contain their own failures; keep draining so
+                // join() never waits on work that no thread will run.
+            }
+        }
+    }
+
+    asio::io_context context_;
+    asio::executor_work_guard<asio::io_context::executor_type> work_{context_.get_executor()};
+    std::vector<std::thread> workers_;
+};
 } // namespace
 
 struct MediaServer::Impl {
@@ -101,7 +164,7 @@ struct MediaServer::Impl {
     asio::io_context network;
     asio::executor_work_guard<asio::io_context::executor_type> work{network.get_executor()};
     Tcp::acceptor listener{network};
-    std::unique_ptr<asio::thread_pool> readers;
+    std::unique_ptr<ReaderPool> readers;
     std::thread network_thread;
     const std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
     std::uint64_t next_request_id = 1; // Network thread only.
@@ -186,7 +249,7 @@ struct MediaServer::Impl {
         authority = (local.is_v6() ? "[" + local.to_string() + "]" : local.to_string()) + ":" +
                     std::to_string(endpoint.port());
         media_url = "http://" + authority + path;
-        readers = std::make_unique<asio::thread_pool>(options.max_connections);
+        readers = std::make_unique<ReaderPool>(options.max_connections);
     }
     ~Impl() {
         stop();
@@ -414,7 +477,7 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
         reading_source = true;
         const auto capacity =
             static_cast<std::size_t>(std::min<std::uint64_t>(remaining, body_chunk_size));
-        asio::post(*server.readers, [self = shared_from_this(), capacity] {
+        asio::post(server.readers->get_executor(), [self = shared_from_this(), capacity] {
             std::size_t count = 0;
             const MediaReadContext context{&self->server.stopped, &self->cancelled, self->deadline};
             try {

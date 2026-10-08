@@ -1,2 +1,5 @@
 # Protocol byte oracles must survive Windows checkouts unchanged.
 tests/fixtures/mrp/*.bin binary
+# Verbatim vcpkg port patches (vcpkg-overlays): their unified-diff context lines
+# carry trailing whitespace by design and must stay byte-identical to upstream.
+vcpkg-overlays/ports/**/*.patch -whitespace

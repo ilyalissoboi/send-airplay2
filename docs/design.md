@@ -126,6 +126,10 @@ Private network but not on a Public one, where `internetClientServer` is needed
 D54 added a C discovery snapshot (`receivers.h`) that a RendererWatcher-style
 AirPlay source can poll. Its scan found the receiver inside the same
 AppContainer with Screenbox's capabilities on a Private network.
+D55 builds the library for app packages ([uwp-native-build.md](uwp-native-build.md)):
+app C runtime, AppContainer flag, no Credential Manager, Botan static. The fork
+should package that build, supply a `PasswordVault` store and keep Asio's
+`thread_pool` out of app builds (D55 found it aborts on join there).
 
 Screenbox's current agent instructions require Visual Studio 2026 MSBuild for UWP
 builds. A desktop C# console success is insufficient: validate native loading,

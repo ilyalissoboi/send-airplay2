@@ -33,7 +33,9 @@ headers is in [`bindings/csharp`](bindings/csharp); see
 Screenbox ([`tools/uwp-host`](tools/uwp-host), [notes](docs/uwp-host.md)) paired
 and cast through it on the recorded Apple TV (D53). Receiver discovery also has a
 C interface, [`receivers.h`](include/send_airplay2/receivers.h) (D54), used by
-the C# binding and that host.
+the C# binding and that host. For app packages the library builds as a UWP
+(WindowsStore) DLL against the app C runtime, without Credential Manager; that
+build cast through the test host (D55, [build notes](docs/uwp-native-build.md)).
 See [media serving contracts and validation](docs/media-server.md).
 Private pairing TLV8 and encrypted control-record codecs are implemented using
 OpenSSL, with independent vector and failure tests. Private authenticated peer
@@ -78,8 +80,9 @@ ctest --test-dir build -C Release --output-on-failure
 
 On Linux/macOS, use `bootstrap-vcpkg.sh` with the same manifest/toolchain option.
 vcpkg copies its dependency DLLs alongside Windows build targets. Redistributed
-builds must include the appropriate OpenSSL/Botan runtimes and license notices; packaged
-Windows/Android loading is still untested. See [dependency provenance](docs/dependencies.md).
+builds must include the appropriate OpenSSL/Botan runtimes and license notices. Packaged
+UWP builds are described in [docs/uwp-native-build.md](docs/uwp-native-build.md); Android
+loading is still untested. See [dependency provenance](docs/dependencies.md).
 
 ## Receiver discovery
 

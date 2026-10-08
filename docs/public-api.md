@@ -137,7 +137,8 @@ provisioning socket open between the PIN request and the proof; its deadline is
 checked when it returns, since a callback cannot be interrupted. Pairing has no
 cancellation besides `read_pin`; each network phase is bounded by `timeout_ms`.
 On a platform without a built-in store, a NULL store reports
-`SAP2_ERROR_UNSUPPORTED`.
+`SAP2_ERROR_UNSUPPORTED`. UWP builds are such a platform: they compile out
+Credential Manager (D55, [uwp-native-build.md](uwp-native-build.md)).
 
 ## Receiver discovery (D54)
 
@@ -232,8 +233,9 @@ Telemetry only (no observer needed):
    remote connection still closes before the URL session. Stop is delayed by at
    most the request timeout (5 s by default). The receiver is unresponsive by
    then, so no ordering guarantee is claimed for that case.
-3. **C# binding and packaged UWP proof:** P/Invoke over this header, native loading,
-   brokered file reads and inbound serving in a packaged app.
+3. **C# binding and packaged UWP proof:** done for one receiver and host (D52-D55,
+   [uwp-host.md](uwp-host.md)), including a UWP-built library; Store certification
+   and x86/ARM64 remain.
 4. **Credential stores for other platforms**, per D49
    ([credential-interface.md](credential-interface.md)): built-in macOS Keychain
    and Linux Secret Service adapters, and host-provided stores for UWP
