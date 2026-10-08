@@ -73,7 +73,8 @@ the value is the version-1 envelope above, labelled "send-airplay2 credential".
 | Absent | `errSecItemNotFound` from `SecItemCopyMatching` or `SecItemDelete` |
 | Unavailable | Any other status (locked keychain without UI, access denied, no keychain); native messages are not surfaced |
 | Malformed | A value larger than 203 bytes or empty is `invalid_record`; the decoder checks the rest |
-| Secret handling | The library passes its erasing buffer without copying; the CFData Security returns on load is immutable and cannot be erased by us |
+| One keychain | Every operation names the default keychain (`kSecUseKeychain` for adds, `kSecMatchSearchList` for reads and deletes); otherwise reads and deletes would search the whole keychain search list while adds go to the default one (TN3137). `SecKeychainCopyDefault` is deprecated with no SecItem equivalent, so its warning is suppressed for that call |
+| Secret handling | The value passed to `SecItemAdd` is our own fixed-capacity mutable copy, erased before release; the CFData Security returns on load is immutable and cannot be erased by us, and Security's stored copy is outside our control |
 
 Engineering choice (D58): the **file-based keychain**, not the data protection
 keychain. Apple's TN3137 recommends the data protection keychain for new code,

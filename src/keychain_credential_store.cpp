@@ -3,6 +3,7 @@
 // was copied; the SecItem calls follow Apple's Keychain Services reference and
 // TN3137 (docs/credential-storage.md).
 #include "keychain_credential_store.h"
+#include "control_crypto.h"
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <Security/Security.h>
@@ -64,6 +65,72 @@ CFMutableDictionaryRef create_dictionary() {
     return dictionary;
 }
 
+/**
+ * The user's default keychain (normally the login keychain). Without an explicit
+ * keychain, SecItem reads and deletes search every keychain in the search list
+ * while SecItemAdd writes to the default one (TN3137), so a same-named item in
+ * the System or a custom keychain could be read or deleted instead. Every
+ * operation therefore names this keychain. SecKeychainCopyDefault belongs to the
+ * deprecated SecKeychain API and has no SecItem equivalent, so its deprecation
+ * warning is suppressed for this one call.
+ */
+SecKeychainRef copy_default_keychain() {
+    SecKeychainRef keychain = nullptr;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    const auto status = SecKeychainCopyDefault(&keychain);
+#pragma clang diagnostic pop
+    if (status != errSecSuccess || !keychain) {
+        if (keychain) {
+            CFRelease(keychain);
+        }
+        unavailable();
+    }
+    return keychain;
+}
+
+/// Restricts a read or delete to `keychain` (kSecMatchSearchList).
+void restrict_search(CFMutableDictionaryRef query, SecKeychainRef keychain) {
+    const void* keychains[] = {keychain};
+    const CfOwner<CFArrayRef> search(
+        CFArrayCreate(kCFAllocatorDefault, keychains, 1, &kCFTypeArrayCallBacks));
+    if (!search.get()) {
+        unavailable();
+    }
+    CFDictionarySetValue(query, kSecMatchSearchList, search.get());
+}
+
+/**
+ * Our copy of the record for SecItemAdd, erased before release. The capacity is
+ * fixed at the record size, so appending cannot reallocate and leave an
+ * unerased buffer behind. Security keeps its own copy of what it stores, which
+ * is outside this library's control. Noncopyable: one owner erases once.
+ */
+class ErasingData {
+public:
+    explicit ErasingData(const CredentialBlob& blob)
+        : data_(CFDataCreateMutable(kCFAllocatorDefault, static_cast<CFIndex>(blob.size))) {
+        if (!data_) {
+            unavailable();
+        }
+        CFDataAppendBytes(data_, blob.bytes.data(), static_cast<CFIndex>(blob.size));
+    }
+    ~ErasingData() {
+        cleanse(CFDataGetMutableBytePtr(data_), static_cast<std::size_t>(CFDataGetLength(data_)));
+        CFRelease(data_);
+    }
+    ErasingData(const ErasingData&) = delete;
+    ErasingData& operator=(const ErasingData&) = delete;
+    ErasingData(ErasingData&&) = delete;
+    ErasingData& operator=(ErasingData&&) = delete;
+    [[nodiscard]] CFDataRef get() const noexcept {
+        return data_;
+    }
+
+private:
+    CFMutableDataRef data_;
+};
+
 /// Generic password items are unique per service and account (errSecDuplicateItem).
 /// The dictionary retains the strings it is given.
 void add_item_keys(CFMutableDictionaryRef query, std::string_view service,
@@ -83,8 +150,10 @@ public:
 
     std::unique_ptr<PairCredentials> load(std::string_view profile) override {
         validate_credential_profile(profile);
+        const CfOwner<SecKeychainRef> keychain(copy_default_keychain());
         const CfOwner<CFMutableDictionaryRef> query(create_dictionary());
         add_item_keys(query.get(), service_, profile);
+        restrict_search(query.get(), keychain.get());
         CFDictionarySetValue(query.get(), kSecReturnData, kCFBooleanTrue);
         CFDictionarySetValue(query.get(), kSecMatchLimit, kSecMatchLimitOne);
         CfOwner<CFTypeRef> result;
@@ -113,17 +182,14 @@ public:
         validate_credential_profile(profile);
         CredentialBlob blob;
         encode_credentials(credentials, blob);
+        const CfOwner<SecKeychainRef> keychain(copy_default_keychain());
+        // Declared before the dictionary that retains it, so the dictionary is
+        // released first and the bytes are erased last.
+        const ErasingData value(blob);
         const CfOwner<CFMutableDictionaryRef> item(create_dictionary());
         add_item_keys(item.get(), service_, profile);
-        // No copy on our side: Security copies the bytes it stores, and the
-        // erasing blob outlives this reference.
-        const CfOwner<CFDataRef> value(
-            CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, blob.bytes.data(),
-                                        static_cast<CFIndex>(blob.size), kCFAllocatorNull));
         const CfOwner<CFStringRef> label(create_string("send-airplay2 credential"));
-        if (!value.get()) {
-            unavailable();
-        }
+        CFDictionarySetValue(item.get(), kSecUseKeychain, keychain.get());
         CFDictionarySetValue(item.get(), kSecValueData, value.get());
         CFDictionarySetValue(item.get(), kSecAttrLabel, label.get());
         // SecItemAdd refuses an existing service/account pair, so creation is
@@ -139,8 +205,10 @@ public:
 
     bool erase(std::string_view profile) override {
         validate_credential_profile(profile);
+        const CfOwner<SecKeychainRef> keychain(copy_default_keychain());
         const CfOwner<CFMutableDictionaryRef> query(create_dictionary());
         add_item_keys(query.get(), service_, profile);
+        restrict_search(query.get(), keychain.get());
         const auto status = SecItemDelete(query.get());
         if (status == errSecItemNotFound) {
             return false;
