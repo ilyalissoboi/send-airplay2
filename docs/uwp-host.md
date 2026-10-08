@@ -26,8 +26,13 @@ and provides:
 Two manifests share one identity (and so one PasswordVault locker):
 `Package.appxmanifest` with Screenbox's network capabilities (`internetClient`,
 `privateNetworkClientServer`), and `Package.InternetServer.appxmanifest`, which
-adds `internetClientServer` (build with `/p:InternetServerCapability=true`). A
-variant's version is raised for a run so switching is an in-place update.
+adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
+Switching variants keeps the app's data only as an in-place update, which
+Windows allows only to a higher version. Before building the other variant,
+raise its `Version` above the installed one (the committed manifests are
+0.1.2.0 and 0.1.3.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0).
+Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
+registers a lower version over a higher one (untested here).
 
 ## Build and install (Windows, Developer Mode)
 

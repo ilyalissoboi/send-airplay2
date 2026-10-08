@@ -25,6 +25,7 @@ namespace SendAirPlay2.UwpHost
         private readonly object castGate = new object();
         private StorageFile? mediaFile;
         private Cast? cast;
+        private bool castStarting; // Guarded by castGate: a start is in progress.
         private CancellationTokenSource? watcher;
 
         public MainPage()
@@ -186,19 +187,23 @@ namespace SendAirPlay2.UwpHost
                 Log("Cast: pick a media file first");
                 return;
             }
+            // Reserve the single cast slot before any asynchronous work, so two quick
+            // clicks cannot both start a cast (one of which Stop could never reach).
             lock (castGate)
             {
-                if (cast != null)
+                if (cast != null || castStarting)
                 {
                     Log("Cast: stop the current cast first");
                     return;
                 }
+                castStarting = true;
             }
             var address = AddressBox.Text.Trim();
             Log("Cast: starting (" + storeName + " store)");
             Task.Run(async () =>
             {
-                Cast created;
+                Cast? created = null;
+                var started = false;
                 try
                 {
                     var source = await StorageFileMediaSource.OpenAsync(file);
@@ -208,37 +213,53 @@ namespace SendAirPlay2.UwpHost
                         Profile = profile,
                         CredentialStore = store,
                     }, source);
+                    lock (castGate)
+                    {
+                        cast = created; // Visible to Stop and the controls while starting.
+                    }
+                    created.Start();
+                    started = true;
                 }
                 catch (Exception error)
                 {
-                    Log("Cast create: " + Failure(error));
+                    // Clean up before logging: a failed start has already torn down, and
+                    // logging (file and dispatcher work) must not keep the slot occupied.
+                    var status = created?.GetStatus();
+                    ReleaseSlot(created);
+                    Log((created == null ? "Cast create: " : "Cast start: ") + Failure(error) +
+                        (status.HasValue ? " " + Describe(status.Value) : string.Empty));
+                    if (created != null)
+                    {
+                        Log("Cast disposed; media source released");
+                    }
                     return;
                 }
-                lock (castGate)
+                finally
                 {
-                    cast = created;
+                    lock (castGate)
+                    {
+                        castStarting = false;
+                    }
                 }
-                try
+                if (started && created != null)
                 {
-                    created.Start();
                     Log("Cast start: ok " + Describe(created.GetStatus()));
                     Watch(created);
                 }
-                catch (Exception error)
-                {
-                    Log("Cast start: " + Failure(error) + " " + Describe(created.GetStatus()));
-                    // A failed start has already torn down; free it so the next cast can run.
-                    lock (castGate)
-                    {
-                        if (cast == created)
-                        {
-                            cast = null;
-                        }
-                    }
-                    created.Dispose();
-                    Log("Cast disposed; media source released");
-                }
             });
+        }
+
+        /// <summary>Frees the slot and disposes a cast whose start failed (no-op for null).</summary>
+        private void ReleaseSlot(Cast? failed)
+        {
+            lock (castGate)
+            {
+                if (failed != null && cast == failed)
+                {
+                    cast = null;
+                }
+            }
+            failed?.Dispose();
         }
 
         /// <summary>Logs state changes and the end reason until the cast ends or stops.</summary>

@@ -6,7 +6,7 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   IgnorableNamespaces="uap">
-  <Identity Name="SendAirPlay2.UwpHost" Publisher="CN=send-airplay2 test" Version="0.1.1.0" />
+  <Identity Name="SendAirPlay2.UwpHost" Publisher="CN=send-airplay2 test" Version="0.1.3.0" />
   <Properties>
     <DisplayName>send-airplay2 UWP test host</DisplayName>
     <PublisherDisplayName>send-airplay2 (test)</PublisherDisplayName>
