@@ -41,7 +41,9 @@ namespace SendAirPlay2
         /// <summary>1..16 concurrent HTTP requests.</summary>
         public int MediaConnections { get; set; } = 16;
 
-        /// <summary>Finite and at least 0.</summary>
+        /// <summary>Finite and at least 0. Above 0, <see cref="Cast.Start"/> seeks there
+        /// once the receiver plays (tvOS 26 ignores the queue item's start), so the first
+        /// second or so may show the beginning.</summary>
         public double StartPositionSeconds { get; set; }
 
         /// <summary>A host store, or null for the library's built-in store.</summary>

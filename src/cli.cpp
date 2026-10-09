@@ -232,7 +232,7 @@ void write_usage() {
                  "PLAYLIST.m3u8) [--port 7000] [--content-type video/mp4] "
                  "[--start-timeout-ms 1..120000] "
                  "[--media-connections 1..16] [--event-log] [--media-log] [--minimal-remote] "
-                 "[--remux]\n"
+                 "[--remux] [--start-position 0..86400]\n"
                  "       airplay2-cli remux --file PATH --out DIR\n"
                  "Auth storage supports Windows desktop; pair prompts for a hidden PIN. serve "
                  "hosts one file for a receiver to fetch. cast plays one file on a paired "

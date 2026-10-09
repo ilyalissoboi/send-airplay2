@@ -18,6 +18,9 @@
             <TextBox x:Name="AddressBox" Header="Receiver address (discover or paste)" Width="240" />
             <TextBox x:Name="ProfileBox" Header="PasswordVault profile" Width="200" Text="living-room-uwp" />
             <TextBox x:Name="BuiltInProfileBox" Header="Built-in store profile" Width="200" Text="living-room-test" />
+            <TextBox x:Name="FileLabelBox" Header="Remember picked file as" Width="160" Text="mkv" />
+            <TextBox x:Name="StartPositionBox" Header="Start at (seconds)" Width="140" Text="0" />
+            <CheckBox x:Name="RemuxBox" Content="HLS remux" IsChecked="True" VerticalAlignment="Bottom" />
         </StackPanel>
         <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
             <Button Content="0. Discover" Click="OnDiscover" />

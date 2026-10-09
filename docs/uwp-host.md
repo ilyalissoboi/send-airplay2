@@ -1,7 +1,8 @@
 # Packaged UWP test host (D53)
 
 Status: **receiver-tested on one Apple TV / Windows host, 2026-10-08** (D53; discovery
-D54; UWP-built native library D55). D49 step 2b:
+D54; UWP-built native library D55); HLS remux, start positions and script mode
+2026-10-10 (D61). D49 step 2b:
 the [C# binding](csharp-binding.md) inside a packaged UWP app built the way
 Screenbox is, to measure what Screenbox would meet. Sideloaded locally; not part
 of CI. Record: [receiver-validation.md](receiver-validation.md#packaged-uwp-host-d53-2026-10-08)
@@ -33,7 +34,16 @@ UWP-built native library (`send_airplay2.dll` and `libcrypto-3-x64.dll` from
   (including `std::terminate`), since a packaged app gets no crash dump without
   machine-wide settings. Resolve the offsets with a linker map of the same build;
 - a cast that ends by itself (end of media, receiver Stop/Home, connection loss)
-  frees the app's single cast slot, so the next Cast works without Stop.
+  frees the app's single cast slot, so the next Cast works without Stop;
+- **HLS remux and start position** (D61): the "HLS remux" checkbox (on by
+  default, as Screenbox will cast) selects `CastDelivery.HlsRemux`, and "Start
+  at (seconds)" sets `StartPositionSeconds`. The picker accepts `.mkv`. Cast
+  start times are logged in milliseconds, including opening the file and, for
+  HLS, reading its index;
+- **remembered files**: a picked file is also kept in the app's
+  `FutureAccessList` under the label in "Remember picked file as" (1-32 of
+  a-z, 0-9 and `-`), so scripts can open it later without the picker;
+- a **script mode** for automated runs (D61), below.
 
 Two manifests share one identity (and so one PasswordVault locker):
 `Package.appxmanifest` with Screenbox's network capabilities (`internetClient`,
@@ -42,10 +52,41 @@ adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
 Switching variants keeps the app's data only as an in-place update, which
 Windows allows only to a higher version. Before building the other variant,
 raise its `Version` above the installed one (the committed manifests are
-0.1.14.0 and 0.1.15.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
-0.1.4.0 and D55 used 0.1.6.0, 0.1.8.0, 0.1.10.0 and 0.1.12.0).
+0.1.22.0 and 0.1.23.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
+0.1.4.0, D55 used 0.1.6.0, 0.1.8.0, 0.1.10.0 and 0.1.12.0, D57 0.1.14.0 and D61
+0.1.16.0, 0.1.18.0, 0.1.20.0 and 0.1.22.0).
 Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
 registers a lower version over a higher one (untested here).
+
+## Script mode (D61)
+
+`sap2-uwp-host NAME` (an app execution alias declared in both manifests) starts
+or activates the app and runs `LocalState\scripts\NAME.txt`. NAME is 1-32 of
+a-z, 0-9 and `-`. A running instance receives later activations, so scripts can
+follow one another; one runs at a time. Each line is one command; blank lines
+and `#` comments are skipped:
+
+| Command | Effect |
+| --- | --- |
+| `discover [NAME]` | One scan; fills the address (default: the form's receiver name) |
+| `cast vault\|builtin LABEL [remux\|progressive] [start=SECONDS]` | Casts the file remembered as LABEL; remux is the default |
+| `wait SECONDS` | Waits |
+| `pause`, `play`, `seek SECONDS`, `status`, `stop` | The button actions |
+| `wait-state STATE SECONDS` | Until the receiver reports that `PlaybackState` |
+| `wait-end SECONDS` | Until the cast ends by itself or is stopped |
+| `exit` | Stops any cast and closes the app |
+
+The log records the script name, line numbers and verbs, never arguments (a
+receiver name). The first failing command ends the script and stops a cast it
+left running, so a run can be judged from `Script NAME: done` or
+`failed at line N`. Pick each file once with its label before the first
+script; the grant survives in-place updates. Observing the TV stays manual.
+
+Found while adding it: under Native AOT, `args is CommandLineActivatedEventArgs`
+was false for a command-line activation; testing `ActivationKind` and the
+`ICommandLineActivatedEventArgs` interface works. The alias's `Executable` must
+name the real file (`SendAirPlay2.UwpHost.exe`); MakeAppx does not expand
+`$targetnametoken$` inside an extension.
 
 ## Build and install (Windows, Developer Mode)
 
@@ -93,6 +134,8 @@ warnings for the binding.
 | UWP-built library (D55, 0.1.6.0) | Private | Screenbox's set | Loads with the app C runtime from VCLibs; built-in store `unsupported`; discover and cast pass, but the app **crashed at every Stop** (Asio `winapp_thread`) |
 | UWP-built library with the reader-pool fix (D55, 0.1.10.0, 0.1.12.0) | Private | Screenbox's set | **Pass**: cast, pause, play, both seeks, Stop and a second cast in one process; a cast ended by remote Home frees the slot; Home after Stop |
 | x86 package with the x86 UWP-built library (D57, 0.1.14.0) | Private | Screenbox's set | **Pass**: x86 app runtime from VCLibs; discover, cast, pause, play, both seeks, Stop; app stayed open |
+| HLS remux through scripts (D61, 0.1.20.0, 2026-10-10) | Private | Screenbox's set | MKV film and tx3g MP4 started in about 2.5 s from brokered files; controls, subtitles and a natural end passed; **start positions ignored** (playback from 0) |
+| Start position fix (D61, 0.1.22.0) | Private | Screenbox's set | **Pass**: MKV at 1:00:00, MP4 at 5:00 and 9:40 (natural end, Home), direct MP4 at 2:00; subtitles shown |
 
 ## What this means for Screenbox
 
@@ -110,9 +153,12 @@ warnings for the binding.
   `privateNetworkClientServer` on a Private network (D54). Public networks were
   not measured for discovery.
 
+Record for D61: [receiver-validation.md](receiver-validation.md#uwp-host-hls-remux-and-start-position-d61-2026-10-10).
+
 Not covered: discovery on a Public network, pairing through the UWP-built
-library, PasswordVault roaming, desktop provisioning of the app's locker,
+library, HLS remux in the x86 or ARM64 package, MKVs without Cues through
+brokered access, PasswordVault roaming, desktop provisioning of the app's locker,
 an ARM64 run, and Store certification of a signed package (the D57 kit run
-on the sideloaded package failed only Supported APIs, for the .NET Native AOT
-runtime in the host executable; see
+on the sideloaded package, repeated on 0.1.22.0 for D61, failed only Supported
+APIs, for the .NET Native AOT runtime in the host executable; see
 [uwp-native-build.md](uwp-native-build.md#certification-kit-d57)).

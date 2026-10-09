@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
+using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
@@ -16,8 +19,10 @@ namespace SendAirPlay2.UwpHost
     /// D49 step 2b measurements: native loading, the built-in store inside an
     /// AppContainer, pairing into PasswordVault, and casting a brokered StorageFile
     /// whose media server the receiver must reach; D54 adds multicast discovery
-    /// inside the AppContainer. Library calls run off the UI thread; the log holds
-    /// fixed fields only (no address, PIN, path, URL or receiver name).
+    /// inside the AppContainer. Casts can use the library's HLS remux (D60) and
+    /// a start position, as Screenbox will. Library calls run off the UI thread;
+    /// the log holds fixed fields only (no address, PIN, path, URL or receiver
+    /// name).
     /// </summary>
     public sealed partial class MainPage : Page
     {
@@ -90,11 +95,17 @@ namespace SendAirPlay2.UwpHost
         /// expected name fills the address box; names and addresses are compared
         /// and shown in the box, never logged.
         /// </summary>
-        private void OnDiscover(object sender, RoutedEventArgs e)
+        private async void OnDiscover(object sender, RoutedEventArgs e)
         {
-            var expected = ExpectedNameBox.Text;
+            await DiscoverAsync(ExpectedNameBox.Text);
+        }
+
+        /// <summary>Scans once; back on the UI thread, fills the address box and
+        /// returns true when the expected receiver has a castable address.</summary>
+        private async Task<bool> DiscoverAsync(string expected)
+        {
             Log("Discover: starting (" + Receivers.DefaultDuration.TotalSeconds + " s)");
-            Task.Run(() =>
+            var address = await Task.Run(() =>
             {
                 try
                 {
@@ -117,17 +128,23 @@ namespace SendAirPlay2.UwpHost
                     if (match == null || match.Address.Length == 0)
                     {
                         Log("Discover: expected receiver " + (match == null ? "not found" : "has no castable address"));
-                        return;
+                        return null;
                     }
-                    var address = match.Address;
-                    _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => AddressBox.Text = address);
-                    Log("Discover: expected receiver found; address box filled");
+                    return match.Address;
                 }
                 catch (Exception error)
                 {
                     Log("Discover: " + Failure(error));
+                    return null;
                 }
             });
+            if (address == null)
+            {
+                return false;
+            }
+            AddressBox.Text = address;
+            Log("Discover: expected receiver found; address box filled");
+            return true;
         }
 
         private void OnProbeBuiltIn(object sender, RoutedEventArgs e)
@@ -213,29 +230,62 @@ namespace SendAirPlay2.UwpHost
             picker.FileTypeFilter.Add(".mp4");
             picker.FileTypeFilter.Add(".m4v");
             picker.FileTypeFilter.Add(".mov");
+            picker.FileTypeFilter.Add(".mkv");
             var file = await picker.PickSingleFileAsync();
             if (file != null)
             {
                 mediaFile = file;
                 var size = (await file.GetBasicPropertiesAsync()).Size;
-                Log("Media file picked: " + size + " bytes");
+                // The extension only, as a container hint; never the name or path.
+                Log("Media file picked: " + size + " bytes, type " + file.FileType.ToLowerInvariant());
+                var label = FileLabelBox.Text.Trim();
+                if (IsScriptToken(label))
+                {
+                    // A lasting grant, so scripts can name the file later.
+                    StorageApplicationPermissions.FutureAccessList.AddOrReplace(label, file);
+                    Log("Media file remembered as " + label);
+                }
+                else
+                {
+                    Log("Media file not remembered: a label is 1-32 of a-z, 0-9 and -");
+                }
             }
         }
 
         private void OnCastVault(object sender, RoutedEventArgs e) =>
-            StartCast(ProfileBox.Text.Trim(), new PasswordVaultStore(), "PasswordVault");
+            _ = StartCastFromForm(ProfileBox.Text.Trim(), new PasswordVaultStore(), "PasswordVault");
 
         private void OnCastBuiltIn(object sender, RoutedEventArgs e) =>
-            StartCast(BuiltInProfileBox.Text.Trim(), null, "built-in");
+            _ = StartCastFromForm(BuiltInProfileBox.Text.Trim(), null, "built-in");
 
-        private void StartCast(string profile, ICredentialStore? store, string storeName)
+        /// <summary>Casts the picked file with the form's delivery and start
+        /// position. Call on the UI thread.</summary>
+        private Task<bool> StartCastFromForm(string profile, ICredentialStore? store, string storeName)
         {
             var file = mediaFile;
             if (file == null)
             {
                 Log("Cast: pick a media file first");
-                return;
+                return Task.FromResult(false);
             }
+            var delivery = RemuxBox.IsChecked == true ? CastDelivery.HlsRemux : CastDelivery.Progressive;
+            if (!double.TryParse(StartPositionBox.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture,
+                                 out var startSeconds))
+            {
+                startSeconds = -1; // Rejected by Cast.Create as invalid options.
+            }
+            return StartCast(profile, store, storeName, file, delivery, startSeconds);
+        }
+
+        /// <summary>
+        /// Starts one cast off the UI thread. The task completes with true once
+        /// <see cref="Cast.Start"/> succeeds (the cast then holds the slot until it
+        /// ends or is stopped) and false when the slot is busy or the start failed.
+        /// Call on the UI thread: the address comes from the form.
+        /// </summary>
+        private Task<bool> StartCast(string profile, ICredentialStore? store, string storeName, StorageFile file,
+                                     CastDelivery delivery, double startSeconds)
+        {
             // Reserve the single cast slot before any asynchronous work, so two quick
             // clicks cannot both start a cast (one of which Stop could never reach).
             lock (castGate)
@@ -243,16 +293,18 @@ namespace SendAirPlay2.UwpHost
                 if (cast != null || castStarting)
                 {
                     Log("Cast: stop the current cast first");
-                    return;
+                    return Task.FromResult(false);
                 }
                 castStarting = true;
             }
             var address = AddressBox.Text.Trim();
-            Log("Cast: starting (" + storeName + " store)");
-            Task.Run(async () =>
+            Log("Cast: starting (" + storeName + " store, delivery=" + delivery + ", start=" +
+                startSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s)");
+            return Task.Run(async () =>
             {
                 Cast? created = null;
                 var started = false;
+                var clock = Stopwatch.StartNew();
                 try
                 {
                     var source = await StorageFileMediaSource.OpenAsync(file);
@@ -261,6 +313,8 @@ namespace SendAirPlay2.UwpHost
                         ReceiverAddress = address,
                         Profile = profile,
                         CredentialStore = store,
+                        Delivery = delivery,
+                        StartPositionSeconds = startSeconds,
                     }, source);
                     lock (castGate)
                     {
@@ -275,13 +329,14 @@ namespace SendAirPlay2.UwpHost
                     // logging (file and dispatcher work) must not keep the slot occupied.
                     var status = created?.GetStatus();
                     ReleaseSlot(created);
-                    Log((created == null ? "Cast create: " : "Cast start: ") + Failure(error) +
+                    Log((created == null ? "Cast create: " : "Cast start: ") + Failure(error) + " after " +
+                        clock.ElapsedMilliseconds + " ms" +
                         (status.HasValue ? " " + Describe(status.Value) : string.Empty));
                     if (created != null)
                     {
                         Log("Cast disposed; media source released");
                     }
-                    return;
+                    return false;
                 }
                 finally
                 {
@@ -292,9 +347,12 @@ namespace SendAirPlay2.UwpHost
                 }
                 if (started && created != null)
                 {
-                    Log("Cast start: ok " + Describe(created.GetStatus()));
+                    // Includes opening the file and, for HLS, reading its index.
+                    Log("Cast start: ok after " + clock.ElapsedMilliseconds + " ms " +
+                        Describe(created.GetStatus()));
                     Watch(created);
                 }
+                return started;
             });
         }
 
@@ -363,7 +421,9 @@ namespace SendAirPlay2.UwpHost
             Log("Ended cast released; media source released");
         }
 
-        private void Control(string name, Action<Cast> action)
+        /// <summary>Runs one command on the current cast off the UI thread; true
+        /// when the library accepted it.</summary>
+        private Task<bool> Control(string name, Action<Cast> action)
         {
             Cast? active;
             lock (castGate)
@@ -373,34 +433,41 @@ namespace SendAirPlay2.UwpHost
             if (active == null)
             {
                 Log("Control " + name + ": no cast");
-                return;
+                return Task.FromResult(false);
             }
-            Task.Run(() =>
+            return Task.Run(() =>
             {
                 try
                 {
                     action(active);
                     Log("Control " + name + ": ok");
+                    return true;
                 }
                 catch (Exception error)
                 {
                     Log("Control " + name + ": " + Failure(error));
+                    return false;
                 }
             });
         }
 
-        private void OnPause(object sender, RoutedEventArgs e) => Control("pause", c => c.Pause());
+        private void OnPause(object sender, RoutedEventArgs e) => _ = Control("pause", c => c.Pause());
 
-        private void OnPlay(object sender, RoutedEventArgs e) => Control("play", c => c.Play());
+        private void OnPlay(object sender, RoutedEventArgs e) => _ = Control("play", c => c.Play());
 
-        private void OnSeekForward(object sender, RoutedEventArgs e) => Control("seek 60", c => c.Seek(60));
+        private void OnSeekForward(object sender, RoutedEventArgs e) => _ = Control("seek 60", c => c.Seek(60));
 
-        private void OnSeekBack(object sender, RoutedEventArgs e) => Control("seek 10", c => c.Seek(10));
+        private void OnSeekBack(object sender, RoutedEventArgs e) => _ = Control("seek 10", c => c.Seek(10));
 
-        private void OnStatus(object sender, RoutedEventArgs e) =>
-            Control("status", c => Log("Status: " + Describe(c.GetStatus())));
+        private void OnStatus(object sender, RoutedEventArgs e) => _ = LogStatus();
 
-        private void OnStop(object sender, RoutedEventArgs e)
+        private Task<bool> LogStatus() => Control("status", c => Log("Status: " + Describe(c.GetStatus())));
+
+        private void OnStop(object sender, RoutedEventArgs e) => _ = StopCast();
+
+        /// <summary>Takes the cast out of the slot, then stops and disposes it off
+        /// the UI thread; false when there was no cast.</summary>
+        private Task<bool> StopCast()
         {
             Cast? active;
             lock (castGate)
@@ -411,15 +478,16 @@ namespace SendAirPlay2.UwpHost
             if (active == null)
             {
                 Log("Stop: no cast");
-                return;
+                return Task.FromResult(false);
             }
             watcher?.Cancel();
-            Task.Run(() =>
+            return Task.Run(() =>
             {
                 active.Stop();
                 Log("Stopped: " + Describe(active.GetStatus()));
                 active.Dispose();
                 Log("Cast disposed; media source released");
+                return true;
             });
         }
     }
