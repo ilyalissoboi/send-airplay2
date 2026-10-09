@@ -24,6 +24,7 @@ run_cast(2 "media connections must be 1..16" "media connection upper bound" --ad
 run_cast(2 "either --file or --hls" "file and HLS together" --address 127.0.0.1 --profile p --file "${media}" --hls "${WORK_DIR}/index.m3u8")
 run_cast(2 "plain name ending in .m3u8" "HLS entry is not a playlist" --address 127.0.0.1 --profile p --hls "${media}")
 run_cast(2 "referenced file is missing" "absent HLS playlist" --address 127.0.0.1 --profile p --hls "${WORK_DIR}/cli-cast-absent.m3u8")
+run_cast(2 "--remux applies to --file" "remux without a file" --address 127.0.0.1 --profile p --hls "${WORK_DIR}/index.m3u8" --remux)
 run_cast(2 "not an existing regular file" "absent media" --address 127.0.0.1 --profile p --file "${WORK_DIR}/cli-cast-absent.bin")
 # A random-looking profile is absent from the store (Windows), or the store is
 # unsupported (other platforms); both stop before the media server or receiver.

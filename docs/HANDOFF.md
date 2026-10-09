@@ -9,14 +9,15 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here: HLS delivery (D60)
 
-**Active slice: HLS** (branch `claude/hls-support`, [hls.md](hls.md)). The user
-set the Screenbox integration aside (design PR ilyalissoboi/Screenbox#1 stays
-open) and asked to add HLS support to the base library, choosing "serve plus
-built-in remux". Phase 1 (media server resource sets, development
-`cast --hls`, the `near_end` end-of-media rule) passed on the recorded Apple TV
-with an ffmpeg-made fMP4 presentation. Next: phase 2, the built-in fMP4 writer
-with MP4 input; then MKV input and the C/C# delivery option (phase 3); growing
-presentations (phase 4). See the D60 record in section 4.
+**Active slice: HLS** ([hls.md](hls.md)). The user set the Screenbox
+integration aside (design PR ilyalissoboi/Screenbox#1 stays open) and asked to
+add HLS support to the base library, choosing "serve plus built-in remux".
+Phase 1 (media server resource sets, development `cast --hls`, the `near_end`
+end-of-media rule) is merged (PR #26). Phase 2 (branch `claude/hls-remux`):
+the library's own MP4-to-fMP4 remux, `cast --file PATH --remux`, passed on the
+recorded Apple TV (user observed) and matched the source packet for packet
+under ffmpeg. Next: phase 3, MKV input and the C/C# delivery option; then
+growing presentations (phase 4). See the D60 record in section 4.
 
 ### Standalone items (D58-D59, merged)
 
@@ -1113,6 +1114,13 @@ as `media_end` (`near_end`); a pause alone never ends a session. Windows static
 and shared suites pass. Not run: HEVC, Dolby audio, separate audio, `EVENT`,
 the C interface. Records: [hls.md](hls.md),
 [receiver-validation.md](receiver-validation.md#hls-phase-1-d60-2026-10-09).
+Phase 2 (2026-10-09): original MP4 demux, fMP4 writer and segmenter (sample
+entries and edit lists copied from the source; cuts on a 6 s grid of video
+sync samples; segments generated on demand). Its remux of the test clip was
+packet-identical to the source under ffmpeg and played, paused, seeked and
+ended normally on the recorded receiver (user observed). Engineering choice:
+an unremuxable audio track refuses the file rather than casting it silent.
+Record: [receiver-validation.md](receiver-validation.md#hls-phase-2-d60-2026-10-09).
 
 ## 5. Implemented code and verification
 

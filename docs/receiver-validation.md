@@ -1339,3 +1339,22 @@ hashes and blobs: [artifact](validation/native-hls-directory-windows-2026-10-09.
 session change. Not run: HEVC, AC-3/E-AC-3, separate audio, TS, gzip
 playlists, `EVENT` playlists, the C interface and UWP host, a sleeping receiver,
 other receivers and firmware. Library-built segments are phase 2.
+
+## HLS phase 2 (D60, 2026-10-09)
+
+Phase 2 casts `gas.mp4` through the library's own remux
+(`airplay2-cli cast --file gas.mp4 --remux`): MP4 sample tables to fMP4 VOD
+HLS, 20 segments, target 8 s, segments generated on demand from the file.
+Windows 11 x64, MSVC Release static on top of `2642161`, existing
+built-in-store profile and firewall Allow rule; Living Room Apple TV 4K
+(AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged and not queried. Offline,
+ffmpeg found every packet identical to the source. Lines, requests, hashes
+and blobs: [artifact](validation/native-hls-remux-windows-2026-10-09.json).
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| Remux cast | Playing at 864 ms, owned, duration 131.6; pause, play, seek 100 accepted; 21 GETs (playlist, init, 19 segments) each once, all 200 and complete; URL `stopped` at the end with MRP `at_end` (131.576 of 131.566 s); `media_end`, cleaned, `failed_reads=0`, exit 0 | Video and audio normal; pause, play and seek visible; Home at the end |
+
+**PASS for this receiver and host.** Not run: HEVC, AC-3/E-AC-3, MKV (phase
+3), long files, the C interface and UWP host, a sleeping receiver, other
+receivers and firmware.

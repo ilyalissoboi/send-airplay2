@@ -176,7 +176,10 @@ build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room -
 
 `--hls PLAYLIST.m3u8` in place of `--file` casts a pre-made HLS presentation
 (development, [D60](docs/hls.md)): the media server serves the playlist and the
-files it names from its directory.
+files it names from its directory. `--file PATH --remux` casts an MP4/MOV with
+H.264/HEVC and AAC/AC-3/E-AC-3 as HLS built by the library's own remux, and
+`airplay2-cli remux --file PATH --out DIR` writes those HLS files to a new
+directory for offline checks.
 
 `cast` reuses a stored profile, starts the receiver-restricted media server and
 an authenticated URL/MRP session. Type `status`, `pause`, `play`, `seek SECONDS`

@@ -3,6 +3,7 @@
 #include "send_airplay2/discovery.h"
 #include "auth_cli.h"
 #include "cast_cli.h"
+#include "remux_cli.h"
 #include "serve_cli.h"
 namespace send_airplay2::detail {
 // This executable exercises discovery formatting only; auth has its own tests.
@@ -15,6 +16,10 @@ int run_serve_cli(int, const char* const*) {
 }
 // Casting has its own tests; this fixture never contacts a receiver.
 int run_cast_cli(int, const char* const*) {
+    return 2;
+}
+// The remux has its own tests; this fixture never reads media.
+int run_remux_cli(int, const char* const*) {
     return 2;
 }
 } // namespace send_airplay2::detail
