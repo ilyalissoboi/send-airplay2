@@ -711,6 +711,37 @@ void hls_delivery_tests() {
     }
 }
 
+/// tvOS 26 plays from 0 whatever the queue item's Start-Position-Seconds says
+/// (D61), so a nonzero start position becomes one MRP seek before start()
+/// returns; a zero start sends no command.
+void start_position_tests(const std::string& fixtures) {
+    group = "Start position";
+    constexpr double requested_start = 300.5;
+    {
+        FakeReceiver receiver(with_mrp(fixtures));
+        auto settings = loopback_settings();
+        settings.start_position_seconds = requested_start;
+        CastController controller(settings, probed_source(std::make_shared<SourceProbe>()),
+                                  fake_receiver_dependencies(receiver, true));
+        check(controller.start() == CastResult::ok, "start with a start position");
+        const auto& remote = receiver.remote_control();
+        check(remote.mrp_commands() == std::vector<std::uint32_t>{wire_seek} &&
+                  remote.mrp_seek_positions() == std::vector<double>{requested_start},
+              "one seek to the start position reaches the receiver before start returns");
+        controller.stop();
+    }
+    {
+        FakeReceiver receiver(with_mrp(fixtures));
+        CastController controller(loopback_settings(),
+                                  probed_source(std::make_shared<SourceProbe>()),
+                                  fake_receiver_dependencies(receiver, true));
+        check(controller.start() == CastResult::ok, "start from the beginning");
+        check(receiver.remote_control().mrp_commands().empty(),
+              "a zero start position sends no seek");
+        controller.stop();
+    }
+}
+
 int main(int argc, char** argv) {
     if (argc != 2) {
         std::cerr << "usage: cast_controller_tests MRP_FIXTURE_DIRECTORY\n";
@@ -729,6 +760,7 @@ int main(int argc, char** argv) {
     concurrent_stop_tests();
     mrp_command_tests(mrp_fixtures);
     mrp_end_tests(mrp_fixtures);
+    start_position_tests(mrp_fixtures);
     hls_delivery_tests();
     if (failures != 0) {
         std::cerr << failures << " failure(s)\n";

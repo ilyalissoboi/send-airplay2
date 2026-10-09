@@ -27,6 +27,9 @@ namespace send_airplay2::detail {
 namespace {
 /// Longest single wait while polling for cancellation during start.
 constexpr std::chrono::milliseconds start_poll_slice{20};
+// MRP ownership of our item normally follows the confirmed playing state
+// within a few hundred milliseconds (D30).
+constexpr std::chrono::milliseconds start_ownership_wait{5000};
 constexpr const char* playing_state = "playing";
 constexpr std::size_t max_event_log = 256;
 
@@ -245,6 +248,9 @@ UrlPlaybackSession::start(const PairCredentials& credentials, UrlPlaybackOptions
         session->run_start(credentials, cancelled);
         // Owners are fully initialized before the cleanup thread can inspect them.
         session->supervisor_thread_ = std::thread([owner = session.get()] { owner->supervise(); });
+        if (session->options_.start_position_seconds > 0) {
+            session->apply_start_position(cancelled);
+        }
         session->trace_start_phase(SessionStartPhase::ready);
         if (diagnostics) {
             session->finish_start_trace(*diagnostics);
@@ -774,6 +780,23 @@ SessionStatus UrlPlaybackSession::status() const {
 
 MrpPlaybackStatus UrlPlaybackSession::playback_status() const {
     return mrp_ ? mrp_->status() : MrpPlaybackStatus{};
+}
+
+void UrlPlaybackSession::apply_start_position(const std::atomic_bool* cancelled) {
+    // tvOS 26 accepts the queue item's Start-Position-Seconds but plays from 0,
+    // for HLS and progressive media alike, while an MRP seek once the item
+    // plays lands (D61). A seek is also harmless where the item is honored.
+    const auto deadline = std::chrono::steady_clock::now() + start_ownership_wait;
+    while (!playback_status().owned) {
+        if ((cancelled && *cancelled) || stopping_) {
+            throw MrpException(MrpError::cancelled);
+        }
+        if (std::chrono::steady_clock::now() >= deadline) {
+            throw MrpException(MrpError::not_owned);
+        }
+        std::this_thread::sleep_for(start_poll_slice);
+    }
+    command(PlaybackCommand::seek, options_.start_position_seconds);
 }
 
 void UrlPlaybackSession::command(PlaybackCommand command, double position_seconds) {

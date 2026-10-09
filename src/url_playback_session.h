@@ -59,6 +59,9 @@ using StreamConnector = std::function<std::unique_ptr<ReceiverStream>(const Rece
 struct UrlPlaybackOptions {
     ReceiverEndpoint receiver; // The AirPlay control endpoint (port 7000).
     std::string media_url;     // Private: never logged or put in errors.
+    /// Sent as the queue item's Start-Position-Seconds and, when above zero,
+    /// applied by one MRP seek before start() returns: tvOS 26 plays from 0
+    /// whatever the item says (D61). The seek needs MRP (not minimal_remote).
     double start_position_seconds = 0;
     SenderIdentity identity; // A random device ID is used when empty.
     std::chrono::milliseconds request_timeout{5000};
@@ -252,6 +255,10 @@ public:
 private:
     explicit UrlPlaybackSession(UrlPlaybackOptions options);
     void run_start(const PairCredentials& credentials, const std::atomic_bool* cancelled);
+    /// Seeks to options_.start_position_seconds once MRP owns our item, waiting
+    /// at most start_ownership_wait for ownership. Throws MrpException
+    /// (not_owned, cancelled or the seek's own failure); start() then tears down.
+    void apply_start_position(const std::atomic_bool* cancelled);
     /// Independent verified remote session and MRP; retained until URL teardown.
     /// enable_mrp=false preserves the isolated minimum H5 experiment.
     void open_remote_control(const PairCredentials& credentials, const std::atomic_bool* cancelled);

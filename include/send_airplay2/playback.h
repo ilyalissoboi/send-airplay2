@@ -183,10 +183,14 @@ typedef struct sap2_cast_options {
     /* Paired credential profile: 1..64 lower-case letters/digits/._-, starting
      * with a letter or digit. It selects a local trust slot, not a receiver. */
     const char* profile;
-    const char* content_type;      /* Plain type/subtype; NULL means "video/mp4". */
-    uint32_t start_timeout_ms;     /* 1..SAP2_MAX_START_TIMEOUT_MS. */
-    uint32_t media_connections;    /* 1..SAP2_MAX_MEDIA_CONNECTIONS concurrent HTTP requests. */
-    double start_position_seconds; /* Finite and >= 0. */
+    const char* content_type;   /* Plain type/subtype; NULL means "video/mp4". */
+    uint32_t start_timeout_ms;  /* 1..SAP2_MAX_START_TIMEOUT_MS. */
+    uint32_t media_connections; /* 1..SAP2_MAX_MEDIA_CONNECTIONS concurrent HTTP requests. */
+    /* Finite and >= 0. Above 0, start seeks there once the receiver plays
+     * (tvOS 26 ignores the queue item's start, D61), so the first second or so
+     * may show the beginning; no MRP ownership within 5 s fails the start with
+     * SAP2_ERROR_NOT_OWNED. */
+    double start_position_seconds;
     /* Version 2. NULL selects the built-in platform store. The table is copied by
      * sap2_cast_create(); its callbacks and context must stay valid until
      * sap2_cast_destroy() returns (see credentials.h). */
