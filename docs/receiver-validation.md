@@ -1317,3 +1317,25 @@ Details, hashes and logs: [artifact](validation/native-uwp-architectures-wack-wi
 
 Not run: ARM64 locally or on a device, the kit on the x86 package or on a
 signed Store-style package.
+
+## HLS phase 1 (D60, 2026-10-09)
+
+The user asked to add HLS support to the base library with scope "serve plus
+built-in remux". Phase 1 casts a pre-made presentation: ffmpeg 9.0.2 cut
+`gas.mp4` with `-c copy` into fMP4 VOD HLS (H.264 Main 720p30 + AAC-LC stereo,
+20 segments, target 8 s, 22 files; not committed). `airplay2-cli cast --hls`
+served it through a media server resource set (Windows 11 x64, MSVC Release
+static on top of `2aad3c7`, existing built-in-store profile, this worktree's
+existing firewall Allow rule) to the Living Room Apple TV 4K (AppleTV14,1),
+tvOS 26.6 (23L773) assumed unchanged and not queried. Lines, request summary,
+hashes and blobs: [artifact](validation/native-hls-directory-windows-2026-10-09.json).
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| 1, before `near_end` | Playing at 860 ms, owned, duration 131.6; pause, play, seek 100 accepted; 21 GETs (playlist, init, 19 segments) each once, all 200 and complete; URL `stopped` at the end, final MRP paused at 131.483 of 131.566 s, `receiver_stop`, cleaned, exit 0 | Audio and video normal; all actions worked and were visible; Home after the stream finished |
+| 2, with `near_end` | Playing at 951 ms, owned; seek 120 accepted; final MRP paused at 131.467 s; `media_end`, cleaned, `failed_reads=0`, exit 0 | Video and audio played after the seek; Home at the end |
+
+**PASS for this receiver and host** with `mediaType` `file` and no other
+session change. Not run: HEVC, AC-3/E-AC-3, separate audio, TS, gzip
+playlists, `EVENT` playlists, the C interface and UWP host, a sleeping receiver,
+other receivers and firmware. Library-built segments are phase 2.

@@ -163,8 +163,10 @@ I/O models in one session. Not recommended for the first slice.
 Use one supervisor and the existing synchronous I/O deadlines. EOF requires
 owned receiver telemetry at its positive duration while paused/stopped, never
 extrapolated position. URL stopped/idle allows one second for the independently
-ordered final MRP position before classifying receiver_stop. A pause alone is
-not terminal. Failure takes priority if detected first. Do not reconnect or
+ordered final MRP position before classifying receiver_stop; D60 amends this:
+once URL stopped/idle, a final MRP position within 0.5 s of the duration is EOF,
+because tvOS stops HLS a frame or two short of the playlist duration. A pause
+alone is not terminal. Failure takes priority if detected first. Do not reconnect or
 adopt a replacement player automatically; recovery is a fresh explicit cast
 with retained credentials. Detailed contracts: [mrp-controls.md](mrp-controls.md).
 Selected hardware EOF/cycle evidence does not close all G3 gates.

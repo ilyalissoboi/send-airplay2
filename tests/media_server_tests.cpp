@@ -666,6 +666,101 @@ void option_and_ipv6_tests() {
     assert_response(wire_exchange(v6, v6.request()), 200, 32, expected_body(0, 32),
                     "IPv6 loopback wire");
 }
+/// Target for a literal request path, independent of resource_url().
+Target with_path(const MediaServer& server, const std::string& path) {
+    Target target(server.url());
+    target.path = path;
+    return target;
+}
+/// Two resources with different sizes and types, served below one bearer path.
+std::vector<MediaResource> playlist_and_segment(std::atomic_uint* size_calls = nullptr) {
+    auto counted = [size_calls](std::uint64_t size) {
+        auto source = patterned_source(size);
+        source.size = [size_calls, size] {
+            if (size_calls) {
+                ++*size_calls;
+            }
+            return size;
+        };
+        return source;
+    };
+    std::vector<MediaResource> resources;
+    resources.push_back({"index.m3u8", "application/vnd.apple.mpegurl", counted(40)});
+    resources.push_back({"s0.m4s", "video/mp4", counted(300)});
+    return resources;
+}
+void resource_set_serving_tests() {
+    group = "resource sets: serving";
+    std::atomic_uint size_calls{0};
+    auto server = MediaServer::start_resource_set(playlist_and_segment(&size_calls), options());
+    check(size_calls == 2, "each size snapshot taken once at start");
+    const auto base = Target(server->url()).path;
+    const Target playlist(server->resource_url("index.m3u8"));
+    const Target segment(server->resource_url("s0.m4s"));
+    check(playlist.path == base + "/index.m3u8", "playlist URL is the bearer path plus its name");
+    check(segment.path == base + "/s0.m4s", "segment URL is the bearer path plus its name");
+
+    const auto playlist_reply = wire_exchange(playlist, playlist.request());
+    assert_response(playlist_reply, 200, 40, expected_body(0, 40), "playlist GET");
+    check(playlist_reply.header("Content-Type") == "application/vnd.apple.mpegurl",
+          "playlist has its own content type");
+    const auto segment_reply =
+        wire_exchange(segment, segment.request("GET", "Range: bytes=100-199\r\n"));
+    assert_response(segment_reply, 206, 100, expected_body(100, 100), "segment range");
+    check(segment_reply.header("Content-Range") == "bytes 100-199/300",
+          "segment range uses the segment's own size");
+    check(segment_reply.header("Content-Type") == "video/mp4", "segment has its own content type");
+    assert_response(wire_exchange(segment, segment.request("HEAD")), 200, 300, "", "segment HEAD");
+    check(size_calls == 2, "requests never call size again");
+
+    // Only "<bearer path>/<name>" for a name in the table exists.
+    for (const auto& path :
+         {base, base + "/", base + "/s1.m4s", base + "/s0.m4s/x", base + "/../index.m3u8",
+          base + "/./s0.m4s", base + "s0.m4s", std::string("/media/s0.m4s"), base + "/S0.M4S"}) {
+        const Target other = with_path(*server, path);
+        assert_response(wire_exchange(other, other.request()), 404, 0, "",
+                        "not served: " + path.substr(std::min(path.size(), base.size())));
+    }
+}
+void resource_set_option_tests() {
+    group = "resource sets: construction";
+    invalid("empty set", [] { (void)MediaServer::start_resource_set({}, options()); });
+    const std::string long_name(65, 'a');
+    for (const auto& name : {std::string{}, std::string(".hidden"), std::string("-dash"),
+                             std::string("a/b"), std::string("a b"), std::string("a%2f"),
+                             std::string("a?b"), std::string("\xc3\xa9t\xc3\xa9"), long_name}) {
+        auto resources = playlist_and_segment();
+        resources[1].name = name;
+        invalid("resource name of length " + std::to_string(name.size()),
+                [&] { (void)MediaServer::start_resource_set(std::move(resources), options()); });
+    }
+    auto at_limit = playlist_and_segment();
+    at_limit[1].name = std::string(64, 'a');
+    auto accepted = MediaServer::start_resource_set(std::move(at_limit), options());
+    check(Target(accepted->resource_url(std::string(64, 'a'))).path.size() ==
+              Target(accepted->url()).path.size() + 65,
+          "64-character name accepted");
+
+    auto duplicate = playlist_and_segment();
+    duplicate[1].name = duplicate[0].name;
+    invalid("duplicate name",
+            [&] { (void)MediaServer::start_resource_set(std::move(duplicate), options()); });
+    auto bad_type = playlist_and_segment();
+    bad_type[1].content_type = "video/mp4; codecs=avc1";
+    invalid("content type with parameters",
+            [&] { (void)MediaServer::start_resource_set(std::move(bad_type), options()); });
+    auto no_reader = playlist_and_segment();
+    no_reader[1].source.read_at = nullptr;
+    invalid("missing read callback",
+            [&] { (void)MediaServer::start_resource_set(std::move(no_reader), options()); });
+
+    auto server = MediaServer::start_resource_set(playlist_and_segment(), options());
+    invalid("resource_url for a name outside the set",
+            [&] { (void)server->resource_url("s1.m4s"); });
+    auto single = MediaServer::start(patterned_source(8), options());
+    invalid("resource_url on a single-source server",
+            [&] { (void)single->resource_url("index.m3u8"); });
+}
 } // namespace
 int main() {
     try {
@@ -678,6 +773,8 @@ int main() {
         request_diagnostic_tests();
         aborted_write_diagnostic_test();
         option_and_ipv6_tests();
+        resource_set_serving_tests();
+        resource_set_option_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';

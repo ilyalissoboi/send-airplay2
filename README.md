@@ -174,6 +174,10 @@ counts, address families and whether a receiver of exactly that name was found.
 build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room --file C:\media\clip.mp4
 ```
 
+`--hls PLAYLIST.m3u8` in place of `--file` casts a pre-made HLS presentation
+(development, [D60](docs/hls.md)): the media server serves the playlist and the
+files it names from its directory.
+
 `cast` reuses a stored profile, starts the receiver-restricted media server and
 an authenticated URL/MRP session. Type `status`, `pause`, `play`, `seek SECONDS`
 (absolute position), or `stop`; Enter or stdin EOF tears down directly. Media

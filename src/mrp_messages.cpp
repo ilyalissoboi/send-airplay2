@@ -15,6 +15,9 @@ namespace pb = protobuf_wire;
 constexpr std::size_t max_identity_size = 1024;
 constexpr std::size_t max_players = 32, max_queue_items = 256;
 constexpr double cocoa_epoch_unix_seconds = 978307200.0;
+// Same bound as the URL/MRP duration match. On the recorded receiver an HLS
+// presentation of 131.567 s stopped at a reported 131.483 s (D60).
+constexpr double near_end_tolerance_seconds = 0.5;
 [[noreturn]] void malformed() {
     throw std::invalid_argument("Invalid bounded MRP message");
 }
@@ -471,9 +474,11 @@ MrpPlaybackStatus MrpPlaybackTracker::status() const {
         result.playback_rate = player.rate;
         result.position_seconds = player.elapsed;
         result.reported_position_seconds = player.elapsed;
-        result.at_end = player.elapsed && player.duration && *player.duration > 0 &&
-                        *player.elapsed >= *player.duration &&
-                        (player.state == "paused" || player.state == "stopped");
+        const bool halted = player.state == "paused" || player.state == "stopped";
+        const bool timed = player.elapsed && player.duration && *player.duration > 0;
+        result.at_end = timed && halted && *player.elapsed >= *player.duration;
+        result.near_end =
+            timed && halted && *player.elapsed >= *player.duration - near_end_tolerance_seconds;
         if (result.position_seconds && player.timestamp && player.rate &&
             player.state == "playing") {
             const auto now =

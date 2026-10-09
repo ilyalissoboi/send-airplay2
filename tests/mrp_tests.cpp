@@ -298,15 +298,18 @@ void end_of_media(const std::string& root) {
     tracker.apply(decode_mrp(pb::view(load(root, "paused-before-end"))));
     check(tracker.status().owned && !tracker.status().at_end,
           "paused at 131.59 of 131.6 seconds is not EOF");
+    check(tracker.status().near_end, "paused at 131.59 of 131.6 seconds is near the end");
     tracker.apply(decode_mrp(pb::view(load(root, "playing-at-end"))));
     check(tracker.status().owned && !tracker.status().at_end,
           "playing at the duration is not terminal; extrapolation/clamping cannot prove EOF");
+    check(!tracker.status().near_end, "playing at the duration is not near_end either");
     tracker.apply(decode_mrp(pb::view(load(root, "paused-at-end"))));
-    check(tracker.status().owned && tracker.status().at_end,
+    check(tracker.status().owned && tracker.status().at_end && tracker.status().near_end,
           "owned item paused at receiver-reported 131.6 of 131.6 seconds is terminal");
     tracker.expect_item("unrelated-item", "other-url");
     tracker.apply(decode_mrp(pb::view(load(root, "paused-at-end"))));
-    check(!tracker.status().at_end, "another item's EOF cannot end our cast");
+    check(!tracker.status().at_end && !tracker.status().near_end,
+          "another item's EOF cannot end our cast");
 }
 
 /// Thread-safe peer facts. Only the worker accesses codec instances; the test

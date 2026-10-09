@@ -43,6 +43,22 @@ cannot be restarted; create a new instance and bearer path for a new session.
 Shared-library users require a compatible C++ compiler/runtime; a versioned C ABI
 and public file/StorageFile/content-URI adapters remain future work.
 
+## Resource sets (D60)
+
+`MediaServer::start_resource_set(resources, options)` serves a fixed table of
+1..65,536 `MediaResource {name, content_type, source}` entries, such as an HLS
+playlist with its init and media segments, at `resource_url(name)`:
+`url()` (the random bearer path) plus `/name`. Names are single path segments
+(1..64 ASCII letters, digits, `.`, `_`, `-`, starting with a letter or digit)
+and unique; each content type follows the `content_type` rules, and
+`options.content_type` is not used. The bearer path itself, any other name, any
+extra path segment and `.`/`..` forms answer 404; there is no directory
+serving. Each `size()` is called once at start, in table order; ranges, HEAD,
+the receiver-only source check, the connection bound, deadlines and
+diagnostics apply per request exactly as for one source. `resource_url` throws
+`std::invalid_argument` for a name outside the set and on a single-source
+server. Growing tables (live HLS) are not supported; see [hls.md](hls.md).
+
 ## Network and resource policy
 
 - Supply a numeric unicast receiver address and port. No DNS lookup is performed.
@@ -195,6 +211,14 @@ statistics, cancellation, four concurrent readers, a file shrinking after open
 through `MediaServer`. `cli_serve` runs the real CLI: it checks argument refusals
 without printing a URL, and a start/stop cycle driven by end-of-file. Neither
 contacts a receiver or opens a firewall.
+
+`airplay2-cli cast --hls PLAYLIST.m3u8` (development, D60) serves a pre-made
+HLS presentation as a resource set: the playlist and exactly the files it, and
+any playlist it names, references by plain file name in the same directory.
+Absolute URLs, subdirectories, queries and unknown extensions are refused.
+Each file's size is snapshotted at start and every read reopens the file, so a
+long presentation holds no open handles. `hls_directory_tests` covers
+references, content types and refusals with temporary files.
 
 ## Validation and next gate
 

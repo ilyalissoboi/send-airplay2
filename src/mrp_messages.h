@@ -67,6 +67,11 @@ struct MrpPlaybackStatus {
     /// Receiver-reported paused/stopped position reaches its duration. Does
     /// not use our wall-clock extrapolation; a mid-item pause is not EOF.
     bool at_end = false;
+    /// Receiver-reported paused/stopped position within 0.5 s of its duration.
+    /// Not EOF by itself: a pause just before the end is still a pause. The
+    /// session uses it only once the URL channel reports stopped/idle, because
+    /// tvOS can stop HLS a frame or two short of the playlist duration (D60).
+    bool near_end = false;
     std::string state;
     std::optional<double> position_seconds, duration_seconds, playback_rate;
     /// Last receiver elapsed-time scalar, without wall-clock extrapolation or
