@@ -46,12 +46,30 @@ struct MediaSource {
  * The name is one URL path segment: 1..64 ASCII letters, digits, '.', '_' or
  * '-', starting with a letter or digit, unique within the set. Names appear in
  * URLs next to the private bearer path, so they should not reveal titles.
- * content_type follows MediaServerOptions::content_type's rules. */
+ * content_type follows MediaServerOptions::content_type's rules.
+ *
+ * size_on_request (optional) defers the size: when set, source.size is not
+ * called; instead size_on_request runs on a worker thread for the first
+ * request that needs the size (HEAD and GET alike), receiving that request's
+ * context, and its result is kept for the server's lifetime. It may do slow
+ * work, such as reading an index, and must poll should_stop(). Requests that
+ * arrive while it runs wait for it. An exception, or a result after the
+ * request stopped, is not kept: that request fails (HTTP 500 or closed) and a
+ * later request calls it again. The value is the representation size, so
+ * read_at must then serve exactly that many bytes. */
 struct MediaResource {
     std::string name;
     std::string content_type;
     MediaSource source;
+    std::function<std::uint64_t(const MediaReadContext&)> size_on_request;
 };
+
+/// The size `resource` is served with: size_on_request(context) when set,
+/// otherwise source.size().
+[[nodiscard]] inline std::uint64_t media_resource_size(const MediaResource& resource,
+                                                       const MediaReadContext& context) {
+    return resource.size_on_request ? resource.size_on_request(context) : resource.source.size();
+}
 
 struct MediaServerOptions {
     std::string receiver_address; // Numeric unicast IPv4/non-link-local IPv6; no DNS/scoped IPv6.
@@ -110,8 +128,10 @@ public:
     /** Start a server for a fixed set of 1..65536 named resources, such as an
      * HLS playlist with its segments. Each resource is served at
      * resource_url(name), below the same private bearer path; the bearer path
-     * itself and every other name answer 404. Every size() is called once, in
-     * table order, by this call. Everything else, including the callback
+     * itself and every other name answer 404. Every size() of a resource
+     * without size_on_request is called once, in table order, by this call.
+     * A resource needs source.read_at and either source.size or
+     * size_on_request. Everything else, including the callback
      * contract, failures and threading, is as for start(). An invalid or
      * duplicate name or content type throws std::invalid_argument. */
     [[nodiscard]] static SAP2_API std::unique_ptr<MediaServer>

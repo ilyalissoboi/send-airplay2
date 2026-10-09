@@ -59,6 +59,17 @@ diagnostics apply per request exactly as for one source. `resource_url` throws
 `std::invalid_argument` for a name outside the set and on a single-source
 server. Growing tables (live HLS) are not supported; see [hls.md](hls.md).
 
+`MediaResource::size_on_request` (optional) defers a resource's size: its
+`source.size` is not called; instead the first request that needs the size
+(HEAD or GET) runs `size_on_request` on a worker thread with that request's
+context, and the result is kept for the server's lifetime. Concurrent first
+requests wait for one computation; an exception or a result after the request
+stopped is not kept, that request answers 500 or closes, and a later request
+computes it again. `media_resource_size()` gives the size either way. The
+indexed MKV remux uses it so that segments are read only when requested.
+`media_server_tests` covers the deferred size, its caching, a retried failure,
+concurrent first requests and the construction rule.
+
 ## Network and resource policy
 
 - Supply a numeric unicast receiver address and port. No DNS lookup is performed.

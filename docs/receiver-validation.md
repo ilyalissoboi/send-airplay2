@@ -1421,6 +1421,20 @@ Record: [artifact](validation/native-hls-subtitles-windows-2026-10-09.json).
 
 **PASS for this receiver and host.** Not run: several or forced subtitle
 tracks, ASS/WebVTT sources, sender-side subtitle selection, the C interface
-with subtitles. Not run: real-world MKVs (other muxers,
+with subtitles.
+
+## Indexed MKV start (D60, 2026-10-09)
+
+The user's film MKV through the indexed path (`cast --remux`, MSVC Release
+static on top of `9b0e1d5`): segments planned from Cues and built on their
+first request. Startup fell from 4.9 s (2.0 s warm) to under 0.1 s. Living
+Room Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged and not
+queried. Record: [artifact](validation/native-hls-indexed-mkv-windows-2026-10-09.json).
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| Film, subtitles enabled | Remux ready in about 0.1 s; playing at 990 ms, owned; pause, play, seek 3600 (3609.5 s), seek 6780 (6785.4 s) accepted; 80 GETs all 200, one abandoned by the receiver at a seek; `media_end` at 6824.5 s, cleaned, `failed_reads=0`, exit 0; 395 MB read (2.8 GB before) | Everything worked as expected |
+
+**PASS for this receiver and host.** Not run: real-world MKVs (other muxers,
 long files), 7.1 E-AC-3, the C interface and UWP host, a sleeping receiver,
 other receivers and firmware.

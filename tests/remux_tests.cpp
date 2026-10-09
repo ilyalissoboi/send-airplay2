@@ -64,7 +64,7 @@ struct OpenContext {
 /// Reads a whole resource through read_at with small, offset-crossing requests.
 Bytes read_resource(const MediaResource& resource, std::size_t chunk = 7) {
     OpenContext open;
-    Bytes out(static_cast<std::size_t>(resource.source.size()));
+    Bytes out(static_cast<std::size_t>(media_resource_size(resource, open.context)));
     std::size_t position = 0;
     while (position < out.size()) {
         const auto count = resource.source.read_at(

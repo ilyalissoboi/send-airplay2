@@ -196,9 +196,10 @@ HlsDirectory open_hls_directory(const fs::path& playlist, std::shared_ptr<FileRe
     const auto add = [&](const std::string& name) {
         const auto path = directory / name;
         const auto size = regular_file_size(path, name);
-        result.resources.push_back(
-            {name, std::string(hls_content_type(name)),
-             lazy_file_source(path, static_cast<std::uint64_t>(size), stats)});
+        result.resources.push_back({name,
+                                    std::string(hls_content_type(name)),
+                                    lazy_file_source(path, static_cast<std::uint64_t>(size), stats),
+                                    {}});
     };
     add(entry);
     while (!playlists.empty()) {
