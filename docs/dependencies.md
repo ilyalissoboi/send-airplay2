@@ -37,6 +37,20 @@ OpenSSL package. Keep the dependency on a supported release; 3.5 is the upstream
 LTS series, while the pinned 3.6 series requires an update before its November
 2026 end of support. [Upstream release lifecycle](https://openssl-library.org/source/)
 
+## Linux libsecret (D59)
+
+Linux builds use the system **libsecret** (`libsecret-1` 0.19 or later, found
+through pkg-config; for example Debian/Ubuntu `libsecret-1-dev`) for the built-in
+credential store, when present. It is optional: without it, or with
+`-DSAP2_SECRET_SERVICE=OFF`, the store reports unsupported. It is not built
+through vcpkg; the library links the system shared library dynamically.
+libsecret is licensed LGPL-2.1-or-later, and it pulls in GLib (LGPL-2.1-or-later)
+at run time. Redistributors shipping these libraries must meet the LGPL terms
+for them (dynamic linking, source availability for the LGPL parts). No libsecret
+source is copied; see
+[credential-storage.md](credential-storage.md#linux-secret-service-d59). CI
+also installs GNOME Keyring and `libsecret-tools` for tests only.
+
 ## macOS Security framework (D58)
 
 The macOS built-in credential store uses the system Security and CoreFoundation

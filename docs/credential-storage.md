@@ -1,11 +1,11 @@
 # Credential storage and authentication CLI
 
 Implemented as private host code. The built-in stores are Windows desktop
-Credential Manager and, since D58, the macOS login keychain; the library's
-public ABI does not expose signing seeds or credential serialization. Linux
-builds exercise the portable codec/workflow but native storage reports
-unsupported; packaged Windows/UWP and Android hosts supply their own store
-(D49). This slice
+Credential Manager, the macOS login keychain (D58) and, on Linux builds with
+libsecret, the Secret Service (D59); the library's public ABI does not expose
+signing seeds or credential serialization. Linux builds without libsecret
+report native storage as unsupported; packaged Windows/UWP and Android hosts
+supply their own store (D49). This slice
 does not implement playback or establish Apple TV compatibility.
 
 The planned design for other platforms and packaged hosts (built-in stores plus a
@@ -96,6 +96,54 @@ only random synthetic profiles in the test service and remove them. Not run: a
 developer Mac with prompts, a rebuilt binary reading an earlier item, Mac
 hardware casting, and Intel Macs.
 
+## Linux Secret Service (D59)
+
+When CMake finds `libsecret-1` 0.19 or later through pkg-config (option
+`SAP2_SECRET_SERVICE`, on by default), Linux builds use the Secret Service as the
+built-in store (`src/secret_service_credential_store.cpp`), through libsecret's
+synchronous binary password API. Without libsecret, or with
+`-DSAP2_SECRET_SERVICE=OFF`, the built-in store stays unsupported. Each profile
+is one item in the default collection under the schema
+`org.send-airplay2.Credential`, with attributes `namespace` (`v1`, or `tests/v1`
+for synthetic tests) and `profile`; the value is the version-1 envelope above,
+labelled "send-airplay2 credential".
+
+| Behavior | Implementation |
+| --- | --- |
+| Create only | libsecret's store **replaces** a matching item, so `save_new` takes a per-user lock, checks that no item exists (a malformed one counts) and then stores |
+| Lock | `flock` on `$XDG_RUNTIME_DIR/send-airplay2.<namespace>.<profile>.lock` (namespace `/` becomes `.`), opened `O_NOFOLLOW` with mode 0600, bounded at five seconds; `erase` takes it too. Without a usable `XDG_RUNTIME_DIR` the store is unavailable |
+| Absent | No matching item at all, checked with `secret_password_search_sync(SECRET_SEARCH_ALL)` |
+| Locked | Lookup and clear skip items in locked collections, so a match that is still present makes `load` and `erase` unavailable (never absent) and keeps `save_new`'s slot occupied; not exercised in CI, whose keyring stays unlocked |
+| Unavailable | Any `GError` (no session bus, no Secret Service, locked collection, refused prompt), or the lock; native messages are not surfaced |
+| Malformed | An empty value or one larger than 203 bytes is `invalid_record`; the decoder checks the rest |
+| Secret handling | Values pass through libsecret's `SecretValue`, which keeps secret data in its non-pageable secure memory and wipes it on release |
+
+The Secret Service needs a session D-Bus and a running, unlocked keyring (for
+example GNOME Keyring in a desktop login). Headless or embedded hosts without one
+get `unavailable` and should pass their own store (D49). Calls block and are not
+cancellable. Other programs of the same user can change the collection without
+the lock; they are inside the trust boundary, as on the other platforms.
+
+The native-store tests run on Linux builds with libsecret. They skip with a
+message when no Secret Service is reachable, unless
+`SAP2_REQUIRE_SECRET_SERVICE=1`. CI's Ubuntu jobs install libsecret and GNOME
+Keyring and run the tests through `tests/with_test_keyring.sh` inside
+`dbus-run-session`: the script starts a throwaway keyring, initializes its
+secrets component, checks that `org.freedesktop.secrets` is on the bus and that
+a probe secret round-trips, and provides a private runtime directory if needed.
+The sanitizer job does not install libsecret, so it covers the unsupported path.
+Detection runs only for Linux targets (`CMAKE_SYSTEM_NAME` `Linux`), so Android
+and other Unix builds, including cross-builds, keep the unsupported store.
+
+Evidence (CI only): at `4176b7d` the Ubuntu 24.04 static and shared jobs
+(libsecret 0.21.4, GNOME Keyring 46) passed with `SAP2_REQUIRE_SECRET_SERVICE=1`,
+so the native-store tests could not skip: roundtrip, a read from a separately
+spawned process, overwrite refusal, idempotent erase, one winner of two racing
+writers and a malformed item. Earlier runs found and fixed a lock-path bug
+that placed the lock file beside `XDG_RUNTIME_DIR` instead of inside it. Not
+run: a Linux desktop session, a locked keyring with a prompt, KWallet or other
+Secret Service providers.
+
 ## CLI workflow
 
 Select the numeric address and service port from discovery. Replace the example
@@ -178,8 +226,9 @@ remain separate authentication gates.
 All new adapters/code are original Apache-2.0 project code. No third-party
 implementation was copied and no runtime dependency was added. Windows uses
 the OS `Advapi32` credential/token APIs and kernel/console APIs; macOS uses the
-system Security and CoreFoundation frameworks (D58); crypto remains
-OpenSSL/Botan as recorded in [dependencies.md](dependencies.md).
+system Security and CoreFoundation frameworks (D58); Linux uses the system
+libsecret when present (D59); crypto remains OpenSSL/Botan as recorded in
+[dependencies.md](dependencies.md).
 Primary contracts consulted:
 
 - [CREDENTIALW](https://learn.microsoft.com/en-us/windows/win32/api/wincred/ns-wincred-credentialw)
@@ -194,3 +243,10 @@ Primary contracts consulted:
   [errSecDuplicateItem](https://developer.apple.com/documentation/security/errsecduplicateitem)
   and [kSecUseDataProtectionKeychain](https://developer.apple.com/documentation/security/ksecusedataprotectionkeychain)
   (read 2026-10-08 through Apple's documentation JSON).
+- libsecret reference: [secret_password_store_binary_sync](https://gnome.pages.gitlab.gnome.org/libsecret/func.password_store_binary_sync.html),
+  [secret_password_store_sync](https://gnome.pages.gitlab.gnome.org/libsecret/func.password_store_sync.html)
+  (matching items are updated),
+  [secret_password_lookup_binary_sync](https://gnome.pages.gitlab.gnome.org/libsecret/func.password_lookup_binary_sync.html),
+  [secret_password_clear_sync](https://gnome.pages.gitlab.gnome.org/libsecret/func.password_clear_sync.html)
+  and [SecretSchema](https://gnome.pages.gitlab.gnome.org/libsecret/struct.Schema.html)
+  (read 2026-10-08).
