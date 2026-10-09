@@ -52,22 +52,24 @@ struct RemuxedHls {
     std::uint32_t target_duration_seconds = 0;
 };
 
-/** Build an fMP4 VOD HLS presentation (D60) over a progressive MP4/MOV source
- * without copying its media: the playlist and init segment are generated
- * here and held in memory; each media segment's moof is generated per
- * request and its samples are read from `input` on demand.
+/** Build an fMP4 VOD HLS presentation (D60) over a progressive MP4/MOV or a
+ * Matroska source, chosen by its first bytes, without copying its media: the
+ * playlist and init segment are generated here and held in memory; each media
+ * segment's moof is generated per request and its samples are read from
+ * `input` on demand.
  *
- * Calls input.size() once and reads the moov through input.read_at on this
- * thread (with an internal 60-second deadline per read). The returned
- * resources own `input`; their read_at forwards the request's
- * MediaReadContext, so cancellation and deadlines apply to source reads, and
- * may return short reads. They are thread-safe when input.read_at is.
+ * Calls input.size() once and reads the moov, or the Matroska track metadata
+ * and every block header, through input.read_at on this thread (with an
+ * internal 60-second deadline per read). The returned resources own `input`;
+ * their read_at forwards the request's MediaReadContext, so cancellation and
+ * deadlines apply to source reads, and may return short reads. They are
+ * thread-safe when input.read_at is.
  *
- * @throws RemuxException for input that read_mp4() or plan_segments() refuse,
- *         or a segment larger than 2 GiB (too_large).
+ * @throws RemuxException for input that read_mp4(), read_mkv() or
+ *         plan_segments() refuse, or a segment larger than 2 GiB (too_large).
  * @throws std::runtime_error when the source fails a read; std::invalid_argument
  *         for a source without callbacks. Messages contain no paths or URLs.
  */
-[[nodiscard]] RemuxedHls remux_mp4_to_hls(MediaSource input);
+[[nodiscard]] RemuxedHls remux_to_hls(MediaSource input);
 } // namespace send_airplay2::detail
 #endif

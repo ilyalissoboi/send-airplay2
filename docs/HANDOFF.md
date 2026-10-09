@@ -13,10 +13,11 @@ checkpoint, review disposition, validation commands and ordered development queu
 integration aside (design PR ilyalissoboi/Screenbox#1 stays open) and asked to
 add HLS support to the base library, choosing "serve plus built-in remux".
 Phase 1 (media server resource sets, development `cast --hls`, the `near_end`
-end-of-media rule) is merged (PR #26). Phase 2 (branch `claude/hls-remux`):
-the library's own MP4-to-fMP4 remux, `cast --file PATH --remux`, passed on the
-recorded Apple TV (user observed) and matched the source packet for packet
-under ffmpeg. Next: phase 3, MKV input and the C/C# delivery option; then
+end-of-media rule) is merged (PR #26), and so is phase 2 (PR #27): the
+library's own MP4-to-fMP4 remux, `cast --file PATH --remux`. Phase 3a (branch
+`claude/hls-mkv`): MKV input to the remux passed on the recorded Apple TV for
+H.264 + AAC, HEVC + AC-3 5.1 and H.264 + E-AC-3 (user observed). Next: 3b, the
+C/C# delivery option; the MKV startup scan cost is a known follow-up; then
 growing presentations (phase 4). See the D60 record in section 4.
 
 ### Standalone items (D58-D59, merged)
@@ -1121,6 +1122,20 @@ packet-identical to the source under ffmpeg and played, paused, seeked and
 ended normally on the recorded receiver (user observed). Engineering choice:
 an unremuxable audio track refuses the file rather than casting it silent.
 Record: [receiver-validation.md](receiver-validation.md#hls-phase-2-d60-2026-10-09).
+Phase 3a (2026-10-09): original Matroska demux and sample entries from codec
+data. Engineering choices:
+- Decode times are the sorted presentation times, with a reorder-delay edit
+  list.
+- The audio timeline is continuous, following block times only beyond
+  rounding.
+- CodecDelay becomes an audio edit.
+- A default-flagged remuxable audio track is preferred.
+- E-AC-3 with dependent substreams is refused.
+
+Three ffmpeg-made MKVs were payload-identical under ffmpeg and played, paused,
+seeked and ended normally on the recorded receiver (user observed). Known
+cost: the startup scan reads about the whole file when frames are small.
+Record: [receiver-validation.md](receiver-validation.md#hls-phase-3a-mkv-d60-2026-10-09).
 
 ## 5. Implemented code and verification
 

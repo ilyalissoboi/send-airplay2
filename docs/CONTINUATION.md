@@ -14,10 +14,10 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D60):** HLS delivery. Phase 1 is merged (PR #26); phase 2,
-  the built-in fMP4 remux with MP4 input, is on `claude/hls-remux` (find its PR
-  with `gh pr list --state open`) and passed on the receiver. Phase 3 (MKV
-  input, C/C# delivery option) is next. See [hls.md](hls.md). The
+- **Active slice (D60):** HLS delivery. Phases 1 and 2 are merged (PRs #26,
+  #27); phase 3a, MKV input to the remux, is on `claude/hls-mkv` (find its PR
+  with `gh pr list --state open`) and passed on the receiver. Next: 3b, the
+  C/C# delivery option. See [hls.md](hls.md). The
   Screenbox integration is paused; its design PR is ilyalissoboi/Screenbox#1.
 - The macOS Keychain (D58) and Linux Secret Service (D59) stores are merged
   (PRs #23-#25); remote-Stop detection stays deferred by the user.

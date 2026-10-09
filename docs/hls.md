@@ -1,10 +1,11 @@
 # HLS delivery (D60)
 
-Status: **phases 1 and 2 passed on the recorded receiver; phases 3-4 not
-started.** Phase 1 (PR #26, merged) started 2026-10-09 from `2aad3c7`; phase 2
-is on `claude/hls-remux` from `2642161`. Records:
-[phase 1](#phase-1-result-2026-10-09), [phase 2](#phase-2-result-2026-10-09)
-and [receiver-validation.md](receiver-validation.md#hls-phase-1-d60-2026-10-09).
+Status: **phases 1, 2 and 3a (MKV input) passed on the recorded receiver;
+3b (C/C# delivery option) and 4 not started.** Phase 1 (PR #26) and phase 2
+(PR #27) are merged; phase 3a is on `claude/hls-mkv` from `9fa8d6d`. Records:
+[phase 1](#phase-1-result-2026-10-09), [phase 2](#phase-2-result-2026-10-09),
+[phase 3a](#phase-3a-result-mkv-input-2026-10-09) and
+[receiver-validation.md](receiver-validation.md#hls-phase-1-d60-2026-10-09).
 
 ## User request and scope
 
@@ -126,8 +127,8 @@ brokered files the same way they do for progressive casting.
    composition offset, duration, size, file offset and sync flag, plus the
    codec configuration (`avcC`, `hvcC`, AAC `AudioSpecificConfig`, `dac3`,
    `dec3`). MP4/MOV input reads `moov`'s sample tables; MKV input reads
-   `Tracks`, `Cues` and `Cluster` block headers (EBML, RFC 9559) without
-   reading frame payloads.
+   `Tracks` and every `Cluster`'s block headers (EBML, RFC 9559) without
+   reading frame payloads (phase 3a).
 2. **Segmenting** cuts before a video sync sample, so each segment starts
    with an IDR frame (7.4). Segment k starts at the first sync sample whose
    decode time is at least k x 6 s: cuts follow that grid, as ffmpeg's
@@ -182,7 +183,8 @@ follows. Not added until the remux has run on the receiver.
 |---|---|---|
 | 1 | Resource sets; development CLI casts a directory of pre-made fMP4 HLS (`cast --hls PLAYLIST`) | **Passed 2026-10-09:** receiver plays, pauses, seeks and ends a VOD playlist with MRP ownership |
 | 2 | fMP4 writer and MP4 demux; CLI casts an MP4 through the remux | **Passed 2026-10-09:** receiver plays the remuxed MP4 the same as progressively |
-| 3 | MKV demux; C interface and C# delivery option | Receiver plays an MKV (H.264/HEVC + AAC/AC-3/E-AC-3) |
+| 3a | MKV demux | **Passed 2026-10-09:** receiver plays MKVs with H.264/HEVC + AAC/AC-3/E-AC-3 |
+| 3b | C interface and C# delivery option | A host casts an MKV through `sap2_cast_*` on the receiver |
 | 4 | Growing presentations and host-supplied segments | Receiver plays an `EVENT` playlist while it grows |
 
 Phase 1 fixtures are made with ffmpeg on the developer machine
@@ -261,6 +263,89 @@ packet comparison were unchanged; the receiver run was not repeated.
 
 Not run: HEVC, AC-3/E-AC-3, long files, sources with `moov` at the end on the
 receiver (covered offline by the tests), the C interface.
+
+## Phase 3a result: MKV input (2026-10-09)
+
+The user's original question was MKV with natively decodable streams. Phase 3
+is split: 3a adds MKV input; 3b adds the C/C# delivery option.
+
+Implemented (internal C++, compiled into the CLI and tests):
+
+- `src/mkv_demux.*`: EBML/Matroska reader (RFC 8794, RFC 9559). It loads Info
+  and Tracks (at most 16 MiB) and scans every cluster's block headers,
+  without reading frame payloads (except the first AC-3/E-AC-3 frame).
+  - SimpleBlock and BlockGroup (keyframe from the flag, or from a missing
+    ReferenceBlock); Xiph, EBML and fixed lacing; unknown-size Segment and
+    Cluster.
+  - Track choice: the first enabled H.264/HEVC video track; for audio, a
+    default-flagged AAC/AC-3/E-AC-3 track, else the first one; an audio track
+    set without any remuxable codec refuses the file.
+  - Timeline. Matroska stores presentation times only:
+    - Video decode times are the sorted presentation times. Presentation is
+      delayed by the reorder delay so composition offsets stay non-negative,
+      and an edit list removes the delay: the same layout as MP4 B-frames,
+      which played in phase 2.
+    - Audio uses its sample rate as the timescale and one codec frame per
+      sample. It follows a block's own timestamp only where that differs by
+      more than the TimestampScale rounding plus one sample.
+    - `CodecDelay` becomes an audio edit list that skips the priming samples.
+  - Refusals: other codecs, ContentEncodings (compression or encryption),
+    laced video, negative timestamps, a TimestampScale that does not divide one
+    second, and E-AC-3 with dependent substreams (7.1) are `unsupported`;
+    invalid EBML or a missing decoder configuration is `malformed`.
+- `src/sample_entries.*`: sample entries built from Matroska codec data (ISO/IEC
+  14496-1/-3/-12/-15, ETSI TS 102 366 Annex F):
+  - `avc1`/`hvc1` with CodecPrivate as `avcC`/`hvcC`, and `pasp` for
+    anamorphic video;
+  - `mp4a` with an `esds` around the AudioSpecificConfig, built from the codec
+    ID for legacy `A_AAC/...` tracks without one;
+  - `ac-3` with `dac3` and `ec-3` with `dec3`, parsed from the first sync
+    frame;
+  - `tkhd` and packed languages.
+- `src/box_writer.h`: the box writer shared with `fmp4_writer.cpp`.
+- `remux_to_hls` (formerly `remux_mp4_to_hls`) picks MKV or MP4 by the
+  file's first bytes, so `cast --file X.mkv --remux` and `remux --file X.mkv`
+  work unchanged.
+
+Offline (development tools only, not committed), on three ffmpeg-made MKVs
+from the test clip (H.264 + AAC; HEVC + AC-3 5.1 at 48 kHz; H.264 + E-AC-3 at
+48 kHz):
+
+- **Payloads:** ffmpeg `framemd5` found every packet's payload identical per
+  stream.
+- **Timing:** a script computing presentation times from the init edit lists
+  and segment `tfdt`/`trun` matched ffprobe's video times exactly, and audio
+  times within 0.33 ms (the source's millisecond rounding).
+- **Sample entries:** compared with ffmpeg's own MKV-to-MP4 remux:
+  - `avcC`/`hvcC`, `dac3` and `dec3` are identical;
+  - the `esds` differs only in ES_ID, zero bit rate fields and the descriptor
+    length form.
+- **Tests:** `mkv_remux_tests` builds Matroska files from literal elements and
+  covers lacing, BlockGroups, an unknown-size cluster, B-frame reordering,
+  CodecDelay, track choice, the refusals, and known-answer `dac3`, `dec3`,
+  `esds` and `pasp` boxes.
+
+On the recorded Apple TV 4K (tvOS 26.6), each MKV was cast through
+`cast --file X.mkv --remux`:
+
+- Playing in 0.82-0.88 s with MRP ownership; pause, play and seek to 110 s
+  were accepted; the natural end was `media_end`.
+- Every media request returned 200 and completed.
+- User: video and audio played in all three runs, the actions were visible,
+  and the TV returned Home at the end.
+
+Record: [artifact](validation/native-hls-mkv-windows-2026-10-09.json).
+
+**Known cost (not yet addressed):** startup reads every block header through
+16 KiB windows. When frames are smaller than a window, that reads about the
+whole file before playback; the test runs read about 76 MB in total for the
+54 MB H.264 + AAC file, including the segments served. The scan took about
+0.1 s here, but grows with file size and storage speed. A possible
+remedy, not designed yet: plan segments from Cues and size each segment on
+its first request, which needs lazily sized media server resources.
+
+Not run: real-world MKVs from mkvmerge or other muxers (lacing from a muxer,
+large files), 7.1 E-AC-3 (refused), the C interface (3b).
 
 ## Provenance
 

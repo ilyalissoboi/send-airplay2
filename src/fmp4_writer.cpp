@@ -2,6 +2,7 @@
 // Fragmented MP4 (ISO/IEC 14496-12 8.8) for the HLS remux (D60). Written from
 // the specification; no third-party code.
 #include "fmp4_writer.h"
+#include "box_writer.h"
 #include <limits>
 #include <stdexcept>
 #include <utility>
@@ -10,9 +11,6 @@ namespace send_airplay2::detail {
 namespace {
 constexpr std::size_t box_header_bytes = 8;
 constexpr std::size_t large_box_header_bytes = 16;
-constexpr std::uint32_t fixed_point_one = 0x00010000; // 16.16 fixed-point 1.0.
-constexpr std::uint16_t full_volume = 0x0100;         // 8.8 fixed-point 1.0.
-constexpr std::uint32_t matrix_w_one = 0x40000000;    // 2.30 fixed-point 1.0.
 constexpr std::uint32_t tfhd_default_base_is_moof = 0x020000;
 constexpr std::uint32_t tfhd_default_sample_flags = 0x000020;
 constexpr std::uint32_t trun_data_offset = 0x000001;
@@ -33,79 +31,6 @@ constexpr std::uint64_t tfdt_size = box_header_bytes + 4 + 8;          // Versio
 constexpr std::uint64_t tfhd_base_size = box_header_bytes + 4 + 4;     // Full box + track ID.
 constexpr std::uint64_t trun_base_size = box_header_bytes + 4 + 4 + 4; // + count + data offset.
 
-/// Appends boxes to a buffer; open() reserves the size field that close()
-/// fills once the box's content is written.
-class BoxWriter {
-public:
-    /// `type` is a four-character box type.
-    std::size_t open(const char* type) {
-        const auto start = out_.size();
-        u32(0);
-        for (int index = 0; index < 4; ++index) {
-            out_.push_back(static_cast<std::uint8_t>(type[index]));
-        }
-        return start;
-    }
-    std::size_t open_full(const char* type, std::uint8_t version, std::uint32_t flags) {
-        const auto start = open(type);
-        u32((static_cast<std::uint32_t>(version) << 24) | (flags & 0xffffff));
-        return start;
-    }
-    void close(std::size_t start) {
-        const auto size = out_.size() - start;
-        if (size > std::numeric_limits<std::uint32_t>::max()) {
-            throw std::length_error("fMP4 box larger than 4 GiB");
-        }
-        for (int index = 0; index < 4; ++index) {
-            out_[start + static_cast<std::size_t>(index)] =
-                static_cast<std::uint8_t>(size >> (24 - 8 * index));
-        }
-    }
-    void u8(std::uint8_t value) {
-        out_.push_back(value);
-    }
-    void u16(std::uint16_t value) {
-        u8(static_cast<std::uint8_t>(value >> 8));
-        u8(static_cast<std::uint8_t>(value));
-    }
-    void u32(std::uint32_t value) {
-        u16(static_cast<std::uint16_t>(value >> 16));
-        u16(static_cast<std::uint16_t>(value));
-    }
-    void u64(std::uint64_t value) {
-        u32(static_cast<std::uint32_t>(value >> 32));
-        u32(static_cast<std::uint32_t>(value));
-    }
-    void zeros(std::size_t count) {
-        out_.insert(out_.end(), count, 0);
-    }
-    void bytes(const std::uint8_t* data, std::size_t count) {
-        out_.insert(out_.end(), data, data + count);
-    }
-    void bytes(const Bytes& data) {
-        bytes(data.data(), data.size());
-    }
-    void text(const char* value) {
-        for (; *value; ++value) {
-            u8(static_cast<std::uint8_t>(*value));
-        }
-        u8(0);
-    }
-    [[nodiscard]] Bytes take() {
-        return std::move(out_);
-    }
-
-private:
-    Bytes out_;
-};
-
-void identity_matrix(BoxWriter& out) {
-    for (const auto value :
-         {fixed_point_one, 0U, 0U, 0U, fixed_point_one, 0U, 0U, 0U, matrix_w_one}) {
-        out.u32(value);
-    }
-}
-
 void movie_header(BoxWriter& out, const Mp4Movie& movie) {
     const auto mvhd = out.open_full("mvhd", 0, 0);
     out.u32(0); // Creation time.
@@ -115,7 +40,7 @@ void movie_header(BoxWriter& out, const Mp4Movie& movie) {
     out.u32(fixed_point_one); // Rate 1.0.
     out.u16(full_volume);
     out.zeros(2 + 8); // Reserved.
-    identity_matrix(out);
+    out.identity_matrix();
     out.zeros(6 * 4);                                             // pre_defined.
     out.u32(static_cast<std::uint32_t>(movie.tracks.size() + 1)); // next_track_ID.
     out.close(mvhd);
