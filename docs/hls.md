@@ -504,13 +504,17 @@ tracks:
   marks no cue.
 - **Timing:** the track's edit list (an initial empty edit and one media
   edit) maps cues onto the presentation timeline the video and audio use.
+  Samples wholly before the media edit give no cue; one crossing it starts at
+  the edit.
 - **Flags:**
   - LANGUAGE comes from mdhd, mapped to BCP 47.
   - DEFAULT comes from the tkhd enabled flag (ffmpeg sets it for the default
     disposition).
   - FORCED comes from tx3g's "all samples are forced" display flag.
 - **Limits:** at most 64 KiB per sample and 16 MiB per track, else the track
-  is left out.
+  is left out. A text track whose layout the demuxer cannot read (several
+  sample descriptions, `stz2`, a malformed table) is also left out; the video
+  and audio remux goes on.
 - **Output:** the existing phase 3c path serves the cues, so an MP4 with
   subtitles gets `main.m3u8`.
 
@@ -522,7 +526,8 @@ Results:
 - **Unit tests** (`remux_tests`): an empty-sample gap, an italic `styl` run,
   UTF-16, CR LF, escaping, an empty edit shifting the cues, DEFAULT and
   FORCED, a `wvtt` track with `vttc` and `vtte`, a QuickTime `text` entry left
-  out, and the multivariant playlist.
+  out, the multivariant playlist, a media edit hiding and clipping cues, and
+  an oversized sample or two sample descriptions leaving out only the track.
 - **Receiver:** the recorded Apple TV showed the subtitles without the menu
   (DEFAULT=YES), in sync after seeks, with normal video and audio, and Home at
   the end. A second run over the italic section rendered italics properly

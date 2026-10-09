@@ -411,9 +411,10 @@ Bytes tx3g_entry(std::uint32_t display_flags) {
 
 /// A text trak whose samples sit in the file's 'free' tail. Builds the file
 /// twice: the moov's size, and so the tail's offset, does not depend on the
-/// chunk offsets' values.
+/// chunk offsets' values. `stsd_entries` copies of `entry` go in its stsd.
 Bytes mp4_with_text(const char* handler, const Bytes& entry, const std::vector<Bytes>& samples,
-                    const std::vector<std::uint32_t>& durations, const Bytes& edts = {}) {
+                    const std::vector<std::uint32_t>& durations, const Bytes& edts = {},
+                    std::uint32_t stsd_entries = 1) {
     Bytes tail;
     std::vector<std::uint64_t> relative;
     for (const auto& sample : samples) {
@@ -427,6 +428,7 @@ Bytes mp4_with_text(const char* handler, const Bytes& entry, const std::vector<B
         text.timescale = 1000;
         text.language = 0x15c7; // "eng".
         text.edts = edts;
+        text.stsd_entries = stsd_entries;
         Bytes stts = words({static_cast<std::uint32_t>(samples.size())});
         Bytes stsz = words({0, static_cast<std::uint32_t>(samples.size())});
         Bytes stco = words({static_cast<std::uint32_t>(samples.size())});
@@ -512,6 +514,51 @@ void mp4_text_tests() {
     check(found_segment, "the WebVTT segment holds the italic cue");
 }
 
+/// Edits, limits and layouts that leave out cues or a whole text track
+/// without refusing the movie.
+void mp4_text_exclusion_tests() {
+    group = "MP4 text subtitles: exclusions";
+    // A media edit at track time 1000 (1 s): "early" (0-0.8 s) is hidden,
+    // "cross" (0.8-1.5 s) is clipped to the edit, "late" (1.5-2.5 s) shifts.
+    constexpr std::uint32_t edit_media_time = 1000;
+    const auto media_edit =
+        box("edts", full_box("elst", 0, 0, words({1, 900, edit_media_time, 0x00010000})));
+    const auto edited =
+        mp4_with_text("sbtl", tx3g_entry(0),
+                      {tx3g_sample(bytes_of("early")), tx3g_sample(bytes_of("cross")),
+                       tx3g_sample(bytes_of("late"))},
+                      {800, 700, 1000}, media_edit);
+    const auto edited_movie = read_mp4(memory_reader(edited), edited.size());
+    check(edited_movie.text_tracks.size() == 1, "media edit: one text track");
+    if (edited_movie.text_tracks.size() == 1) {
+        const auto& cues = edited_movie.text_tracks[0].cues;
+        check(cues.size() == 2, "media edit: the sample wholly before the edit gives no cue");
+        if (cues.size() == 2) {
+            check(cues[0].text == "cross" && cues[0].start_us == 0 && cues[0].end_us == 500'000,
+                  "media edit: a sample crossing the edit is clipped to it");
+            check(cues[1].text == "late" && cues[1].start_us == 500'000 &&
+                      cues[1].end_us == 1'500'000,
+                  "media edit: a later sample shifts by the edit's media time");
+        }
+    }
+
+    // One sample over the 64 KiB per-sample limit leaves out the whole track.
+    constexpr std::size_t over_sample_limit = 64 * 1024 + 1;
+    const auto oversized = mp4_with_text(
+        "sbtl", tx3g_entry(0), {tx3g_sample(bytes_of("kept?")), Bytes(over_sample_limit, 'x')},
+        {1000, 1000});
+    const auto oversized_movie = read_mp4(memory_reader(oversized), oversized.size());
+    check(oversized_movie.tracks.size() == 2 && oversized_movie.text_tracks.empty(),
+          "an oversized sample leaves out the track, not the movie");
+
+    // Two sample descriptions are unsupported for text: the track is left out.
+    const auto two_entries =
+        mp4_with_text("sbtl", tx3g_entry(0), {tx3g_sample(bytes_of("x"))}, {1000}, {}, 2);
+    const auto two_entries_movie = read_mp4(memory_reader(two_entries), two_entries.size());
+    check(two_entries_movie.tracks.size() == 2 && two_entries_movie.text_tracks.empty(),
+          "an unreadable text layout leaves out the track, not the movie");
+}
+
 int main() {
     try {
         demux_tests();
@@ -521,6 +568,7 @@ int main() {
         segment_header_tests();
         presentation_tests();
         mp4_text_tests();
+        mp4_text_exclusion_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';

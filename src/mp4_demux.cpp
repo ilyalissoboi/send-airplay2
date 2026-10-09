@@ -667,7 +667,9 @@ std::vector<std::string> wvtt_texts(const Bytes& sample) {
         if (cue.type != fourcc("vttc")) {
             continue;
         }
-        if (const auto* payload = find(children(cue), fourcc("payl"))) {
+        // Named: find returns a pointer into this vector.
+        const auto cue_boxes = children(cue);
+        if (const auto* payload = find(cue_boxes, fourcc("payl"))) {
             const std::string_view text(
                 reinterpret_cast<const char*>(payload->begin + payload->header),
                 payload->size - payload->header);
@@ -681,7 +683,9 @@ std::vector<std::string> wvtt_texts(const Bytes& sample) {
 }
 
 /// The text track of a trak with a tx3g or wvtt entry, or nothing for other
-/// text formats or a track over the size limits.
+/// text formats or a track over the size limits. Samples wholly before the
+/// first media edit are not presented and give no cue; one crossing it starts
+/// at the edit. Throws RemuxException for a layout it cannot read.
 std::optional<TextTrack> read_text_track(const std::vector<Box>& trak, const RandomReader& read,
                                          std::uint64_t file_size, std::uint32_t movie_timescale) {
     constexpr std::uint32_t track_enabled_flag = 0x1;
@@ -727,8 +731,16 @@ std::optional<TextTrack> read_text_track(const std::vector<Box>& trak, const Ran
     };
     std::uint64_t total = 0;
     for (const auto& sample : sample_table(stbl, file_size)) {
-        if (sample.size <= 2 || sample.size > max_text_sample_bytes) {
+        if (sample.size > max_text_sample_bytes) {
+            return std::nullopt; // A partial rendition would silently miss cues.
+        }
+        if (sample.size <= 2) {
             continue; // Two bytes is an empty tx3g sample: a gap between cues.
+        }
+        const auto start =
+            static_cast<std::int64_t>(sample.decode_time) + sample.composition_offset;
+        if (start + static_cast<std::int64_t>(sample.duration) <= media_start) {
+            continue; // Wholly before the media edit, so not presented.
         }
         total += sample.size;
         if (total > max_text_bytes_per_track) {
@@ -736,8 +748,6 @@ std::optional<TextTrack> read_text_track(const std::vector<Box>& trak, const Ran
         }
         Bytes payload(sample.size);
         read(sample.offset, payload.data(), payload.size());
-        const auto start =
-            static_cast<std::int64_t>(sample.decode_time) + sample.composition_offset;
         const auto start_us = to_us(start);
         const auto end_us = std::max(to_us(start + sample.duration), start_us + 1000);
         const auto texts =
@@ -798,16 +808,22 @@ Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size) {
     if (audio) {
         movie.tracks.push_back(read_track(audio->first, audio->second, file_size));
     }
-    // Text subtitles are extras: any track that cannot be served is left out.
+    // Text subtitles are extras: any track that cannot be served is left out,
+    // including a malformed or unsupported layout (several stsd entries, stz2).
+    // Read failures and cancellation are not RemuxException and still propagate.
     for (const auto& box : boxes) {
         if (box.type != fourcc("trak")) {
             continue;
         }
-        const auto trak = children(box);
-        if (text_handler(trak)) {
-            if (auto text = read_text_track(trak, read, file_size, movie.timescale)) {
-                movie.text_tracks.push_back(std::move(*text));
+        try {
+            const auto trak = children(box);
+            if (text_handler(trak)) {
+                if (auto text = read_text_track(trak, read, file_size, movie.timescale)) {
+                    movie.text_tracks.push_back(std::move(*text));
+                }
             }
+        } catch (const RemuxException&) {
+            // Left out; the video and audio remux is unaffected.
         }
     }
     return movie;
