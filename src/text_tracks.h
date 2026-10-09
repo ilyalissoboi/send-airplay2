@@ -33,6 +33,11 @@ struct TextTrack {
  * are removed. */
 [[nodiscard]] std::string subrip_to_webvtt(std::string_view text);
 
+/** Matroska S_TEXT/WEBVTT cue text (already WebVTT) kept as it is, markup and
+ * entities included: CR LF becomes LF, blank lines (which would end the cue)
+ * are removed, and "-->", which cue text cannot contain, becomes "--&gt;". */
+[[nodiscard]] std::string webvtt_cue_text(std::string_view text);
+
 /** The Text field of a Matroska S_TEXT/ASS or S_TEXT/SSA block (RFC 9559
  * codec mappings: ReadOrder, Layer, Style, Name, MarginL, MarginR, MarginV,
  * Effect, Text) as WebVTT cue text: override blocks {...} are dropped, \N

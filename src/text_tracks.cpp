@@ -137,6 +137,37 @@ std::string subrip_to_webvtt(std::string_view text) {
     return tidy_lines(out);
 }
 
+std::string webvtt_cue_text(std::string_view text) {
+    std::string out;
+    for (std::size_t index = 0; index < text.size(); ++index) {
+        if (text.compare(index, 3, "-->") == 0) {
+            out += "--&gt;";
+            index += 2;
+        } else if (text[index] == '\r') {
+            if (index + 1 >= text.size() || text[index + 1] != '\n') {
+                out += '\n';
+            }
+        } else {
+            out += text[index];
+        }
+    }
+    // Remove blank lines only: unlike converted text, leading spaces are kept.
+    std::string kept;
+    std::size_t start = 0;
+    while (start <= out.size()) {
+        auto end = out.find('\n', start);
+        if (end == std::string::npos) {
+            end = out.size();
+        }
+        const auto line = out.substr(start, end - start);
+        if (line.find_first_not_of(" \t") != std::string::npos) {
+            kept += (kept.empty() ? "" : "\n") + line;
+        }
+        start = end + 1;
+    }
+    return kept;
+}
+
 std::string ass_to_webvtt(std::string_view block) {
     std::size_t start = 0;
     for (std::size_t field = 0; field < ass_fields_before_text; ++field) {

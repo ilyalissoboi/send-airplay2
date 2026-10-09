@@ -97,24 +97,44 @@ std::pair<std::uint32_t, std::uint32_t> display_size(const Mp4Track& video) {
     return {field(tkhd.size() - 8), field(tkhd.size() - 4)};
 }
 
-/// EXT-X-STREAM-INF values: peak and average bit rate of the media segments,
-/// display size, frame rate and codecs.
-VariantStream variant_stream(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments,
-                             const std::vector<std::uint64_t>& sizes) {
-    VariantStream variant;
-    variant.uri = playlist_name;
+/// Peak and average bit rate (bits per second) of segments of these sizes on
+/// the video segment durations.
+std::pair<std::uint64_t, std::uint64_t> bit_rates(const Mp4Movie& movie,
+                                                  const std::vector<SegmentLayout>& segments,
+                                                  const std::vector<std::uint64_t>& sizes) {
+    std::uint64_t peak = 0;
     std::uint64_t total_bytes = 0;
     std::uint64_t total_us = 0;
     for (std::size_t index = 0; index < segments.size(); ++index) {
         const auto duration =
             std::max<std::uint64_t>(segment_duration_us(movie, segments, index), 1);
-        variant.peak_bits_per_second = std::max(
-            variant.peak_bits_per_second, sizes[index] * 8 * microseconds_per_second / duration);
+        peak = std::max(peak, sizes[index] * 8 * microseconds_per_second / duration);
         total_bytes += sizes[index];
         total_us += duration;
     }
-    variant.average_bits_per_second =
-        total_us ? total_bytes * 8 * microseconds_per_second / total_us : 0;
+    return {peak, total_us ? total_bytes * 8 * microseconds_per_second / total_us : 0};
+}
+
+/// EXT-X-STREAM-INF values: the media segments' peak and average bit rate
+/// plus the largest subtitle rendition's (one plays at a time; RFC 8216bis:
+/// the largest sum over playable combinations), display size, frame rate and
+/// codecs.
+VariantStream variant_stream(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments,
+                             const std::vector<std::uint64_t>& sizes,
+                             const std::vector<std::vector<std::uint64_t>>& subtitle_sizes) {
+    VariantStream variant;
+    variant.uri = playlist_name;
+    std::tie(variant.peak_bits_per_second, variant.average_bits_per_second) =
+        bit_rates(movie, segments, sizes);
+    std::uint64_t subtitle_peak = 0;
+    std::uint64_t subtitle_average = 0;
+    for (const auto& track : subtitle_sizes) {
+        const auto [peak, average] = bit_rates(movie, segments, track);
+        subtitle_peak = std::max(subtitle_peak, peak);
+        subtitle_average = std::max(subtitle_average, average);
+    }
+    variant.peak_bits_per_second += subtitle_peak;
+    variant.average_bits_per_second += subtitle_average;
     const auto& video = movie.tracks.at(0);
     std::tie(variant.width, variant.height) = display_size(video);
     const auto ticks = track_end_time(video) - video.samples.front().decode_time;
@@ -409,28 +429,39 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
     const auto text = [](const std::string& value) {
         return memory_source(std::make_shared<const Bytes>(value.begin(), value.end()));
     };
-    result.playlist_name = multivariant_name;
-    result.resources.push_back({multivariant_name, playlist_type,
-                                text(multivariant_playlist(variant_stream(movie, segments, sizes),
-                                                           subtitle_renditions(movie)))});
-    // Each WebVTT segment covers the presentation window of its video segment,
-    // by cumulative EXTINF time; the last one runs to the end.
+    // Each WebVTT segment covers the presentation window of its video segment:
+    // cumulative EXTINF time from the first video timestamp, which is the
+    // timeline origin cues share (not necessarily 0); the last runs to the end.
+    const auto& video = movie.tracks.at(0);
     std::vector<std::uint64_t> window_starts;
-    std::uint64_t elapsed = 0;
+    std::uint64_t elapsed = ticks_to_us(video.samples.front().decode_time, video.timescale);
     for (std::size_t index = 0; index < segments.size(); ++index) {
         window_starts.push_back(elapsed);
         elapsed += segment_duration_us(movie, segments, index);
     }
+    std::vector<std::vector<std::string>> webvtt(movie.text_tracks.size());
+    std::vector<std::vector<std::uint64_t>> webvtt_sizes(movie.text_tracks.size());
     for (std::size_t track = 0; track < movie.text_tracks.size(); ++track) {
-        result.resources.push_back({text_playlist_name(track), playlist_type,
-                                    text(subtitle_playlist(movie, segments, track))});
         for (std::size_t index = 0; index < segments.size(); ++index) {
             const auto end = index + 1 < segments.size()
                                  ? window_starts[index + 1]
                                  : std::numeric_limits<std::uint64_t>::max();
+            webvtt[track].push_back(
+                webvtt_segment(movie.text_tracks[track], window_starts[index], end));
+            webvtt_sizes[track].push_back(webvtt[track].back().size());
+        }
+    }
+    result.playlist_name = multivariant_name;
+    result.resources.push_back(
+        {multivariant_name, playlist_type,
+         text(multivariant_playlist(variant_stream(movie, segments, sizes, webvtt_sizes),
+                                    subtitle_renditions(movie)))});
+    for (std::size_t track = 0; track < movie.text_tracks.size(); ++track) {
+        result.resources.push_back({text_playlist_name(track), playlist_type,
+                                    text(subtitle_playlist(movie, segments, track))});
+        for (std::size_t index = 0; index < segments.size(); ++index) {
             result.resources.push_back(
-                {text_segment_name(track, index), text_type,
-                 text(webvtt_segment(movie.text_tracks[track], window_starts[index], end))});
+                {text_segment_name(track, index), text_type, text(webvtt[track][index])});
         }
     }
     return result;

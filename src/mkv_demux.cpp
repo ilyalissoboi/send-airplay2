@@ -790,10 +790,10 @@ std::optional<TextTrack> text_track(const SelectedTrack& selected, std::uint64_t
         std::string text;
         if (info.codec_id == "S_TEXT/ASS" || info.codec_id == "S_TEXT/SSA") {
             text = ass_to_webvtt(payload);
+        } else if (info.codec_id == "S_TEXT/WEBVTT") {
+            text = webvtt_cue_text(payload); // Already WebVTT cue text.
         } else {
-            // SubRip text; WebVTT cue text is the same markup family, and the
-            // conversion keeps its <i>/<b>/<u> and escapes the rest.
-            text = subrip_to_webvtt(payload);
+            text = subrip_to_webvtt(payload); // S_TEXT/UTF8 and S_TEXT/ASCII.
         }
         if (text.empty()) {
             continue;

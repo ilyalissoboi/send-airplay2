@@ -51,6 +51,18 @@ void ass_tests() {
     check(ass_to_webvtt("too,few,fields").empty(), "a short block gives no text");
 }
 
+void webvtt_source_tests() {
+    group = "WebVTT source cue text";
+    check(webvtt_cue_text("<v Roger>Hi &amp; <c.loud>bye</c></v>") ==
+              "<v Roger>Hi &amp; <c.loud>bye</c></v>",
+          "voice, class spans and entities kept as they are");
+    check(webvtt_cue_text("<ruby>漢<rt>kan</rt></ruby>") == "<ruby>漢<rt>kan</rt></ruby>",
+          "ruby kept");
+    check(webvtt_cue_text("a --> b") == "a --&gt; b", "an arrow cannot stay in cue text");
+    check(webvtt_cue_text("one\r\n\r\n  two") == "one\n  two",
+          "CR LF to LF, blank lines removed, indentation kept");
+}
+
 void language_tests() {
     group = "language tags";
     check(language_tag("eng") == "en" && language_tag("fre") == "fr" &&
@@ -174,6 +186,7 @@ int main() {
     try {
         subrip_tests();
         ass_tests();
+        webvtt_source_tests();
         language_tests();
         webvtt_tests();
         codec_string_tests();

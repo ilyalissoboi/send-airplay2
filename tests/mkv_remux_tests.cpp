@@ -11,6 +11,7 @@
 #include <cstring>
 #include <initializer_list>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -621,7 +622,7 @@ Bytes text(const std::string& value) {
 /// subtitle tracks: SubRip (number 3, English, with BlockGroup durations and
 /// one SimpleBlock without), ASS (number 4, forced, hearing impaired) and a
 /// PGS bitmap track (number 5), which is left out.
-Bytes subtitle_fixture() {
+Bytes subtitle_fixture(std::uint64_t origin_ms = 0) {
     TrackSpec srt;
     srt.number = 3;
     srt.type = 17;
@@ -651,7 +652,7 @@ Bytes subtitle_fixture() {
     };
     const auto cluster1 =
         element(cluster_id,
-                join({uint_element(0xE7, 0),
+                join({uint_element(0xE7, origin_ms),
                       element(simple_block_id,
                               block(1, 0, keyframe_flag, Lacing::none, {frame_bytes(0x10, 8)})),
                       timed_block(3, 1000, "<i>Hello</i> & welcome", 1500),
@@ -663,6 +664,49 @@ Bytes subtitle_fixture() {
                       element(simple_block_id, block(3, 9000, keyframe_flag, Lacing::none,
                                                      {text("No duration")}))}));
     return mkv_file({video_spec(), srt, ass, pgs}, cluster1);
+}
+
+/// Remuxes `file` and returns every resource's bytes by name, and the entry point.
+std::map<std::string, std::string> remux_texts(const Bytes& file, std::string& entry) {
+    const auto shared = std::make_shared<const Bytes>(file);
+    MediaSource source{
+        [shared] { return static_cast<std::uint64_t>(shared->size()); },
+        [shared](std::uint64_t offset, std::uint8_t* output, std::size_t capacity,
+                 const MediaReadContext&) -> std::size_t {
+            if (offset >= shared->size()) {
+                return 0;
+            }
+            const auto count = std::min<std::uint64_t>(capacity, shared->size() - offset);
+            std::memcpy(output, shared->data() + offset, static_cast<std::size_t>(count));
+            return static_cast<std::size_t>(count);
+        }};
+    const auto remuxed = remux_to_hls(std::move(source));
+    entry = remuxed.playlist_name;
+    std::atomic_bool stopped{false};
+    std::atomic_bool cancelled{false};
+    const MediaReadContext context{&stopped, &cancelled,
+                                   std::chrono::steady_clock::now() + std::chrono::minutes(1)};
+    std::map<std::string, std::string> texts;
+    for (const auto& resource : remuxed.resources) {
+        std::string out(static_cast<std::size_t>(resource.source.size()), '\0');
+        std::size_t position = 0;
+        while (position < out.size()) {
+            const auto count =
+                resource.source.read_at(position, reinterpret_cast<std::uint8_t*>(&out[position]),
+                                        out.size() - position, context);
+            if (count == 0) {
+                break;
+            }
+            position += count;
+        }
+        texts[resource.name] = out;
+    }
+    return texts;
+}
+
+/// Bits per second of `bytes` over `microseconds`, as the remux computes it.
+std::uint64_t rate(std::uint64_t bytes, std::uint64_t microseconds) {
+    return bytes * 8 * 1'000'000 / microseconds;
 }
 
 void subtitle_tests() {
@@ -697,43 +741,12 @@ void subtitle_tests() {
               ass.cues[0].start_us == 2'000'000 && ass.cues[0].end_us == 3'000'000,
           "ASS cue: Text field without overrides, \\N a line break");
 
-    const auto shared = std::make_shared<const Bytes>(file);
-    MediaSource source{
-        [shared] { return static_cast<std::uint64_t>(shared->size()); },
-        [shared](std::uint64_t offset, std::uint8_t* output, std::size_t capacity,
-                 const MediaReadContext&) -> std::size_t {
-            if (offset >= shared->size()) {
-                return 0;
-            }
-            const auto count = std::min<std::uint64_t>(capacity, shared->size() - offset);
-            std::memcpy(output, shared->data() + offset, static_cast<std::size_t>(count));
-            return static_cast<std::size_t>(count);
-        }};
-    const auto remuxed = remux_to_hls(std::move(source));
-    check(remuxed.playlist_name == "main.m3u8" && remuxed.text_track_count == 2,
-          "subtitles make main.m3u8 the entry point");
-    std::atomic_bool stopped{false};
-    std::atomic_bool cancelled{false};
-    const MediaReadContext context{&stopped, &cancelled,
-                                   std::chrono::steady_clock::now() + std::chrono::minutes(1)};
-    const auto resource_text = [&](const std::string& name) {
-        for (const auto& resource : remuxed.resources) {
-            if (resource.name == name) {
-                std::string out(static_cast<std::size_t>(resource.source.size()), '\0');
-                std::size_t position = 0;
-                while (position < out.size()) {
-                    const auto count = resource.source.read_at(
-                        position, reinterpret_cast<std::uint8_t*>(&out[position]),
-                        out.size() - position, context);
-                    if (count == 0) {
-                        break;
-                    }
-                    position += count;
-                }
-                return out;
-            }
-        }
-        return std::string("(missing)");
+    std::string entry;
+    auto texts = remux_texts(file, entry);
+    check(entry == "main.m3u8", "subtitles make main.m3u8 the entry point");
+    const auto resource_text = [&texts](const std::string& name) {
+        const auto found = texts.find(name);
+        return found == texts.end() ? std::string("(missing)") : found->second;
     };
     const auto main = resource_text("main.m3u8");
     check(main.find("NAME=\"English\",LANGUAGE=\"en\",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,"
@@ -758,6 +771,33 @@ void subtitle_tests() {
     check(resource_text("t0s1.vtt") == "WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n"
                                        "\n00:00:09.000 --> 00:00:14.000\nNo duration\n",
           "last WebVTT segment runs to the end");
+
+    // BANDWIDTH and AVERAGE-BANDWIDTH: the video segments plus the largest
+    // subtitle rendition; both segments last 7 s.
+    const std::uint64_t seven_s = 7'000'000;
+    const auto size = [&](const std::string& name) {
+        return static_cast<std::uint64_t>(resource_text(name).size());
+    };
+    const auto peak = std::max(rate(size("s0.m4s"), seven_s), rate(size("s1.m4s"), seven_s)) +
+                      std::max({rate(size("t0s0.vtt"), seven_s), rate(size("t0s1.vtt"), seven_s),
+                                rate(size("t1s0.vtt"), seven_s), rate(size("t1s1.vtt"), seven_s)});
+    const auto average = rate(size("s0.m4s") + size("s1.m4s"), 2 * seven_s) +
+                         std::max(rate(size("t0s0.vtt") + size("t0s1.vtt"), 2 * seven_s),
+                                  rate(size("t1s0.vtt") + size("t1s1.vtt"), 2 * seven_s));
+    check(main.find("BANDWIDTH=" + std::to_string(peak) +
+                    ",AVERAGE-BANDWIDTH=" + std::to_string(average) + ",") != std::string::npos,
+          "bandwidth includes the largest subtitle rendition");
+
+    // A timeline that starts at 10 s: windows follow the first video
+    // timestamp, so the 11 s cue still belongs to the first segment.
+    std::string shifted_entry;
+    const auto shifted = remux_texts(subtitle_fixture(10'000), shifted_entry);
+    check(shifted.at("t0s0.vtt") == "WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n"
+                                    "\n00:00:11.000 --> 00:00:12.500\n<i>Hello</i> &amp; welcome\n"
+                                    "\n00:00:15.500 --> 00:00:16.500\nAcross the cut\n",
+          "nonzero origin: first WebVTT segment holds the cues of [10 s, 17 s)");
+    check(shifted.at("t0s1.vtt").find("00:00:19.000 --> 00:00:24.000") != std::string::npos,
+          "nonzero origin: last segment holds the later cue");
 }
 
 int main() {
