@@ -111,6 +111,12 @@ runtime compiled into `SendAirPlay2.UwpHost.exe`. No test reported
 runtime calls is a question for Screenbox's .NET toolchain, not the library.
 Record: [artifact](validation/native-uwp-architectures-wack-windows-2026-10-08.json).
 
+Re-run (D61, 2026-10-10) on the x64 test host 0.1.22.0, whose library now
+includes the HLS remux and the start-position seek: the same 26 of 27, with
+Supported APIs failing only for the same six kernel32 functions in the host
+executable; the library DLLs appear only in the inventory, with no errors.
+Record: [artifact](validation/native-uwp-host-remux-start-windows-2026-10-10.json).
+
 ## Not covered
 
 - ARM64 on a device: CI builds and checks `arm64-uwp`; no ARM64 run (D57).

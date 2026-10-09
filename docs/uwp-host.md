@@ -159,6 +159,6 @@ Not covered: discovery on a Public network, pairing through the UWP-built
 library, HLS remux in the x86 or ARM64 package, MKVs without Cues through
 brokered access, PasswordVault roaming, desktop provisioning of the app's locker,
 an ARM64 run, and Store certification of a signed package (the D57 kit run
-on the sideloaded package failed only Supported APIs, for the .NET Native AOT
-runtime in the host executable; see
+on the sideloaded package, repeated on 0.1.22.0 for D61, failed only Supported
+APIs, for the .NET Native AOT runtime in the host executable; see
 [uwp-native-build.md](uwp-native-build.md#certification-kit-d57)).

@@ -1492,6 +1492,7 @@ Second batch (0.1.22.0, with the fix):
 | 4: MP4, remux, start 580 | Start ok after 2563 ms; `MediaEnd` at 600 s about 21 s later; slot freed | Everything worked as expected |
 | 5: MP4, progressive, start 120 | Start ok after 2283 ms; position 139.0 s after 20 s | Everything worked as expected |
 
-**PASS for this receiver and host.** Not run: the x86 and ARM64 packages, a
-sleeping receiver from the UWP host, MKVs without Cues through brokered access,
-the certification kit on 0.1.22.0.
+**PASS for this receiver and host.** The certification kit on 0.1.22.0 (run by
+the user) matched D57: 26 of 27, Supported APIs failing only for the .NET AOT
+runtime in the host executable. Not run: the x86 and ARM64 packages, a sleeping
+receiver from the UWP host, MKVs without Cues through brokered access.

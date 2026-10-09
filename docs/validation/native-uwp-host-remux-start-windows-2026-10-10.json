@@ -351,6 +351,14 @@
     "observer": "Everything worked as expected (user): each run jumped to its start position after at most a second or two from 0:00, normal video and audio, subtitles in runs 2-4, Home after run 4's natural end."
   },
   "checks": "Windows static 35/35 and shared 36/36 CTest; UWP binary check passed; host package built without warnings.",
-  "result": "PASS for this receiver and host: the UWP-built library in a packaged x64 app with Screenbox's capabilities casts an MKV and an MP4 through the HLS remux from brokered StorageFile access (start in about 2.5 s), with controls, subtitles, start positions (after the fix) and a natural end.",
-  "not_run": "x86 and ARM64 packages, a sleeping receiver from the UWP host, MKVs without Cues through brokered access, the certification kit on 0.1.22.0 (pending, run by the user), other receivers and firmware."
+  "result": "PASS for this receiver and host: the UWP-built library in a packaged x64 app with Screenbox's capabilities casts an MKV and an MP4 through the HLS remux from brokered StorageFile access (start in about 2.5 s), with controls, subtitles, start positions (after the fix) and a natural end. The certification kit on that package matched D57 (only the AOT runtime in the host executable fails Supported APIs).",
+  "not_run": "x86 and ARM64 packages, a sleeping receiver from the UWP host, MKVs without Cues through brokered access, other receivers and firmware.",
+  "certification_kit": {
+    "run_by": "the user, elevated shell, appcert.exe test -packagefullname <installed 0.1.22.0 x64>",
+    "kit": "10.0.28000.2526",
+    "os": "10.0.26200.0",
+    "result": "26 of 27 tests passed. Supported APIs failed only for SendAirPlay2.UwpHost.exe: CreateMemoryResourceNotification, GetProcessGroupAffinity, IsProcessInJob, QueryInformationJobObject, SetXStateFeaturesMask, VirtualAllocExNuma (kernel32), the .NET Native AOT runtime, as in D57.",
+    "library": "send_airplay2.dll and libcrypto-3-x64.dll appear only in the file inventory and API scan with error code 0; no test reports them.",
+    "report": "kept outside the repository"
+  }
 }

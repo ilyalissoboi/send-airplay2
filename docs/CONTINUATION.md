@@ -18,7 +18,7 @@ guide; the master handoff and dated artifacts preserve the longer history.
   through MP4 text subtitles (PRs #26-#32). Step 1 (D61: UWP test host with
   remux, start position and script mode; the start-position seek fix) is on
   `claude/uwp-host-remux` (find its PR with `gh pr list --state open`) and
-  passed on the receiver; the certification kit run is pending. Next: step 2,
+  passed on the receiver and the certification kit (as D57). Next: step 2,
   update the design in ilyalissoboi/Screenbox#1 and answer its two review
   threads; step 3, packaging. Later: sender-side subtitle selection, HLS
   phase 4 (growing presentations).

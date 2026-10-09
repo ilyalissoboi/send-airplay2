@@ -64,8 +64,9 @@ answer its PR's two review threads; (3) packaging. The test host gained the
 remux option, a start position, remembered files and a script mode
 ([uwp-host.md](uwp-host.md#script-mode-d61)). On the TV it found that tvOS
 26.6 ignores the queue item's start position; the library now seeks there
-before `Start` returns, which passed (user). Pending in step 1: the user's
-certification kit run on 0.1.22.0. Record:
+before `Start` returns, which passed (user). The certification kit on 0.1.22.0
+matched D57 (only the AOT runtime in the host executable fails Supported
+APIs). Next: step 2. Record:
 [receiver-validation.md](receiver-validation.md#uwp-host-hls-remux-and-start-position-d61-2026-10-10).
 
 ### Standalone items (D58-D59, merged)
