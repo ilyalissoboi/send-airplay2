@@ -16,7 +16,9 @@ Phase 1 (media server resource sets, development `cast --hls`, the `near_end`
 end-of-media rule) is merged (PR #26), and so is phase 2 (PR #27): the
 library's own MP4-to-fMP4 remux, `cast --file PATH --remux`. Phase 3a (branch
 `claude/hls-mkv`): MKV input to the remux passed on the recorded Apple TV for
-H.264 + AAC, HEVC + AC-3 5.1 and H.264 + E-AC-3 (user observed). Next: 3b, the
+H.264 + AAC, HEVC + AC-3 5.1 and H.264 + E-AC-3, and with a user-provided
+1 h 54 min H.264 + E-AC-3 Atmos film (user observed; packet-identical
+offline). Next: 3b, the
 C/C# delivery option; the MKV startup scan cost is a known follow-up; then
 growing presentations (phase 4). See the D60 record in section 4.
 
@@ -1132,9 +1134,10 @@ data. Engineering choices:
 - A default-flagged remuxable audio track is preferred.
 - E-AC-3 with dependent substreams is refused.
 
-Three ffmpeg-made MKVs were payload-identical under ffmpeg and played, paused,
-seeked and ended normally on the recorded receiver (user observed). Known
-cost: the startup scan reads about the whole file when frames are small.
+Three ffmpeg-made MKVs and a user-provided 6.3 GB film were payload-identical
+under ffmpeg and played, paused, seeked and ended normally on the recorded
+receiver (user observed). Known cost: the startup scan reads every block
+header (2.8 GB and 4.9 s cold for the film).
 Record: [receiver-validation.md](receiver-validation.md#hls-phase-3a-mkv-d60-2026-10-09).
 
 ## 5. Implemented code and verification

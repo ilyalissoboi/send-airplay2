@@ -336,11 +336,25 @@ On the recorded Apple TV 4K (tvOS 26.6), each MKV was cast through
 
 Record: [artifact](validation/native-hls-mkv-windows-2026-10-09.json).
 
+A user-provided feature-film MKV was also tested. Title withheld; 6.3 GB,
+1 h 54 min, H.264 High 1920x802, E-AC-3 5.1 with Atmos (JOC, one independent
+substream).
+- **Offline:** all 163,624 video and 213,267 audio packets were identical, and
+  presentation times matched ffprobe's exactly.
+- **On the receiver:** it played in 1.03 s; seeks to 3600 s and 6780 s were
+  accepted and resumed; the natural end was `media_end` at the full 6824.5 s.
+  All 35 requests completed.
+- **User:** video and audio played after each seek, both seeks landed
+  correctly, and the TV went Home at the end. Atmos rendering was not checked,
+  for lack of Atmos hardware.
+
 **Known cost (not yet addressed):** startup reads every block header through
 16 KiB windows. When frames are smaller than a window, that reads about the
 whole file before playback; the test runs read about 76 MB in total for the
-54 MB H.264 + AAC file, including the segments served. The scan took about
-0.1 s here, but grows with file size and storage speed. A possible
+54 MB H.264 + AAC file, including the segments served. For the 6.3 GB film
+the scan read about 2.8 GB and took 4.9 s with a cold cache (2.0 s warm) on a
+local disk, before any network work; slower storage or brokered UWP file
+access would stretch it. A possible
 remedy, not designed yet: plan segments from Cues and size each segment on
 its first request, which needs lazily sized media server resources.
 
