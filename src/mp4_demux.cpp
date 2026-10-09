@@ -245,7 +245,9 @@ std::vector<Mp4Edit> edit_list(const std::vector<Box>& trak) {
     if (!edts) {
         return edits;
     }
-    const auto* elst = find(children(*edts), fourcc("elst"));
+    // find() points into this vector, so it must outlive every use of elst.
+    const auto edts_children = children(*edts);
+    const auto* elst = find(edts_children, fourcc("elst"));
     if (!elst) {
         return edits;
     }

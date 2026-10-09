@@ -272,5 +272,12 @@
     "observer": "Video and audio played normally; pause, play and seek were visible on the TV; the receiver returned to the Home screen at the end."
   },
   "result": "PASS for this receiver and host: the library-built fMP4 HLS of an H.264 + AAC MP4 started in 0.86 s with MRP ownership, pause/play/seek were accepted and seen, and the natural end was media_end with MRP at_end=yes (reported 131.576 of 131.566 s).",
-  "not_run": "HEVC, AC-3/E-AC-3, MKV input (phase 3), separate audio renditions, long files, the C interface and UWP host, a sleeping receiver, other receivers and firmware."
+  "not_run": "HEVC, AC-3/E-AC-3, MKV input (phase 3), separate audio renditions, long files, the C interface and UWP host, a sleeping receiver, other receivers and firmware.",
+  "post_run_fix": {
+    "change": "src/mp4_demux.cpp: the edit-list lookup kept a pointer into a destroyed temporary vector of edts children (use-after-free; found by the PR #27 review and CI's ASan, segfault on Linux, malformed parse on macOS). The tested MSVC binary read intact freed memory, so its edit lists were correct; the fix keeps the vector alive.",
+    "fixed_blob": {
+      "src/mp4_demux.cpp": "1c6cd8ed81916445e8c00bd48d94cbb32fbbe8ce"
+    },
+    "recheck": "airplay2-cli remux with the fixed build produced the same 20 segments and 53,885,559 bytes; ffmpeg framemd5 again found all 9614 packets identical to the source. The receiver run was not repeated."
+  }
 }

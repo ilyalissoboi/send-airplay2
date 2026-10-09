@@ -254,6 +254,11 @@ segment and each needed segment once (21 GETs, all complete). User: video and
 audio played normally, the actions were visible, Home at the end. Record:
 [artifact](validation/native-hls-remux-windows-2026-10-09.json).
 
+After the run, review and CI's AddressSanitizer found a use-after-free in the
+edit-list lookup (a pointer into a destroyed temporary); the tested MSVC build
+happened to read intact memory. With the fix, the remux output and the ffmpeg
+packet comparison were unchanged; the receiver run was not repeated.
+
 Not run: HEVC, AC-3/E-AC-3, long files, sources with `moov` at the end on the
 receiver (covered offline by the tests), the C interface.
 
