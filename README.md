@@ -1,62 +1,41 @@
 # send-airplay2
 
-Experimental native sender library for supported, unprotected media on tested
-AirPlay receivers. Target hosts: Windows, Linux, macOS and Android.
+A native C++17 library for casting local video files to AirPlay 2 receivers
+such as the Apple TV. It discovers receivers, pairs with them by PIN, serves the
+media over HTTP from the sending device and controls playback. It has a C API, a
+C# binding and a development CLI.
 
-**Status: experimental discovery, authentication, HTTP media serving and private
-URL playback sessions with a development `cast` CLI. Native-only G1 passed on
-Apple TV 4K / tvOS 26.6 (23L773) / Windows 11 x64: video/audio played and the TV
-returned home after sender shutdown. The session retains a separate native
-remote-control session, now extended with native MRP status and controls. G2
-controls and selected G3 lifecycle cases passed on that combination, including
-Ethernet interruption cleanup and fresh same-credential playback after reconnection
-(D42). An experimental versioned C playback interface (D46) passed its manual
-TV checks on that combination (D48), as did one seek past 4 GiB and E-AC-3 audio
-in a remuxed film; receiver-stop intent remains pending.
-A historical full-clip run failed sustained video: after buffering near 18 seconds,
-the picture froze while audio continued to EOF.**
+> **Experimental.** The API is not frozen. Receiver testing so far covers one
+> Apple TV 4K (tvOS 26.6) from a Windows 11 x64 host, as a desktop app and as a
+> packaged UWP app. Other receivers, firmware versions and host platforms are
+> untested. See [what has been tested](#tested-so-far).
 
-The C++17 core includes a byte-range resolver with a C interface
-and a bounded mDNS/DNS-SD scanner with an experimental C++ interface and diagnostic
-CLI. A Boost.Beast/Asio media server now streams immutable byte-source callbacks
-with GET/HEAD and byte ranges. Private session integration uses authenticated
-SETUP, encrypted events, NTP timing, feedback and `/command` queue messages.
-The pre-1.0 API is not frozen. Playback has an experimental C interface,
-[`playback.h`](include/send_airplay2/playback.h), that casts a host read-callback
-source to a paired profile; see [its design record](docs/public-api.md). Since API
-version 2 it also accepts a host-provided credential store and can pair by PIN
-([`credentials.h`](include/send_airplay2/credentials.h),
-[`pairing.h`](include/send_airplay2/pairing.h)). One real pairing through it
-passed on the recorded Apple TV (D51). An experimental C# binding over these
-headers is in [`bindings/csharp`](bindings/csharp); see
-[the binding notes](docs/csharp-binding.md). A packaged UWP test host built like
-Screenbox ([`tools/uwp-host`](tools/uwp-host), [notes](docs/uwp-host.md)) paired
-and cast through it on the recorded Apple TV (D53). Receiver discovery also has a
-C interface, [`receivers.h`](include/send_airplay2/receivers.h) (D54), used by
-the C# binding and that host. For app packages the library builds as a UWP
-(WindowsStore) DLL against the app C runtime, without Credential Manager; that
-build cast through the test host (D55, [build notes](docs/uwp-native-build.md)).
-See [media serving contracts and validation](docs/media-server.md).
-Private pairing TLV8 and encrypted control-record codecs are implemented using
-OpenSSL, with independent vector and failure tests. Private authenticated peer
-verification and first-time PIN/SRP message processing are also implemented.
-Private bounded HTTP/RTSP framing and native receiver TCP transport now connect
-these flows, with deadlines, cancellation and the encrypted-record transition.
-Windows desktop credential storage and CLI pairing/reconnect are implemented;
-broader hardware authentication and storage adapters for other hosts are pending.
-See [credential storage and CLI authentication](docs/credential-storage.md).
-See [pairing transport foundation](docs/pairing-transport.md).
-See [peer verification](docs/peer-verification.md) for trust and state contracts.
-See [PIN pairing](docs/pin-pairing.md) for the private provisioning contract.
-See [receiver transport](docs/receiver-transport.md) for framing, I/O and ownership.
+## What it does
 
-## Build and test
+- **Discovery:** an mDNS/DNS-SD scan for AirPlay receivers on the local network.
+- **Pairing:** PIN pairing and reconnects with saved credentials. Credentials
+  are kept in Windows Credential Manager, the macOS login keychain or the Linux
+  Secret Service, or in a store the host app provides.
+- **Playback:** casts an unprotected file through a private, receiver-only
+  HTTP server, with play, pause, seek, status and stop, and cleans up when the
+  media ends or the receiver stops.
+- **HLS remux:** turns an MP4/MOV or MKV file into HLS on the fly, without
+  re-encoding. Supported codecs are H.264 or HEVC video and AAC, AC-3 or E-AC-3
+  audio. Text subtitles become selectable WebVTT tracks: SubRip, WebVTT and ASS
+  from MKV files, and tx3g or WebVTT from MP4 files. A ready-made HLS playlist
+  can also be cast as is.
 
-Requires CMake 3.20+, a C++17 compiler, OpenSSL 3.5+ and Botan 3.12+ development
-libraries (Botan modules: ffi, srp6, sha2_64, system_rng, ed25519), and Boost 1.92+
-Beast/Asio development headers and CMake package configs. Building Botan itself
-requires C++20. With maintained packages installed (set `OPENSSL_ROOT_DIR` and
-`Botan_DIR` if needed):
+Not in scope: DRM-protected media, screen mirroring, system audio capture,
+multiroom audio and transcoding.
+
+## Build
+
+You need CMake 3.20+, a C++17 compiler and these development packages:
+
+- OpenSSL 3.5+
+- Botan 3.12+ with the modules ffi, srp6, sha2_64, system_rng and ed25519.
+  Building Botan itself requires C++20.
+- Boost 1.92+ Beast and Asio headers, with their CMake package configs.
 
 ```sh
 cmake -S . -B build -DBUILD_TESTING=ON
@@ -64,214 +43,106 @@ cmake --build build --config Release
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-Use `-DBUILD_SHARED_LIBS=ON` for a shared library. CI covers static and shared
-builds on Windows, Linux and macOS. Android build/device validation is pending.
+- **Shared library:** add `-DBUILD_SHARED_LIBS=ON`. CI builds and tests both
+  static and shared libraries on Windows, Linux and macOS.
+- **Pinned dependencies:** pass
+  `-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake`
+  after checking out vcpkg at `434307da09bc05b2c86996dccc8b2351fc0d5d37` in
+  `build-tools/vcpkg` and bootstrapping it.
+- **Linux:** install `libsecret-1-dev` for the Secret Service credential store.
+  Its tests need an unlocked keyring on the session bus and skip without one; CI
+  uses `tests/with_test_keyring.sh` to provide it.
+- **UWP:** see [docs/uwp-native-build.md](docs/uwp-native-build.md).
+- **Android:** not built or tested yet.
 
-For the pinned dependency build on Windows, from the repository root:
+Redistributed builds must ship the OpenSSL and Botan runtimes and their license
+notices. See [dependency provenance](docs/dependencies.md).
 
-```powershell
-git clone https://github.com/microsoft/vcpkg.git build-tools/vcpkg
-git -C build-tools/vcpkg checkout 434307da09bc05b2c86996dccc8b2351fc0d5d37
-.\build-tools\vcpkg\bootstrap-vcpkg.bat -disableMetrics
-cmake -S . -B build -DBUILD_TESTING=ON "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake"
-cmake --build build --config Release
-ctest --test-dir build -C Release --output-on-failure
-```
+## Try it with the CLI
 
-On Linux/macOS, use `bootstrap-vcpkg.sh` with the same manifest/toolchain option.
-On Linux, install libsecret's development package (for example `libsecret-1-dev`)
-to get the Secret Service credential store; without it the built-in store is
-unsupported. Its tests need a running, unlocked keyring on the session bus, or
-they skip (CI runs them through `tests/with_test_keyring.sh`).
-vcpkg copies its dependency DLLs alongside Windows build targets. Redistributed
-builds must include the appropriate OpenSSL/Botan runtimes and license notices. Packaged
-UWP builds are described in [docs/uwp-native-build.md](docs/uwp-native-build.md); Android
-loading is still untested. See [dependency provenance](docs/dependencies.md).
-
-## Receiver discovery
-
-```sh
-# Windows with the default Visual Studio generator:
-build/Release/airplay2-cli.exe discover --timeout-ms 10000
-build/Release/airplay2-cli.exe discover --json --timeout-ms 10000
-# Linux/macOS with a single-config generator:
-./build/airplay2-cli discover --json
-```
-
-Enable AirPlay and place the receiver on the same LAN as the sender. The scanner
-uses active IPv4 multicast interfaces and UDP 5353; allow local-network access
-for the CLI in the host firewall. It reports A and AAAA addresses, interface
-indices, ports, model and raw advertised TXT fields. An empty scan does not prove
-that no receiver exists. Discovery does not establish pairing or playback support.
-See [discovery contracts and limits](docs/discovery.md), including JSON fields
-and the separation between advertisements and tested compatibility.
-
-## Windows desktop authentication
-
-Choose the receiver's numeric address and port from discovery, then use a local
-profile name (lowercase letters/digits/`._-`, starting with a letter/digit):
+The CLI is a development tool, and pairing needs an interactive Windows console.
+Commands are shown with Windows paths; replace `192.0.2.10` with your
+receiver's address.
 
 ```powershell
-# Replace the documentation address with the actual receiver address.
+# 1. Find receivers (same LAN; allow UDP 5353 for the CLI in the firewall).
+build/Release/airplay2-cli.exe discover
+
+# 2. Pair once; enter the PIN shown on the TV. Saved as profile "living-room".
 build/Release/airplay2-cli.exe pair --address 192.0.2.10 --profile living-room
-build/Release/airplay2-cli.exe verify --address 192.0.2.10 --profile living-room
-build/Release/airplay2-cli.exe forget --profile living-room
-```
 
-Pairing prompts for a hidden PIN in an interactive Windows console and stores
-authenticated credentials in the current user's Windows Credential Manager.
-Existing profiles are never overwritten automatically. Reconnect failure retains
-saved credentials for `verify`; `forget` deletes local credentials only.
-For scoped IPv6 use `--scope-id` with the numeric interface index. See the
-[storage/CLI contract](docs/credential-storage.md) for deadlines, cancellation,
-failure recovery and platform limits. See the
-[receiver validation record](docs/receiver-validation.md) for the observed pairing
-result and remaining restart/revocation/playback gates.
-
-Automate the available noninteractive authentication/discovery checks with the
-[E2E runner](docs/e2e-runner.md), using an already paired Windows profile. It runs
-repeated verification, profile guards, loopback faults and live recovery, and
-writes sanitized JSON results. It does not request a PIN or implement playback.
-
-## Serving a file to a receiver (development)
-
-```powershell
-build/Release/airplay2-cli.exe serve --address 192.0.2.10 --file C:\media\clip.mp4
-```
-
-`serve` hosts one local file with the bounded media server so that a receiver can
-fetch it, for example during the [pyatv reference baseline](docs/reference-baseline.md).
-Only the given receiver address may fetch from it. It prints a private URL once,
-serves until Enter or end-of-file on standard input, then prints aggregate read
-counts. It sends no playback commands. See the
-[media server CLI notes](docs/media-server.md#development-cli-serve) for options
-and limits.
-
-## Public playback interface host (development)
-
-```powershell
-build/Release/airplay2-api-host.exe --address 192.0.2.10 --profile living-room --file C:\media\clip.mp4
-```
-
-`airplay2-api-host` drives the experimental C interface in
-[`playback.h`](include/send_airplay2/playback.h) and nothing else in the library,
-so it exercises the boundary a C# or JNI host would use. By default it is
-interactive, with the same commands as `cast` (`status`, `pause`, `play`,
-`seek SECONDS`, `stop`; Enter or EOF stops locally). It exits on its own when the
-session ends. `--cancel-after-ms N` stops a blocking start after N ms;
-`--cycles N [--hold-ms N]` runs N casts in one process, alternating MRP stop and
-local stop. The summary reports the API version, static/shared linkage, fixed
-status fields, read counts and how many times the library released the media
-source. It prints no address, profile, path or media URL. The manual procedures
-are in [the interface's validation plan](docs/public-api.md#manual-validation-plan).
-`--remux` selects `SAP2_DELIVERY_HLS_REMUX` (MP4/MOV or MKV as HLS, D60).
-`--discover [--discover-ms N] [--expect-name NAME]` runs one
-[`receivers.h`](include/send_airplay2/receivers.h) scan instead and prints only
-counts, address families and whether a receiver of exactly that name was found.
-
-## Native playback experiment (Windows desktop)
-
-```powershell
+# 3. Cast a file. While it plays, type status, pause, play, seek SECONDS or stop.
 build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room --file C:\media\clip.mp4
+
+# Cast an MKV, or an MP4 with subtitles, through the built-in HLS remux.
+build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room --file C:\media\film.mkv --remux
 ```
 
-`--hls PLAYLIST.m3u8` in place of `--file` casts a pre-made HLS presentation
-(development, [D60](docs/hls.md)): the media server serves the playlist and the
-files it names from its directory. `--file PATH --remux` casts an MP4/MOV or
-MKV with H.264/HEVC and AAC/AC-3/E-AC-3 as HLS built by the library's own
-remux (MKV and MP4 text subtitles become selectable WebVTT tracks), and
-`airplay2-cli remux --file PATH --out DIR` writes those HLS files to a new
-directory for offline checks.
+| Command | Purpose |
+| --- | --- |
+| `discover`, `pair`, `verify`, `forget` | Find receivers and manage saved credentials |
+| `cast --file PATH [--remux]` | Play a file directly, or remuxed to HLS |
+| `cast --hls PLAYLIST.m3u8` | Play a ready-made HLS presentation |
+| `serve`, `remux` | Serve a file without playback, or write the remuxed HLS files to a folder |
 
-`cast` reuses a stored profile, starts the receiver-restricted media server and
-an authenticated URL/MRP session. Type `status`, `pause`, `play`, `seek SECONDS`
-(absolute position), or `stop`; Enter or stdin EOF tears down directly. Media
-EOF, receiver terminal state, ownership loss and connection failure now trigger
-automatic cleanup without command input. The summary reports the first terminal
-reason, whether cleanup finished and fixed failure channel/category; connection
-failure returns exit 1. It
-prints no private URL or receiver address. `--event-log` enables bounded event
-outlines, allowlisted buffering values and a fixed startup phase/state/rate trace,
-including failed starts. It also records fixed-label remote notification
-observations (shared 256-entry event log) and the retained final MRP state after
-joined cleanup. URL and remote output omit arbitrary names/values and request targets;
-URL state/type labels use fixed allowlists, with unknown strings reported as `other`.
-URL outlines include only allowlisted key paths; malformed bodies report `URL unreadable=yes`.
-Numeric remote reason/error/status codes have no inferred meaning. Final MRP
-reports the received position rather
-than wall-clock progress and is not a fresh receiver query. These observations
-do not change terminal classification. Startup success requires one continuous
-second of URL playing without an explicitly zero/reverse rate, within the
-startup deadline.
-A transient playing event is insufficient; no automatic Play retry is sent.
-This confirmation is telemetry, not a proof of moving video.
+Run `airplay2-cli` with no arguments for every option. `airplay2-api-host`
+runs the same casts through the public C API only.
 
-D42's [network check](docs/receiver-validation.md#ethernet-interruption-and-fresh-recovery-d42-2026-10-07)
-used a user-confirmed Ethernet cable removal during established playback. The
-sender cleaned automatically on a URL feedback timeout, with connection_lost/exit 1.
-A fresh cast after reconnection/Home reused credentials and passed user-observed
-video/audio and Home at near-end EOF. Recovery starts a new session explicitly;
-there is no automatic reconnect or resume. Ambiguous socket closure still does
-not prove remote Stop intent; see the [pyatv audit](docs/pyatv-stop-reference.md).
+## Use it as a library
 
-D39's [manual batch](docs/manual-validation.md) passed selected startup,
-controls/full EOF and sleep/wake presentation on the recorded receiver/host.
-Remote Stop returned Home and cleaned up but still reports connection_lost/exit 1.
-D40's [diagnostic comparison](docs/receiver-validation.md#remote-stop-diagnostic-comparison-d40-2026-10-07)
-retained that classification: Stop/Home and sleep differed in final MRP state,
-but did not establish normal protocol intent. Fresh post-wake video/audio/EOF/Home passed.
-`--media-log` reports bounded HTTP range/status/socket-write/completion facts;
-socket completion does not prove receipt or decoding (see [diagnostic contracts](docs/media-server.md#opt-in-request-diagnostics)). A `playing` event does not prove visible playback:
-G1 passed for the recorded native-only run, with user-observed video/audio and
-return to the home screen after sender stop. Native EOF cleanup with stdin held
-open and ten short start/stop cycles passed on the recorded receiver; the user
-confirmed G2 controls and near-end EOF video/audio/home. A separate full-clip run
-froze video after buffering near 18 s while audio continued normally; its EOF
-cleanup still passed. D35 diagnostics support media admission capacity as a
-buffering cause: an explicit `--media-connections 16` comparison retained MRP and
-passed full video/audio/Home with no recorded loading transition. D36 then passed
-user-observed controls and ten fresh-process stop/teardown cycles at that budget;
-a full-clip repeat reached automatic EOF with no recorded loading transition
-and user-confirmed normal video/audio and Home return.
-`cast` now defaults to 16 media connections; `--media-connections N` accepts 1..16.
-The generic server and `serve` still default to four. The original freeze is low
-priority unless it recurs in later testing; insufficient media connections are
-the likely cause (user triage decision). The intermittent startup pause remains
-active: another 16-slot run paused at zero
-without transport commands or remote input. See the [capacity validation record](docs/receiver-validation.md#bounded-cast-admission-policy-and-controlslifecycle-checks-2026-10-07).
-`--minimal-remote` is a separate diagnostic comparison without MRP controls.
-Receiver-remote stop and sleep triggered cleanup. D42 passed the selected
-Ethernet interruption and fresh explicit recovery check. Normal stop classification
-and broader network/lifecycle reliability remain open G3 work; automatic in-session
-reconnect/resume is not implemented. Native MRP controls are implemented; see the recorded
-G2 result and [control contracts](docs/mrp-controls.md).
-See [session design and gates](docs/session-design.md) and
-[receiver results](docs/receiver-validation.md).
+| Interface | Location |
+| --- | --- |
+| Playback (C) | [`playback.h`](include/send_airplay2/playback.h): cast from a host read callback, with controls and status. Set `delivery` to `SAP2_DELIVERY_HLS_REMUX` for the HLS remux |
+| Pairing and credentials (C) | [`pairing.h`](include/send_airplay2/pairing.h), [`credentials.h`](include/send_airplay2/credentials.h) |
+| Discovery (C) | [`receivers.h`](include/send_airplay2/receivers.h) |
+| C# (.NET Standard 2.0) | [`bindings/csharp`](bindings/csharp); see [the binding notes](docs/csharp-binding.md) |
+| Packaged UWP example | [`tools/uwp-host`](tools/uwp-host); see [its notes](docs/uwp-host.md) |
 
-The [D43 PR review](docs/pr-review.md) fixed URL diagnostic redaction and decoded
-MRP/event plaintext cleanup on exception paths. With the D46 playback interface
-tests, Windows static/shared Release each pass 27 CTest targets; offline runner
-contracts pass 10 tests. These checks are separate from the dated receiver
-observations above; the C interface's receiver results are D48.
+The contracts and the version policy are in [docs/public-api.md](docs/public-api.md).
 
-## Milestones
+## Tested so far
 
-1. Standalone tested library, starting with local H.264/AAC MP4 playback on a
-   specified Apple TV model/firmware. Prove pairing, reconnect, playback, pause,
-   resume, seek, position reporting and stop through a CLI and a packaged Windows
-   C# host. Expand host/receiver coverage only after explicit tests.
-2. Integrate into a Screenbox fork alongside Chromecast through a shared casting
-   abstraction, retaining the existing Chromecast implementation.
+Receiver: Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773). Host: Windows 11 x64.
 
-Initial exclusions: DRM, screen mirroring, system-audio capture, synchronized
-multiroom, automatic transcoding, and universal receiver/codec compatibility.
+**Passed, as observed by a user at the TV:**
+- pairing, then reconnecting with the saved credentials
+- playback of video and audio, pause, play and seek, including seeking past
+  4 GiB
+- the end of the media, and returning to the Home screen afterwards
+- pulling the Ethernet cable during playback: the cast ends and cleans up, and
+  a new cast works once the cable is back. The interrupted cast does not
+  reconnect or resume.
+- the C API, the C# binding and the packaged UWP app
+- HLS remux of MP4 and MKV files: H.264, HEVC, AAC, AC-3 and E-AC-3, a
+  1 h 54 min film, and text subtitles in sync, with italics
 
-Start with the [developer/model handoff](docs/HANDOFF.md) for project history,
-decisions, verified state and continuation instructions.
-See [design and implementation sequence](docs/design.md),
-[reference sender baseline](docs/reference-baseline.md) and
-[receiver validation checklist](docs/receiver-validation.md).
+**Open:**
+- When the receiver's remote stops playback, the session is still reported as
+  a lost connection.
+- Playback used to pause occasionally at startup. This was seen while the
+  receiver was waking from sleep, and waking it before play most likely fixed
+  it; watch for a recurrence on an awake receiver.
+- Linux, macOS and Android hosts have not cast to a receiver.
 
-License: Apache-2.0, as established by the repository's original LICENSE.
-No third-party implementation source is copied into the repository. The new
-cryptographic adapters link OpenSSL's Apache-2.0 `libcrypto` and BSD-2-Clause Botan.
+Passing unit tests and CI does not show compatibility with any receiver. Each
+receiver result is listed in [docs/receiver-validation.md](docs/receiver-validation.md),
+with the raw records in [docs/validation](docs/validation).
+
+## Documentation
+
+- **Start here to continue development:** [docs/HANDOFF.md](docs/HANDOFF.md)
+  (history, decisions and current state) and
+  [docs/CONTINUATION.md](docs/CONTINUATION.md) (the work queue).
+- **Design:** [design.md](docs/design.md), [session-design.md](docs/session-design.md),
+  [hls.md](docs/hls.md), [media-server.md](docs/media-server.md) and
+  [mrp-controls.md](docs/mrp-controls.md).
+- **Protocol pieces:** [discovery](docs/discovery.md),
+  [PIN pairing](docs/pin-pairing.md), [peer verification](docs/peer-verification.md),
+  [receiver transport](docs/receiver-transport.md) and
+  [credential storage](docs/credential-storage.md).
+
+## License
+
+Apache-2.0 (see [LICENSE](LICENSE)). No third-party implementation source is
+copied into the repository. The library links OpenSSL `libcrypto`
+(Apache-2.0), Botan (BSD-2-Clause) and Boost (BSL-1.0).
