@@ -149,7 +149,9 @@ Credential Manager (D55, [uwp-native-build.md](uwp-native-build.md)).
   (0, the default and the only behavior before version 3) serves the source
   as one representation; `SAP2_DELIVERY_HLS_REMUX` (1) builds fMP4 HLS from an
   MP4/MOV or MKV with H.264/HEVC and AAC, AC-3 or E-AC-3, through the same
-  `sap2_media_source` ([hls.md](hls.md)). `content_type` is ignored for HLS.
+  `sap2_media_source` ([hls.md](hls.md)); an MKV's text subtitle tracks become
+  WebVTT renditions the receiver's subtitle menu offers (phase 3c).
+  `content_type` is ignored for HLS.
   Version 1 and 2 option structs (shorter `struct_size`) keep progressive
   delivery; any other value is `INVALID_ARGUMENT`.
 - `sap2_cast_start()` loads credentials first, as before, then reads the

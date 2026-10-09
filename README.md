@@ -179,7 +179,7 @@ build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room -
 (development, [D60](docs/hls.md)): the media server serves the playlist and the
 files it names from its directory. `--file PATH --remux` casts an MP4/MOV or
 MKV with H.264/HEVC and AAC/AC-3/E-AC-3 as HLS built by the library's own
-remux, and
+remux (an MKV's text subtitles become selectable WebVTT tracks), and
 `airplay2-cli remux --file PATH --out DIR` writes those HLS files to a new
 directory for offline checks.
 

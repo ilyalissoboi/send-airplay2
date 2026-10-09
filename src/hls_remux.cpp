@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "hls_remux.h"
+#include "hls_variant.h"
 #include "mkv_demux.h"
 #include <algorithm>
 #include <array>
@@ -9,6 +10,8 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <string>
+#include <tuple>
 #include <utility>
 
 namespace send_airplay2::detail {
@@ -18,6 +21,9 @@ constexpr std::chrono::seconds demux_read_deadline{60};
 constexpr std::uint64_t max_segment_bytes =
     static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max()); // trun data offsets.
 constexpr const char* playlist_name = "index.m3u8";
+constexpr const char* multivariant_name = "main.m3u8";
+constexpr const char* text_type = "text/vtt";
+constexpr std::size_t tkhd_size_fields = 8; // width and height (16.16) end the tkhd.
 constexpr const char* init_name = "init.mp4";
 constexpr const char* playlist_type = "application/vnd.apple.mpegurl";
 constexpr const char* segment_type = "video/mp4";
@@ -57,6 +63,119 @@ std::uint32_t rounded_seconds(std::uint64_t microseconds) {
 
 std::string segment_name(std::size_t index) {
     return "s" + std::to_string(index) + ".m4s";
+}
+
+std::string text_playlist_name(std::size_t track) {
+    return "t" + std::to_string(track) + ".m3u8";
+}
+
+std::string text_segment_name(std::size_t track, std::size_t index) {
+    return "t" + std::to_string(track) + "s" + std::to_string(index) + ".vtt";
+}
+
+/// The EXTINF lines of every segment, each followed by its name.
+template <class Name>
+std::string segment_lines(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments,
+                          Name name) {
+    std::string lines;
+    for (std::size_t index = 0; index < segments.size(); ++index) {
+        lines += "#EXTINF:" + seconds_text(segment_duration_us(movie, segments, index)) + ",\n" +
+                 name(index) + "\n";
+    }
+    return lines;
+}
+
+/// The video track's display size from its tkhd (16.16 width and height).
+std::pair<std::uint32_t, std::uint32_t> display_size(const Mp4Track& video) {
+    const auto& tkhd = video.track_header;
+    if (tkhd.size() < tkhd_size_fields) {
+        return {0, 0};
+    }
+    const auto field = [&tkhd](std::size_t at) {
+        return (static_cast<std::uint32_t>(tkhd[at]) << 8) | tkhd[at + 1]; // Integer part.
+    };
+    return {field(tkhd.size() - 8), field(tkhd.size() - 4)};
+}
+
+/// Peak and average bit rate (bits per second) of segments of these sizes on
+/// the video segment durations.
+std::pair<std::uint64_t, std::uint64_t> bit_rates(const Mp4Movie& movie,
+                                                  const std::vector<SegmentLayout>& segments,
+                                                  const std::vector<std::uint64_t>& sizes) {
+    std::uint64_t peak = 0;
+    std::uint64_t total_bytes = 0;
+    std::uint64_t total_us = 0;
+    for (std::size_t index = 0; index < segments.size(); ++index) {
+        const auto duration =
+            std::max<std::uint64_t>(segment_duration_us(movie, segments, index), 1);
+        peak = std::max(peak, sizes[index] * 8 * microseconds_per_second / duration);
+        total_bytes += sizes[index];
+        total_us += duration;
+    }
+    return {peak, total_us ? total_bytes * 8 * microseconds_per_second / total_us : 0};
+}
+
+/// EXT-X-STREAM-INF values: the media segments' peak and average bit rate
+/// plus the largest subtitle rendition's (one plays at a time; RFC 8216bis:
+/// the largest sum over playable combinations), display size, frame rate and
+/// codecs.
+VariantStream variant_stream(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments,
+                             const std::vector<std::uint64_t>& sizes,
+                             const std::vector<std::vector<std::uint64_t>>& subtitle_sizes) {
+    VariantStream variant;
+    variant.uri = playlist_name;
+    std::tie(variant.peak_bits_per_second, variant.average_bits_per_second) =
+        bit_rates(movie, segments, sizes);
+    std::uint64_t subtitle_peak = 0;
+    std::uint64_t subtitle_average = 0;
+    for (const auto& track : subtitle_sizes) {
+        const auto [peak, average] = bit_rates(movie, segments, track);
+        subtitle_peak = std::max(subtitle_peak, peak);
+        subtitle_average = std::max(subtitle_average, average);
+    }
+    variant.peak_bits_per_second += subtitle_peak;
+    variant.average_bits_per_second += subtitle_average;
+    const auto& video = movie.tracks.at(0);
+    std::tie(variant.width, variant.height) = display_size(video);
+    const auto ticks = track_end_time(video) - video.samples.front().decode_time;
+    if (ticks) {
+        // Frames per 1000 s, rounded: samples x timescale x 1000 / ticks.
+        variant.frame_rate_milli =
+            (static_cast<std::uint64_t>(video.samples.size()) * video.timescale * 1000 +
+             ticks / 2) /
+            ticks;
+    }
+    for (const auto& track : movie.tracks) {
+        variant.codecs += (variant.codecs.empty() ? "" : ",") + codec_string(track);
+    }
+    return variant;
+}
+
+/// One rendition per text track; names are made unique within the group,
+/// and only the first default-flagged, non-forced track is DEFAULT=YES.
+std::vector<SubtitleRendition> subtitle_renditions(const Mp4Movie& movie) {
+    std::vector<SubtitleRendition> renditions;
+    bool default_taken = false;
+    for (std::size_t index = 0; index < movie.text_tracks.size(); ++index) {
+        const auto& track = movie.text_tracks[index];
+        SubtitleRendition rendition;
+        rendition.uri = text_playlist_name(index);
+        rendition.language = track.language;
+        rendition.forced = track.forced;
+        rendition.hearing_impaired = track.hearing_impaired;
+        rendition.default_track = track.default_track && !track.forced && !default_taken;
+        default_taken = default_taken || rendition.default_track;
+        const auto base = !track.name.empty() ? track.name : track.language;
+        rendition.name = base;
+        for (int copy = 2;
+             std::any_of(renditions.begin(), renditions.end(),
+                         [&](const auto& other) { return other.name == rendition.name; });
+             ++copy) {
+            rendition.name = base + " (" + std::to_string(copy) + ")";
+        }
+        renditions.push_back(std::move(rendition));
+    }
+    return renditions;
 }
 
 /// What every resource's read_at shares: the source and the sample tables.
@@ -239,12 +358,19 @@ std::string media_playlist(const Mp4Movie& movie, const std::vector<SegmentLayou
                            "#EXT-X-INDEPENDENT-SEGMENTS\n"
                            "#EXT-X-MAP:URI=\"" +
                            std::string(init_name) + "\"\n";
-    for (std::size_t index = 0; index < segments.size(); ++index) {
-        playlist += "#EXTINF:" + seconds_text(segment_duration_us(movie, segments, index)) + ",\n" +
-                    segment_name(index) + "\n";
-    }
+    playlist += segment_lines(movie, segments, segment_name);
     playlist += "#EXT-X-ENDLIST\n";
     return playlist;
+}
+
+std::string subtitle_playlist(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments,
+                              std::size_t track) {
+    return "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:" +
+           std::to_string(target_duration_seconds(movie, segments)) +
+           "\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n" +
+           segment_lines(movie, segments,
+                         [track](std::size_t index) { return text_segment_name(track, index); }) +
+           "#EXT-X-ENDLIST\n";
 }
 
 RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
@@ -292,6 +418,51 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
     for (std::size_t index = 0; index < sizes.size(); ++index) {
         result.resources.push_back(
             {segment_name(index), segment_type, segment_source(shared, index, sizes[index])});
+    }
+
+    const auto& movie = presentation->movie;
+    const auto& segments = presentation->segments;
+    result.text_track_count = movie.text_tracks.size();
+    if (movie.text_tracks.empty()) {
+        return result;
+    }
+    const auto text = [](const std::string& value) {
+        return memory_source(std::make_shared<const Bytes>(value.begin(), value.end()));
+    };
+    // Each WebVTT segment covers the presentation window of its video segment:
+    // cumulative EXTINF time from the first video timestamp, which is the
+    // timeline origin cues share (not necessarily 0); the last runs to the end.
+    const auto& video = movie.tracks.at(0);
+    std::vector<std::uint64_t> window_starts;
+    std::uint64_t elapsed = ticks_to_us(video.samples.front().decode_time, video.timescale);
+    for (std::size_t index = 0; index < segments.size(); ++index) {
+        window_starts.push_back(elapsed);
+        elapsed += segment_duration_us(movie, segments, index);
+    }
+    std::vector<std::vector<std::string>> webvtt(movie.text_tracks.size());
+    std::vector<std::vector<std::uint64_t>> webvtt_sizes(movie.text_tracks.size());
+    for (std::size_t track = 0; track < movie.text_tracks.size(); ++track) {
+        for (std::size_t index = 0; index < segments.size(); ++index) {
+            const auto end = index + 1 < segments.size()
+                                 ? window_starts[index + 1]
+                                 : std::numeric_limits<std::uint64_t>::max();
+            webvtt[track].push_back(
+                webvtt_segment(movie.text_tracks[track], window_starts[index], end));
+            webvtt_sizes[track].push_back(webvtt[track].back().size());
+        }
+    }
+    result.playlist_name = multivariant_name;
+    result.resources.push_back(
+        {multivariant_name, playlist_type,
+         text(multivariant_playlist(variant_stream(movie, segments, sizes, webvtt_sizes),
+                                    subtitle_renditions(movie)))});
+    for (std::size_t track = 0; track < movie.text_tracks.size(); ++track) {
+        result.resources.push_back({text_playlist_name(track), playlist_type,
+                                    text(subtitle_playlist(movie, segments, track))});
+        for (std::size_t index = 0; index < segments.size(); ++index) {
+            result.resources.push_back(
+                {text_segment_name(track, index), text_type, text(webvtt[track][index])});
+        }
     }
     return result;
 }

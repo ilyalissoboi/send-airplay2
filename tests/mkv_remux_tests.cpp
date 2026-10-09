@@ -11,6 +11,7 @@
 #include <cstring>
 #include <initializer_list>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -261,6 +262,11 @@ struct TrackSpec {
     bool encoded = false;
     std::uint64_t codec_delay_ns = 0;
     std::uint64_t display_width = 0; // Omitted when zero.
+    // Subtitle tracks (type 17): written when not empty / true.
+    std::string name;
+    std::string language;
+    bool forced = false;
+    bool hearing_impaired = false;
 };
 
 Bytes track_entry(const TrackSpec& spec) {
@@ -276,7 +282,21 @@ Bytes track_entry(const TrackSpec& spec) {
     if (spec.encoded) {
         data = join({data, element(0x6D80, element(0x6240, uint_element(0x5031, 0)))});
     }
-    if (spec.type == 1) {
+    if (!spec.name.empty()) {
+        data = join({data, string_element(0x536E, spec.name)});
+    }
+    if (!spec.language.empty()) {
+        data = join({data, string_element(0x22B59C, spec.language)});
+    }
+    if (spec.forced) {
+        data = join({data, uint_element(0x55AA, 1)});
+    }
+    if (spec.hearing_impaired) {
+        data = join({data, uint_element(0x55AB, 1)});
+    }
+    if (spec.type == 17) {
+        // Subtitle tracks have neither a Video nor an Audio element.
+    } else if (spec.type == 1) {
         Bytes video = join({uint_element(0xB0, 1280), uint_element(0xBA, 720)});
         if (spec.display_width) {
             video = join({video, uint_element(0x54B0, spec.display_width)});
@@ -594,12 +614,199 @@ void presentation_tests() {
 }
 } // namespace
 
+Bytes text(const std::string& value) {
+    return Bytes(value.begin(), value.end());
+}
+
+/// Video key frames at 0 and 7 s (two segments on the 6 s grid) and three
+/// subtitle tracks: SubRip (number 3, English, with BlockGroup durations and
+/// one SimpleBlock without), ASS (number 4, forced, hearing impaired) and a
+/// PGS bitmap track (number 5), which is left out.
+Bytes subtitle_fixture(std::uint64_t origin_ms = 0) {
+    TrackSpec srt;
+    srt.number = 3;
+    srt.type = 17;
+    srt.codec = "S_TEXT/UTF8";
+    srt.codec_private.clear();
+    srt.flag_default = true;
+    srt.name = "English";
+    TrackSpec ass = srt;
+    ass.number = 4;
+    ass.codec = "S_TEXT/ASS";
+    ass.codec_private = text("[Script Info]");
+    ass.flag_default = false;
+    ass.name.clear();
+    ass.language = "fre";
+    ass.forced = true;
+    ass.hearing_impaired = true;
+    TrackSpec pgs = srt;
+    pgs.number = 5;
+    pgs.codec = "S_HDMV/PGS";
+    pgs.name = "Bitmap";
+    const auto timed_block = [](std::uint8_t track, std::int16_t relative,
+                                const std::string& payload, std::uint64_t duration) {
+        return element(
+            block_group_id,
+            join({element(0xA1, block(track, relative, 0, Lacing::none, {text(payload)})),
+                  uint_element(0x9B, duration)}));
+    };
+    const auto cluster1 =
+        element(cluster_id,
+                join({uint_element(0xE7, origin_ms),
+                      element(simple_block_id,
+                              block(1, 0, keyframe_flag, Lacing::none, {frame_bytes(0x10, 8)})),
+                      timed_block(3, 1000, "<i>Hello</i> & welcome", 1500),
+                      timed_block(4, 2000, "0,0,Default,,0,0,0,,{\\an8}Bonjour\\Nmonde", 1000),
+                      timed_block(5, 2500, "bitmap bytes", 1000),
+                      timed_block(3, 5500, "Across the cut", 1000),
+                      element(simple_block_id,
+                              block(1, 7000, keyframe_flag, Lacing::none, {frame_bytes(0x11, 8)})),
+                      element(simple_block_id, block(3, 9000, keyframe_flag, Lacing::none,
+                                                     {text("No duration")}))}));
+    return mkv_file({video_spec(), srt, ass, pgs}, cluster1);
+}
+
+/// Remuxes `file` and returns every resource's bytes by name, and the entry point.
+std::map<std::string, std::string> remux_texts(const Bytes& file, std::string& entry) {
+    const auto shared = std::make_shared<const Bytes>(file);
+    MediaSource source{
+        [shared] { return static_cast<std::uint64_t>(shared->size()); },
+        [shared](std::uint64_t offset, std::uint8_t* output, std::size_t capacity,
+                 const MediaReadContext&) -> std::size_t {
+            if (offset >= shared->size()) {
+                return 0;
+            }
+            const auto count = std::min<std::uint64_t>(capacity, shared->size() - offset);
+            std::memcpy(output, shared->data() + offset, static_cast<std::size_t>(count));
+            return static_cast<std::size_t>(count);
+        }};
+    const auto remuxed = remux_to_hls(std::move(source));
+    entry = remuxed.playlist_name;
+    std::atomic_bool stopped{false};
+    std::atomic_bool cancelled{false};
+    const MediaReadContext context{&stopped, &cancelled,
+                                   std::chrono::steady_clock::now() + std::chrono::minutes(1)};
+    std::map<std::string, std::string> texts;
+    for (const auto& resource : remuxed.resources) {
+        std::string out(static_cast<std::size_t>(resource.source.size()), '\0');
+        std::size_t position = 0;
+        while (position < out.size()) {
+            const auto count =
+                resource.source.read_at(position, reinterpret_cast<std::uint8_t*>(&out[position]),
+                                        out.size() - position, context);
+            if (count == 0) {
+                break;
+            }
+            position += count;
+        }
+        texts[resource.name] = out;
+    }
+    return texts;
+}
+
+/// Bits per second of `bytes` over `microseconds`, as the remux computes it.
+std::uint64_t rate(std::uint64_t bytes, std::uint64_t microseconds) {
+    return bytes * 8 * 1'000'000 / microseconds;
+}
+
+void subtitle_tests() {
+    group = "MKV text subtitles";
+    const auto file = subtitle_fixture();
+    const auto movie = read_mkv(memory_reader(file), file.size());
+    check(movie.tracks.size() == 1, "video only among the media tracks");
+    check(movie.text_tracks.size() == 2, "SubRip and ASS kept, PGS left out");
+    if (movie.text_tracks.size() != 2) {
+        return;
+    }
+    const auto& srt = movie.text_tracks[0];
+    check(srt.name == "English" && srt.language == "en" && srt.default_track && !srt.forced &&
+              !srt.hearing_impaired,
+          "SubRip track: name, default language eng -> en, flags");
+    check(srt.cues.size() == 3, "three SubRip cues");
+    if (srt.cues.size() == 3) {
+        check(srt.cues[0].start_us == 1'000'000 && srt.cues[0].end_us == 2'500'000 &&
+                  srt.cues[0].text == "<i>Hello</i> &amp; welcome",
+              "BlockGroup cue: BlockDuration, converted text");
+        check(srt.cues[1].start_us == 5'500'000 && srt.cues[1].end_us == 6'500'000,
+              "cue across the segment cut");
+        check(srt.cues[2].start_us == 9'000'000 && srt.cues[2].end_us == 14'000'000 &&
+                  srt.cues[2].text == "No duration",
+              "SimpleBlock cue without a duration or successor: 5 s");
+    }
+    const auto& ass = movie.text_tracks[1];
+    check(ass.name.empty() && ass.language == "fr" && !ass.default_track && ass.forced &&
+              ass.hearing_impaired,
+          "ASS track: language fre -> fr, forced, hearing impaired");
+    check(ass.cues.size() == 1 && ass.cues[0].text == "Bonjour\nmonde" &&
+              ass.cues[0].start_us == 2'000'000 && ass.cues[0].end_us == 3'000'000,
+          "ASS cue: Text field without overrides, \\N a line break");
+
+    std::string entry;
+    auto texts = remux_texts(file, entry);
+    check(entry == "main.m3u8", "subtitles make main.m3u8 the entry point");
+    const auto resource_text = [&texts](const std::string& name) {
+        const auto found = texts.find(name);
+        return found == texts.end() ? std::string("(missing)") : found->second;
+    };
+    const auto main = resource_text("main.m3u8");
+    check(main.find("NAME=\"English\",LANGUAGE=\"en\",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,"
+                    "URI=\"t0.m3u8\"") != std::string::npos,
+          "English rendition, default");
+    check(main.find("NAME=\"fr\",LANGUAGE=\"fr\",DEFAULT=NO,AUTOSELECT=YES,FORCED=YES,"
+                    "CHARACTERISTICS=") != std::string::npos,
+          "unnamed rendition named by its language, forced, accessibility characteristics");
+    check(main.find("CODECS=\"avc1.64001f\",RESOLUTION=1280x720") != std::string::npos &&
+              main.find("SUBTITLES=\"subs\"\nindex.m3u8\n") != std::string::npos,
+          "stream info: codecs, resolution, subtitle group, media playlist");
+    check(resource_text("t0.m3u8") ==
+              "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:7\n#EXT-X-MEDIA-SEQUENCE:0\n"
+              "#EXT-X-PLAYLIST-TYPE:VOD\n#EXTINF:7.000000,\nt0s0.vtt\n#EXTINF:7.000000,\n"
+              "t0s1.vtt\n#EXT-X-ENDLIST\n",
+          "subtitle playlist follows the video EXTINF values");
+    check(resource_text("t0s0.vtt") ==
+              "WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n"
+              "\n00:00:01.000 --> 00:00:02.500\n<i>Hello</i> &amp; welcome\n"
+              "\n00:00:05.500 --> 00:00:06.500\nAcross the cut\n",
+          "first WebVTT segment: cues of [0, 7 s)");
+    check(resource_text("t0s1.vtt") == "WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n"
+                                       "\n00:00:09.000 --> 00:00:14.000\nNo duration\n",
+          "last WebVTT segment runs to the end");
+
+    // BANDWIDTH and AVERAGE-BANDWIDTH: the video segments plus the largest
+    // subtitle rendition; both segments last 7 s.
+    const std::uint64_t seven_s = 7'000'000;
+    const auto size = [&](const std::string& name) {
+        return static_cast<std::uint64_t>(resource_text(name).size());
+    };
+    const auto peak = std::max(rate(size("s0.m4s"), seven_s), rate(size("s1.m4s"), seven_s)) +
+                      std::max({rate(size("t0s0.vtt"), seven_s), rate(size("t0s1.vtt"), seven_s),
+                                rate(size("t1s0.vtt"), seven_s), rate(size("t1s1.vtt"), seven_s)});
+    const auto average = rate(size("s0.m4s") + size("s1.m4s"), 2 * seven_s) +
+                         std::max(rate(size("t0s0.vtt") + size("t0s1.vtt"), 2 * seven_s),
+                                  rate(size("t1s0.vtt") + size("t1s1.vtt"), 2 * seven_s));
+    check(main.find("BANDWIDTH=" + std::to_string(peak) +
+                    ",AVERAGE-BANDWIDTH=" + std::to_string(average) + ",") != std::string::npos,
+          "bandwidth includes the largest subtitle rendition");
+
+    // A timeline that starts at 10 s: windows follow the first video
+    // timestamp, so the 11 s cue still belongs to the first segment.
+    std::string shifted_entry;
+    const auto shifted = remux_texts(subtitle_fixture(10'000), shifted_entry);
+    check(shifted.at("t0s0.vtt") == "WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n"
+                                    "\n00:00:11.000 --> 00:00:12.500\n<i>Hello</i> &amp; welcome\n"
+                                    "\n00:00:15.500 --> 00:00:16.500\nAcross the cut\n",
+          "nonzero origin: first WebVTT segment holds the cues of [10 s, 17 s)");
+    check(shifted.at("t0s1.vtt").find("00:00:19.000 --> 00:00:24.000") != std::string::npos,
+          "nonzero origin: last segment holds the later cue");
+}
+
 int main() {
     try {
         sample_entry_tests();
         demux_tests();
         selection_and_refusal_tests();
         presentation_tests();
+        subtitle_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';

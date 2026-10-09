@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifndef SEND_AIRPLAY2_MP4_DEMUX_H
 #define SEND_AIRPLAY2_MP4_DEMUX_H
+#include "text_tracks.h"
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -76,6 +77,8 @@ struct Mp4Track {
 struct Mp4Movie {
     std::uint32_t timescale = 0; ///< mvhd timescale; elst durations use it.
     std::vector<Mp4Track> tracks;
+    /// Text subtitles served as WebVTT renditions (phase 3c); MKV input only.
+    std::vector<TextTrack> text_tracks;
 };
 
 /// Video sample entries the remux writes (Apple HLS 1.1, 1.10).
