@@ -143,7 +143,9 @@ Credential Manager (D55, [uwp-native-build.md](uwp-native-build.md)).
 
 ## HLS remux delivery (API version 3, D60)
 
-- `sap2_cast_options.delivery` (new last field): `SAP2_DELIVERY_PROGRESSIVE`
+- `sap2_cast_options.delivery` (new last field, after a `reserved` field that
+  fills a version 2 struct's 32-bit tail padding, so a version 2 host's
+  `sizeof` never reaches it): `SAP2_DELIVERY_PROGRESSIVE`
   (0, the default and the only behavior before version 3) serves the source
   as one representation; `SAP2_DELIVERY_HLS_REMUX` (1) builds fMP4 HLS from an
   MP4/MOV or MKV with H.264/HEVC and AAC, AC-3 or E-AC-3, through the same

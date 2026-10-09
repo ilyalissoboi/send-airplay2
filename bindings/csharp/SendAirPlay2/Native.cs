@@ -85,6 +85,7 @@ namespace SendAirPlay2
             internal uint MediaConnections;
             internal double StartPositionSeconds;
             internal IntPtr CredentialStore; // Version 2.
+            internal uint Reserved;          // Version 3: version 2 tail padding on x86.
             internal uint Delivery;          // Version 3: SAP2_DELIVERY_*.
         }
 

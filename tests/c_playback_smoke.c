@@ -44,6 +44,19 @@ static sap2_media_source source_for(struct probe* probe) {
     return source;
 }
 
+/* sap2_cast_options as published in API version 2, for its sizeof. */
+struct options_v2 {
+    uint32_t struct_size;
+    const char* receiver_address;
+    uint16_t receiver_port;
+    const char* profile;
+    const char* content_type;
+    uint32_t start_timeout_ms;
+    uint32_t media_connections;
+    double start_position_seconds;
+    const sap2_credential_store* credential_store;
+};
+
 static sap2_cast_options valid_options(void) {
     sap2_cast_options options;
     sap2_cast_options_init(&options);
@@ -168,12 +181,15 @@ static void argument_validation(void) {
     check(create_result(&options) == SAP2_OK, "HLS remux delivery is accepted at create");
     options.delivery = 2;
     check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "unknown delivery");
-    /* A version 2 struct ends before delivery, which is then never read. */
+    /* A version 2 host passes sizeof its struct, tail padding included (4 bytes
+     * on 32-bit targets); delivery lies beyond it and is never read. */
     options = valid_options();
-    options.struct_size = (uint32_t)offsetof(sap2_cast_options, delivery);
+    options.struct_size = (uint32_t)sizeof(struct options_v2);
     options.credential_store = NULL;
     options.delivery = 2;
     check(create_result(&options) == SAP2_OK, "version 2 options struct ignores delivery");
+    check(offsetof(sap2_cast_options, delivery) >= sizeof(struct options_v2),
+          "delivery starts past a whole version 2 struct");
     options = valid_options();
     options.receiver_address = NULL;
     check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "NULL address");

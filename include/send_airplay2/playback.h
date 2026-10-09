@@ -191,8 +191,12 @@ typedef struct sap2_cast_options {
      * sap2_cast_create(); its callbacks and context must stay valid until
      * sap2_cast_destroy() returns (see credentials.h). */
     const sap2_credential_store* credential_store;
-    /* Version 3. SAP2_DELIVERY_*; the initializer sets PROGRESSIVE, as do
+    /* Version 3. reserved fills what is tail padding of a version 2 struct on
+     * 32-bit targets (8-byte alignment), so delivery starts past the full
+     * version 2 size on every ABI; leave it zero, as the initializer does.
+     * delivery is SAP2_DELIVERY_*; the initializer sets PROGRESSIVE, as do
      * structs of earlier versions. */
+    uint32_t reserved;
     uint32_t delivery;
 } sap2_cast_options;
 

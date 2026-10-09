@@ -70,7 +70,26 @@ static_assert(static_cast<std::int32_t>(CastResult::media_malformed) == SAP2_ERR
 constexpr std::size_t cast_options_v1_size = offsetof(sap2_cast_options, credential_store);
 constexpr std::size_t cast_options_v2_size =
     cast_options_v1_size + sizeof(sap2_cast_options::credential_store);
-// Version 3 added delivery after credential_store.
+// The version 2 layout, for its full size: a version 2 host passes sizeof,
+// which on 32-bit targets includes 4 bytes of tail padding (8-byte alignment).
+struct CastOptionsV2 {
+    std::uint32_t struct_size;
+    const char* receiver_address;
+    std::uint16_t receiver_port;
+    const char* profile;
+    const char* content_type;
+    std::uint32_t start_timeout_ms;
+    std::uint32_t media_connections;
+    double start_position_seconds;
+    const sap2_credential_store* credential_store;
+};
+static_assert(offsetof(CastOptionsV2, credential_store) ==
+                  offsetof(sap2_cast_options, credential_store),
+              "version 2 prefix of sap2_cast_options");
+// Version 3 added delivery; it must start beyond any version 2 struct, or a
+// version 2 host's padding would be read as delivery.
+static_assert(offsetof(sap2_cast_options, delivery) >= sizeof(CastOptionsV2),
+              "delivery overlaps a version 2 struct");
 constexpr std::size_t cast_options_v3_size =
     offsetof(sap2_cast_options, delivery) + sizeof(sap2_cast_options::delivery);
 
