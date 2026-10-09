@@ -2,12 +2,14 @@
 #include "cast_controller.h"
 #include "control_crypto.h"
 #include "credential_store.h"
+#include "hls_remux.h"
 #include "mrp_session.h"
 #include "pair_setup_crypto.h"
 #include "receiver_http.h"
 
 #include <cmath>
 #include <new>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 
@@ -193,6 +195,9 @@ CastResult cast_start_result(const std::exception_ptr& failure,
         return transport_result(error.reason());
     } catch (const MrpException& error) {
         return mrp_start_result(error.reason());
+    } catch (const RemuxException& error) {
+        return error.reason() == RemuxFailure::malformed ? CastResult::media_malformed
+                                                         : CastResult::media_unsupported;
     } catch (const std::invalid_argument&) {
         return CastResult::invalid_argument;
     } catch (const std::bad_alloc&) {
@@ -237,6 +242,13 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
         throw CastFailure(CastResult::profile_not_found);
     }
 
+    // HLS reads the source's index here, before any listener exists; a
+    // refusal is a RemuxException and a stop() cancels the reads.
+    std::optional<RemuxedHls> remuxed;
+    if (settings_.delivery == CastDelivery::hls_remux) {
+        remuxed = remux_to_hls(source_, &cancel_requested_);
+    }
+
     MediaServerOptions server_options;
     server_options.receiver_address = settings_.receiver_address;
     server_options.receiver_port = settings_.receiver_port;
@@ -244,7 +256,9 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
     server_options.request_timeout_ms = media_request_timeout_ms;
     server_options.content_type = settings_.content_type;
     try {
-        server = MediaServer::start(source_, server_options);
+        server =
+            remuxed ? MediaServer::start_resource_set(std::move(remuxed->resources), server_options)
+                    : MediaServer::start(source_, server_options);
     } catch (const std::invalid_argument&) {
         throw; // Address or content type rejected by the server's own validation.
     } catch (const std::bad_alloc&) {
@@ -255,7 +269,7 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
 
     UrlPlaybackOptions options;
     options.receiver = {settings_.receiver_address, settings_.receiver_port, 0};
-    options.media_url = server->url();
+    options.media_url = remuxed ? server->resource_url(remuxed->playlist_name) : server->url();
     options.start_position_seconds = settings_.start_position_seconds;
     options.start_timeout = settings_.start_timeout;
     options.connect = dependencies_.connect;

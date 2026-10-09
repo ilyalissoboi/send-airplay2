@@ -141,11 +141,11 @@ MediaSource segment_source(std::shared_ptr<const Presentation> presentation, std
 
 /// Reads through MediaSource::read_at until `length` bytes arrive, under a
 /// fixed deadline, for the demuxer's moov and box headers.
-RandomReader source_reader(const MediaSource& input) {
-    return [&input](std::uint64_t offset, std::uint8_t* output, std::size_t length) {
+RandomReader source_reader(const MediaSource& input, const std::atomic_bool* cancelled) {
+    return [&input, cancelled](std::uint64_t offset, std::uint8_t* output, std::size_t length) {
         const std::atomic_bool not_stopped{false};
         const std::atomic_bool not_cancelled{false};
-        const MediaReadContext context{&not_stopped, &not_cancelled,
+        const MediaReadContext context{&not_stopped, cancelled ? cancelled : &not_cancelled,
                                        std::chrono::steady_clock::now() + demux_read_deadline};
         constexpr std::size_t max_read = 64 * 1024; // MediaSource's read capacity bound.
         while (length) {
@@ -247,14 +247,14 @@ std::string media_playlist(const Mp4Movie& movie, const std::vector<SegmentLayou
     return playlist;
 }
 
-RemuxedHls remux_to_hls(MediaSource input) {
+RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
     if (!input.size || !input.read_at) {
         throw std::invalid_argument("remux requires a media source");
     }
     auto presentation = std::make_shared<Presentation>();
     presentation->input = std::move(input);
     const auto file_size = presentation->input.size();
-    const auto reader = source_reader(presentation->input);
+    const auto reader = source_reader(presentation->input, cancelled);
     std::array<std::uint8_t, 4> magic{};
     if (file_size >= magic.size()) {
         reader(0, magic.data(), magic.size());

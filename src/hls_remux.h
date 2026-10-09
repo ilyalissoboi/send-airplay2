@@ -4,6 +4,7 @@
 #include "fmp4_writer.h"
 #include "mp4_demux.h"
 #include "send_airplay2/media_server.h"
+#include <atomic>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -60,7 +61,9 @@ struct RemuxedHls {
  *
  * Calls input.size() once and reads the moov, or the Matroska track metadata
  * and every block header, through input.read_at on this thread (with an
- * internal 60-second deadline per read). The returned resources own `input`;
+ * internal 60-second deadline per read). Those reads see `cancelled` (when
+ * given) as their MediaReadContext's request cancellation, so setting it ends
+ * the remux promptly with an exception. The returned resources own `input`;
  * their read_at forwards the request's MediaReadContext, so cancellation and
  * deadlines apply to source reads, and may return short reads. They are
  * thread-safe when input.read_at is.
@@ -70,6 +73,7 @@ struct RemuxedHls {
  * @throws std::runtime_error when the source fails a read; std::invalid_argument
  *         for a source without callbacks. Messages contain no paths or URLs.
  */
-[[nodiscard]] RemuxedHls remux_to_hls(MediaSource input);
+[[nodiscard]] RemuxedHls remux_to_hls(MediaSource input,
+                                      const std::atomic_bool* cancelled = nullptr);
 } // namespace send_airplay2::detail
 #endif

@@ -5,14 +5,17 @@
 #include "cast_controller.h"
 #include "control_crypto.h"
 #include "fake_receiver.h"
+#include "mp4_fixture.h"
 #include "credential_store.h"
 #include "mrp_session.h"
 #include "receiver_http.h"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <exception>
 #include <future>
 #include <iostream>
@@ -599,6 +602,115 @@ void command_argument_tests() {
 }
 } // namespace
 
+/// The synthetic MP4 of mp4_fixture.h as a host source, counting reads.
+MediaSource mp4_source(const std::shared_ptr<SourceProbe>& probe) {
+    using namespace send_airplay2::test::mp4_fixture;
+    const auto file = std::make_shared<const Bytes>(mp4_file({video_spec(), audio_spec()}));
+    auto marker = std::make_shared<ReleaseMarker>(probe);
+    MediaSource source;
+    source.size = [file, marker] { return static_cast<std::uint64_t>(file->size()); };
+    source.read_at = [file, marker](std::uint64_t offset, std::uint8_t* buffer,
+                                    std::size_t capacity, const MediaReadContext&) -> std::size_t {
+        ++marker->probe->reads;
+        if (offset >= file->size()) {
+            return 0;
+        }
+        const auto count = std::min<std::uint64_t>(capacity, file->size() - offset);
+        std::memcpy(buffer, file->data() + offset, static_cast<std::size_t>(count));
+        return static_cast<std::size_t>(count);
+    };
+    return source;
+}
+
+CastSettings hls_settings() {
+    auto settings = loopback_settings();
+    settings.delivery = CastDelivery::hls_remux;
+    return settings;
+}
+
+bool ends_with(const std::string& text, const std::string& suffix) {
+    return text.size() >= suffix.size() &&
+           text.compare(text.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+void hls_delivery_tests() {
+    group = "HLS remux delivery";
+    {
+        auto probe = std::make_shared<SourceProbe>();
+        FakeReceiver receiver({});
+        CastController controller(hls_settings(), mp4_source(probe),
+                                  fake_receiver_dependencies(receiver));
+        check(controller.start() == CastResult::ok, "remuxed MP4 starts on the scripted receiver");
+        const auto url = receiver.inserted_media_url();
+        check(url.rfind("http://127.0.0.1:", 0) == 0 && ends_with(url, "/index.m3u8"),
+              "the receiver is sent the playlist below the private path");
+        check(probe->reads > 0, "the remux read the source's sample tables");
+        controller.stop();
+        check(controller.snapshot().phase == CastPhase::stopped, "stop after an HLS start");
+    }
+    {
+        FakeReceiver receiver({});
+        CastController controller(loopback_settings(),
+                                  probed_source(std::make_shared<SourceProbe>()),
+                                  fake_receiver_dependencies(receiver));
+        check(controller.start() == CastResult::ok, "progressive start");
+        check(!ends_with(receiver.inserted_media_url(), ".m3u8"),
+              "progressive delivery sends the single representation's URL");
+        controller.stop();
+    }
+    {
+        // The probed source reads zeros: no moov, so the remux finds it malformed
+        // before any listener or receiver connection exists.
+        auto probe = std::make_shared<SourceProbe>();
+        std::atomic_bool connected{false};
+        auto dependencies = stored_credentials(blocking_connector(connected));
+        CastController controller(hls_settings(), probed_source(probe), dependencies);
+        check(controller.start() == CastResult::media_malformed, "unremuxable source is malformed");
+        check(!connected, "no receiver connection after a remux refusal");
+        check(controller.snapshot().phase == CastPhase::start_failed, "refusal is a failed start");
+    }
+    unsigned rejected_status = 0;
+    for (const auto reason : {RemuxFailure::unsupported, RemuxFailure::too_large}) {
+        check(cast_start_result(std::make_exception_ptr(RemuxException(reason, "synthetic")),
+                                rejected_status) == CastResult::media_unsupported,
+              std::string(remux_failure_name(reason)) + " maps to media_unsupported");
+    }
+    {
+        // A source read that blocks until its request is cancelled: stop()
+        // must end the remux, and the start reports cancelled.
+        auto probe = std::make_shared<SourceProbe>();
+        std::atomic_bool entered{false};
+        auto marker = std::make_shared<ReleaseMarker>(probe);
+        MediaSource stalled;
+        stalled.size = [marker] { return std::uint64_t{1} << 20; };
+        stalled.read_at = [marker, &entered](std::uint64_t, std::uint8_t*, std::size_t,
+                                             const MediaReadContext& context) -> std::size_t {
+            entered = true;
+            while (!context.should_stop()) {
+                std::this_thread::sleep_for(5ms);
+            }
+            return 0;
+        };
+        std::atomic_bool connected{false};
+        CastController controller(hls_settings(), std::move(stalled),
+                                  stored_credentials(blocking_connector(connected)));
+        auto start = std::async(std::launch::async, [&controller] { return controller.start(); });
+        const auto deadline = std::chrono::steady_clock::now() + 2s;
+        while (!entered && std::chrono::steady_clock::now() < deadline) {
+            std::this_thread::sleep_for(5ms);
+        }
+        check(entered, "the remux is reading the source");
+        const auto stop_started = std::chrono::steady_clock::now();
+        controller.stop();
+        check(std::chrono::steady_clock::now() - stop_started < 1500ms,
+              "stop ends a blocked remux read promptly");
+        check(start.wait_for(2s) == std::future_status::ready &&
+                  start.get() == CastResult::cancelled,
+              "a stopped remux start reports cancelled");
+        check(!connected, "no receiver connection after a cancelled remux");
+    }
+}
+
 int main(int argc, char** argv) {
     if (argc != 2) {
         std::cerr << "usage: cast_controller_tests MRP_FIXTURE_DIRECTORY\n";
@@ -617,6 +729,7 @@ int main(int argc, char** argv) {
     concurrent_stop_tests();
     mrp_command_tests(mrp_fixtures);
     mrp_end_tests(mrp_fixtures);
+    hls_delivery_tests();
     if (failures != 0) {
         std::cerr << failures << " failure(s)\n";
         return 1;

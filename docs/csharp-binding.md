@@ -22,7 +22,7 @@ The library loads `send_airplay2` (`send_airplay2.dll`, `libsend_airplay2.so` or
 | C | C# |
 | --- | --- |
 | `sap2_cast_*` | `Cast` (`IDisposable`): `Create`, `Start`, `GetStatus`, `WaitForChange`, `Play`, `Pause`, `Seek`, `StopPlayback` (MRP stop), `Stop` (local teardown), `Dispose` |
-| `sap2_cast_options` | `CastOptions`, including `CredentialStore` |
+| `sap2_cast_options` | `CastOptions`, including `CredentialStore` and `Delivery` (`CastDelivery.Progressive`/`HlsRemux`, API version 3) |
 | `sap2_media_source` | abstract `MediaSource` (`Size`, `Read`, `OnReleased`); `FileMediaSource` for desktop files |
 | `sap2_credential_store` | `ICredentialStore` (`Load`, `SaveNew`, `Erase`) |
 | `sap2_pair`, `sap2_forget_profile` | `Pairing.Pair(PairOptions, PinReader)`, `Pairing.ForgetProfile` |

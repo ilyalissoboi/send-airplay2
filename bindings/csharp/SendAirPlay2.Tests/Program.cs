@@ -147,6 +147,9 @@ internal static class Program
         Check(SendAirPlay2Library.ResultName(ResultCode.Connection) == "connection", "result names");
         Check(SendAirPlay2Library.ResultName(ResultCode.PinTimeout) == "pin_timeout",
               "version 2 result names");
+        Check(SendAirPlay2Library.ResultName(ResultCode.MediaUnsupported) == "media_unsupported" &&
+                  SendAirPlay2Library.ResultName(ResultCode.MediaMalformed) == "media_malformed",
+              "version 3 result names");
 
         // The native initializer writes min(our size, its size) and stores it, and
         // fills defaults at fixed offsets: a layout or size mismatch shows here.
@@ -155,7 +158,8 @@ internal static class Program
         SendAirPlay2.Native.sap2_cast_options_init_sized(ref cast, new UIntPtr((uint)castSize));
         Check(cast.StructSize == castSize, $"cast options size {castSize} matches the library");
         Check(cast.ReceiverPort == 7000 && cast.StartTimeoutMs == 30000 &&
-                  cast.MediaConnections == 16 && cast.CredentialStore == IntPtr.Zero,
+                  cast.MediaConnections == 16 && cast.CredentialStore == IntPtr.Zero &&
+                  cast.Delivery == (uint)CastDelivery.Progressive,
               "cast option defaults land on the expected fields");
         var pair = new SendAirPlay2.Native.PairOptions();
         var pairSize = Marshal.SizeOf<SendAirPlay2.Native.PairOptions>();
@@ -293,6 +297,30 @@ internal static class Program
         using (var cast = Cast.Create(LoopbackOptions(malformed), new CountingSource()))
         {
             Check(ResultOf(cast.Start) == ResultCode.CredentialStore, "malformed record");
+        }
+
+        var remuxStore = new MemoryStore();
+        var remux = LoopbackOptions(remuxStore);
+        remux.Delivery = CastDelivery.HlsRemux;
+        using (var cast = Cast.Create(remux, new CountingSource()))
+        {
+            Check(ResultOf(cast.Start) == ResultCode.ProfileNotFound && remuxStore.Count.Loads == 1,
+                  "HLS delivery: credentials load before the remux reads the source");
+        }
+        var unknown = LoopbackOptions(new MemoryStore());
+        unknown.Delivery = (CastDelivery)7;
+        var unknownSource = new CountingSource();
+        try
+        {
+            using (Cast.Create(unknown, unknownSource))
+            {
+            }
+            Check(false, "an unknown delivery is refused");
+        }
+        catch (SendAirPlay2Exception error)
+        {
+            Check(error.Result == ResultCode.InvalidArgument && unknownSource.Releases == 1,
+                  "an unknown delivery is invalid_argument and releases the source");
         }
     }
 

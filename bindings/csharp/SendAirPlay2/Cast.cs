@@ -5,6 +5,20 @@ using Microsoft.Win32.SafeHandles;
 
 namespace SendAirPlay2
 {
+    /// <summary>How the media reaches the receiver (SAP2_DELIVERY_*).</summary>
+    public enum CastDelivery
+    {
+        /// <summary>The source as one representation of <see cref="CastOptions.ContentType"/>,
+        /// for containers the receiver plays directly (MP4/MOV).</summary>
+        Progressive = 0,
+        /// <summary>HLS built by the library from an MP4/MOV or MKV with H.264/HEVC and
+        /// AAC, AC-3 or E-AC-3, without transcoding; <see cref="CastOptions.ContentType"/>
+        /// is ignored. A file that cannot be remuxed fails <see cref="Cast.Start"/> with
+        /// <see cref="ResultCode.MediaUnsupported"/> or
+        /// <see cref="ResultCode.MediaMalformed"/>.</summary>
+        HlsRemux = 1,
+    }
+
     /// <summary>Options for <see cref="Cast.Create"/> (sap2_cast_options).</summary>
     public sealed class CastOptions
     {
@@ -32,6 +46,9 @@ namespace SendAirPlay2
 
         /// <summary>A host store, or null for the library's built-in store.</summary>
         public ICredentialStore? CredentialStore { get; set; }
+
+        /// <summary>Progressive (the default) or HLS built by the library's remux.</summary>
+        public CastDelivery Delivery { get; set; } = CastDelivery.Progressive;
     }
 
     /// <summary>Owns one native cast; releases it in the finalizer if not disposed.</summary>
@@ -128,6 +145,7 @@ namespace SendAirPlay2
                     nativeOptions.MediaConnections = (uint)Math.Max(0, options.MediaConnections);
                     nativeOptions.StartPositionSeconds = options.StartPositionSeconds;
                     nativeOptions.CredentialStore = storeTable.Pointer;
+                    nativeOptions.Delivery = (uint)options.Delivery;
                     var nativeSource = source.ToNative();
                     var result = Native.sap2_cast_create(ref nativeOptions, ref nativeSource,
                                                          out var created);

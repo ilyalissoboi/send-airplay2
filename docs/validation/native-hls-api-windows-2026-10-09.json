@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-09",
+  "decision": "D60",
+  "scope": "HLS phase 3b: SAP2_DELIVERY_HLS_REMUX through the C interface (airplay2-api-host --remux), static and shared library, with driver-scheduled commands. Observer answers recorded separately from telemetry.",
+  "receiver": {
+    "name": "Living Room",
+    "hardware": "Apple TV 4K (AppleTV14,1)",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_scope": "Prior user report, assumed unchanged; not queried during this test."
+  },
+  "host": "Windows 11 x64 (10.0.26200), MSVC Release; network category read as Private (earlier records: Public); firewall rules read, not changed",
+  "source_base": "5df2b80 (main after PR #28)",
+  "tested_source_blobs": {
+    "include/send_airplay2/playback.h": "030d31f8a082ca56fe210142553668d84fbd41fa",
+    "src/playback_api.cpp": "7d35ab9473bfcbdd65b52657c74ce490196176ca",
+    "src/cast_controller.h": "880b537389cff8efb8b9f3e175f8ba9f97d587b9",
+    "src/cast_controller.cpp": "1d22889349272cb4d45fadc083cc7bbdf238c712",
+    "src/hls_remux.h": "6f24289ae3c56db6d27494cb998baa92d71b1fe3",
+    "src/hls_remux.cpp": "b8a379ffd0be5559a1fcdf3d2d5d5d2d8719b1ac",
+    "tools/airplay2_api_host.cpp": "4924601ebc7f0c1d3abe0e161b3f85e9cdd426e9",
+    "bindings/csharp/SendAirPlay2/Cast.cs": "d32b3fea1f60202672257148e18f88d991bb5d1e",
+    "bindings/csharp/SendAirPlay2/Native.cs": "0f047748a6b5efb883ee4072a3e2d5b92ae983e1",
+    "bindings/csharp/SendAirPlay2/Results.cs": "aff6db85e0167cd998303b8cee97902c46d5cac0"
+  },
+  "runs": [
+    {
+      "label": "static library, user-provided 6.3 GB film MKV (H.264 High + E-AC-3 5.1 Atmos; title withheld; SHA-256 95964b9712ed9f00cb5e5b642f053545b0b03d1d6e2d19d2a4c20e79416045c3)",
+      "lines": [
+        "[10.0s] Tested binary SHA-256: 17b28bc4d85dad6532c770d1f8a74f48b7fe72cba2422864020ad754b4019164",
+        "[14.0s] Start: ok phase=active state=playing end=none owned=yes position=3.1 duration=6824.5 rate=1.0 failure=none/none cleaned=no",
+        "[26.1s] >>> sending 'pause'",
+        "[26.1s] State: paused",
+        "[26.1s] Control: ok",
+        "[30.1s] >>> sending 'play'",
+        "[30.1s] Control: ok",
+        "[30.1s] State: loading",
+        "[30.2s] State: playing",
+        "[35.1s] >>> sending 'status'",
+        "[35.1s] Status: phase=active state=playing end=none owned=yes position=20.0 duration=6824.5 rate=1.0 failure=none/none cleaned=no",
+        "[37.1s] >>> sending 'seek 3600'",
+        "[37.2s] Control: ok",
+        "[37.4s] State: loading",
+        "[37.5s] State: playing",
+        "[45.1s] >>> sending 'status'",
+        "[45.1s] Status: phase=active state=playing end=none owned=yes position=3609.5 duration=6824.5 rate=1.0 failure=none/none cleaned=no",
+        "[47.1s] >>> sending 'seek 6780'",
+        "[47.2s] Control: ok",
+        "[47.3s] State: loading",
+        "[47.6s] State: playing",
+        "[53.2s] >>> sending 'status'",
+        "[53.2s] Status: phase=active state=playing end=none owned=yes position=6787.4 duration=6824.5 rate=1.0 failure=none/none cleaned=no",
+        "[92.4s] State: stopped",
+        "[93.2s] Session ended; cleaning up.",
+        "[93.2s] End: media_end failure=none/none",
+        "[93.4s] Summary: api_version=3 linkage=static start=ok phase=stopped state=stopped end=media_end owned=yes position=6824.5 duration=6824.5 rate=0.0 failure=none/none cleaned=yes reads=175327 bytes=2811811135 failed_reads=0 releases=1",
+        "[93.5s] Exit code: 0"
+      ],
+      "observer": "Video and audio played normally in every attempt that started; all runs seeked successfully and returned to the Home screen (user)."
+    },
+    {
+      "label": "static library, gas-hevc-ac3.mkv (ffmpeg-made, HEVC + AC-3 5.1), local stop after about 10 s",
+      "lines": [
+        "[10.0s] Tested binary SHA-256: 17b28bc4d85dad6532c770d1f8a74f48b7fe72cba2422864020ad754b4019164",
+        "[16.5s] Start: ok phase=active state=playing end=none owned=yes position=3.1 duration=131.6 rate=1.0 failure=none/none cleaned=no",
+        "[21.5s] >>> sending 'status'",
+        "[21.6s] Status: phase=active state=playing end=none owned=yes position=8.2 duration=131.6 rate=1.0 failure=none/none cleaned=no",
+        "[23.6s] >>> sending Enter",
+        "[23.9s] Summary: api_version=3 linkage=static start=ok phase=stopped state=playing end=sender_stop owned=yes position=10.5 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=9565 bytes=43745330 failed_reads=0 releases=1",
+        "[24.0s] Exit code: 0"
+      ],
+      "observer": "Video and audio played normally in every attempt that started; all runs seeked successfully and returned to the Home screen (user). This run had no seek command (local stop after about 10 s)."
+    },
+    {
+      "label": "shared library run in place from the worktree's build-shared/Release, gas-hevc-ac3.mkv",
+      "lines": [
+        "[10.0s] Tested binary SHA-256: df09c88fac79ce0f7b454c0d3f8560b94c1a84a4a63826ef8d09115939676f8c",
+        "[10.0s] Tested DLL SHA-256: 1cbac6f5a7b531ab6d7895e2bae5f8f8bf28f632e0c39cfb89ee40103abb4b4e",
+        "[11.9s] Start: ok phase=active state=playing end=none owned=yes position=3.1 duration=131.6 rate=1.0 failure=none/none cleaned=no",
+        "[19.9s] >>> sending 'pause'",
+        "[20.0s] State: paused",
+        "[20.0s] Control: ok",
+        "[24.0s] >>> sending 'play'",
+        "[24.0s] Control: State: loadingok",
+        "[24.1s] State: playing",
+        "[28.0s] >>> sending 'seek 115'",
+        "[28.0s] Control: ok",
+        "[28.2s] State: loading",
+        "[28.2s] State: playing",
+        "[33.0s] >>> sending 'status'",
+        "[33.0s] Status: phase=active state=playing end=none owned=yes position=121.7 duration=131.6 rate=1.0 failure=none/none cleaned=no",
+        "[45.1s] State: stopped",
+        "[45.9s] End: media_end failure=none/none",
+        "[45.9s] Session ended; cleaning up.",
+        "[46.1s] Summary: api_version=3 linkage=shared start=ok phase=stopped state=stopped end=media_end owned=yes position=131.6 duration=131.6 rate=0.0 failure=none/none cleaned=yes reads=9565 bytes=43745330 failed_reads=0 releases=1",
+        "[46.2s] Exit code: 0"
+      ],
+      "observer": "Video and audio played normally in every attempt that started; all runs seeked successfully and returned to the Home screen (user)."
+    }
+  ],
+  "environment_finding": "Three shared-library attempts staged at E:\\work\\send-airplay2\\build-pairing-shared\\release (the path earlier shared runs used) failed with start=connection after about 5.4 s, including a progressive gas.mp4 cast, and never started playback. Windows Firewall has an Inbound Block rule on the Private profile for that staged executable (and Allow only on Public); the network is now Private. The rule was read, not changed; the shared host was then run from its own path, which has a Private Allow rule.",
+  "result": "PASS for this receiver and host: HLS remux delivery through the C interface, static (film with seeks to 1 h and near the end, natural media_end at 6824.5 s) and shared (HEVC + AC-3 MKV, controls, media_end). The source was released once in every run.",
+  "not_run": "The C# binding and the packaged UWP host on the receiver; a sleeping receiver; cancelling a long remux on the receiver (unit-tested only)."
+}

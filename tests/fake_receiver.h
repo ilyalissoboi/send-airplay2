@@ -693,6 +693,11 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         return control_closed_;
     }
+    /// The Content-Location of the last insertPlayQueueItem; empty before one.
+    std::string inserted_media_url() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return inserted_media_url_;
+    }
     bool event_channel_opened() const {
         std::lock_guard<std::mutex> lock(mutex_);
         return event_pipe_ != nullptr;
@@ -786,8 +791,13 @@ private:
             const auto envelope = decode_binary_plist(request.body);
             const auto command =
                 decode_binary_plist(envelope.find("params")->find("data")->as_data());
-            if (command.find("type")->as_string() == "insertPlayQueueItem" && remote_receiver_) {
-                remote_receiver_->set_mrp_item(command.find("item")->find("uuid")->as_string());
+            if (command.find("type")->as_string() == "insertPlayQueueItem") {
+                if (const auto* location = command.find("item")->find("Content-Location")) {
+                    inserted_media_url_ = location->as_string();
+                }
+                if (remote_receiver_) {
+                    remote_receiver_->set_mrp_item(command.find("item")->find("uuid")->as_string());
+                }
             }
             if (command.find("type")->as_string() == "setRate") {
                 if (remote_receiver_) {
@@ -909,6 +919,7 @@ private:
     Bytes control_input_;
     Bytes control_output_;
     bool control_closed_ = false;
+    std::string inserted_media_url_;
     std::vector<ParsedRequest> requests_;
     int feedback_ = 0;
     bool hold_feedback_ = false;

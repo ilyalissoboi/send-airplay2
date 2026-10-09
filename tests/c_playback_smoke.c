@@ -68,7 +68,10 @@ static int create_result(const sap2_cast_options* options) {
 
 static void version_and_names(void) {
     check(sap2_playback_api_version() == SAP2_PLAYBACK_API_VERSION, "runtime version");
-    check(SAP2_PLAYBACK_API_VERSION == 2, "credential stores and pairing are version 2");
+    check(SAP2_PLAYBACK_API_VERSION == 3, "the delivery option is version 3");
+    check(strcmp(sap2_result_name(SAP2_ERROR_MEDIA_UNSUPPORTED), "media_unsupported") == 0 &&
+              strcmp(sap2_result_name(SAP2_ERROR_MEDIA_MALFORMED), "media_malformed") == 0,
+          "remux result names");
     check(strcmp(sap2_result_name(SAP2_OK), "ok") == 0, "ok name");
     check(strcmp(sap2_result_name(SAP2_ERROR_CONNECTION), "connection") == 0, "connection name");
     check(strcmp(sap2_result_name(-1), "unknown") == 0, "unknown name");
@@ -105,6 +108,7 @@ static void option_defaults(void) {
     sap2_cast_options_init_sized(&options, sizeof(options));
     check(options.struct_size == sizeof(options), "sized init: full struct size");
     check(options.credential_store == NULL, "sized init: no credential store");
+    check(options.delivery == SAP2_DELIVERY_PROGRESSIVE, "sized init: progressive delivery");
     check_defaults(&options, "sized init");
 
     /* A host built against version 1 owns only v1_size bytes: the legacy
@@ -156,6 +160,20 @@ static void argument_validation(void) {
           "options struct shorter than version 1");
     options.struct_size = (uint32_t)offsetof(sap2_cast_options, credential_store);
     check(create_result(&options) == SAP2_OK, "version 1 options struct is still accepted");
+    /* valid_options() is a version 1 struct; delivery needs the full size. */
+    options = valid_options();
+    options.struct_size = (uint32_t)sizeof(options);
+    options.credential_store = NULL;
+    options.delivery = SAP2_DELIVERY_HLS_REMUX;
+    check(create_result(&options) == SAP2_OK, "HLS remux delivery is accepted at create");
+    options.delivery = 2;
+    check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "unknown delivery");
+    /* A version 2 struct ends before delivery, which is then never read. */
+    options = valid_options();
+    options.struct_size = (uint32_t)offsetof(sap2_cast_options, delivery);
+    options.credential_store = NULL;
+    options.delivery = 2;
+    check(create_result(&options) == SAP2_OK, "version 2 options struct ignores delivery");
     options = valid_options();
     options.receiver_address = NULL;
     check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "NULL address");

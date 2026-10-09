@@ -164,6 +164,7 @@ local stop. The summary reports the API version, static/shared linkage, fixed
 status fields, read counts and how many times the library released the media
 source. It prints no address, profile, path or media URL. The manual procedures
 are in [the interface's validation plan](docs/public-api.md#manual-validation-plan).
+`--remux` selects `SAP2_DELIVERY_HLS_REMUX` (MP4/MOV or MKV as HLS, D60).
 `--discover [--discover-ms N] [--expect-name NAME]` runs one
 [`receivers.h`](include/send_airplay2/receivers.h) scan instead and prints only
 counts, address families and whether a receiver of exactly that name was found.
