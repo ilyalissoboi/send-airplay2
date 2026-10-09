@@ -33,6 +33,14 @@ Local environment: the network now reads Private, and the earlier shared
 staging path has a Private Block firewall rule (read, not changed); run the
 shared host from the worktree's `build-shared/Release`.
 
+**Phase 3c (branch `claude/hls-subtitles`):** PR #29 (3b) is merged. MKV text
+subtitles (SubRip, WebVTT, ASS as text) become WebVTT renditions of a
+multivariant `main.m3u8` with codec strings, bandwidth, resolution and frame
+rate. The user's film was offered, selected and shown in sync on the
+recorded Apple TV (user: yes to all four checks); offline, its 2,048 cues
+matched ffmpeg's conversion. Open: sender-side subtitle selection over MRP,
+MP4 text tracks, HDR VIDEO-RANGE. See [hls.md](hls.md#phase-3c-result-text-subtitles-2026-10-09).
+
 ### Standalone items (D58-D59, merged)
 
 **Active slices: the standalone items.** The user merged PR #21 (D56) as

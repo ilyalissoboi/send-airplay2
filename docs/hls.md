@@ -1,8 +1,8 @@
 # HLS delivery (D60)
 
-Status: **phases 1-3b passed on the recorded receiver; 4 and subtitles not
-started.** Phases 1 (PR #26), 2 (PR #27) and 3a (PR #28) are merged; 3b (the
-C/C# delivery option) is on `claude/hls-api` from `5df2b80`. Records:
+Status: **phases 1-3c passed on the recorded receiver; 4 not started.**
+Phases 1-3b are merged (PRs #26-#29); 3c (text subtitles) is on
+`claude/hls-subtitles` from `15acd95`. Records:
 [phase 1](#phase-1-result-2026-10-09), [phase 2](#phase-2-result-2026-10-09),
 [phase 3a](#phase-3a-result-mkv-input-2026-10-09) and
 [receiver-validation.md](receiver-validation.md#hls-phase-1-d60-2026-10-09).
@@ -196,7 +196,7 @@ or only the receiver's own menu; host-supplied sidecar subtitle files.
 | 2 | fMP4 writer and MP4 demux; CLI casts an MP4 through the remux | **Passed 2026-10-09:** receiver plays the remuxed MP4 the same as progressively |
 | 3a | MKV demux | **Passed 2026-10-09:** receiver plays MKVs with H.264/HEVC + AAC/AC-3/E-AC-3 |
 | 3b | C interface and C# delivery option | **Passed 2026-10-09:** a host casts an MKV through `sap2_cast_*` on the receiver |
-| 3c | Text subtitles (user-approved plan) | Subtitle tracks selectable on the receiver |
+| 3c | Text subtitles (user-approved plan) | **Passed 2026-10-09:** a subtitle track is offered, selectable and in sync on the receiver |
 | 4 | Growing presentations and host-supplied segments | Receiver plays an `EVENT` playlist while it grows |
 
 Phase 1 fixtures are made with ffmpeg on the developer machine
@@ -372,6 +372,64 @@ its first request, which needs lazily sized media server resources.
 
 Not run: real-world MKVs from mkvmerge or other muxers (lacing from a muxer,
 large files), 7.1 E-AC-3 (refused), the C interface (3b).
+
+## Phase 3c result: text subtitles (2026-10-09)
+
+Implemented:
+
+- `src/text_tracks.*`: the cue model; SubRip to WebVTT (keeps `<i>`, `<b>`,
+  `<u>`, drops other tags, escapes `&`, `<`, `>`, trims lines, removes blank
+  lines); ASS/SSA Text field to WebVTT (override blocks dropped, `\N` line
+  breaks); BCP 47 tags from LanguageBCP47 or ISO 639-2 (mapped to ISO 639-1
+  for common languages); WebVTT segments with
+  `X-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000` (the presentation starts at 0,
+  and a missing map means the same, RFC 8216bis 3.1.4), holding every cue
+  that overlaps the window with its full times.
+- `src/hls_variant.*`: codec strings (`avc1.PPCCLL`; `hvc1.<profile>.<flags
+  reversed>.<tier level>[.<constraints>]` per ISO/IEC 14496-15 Annex E;
+  `mp4a.40.<object type>`; `ac-3`, `ec-3`) and the multivariant playlist
+  (Apple HLS 4.5-4.7, 5.11, 9.1-9.2, 9.11-9.15: `EXT-X-MEDIA TYPE=SUBTITLES`
+  with LANGUAGE, unique NAME, AUTOSELECT=YES, FORCED, accessibility
+  CHARACTERISTICS; one `EXT-X-STREAM-INF` with BANDWIDTH (peak segment bit
+  rate), AVERAGE-BANDWIDTH, CODECS, RESOLUTION (tkhd display size),
+  FRAME-RATE, SUBTITLES).
+- MKV: subtitle tracks with `S_TEXT/UTF8`, `S_TEXT/ASCII`, `S_TEXT/WEBVTT`,
+  `S_TEXT/ASS`, `S_TEXT/SSA` are read with their payloads (at most 64 KiB per
+  cue, 16 MiB per track). Cue times come from the block timestamp and
+  BlockDuration, else DefaultDuration, else the next cue, else 5 s. Name,
+  Language, FlagDefault, FlagForced and FlagHearingImpaired are kept. Bitmap
+  formats (PGS, VobSub) and ContentEncodings tracks are left out, not refused:
+  subtitles are an extra.
+- `remux_to_hls`: with text tracks the entry point becomes `main.m3u8`. It
+  names `index.m3u8` and one rendition per track (`t<T>.m3u8` with the video
+  EXTINF values, segments `t<T>s<N>.vtt` on the same windows). Without text
+  tracks nothing changes.
+- Engineering choices:
+  - DEFAULT=YES only for the first default-flagged, non-forced track,
+    mirroring VLC (Screenbox's local player) honoring the Matroska default
+    flag.
+  - AUTOSELECT=YES for every track, so tvOS can follow its language and
+    accessibility settings.
+  - `wvtt` is not added to CODECS (Apple 5.10 makes it optional).
+  - VIDEO-RANGE is not written: HDR sources would be declared SDR until
+    detected (Apple 9.16).
+
+Offline: for the user's film (one English SubRip track, 2,048 cues), the
+union of the 1,137 WebVTT segments matched ffmpeg's own WebVTT conversion
+exactly (count, millisecond times, text). `hls_subtitle_tests` checks
+conversions, language tags, segments, codec strings (`avc1.640028`,
+`hvc1.1.6.L120.90`, `hvc1.2.4.H150.B0`, `mp4a.40.2`, `mp4a.40.5`) and the
+exact multivariant text. `mkv_remux_tests` covers SubRip/ASS tracks, a PGS
+track left out, flags and the generated playlists and segments.
+
+On the recorded Apple TV 4K (tvOS 26.6), the film cast through `cast --remux`.
+The receiver fetched the subtitle rendition. User: English was offered in the
+subtitle menu, appeared when enabled, stayed in sync before and after a seek
+to 1 h, and video and audio were normal. Record: [artifact](validation/native-hls-subtitles-windows-2026-10-09.json).
+
+Not run: ASS and WebVTT source tracks on the receiver, several or forced or
+hearing-impaired tracks, MP4 text tracks (tx3g/wvtt, not read), selecting a
+subtitle track from the sender (MRP not researched).
 
 ## Provenance
 

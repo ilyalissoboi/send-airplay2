@@ -3,6 +3,7 @@
 // (D60). Written from the specifications; no third-party code.
 #include "mkv_demux.h"
 #include "sample_entries.h"
+#include "text_tracks.h"
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -33,6 +34,10 @@ constexpr std::uint32_t id_default_duration = 0x23E383;
 constexpr std::uint32_t id_language = 0x22B59C;
 constexpr std::uint32_t id_content_encodings = 0x6D80;
 constexpr std::uint32_t id_codec_delay = 0x56AA;
+constexpr std::uint32_t id_name = 0x536E;
+constexpr std::uint32_t id_language_bcp47 = 0x22B59D;
+constexpr std::uint32_t id_flag_forced = 0x55AA;
+constexpr std::uint32_t id_flag_hearing_impaired = 0x55AB;
 constexpr std::uint32_t id_video = 0xE0;
 constexpr std::uint32_t id_pixel_width = 0xB0;
 constexpr std::uint32_t id_pixel_height = 0xBA;
@@ -56,6 +61,10 @@ constexpr std::uint32_t id_attachments = 0x1941A469;
 
 constexpr std::uint64_t track_type_video = 1;
 constexpr std::uint64_t track_type_audio = 2;
+constexpr std::uint64_t track_type_subtitle = 17;
+constexpr std::uint32_t max_text_frame_bytes = 64 * 1024;       // Larger cues are skipped.
+constexpr std::uint64_t max_text_bytes_per_track = 16ULL << 20; // Beyond it, the track is dropped.
+constexpr std::uint64_t untimed_cue_us = 5'000'000; // A cue without a duration or successor.
 constexpr std::uint64_t default_timestamp_scale = 1'000'000; // Nanoseconds per tick.
 constexpr std::uint64_t nanoseconds_per_second = 1'000'000'000;
 constexpr std::uint64_t max_metadata_bytes = 16ULL << 20;
@@ -252,6 +261,10 @@ struct TrackInfo {
     std::uint64_t default_duration_ns = 0;
     std::uint64_t codec_delay_ns = 0; // Priming to discard (RFC 9559 CodecDelay).
     std::string language = "eng";     // The Matroska default.
+    std::string language_bcp47;
+    std::string name;
+    bool forced = false;
+    bool hearing_impaired = false;
     std::uint64_t pixel_width = 0;
     std::uint64_t pixel_height = 0;
     std::uint64_t display_width = 0;
@@ -291,6 +304,18 @@ TrackInfo read_track_entry(const Bytes& data, const Element& entry) {
             break;
         case id_language:
             track.language = string_value(data, field);
+            break;
+        case id_language_bcp47:
+            track.language_bcp47 = string_value(data, field);
+            break;
+        case id_name:
+            track.name = string_value(data, field);
+            break;
+        case id_flag_forced:
+            track.forced = unsigned_value(data, field) != 0;
+            break;
+        case id_flag_hearing_impaired:
+            track.hearing_impaired = unsigned_value(data, field) != 0;
             break;
         case id_content_encodings:
             track.encoded = true;
@@ -360,7 +385,13 @@ struct SelectedTrack {
     TrackInfo info;
     std::vector<Frame> frames;
     std::optional<std::uint64_t> last_block_duration; // Ticks; from BlockDuration.
+    std::vector<std::uint64_t> durations; // Text tracks only: BlockDuration per frame, 0 if none.
 };
+
+bool text_codec(const std::string& codec_id) {
+    return codec_id == "S_TEXT/UTF8" || codec_id == "S_TEXT/ASCII" || codec_id == "S_TEXT/WEBVTT" ||
+           codec_id == "S_TEXT/ASS" || codec_id == "S_TEXT/SSA";
+}
 
 /// Parses one Block or SimpleBlock (RFC 9559 10) whose data is [begin, end)
 /// and appends its frames to the selected track it belongs to.
@@ -460,6 +491,9 @@ void read_block(WindowReader& reader, std::uint64_t begin, std::uint64_t end,
         frame.first_in_block = index == 0;
         frame.keyframe = keyframe;
         track->frames.push_back(frame);
+        if (track->info.type == track_type_subtitle) {
+            track->durations.push_back(duration.value_or(0));
+        }
         position += sizes[index];
     }
     track->last_block_duration = duration;
@@ -725,6 +759,70 @@ Mp4Track audio_track(const SelectedTrack& selected, std::uint64_t timestamp_scal
     track.samples.back().duration = frame_samples;
     return track;
 }
+/// Cues from a text track's blocks: payloads converted to WebVTT cue text,
+/// times from block timestamps and BlockDuration (else DefaultDuration,
+/// else the next cue's start, else 5 s). Empty cues are skipped; a track whose
+/// payloads exceed 16 MiB, or that ends up empty, is left out.
+std::optional<TextTrack> text_track(const SelectedTrack& selected, std::uint64_t timestamp_scale,
+                                    WindowReader& reader) {
+    const auto& info = selected.info;
+    TextTrack track;
+    track.name = info.name;
+    track.language = language_tag(info.language, info.language_bcp47);
+    track.default_track = info.default_track;
+    track.forced = info.forced;
+    track.hearing_impaired = info.hearing_impaired;
+    std::uint64_t total_bytes = 0;
+    const auto to_us = [timestamp_scale](std::uint64_t ticks) {
+        return ticks * timestamp_scale / 1000; // TimestampScale is in nanoseconds.
+    };
+    for (std::size_t index = 0; index < selected.frames.size(); ++index) {
+        const auto& frame = selected.frames[index];
+        if (frame.size == 0 || frame.size > max_text_frame_bytes) {
+            continue;
+        }
+        total_bytes += frame.size;
+        if (total_bytes > max_text_bytes_per_track) {
+            return std::nullopt;
+        }
+        std::string payload(frame.size, '\0');
+        reader.copy(frame.offset, reinterpret_cast<std::uint8_t*>(payload.data()), payload.size());
+        std::string text;
+        if (info.codec_id == "S_TEXT/ASS" || info.codec_id == "S_TEXT/SSA") {
+            text = ass_to_webvtt(payload);
+        } else {
+            // SubRip text; WebVTT cue text is the same markup family, and the
+            // conversion keeps its <i>/<b>/<u> and escapes the rest.
+            text = subrip_to_webvtt(payload);
+        }
+        if (text.empty()) {
+            continue;
+        }
+        TextCue cue;
+        cue.start_us = to_us(static_cast<std::uint64_t>(frame.timestamp));
+        std::uint64_t duration_us = 0;
+        if (index < selected.durations.size() && selected.durations[index]) {
+            duration_us = to_us(selected.durations[index]);
+        } else if (info.default_duration_ns) {
+            duration_us = info.default_duration_ns / 1000;
+        } else if (index + 1 < selected.frames.size()) {
+            const auto next =
+                to_us(static_cast<std::uint64_t>(selected.frames[index + 1].timestamp));
+            duration_us = next > cue.start_us ? next - cue.start_us : 0;
+        } else {
+            duration_us = untimed_cue_us;
+        }
+        cue.end_us = cue.start_us + std::max<std::uint64_t>(duration_us, 1000);
+        cue.text = std::move(text);
+        track.cues.push_back(std::move(cue));
+    }
+    if (track.cues.empty()) {
+        return std::nullopt;
+    }
+    std::stable_sort(track.cues.begin(), track.cues.end(),
+                     [](const TextCue& a, const TextCue& b) { return a.start_us < b.start_us; });
+    return track;
+}
 } // namespace
 
 bool starts_like_matroska(const std::uint8_t* data, std::size_t size) {
@@ -812,9 +910,17 @@ Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size) {
                     unsupported("compressed or encrypted track (ContentEncodings)");
                 }
             }
-            selected.push_back({*video, {}, std::nullopt});
+            selected.push_back({*video, {}, std::nullopt, {}});
             if (audio) {
-                selected.push_back({*audio, {}, std::nullopt});
+                selected.push_back({*audio, {}, std::nullopt, {}});
+            }
+            // Text subtitles are optional extras: tracks that cannot be served
+            // (bitmap formats, ContentEncodings) are left out, not refused.
+            for (const auto& info : infos) {
+                if (info.type == track_type_subtitle && info.enabled && !info.encoded &&
+                    text_codec(info.codec_id)) {
+                    selected.push_back({info, {}, std::nullopt, {}});
+                }
             }
             for (auto& track : selected) {
                 pointers.push_back(&track);
@@ -837,8 +943,12 @@ Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size) {
     Mp4Movie movie;
     movie.timescale = movie_timescale;
     movie.tracks.push_back(video_track(selected[0], timestamp_scale));
-    if (selected.size() > 1) {
-        movie.tracks.push_back(audio_track(selected[1], timestamp_scale, reader));
+    for (std::size_t index = 1; index < selected.size(); ++index) {
+        if (selected[index].info.type == track_type_audio) {
+            movie.tracks.push_back(audio_track(selected[index], timestamp_scale, reader));
+        } else if (auto text = text_track(selected[index], timestamp_scale, reader)) {
+            movie.text_tracks.push_back(std::move(*text));
+        }
     }
     return movie;
 }

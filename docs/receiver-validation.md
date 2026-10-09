@@ -1403,6 +1403,24 @@ shared path (`build-pairing-shared\release`), one of them a progressive
 `gas.mp4`, failed with `connection` before playback. That executable has an
 Inbound Block rule on the Private profile (Allow only on Public). The rule was
 read, not changed; the shared host ran from its own path, which is allowed on
-Private. Not run: the C# binding and packaged UWP host on the receiver. Not run: real-world MKVs (other muxers,
+Private. Not run: the C# binding and packaged UWP host on the receiver.
+
+## HLS phase 3c: text subtitles (D60, 2026-10-09)
+
+The user's 6.3 GB film MKV (one English SubRip track) cast through
+`airplay2-cli cast --remux` (MSVC Release static on top of `15acd95`, existing
+profile; network read as Private) to the Living Room Apple TV 4K
+(AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged and not queried. The
+remux served `main.m3u8` with one WebVTT rendition (English, DEFAULT=NO,
+AUTOSELECT=YES). Offline, the WebVTT cues matched ffmpeg's conversion exactly.
+Record: [artifact](validation/native-hls-subtitles-windows-2026-10-09.json).
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| Film, subtitles enabled from the TV's menu | Playing at 1033 ms, owned; seek 3600 accepted (3639.4 s at the stop); 70 GETs all 200, including empty and single-cue WebVTT segments; local stop, `sender_stop`, cleaned, `failed_reads=0`, exit 0 | English offered in the subtitle menu; subtitles shown when enabled; in sync before and after the seek; video and audio normal |
+
+**PASS for this receiver and host.** Not run: several or forced subtitle
+tracks, ASS/WebVTT sources, sender-side subtitle selection, the C interface
+with subtitles. Not run: real-world MKVs (other muxers,
 long files), 7.1 E-AC-3, the C interface and UWP host, a sleeping receiver,
 other receivers and firmware.

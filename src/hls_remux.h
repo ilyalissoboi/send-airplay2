@@ -45,11 +45,24 @@ plan_segments(const Mp4Movie& movie, std::uint32_t target_seconds = default_segm
 [[nodiscard]] std::string media_playlist(const Mp4Movie& movie,
                                          const std::vector<SegmentLayout>& segments);
 
+/** The WebVTT media playlist of text track `track` (phase 3c): the same
+ * target duration and EXTINF values as the video, so its segments cover the
+ * same presentation windows, segment names t<track>s<N>.vtt, VOD, ENDLIST. */
+[[nodiscard]] std::string subtitle_playlist(const Mp4Movie& movie,
+                                            const std::vector<SegmentLayout>& segments,
+                                            std::size_t track);
+
 /// A remuxed presentation, ready for MediaServer::start_resource_set.
 struct RemuxedHls {
+    /// The entry point: index.m3u8 (the media playlist) without text tracks;
+    /// main.m3u8 (a multivariant playlist naming index.m3u8 and one WebVTT
+    /// rendition per text track) with them.
     std::string playlist_name;
-    std::vector<MediaResource> resources; ///< Playlist, init.mp4, then s0.m4s, s1.m4s, ...
+    /// The playlists, init.mp4, s0.m4s, s1.m4s, ..., and for text track T its
+    /// playlist t<T>.m3u8 and segments t<T>s0.vtt, t<T>s1.vtt, ...
+    std::vector<MediaResource> resources;
     std::size_t segment_count = 0;
+    std::size_t text_track_count = 0;
     std::uint32_t target_duration_seconds = 0;
 };
 
@@ -58,6 +71,9 @@ struct RemuxedHls {
  * playlist and init segment are generated here and held in memory; each media
  * segment's moof is generated per request and its samples are read from
  * `input` on demand.
+ *
+ * Text subtitle tracks of a Matroska source become WebVTT renditions of a
+ * multivariant playlist (phase 3c); their segments are generated here.
  *
  * Calls input.size() once and reads the moov, or the Matroska track metadata
  * and every block header, through input.read_at on this thread (with an
