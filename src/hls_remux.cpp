@@ -389,7 +389,10 @@ struct IndexedPresentation {
     }
 
     /// WebVTT segment of `track` for window `index_of`: the cues starting in
-    /// this segment and the previous one (a cue can run across one cut).
+    /// this segment and in every earlier segment that starts within 30 s
+    /// before it, so a cue running across several cuts stays in each window
+    /// it overlaps. Cues longer than that look-back (rare) are cut short here;
+    /// reading further back would scan arbitrarily far on every seek.
     std::shared_ptr<const std::string> webvtt_segment_text(std::size_t track, std::size_t index_of,
                                                            const MediaReadContext& context) {
         {
@@ -398,14 +401,17 @@ struct IndexedPresentation {
                 return webvtt[track][index_of];
             }
         }
-        TextTrack cues;
-        if (index_of > 0) {
-            const auto& previous = segment(index_of - 1, context)->cues.at(track);
-            cues.cues.insert(cues.cues.end(), previous.begin(), previous.end());
-        }
-        const auto& current = segment(index_of, context)->cues.at(track);
-        cues.cues.insert(cues.cues.end(), current.begin(), current.end());
+        constexpr std::uint64_t look_back_us = 30'000'000;
         const auto start = index->segment_start_us(index_of);
+        std::size_t first = index_of;
+        while (first > 0 && start - index->segment_start_us(first - 1) <= look_back_us) {
+            --first;
+        }
+        TextTrack cues;
+        for (auto earlier = first; earlier <= index_of; ++earlier) {
+            const auto& from = segment(earlier, context)->cues.at(track);
+            cues.cues.insert(cues.cues.end(), from.begin(), from.end());
+        }
         const auto end = index_of + 1 < durations_us.size()
                              ? index->segment_start_us(index_of + 1)
                              : std::numeric_limits<std::uint64_t>::max();

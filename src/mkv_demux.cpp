@@ -21,6 +21,7 @@ constexpr std::uint32_t id_doc_type = 0x4282;
 constexpr std::uint32_t id_segment = 0x18538067;
 constexpr std::uint32_t id_seek_head = 0x114D9B74;
 constexpr std::uint32_t id_info = 0x1549A966;
+constexpr std::uint32_t id_duration = 0x4489;
 constexpr std::uint32_t id_timestamp_scale = 0x2AD7B1;
 constexpr std::uint32_t id_tracks = 0x1654AE6B;
 constexpr std::uint32_t id_track_entry = 0xAE;
@@ -908,6 +909,7 @@ struct MkvLayout {
     std::vector<TrackInfo> selected; // select_tracks() order.
     std::uint64_t first_cluster = 0;
     std::optional<std::uint64_t> cues; // Absolute offset of the Cues element.
+    std::optional<double> duration;    // Info Duration, in TimestampScale ticks.
 };
 
 MkvLayout read_layout(WindowReader& reader, std::uint64_t file_size) {
@@ -945,6 +947,8 @@ MkvLayout read_layout(WindowReader& reader, std::uint64_t file_size) {
             for (const auto& field : children(data, 0, data.size())) {
                 if (field.id == id_timestamp_scale) {
                     layout.timestamp_scale = unsigned_value(data, field);
+                } else if (field.id == id_duration) {
+                    layout.duration = float_value(data, field);
                 }
             }
             if (layout.timestamp_scale == 0 ||
@@ -1292,11 +1296,24 @@ std::unique_ptr<MkvIndex> MkvIndex::open(const RandomReader& read, std::uint64_t
             return nullptr; // Sparse cues: the full scan plans better segments.
         }
     }
+    // A selective index (RFC 9559 22) can also leave a long tail after its
+    // last cue; Info Duration shows it before the tail is scanned.
+    const auto last_start = impl->start_ticks(impl->starts.size() - 1);
+    if (layout.duration &&
+        *layout.duration - static_cast<double>(last_start) > static_cast<double>(longest)) {
+        return nullptr;
+    }
 
     // The first segment fixes the formats, the reorder delay and the audio
     // grid; the last one fixes the end time.
     impl->end_ticks = std::numeric_limits<std::int64_t>::max();
     const auto first_scan = impl->scan(0, read);
+    // A selective index may begin after the first video frames; segment 0
+    // would then drop them, so the full scan reads such a file.
+    if (first_scan[0].frames.empty() ||
+        first_scan[0].frames.front().timestamp < impl->start_ticks(0)) {
+        return nullptr;
+    }
     const auto first_video = impl->video_frames(first_scan[0], 0);
     auto video = video_track(first_video, layout.timestamp_scale);
     impl->reorder_delay = video.edits.empty() ? 0 : video.edits.front().media_time;
@@ -1335,6 +1352,9 @@ std::unique_ptr<MkvIndex> MkvIndex::open(const RandomReader& read, std::uint64_t
         impl->video_samples(impl->video_frames(impl->scan(last, read)[0], last), last);
     impl->end_ticks =
         static_cast<std::int64_t>(last_samples.back().decode_time + last_samples.back().duration);
+    if (impl->end_ticks - last_start > longest) {
+        return nullptr; // The last segment would exceed 20 s.
+    }
     return std::unique_ptr<MkvIndex>(new MkvIndex(std::move(impl)));
 }
 
@@ -1391,9 +1411,27 @@ MkvIndex::Segment MkvIndex::read_segment(std::size_t segment, const RandomReader
         next = 2;
     }
     for (std::size_t index = next; index < tracks.size(); ++index) {
-        auto text =
-            text_track(frames_in(tracks[index], start, end), impl.layout.timestamp_scale, reader);
-        result.cues.push_back(text ? std::move(text->cues) : std::vector<TextCue>{});
+        // Keep the first frame past the window, when the scan reached it, so a
+        // cue without a duration can end at its successor as in the full scan.
+        auto window = frames_in(tracks[index], start, end);
+        const SelectedTrack* source = &tracks[index];
+        for (std::size_t frame = 0; frame < source->frames.size(); ++frame) {
+            if (source->frames[frame].timestamp >= end) {
+                window.frames.push_back(source->frames[frame]);
+                window.durations.push_back(
+                    frame < source->durations.size() ? source->durations[frame] : 0);
+                break;
+            }
+        }
+        auto text = text_track(window, impl.layout.timestamp_scale, reader);
+        std::vector<TextCue> cues = text ? std::move(text->cues) : std::vector<TextCue>{};
+        const auto end_us = end == std::numeric_limits<std::int64_t>::max()
+                                ? std::numeric_limits<std::uint64_t>::max()
+                                : impl.ticks_to_us(end);
+        cues.erase(std::remove_if(cues.begin(), cues.end(),
+                                  [end_us](const TextCue& cue) { return cue.start_us >= end_us; }),
+                   cues.end());
+        result.cues.push_back(std::move(cues));
     }
     return result;
 }

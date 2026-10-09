@@ -60,12 +60,17 @@ namespace send_airplay2::detail {
  * segments. Text tracks keep their metadata here; their cues come per
  * segment.
  *
+ * A text cue without BlockDuration or DefaultDuration ends at its successor
+ * when the segment's scan reaches it (up to 2 s past the segment), else
+ * after 5 s.
+ *
  * Thread-safe: read_segment() is const and reads through the given reader.
  */
 class MkvIndex {
 public:
-    /** Null when the file has no Cues for its video track, the cues would
-     * make a segment longer than 20 s, or the first segment has no audio
+    /** Null when the file has no Cues for its video track, the index begins
+     * after the first video frame, the cues would make a segment (the last
+     * one included) longer than 20 s, or the first segment has no audio
      * frames while the file has an audio track: read_mkv() then reads the
      * whole file. Refusals are as for read_mkv().
      * @throws RemuxException; exceptions from `read` propagate. */

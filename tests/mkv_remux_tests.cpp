@@ -812,10 +812,19 @@ struct VideoFrameSpec {
 /// One cluster: video frames (keyframe flags as given) at `video_ms` relative
 /// times and AAC frames every 64 ms (three 1024-sample frames at 48 kHz each
 /// block, Xiph-laced) over [start, start + span).
+/// One SubRip block on track 3: a BlockGroup with BlockDuration, or a
+/// SimpleBlock without any duration when duration_ms is 0.
+struct TextBlockSpec {
+    int relative_ms = 0;
+    std::string text;
+    std::uint64_t duration_ms = 0;
+};
+
 struct ClusterSpec {
     std::uint64_t start_ms = 0;
     std::vector<VideoFrameSpec> video;
     std::int16_t audio_span_ms = 0;
+    std::vector<TextBlockSpec> text;
 };
 
 /// Frame contents unique per cluster and frame index.
@@ -835,22 +844,37 @@ Bytes cluster_bytes(const ClusterSpec& spec, std::uint8_t cluster_id_byte) {
                                                      {frame_bytes(0x80, 4), frame_bytes(0x81, 5),
                                                       frame_bytes(0x82, 6)}))});
     }
+    for (const auto& cue : spec.text) {
+        const auto body = block(3, static_cast<std::int16_t>(cue.relative_ms), keyframe_flag,
+                                Lacing::none, {Bytes(cue.text.begin(), cue.text.end())});
+        content =
+            join({content, cue.duration_ms ? element(block_group_id,
+                                                     join({element(0xA1, body),
+                                                           uint_element(0x9B, cue.duration_ms)}))
+                                           : element(simple_block_id, body)});
+    }
     return element(cluster_id, content);
-}
-
-/// Bytes of an element ID and an 8-byte size, which `element` always writes.
-constexpr std::size_t element_header_bytes(std::uint32_t id) {
-    return (id > 0xFFFFFF ? 4 : id > 0xFFFF ? 3 : id > 0xFF ? 2 : 1) + 8;
 }
 
 /// A Matroska file whose SeekHead (first in the Segment) points to Cues after
 /// the clusters; one cue point per cluster that starts with a keyframe.
-Bytes indexed_mkv(const std::vector<ClusterSpec>& specs, bool with_cues = true) {
+Bytes indexed_mkv(const std::vector<ClusterSpec>& specs, bool with_cues = true,
+                  std::size_t first_cued_cluster = 0) {
     Bytes track_data = join({track_entry(video_spec()), track_entry([] {
                                  auto audio = aac_spec();
                                  audio.codec_delay_ns = 0;
                                  return audio;
                              }())});
+    if (std::any_of(specs.begin(), specs.end(),
+                    [](const ClusterSpec& spec) { return !spec.text.empty(); })) {
+        TrackSpec subtitles;
+        subtitles.number = 3;
+        subtitles.type = 17;
+        subtitles.codec = "S_TEXT/UTF8";
+        subtitles.codec_private.clear();
+        subtitles.flag_default = false;
+        track_data = join({track_data, track_entry(subtitles)});
+    }
     const auto info = element(info_id, uint_element(0x2AD7B1, 1'000'000));
     const auto tracks = element(tracks_id, track_data);
     std::vector<Bytes> clusters;
@@ -875,7 +899,7 @@ Bytes indexed_mkv(const std::vector<ClusterSpec>& specs, bool with_cues = true) 
     Bytes all_clusters;
     for (std::size_t index = 0; index < specs.size(); ++index) {
         const auto& spec = specs[index];
-        if (!spec.video.empty() && spec.video.front().keyframe &&
+        if (index >= first_cued_cluster && !spec.video.empty() && spec.video.front().keyframe &&
             spec.video.front().relative_ms == 0) {
             cue_points =
                 join({cue_points,
@@ -1038,6 +1062,47 @@ void indexed_open_gop_tests() {
           "audio decode times join at the cut");
 }
 
+void indexed_review_tests() {
+    group = "indexed MKV: selective indexes and subtitles";
+    const auto specs = regular_clusters();
+    // The index starts at the second cluster (3 s): segment 0 would drop the
+    // first 3 s, so the full scan reads the file.
+    const auto late = indexed_mkv(specs, true, 1);
+    check(MkvIndex::open(memory_reader(late), late.size()) == nullptr,
+          "an index starting after the first video frame falls back");
+
+    // One cue at 0 s, then 25 s of video in a cluster that starts with a
+    // non-keyframe (so it gets no cue): the last segment would last 25 s.
+    std::vector<ClusterSpec> tail(2);
+    tail[0].start_ms = 0;
+    tail[0].video = {{0, true}};
+    tail[0].audio_span_ms = 64;
+    tail[1].start_ms = 25'000;
+    tail[1].video = {{0, false}};
+    tail[1].audio_span_ms = 64;
+    const auto long_tail = indexed_mkv(tail);
+    check(MkvIndex::open(memory_reader(long_tail), long_tail.size()) == nullptr,
+          "a final segment over 20 s falls back");
+
+    // Subtitles: a 14 s cue from 1 s spans the cuts at 6.5 and 12.5 s; a cue
+    // without a duration at 6 s ends at its successor at 7 s, across a cut.
+    auto with_text = specs;
+    with_text[0].text = {{1000, "Long", 14'000}};
+    with_text[1].text = {{3000, "Until next", 0}};
+    with_text[2].text = {{500, "Next", 1000}};
+    const auto file = indexed_mkv(with_text);
+    check(MkvIndex::open(memory_reader(file), file.size()) != nullptr, "indexed with subtitles");
+    std::string entry;
+    const auto texts = remux_texts(file, entry);
+    for (const auto* name : {"t0s0.vtt", "t0s1.vtt", "t0s2.vtt"}) {
+        check(texts.at(name).find("00:00:01.000 --> 00:00:15.000\nLong") != std::string::npos,
+              std::string(name) + ": the long cue is in every window it overlaps");
+    }
+    check(texts.at("t0s0.vtt").find("00:00:06.000 --> 00:00:07.000\nUntil next") !=
+              std::string::npos,
+          "a cue without a duration ends at its successor in the next segment");
+}
+
 int main() {
     try {
         sample_entry_tests();
@@ -1048,6 +1113,7 @@ int main() {
         indexed_reading_tests();
         indexed_fallback_tests();
         indexed_open_gop_tests();
+        indexed_review_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';
