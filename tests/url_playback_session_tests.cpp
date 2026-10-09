@@ -983,6 +983,7 @@ int main(int argc, char** argv) {
         feedback_deadline_tests();
         feedback_cancel_tests();
         remote_feedback_stop_tests(mrp_fixtures);
+        stopped_near_end_tests(mrp_fixtures);
         startup_power_report_tests(mrp_fixtures);
         wake_before_play_tests(mrp_fixtures);
     } catch (const std::exception& error) {
