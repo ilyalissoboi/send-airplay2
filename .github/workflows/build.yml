@@ -94,6 +94,37 @@ jobs:
         run: cmake --build build-uwp --config Release
       - name: Check AppContainer, app C runtime and imports
         run: ./scripts/check_uwp_binaries.ps1 -Directory build-uwp/Release -Machine ${{ matrix.machine }}
+      - name: Keep the native libraries and notices for the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: uwp-${{ matrix.arch }}
+          path: |
+            build-uwp/Release/send_airplay2.dll
+            build-uwp/Release/libcrypto-*.dll
+            build-uwp/vcpkg_installed/${{ matrix.arch }}-uwp/share/openssl/copyright
+            build-uwp/vcpkg_installed/${{ matrix.arch }}-uwp/share/botan/copyright
+            build-uwp/vcpkg_installed/${{ matrix.arch }}-uwp/share/boost-asio/copyright
+          if-no-files-found: error
+          retention-days: 14
+  nuget:
+    # The SendAirPlay2 package with all three UWP architectures
+    # (docs/nuget-package.md), as an artifact; nothing is published.
+    needs: uwp
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: uwp-*
+          path: build-ci-uwp
+      - name: Pack
+        run: ./scripts/pack_nuget.ps1 -Native 'x64=build-ci-uwp/uwp-x64/Release','x86=build-ci-uwp/uwp-x86/Release','arm64=build-ci-uwp/uwp-arm64/Release' -VcpkgShare build-ci-uwp/uwp-x64/vcpkg_installed/x64-uwp/share -VersionSuffix "ci.${{ github.run_number }}" -OutputDirectory build-ci-package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: build-ci-package/*.nupkg
+          if-no-files-found: error
+          retention-days: 14
   sanitizers:
     runs-on: ubuntu-latest
     steps:

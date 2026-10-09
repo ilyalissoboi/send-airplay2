@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- C# binding over the experimental C interface (playback.h, credentials.h,
-       pairing.h). netstandard2.0 so UWP (.NET Native) and modern .NET hosts can
-       share it. No package dependencies. -->
+       pairing.h, receivers.h). netstandard2.0 so UWP (.NET Native) and modern
+       .NET hosts can share it. No package dependencies. -->
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
@@ -10,6 +10,26 @@
     <AssemblyName>SendAirPlay2</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>0.2.0</Version>
+    <!-- Follows the C interface: 0.3 is SAP2_PLAYBACK_API_VERSION 3. -->
+    <Version>0.3.0</Version>
   </PropertyGroup>
+
+  <!-- NuGet package (scripts/pack_nuget.ps1, docs/nuget-package.md). The script
+       stages the UWP-built native libraries (runtimes/win-*/native), the
+       third-party notices and the package readme in Sap2PackageContent; this
+       project packs that tree as is. -->
+  <PropertyGroup>
+    <PackageId>SendAirPlay2</PackageId>
+    <Authors>send-airplay2 contributors</Authors>
+    <Description>Experimental native AirPlay 2 video sender for UWP and .NET hosts: discovery, PIN pairing, casting local files (direct or remuxed to HLS) and playback control. C# binding plus UWP-built native libraries.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ilyalissoboi/send-airplay2</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ilyalissoboi/send-airplay2</RepositoryUrl>
+    <PackageTags>airplay;airplay2;apple-tv;cast;uwp</PackageTags>
+    <PackageReadmeFile Condition="'$(Sap2PackageContent)' != ''">README.md</PackageReadmeFile>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Sap2PackageContent)' != ''">
+    <None Include="$(Sap2PackageContent)\**\*" Pack="true" PackagePath="/" Visible="false" />
+  </ItemGroup>
 </Project>

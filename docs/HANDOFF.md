@@ -66,8 +66,20 @@ remux option, a start position, remembered files and a script mode
 26.6 ignores the queue item's start position; the library now seeks there
 before `Start` returns, which passed (user). The certification kit on 0.1.22.0
 matched D57 (only the AOT runtime in the host executable fails Supported
-APIs). Next: step 2. Record:
+APIs). Merged as PR #34. Record:
 [receiver-validation.md](receiver-validation.md#uwp-host-hls-remux-and-start-position-d61-2026-10-10).
+
+**Screenbox step 2 (fork PR #1, `b0efd6e0`):** the design now casts every
+file through the remux (user decision 7), routes the system media transport
+controls through the active `IMediaPlayer`, and has explicit end-of-item rules
+for the queue; both review threads were answered and resolved.
+
+**Screenbox step 3 (branch `claude/nuget-pack`):** `scripts/pack_nuget.ps1`
+packs the binding (now 0.3.0, following API version 3) with the UWP-built
+native libraries per architecture and the OpenSSL, Botan and Boost notices;
+CI packs all three architectures as an artifact
+([nuget-package.md](nuget-package.md)). Open: how the fork's CI restores a
+package that lives only in a local feed.
 
 ### Standalone items (D58-D59, merged)
 

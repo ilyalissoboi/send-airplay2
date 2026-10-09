@@ -1,4 +1,6 @@
 /build*/
+# Local NuGet feed written by scripts/pack_nuget.ps1.
+/packages-local/
 /vcpkg_installed/
 __pycache__/
 # .NET build output if the binding is built in place.
