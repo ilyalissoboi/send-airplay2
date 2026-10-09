@@ -389,7 +389,7 @@ int cast(const CastArguments& arguments) {
     std::optional<MediaSource> file;
     std::optional<HlsDirectory> hls;
     if (arguments.remux) {
-        auto remuxed = remux_mp4_to_hls(open_file_media_source(arguments.file, reads));
+        auto remuxed = remux_to_hls(open_file_media_source(arguments.file, reads));
         std::cout << "HLS remux: segments=" << remuxed.segment_count
                   << " target_duration=" << remuxed.target_duration_seconds << std::endl;
         hls = HlsDirectory{std::move(remuxed.playlist_name), std::move(remuxed.resources)};

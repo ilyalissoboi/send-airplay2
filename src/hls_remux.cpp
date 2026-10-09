@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "hls_remux.h"
+#include "mkv_demux.h"
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -245,14 +247,21 @@ std::string media_playlist(const Mp4Movie& movie, const std::vector<SegmentLayou
     return playlist;
 }
 
-RemuxedHls remux_mp4_to_hls(MediaSource input) {
+RemuxedHls remux_to_hls(MediaSource input) {
     if (!input.size || !input.read_at) {
         throw std::invalid_argument("remux requires a media source");
     }
     auto presentation = std::make_shared<Presentation>();
     presentation->input = std::move(input);
     const auto file_size = presentation->input.size();
-    presentation->movie = read_mp4(source_reader(presentation->input), file_size);
+    const auto reader = source_reader(presentation->input);
+    std::array<std::uint8_t, 4> magic{};
+    if (file_size >= magic.size()) {
+        reader(0, magic.data(), magic.size());
+    }
+    presentation->movie = starts_like_matroska(magic.data(), magic.size())
+                              ? read_mkv(reader, file_size)
+                              : read_mp4(reader, file_size);
     presentation->segments = plan_segments(presentation->movie);
 
     RemuxedHls result;

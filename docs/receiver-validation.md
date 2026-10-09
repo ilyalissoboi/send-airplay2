@@ -1358,3 +1358,27 @@ and blobs: [artifact](validation/native-hls-remux-windows-2026-10-09.json).
 **PASS for this receiver and host.** Not run: HEVC, AC-3/E-AC-3, MKV (phase
 3), long files, the C interface and UWP host, a sleeping receiver, other
 receivers and firmware.
+
+## HLS phase 3a: MKV (D60, 2026-10-09)
+
+Three MKVs made with ffmpeg 9.0.2 from `gas.mp4` (not committed), cast through
+the library's remux with `airplay2-cli cast --file X.mkv --remux`. Windows 11
+x64, MSVC Release static on top of `9fa8d6d`, existing built-in-store profile
+and firewall Allow rule; Living Room Apple TV 4K (AppleTV14,1), tvOS 26.6
+(23L773) assumed unchanged and not queried. Offline, every packet payload
+matched the source, video presentation times matched exactly and audio times
+within 0.33 ms. Lines, fixtures, hashes and blobs:
+[artifact](validation/native-hls-mkv-windows-2026-10-09.json).
+
+| Fixture | Native result | Observer |
+| --- | --- | --- |
+| H.264 + AAC-LC stereo 44.1 kHz | Playing at 816 ms, owned; pause, play, seek 110 accepted; 18 GETs all complete; `media_end` (MRP `at_end`), cleaned, `failed_reads=0`, exit 0 | Video and audio played; actions visible; Home at the end |
+| HEVC Main + AC-3 5.1 384 kbit/s 48 kHz | Playing at 880 ms, owned; controls accepted; 24 GETs all complete; `media_end` (MRP `at_end`), exit 0 | Video and audio played; actions visible; Home at the end |
+| H.264 + E-AC-3 stereo 256 kbit/s 48 kHz | Playing at 854 ms, owned; controls accepted; 18 GETs all complete; `media_end` (`near_end`, 131.5658 of 131.566 s), exit 0 | Video and audio played; actions visible; Home at the end |
+
+| User-provided 1 h 54 min film (6.3 GB, H.264 High 1920x802 + E-AC-3 5.1 Atmos JOC; title withheld) | Remux built in 1.9 s (warm; 4.9 s cold); playing at 1033 ms, owned; pause, play, seek 3600 (to 3609.6 s after 10 s), seek 6780 accepted; 35 GETs all complete; `media_end` at 6824.5 s (MRP `at_end`), exit 0 | Video and audio played after each seek; seeks landed correctly; Home at the end; Atmos not checked (no Atmos hardware) |
+
+**PASS for this receiver and host.** These are the first HEVC, AC-3 and E-AC-3
+casts recorded for this project, and the first long file. Not run: real-world MKVs (other muxers,
+long files), 7.1 E-AC-3, the C interface and UWP host, a sleeping receiver,
+other receivers and firmware.

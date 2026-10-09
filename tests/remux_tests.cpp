@@ -530,7 +530,7 @@ void presentation_tests() {
     group = "remuxed presentation";
     const auto file = std::make_shared<const Bytes>(mp4_file({video_spec(), audio_spec()}));
     // The source returns at most 5 bytes per read, so every layer handles short reads.
-    const auto remuxed = remux_mp4_to_hls(memory_media(file, 5));
+    const auto remuxed = remux_to_hls(memory_media(file, 5));
     check(remuxed.playlist_name == "index.m3u8", "playlist name");
     check(remuxed.segment_count == 2, "6-second target: two segments");
     check(remuxed.target_duration_seconds == 6, "target duration");

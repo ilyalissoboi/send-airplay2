@@ -87,7 +87,7 @@ int remux(const RemuxArguments& arguments) {
         throw std::invalid_argument("--out must be a new or empty directory");
     }
     auto source = open_file_media_source(arguments.file, std::make_shared<FileReadStats>());
-    const auto presentation = remux_mp4_to_hls(std::move(source));
+    const auto presentation = remux_to_hls(std::move(source));
     fs::create_directories(out);
     std::uint64_t bytes = 0;
     for (const auto& resource : presentation.resources) {

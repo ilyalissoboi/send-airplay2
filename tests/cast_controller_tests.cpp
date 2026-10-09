@@ -312,14 +312,17 @@ void cancellation_tests() {
         const auto stop_started = std::chrono::steady_clock::now();
         controller.stop();
         const auto stop_duration = std::chrono::steady_clock::now() - stop_started;
-        check(start.wait_for(0s) == std::future_status::ready,
-              "stop returns only after the pending start");
-        check(start.get() == CastResult::cancelled, "pending start is cancelled");
-        check(stop_duration < 1500ms, "cancellation is prompt, not the request deadline");
+        // stop() waits until start() has recorded its result. start() returns
+        // to the async wrapper just after, and the future becomes ready after
+        // that, so its readiness is checked with a bound rather than at once
+        // (an immediate check raced on loaded CI runners).
         const auto snapshot = controller.snapshot();
         check(snapshot.phase == CastPhase::start_failed &&
                   snapshot.start_result == CastResult::cancelled,
-              "cancelled start is recorded");
+              "stop returns only after the pending start recorded its cancellation");
+        check(start.wait_for(2s) == std::future_status::ready, "the pending start returns");
+        check(start.get() == CastResult::cancelled, "pending start is cancelled");
+        check(stop_duration < 1500ms, "cancellation is prompt, not the request deadline");
     }
     check(probe->releases == 1, "cancelled start releases the source once");
 }
