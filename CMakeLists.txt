@@ -20,11 +20,30 @@ set(sap2_verification_sources src/identity_crypto.cpp src/channel_keys.cpp src/p
 set(sap2_setup_sources src/pair_setup_crypto.cpp src/pair_setup.cpp)
 set(sap2_receiver_sources src/receiver_http.cpp src/native_socket.cpp src/receiver_stream.cpp src/receiver_connection.cpp src/event_channel.cpp src/ntp_timing.cpp)
 set(sap2_credential_sources src/credential_codec.cpp src/credential_store.cpp)
-# Built-in stores other than Windows: the macOS login keychain (D58).
+# Built-in stores other than Windows: the macOS login keychain (D58) and, on
+# Linux when libsecret is found through pkg-config, the Secret Service (D59).
+# Without libsecret Linux builds report the built-in store as unsupported.
 set(sap2_credential_libraries)
+option(SAP2_SECRET_SERVICE "Use libsecret for the Linux built-in credential store when found" ON)
 if(APPLE)
   list(APPEND sap2_credential_sources src/keychain_credential_store.cpp)
   set(sap2_credential_libraries "-framework Security" "-framework CoreFoundation")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SAP2_SECRET_SERVICE)
+  # Linux targets only: Android and other Unix targets are also UNIX, and a
+  # cross-build must not pick up the host's libsecret.
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(SAP2_LIBSECRET QUIET IMPORTED_TARGET libsecret-1>=0.19)
+  endif()
+  if(TARGET PkgConfig::SAP2_LIBSECRET)
+    message(STATUS "Linux built-in credential store: Secret Service (libsecret ${SAP2_LIBSECRET_VERSION})")
+    list(APPEND sap2_credential_sources src/secret_service_credential_store.cpp)
+    set(sap2_credential_libraries PkgConfig::SAP2_LIBSECRET)
+    # Every target that compiles credential_store.cpp selects the same store.
+    add_compile_definitions(SAP2_HAS_SECRET_SERVICE=1)
+  else()
+    message(STATUS "Linux built-in credential store: none (libsecret-1 >= 0.19 not found)")
+  endif()
 endif()
 set(sap2_mrp_sources src/protobuf_wire.cpp src/mrp_messages.cpp src/mrp_channel.cpp src/mrp_session.cpp)
 set(sap2_session_sources src/binary_plist.cpp src/session_messages.cpp src/url_playback_session.cpp ${sap2_mrp_sources})

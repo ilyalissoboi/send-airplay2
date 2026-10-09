@@ -23,6 +23,9 @@
 #include "keychain_credential_store.h"
 #endif
 #endif
+#ifdef SAP2_HAS_SECRET_SERVICE
+#include "secret_service_credential_store.h"
+#endif
 #ifdef SAP2_HAS_CREDENTIAL_MANAGER
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -205,6 +208,8 @@ std::unique_ptr<CredentialStore> native_credential_store(CredentialNamespace spa
     return std::make_unique<WindowsCredentialStore>(space);
 #elif defined(SAP2_HAS_KEYCHAIN)
     return keychain_credential_store(space);
+#elif defined(SAP2_HAS_SECRET_SERVICE)
+    return secret_service_credential_store(space);
 #else
     (void)space;
     throw CredentialException(CredentialError::unsupported);

@@ -79,6 +79,10 @@ ctest --test-dir build -C Release --output-on-failure
 ```
 
 On Linux/macOS, use `bootstrap-vcpkg.sh` with the same manifest/toolchain option.
+On Linux, install libsecret's development package (for example `libsecret-1-dev`)
+to get the Secret Service credential store; without it the built-in store is
+unsupported. Its tests need a running, unlocked keyring on the session bus, or
+they skip (CI runs them through `tests/with_test_keyring.sh`).
 vcpkg copies its dependency DLLs alongside Windows build targets. Redistributed
 builds must include the appropriate OpenSSL/Botan runtimes and license notices. Packaged
 UWP builds are described in [docs/uwp-native-build.md](docs/uwp-native-build.md); Android

@@ -36,7 +36,19 @@
 extern char** environ;
 #endif
 #endif
-#if defined(_WIN32) || defined(SAP2_TEST_KEYCHAIN)
+#if defined(__linux__) && defined(SAP2_HAS_SECRET_SERVICE)
+#define SAP2_TEST_SECRET_SERVICE 1
+#include <libsecret/secret.h>
+#include <signal.h>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <chrono>
+#include <cstdlib>
+#include <thread>
+extern char** environ;
+#endif
+#if defined(_WIN32) || defined(SAP2_TEST_KEYCHAIN) || defined(SAP2_TEST_SECRET_SERVICE)
 #define SAP2_TEST_NATIVE_STORE 1
 #endif
 
@@ -376,6 +388,15 @@ void workflow_tests() {
 }
 
 #ifdef SAP2_TEST_NATIVE_STORE
+/// Runs one native-store operation and names it if the store throws: the
+/// exception itself carries only a fixed category.
+template <class Action> auto store_step(const char* step, Action action) -> decltype(action()) {
+    try {
+        return action();
+    } catch (const CredentialException& error) {
+        throw std::runtime_error(std::string("native store, ") + step + ": " + error.what());
+    }
+}
 // Tests use only random, synthetic namespace entries, never application credentials.
 class TestSlot {
     CredentialStore& store_;
@@ -392,7 +413,8 @@ public:
             profile += hex[random.bytes[index] >> 4];
             profile += hex[random.bytes[index] & 15];
         }
-        require(!store_.load(profile), "synthetic slot must be absent before ownership");
+        require(!store_step("slot absence check", [&] { return store_.load(profile); }),
+                "synthetic slot must be absent before ownership");
     }
     ~TestSlot() {
         if (owned) {
@@ -456,14 +478,28 @@ void write_malformed_slot(const std::string& profile) {
     require(CredWriteW(&record, 0) != 0, "write owned malformed synthetic slot");
 }
 #else
-/// The same test binary re-run as a separate process (posix_spawn), so the item
-/// is read back without any in-process state.
-void verify_in_child_process(const std::string& profile) {
+/// This test executable's path, for re-running it as a child process.
+std::string executable_path() {
+#ifdef SAP2_TEST_KEYCHAIN
     std::uint32_t capacity = 0;
     (void)_NSGetExecutablePath(nullptr, &capacity);
     std::string path(capacity, '\0');
     require(_NSGetExecutablePath(path.data(), &capacity) == 0, "child executable path");
     path.resize(std::strlen(path.c_str()));
+    return path;
+#else
+    constexpr std::size_t max_path = 4096;
+    std::string path(max_path, '\0');
+    const auto length = readlink("/proc/self/exe", path.data(), path.size());
+    require(length > 0 && static_cast<std::size_t>(length) < path.size(), "child executable path");
+    path.resize(static_cast<std::size_t>(length));
+    return path;
+#endif
+}
+/// The same test binary re-run as a separate process (posix_spawn), so the item
+/// is read back without any in-process state.
+void verify_in_child_process(const std::string& profile) {
+    auto path = executable_path();
     std::string flag = "--load-synthetic";
     std::string slot = profile;
     char* arguments[] = {path.data(), flag.data(), slot.data(), nullptr};
@@ -489,6 +525,7 @@ void verify_in_child_process(const std::string& profile) {
     require(WIFEXITED(status) && WEXITSTATUS(status) == 0,
             "credentials persist across independent process");
 }
+#ifdef SAP2_TEST_KEYCHAIN
 /// A one-byte item where the store expects an encoded credential, in the test
 /// service the synthetic namespace uses.
 void write_malformed_slot(const std::string& profile) {
@@ -520,20 +557,84 @@ void write_malformed_slot(const std::string& profile) {
     require(status == errSecSuccess,
             "write owned malformed synthetic slot (status " + std::to_string(status) + ")");
 }
+#else
+/// A one-byte item where the store expects an encoded credential. The schema
+/// name, attribute names and test namespace are literals of the stored format,
+/// written independently of the adapter.
+void write_malformed_slot(const std::string& profile) {
+    static const SecretSchema schema = {"org.send-airplay2.Credential",
+                                        SECRET_SCHEMA_NONE,
+                                        {
+                                            {"namespace", SECRET_SCHEMA_ATTRIBUTE_STRING},
+                                            {"profile", SECRET_SCHEMA_ATTRIBUTE_STRING},
+                                            {nullptr, SECRET_SCHEMA_ATTRIBUTE_STRING},
+                                        },
+                                        0,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr};
+    const char invalid[] = {'\xff'};
+    auto* value = secret_value_new(invalid, sizeof(invalid), "application/octet-stream");
+    GError* error = nullptr;
+    const auto stored = secret_password_store_binary_sync(
+        &schema, SECRET_COLLECTION_DEFAULT, "send-airplay2 malformed test item", value, nullptr,
+        &error, "namespace", "tests/v1", "profile", profile.c_str(), nullptr);
+    secret_value_unref(value);
+    if (error) {
+        g_error_free(error);
+    }
+    require(stored && !error, "write owned malformed synthetic slot");
+}
 #endif
+#endif
+/// Whether the built-in store can be reached. Only the Secret Service can be
+/// missing on a supported build (no session bus or keyring); the test is then
+/// skipped unless SAP2_REQUIRE_SECRET_SERVICE=1, which CI sets.
+bool native_store_reachable(CredentialStore& store) {
+#ifdef SAP2_TEST_SECRET_SERVICE
+    try {
+        (void)store.load("test-reachability-probe");
+        return true;
+    } catch (const CredentialException& error) {
+        const char* required = std::getenv("SAP2_REQUIRE_SECRET_SERVICE");
+        if (error.reason() != CredentialError::unavailable ||
+            (required && std::string_view(required) == "1")) {
+            throw std::runtime_error(std::string("native store, reachability probe (load): ") +
+                                     error.what());
+        }
+        std::cout << "SKIP: Secret Service unavailable (no session bus or unlocked keyring); "
+                     "set SAP2_REQUIRE_SECRET_SERVICE=1 to fail instead.\n";
+        return false;
+    }
+#else
+    (void)store;
+    return true;
+#endif
+}
 void native_store_tests() {
     auto store = native_credential_store(CredentialNamespace::synthetic_test);
+    if (!native_store_reachable(*store)) {
+        return;
+    }
     TestSlot slot(*store);
     auto credentials = fixture_credentials();
-    store->save_new(slot.profile, *credentials);
+    store_step("first save_new", [&] { store->save_new(slot.profile, *credentials); });
     slot.owned = true;
-    auto reloaded = store->load(slot.profile);
+    auto reloaded = store_step("reload", [&] { return store->load(slot.profile); });
     require(static_cast<bool>(reloaded), "native load exists");
     same_credentials(*reloaded, *credentials, "native credential roundtrip");
     verify_in_child_process(slot.profile);
     rejects<CredentialException>([&] { store->save_new(slot.profile, *credentials); },
                                  "native overwrite refusal");
-    require(store->erase(slot.profile) && !store->erase(slot.profile) && !store->load(slot.profile),
+    require(store_step("erase",
+                       [&] {
+                           return store->erase(slot.profile) && !store->erase(slot.profile) &&
+                                  !store->load(slot.profile);
+                       }),
             "native idempotent erase");
     slot.owned = false;
 

@@ -16,8 +16,9 @@ merged (PR #22, `8ecb8b0`): x86 passed on the TV, ARM64 is built in CI only, and
 the kit failed only Supported APIs for the .NET AOT runtime in the host
 executable. D58 (branch `claude/macos-keychain`) adds the macOS login-keychain
 built-in store, which passed its native-store tests on CI's macOS runner; the
-Linux Secret Service store (D59) is stacked on it. See the D57 and D58 records
-in section 4.
+Linux Secret Service store (D59, branch `claude/linux-secret-service`) is
+stacked on it and passed against a throwaway GNOME Keyring in CI. See the D57,
+D58 and D59 records in section 4.
 
 **Wake before play (D56) is merged.** The user had asked whether a cast can wake
 the receiver and chose the order: reproduce, check pyatv, fix. It records the receiver's MRP power reports in the start
@@ -1045,6 +1046,21 @@ native-store tests now run on macOS too and passed on CI's `macos-26-arm64`
 image, static and shared. Not run: a developer Mac, rebuilt-binary prompts,
 Intel Macs. Record:
 [credential-storage.md](credential-storage.md#macos-login-keychain-d58).
+
+**D59 (Linux Secret Service built-in store, 2026-10-08):** part of the
+standalone items. Research (libsecret reference): the synchronous binary API
+stores and looks up `SecretValue` secrets; storing **replaces** a matching item;
+errors come back as `GError`. Engineering choices: optional system libsecret
+(>= 0.19, pkg-config, Linux targets only, `SAP2_SECRET_SERVICE`), one item per
+profile under schema `org.send-airplay2.Credential` (attributes `namespace`,
+`profile`) in the default collection, a per-user `flock` in `$XDG_RUNTIME_DIR`
+around check-then-store and erase, every error unavailable; tests skip without a
+Secret Service unless `SAP2_REQUIRE_SECRET_SERVICE=1`. CI's Ubuntu jobs run them
+against a throwaway GNOME Keyring (`tests/with_test_keyring.sh`); they passed at
+`4176b7d`, static and shared, after a lock-path fix. libsecret is
+LGPL-2.1-or-later (dependencies.md). Not run: a Linux desktop, a locked keyring,
+other Secret Service providers. Record:
+[credential-storage.md](credential-storage.md#linux-secret-service-d59).
 
 **D56 (casting to a sleeping receiver, 2026-10-08):** the user asked whether a
 cast can wake the receiver remotely and chose the suggested order. Reproduced:
