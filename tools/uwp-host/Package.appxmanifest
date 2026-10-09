@@ -7,8 +7,9 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  IgnorableNamespaces="uap">
-  <Identity Name="SendAirPlay2.UwpHost" Publisher="CN=send-airplay2 test" Version="0.1.14.0" />
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  IgnorableNamespaces="uap uap5">
+  <Identity Name="SendAirPlay2.UwpHost" Publisher="CN=send-airplay2 test" Version="0.1.22.0" />
   <Properties>
     <DisplayName>send-airplay2 UWP test host</DisplayName>
     <PublisherDisplayName>send-airplay2 (test)</PublisherDisplayName>
@@ -26,6 +27,14 @@
         BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+      <!-- Test automation: "sap2-uwp-host NAME" runs LocalState\scripts\NAME.txt. -->
+      <Extensions>
+        <uap5:Extension Category="windows.appExecutionAlias" Executable="SendAirPlay2.UwpHost.exe" EntryPoint="SendAirPlay2.UwpHost.App">
+          <uap5:AppExecutionAlias>
+            <uap5:ExecutionAlias Alias="sap2-uwp-host.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
     </Application>
   </Applications>
   <Capabilities>

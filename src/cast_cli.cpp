@@ -42,6 +42,7 @@ constexpr std::uint32_t default_cast_media_connections = 16;
 // server's maximum per-request budget, as `serve` does.
 constexpr std::uint32_t media_request_timeout_ms = 600000;
 constexpr std::chrono::milliseconds state_poll{250};
+constexpr std::uint32_t max_start_position_seconds = 24 * 3600;
 
 struct CastArguments {
     std::string address;
@@ -53,9 +54,10 @@ struct CastArguments {
     std::string content_type = "video/mp4";
     std::uint32_t start_timeout_ms = 30000;
     std::uint32_t media_connections = default_cast_media_connections;
-    bool event_log = false;      // Diagnostic: print value-free event outlines.
-    bool media_log = false;      // Diagnostic: bounded HTTP completion facts.
-    bool minimal_remote = false; // Comparison only: remote SETUP/events without MRP.
+    bool event_log = false;                   // Diagnostic: print value-free event outlines.
+    bool media_log = false;                   // Diagnostic: bounded HTTP completion facts.
+    bool minimal_remote = false;              // Comparison only: remote SETUP/events without MRP.
+    std::uint32_t start_position_seconds = 0; // Development: the queue item's start.
 };
 
 std::uint32_t parse_bounded(std::string_view value, std::uint32_t minimum, std::uint32_t maximum,
@@ -112,6 +114,9 @@ CastArguments parse_arguments(int argc, const char* const* argv) {
         } else if (option == "--media-connections") {
             arguments.media_connections =
                 parse_bounded(value, 1, max_media_connections, "media connections");
+        } else if (option == "--start-position") {
+            arguments.start_position_seconds =
+                parse_bounded(value, 0, max_start_position_seconds, "start position");
         } else {
             throw std::invalid_argument("unknown option: " + std::string(option));
         }
@@ -421,6 +426,7 @@ int cast(const CastArguments& arguments) {
     options.receiver = {arguments.address, arguments.port, 0};
     options.media_url = hls ? server->resource_url(hls->playlist_name) : server->url();
     options.start_timeout = std::chrono::milliseconds(arguments.start_timeout_ms);
+    options.start_position_seconds = arguments.start_position_seconds;
     options.record_event_structure = arguments.event_log;
     options.enable_mrp = !arguments.minimal_remote;
     std::cout << "Starting playback." << std::endl;
