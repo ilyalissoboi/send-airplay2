@@ -23,14 +23,19 @@ namespace send_airplay2::detail {
 
 /// AAC settings read from an AudioSpecificConfig (ISO/IEC 14496-3 1.6.2.1).
 struct AacConfig {
-    std::uint8_t object_type = 0;
-    std::uint32_t sample_rate = 0; ///< Core sampling frequency.
-    std::uint8_t channels = 0;     ///< channelConfiguration; 0 means a PCE.
+    std::uint8_t object_type = 0;    ///< The core object type (after any SBR/PS signaling).
+    std::uint32_t sample_rate = 0;   ///< Core sampling frequency.
+    std::uint8_t channels = 0;       ///< channelConfiguration; 0 means a PCE.
+    std::uint32_t frame_samples = 0; ///< 1024, or 960 with frameLengthFlag.
 };
 
-/** Reads the leading fields of an AudioSpecificConfig.
+/** Reads an AudioSpecificConfig up to GASpecificConfig's frameLengthFlag,
+ * through explicit SBR/PS signaling (object types 5 and 29) to the core
+ * object type.
  * @throws RemuxException (malformed) when it is shorter than those fields or
- *         names a reserved sampling frequency index. */
+ *         names a reserved sampling frequency index; (unsupported) for a core
+ *         object type outside AAC Main, LC, SSR and LTP, whose frames are not
+ *         1024 or 960 samples. */
 [[nodiscard]] AacConfig read_aac_config(const Bytes& audio_specific_config);
 
 /** A two-byte AudioSpecificConfig for an MKV A_AAC/... codec ID without

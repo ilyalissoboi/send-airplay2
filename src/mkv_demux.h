@@ -24,7 +24,7 @@ namespace send_airplay2::detail {
  * reorder delay so composition offsets stay non-negative, and an edit list
  * removes that delay. The video timescale is 10^9 / TimestampScale. Audio
  * uses its sample rate as the timescale and one codec frame per sample
- * (1024 for AAC, 1536 for AC-3, 256 x blocks for E-AC-3), following a
+ * (1024 or 960 for AAC, 1536 for AC-3, 256 x blocks for E-AC-3), following a
  * block's timestamp where it differs from that timeline by more than the
  * TimestampScale rounding (half a tick) plus one sample; a CodecDelay
  * becomes an edit list that skips the priming samples.

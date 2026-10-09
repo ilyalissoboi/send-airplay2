@@ -168,25 +168,42 @@ Bytes visual_sample_entry(const std::string& codec, std::uint16_t width, std::ui
 }
 
 AacConfig read_aac_config(const Bytes& audio_specific_config) {
-    constexpr std::uint32_t escape_object_type = 31;
-    constexpr std::uint32_t explicit_frequency_index = 15;
+    // ISO/IEC 14496-3 1.6.2.1 (AudioSpecificConfig) and 4.4.1 (GASpecificConfig).
+    constexpr std::uint32_t sbr_object_type = 5;
+    constexpr std::uint32_t ps_object_type = 29;
+    constexpr std::uint32_t aac_main = 1;
+    constexpr std::uint32_t aac_ltp = 4; // Main, LC, SSR and LTP: 1024/960-sample frames.
     BitReader bits(audio_specific_config.data(), audio_specific_config.size(),
                    "AudioSpecificConfig");
+    const auto object_type = [&bits] {
+        constexpr std::uint32_t escape_object_type = 31;
+        const auto value = bits.bits(5);
+        return value == escape_object_type ? 32 + bits.bits(6) : value;
+    };
+    const auto sampling_frequency = [&bits] {
+        constexpr std::uint32_t explicit_frequency_index = 15;
+        const auto index = bits.bits(4);
+        if (index == explicit_frequency_index) {
+            return bits.bits(24);
+        }
+        if (index >= aac_sample_rates.size()) {
+            malformed("AudioSpecificConfig with a reserved sampling frequency index");
+        }
+        return aac_sample_rates[index];
+    };
     AacConfig config;
-    auto object_type = bits.bits(5);
-    if (object_type == escape_object_type) {
-        object_type = 32 + bits.bits(6);
-    }
-    config.object_type = static_cast<std::uint8_t>(object_type);
-    const auto index = bits.bits(4);
-    if (index == explicit_frequency_index) {
-        config.sample_rate = bits.bits(24);
-    } else if (index < aac_sample_rates.size()) {
-        config.sample_rate = aac_sample_rates[index];
-    } else {
-        malformed("AudioSpecificConfig with a reserved sampling frequency index");
-    }
+    auto type = object_type();
+    config.sample_rate = sampling_frequency();
     config.channels = static_cast<std::uint8_t>(bits.bits(4));
+    if (type == sbr_object_type || type == ps_object_type) {
+        (void)sampling_frequency(); // The SBR output rate; the core rate times the frames.
+        type = object_type();
+    }
+    if (type < aac_main || type > aac_ltp) {
+        unsupported("AAC object type " + std::to_string(type));
+    }
+    config.object_type = static_cast<std::uint8_t>(type);
+    config.frame_samples = bits.bits(1) ? 960 : 1024; // frameLengthFlag.
     return config;
 }
 

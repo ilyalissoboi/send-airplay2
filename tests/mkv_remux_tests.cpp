@@ -97,7 +97,18 @@ void sample_entry_tests() {
     const Bytes asc{0x11, 0x90};
     const auto aac = read_aac_config(asc);
     check(aac.object_type == 2 && aac.sample_rate == 48000 && aac.channels == 2, "ASC fields");
+    check(aac.frame_samples == 1024, "1024-sample frames without frameLengthFlag");
     check(aac_config(2, 48000, 2) == asc, "ASC built from a legacy codec ID");
+    // 0x1194: the same fields with frameLengthFlag set (bit 13).
+    check(read_aac_config({0x11, 0x94}).frame_samples == 960, "frameLengthFlag: 960 samples");
+    // HE-AAC with explicit SBR: object type 5, core index 6 (24 kHz), 2
+    // channels, extension index 3 (48 kHz), core type 2, frameLengthFlag 0:
+    // 00101 0110 0010 0011 00010 0 -> 0x2b 0x11 0x88.
+    const auto he_aac = read_aac_config({0x2b, 0x11, 0x88});
+    check(he_aac.object_type == 2 && he_aac.sample_rate == 24000 && he_aac.frame_samples == 1024,
+          "explicit SBR: core LC at 24 kHz, 1024-sample frames");
+    expect_failure(RemuxFailure::unsupported, "AAC-LD (object type 23)",
+                   [] { (void)read_aac_config({0xb9, 0x90}); });
     expect_failure(RemuxFailure::unsupported, "AAC rate without an index",
                    [] { (void)aac_config(2, 50000, 2); });
     // esds: ES (3, 25 bytes): ES_ID 0, flags 0; DecoderConfig (4, 17 bytes):
@@ -249,6 +260,7 @@ struct TrackSpec {
     bool flag_default = true;
     bool encoded = false;
     std::uint64_t codec_delay_ns = 0;
+    std::uint64_t display_width = 0; // Omitted when zero.
 };
 
 Bytes track_entry(const TrackSpec& spec) {
@@ -265,8 +277,11 @@ Bytes track_entry(const TrackSpec& spec) {
         data = join({data, element(0x6D80, element(0x6240, uint_element(0x5031, 0)))});
     }
     if (spec.type == 1) {
-        data =
-            join({data, element(0xE0, join({uint_element(0xB0, 1280), uint_element(0xBA, 720)}))});
+        Bytes video = join({uint_element(0xB0, 1280), uint_element(0xBA, 720)});
+        if (spec.display_width) {
+            video = join({video, uint_element(0x54B0, spec.display_width)});
+        }
+        data = join({data, element(0xE0, video)});
     } else {
         data = join(
             {data, element(0xE1, join({float_element(0xB5, 48000.0F), uint_element(0x9F, 2)}))});
@@ -452,6 +467,12 @@ void selection_and_refusal_tests() {
           "remuxable audio chosen over an unremuxable default track");
 
     refuse(RemuxFailure::unsupported, "only DTS audio", mkv_file({video_spec(), dts}, one_frame));
+    auto anamorphic = video_spec();
+    anamorphic.display_width = 1707; // DisplayHeight omitted: it defaults to 720.
+    const auto wide = mkv_file({anamorphic}, one_frame);
+    check(read_mkv(memory_reader(wide), wide.size()).tracks[0].sample_entry ==
+              visual_sample_entry("avc1", 1280, 720, 1707, 720, {1, 0x64, 0, 0x1f, 0xff}),
+          "DisplayWidth alone keeps its aspect ratio (pasp)");
     auto mpeg4 = video_spec();
     mpeg4.codec = "V_MPEG4/ISO/ASP";
     refuse(RemuxFailure::unsupported, "MPEG-4 Part 2 video", mkv_file({mpeg4}, one_frame));

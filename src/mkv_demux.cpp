@@ -68,7 +68,6 @@ constexpr std::uint8_t xiph_lacing = 0x02;
 constexpr std::uint8_t fixed_lacing = 0x04;
 constexpr std::uint8_t ebml_lacing = 0x06;
 constexpr std::size_t dolby_header_bytes = 16; // Covers both sync frame headers' fields.
-constexpr std::uint32_t aac_frame_samples = 1024;
 
 [[noreturn]] void malformed(const std::string& what) {
     throw RemuxException(RemuxFailure::malformed, "MKV: " + what);
@@ -569,9 +568,13 @@ Mp4Track video_track(const SelectedTrack& selected, std::uint64_t timestamp_scal
         static_cast<std::uint16_t>(std::min<std::uint64_t>(info.pixel_width, 0xffff));
     const auto height =
         static_cast<std::uint16_t>(std::min<std::uint64_t>(info.pixel_height, 0xffff));
-    const bool pixels = info.display_unit == 0 && info.display_width && info.display_height;
-    const auto display_width = static_cast<std::uint32_t>(pixels ? info.display_width : width);
-    const auto display_height = static_cast<std::uint32_t>(pixels ? info.display_height : height);
+    // A missing display dimension defaults to its pixel dimension, each on its
+    // own (RFC 9559 5.1.4.1.28); other display units carry no pixel size.
+    const bool pixels = info.display_unit == 0;
+    const auto display_width =
+        static_cast<std::uint32_t>(pixels && info.display_width ? info.display_width : width);
+    const auto display_height =
+        static_cast<std::uint32_t>(pixels && info.display_height ? info.display_height : height);
     track.sample_entry = visual_sample_entry(track.codec, width, height, display_width,
                                              display_height, info.codec_private);
     track.track_header = track_header_box(TrackKind::video, 1, display_width, display_height);
@@ -647,7 +650,7 @@ Mp4Track audio_track(const SelectedTrack& selected, std::uint64_t timestamp_scal
         }
         const auto aac = read_aac_config(config);
         sample_rate = aac.sample_rate;
-        frame_samples = aac_frame_samples;
+        frame_samples = aac.frame_samples;
         const auto channels =
             aac.channels ? aac.channels : static_cast<std::uint8_t>(info.channels);
         track.codec = "mp4a";
