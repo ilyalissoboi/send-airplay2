@@ -2,6 +2,7 @@
 // Reads ISO base media file format sample tables (ISO/IEC 14496-12) for the
 // HLS remux (D60). Written from the specification; no third-party code.
 #include "mp4_demux.h"
+#include "text_tracks.h"
 #include <algorithm>
 #include <array>
 #include <limits>
@@ -563,12 +564,208 @@ const char* remux_failure_name(RemuxFailure reason) noexcept {
     return "not remuxable";
 }
 
+namespace {
+bool text_handler(const std::vector<Box>& trak) {
+    const auto mdia = children(require(trak, fourcc("mdia")));
+    auto handler = require(mdia, fourcc("hdlr")).payload();
+    handler.full_box_version();
+    handler.skip(4); // pre_defined.
+    const auto type = handler.u32();
+    return type == fourcc("sbtl") || type == fourcc("text") || type == fourcc("subt");
+}
+} // namespace
+
 bool remuxable_video_codec(const std::string& codec) {
     return codec == "avc1" || codec == "avc3" || codec == "hvc1" || codec == "hev1";
 }
 bool remuxable_audio_codec(const std::string& codec) {
     return codec == "mp4a" || codec == "ac-3" || codec == "ec-3";
 }
+
+namespace {
+// --- Text subtitle tracks (D60) ---------------------------------------------
+
+constexpr std::size_t max_text_sample_bytes = 64 * 1024;
+constexpr std::uint64_t max_text_bytes_per_track = 16ULL << 20;
+// 3GPP TS 26.245 5.16: displayFlags bit for "all samples are forced".
+constexpr std::uint32_t tx3g_all_samples_forced = 0x40000000;
+constexpr std::size_t sample_entry_header_fields = 8; // Reserved 6 and data_reference_index.
+
+/// "eng" from mdhd's packed ISO-639-2/T language (three 5-bit letters).
+std::string unpacked_language(std::uint16_t packed) {
+    std::string code(3, ' ');
+    for (int index = 0; index < 3; ++index) {
+        code[static_cast<std::size_t>(index)] =
+            static_cast<char>(((packed >> (10 - 5 * index)) & 0x1F) + 0x60);
+    }
+    return code;
+}
+
+/// Bold, italic and underline runs of a tx3g sample's 'styl' modifier box
+/// (TS 26.245 5.17.1.1): StyleRecords of startChar, endChar, font-ID,
+/// face-style-flags (1 bold, 2 italic, 4 underline), font-size and colour.
+/// Fonts, sizes and colours have no WebVTT cue-text form and are dropped.
+std::vector<TextStyleRun> tx3g_styles(const Bytes& sample, std::size_t modifiers) {
+    constexpr std::size_t style_record_bytes = 12;
+    std::vector<TextStyleRun> runs;
+    if (modifiers >= sample.size()) {
+        return runs;
+    }
+    for (const auto& box : children(sample.data() + modifiers, sample.size() - modifiers)) {
+        if (box.type != fourcc("styl")) {
+            continue;
+        }
+        auto fields = box.payload();
+        const auto count = fields.u16();
+        for (std::uint16_t index = 0; index < count && fields.remaining() >= style_record_bytes;
+             ++index) {
+            TextStyleRun run;
+            run.start = fields.u16();
+            run.end = fields.u16();
+            fields.skip(2); // font-ID.
+            const auto face = fields.u8();
+            fields.skip(1 + 4); // font-size, text-color-rgba.
+            run.bold = (face & 0x01) != 0;
+            run.italic = (face & 0x02) != 0;
+            run.underline = (face & 0x04) != 0;
+            if (run.bold || run.italic || run.underline) {
+                runs.push_back(run);
+            }
+        }
+    }
+    return runs;
+}
+
+/// Cue text of one tx3g sample (TS 26.245 5.17): a 16-bit length, then UTF-8
+/// or UTF-16 (byte-order mark FE FF) text, then modifier boxes, of which the
+/// 'styl' bold/italic/underline runs are kept.
+std::string tx3g_text(const Bytes& sample) {
+    if (sample.size() < 2) {
+        return {};
+    }
+    const std::size_t length = (static_cast<std::size_t>(sample[0]) << 8) | sample[1];
+    const auto text_bytes = std::min(length, sample.size() - 2);
+    const std::string_view text(reinterpret_cast<const char*>(sample.data()) + 2, text_bytes);
+    std::vector<TextStyleRun> runs;
+    try {
+        runs = tx3g_styles(sample, 2 + text_bytes);
+    } catch (const RemuxException&) {
+        // A malformed modifier box loses the styling, not the text.
+    }
+    if (text.size() >= 2 && static_cast<unsigned char>(text[0]) == 0xFE &&
+        static_cast<unsigned char>(text[1]) == 0xFF) {
+        return plain_text_to_webvtt(utf16be_to_utf8(text.substr(2)), runs);
+    }
+    return plain_text_to_webvtt(text, runs);
+}
+
+/// Cue texts of one wvtt sample (ISO/IEC 14496-30 7): each 'vttc' box's
+/// 'payl' payload, already WebVTT cue text; 'vtte' (no cue) gives none.
+std::vector<std::string> wvtt_texts(const Bytes& sample) {
+    std::vector<std::string> texts;
+    for (const auto& cue : children(sample.data(), sample.size())) {
+        if (cue.type != fourcc("vttc")) {
+            continue;
+        }
+        // Named: find returns a pointer into this vector.
+        const auto cue_boxes = children(cue);
+        if (const auto* payload = find(cue_boxes, fourcc("payl"))) {
+            const std::string_view text(
+                reinterpret_cast<const char*>(payload->begin + payload->header),
+                payload->size - payload->header);
+            auto converted = webvtt_cue_text(text);
+            if (!converted.empty()) {
+                texts.push_back(std::move(converted));
+            }
+        }
+    }
+    return texts;
+}
+
+/// The text track of a trak with a tx3g or wvtt entry, or nothing for other
+/// text formats or a track over the size limits. Samples wholly before the
+/// first media edit are not presented and give no cue; one crossing it starts
+/// at the edit. Throws RemuxException for a layout it cannot read.
+std::optional<TextTrack> read_text_track(const std::vector<Box>& trak, const RandomReader& read,
+                                         std::uint64_t file_size, std::uint32_t movie_timescale) {
+    constexpr std::uint32_t track_enabled_flag = 0x1;
+    auto header = require(trak, fourcc("tkhd")).payload();
+    header.skip(1);
+    const auto flags = (static_cast<std::uint32_t>(header.u8()) << 16) | header.u16();
+    const auto mdia = children(require(trak, fourcc("mdia")));
+    std::uint16_t packed_language = 0;
+    const auto timescale =
+        header_timescale(require(mdia, fourcc("mdhd")).payload(), &packed_language);
+    const auto minf = children(require(mdia, fourcc("minf")));
+    const auto stbl = children(require(minf, fourcc("stbl")));
+    const auto entry = sample_entry(require(stbl, fourcc("stsd")));
+    const bool tx3g = entry.type == fourcc("tx3g");
+    if (!tx3g && entry.type != fourcc("wvtt")) {
+        return std::nullopt;
+    }
+    TextTrack track;
+    track.language = language_tag(unpacked_language(packed_language));
+    track.default_track = (flags & track_enabled_flag) != 0;
+    if (tx3g) {
+        auto fields = entry.payload();
+        fields.skip(sample_entry_header_fields);
+        track.forced = (fields.u32() & tx3g_all_samples_forced) != 0;
+    }
+    // Presentation = media time - the media edit's start + any empty edit.
+    std::int64_t media_start = 0;
+    std::uint64_t empty_us = 0;
+    for (const auto& edit : edit_list(trak)) {
+        if (edit.media_time == -1) {
+            empty_us += edit.segment_duration * 1'000'000 / movie_timescale;
+        } else {
+            media_start = edit.media_time;
+            break;
+        }
+    }
+    const auto to_us = [timescale, media_start, empty_us](std::int64_t ticks) -> std::uint64_t {
+        const auto relative = ticks - media_start;
+        return relative <= 0
+                   ? empty_us
+                   : empty_us + static_cast<std::uint64_t>(relative) / timescale * 1'000'000 +
+                         static_cast<std::uint64_t>(relative) % timescale * 1'000'000 / timescale;
+    };
+    std::uint64_t total = 0;
+    for (const auto& sample : sample_table(stbl, file_size)) {
+        if (sample.size > max_text_sample_bytes) {
+            return std::nullopt; // A partial rendition would silently miss cues.
+        }
+        if (sample.size <= 2) {
+            continue; // Two bytes is an empty tx3g sample: a gap between cues.
+        }
+        const auto start =
+            static_cast<std::int64_t>(sample.decode_time) + sample.composition_offset;
+        if (start + static_cast<std::int64_t>(sample.duration) <= media_start) {
+            continue; // Wholly before the media edit, so not presented.
+        }
+        total += sample.size;
+        if (total > max_text_bytes_per_track) {
+            return std::nullopt;
+        }
+        Bytes payload(sample.size);
+        read(sample.offset, payload.data(), payload.size());
+        const auto start_us = to_us(start);
+        const auto end_us = std::max(to_us(start + sample.duration), start_us + 1000);
+        const auto texts =
+            tx3g ? std::vector<std::string>{tx3g_text(payload)} : wvtt_texts(payload);
+        for (const auto& text : texts) {
+            if (!text.empty()) {
+                track.cues.push_back({start_us, end_us, text});
+            }
+        }
+    }
+    if (track.cues.empty()) {
+        return std::nullopt;
+    }
+    std::stable_sort(track.cues.begin(), track.cues.end(),
+                     [](const TextCue& a, const TextCue& b) { return a.start_us < b.start_us; });
+    return track;
+}
+} // namespace
 
 Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size) {
     const auto location = scan_top_level(read, file_size);
@@ -610,6 +807,24 @@ Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size) {
     movie.tracks.push_back(read_track(video->first, video->second, file_size));
     if (audio) {
         movie.tracks.push_back(read_track(audio->first, audio->second, file_size));
+    }
+    // Text subtitles are extras: any track that cannot be served is left out,
+    // including a malformed or unsupported layout (several stsd entries, stz2).
+    // Read failures and cancellation are not RemuxException and still propagate.
+    for (const auto& box : boxes) {
+        if (box.type != fourcc("trak")) {
+            continue;
+        }
+        try {
+            const auto trak = children(box);
+            if (text_handler(trak)) {
+                if (auto text = read_text_track(trak, read, file_size, movie.timescale)) {
+                    movie.text_tracks.push_back(std::move(*text));
+                }
+            }
+        } catch (const RemuxException&) {
+            // Left out; the video and audio remux is unaffected.
+        }
     }
     return movie;
 }

@@ -112,6 +112,7 @@ struct TrackSpec {
     std::uint32_t tkhd_flags = 3;
     std::uint32_t stsd_entries = 1;
     Bytes edts;
+    std::uint16_t language = 0x55c4; // mdhd packed ISO-639-2/T; "und".
 };
 
 inline Bytes track(const TrackSpec& spec, std::uint32_t track_id) {
@@ -122,7 +123,7 @@ inline Bytes track(const TrackSpec& spec, std::uint32_t track_id) {
         stsd_fields.insert(stsd_fields.end(), spec.entry.begin(), spec.entry.end());
     }
     Bytes mdhd_fields = words({0, 0, spec.timescale, 0});
-    put16(mdhd_fields, 0x55c4); // "und".
+    put16(mdhd_fields, spec.language);
     put16(mdhd_fields, 0);
     Bytes hdlr_fields = words({0});
     put_type(hdlr_fields, spec.handler);
@@ -186,7 +187,10 @@ inline TrackSpec audio_spec(const Bytes& entry = audio_entry("mp4a", esds(0x40))
     return spec;
 }
 
-inline Bytes mp4_file(const std::vector<TrackSpec>& tracks, bool fragmented = false) {
+/// `tail` (if any) follows the moov in a 'free' box, for samples placed
+/// after the fixed mdat layout.
+inline Bytes mp4_file(const std::vector<TrackSpec>& tracks, bool fragmented = false,
+                      const Bytes& tail = {}) {
     // 16 bytes: major brand and minor version, no compatible brands.
     Bytes file = box("ftyp", join({Bytes{'i', 's', 'o', 'm'}, words({0})}));
     Bytes payload;
@@ -204,6 +208,9 @@ inline Bytes mp4_file(const std::vector<TrackSpec>& tracks, bool fragmented = fa
     file = join({file, box("moov", moov_payload)});
     if (fragmented) {
         file = join({file, box("moof", full_box("mfhd", 0, 0, words({1})))});
+    }
+    if (!tail.empty()) {
+        file = join({file, box("free", tail)});
     }
     return file;
 }

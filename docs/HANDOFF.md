@@ -47,8 +47,14 @@ first request (media server `size_on_request`). The film's startup fell from
 4.9 s to under 0.1 s, its packets, times, continuity and subtitles stay
 identical offline, and it played, seeked and ended normally on the recorded
 Apple TV (user: everything worked as expected). Files without Cues keep the
-full scan. Next on the list, as the user asked: MP4 text subtitles
-([hls.md](hls.md#planned-mp4-text-subtitles)), then the Screenbox integration.
+full scan. Merged as PR #31.
+
+**MP4 text subtitles (branch `claude/hls-mp4-subtitles`):** `read_mp4` reads
+tx3g (with bold/italic/underline) and wvtt tracks, timed by their edit lists,
+with language, DEFAULT and FORCED; they feed the WebVTT renditions. A
+10-minute tx3g MP4 matched ffmpeg's cues exactly offline and showed subtitles
+in sync, with italics, on the recorded Apple TV (user). Next on the list: the
+Screenbox integration ([hls.md](hls.md#mp4-text-subtitles-2026-10-09)).
 
 ### Standalone items (D58-D59, merged)
 

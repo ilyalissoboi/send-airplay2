@@ -14,11 +14,11 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (D60):** HLS delivery. Phases 1-3c are merged (PRs
-  #26-#30); the indexed MKV start is on `claude/hls-lazy-mkv` (find its PR
-  with `gh pr list --state open`) and passed on the receiver. Listed next: MP4
-  text subtitles, the Screenbox integration, sender-side subtitle selection,
-  phase 4 (growing presentations). See [hls.md](hls.md). The
+- **Active slice (D60):** HLS delivery. Phases 1-3c and the indexed MKV
+  start are merged (PRs #26-#31); MP4 text subtitles are on
+  `claude/hls-mp4-subtitles` (find its PR with `gh pr list --state open`) and
+  passed on the receiver. Listed next: the Screenbox integration, sender-side
+  subtitle selection, phase 4 (growing presentations). See [hls.md](hls.md). The
   Screenbox integration is paused; its design PR is ilyalissoboi/Screenbox#1.
 - The macOS Keychain (D58) and Linux Secret Service (D59) stores are merged
   (PRs #23-#25); remote-Stop detection stays deferred by the user.

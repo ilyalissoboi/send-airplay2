@@ -1438,3 +1438,19 @@ queried. Record: [artifact](validation/native-hls-indexed-mkv-windows-2026-10-09
 **PASS for this receiver and host.** Not run: real-world MKVs (other muxers,
 long files), 7.1 E-AC-3, the C interface and UWP host, a sleeping receiver,
 other receivers and firmware.
+
+## MP4 text subtitles (D60, 2026-10-09)
+
+A 10-minute MP4 made with ffmpeg from the user's film (H.264 + E-AC-3 + a tx3g
+subtitle track with italics; not committed) cast through `airplay2-cli cast
+--remux` (MSVC Release static on top of `ce8aaec`). Living Room Apple TV 4K
+(AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged and not queried.
+Offline, the 190 cues matched ffmpeg's WebVTT conversion exactly. Record:
+[artifact](validation/native-hls-mp4-subtitles-windows-2026-10-09.json).
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| Controls and natural end | Playing at 1008 ms, owned; pause, play, seek 300, seek 560 accepted; 74 GETs all complete; `media_end` (`near_end`, 600.03 of 600.06 s), exit 0 | Everything worked as expected: subtitles without the menu, in sync after seeks; italic lines not reached |
+| Italic section | Seek 95 s, played to 149 s; local stop, exit 0 | Italic lines rendered properly |
+
+**PASS for this receiver and host.**

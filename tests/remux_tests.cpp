@@ -385,6 +385,180 @@ void presentation_tests() {
 }
 } // namespace
 
+// --- MP4 text subtitles ----------------------------------------------------
+
+/// A tx3g sample (TS 26.245 5.17): 16-bit length, text, optional modifiers.
+Bytes tx3g_sample(const Bytes& text, const Bytes& modifiers = {}) {
+    Bytes out;
+    put16(out, static_cast<std::uint16_t>(text.size()));
+    return join({out, text, modifiers});
+}
+
+Bytes bytes_of(const std::string& text) {
+    return Bytes(text.begin(), text.end());
+}
+
+/// A tx3g sample entry: reserved, data_reference_index 1, displayFlags,
+/// justification, background colour, BoxRecord and a default StyleRecord.
+Bytes tx3g_entry(std::uint32_t display_flags) {
+    Bytes fields(6, 0);
+    put16(fields, 1);
+    put32(fields, display_flags);
+    fields.insert(fields.end(), {0x01, 0xff, 0, 0, 0, 0xff});
+    fields.resize(fields.size() + 8 + 12, 0);
+    return box("tx3g", fields);
+}
+
+/// A text trak whose samples sit in the file's 'free' tail. Builds the file
+/// twice: the moov's size, and so the tail's offset, does not depend on the
+/// chunk offsets' values. `stsd_entries` copies of `entry` go in its stsd.
+Bytes mp4_with_text(const char* handler, const Bytes& entry, const std::vector<Bytes>& samples,
+                    const std::vector<std::uint32_t>& durations, const Bytes& edts = {},
+                    std::uint32_t stsd_entries = 1) {
+    Bytes tail;
+    std::vector<std::uint64_t> relative;
+    for (const auto& sample : samples) {
+        relative.push_back(tail.size());
+        tail = join({tail, sample});
+    }
+    const auto build = [&](std::uint64_t tail_offset) {
+        TrackSpec text;
+        text.handler = handler;
+        text.entry = entry;
+        text.timescale = 1000;
+        text.language = 0x15c7; // "eng".
+        text.edts = edts;
+        text.stsd_entries = stsd_entries;
+        Bytes stts = words({static_cast<std::uint32_t>(samples.size())});
+        Bytes stsz = words({0, static_cast<std::uint32_t>(samples.size())});
+        Bytes stco = words({static_cast<std::uint32_t>(samples.size())});
+        for (std::size_t index = 0; index < samples.size(); ++index) {
+            put32(stts, 1);
+            put32(stts, durations[index]);
+            put32(stsz, static_cast<std::uint32_t>(samples[index].size()));
+            put32(stco, static_cast<std::uint32_t>(tail_offset + relative[index]));
+        }
+        text.stbl_extra =
+            join({full_box("stts", 0, 0, stts), full_box("stsc", 0, 0, words({1, 1, 1, 1})),
+                  full_box("stsz", 0, 0, stsz), full_box("stco", 0, 0, stco)});
+        return mp4_file({video_spec(), audio_spec(), text}, false, tail);
+    };
+    const auto draft = build(0);
+    return build(draft.size() - tail.size()); // The tail is the file's last bytes.
+}
+
+void mp4_text_tests() {
+    group = "MP4 text subtitles";
+    // Samples: a 1 s gap (empty text), italic "Hello" (styl run 0-5), UTF-16
+    // "Ünï" after a byte-order mark, and two lines with CR LF.
+    const Bytes styl =
+        box("styl", join({Bytes{0, 1}, Bytes{0, 0, 0, 5, 0, 1, 0x02, 18}, words({0xffffffff})}));
+    const std::vector<Bytes> samples{tx3g_sample({}), tx3g_sample(bytes_of("Hello there"), styl),
+                                     tx3g_sample({0xfe, 0xff, 0x00, 0xdc, 0x00, 'n', 0x00, 0xef}),
+                                     tx3g_sample(bytes_of("one\r\ntwo & <three>"))};
+    // An empty edit of 300 movie ticks (0.5 s at 600) shifts every cue.
+    const auto edts = box(
+        "edts", full_box("elst", 0, 0, words({2, 300, 0xffffffff, 0x00010000, 0, 0, 0x00010000})));
+    const auto file =
+        mp4_with_text("sbtl", tx3g_entry(0x40000000), samples, {1000, 2000, 1500, 500}, edts);
+    const auto movie = read_mp4(memory_reader(file), file.size());
+    check(movie.tracks.size() == 2 && movie.text_tracks.size() == 1, "one text track");
+    if (movie.text_tracks.size() != 1) {
+        return;
+    }
+    const auto& text = movie.text_tracks[0];
+    check(text.language == "en" && text.default_track && text.forced,
+          "language from mdhd, DEFAULT from tkhd enabled, FORCED from displayFlags");
+    check(text.cues.size() == 3, "three cues; the empty sample is a gap");
+    if (text.cues.size() == 3) {
+        check(text.cues[0].start_us == 1'500'000 && text.cues[0].end_us == 3'500'000 &&
+                  text.cues[0].text == "<i>Hello</i> there",
+              "italic run, times shifted by the empty edit");
+        check(text.cues[1].start_us == 3'500'000 && text.cues[1].text == "\xc3\x9cn\xc3\xaf",
+              "UTF-16 text after a byte-order mark");
+        check(text.cues[2].text == "one\ntwo &amp; &lt;three&gt;",
+              "CR LF to LF and escaped plain text");
+    }
+
+    // WebVTT in MP4 (ISO/IEC 14496-30): a vttc cue with its payl, then vtte.
+    Bytes wvtt_entry(6, 0);
+    put16(wvtt_entry, 1);
+    const auto wvtt = mp4_with_text(
+        "text", box("wvtt", join({wvtt_entry, box("vttC", bytes_of("WEBVTT"))})),
+        {box("vttc", box("payl", bytes_of("<v Ann>Hi &amp; bye"))), box("vtte", {})}, {1000, 1000});
+    const auto wvtt_movie = read_mp4(memory_reader(wvtt), wvtt.size());
+    check(wvtt_movie.text_tracks.size() == 1 && wvtt_movie.text_tracks[0].cues.size() == 1 &&
+              wvtt_movie.text_tracks[0].cues[0].text == "<v Ann>Hi &amp; bye" &&
+              wvtt_movie.text_tracks[0].cues[0].end_us == 1'000'000,
+          "wvtt cue text kept as WebVTT; vtte gives no cue");
+
+    // QuickTime 'text' entries are left out without refusing the file.
+    const auto quicktime =
+        mp4_with_text("text", box("text", Bytes(8, 0)), {tx3g_sample(bytes_of("x"))}, {1000});
+    check(read_mp4(memory_reader(quicktime), quicktime.size()).text_tracks.empty(),
+          "an unsupported text format is left out");
+
+    const auto shared = std::make_shared<const Bytes>(file);
+    const auto remuxed = remux_to_hls(memory_media(shared));
+    check(remuxed.playlist_name == "main.m3u8" && remuxed.text_track_count == 1,
+          "an MP4 with subtitles gets the multivariant entry point");
+    bool found_segment = false;
+    for (const auto& resource : remuxed.resources) {
+        if (resource.name == "t0s0.vtt") {
+            const auto bytes = read_resource(resource);
+            found_segment =
+                std::string(bytes.begin(), bytes.end())
+                    .find("00:00:01.500 --> 00:00:03.500\n<i>Hello</i> there") != std::string::npos;
+        }
+    }
+    check(found_segment, "the WebVTT segment holds the italic cue");
+}
+
+/// Edits, limits and layouts that leave out cues or a whole text track
+/// without refusing the movie.
+void mp4_text_exclusion_tests() {
+    group = "MP4 text subtitles: exclusions";
+    // A media edit at track time 1000 (1 s): "early" (0-0.8 s) is hidden,
+    // "cross" (0.8-1.5 s) is clipped to the edit, "late" (1.5-2.5 s) shifts.
+    constexpr std::uint32_t edit_media_time = 1000;
+    const auto media_edit =
+        box("edts", full_box("elst", 0, 0, words({1, 900, edit_media_time, 0x00010000})));
+    const auto edited =
+        mp4_with_text("sbtl", tx3g_entry(0),
+                      {tx3g_sample(bytes_of("early")), tx3g_sample(bytes_of("cross")),
+                       tx3g_sample(bytes_of("late"))},
+                      {800, 700, 1000}, media_edit);
+    const auto edited_movie = read_mp4(memory_reader(edited), edited.size());
+    check(edited_movie.text_tracks.size() == 1, "media edit: one text track");
+    if (edited_movie.text_tracks.size() == 1) {
+        const auto& cues = edited_movie.text_tracks[0].cues;
+        check(cues.size() == 2, "media edit: the sample wholly before the edit gives no cue");
+        if (cues.size() == 2) {
+            check(cues[0].text == "cross" && cues[0].start_us == 0 && cues[0].end_us == 500'000,
+                  "media edit: a sample crossing the edit is clipped to it");
+            check(cues[1].text == "late" && cues[1].start_us == 500'000 &&
+                      cues[1].end_us == 1'500'000,
+                  "media edit: a later sample shifts by the edit's media time");
+        }
+    }
+
+    // One sample over the 64 KiB per-sample limit leaves out the whole track.
+    constexpr std::size_t over_sample_limit = 64 * 1024 + 1;
+    const auto oversized = mp4_with_text(
+        "sbtl", tx3g_entry(0), {tx3g_sample(bytes_of("kept?")), Bytes(over_sample_limit, 'x')},
+        {1000, 1000});
+    const auto oversized_movie = read_mp4(memory_reader(oversized), oversized.size());
+    check(oversized_movie.tracks.size() == 2 && oversized_movie.text_tracks.empty(),
+          "an oversized sample leaves out the track, not the movie");
+
+    // Two sample descriptions are unsupported for text: the track is left out.
+    const auto two_entries =
+        mp4_with_text("sbtl", tx3g_entry(0), {tx3g_sample(bytes_of("x"))}, {1000}, {}, 2);
+    const auto two_entries_movie = read_mp4(memory_reader(two_entries), two_entries.size());
+    check(two_entries_movie.tracks.size() == 2 && two_entries_movie.text_tracks.empty(),
+          "an unreadable text layout leaves out the track, not the movie");
+}
+
 int main() {
     try {
         demux_tests();
@@ -393,6 +567,8 @@ int main() {
         init_segment_tests();
         segment_header_tests();
         presentation_tests();
+        mp4_text_tests();
+        mp4_text_exclusion_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';
