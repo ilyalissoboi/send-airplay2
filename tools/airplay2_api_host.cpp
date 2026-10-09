@@ -57,7 +57,9 @@ constexpr std::uint32_t watch_timeout_ms = 250;
 const char* usage =
     "Usage: airplay2-api-host --address IP --profile NAME --file PATH [--port 7000]\n"
     "         [--content-type TYPE] [--start-timeout-ms N] [--media-connections N]\n"
-    "         [--start-position SECONDS] [--cancel-after-ms N | --cycles N [--hold-ms N]]\n"
+    "         [--start-position SECONDS] [--remux]\n"
+    "         [--cancel-after-ms N | --cycles N [--hold-ms N]]\n"
+    "--remux: SAP2_DELIVERY_HLS_REMUX (MP4/MOV or MKV as HLS; content type ignored).\n"
     "Interactive (default): status, pause, play, seek SECONDS, stop; Enter stops locally.\n"
     "--cancel-after-ms: call sap2_cast_stop() N ms into a blocking start.\n"
     "--cycles: N casts in one process, alternating MRP stop and local stop.\n"
@@ -82,6 +84,7 @@ struct HostArguments {
     std::uint32_t hold_ms = 5000; // Playing time per cycle before stopping.
     bool pair = false;            // Pair a new profile instead of casting.
     bool discover = false;        // Scan for receivers instead of casting.
+    bool remux = false;           // SAP2_DELIVERY_HLS_REMUX instead of progressive.
     std::uint32_t discover_ms = SAP2_DEFAULT_DISCOVERY_MS;
     std::optional<std::string> expect_name; // Compared, never printed.
 };
@@ -123,6 +126,11 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
         }
         if (option == "--discover") {
             arguments.discover = true;
+            continue;
+        }
+        if (option == "--remux") {
+            arguments.remux = true;
+            other_option_given = true;
             continue;
         }
         if (index + 1 >= argc) {
@@ -177,7 +185,7 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
     }
     if (arguments.pair) {
         if (arguments.address.empty() || arguments.profile.empty() || !arguments.file.empty() ||
-            arguments.cancel_after_ms || arguments.cycles) {
+            arguments.cancel_after_ms || arguments.cycles || arguments.remux) {
             throw std::invalid_argument("--pair requires --address and --profile only");
         }
         return arguments;
@@ -511,6 +519,7 @@ sap2_cast_options options_for(const HostArguments& arguments) {
     options.start_timeout_ms = arguments.start_timeout_ms;
     options.media_connections = arguments.media_connections;
     options.start_position_seconds = arguments.start_position_seconds;
+    options.delivery = arguments.remux ? SAP2_DELIVERY_HLS_REMUX : SAP2_DELIVERY_PROGRESSIVE;
     return options;
 }
 

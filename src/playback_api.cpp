@@ -62,11 +62,36 @@ static_assert(static_cast<std::int32_t>(CastResult::out_of_memory) == SAP2_ERROR
 static_assert(static_cast<std::int32_t>(CastResult::internal) == SAP2_ERROR_INTERNAL);
 static_assert(static_cast<std::int32_t>(CastResult::profile_exists) == SAP2_ERROR_PROFILE_EXISTS);
 static_assert(static_cast<std::int32_t>(CastResult::pin_timeout) == SAP2_ERROR_PIN_TIMEOUT);
+static_assert(static_cast<std::int32_t>(CastResult::media_unsupported) ==
+              SAP2_ERROR_MEDIA_UNSUPPORTED);
+static_assert(static_cast<std::int32_t>(CastResult::media_malformed) == SAP2_ERROR_MEDIA_MALFORMED);
 
 // Version 1 sap2_cast_options ended before credential_store (API version 2).
 constexpr std::size_t cast_options_v1_size = offsetof(sap2_cast_options, credential_store);
 constexpr std::size_t cast_options_v2_size =
     cast_options_v1_size + sizeof(sap2_cast_options::credential_store);
+// The version 2 layout, for its full size: a version 2 host passes sizeof,
+// which on 32-bit targets includes 4 bytes of tail padding (8-byte alignment).
+struct CastOptionsV2 {
+    std::uint32_t struct_size;
+    const char* receiver_address;
+    std::uint16_t receiver_port;
+    const char* profile;
+    const char* content_type;
+    std::uint32_t start_timeout_ms;
+    std::uint32_t media_connections;
+    double start_position_seconds;
+    const sap2_credential_store* credential_store;
+};
+static_assert(offsetof(CastOptionsV2, credential_store) ==
+                  offsetof(sap2_cast_options, credential_store),
+              "version 2 prefix of sap2_cast_options");
+// Version 3 added delivery; it must start beyond any version 2 struct, or a
+// version 2 host's padding would be read as delivery.
+static_assert(offsetof(sap2_cast_options, delivery) >= sizeof(CastOptionsV2),
+              "delivery overlaps a version 2 struct");
+constexpr std::size_t cast_options_v3_size =
+    offsetof(sap2_cast_options, delivery) + sizeof(sap2_cast_options::delivery);
 
 // Longest numeric IPv6 text form (INET6_ADDRSTRLEN without the terminator).
 constexpr std::size_t max_address_length = 45;
@@ -181,6 +206,13 @@ CastResult settings_from(const sap2_cast_options& options, CastSettings& setting
     settings.start_timeout = std::chrono::milliseconds(options.start_timeout_ms);
     settings.media_connections = options.media_connections;
     settings.start_position_seconds = options.start_position_seconds;
+    if (options.struct_size >= cast_options_v3_size) {
+        if (options.delivery == SAP2_DELIVERY_HLS_REMUX) {
+            settings.delivery = CastDelivery::hls_remux;
+        } else if (options.delivery != SAP2_DELIVERY_PROGRESSIVE) {
+            return CastResult::invalid_argument;
+        }
+    }
     return CastResult::ok;
 }
 
@@ -374,6 +406,10 @@ const char* sap2_result_name(int32_t result) {
         return "internal";
     case SAP2_ERROR_PROFILE_EXISTS:
         return "profile_exists";
+    case SAP2_ERROR_MEDIA_UNSUPPORTED:
+        return "media_unsupported";
+    case SAP2_ERROR_MEDIA_MALFORMED:
+        return "media_malformed";
     case SAP2_ERROR_PIN_TIMEOUT:
         return "pin_timeout";
     default:

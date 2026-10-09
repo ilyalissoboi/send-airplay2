@@ -39,7 +39,15 @@ enum class CastResult : std::int32_t {
     out_of_memory = 16,
     internal = 17,
     profile_exists = 18,
-    pin_timeout = 19
+    pin_timeout = 19,
+    media_unsupported = 20,
+    media_malformed = 21
+};
+
+/// How the media reaches the receiver (SAP2_DELIVERY_*).
+enum class CastDelivery {
+    progressive, ///< One representation of CastSettings::content_type.
+    hls_remux    ///< HLS built from the source by remux_to_hls (D60).
 };
 
 /// Handle lifecycle. `ended` is derived from the session's own end reason while
@@ -55,6 +63,7 @@ struct CastSettings {
     std::chrono::milliseconds start_timeout{30000};
     std::uint32_t media_connections = 16;
     double start_position_seconds = 0;
+    CastDelivery delivery = CastDelivery::progressive;
 };
 
 /// Returns null only when no credentials are stored under the profile.
@@ -84,9 +93,10 @@ struct CastSnapshot {
  * Owns one media server and one URL playback session for the public C interface.
  *
  * The controller composes the same order the validated CLI uses: load trusted
- * credentials before any network work, start the media server, then start the
- * session; on failure or teardown the session is cleaned up before the media
- * server stops, so the receiver never fetches from a server mid-teardown.
+ * credentials before any network work, build the HLS presentation for
+ * hls_remux delivery (source reads only, cancellable by stop()), start the
+ * media server, then start the session; on failure or teardown the session is cleaned up before the
+ * media server stops, so the receiver never fetches from a server mid-teardown.
  *
  * Threading: start() blocks its caller. snapshot(), wait_for_change(), command()
  * and stop() may run concurrently with each other and with start(); stop()

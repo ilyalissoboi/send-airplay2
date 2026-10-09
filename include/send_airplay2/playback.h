@@ -14,7 +14,8 @@ extern "C" {
  * already paired AirPlay receiver. See docs/public-api.md for the design record.
  *
  * Scope: one URL playback session per handle, served by a library-owned HTTP
- * media server from host read callbacks, with MRP pause/play/seek/stop, status
+ * media server from host read callbacks, either progressively or as HLS built
+ * by the library's remux (delivery option), with MRP pause/play/seek/stop, status
  * and an end reason. Credentials are loaded by profile name, from a host-provided
  * store (credentials.h) when one is given and otherwise from the library's
  * built-in platform store; built-in records never cross this interface.
@@ -36,9 +37,10 @@ extern "C" {
 
 /* Incremented whenever the interface changes while it is experimental.
  * 1: playback. 2: host credential stores, pairing, profile removal, and the
- *    PROFILE_EXISTS and PIN_TIMEOUT results. Version 1 option structs (shorter
- *    struct_size) are still accepted. */
-#define SAP2_PLAYBACK_API_VERSION 2u
+ *    PROFILE_EXISTS and PIN_TIMEOUT results. 3: the delivery option (HLS
+ *    remux) and the MEDIA_UNSUPPORTED and MEDIA_MALFORMED results. Option
+ *    structs of earlier versions (shorter struct_size) are still accepted. */
+#define SAP2_PLAYBACK_API_VERSION 3u
 
 /* Results. Fixed-width values for foreign-function bindings. */
 #define SAP2_OK 0
@@ -61,6 +63,9 @@ extern "C" {
 #define SAP2_ERROR_INTERNAL 17       /* Unexpected backend failure; details are not exposed. */
 #define SAP2_ERROR_PROFILE_EXISTS 18 /* Pairing refused: the profile already has credentials. */
 #define SAP2_ERROR_PIN_TIMEOUT 19    /* read_pin returned after pin_timeout_ms. */
+/* Version 3, SAP2_DELIVERY_HLS_REMUX only: the media cannot be remuxed. */
+#define SAP2_ERROR_MEDIA_UNSUPPORTED 20 /* Container, codec or size the remux does not take. */
+#define SAP2_ERROR_MEDIA_MALFORMED 21   /* The container's structure is invalid. */
 
 /* Handle phases. ENDED means the session cleaned itself up after an end reason;
  * the media server keeps its listener until sap2_cast_stop() or destroy. */
@@ -116,6 +121,14 @@ extern "C" {
 #define SAP2_COMMAND_PAUSE 2
 #define SAP2_COMMAND_STOP 3
 #define SAP2_COMMAND_SEEK 4
+
+/* Delivery (version 3). PROGRESSIVE serves the source as one representation
+ * of content_type, for containers the receiver plays directly (MP4/MOV).
+ * HLS_REMUX turns an MP4/MOV or MKV with H.264/HEVC video and AAC, AC-3 or
+ * E-AC-3 audio into fragmented-MP4 HLS without transcoding; content_type is
+ * then ignored. See docs/hls.md. */
+#define SAP2_DELIVERY_PROGRESSIVE 0u
+#define SAP2_DELIVERY_HLS_REMUX 1u
 
 /* Option bounds. */
 #define SAP2_DEFAULT_RECEIVER_PORT 7000u
@@ -178,6 +191,13 @@ typedef struct sap2_cast_options {
      * sap2_cast_create(); its callbacks and context must stay valid until
      * sap2_cast_destroy() returns (see credentials.h). */
     const sap2_credential_store* credential_store;
+    /* Version 3. reserved fills what is tail padding of a version 2 struct on
+     * 32-bit targets (8-byte alignment), so delivery starts past the full
+     * version 2 size on every ABI; leave it zero, as the initializer does.
+     * delivery is SAP2_DELIVERY_*; the initializer sets PROGRESSIVE, as do
+     * structs of earlier versions. */
+    uint32_t reserved;
+    uint32_t delivery;
 } sap2_cast_options;
 
 /** Fill defaults for a struct of `struct_size` bytes, the caller's sizeof.
@@ -228,9 +248,13 @@ SAP2_API int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_m
                                   sap2_cast** cast);
 
 /** Load the profile's credentials (a host store's load runs once, on this
- * thread, before any network work), start the media server, authenticate both
- * receiver sessions and start playback. Blocks until playback is confirmed (one
- * continuous second of forward playing within start_timeout_ms), failure, or
+ * thread, before any network work), with SAP2_DELIVERY_HLS_REMUX build the HLS
+ * presentation from the source (reading its index or block headers through
+ * read_at on this thread; SAP2_ERROR_MEDIA_UNSUPPORTED or _MALFORMED if it
+ * cannot be remuxed), start the media server, authenticate both receiver
+ * sessions and start playback. The remux reads precede start_timeout_ms and
+ * can be cancelled by sap2_cast_stop() like the rest of the start. Blocks until playback is
+ * confirmed (one continuous second of forward playing within start_timeout_ms), failure, or
  * cancellation by sap2_cast_stop() from another thread. If the receiver
  * reports itself asleep, start first wakes it and waits up to 10 s for it to
  * settle; that wait is in addition to start_timeout_ms. There is no automatic

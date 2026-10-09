@@ -1,8 +1,8 @@
 # HLS delivery (D60)
 
-Status: **phases 1, 2 and 3a (MKV input) passed on the recorded receiver;
-3b (C/C# delivery option) and 4 not started.** Phase 1 (PR #26) and phase 2
-(PR #27) are merged; phase 3a is on `claude/hls-mkv` from `9fa8d6d`. Records:
+Status: **phases 1-3b passed on the recorded receiver; 4 and subtitles not
+started.** Phases 1 (PR #26), 2 (PR #27) and 3a (PR #28) are merged; 3b (the
+C/C# delivery option) is on `claude/hls-api` from `5df2b80`. Records:
 [phase 1](#phase-1-result-2026-10-09), [phase 2](#phase-2-result-2026-10-09),
 [phase 3a](#phase-3a-result-mkv-input-2026-10-09) and
 [receiver-validation.md](receiver-validation.md#hls-phase-1-d60-2026-10-09).
@@ -170,12 +170,23 @@ appear), host-supplied segments from a transcoder such as LibVLC, and
 ownership without a finite duration. Designed after phases 1-3 report what the
 receiver does with VOD.
 
-### 5. Public interface (with phase 3)
+### 5. Public interface (phase 3b)
 
-Planned shape, not implemented: a delivery option on `sap2_cast_options`
-selecting progressive (today) or HLS remux, using the same `sap2_media_source`.
-Versioned with `struct_size` and `SAP2_PLAYBACK_API_VERSION`; the C# binding
-follows. Not added until the remux has run on the receiver.
+`sap2_cast_options.delivery` selects progressive (the default) or HLS remux
+over the same `sap2_media_source`; API version 3, C# `CastOptions.Delivery`.
+Details: [public-api.md](public-api.md#hls-remux-delivery-api-version-3-d60).
+
+### 6. Subtitles (phase 3c, approved 2026-10-09)
+
+The user asked whether subtitle tracks can survive the remux and approved
+the recommended plan: after 3b, text subtitles from MKV (SubRip, WebVTT, and
+ASS as text only) become WebVTT subtitle renditions in a multivariant
+playlist (EXT-X-MEDIA TYPE=SUBTITLES with LANGUAGE, a STREAM-INF with CODECS
+and RESOLUTION), segmented on the video segment boundaries with
+X-TIMESTAMP-MAP, and are checked on the receiver with the user's film.
+Bitmap subtitles (PGS, VobSub) are out of scope: Apple HLS takes text
+subtitles only. Open: whether the sender can select a subtitle track (MRP)
+or only the receiver's own menu; host-supplied sidecar subtitle files.
 
 ## Phases and gates
 
@@ -184,7 +195,8 @@ follows. Not added until the remux has run on the receiver.
 | 1 | Resource sets; development CLI casts a directory of pre-made fMP4 HLS (`cast --hls PLAYLIST`) | **Passed 2026-10-09:** receiver plays, pauses, seeks and ends a VOD playlist with MRP ownership |
 | 2 | fMP4 writer and MP4 demux; CLI casts an MP4 through the remux | **Passed 2026-10-09:** receiver plays the remuxed MP4 the same as progressively |
 | 3a | MKV demux | **Passed 2026-10-09:** receiver plays MKVs with H.264/HEVC + AAC/AC-3/E-AC-3 |
-| 3b | C interface and C# delivery option | A host casts an MKV through `sap2_cast_*` on the receiver |
+| 3b | C interface and C# delivery option | **Passed 2026-10-09:** a host casts an MKV through `sap2_cast_*` on the receiver |
+| 3c | Text subtitles (user-approved plan) | Subtitle tracks selectable on the receiver |
 | 4 | Growing presentations and host-supplied segments | Receiver plays an `EVENT` playlist while it grows |
 
 Phase 1 fixtures are made with ffmpeg on the developer machine

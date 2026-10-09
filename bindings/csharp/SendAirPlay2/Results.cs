@@ -47,6 +47,10 @@ namespace SendAirPlay2
         ProfileExists = 18,
         /// <summary>The PIN arrived after the PIN timeout.</summary>
         PinTimeout = 19,
+        /// <summary>HLS remux: the container, codec or size cannot be remuxed.</summary>
+        MediaUnsupported = 20,
+        /// <summary>HLS remux: the container's structure is invalid.</summary>
+        MediaMalformed = 21,
     }
 
     /// <summary>A failed library call, with its fixed result code.</summary>

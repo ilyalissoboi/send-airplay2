@@ -1379,6 +1379,30 @@ within 0.33 ms. Lines, fixtures, hashes and blobs:
 | User-provided 1 h 54 min film (6.3 GB, H.264 High 1920x802 + E-AC-3 5.1 Atmos JOC; title withheld) | Remux built in 1.9 s (warm; 4.9 s cold); playing at 1033 ms, owned; pause, play, seek 3600 (to 3609.6 s after 10 s), seek 6780 accepted; 35 GETs all complete; `media_end` at 6824.5 s (MRP `at_end`), exit 0 | Video and audio played after each seek; seeks landed correctly; Home at the end; Atmos not checked (no Atmos hardware) |
 
 **PASS for this receiver and host.** These are the first HEVC, AC-3 and E-AC-3
-casts recorded for this project, and the first long file. Not run: real-world MKVs (other muxers,
+casts recorded for this project, and the first long file.
+
+## HLS phase 3b: C interface (D60, 2026-10-09)
+
+`SAP2_DELIVERY_HLS_REMUX` through `airplay2-api-host --remux` (C interface
+only), MSVC Release on top of `5df2b80`, existing built-in-store profile;
+Living Room Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773) assumed unchanged
+and not queried. The network was read as Private; earlier records had Public.
+Lines, hashes and blobs: [artifact](validation/native-hls-api-windows-2026-10-09.json).
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| Static, user-provided 6.3 GB film MKV (H.264 + E-AC-3 5.1 Atmos) | `Start: ok` after about 4 s including the remux; pause, play, seek 3600 (3609.5 s), seek 6780 accepted; `media_end` at 6824.5 s, cleaned, `failed_reads=0`, `releases=1`, exit 0 | Video and audio normal; seeks worked; Home at the end |
+| Static, HEVC + AC-3 5.1 MKV | `Start: ok`, owned; local stop after about 10 s, `sender_stop`, `releases=1`, exit 0 | Video and audio normal; Home after the stop (no seek in this run) |
+| Shared, HEVC + AC-3 5.1 MKV, run in place | `Start: ok` in 1.9 s; pause, play, seek 115 accepted; `media_end` at 131.6 s, `releases=1`, exit 0 | Video and audio normal; seek worked; Home at the end |
+
+**PASS for this receiver and host** (C interface, static and shared). The
+user reported that video and audio played normally in every attempt that
+started, that the runs seeked successfully and that every run returned to the
+Home screen. Environment finding: three shared attempts staged at the earlier
+shared path (`build-pairing-shared\release`), one of them a progressive
+`gas.mp4`, failed with `connection` before playback. That executable has an
+Inbound Block rule on the Private profile (Allow only on Public). The rule was
+read, not changed; the shared host ran from its own path, which is allowed on
+Private. Not run: the C# binding and packaged UWP host on the receiver. Not run: real-world MKVs (other muxers,
 long files), 7.1 E-AC-3, the C interface and UWP host, a sleeping receiver,
 other receivers and firmware.

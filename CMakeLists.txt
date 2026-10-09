@@ -56,7 +56,7 @@ set(sap2_auth_sources src/auth_workflow.cpp ${sap2_credential_sources} ${sap2_re
 set(sap2_playback_api_sources src/cast_controller.cpp src/playback_api.cpp src/host_credentials.cpp src/auth_workflow.cpp ${sap2_credential_sources})
 # The C discovery interface (D54) wraps discover() for non-C++ hosts.
 set(sap2_receivers_api_sources src/discovery_api.cpp src/receiver_list.cpp)
-add_library(send_airplay2 src/http_range.cpp src/media_server.cpp src/discovery.cpp src/discovery_core.cpp src/discovery_transport.cpp ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources} ${sap2_receiver_sources} ${sap2_session_sources} ${sap2_playback_api_sources} ${sap2_receivers_api_sources})
+add_library(send_airplay2 src/http_range.cpp src/media_server.cpp src/discovery.cpp src/discovery_core.cpp src/discovery_transport.cpp ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources} ${sap2_receiver_sources} ${sap2_session_sources} ${sap2_playback_api_sources} ${sap2_remux_sources} ${sap2_receivers_api_sources})
 target_link_libraries(send_airplay2 PRIVATE OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS} Boost::beast Boost::asio ${sap2_credential_libraries})
 target_compile_features(send_airplay2 PUBLIC cxx_std_17)
 target_include_directories(send_airplay2 PUBLIC
@@ -229,7 +229,7 @@ if(BUILD_TESTING)
     endif()
   endif()
   # Host stores and pairing are compiled directly so tests can script sessions.
-  add_executable(host_credential_tests tests/host_credential_tests.cpp src/host_credentials.cpp src/auth_workflow.cpp src/cast_controller.cpp ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
+  add_executable(host_credential_tests tests/host_credential_tests.cpp src/host_credentials.cpp src/auth_workflow.cpp src/cast_controller.cpp ${sap2_remux_sources} ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
   target_include_directories(host_credential_tests PRIVATE src)
   target_link_libraries(host_credential_tests PRIVATE send_airplay2 OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS} ${sap2_credential_libraries})
   if(WIN32)
@@ -240,7 +240,7 @@ if(BUILD_TESTING)
   add_test(NAME host_credential_tests COMMAND host_credential_tests)
   set_tests_properties(host_credential_tests PROPERTIES TIMEOUT 60)
   # The controller is compiled directly so tests can inject credentials and connectors.
-  add_executable(cast_controller_tests tests/cast_controller_tests.cpp src/cast_controller.cpp ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
+  add_executable(cast_controller_tests tests/cast_controller_tests.cpp src/cast_controller.cpp ${sap2_remux_sources} ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
   target_include_directories(cast_controller_tests PRIVATE src)
   target_link_libraries(cast_controller_tests PRIVATE send_airplay2 OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS} ${sap2_credential_libraries})
   if(WIN32)

@@ -22,6 +22,17 @@ offline). Next: 3b, the
 C/C# delivery option; the MKV startup scan cost is a known follow-up; then
 growing presentations (phase 4). See the D60 record in section 4.
 
+**Phase 3b (branch `claude/hls-api`):** PR #28 (3a) is merged. The C
+interface gains `sap2_cast_options.delivery` (`SAP2_DELIVERY_HLS_REMUX`), API
+version 3, `MEDIA_UNSUPPORTED`/`MEDIA_MALFORMED` results, C#
+`CastOptions.Delivery`, and the remux moves into the library. It passed on the
+recorded Apple TV through `airplay2-api-host --remux`, static and shared (user:
+video and audio normal, seeks worked, Home at the end). The user approved subtitles (3c) as the next step
+after 3b; see [hls.md](hls.md#6-subtitles-phase-3c-approved-2026-10-09).
+Local environment: the network now reads Private, and the earlier shared
+staging path has a Private Block firewall rule (read, not changed); run the
+shared host from the worktree's `build-shared/Release`.
+
 ### Standalone items (D58-D59, merged)
 
 **Active slices: the standalone items.** The user merged PR #21 (D56) as

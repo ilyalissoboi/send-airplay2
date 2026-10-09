@@ -66,6 +66,7 @@ text, address, identifier or URL is exposed.
 | Malformed message, correlation error | `PROTOCOL` |
 | Media server setup | `MEDIA_SERVER`; its address/content-type validation gives `INVALID_ARGUMENT` |
 | `sap2_cast_stop()` during start | `CANCELLED`, whatever the interrupted step raised |
+| HLS remux refused (version 3): codec, container or size / invalid structure | `MEDIA_UNSUPPORTED` / `MEDIA_MALFORMED` (before any listener or connection) |
 
 Commands: `NOT_OWNED` when the receiver no longer plays our item, `ENDED` once the
 session ended or stop began, `COMMAND_FAILED` for a rejected or unanswered command.
@@ -139,6 +140,43 @@ cancellation besides `read_pin`; each network phase is bounded by `timeout_ms`.
 On a platform without a built-in store, a NULL store reports
 `SAP2_ERROR_UNSUPPORTED`. UWP builds are such a platform: they compile out
 Credential Manager (D55, [uwp-native-build.md](uwp-native-build.md)).
+
+## HLS remux delivery (API version 3, D60)
+
+- `sap2_cast_options.delivery` (new last field, after a `reserved` field that
+  fills a version 2 struct's 32-bit tail padding, so a version 2 host's
+  `sizeof` never reaches it): `SAP2_DELIVERY_PROGRESSIVE`
+  (0, the default and the only behavior before version 3) serves the source
+  as one representation; `SAP2_DELIVERY_HLS_REMUX` (1) builds fMP4 HLS from an
+  MP4/MOV or MKV with H.264/HEVC and AAC, AC-3 or E-AC-3, through the same
+  `sap2_media_source` ([hls.md](hls.md)). `content_type` is ignored for HLS.
+  Version 1 and 2 option structs (shorter `struct_size`) keep progressive
+  delivery; any other value is `INVALID_ARGUMENT`.
+- `sap2_cast_start()` loads credentials first, as before, then reads the
+  source's index or block headers through `read_at` on the calling thread,
+  before any listener or connection. Those reads precede `start_timeout_ms`,
+  see `sap2_cast_stop()` as request cancellation (`sap2_read_should_stop()`),
+  and end the start with `CANCELLED`. A refusal is `MEDIA_UNSUPPORTED` (codec,
+  container or size) or `MEDIA_MALFORMED` (invalid structure).
+- New results: `SAP2_ERROR_MEDIA_UNSUPPORTED` (20), `SAP2_ERROR_MEDIA_MALFORMED`
+  (21). Engineering choice: results rather than a status field, because
+  `sap2_cast_status` requires its full size and cannot grow compatibly.
+- The library now contains the remux (it was CLI/test-only before); the UWP
+  x64 build and its binary check pass with it.
+- C#: `CastOptions.Delivery` (`CastDelivery.Progressive`/`HlsRemux`) and
+  `ResultCode.MediaUnsupported`/`MediaMalformed`; the binding's API version
+  is 3. `airplay2-api-host --remux` exercises the delivery option.
+- Tests: the controller casts a remuxed synthetic MP4 against the scripted
+  fake receiver (the inserted URL is the playlist below the private path),
+  refuses an unremuxable source before any connection, and cancels a remux
+  blocked in `read_at` promptly; the C smoke and C# tests cover the field,
+  defaults, older struct sizes and result names.
+- **Receiver (2026-10-09):** through the C interface, the static library cast
+  a 6.3 GB film MKV (seeks to 1 h and near the end, natural end) and an HEVC +
+  AC-3 MKV; the shared library cast the HEVC + AC-3 MKV (controls, natural
+  end). User: video and audio played normally in every attempt that started,
+  seeks worked and every run returned Home.
+  Record: [receiver-validation.md](receiver-validation.md#hls-phase-3b-c-interface-d60-2026-10-09).
 
 ## Receiver discovery (D54)
 
