@@ -485,7 +485,9 @@ Results:
 Record: [artifact](validation/native-hls-indexed-mkv-windows-2026-10-09.json).
 
 Not run: MKVs from other muxers on the receiver, files without Cues on the
-receiver, brokered UWP file access.
+receiver. Brokered UWP file access passed later through the test host: the
+film started in about 2.5 s (D61,
+[record](receiver-validation.md#uwp-host-hls-remux-and-start-position-d61-2026-10-10)).
 
 ## MP4 text subtitles (2026-10-09)
 

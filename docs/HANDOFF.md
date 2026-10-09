@@ -53,8 +53,20 @@ full scan. Merged as PR #31.
 tx3g (with bold/italic/underline) and wvtt tracks, timed by their edit lists,
 with language, DEFAULT and FORCED; they feed the WebVTT renditions. A
 10-minute tx3g MP4 matched ffmpeg's cues exactly offline and showed subtitles
-in sync, with italics, on the recorded Apple TV (user). Next on the list: the
-Screenbox integration ([hls.md](hls.md#mp4-text-subtitles-2026-10-09)).
+in sync, with italics, on the recorded Apple TV (user). Merged as PR #32; the
+README rewrite followed as PR #33.
+
+**Screenbox step 1 (branch `claude/uwp-host-remux`, D61):** after reviewing
+the Screenbox design against the HLS work, the user chose HLS remux for every
+file (option B) and the order: (1) UWP test host with remux and start
+position, TV checks, certification kit; (2) update the Screenbox design and
+answer its PR's two review threads; (3) packaging. The test host gained the
+remux option, a start position, remembered files and a script mode
+([uwp-host.md](uwp-host.md#script-mode-d61)). On the TV it found that tvOS
+26.6 ignores the queue item's start position; the library now seeks there
+before `Start` returns, which passed (user). Pending in step 1: the user's
+certification kit run on 0.1.22.0. Record:
+[receiver-validation.md](receiver-validation.md#uwp-host-hls-remux-and-start-position-d61-2026-10-10).
 
 ### Standalone items (D58-D59, merged)
 
@@ -1174,6 +1186,22 @@ receiver (user observed). Known cost: the startup scan reads every block
 header (2.8 GB and 4.9 s cold for the film).
 Record: [receiver-validation.md](receiver-validation.md#hls-phase-3a-mkv-d60-2026-10-09).
 
+**D61 (start position as a seek; UWP host script mode, 2026-10-10):** a
+nonzero `start_position_seconds` had never been tried on the receiver. Through
+the UWP test host, tvOS 26.6 played from 0 for HLS and progressive media alike,
+although it accepted the queue item's `Start-Position-Seconds` (the key pyatv
+sends too). Engineering choice: keep sending the key and, when the start is
+above zero, wait up to 5 s for MRP ownership and send one seek before
+`UrlPlaybackSession::start` returns; ownership not arriving fails the start as
+`not_owned`, so a host never gets a cast silently playing from the wrong place.
+Tested: `cast_controller_tests` ("Start position") and, on the recorded Apple
+TV, the MKV film at 1:00:00 and the MP4 at 5:00, 9:40 (to its end) and 2:00
+(progressive), user observed. The test host also gained a script mode (an
+`sap2-uwp-host` app execution alias running `LocalState\scripts`), so TV runs
+need the user only to watch. User decision in the same review: Screenbox casts
+every file through `CastDelivery.HlsRemux` (option B), not progressive MP4.
+Record: [receiver-validation.md](receiver-validation.md#uwp-host-hls-remux-and-start-position-d61-2026-10-10).
+
 ## 5. Implemented code and verification
 
 The table and section 0 summarize current components. Dated subsections preserve
@@ -2193,6 +2221,11 @@ FAIL and this separate capacity candidate, without claiming MRP caused the freez
 or declaring the startup pause solved. Default cast/server budget is still four.
 
 ## 6. Screenbox integration findings
+
+User decisions on 2026-10-09 and 2026-10-10 are recorded in the fork's
+`docs/AIRPLAY_INTEGRATION.md` (fork PR #1). The latest: every file is cast
+through `CastDelivery.HlsRemux` (option B); the remux's own refusal
+(`MediaUnsupported`/`MediaMalformed`) decides eligibility.
 
 At the inspected Screenbox commit:
 

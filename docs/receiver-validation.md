@@ -1454,3 +1454,44 @@ Offline, the 190 cues matched ffmpeg's WebVTT conversion exactly. Record:
 | Italic section | Seek 95 s, played to 149 s; local stop, exit 0 | Italic lines rendered properly |
 
 **PASS for this receiver and host.**
+
+## UWP host: HLS remux and start position (D61, 2026-10-10)
+
+Screenbox step 1, as the user ordered after choosing HLS remux for every file
+(option B): the packaged x64 test host with Screenbox's capabilities and the
+UWP-built library (`build-uwp`, on top of `6ae08fa`), driven by its new script
+mode. Media: the user's 6.3 GB MKV film and the 10-minute tx3g MP4, both opened
+as brokered StorageFiles. Living Room Apple TV 4K (AppleTV14,1), tvOS 26.6
+(23L773) assumed unchanged and not queried. Record: [artifact](validation/native-uwp-host-remux-start-windows-2026-10-10.json).
+
+First batch (0.1.20.0):
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| 1: MKV, remux, start 0; pause, play, seek 1800, seek 600 | Start ok after 2520 ms; each control ok; positions 16.0, 1813.7, 613.9 s; local stop | Played normally; controls moved the TV; subtitles |
+| 2: MKV, remux, start 3600 | Start ok after 2498 ms; position 21.0 s after 20 s | Started at 0:00; Home at the scripted stop |
+| 3: MP4, remux, start 300 | Start ok after 2455 ms; position 21.0 s | Started at 0:00 |
+| 4: MP4, remux, start 580; seek 580 | First attempt: a scan missed the receiver. Retry: position 4.0 s, seek ok, `MediaEnd` at 600 s, slot freed | Started at 0; played to the end; subtitles; Home |
+| 5: MP4, progressive, start 120 | Start ok after 2421 ms; position 10.8 s | Started at 0:00 |
+
+**Finding:** tvOS 26.6 accepts `Start-Position-Seconds` in `insertPlayQueueItem`
+and plays from 0 anyway, for HLS and progressive media. A CLI diagnostic
+(`cast --remux --start-position 300 --event-log`) agreed: URL and MRP
+positions stayed at 0 and the video played from 0 (user). pyatv's AirPlay 2
+`play_url` sends the same item, so it offers no other key.
+
+**Fix (D61):** the session still sends the key and, for a start above zero,
+waits up to 5 s for MRP ownership, then sends one seek before `start` returns.
+
+Second batch (0.1.22.0, with the fix):
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| 2: MKV, remux, start 3600 | Start ok after 2502 ms; seek's Loading then Playing; position 3629.1 s after 30 s | Everything worked as expected |
+| 3: MP4, remux, start 300 | Start ok after 2474 ms; position 329.1 s after 30 s | Everything worked as expected |
+| 4: MP4, remux, start 580 | Start ok after 2563 ms; `MediaEnd` at 600 s about 21 s later; slot freed | Everything worked as expected |
+| 5: MP4, progressive, start 120 | Start ok after 2283 ms; position 139.0 s after 20 s | Everything worked as expected |
+
+**PASS for this receiver and host.** Not run: the x86 and ARM64 packages, a
+sleeping receiver from the UWP host, MKVs without Cues through brokered access,
+the certification kit on 0.1.22.0.

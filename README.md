@@ -107,7 +107,7 @@ Receiver: Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773). Host: Windows 11 x64.
 **Passed, as observed by a user at the TV:**
 - pairing, then reconnecting with the saved credentials
 - playback of video and audio, pause, play and seek, including seeking past
-  4 GiB
+  4 GiB, and starting at a chosen position
 - the end of the media, and returning to the Home screen afterwards
 - pulling the Ethernet cable during playback: the cast ends and cleans up, and
   a new cast works once the cable is back. The interrupted cast does not
