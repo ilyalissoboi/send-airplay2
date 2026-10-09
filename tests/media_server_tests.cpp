@@ -685,8 +685,8 @@ std::vector<MediaResource> playlist_and_segment(std::atomic_uint* size_calls = n
         return source;
     };
     std::vector<MediaResource> resources;
-    resources.push_back({"index.m3u8", "application/vnd.apple.mpegurl", counted(40)});
-    resources.push_back({"s0.m4s", "video/mp4", counted(300)});
+    resources.push_back({"index.m3u8", "application/vnd.apple.mpegurl", counted(40), {}});
+    resources.push_back({"s0.m4s", "video/mp4", counted(300), {}});
     return resources;
 }
 void resource_set_serving_tests() {
@@ -722,6 +722,78 @@ void resource_set_serving_tests() {
                         "not served: " + path.substr(std::min(path.size(), base.size())));
     }
 }
+/// A resource whose 300-byte size is known only on request, counting the
+/// computations; the first `failing_calls` computations throw.
+MediaResource deferred_resource(std::atomic_uint& computations, unsigned failing_calls = 0,
+                                std::chrono::milliseconds delay = 0ms) {
+    MediaResource resource{"s0.m4s", "video/mp4", patterned_source(300), {}};
+    resource.source.size = nullptr; // Only size_on_request may provide it.
+    resource.size_on_request = [&computations, failing_calls, delay](const MediaReadContext&) {
+        const auto call = ++computations;
+        std::this_thread::sleep_for(delay);
+        if (call <= failing_calls) {
+            throw std::runtime_error("synthetic index failure");
+        }
+        return std::uint64_t{300};
+    };
+    return resource;
+}
+
+void deferred_size_tests() {
+    group = "resource sets: deferred sizes";
+    {
+        std::atomic_uint computations{0};
+        std::vector<MediaResource> resources;
+        resources.push_back(deferred_resource(computations));
+        auto server = MediaServer::start_resource_set(std::move(resources), options());
+        check(computations == 0, "not computed at start");
+        const Target segment(server->resource_url("s0.m4s"));
+        assert_response(wire_exchange(segment, segment.request("HEAD")), 200, 300, "",
+                        "HEAD resolves the size");
+        const auto ranged =
+            wire_exchange(segment, segment.request("GET", "Range: bytes=10-19\r\n"));
+        assert_response(ranged, 206, 10, expected_body(10, 10), "range on a deferred size");
+        check(ranged.header("Content-Range") == "bytes 10-19/300",
+              "deferred size in Content-Range");
+        assert_response(wire_exchange(segment, segment.request()), 200, 300, expected_body(0, 300),
+                        "full GET");
+        check(computations == 1, "computed once, then kept");
+    }
+    {
+        std::atomic_uint computations{0};
+        std::vector<MediaResource> resources;
+        resources.push_back(deferred_resource(computations, 1));
+        auto server = MediaServer::start_resource_set(std::move(resources), options());
+        const Target segment(server->resource_url("s0.m4s"));
+        assert_response(wire_exchange(segment, segment.request()), 500, 0, "",
+                        "a failed computation answers 500");
+        assert_response(wire_exchange(segment, segment.request()), 200, 300, expected_body(0, 300),
+                        "a later request computes it again");
+        check(computations == 2, "a failure is not kept");
+    }
+    {
+        std::atomic_uint computations{0};
+        std::vector<MediaResource> resources;
+        resources.push_back(deferred_resource(computations, 0, 100ms));
+        auto server = MediaServer::start_resource_set(std::move(resources), options());
+        const Target segment(server->resource_url("s0.m4s"));
+        auto first = std::async(std::launch::async,
+                                [&segment] { return wire_exchange(segment, segment.request()); });
+        auto second = std::async(std::launch::async,
+                                 [&segment] { return wire_exchange(segment, segment.request()); });
+        assert_response(first.get(), 200, 300, expected_body(0, 300), "first concurrent request");
+        assert_response(second.get(), 200, 300, expected_body(0, 300), "second concurrent request");
+        check(computations == 1, "concurrent first requests share one computation");
+    }
+    std::atomic_uint unused{0};
+    auto neither = deferred_resource(unused);
+    neither.size_on_request = nullptr;
+    std::vector<MediaResource> resources;
+    resources.push_back(std::move(neither));
+    invalid("neither size nor size_on_request",
+            [&] { (void)MediaServer::start_resource_set(std::move(resources), options()); });
+}
+
 void resource_set_option_tests() {
     group = "resource sets: construction";
     invalid("empty set", [] { (void)MediaServer::start_resource_set({}, options()); });
@@ -775,6 +847,7 @@ int main() {
         option_and_ipv6_tests();
         resource_set_serving_tests();
         resource_set_option_tests();
+        deferred_size_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';

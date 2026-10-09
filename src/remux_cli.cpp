@@ -61,7 +61,7 @@ std::uint64_t write_resource(const MediaResource& resource, const fs::path& path
     const MediaReadContext context{&not_stopped, &not_cancelled,
                                    std::chrono::steady_clock::now() + std::chrono::minutes(10)};
     std::array<std::uint8_t, copy_chunk> buffer{};
-    const auto size = resource.source.size();
+    const auto size = media_resource_size(resource, context);
     std::uint64_t offset = 0;
     while (offset < size) {
         const auto wanted =

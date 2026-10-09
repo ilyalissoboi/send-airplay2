@@ -360,7 +360,8 @@ substream).
   correctly, and the TV went Home at the end. Atmos rendering was not checked,
   for lack of Atmos hardware.
 
-**Known cost (not yet addressed):** startup reads every block header through
+**Known cost (addressed by the indexed path below for files with Cues):**
+startup reads every block header through
 16 KiB windows. When frames are smaller than a window, that reads about the
 whole file before playback; the test runs read about 76 MB in total for the
 54 MB H.264 + AAC file, including the segments served. For the 6.3 GB film
@@ -430,6 +431,75 @@ to 1 h, and video and audio were normal. Record: [artifact](validation/native-hl
 Not run: ASS and WebVTT source tracks on the receiver, several or forced or
 hearing-impaired tracks, MP4 text tracks (tx3g/wvtt, not read), selecting a
 subtitle track from the sender (MRP not researched).
+
+## Indexed MKV start (2026-10-09)
+
+The user chose to address the MKV startup cost next. With Cues, the remux no
+longer reads every block header before playback:
+
+- `MediaResource::size_on_request` (media server, see
+  [media-server.md](media-server.md#resource-sets-d60)): a resource's size can
+  be computed on its first request on a worker thread and is then kept;
+  failures are retried by the next request.
+- `MkvIndex` (`src/mkv_demux.*`): at start it reads the EBML header, Info,
+  Tracks and the Cues found through the SeekHead, plans segments on the same
+  6-second grid over the video track's cue times, and scans only the first
+  segment (sample entries, reorder delay, audio frame grid) and the last one
+  (end time). `read_segment(k)` scans the clusters from the last cue point at
+  least 2 s before the segment to the first cluster 2 s past it.
+- Timeline per segment:
+  - Video decode times are the sorted presentation times, moved to start at
+    the segment's cue time. Consecutive segments therefore join exactly,
+    open GOPs included, and presentation keeps the Matroska timestamps.
+  - Audio follows block times beyond the rounding. Each segment's first frame
+    snaps to the file's frame grid, and the last frame lasts until the next
+    segment's first one, which the scan reaches. So audio decode times also
+    join exactly (Apple HLS 7.3).
+  - Text cues are read per segment; a WebVTT segment takes the cues of its
+    own segment and of the previous one.
+- `remux_to_hls` uses the index when it opens, and the full scan otherwise:
+  no Cues, Cues that would make a segment longer than 20 s, or no audio in the
+  first segment of a file with audio. Every media and WebVTT segment is sized
+  and built on its first request and cached. Engineering choice: the
+  multivariant BANDWIDTH and AVERAGE-BANDWIDTH use the index's cluster spans
+  as estimates, because segment sizes are unknown before their first request.
+
+Results:
+
+- **Startup:** for the user's 6.3 GB film it took 72-95 ms, down from 4.9 s
+  cold (2.0 s warm), and the cast read 395 MB instead of 2.8 GB.
+- **Offline, the film:** packets identical, presentation times exact, decode
+  times continuous at every boundary, subtitles identical to ffmpeg's
+  conversion.
+- **Offline, the three test MKVs:** the same checks pass.
+- **Unit tests:** the indexed segments of a synthetic MKV hold the same
+  samples as the full scan's, and its served segments are byte-identical to
+  the full-scan remux of the same file without Cues. The tests also cover
+  the fallbacks, and an open-GOP cut whose leading frames keep their
+  presentation times while decode times join.
+- **Receiver:** on the recorded Apple TV, the film started promptly, paused,
+  seeked to 1 h and near the end, showed subtitles in sync and ended
+  normally. User: everything worked as expected.
+
+Record: [artifact](validation/native-hls-indexed-mkv-windows-2026-10-09.json).
+
+Not run: MKVs from other muxers on the receiver, files without Cues on the
+receiver, brokered UWP file access.
+
+## Planned: MP4 text subtitles
+
+The user asked to add native MP4 subtitle support to the list if it needs
+extra work, and it does. The MP4 reader selects only video and audio tracks.
+Subtitle tracks (`tx3g` / `mov_text` in a `text` or `sbtl` handler; `wvtt`
+per ISO/IEC 14496-30) are ignored today. Support needs:
+- reading those tracks' samples, which are small;
+- converting 3GPP Timed Text (a 16-bit length-prefixed UTF-8 string, styles
+  dropped) to WebVTT cue text, with WebVTT samples kept as WebVTT;
+- feeding them to the existing `TextTrack` path, with language from mdhd and
+  forced flags from the track.
+
+The multivariant playlist, WebVTT segments and receiver behavior are already
+in place from phase 3c. Not started.
 
 ## Provenance
 

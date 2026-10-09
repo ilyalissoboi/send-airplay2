@@ -4,6 +4,8 @@
 #include "mp4_demux.h"
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <vector>
 
 namespace send_airplay2::detail {
 /// Whether `data` starts with the EBML header ID (Matroska and WebM files).
@@ -38,5 +40,76 @@ namespace send_airplay2::detail {
  * track metadata or 4,000,000 frames per track.
  */
 [[nodiscard]] Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size);
+
+/** A Matroska file opened from its Cues index (D60), so start-up reads the
+ * track metadata, the index and two segments instead of every block header.
+ *
+ * Segments start at the video track's cue points, on the same 6-second grid
+ * as plan_segments(). The first segment fixes the sample entries, the video
+ * reorder delay (its edit list) and the audio frame grid; the last one fixes
+ * the end time. Each read_segment() scans only the clusters around one
+ * segment, from the last cue point at least 2 s before it to the first
+ * cluster 2 s past it, so it is bounded by the segment's size, not the
+ * file's.
+ *
+ * Per segment, the video decode times are the sorted presentation times
+ * moved to start at the segment's cue time, so consecutive segments' decode
+ * timelines join exactly (also for open GOPs); presentation times are the
+ * Matroska timestamps, as with read_mkv(). Audio frames belong to the segment
+ * whose window holds their block timestamp and stay on one frame grid across
+ * segments. Text tracks keep their metadata here; their cues come per
+ * segment.
+ *
+ * A text cue without BlockDuration or DefaultDuration ends at its successor
+ * when the segment's scan reaches it (up to 2 s past the segment), else
+ * after 5 s.
+ *
+ * Thread-safe: read_segment() is const and reads through the given reader.
+ */
+class MkvIndex {
+public:
+    /** Null when the file has no Cues for its video track, the index begins
+     * after the first video frame, the cues would make a segment (the last
+     * one included) longer than 20 s, or the first segment has no audio
+     * frames while the file has an audio track: read_mkv() then reads the
+     * whole file. Refusals are as for read_mkv().
+     * @throws RemuxException; exceptions from `read` propagate. */
+    [[nodiscard]] static std::unique_ptr<MkvIndex> open(const RandomReader& read,
+                                                        std::uint64_t file_size);
+    ~MkvIndex();
+    MkvIndex(const MkvIndex&) = delete;
+    MkvIndex& operator=(const MkvIndex&) = delete;
+    MkvIndex(MkvIndex&&) = delete;
+    MkvIndex& operator=(MkvIndex&&) = delete;
+
+    /// Tracks with sample entries, headers and edit lists but no samples, and
+    /// text tracks with metadata but no cues.
+    [[nodiscard]] const Mp4Movie& metadata() const;
+    [[nodiscard]] std::size_t segment_count() const;
+    /// Presentation start of a segment (its cue time) and its duration, in
+    /// microseconds; the last segment ends with the last video frame.
+    [[nodiscard]] std::uint64_t segment_start_us(std::size_t segment) const;
+    [[nodiscard]] std::uint64_t segment_duration_us(std::size_t segment) const;
+    /// File bytes between this segment's cue cluster and the next one's: an
+    /// estimate for advertised bandwidth before a segment is read.
+    [[nodiscard]] std::uint64_t estimated_segment_bytes(std::size_t segment) const;
+    /// Video frames per 1000 s in the first segment, for FRAME-RATE.
+    [[nodiscard]] std::uint64_t frame_rate_milli() const;
+
+    /// One segment's samples per media track (metadata() order) and the text
+    /// cues per text track that start in its window.
+    struct Segment {
+        std::vector<std::vector<Mp4Sample>> samples;
+        std::vector<std::vector<TextCue>> cues;
+    };
+    /** @throws RemuxException for blocks that contradict the index;
+     *          std::out_of_range for a segment past segment_count(). */
+    [[nodiscard]] Segment read_segment(std::size_t segment, const RandomReader& read) const;
+
+private:
+    struct Impl;
+    explicit MkvIndex(std::unique_ptr<Impl> impl);
+    std::unique_ptr<Impl> impl_;
+};
 } // namespace send_airplay2::detail
 #endif

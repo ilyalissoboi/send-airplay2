@@ -8,10 +8,12 @@
 #include <array>
 #include <chrono>
 #include <cstddef>
+#include <functional>
 #include <future>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -173,11 +175,18 @@ private:
 struct MediaServer::Impl {
     struct Session;
     /// One served representation; its size is the snapshot taken at start.
+    /// A size computed on the first request that needs it, then kept.
+    struct DeferredSize {
+        std::function<std::uint64_t(const MediaReadContext&)> compute;
+        std::mutex mutex; // Held while computing, so concurrent first requests wait.
+        std::optional<std::uint64_t> value;
+    };
     struct Resource {
         std::string name; // Empty for the single-source server.
         std::string content_type;
-        std::uint64_t size = 0;
+        std::uint64_t size = 0; // Unused while `deferred` has no value.
         MediaSource source;
+        std::shared_ptr<DeferredSize> deferred; // Set for size_on_request resources.
     };
     // Fixed after construction, so workers read them without locking.
     std::vector<Resource> resources;
@@ -237,7 +246,7 @@ struct MediaServer::Impl {
         }
         resources.reserve(input.size());
         for (auto& resource : input) {
-            if (!resource.source.size || !resource.source.read_at) {
+            if (!resource.source.read_at || (!resource.source.size && !resource.size_on_request)) {
                 invalid_options();
             }
             if (named) {
@@ -247,12 +256,19 @@ struct MediaServer::Impl {
                     invalid_options();
                 }
             }
+            std::shared_ptr<DeferredSize> deferred;
+            if (resource.size_on_request) {
+                deferred = std::make_shared<DeferredSize>();
+                deferred->compute = std::move(resource.size_on_request);
+            }
             resources.push_back({named ? std::move(resource.name) : std::string{},
                                  named ? std::move(resource.content_type) : options.content_type, 0,
-                                 std::move(resource.source)});
+                                 std::move(resource.source), std::move(deferred)});
         }
         for (auto& resource : resources) {
-            resource.size = resource.source.size();
+            if (!resource.deferred) {
+                resource.size = resource.source.size();
+            }
         }
         ErrorCode error;
         // UDP connect selects a route without sending anything to the receiver.
@@ -465,6 +481,56 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
             send_error(http::status::method_not_allowed);
             return;
         }
+        if (resource->deferred) {
+            resolve_deferred_size();
+            return;
+        }
+        respond(resource->size);
+    }
+    /// Computes a deferred size on a worker, then continues on the network
+    /// thread. Only a completed computation for a live request is kept.
+    void resolve_deferred_size() {
+        reading_source = true;
+        asio::post(server.readers->get_executor(), [self = shared_from_this()] {
+            std::optional<std::uint64_t> size;
+            const MediaReadContext context{&self->server.stopped, &self->cancelled, self->deadline};
+            try {
+                auto& deferred = *self->resource->deferred;
+                std::lock_guard<std::mutex> lock(deferred.mutex);
+                if (!deferred.value && !context.should_stop()) {
+                    const auto computed = deferred.compute(context);
+                    if (!context.should_stop()) {
+                        deferred.value = computed;
+                    }
+                }
+                size = deferred.value;
+            } catch (...) {
+                // Not kept: a later request computes it again. Never log the text.
+            }
+            asio::post(self->server.network, [self, size] {
+                self->reading_source = false;
+                if (self->closed || self->server.stopped.load(std::memory_order_relaxed) ||
+                    std::chrono::steady_clock::now() >= self->deadline) {
+                    self->close(std::chrono::steady_clock::now() >= self->deadline
+                                    ? MediaRequestEnd::timeout
+                                    : MediaRequestEnd::cancelled);
+                } else if (!size) {
+                    self->source_failed = true;
+                    self->send_error(http::status::internal_server_error);
+                } else {
+                    try {
+                        self->respond(*size);
+                    } catch (...) {
+                        self->close(MediaRequestEnd::internal_error);
+                    }
+                }
+            });
+        });
+    }
+    /// The response for a representation of `representation_size` bytes.
+    void respond(std::uint64_t representation_size) {
+        const auto& request = parser.get();
+        const bool head = request.method() == http::verb::head;
         // Range applies only to GET. Without a representation validator, If-Range
         // cannot match, so ignore Range and send the full representation.
         const auto range = head || request.count(http::field::if_range)
@@ -472,11 +538,12 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
                                : request[http::field::range];
         sap2_byte_range selection{};
         const auto result =
-            sap2_resolve_http_range(range.data(), range.size(), resource->size, &selection);
+            sap2_resolve_http_range(range.data(), range.size(), representation_size, &selection);
         response.set(http::field::accept_ranges, "bytes");
         response.set(http::field::content_type, resource->content_type);
         if (result == SAP2_RANGE_UNSATISFIABLE) {
-            response.set(http::field::content_range, "bytes */" + std::to_string(resource->size));
+            response.set(http::field::content_range,
+                         "bytes */" + std::to_string(representation_size));
             response.result(http::status::range_not_satisfiable);
             response.content_length(0);
             send_header();
@@ -487,7 +554,7 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
             response.set(http::field::content_range,
                          "bytes " + std::to_string(selection.offset) + "-" +
                              std::to_string(selection.offset + selection.length - 1) + "/" +
-                             std::to_string(resource->size));
+                             std::to_string(representation_size));
         }
         response.content_length(selection.length);
         offset = selection.offset;
@@ -685,7 +752,7 @@ MediaServer::MediaServer(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 MediaServer::~MediaServer() = default;
 std::unique_ptr<MediaServer> MediaServer::start(MediaSource source, MediaServerOptions options) {
     std::vector<MediaResource> single;
-    single.push_back({{}, {}, std::move(source)});
+    single.push_back({{}, {}, std::move(source), {}});
     auto impl = std::make_unique<Impl>(std::move(single), false, std::move(options));
     auto server = std::unique_ptr<MediaServer>(new MediaServer(std::move(impl)));
     server->impl_->start();

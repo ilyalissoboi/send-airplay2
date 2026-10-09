@@ -9,6 +9,7 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -75,14 +76,51 @@ std::string text_segment_name(std::size_t track, std::size_t index) {
 
 /// The EXTINF lines of every segment, each followed by its name.
 template <class Name>
-std::string segment_lines(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments,
-                          Name name) {
+std::string segment_lines(const std::vector<std::uint64_t>& durations_us, Name name) {
     std::string lines;
-    for (std::size_t index = 0; index < segments.size(); ++index) {
-        lines += "#EXTINF:" + seconds_text(segment_duration_us(movie, segments, index)) + ",\n" +
-                 name(index) + "\n";
+    for (std::size_t index = 0; index < durations_us.size(); ++index) {
+        lines += "#EXTINF:" + seconds_text(durations_us[index]) + ",\n" + name(index) + "\n";
     }
     return lines;
+}
+
+std::uint32_t target_from(const std::vector<std::uint64_t>& durations_us) {
+    std::uint32_t target = 1;
+    for (const auto duration : durations_us) {
+        target = std::max(target, rounded_seconds(duration));
+    }
+    return target;
+}
+
+std::string media_playlist_text(const std::vector<std::uint64_t>& durations_us) {
+    return "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:" +
+           std::to_string(target_from(durations_us)) +
+           "\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXT-X-INDEPENDENT-SEGMENTS\n"
+           "#EXT-X-MAP:URI=\"" +
+           std::string(init_name) + "\"\n" + segment_lines(durations_us, segment_name) +
+           "#EXT-X-ENDLIST\n";
+}
+
+std::string subtitle_playlist_text(const std::vector<std::uint64_t>& durations_us,
+                                   std::size_t track) {
+    return "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:" +
+           std::to_string(target_from(durations_us)) +
+           "\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n" +
+           segment_lines(durations_us,
+                         [track](std::size_t index) { return text_segment_name(track, index); }) +
+           "#EXT-X-ENDLIST\n";
+}
+
+/// Presentation windows' starts: `origin_us` plus the cumulative durations.
+std::vector<std::uint64_t> window_starts(std::uint64_t origin_us,
+                                         const std::vector<std::uint64_t>& durations_us) {
+    std::vector<std::uint64_t> starts;
+    auto elapsed = origin_us;
+    for (const auto duration : durations_us) {
+        starts.push_back(elapsed);
+        elapsed += duration;
+    }
+    return starts;
 }
 
 /// The video track's display size from its tkhd (16.16 width and height).
@@ -99,15 +137,13 @@ std::pair<std::uint32_t, std::uint32_t> display_size(const Mp4Track& video) {
 
 /// Peak and average bit rate (bits per second) of segments of these sizes on
 /// the video segment durations.
-std::pair<std::uint64_t, std::uint64_t> bit_rates(const Mp4Movie& movie,
-                                                  const std::vector<SegmentLayout>& segments,
+std::pair<std::uint64_t, std::uint64_t> bit_rates(const std::vector<std::uint64_t>& durations_us,
                                                   const std::vector<std::uint64_t>& sizes) {
     std::uint64_t peak = 0;
     std::uint64_t total_bytes = 0;
     std::uint64_t total_us = 0;
-    for (std::size_t index = 0; index < segments.size(); ++index) {
-        const auto duration =
-            std::max<std::uint64_t>(segment_duration_us(movie, segments, index), 1);
+    for (std::size_t index = 0; index < durations_us.size(); ++index) {
+        const auto duration = std::max<std::uint64_t>(durations_us[index], 1);
         peak = std::max(peak, sizes[index] * 8 * microseconds_per_second / duration);
         total_bytes += sizes[index];
         total_us += duration;
@@ -119,36 +155,38 @@ std::pair<std::uint64_t, std::uint64_t> bit_rates(const Mp4Movie& movie,
 /// plus the largest subtitle rendition's (one plays at a time; RFC 8216bis:
 /// the largest sum over playable combinations), display size, frame rate and
 /// codecs.
-VariantStream variant_stream(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments,
+VariantStream variant_stream(const Mp4Movie& movie, const std::vector<std::uint64_t>& durations_us,
                              const std::vector<std::uint64_t>& sizes,
-                             const std::vector<std::vector<std::uint64_t>>& subtitle_sizes) {
+                             const std::vector<std::vector<std::uint64_t>>& subtitle_sizes,
+                             std::uint64_t frame_rate_milli) {
     VariantStream variant;
     variant.uri = playlist_name;
     std::tie(variant.peak_bits_per_second, variant.average_bits_per_second) =
-        bit_rates(movie, segments, sizes);
+        bit_rates(durations_us, sizes);
     std::uint64_t subtitle_peak = 0;
     std::uint64_t subtitle_average = 0;
     for (const auto& track : subtitle_sizes) {
-        const auto [peak, average] = bit_rates(movie, segments, track);
+        const auto [peak, average] = bit_rates(durations_us, track);
         subtitle_peak = std::max(subtitle_peak, peak);
         subtitle_average = std::max(subtitle_average, average);
     }
     variant.peak_bits_per_second += subtitle_peak;
     variant.average_bits_per_second += subtitle_average;
-    const auto& video = movie.tracks.at(0);
-    std::tie(variant.width, variant.height) = display_size(video);
-    const auto ticks = track_end_time(video) - video.samples.front().decode_time;
-    if (ticks) {
-        // Frames per 1000 s, rounded: samples x timescale x 1000 / ticks.
-        variant.frame_rate_milli =
-            (static_cast<std::uint64_t>(video.samples.size()) * video.timescale * 1000 +
-             ticks / 2) /
-            ticks;
-    }
+    std::tie(variant.width, variant.height) = display_size(movie.tracks.at(0));
+    variant.frame_rate_milli = frame_rate_milli;
     for (const auto& track : movie.tracks) {
         variant.codecs += (variant.codecs.empty() ? "" : ",") + codec_string(track);
     }
     return variant;
+}
+
+/// Frames per 1000 s of a video track, rounded: samples x timescale x 1000 / ticks.
+std::uint64_t video_frame_rate_milli(const Mp4Track& video) {
+    const auto ticks = track_end_time(video) - video.samples.front().decode_time;
+    return ticks ? (static_cast<std::uint64_t>(video.samples.size()) * video.timescale * 1000 +
+                    ticks / 2) /
+                       ticks
+                 : 0;
 }
 
 /// One rendition per text track; names are made unique within the group,
@@ -203,13 +241,13 @@ MediaSource memory_source(std::shared_ptr<const Bytes> bytes) {
 /// Copies up to `capacity` mdat payload bytes starting `offset` bytes into
 /// the payload: each range's samples in track order, read from the source.
 /// Returns fewer bytes when the source returns a short read or fails.
-std::size_t read_payload(const Presentation& presentation, const SegmentLayout& segment,
-                         std::uint64_t offset, std::uint8_t* output, std::size_t capacity,
-                         const MediaReadContext& context) {
+std::size_t read_payload(const MediaSource& input, const Mp4Movie& movie,
+                         const SegmentLayout& segment, std::uint64_t offset, std::uint8_t* output,
+                         std::size_t capacity, const MediaReadContext& context) {
     std::size_t written = 0;
     std::uint64_t position = 0; // Payload offset of the current sample.
     for (std::size_t track = 0; track < segment.ranges.size() && written < capacity; ++track) {
-        const auto& samples = presentation.movie.tracks[track].samples;
+        const auto& samples = movie.tracks[track].samples;
         for (auto index = segment.ranges[track].first;
              index < segment.ranges[track].end && written < capacity; ++index) {
             const auto& sample = samples[index];
@@ -218,8 +256,8 @@ std::size_t read_payload(const Presentation& presentation, const SegmentLayout& 
                 const auto within = offset + written - position;
                 const auto wanted = static_cast<std::size_t>(
                     std::min<std::uint64_t>(sample.size - within, capacity - written));
-                const auto count = presentation.input.read_at(sample.offset + within,
-                                                              output + written, wanted, context);
+                const auto count =
+                    input.read_at(sample.offset + within, output + written, wanted, context);
                 if (count == 0 || count > wanted) {
                     return count > wanted ? 0 : written;
                 }
@@ -253,8 +291,8 @@ MediaSource segment_source(std::shared_ptr<const Presentation> presentation, std
                     std::memcpy(output, header.data() + offset, count);
                     return count;
                 }
-                return read_payload(*presentation, segment, offset - header_size, output, capacity,
-                                    context);
+                return read_payload(presentation->input, presentation->movie, segment,
+                                    offset - header_size, output, capacity, context);
             }};
 }
 
@@ -278,6 +316,226 @@ RandomReader source_reader(const MediaSource& input, const std::atomic_bool* can
             length -= count;
         }
     };
+}
+/// Reads through MediaSource::read_at until `length` bytes arrive, under one
+/// request's context: for indexed segment scans on that request's thread.
+RandomReader request_reader(const MediaSource& input, const MediaReadContext& context) {
+    return [&input, &context](std::uint64_t offset, std::uint8_t* output, std::size_t length) {
+        constexpr std::size_t max_read = 64 * 1024; // MediaSource's read capacity bound.
+        while (length) {
+            if (context.should_stop()) {
+                throw std::runtime_error("request stopped while reading an indexed segment");
+            }
+            const auto wanted = std::min(length, max_read);
+            const auto count = input.read_at(offset, output, wanted, context);
+            if (count == 0 || count > wanted) {
+                throw std::runtime_error("media source read failed while remuxing");
+            }
+            offset += count;
+            output += count;
+            length -= count;
+        }
+    };
+}
+
+/// One indexed segment, built on its first request and then kept: its
+/// samples as a one-segment movie, and the text cues that start in it.
+struct IndexedSegment {
+    Mp4Movie movie;
+    SegmentLayout layout;
+    std::uint64_t header_size = 0;
+    std::uint64_t size = 0;
+    std::vector<std::vector<TextCue>> cues;
+};
+
+/// What an indexed MKV presentation's resources share.
+struct IndexedPresentation {
+    MediaSource input;
+    std::unique_ptr<MkvIndex> index;
+    std::vector<std::uint64_t> durations_us;
+    std::mutex mutex; // Guards the caches; building runs outside it.
+    std::vector<std::shared_ptr<const IndexedSegment>> segments;
+    std::vector<std::vector<std::shared_ptr<const std::string>>> webvtt; // [track][segment].
+
+    std::shared_ptr<const IndexedSegment> segment(std::size_t index_of,
+                                                  const MediaReadContext& context) {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            if (segments[index_of]) {
+                return segments[index_of];
+            }
+        }
+        const auto read = index->read_segment(index_of, request_reader(input, context));
+        auto built = std::make_shared<IndexedSegment>();
+        built->movie = index->metadata();
+        built->movie.text_tracks.clear();
+        built->layout.sequence = static_cast<std::uint32_t>(index_of + 1);
+        for (std::size_t track = 0; track < built->movie.tracks.size(); ++track) {
+            built->movie.tracks[track].samples = read.samples[track];
+            built->layout.ranges.push_back({0, read.samples[track].size()});
+        }
+        built->header_size =
+            moof_size(built->movie, built->layout) + mdat_header_size(built->movie, built->layout);
+        built->size = built->header_size + mdat_payload_size(built->movie, built->layout);
+        if (built->size > max_segment_bytes) {
+            throw RemuxException(RemuxFailure::too_large, "MKV: a segment exceeds 2 GiB");
+        }
+        built->cues = read.cues;
+        std::lock_guard<std::mutex> lock(mutex);
+        if (!segments[index_of]) {
+            segments[index_of] = std::move(built);
+        }
+        return segments[index_of];
+    }
+
+    /// WebVTT segment of `track` for window `index_of`: the cues starting in
+    /// this segment and in every earlier segment that starts within 30 s
+    /// before it, so a cue running across several cuts stays in each window
+    /// it overlaps. Cues longer than that look-back (rare) are cut short here;
+    /// reading further back would scan arbitrarily far on every seek.
+    std::shared_ptr<const std::string> webvtt_segment_text(std::size_t track, std::size_t index_of,
+                                                           const MediaReadContext& context) {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            if (webvtt[track][index_of]) {
+                return webvtt[track][index_of];
+            }
+        }
+        constexpr std::uint64_t look_back_us = 30'000'000;
+        const auto start = index->segment_start_us(index_of);
+        std::size_t first = index_of;
+        while (first > 0 && start - index->segment_start_us(first - 1) <= look_back_us) {
+            --first;
+        }
+        TextTrack cues;
+        for (auto earlier = first; earlier <= index_of; ++earlier) {
+            const auto& from = segment(earlier, context)->cues.at(track);
+            cues.cues.insert(cues.cues.end(), from.begin(), from.end());
+        }
+        const auto end = index_of + 1 < durations_us.size()
+                             ? index->segment_start_us(index_of + 1)
+                             : std::numeric_limits<std::uint64_t>::max();
+        auto text = std::make_shared<const std::string>(webvtt_segment(cues, start, end));
+        std::lock_guard<std::mutex> lock(mutex);
+        if (!webvtt[track][index_of]) {
+            webvtt[track][index_of] = std::move(text);
+        }
+        return webvtt[track][index_of];
+    }
+};
+
+/// Copies a built segment's bytes: its moof and mdat header, then samples.
+std::size_t read_indexed_segment(const IndexedPresentation& presentation,
+                                 const IndexedSegment& segment, std::uint64_t offset,
+                                 std::uint8_t* output, std::size_t capacity,
+                                 const MediaReadContext& context) {
+    if (offset < segment.header_size) {
+        const auto header = write_segment_header(segment.movie, segment.layout);
+        const auto count =
+            static_cast<std::size_t>(std::min<std::uint64_t>(capacity, header.size() - offset));
+        std::memcpy(output, header.data() + offset, count);
+        return count;
+    }
+    return read_payload(presentation.input, segment.movie, segment.layout,
+                        offset - segment.header_size, output, capacity, context);
+}
+
+/// The resources of an indexed MKV: playlists and init segment built now;
+/// every media and WebVTT segment sized and built on its first request.
+RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
+                         std::uint64_t frame_rate_milli) {
+    auto presentation = std::make_shared<IndexedPresentation>();
+    presentation->input = std::move(input);
+    presentation->index = std::move(index);
+    const auto& index_ref = *presentation->index;
+    const auto& metadata = index_ref.metadata();
+    const auto count = index_ref.segment_count();
+    for (std::size_t segment = 0; segment < count; ++segment) {
+        presentation->durations_us.push_back(index_ref.segment_duration_us(segment));
+    }
+    presentation->segments.resize(count);
+    presentation->webvtt.assign(metadata.text_tracks.size(),
+                                std::vector<std::shared_ptr<const std::string>>(count));
+    const auto& durations = presentation->durations_us;
+    const auto text = [](const std::string& value) {
+        return memory_source(std::make_shared<const Bytes>(value.begin(), value.end()));
+    };
+
+    RemuxedHls result;
+    result.playlist_name = playlist_name;
+    result.segment_count = count;
+    result.text_track_count = metadata.text_tracks.size();
+    result.target_duration_seconds = target_from(durations);
+    result.resources.push_back(
+        {playlist_name, playlist_type, text(media_playlist_text(durations)), {}});
+    result.resources.push_back(
+        {init_name,
+         segment_type,
+         memory_source(std::make_shared<const Bytes>(write_init_segment(metadata))),
+         {}});
+    for (std::size_t segment = 0; segment < count; ++segment) {
+        MediaResource resource{segment_name(segment), segment_type, {}, {}};
+        resource.source.read_at = [presentation,
+                                   segment](std::uint64_t offset, std::uint8_t* output,
+                                            std::size_t capacity,
+                                            const MediaReadContext& context) -> std::size_t {
+            if (context.should_stop()) {
+                return 0;
+            }
+            const auto built = presentation->segment(segment, context);
+            return read_indexed_segment(*presentation, *built, offset, output, capacity, context);
+        };
+        resource.size_on_request = [presentation, segment](const MediaReadContext& context) {
+            return presentation->segment(segment, context)->size;
+        };
+        result.resources.push_back(std::move(resource));
+    }
+    if (metadata.text_tracks.empty()) {
+        return result;
+    }
+    // Advertised bit rates use the index's cluster spans: segment sizes are
+    // not known before their first request.
+    std::vector<std::uint64_t> estimates;
+    for (std::size_t segment = 0; segment < count; ++segment) {
+        estimates.push_back(index_ref.estimated_segment_bytes(segment));
+    }
+    result.playlist_name = multivariant_name;
+    result.resources.push_back(
+        {multivariant_name,
+         playlist_type,
+         text(multivariant_playlist(
+             variant_stream(metadata, durations, estimates, {}, frame_rate_milli),
+             subtitle_renditions(metadata))),
+         {}});
+    for (std::size_t track = 0; track < metadata.text_tracks.size(); ++track) {
+        result.resources.push_back({text_playlist_name(track),
+                                    playlist_type,
+                                    text(subtitle_playlist_text(durations, track)),
+                                    {}});
+        for (std::size_t segment = 0; segment < count; ++segment) {
+            MediaResource resource{text_segment_name(track, segment), text_type, {}, {}};
+            resource.source.read_at = [presentation, track,
+                                       segment](std::uint64_t offset, std::uint8_t* output,
+                                                std::size_t capacity,
+                                                const MediaReadContext& context) -> std::size_t {
+                const auto webvtt = presentation->webvtt_segment_text(track, segment, context);
+                if (offset >= webvtt->size()) {
+                    return 0;
+                }
+                const auto copied = static_cast<std::size_t>(
+                    std::min<std::uint64_t>(capacity, webvtt->size() - offset));
+                std::memcpy(output, webvtt->data() + offset, copied);
+                return copied;
+            };
+            resource.size_on_request = [presentation, track,
+                                        segment](const MediaReadContext& context) {
+                return static_cast<std::uint64_t>(
+                    presentation->webvtt_segment_text(track, segment, context)->size());
+            };
+            result.resources.push_back(std::move(resource));
+        }
+    }
+    return result;
 }
 } // namespace
 
@@ -337,40 +595,29 @@ std::uint64_t segment_duration_us(const Mp4Movie& movie, const std::vector<Segme
     return ticks_to_us(end, video.timescale) - ticks_to_us(start, video.timescale);
 }
 
+namespace {
+std::vector<std::uint64_t> durations_of(const Mp4Movie& movie,
+                                        const std::vector<SegmentLayout>& segments) {
+    std::vector<std::uint64_t> durations;
+    for (std::size_t index = 0; index < segments.size(); ++index) {
+        durations.push_back(segment_duration_us(movie, segments, index));
+    }
+    return durations;
+}
+} // namespace
+
 std::uint32_t target_duration_seconds(const Mp4Movie& movie,
                                       const std::vector<SegmentLayout>& segments) {
-    std::uint32_t target = 1;
-    for (std::size_t index = 0; index < segments.size(); ++index) {
-        target = std::max(target, rounded_seconds(segment_duration_us(movie, segments, index)));
-    }
-    return target;
+    return target_from(durations_of(movie, segments));
 }
 
 std::string media_playlist(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments) {
-    const auto target = target_duration_seconds(movie, segments);
-    std::string playlist = "#EXTM3U\n"
-                           "#EXT-X-VERSION:7\n"
-                           "#EXT-X-TARGETDURATION:" +
-                           std::to_string(target) +
-                           "\n"
-                           "#EXT-X-MEDIA-SEQUENCE:0\n"
-                           "#EXT-X-PLAYLIST-TYPE:VOD\n"
-                           "#EXT-X-INDEPENDENT-SEGMENTS\n"
-                           "#EXT-X-MAP:URI=\"" +
-                           std::string(init_name) + "\"\n";
-    playlist += segment_lines(movie, segments, segment_name);
-    playlist += "#EXT-X-ENDLIST\n";
-    return playlist;
+    return media_playlist_text(durations_of(movie, segments));
 }
 
 std::string subtitle_playlist(const Mp4Movie& movie, const std::vector<SegmentLayout>& segments,
                               std::size_t track) {
-    return "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:" +
-           std::to_string(target_duration_seconds(movie, segments)) +
-           "\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n" +
-           segment_lines(movie, segments,
-                         [track](std::size_t index) { return text_segment_name(track, index); }) +
-           "#EXT-X-ENDLIST\n";
+    return subtitle_playlist_text(durations_of(movie, segments), track);
 }
 
 RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
@@ -385,9 +632,14 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
     if (file_size >= magic.size()) {
         reader(0, magic.data(), magic.size());
     }
-    presentation->movie = starts_like_matroska(magic.data(), magic.size())
-                              ? read_mkv(reader, file_size)
-                              : read_mp4(reader, file_size);
+    const bool matroska = starts_like_matroska(magic.data(), magic.size());
+    if (matroska) {
+        if (auto index = MkvIndex::open(reader, file_size)) {
+            const auto rate = index->frame_rate_milli();
+            return remux_indexed(std::move(presentation->input), std::move(index), rate);
+        }
+    }
+    presentation->movie = matroska ? read_mkv(reader, file_size) : read_mp4(reader, file_size);
     presentation->segments = plan_segments(presentation->movie);
 
     RemuxedHls result;
@@ -410,14 +662,16 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
     }());
     result.target_duration_seconds =
         target_duration_seconds(presentation->movie, presentation->segments);
-    result.resources.push_back({playlist_name, playlist_type, memory_source(playlist)});
+    result.resources.push_back({playlist_name, playlist_type, memory_source(playlist), {}});
     result.resources.push_back(
-        {init_name, segment_type,
-         memory_source(std::make_shared<const Bytes>(write_init_segment(presentation->movie)))});
+        {init_name,
+         segment_type,
+         memory_source(std::make_shared<const Bytes>(write_init_segment(presentation->movie))),
+         {}});
     std::shared_ptr<const Presentation> shared = presentation;
     for (std::size_t index = 0; index < sizes.size(); ++index) {
         result.resources.push_back(
-            {segment_name(index), segment_type, segment_source(shared, index, sizes[index])});
+            {segment_name(index), segment_type, segment_source(shared, index, sizes[index]), {}});
     }
 
     const auto& movie = presentation->movie;
@@ -433,35 +687,36 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
     // cumulative EXTINF time from the first video timestamp, which is the
     // timeline origin cues share (not necessarily 0); the last runs to the end.
     const auto& video = movie.tracks.at(0);
-    std::vector<std::uint64_t> window_starts;
-    std::uint64_t elapsed = ticks_to_us(video.samples.front().decode_time, video.timescale);
-    for (std::size_t index = 0; index < segments.size(); ++index) {
-        window_starts.push_back(elapsed);
-        elapsed += segment_duration_us(movie, segments, index);
-    }
+    const auto durations = durations_of(movie, segments);
+    const auto starts =
+        window_starts(ticks_to_us(video.samples.front().decode_time, video.timescale), durations);
     std::vector<std::vector<std::string>> webvtt(movie.text_tracks.size());
     std::vector<std::vector<std::uint64_t>> webvtt_sizes(movie.text_tracks.size());
     for (std::size_t track = 0; track < movie.text_tracks.size(); ++track) {
         for (std::size_t index = 0; index < segments.size(); ++index) {
             const auto end = index + 1 < segments.size()
-                                 ? window_starts[index + 1]
+                                 ? starts[index + 1]
                                  : std::numeric_limits<std::uint64_t>::max();
-            webvtt[track].push_back(
-                webvtt_segment(movie.text_tracks[track], window_starts[index], end));
+            webvtt[track].push_back(webvtt_segment(movie.text_tracks[track], starts[index], end));
             webvtt_sizes[track].push_back(webvtt[track].back().size());
         }
     }
     result.playlist_name = multivariant_name;
     result.resources.push_back(
-        {multivariant_name, playlist_type,
-         text(multivariant_playlist(variant_stream(movie, segments, sizes, webvtt_sizes),
-                                    subtitle_renditions(movie)))});
+        {multivariant_name,
+         playlist_type,
+         text(multivariant_playlist(
+             variant_stream(movie, durations, sizes, webvtt_sizes, video_frame_rate_milli(video)),
+             subtitle_renditions(movie))),
+         {}});
     for (std::size_t track = 0; track < movie.text_tracks.size(); ++track) {
-        result.resources.push_back({text_playlist_name(track), playlist_type,
-                                    text(subtitle_playlist(movie, segments, track))});
+        result.resources.push_back({text_playlist_name(track),
+                                    playlist_type,
+                                    text(subtitle_playlist(movie, segments, track)),
+                                    {}});
         for (std::size_t index = 0; index < segments.size(); ++index) {
             result.resources.push_back(
-                {text_segment_name(track, index), text_type, text(webvtt[track][index])});
+                {text_segment_name(track, index), text_type, text(webvtt[track][index]), {}});
         }
     }
     return result;

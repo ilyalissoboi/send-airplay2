@@ -688,7 +688,7 @@ std::map<std::string, std::string> remux_texts(const Bytes& file, std::string& e
                                    std::chrono::steady_clock::now() + std::chrono::minutes(1)};
     std::map<std::string, std::string> texts;
     for (const auto& resource : remuxed.resources) {
-        std::string out(static_cast<std::size_t>(resource.source.size()), '\0');
+        std::string out(static_cast<std::size_t>(media_resource_size(resource, context)), '\0');
         std::size_t position = 0;
         while (position < out.size()) {
             const auto count =
@@ -800,6 +800,309 @@ void subtitle_tests() {
           "nonzero origin: last segment holds the later cue");
 }
 
+// --- Indexed reading -----------------------------------------------------------
+
+/// One video block: presentation time relative to its cluster, and whether
+/// it is a keyframe.
+struct VideoFrameSpec {
+    int relative_ms = 0;
+    bool keyframe = false;
+};
+
+/// One cluster: video frames (keyframe flags as given) at `video_ms` relative
+/// times and AAC frames every 64 ms (three 1024-sample frames at 48 kHz each
+/// block, Xiph-laced) over [start, start + span).
+/// One SubRip block on track 3: a BlockGroup with BlockDuration, or a
+/// SimpleBlock without any duration when duration_ms is 0.
+struct TextBlockSpec {
+    int relative_ms = 0;
+    std::string text;
+    std::uint64_t duration_ms = 0;
+};
+
+struct ClusterSpec {
+    std::uint64_t start_ms = 0;
+    std::vector<VideoFrameSpec> video;
+    std::int16_t audio_span_ms = 0;
+    std::vector<TextBlockSpec> text;
+};
+
+/// Frame contents unique per cluster and frame index.
+Bytes cluster_bytes(const ClusterSpec& spec, std::uint8_t cluster_id_byte) {
+    Bytes content = uint_element(0xE7, spec.start_ms);
+    std::uint8_t serial = 0;
+    for (const auto& frame : spec.video) {
+        const auto relative = static_cast<std::int16_t>(frame.relative_ms);
+        const auto key = frame.keyframe;
+        content = join({content, element(simple_block_id,
+                                         block(1, relative, key ? keyframe_flag : 0, Lacing::none,
+                                               {frame_bytes(cluster_id_byte, 20u + serial++)}))});
+    }
+    for (std::int16_t at = 0; at < spec.audio_span_ms; at = static_cast<std::int16_t>(at + 64)) {
+        content = join(
+            {content, element(simple_block_id, block(2, at, keyframe_flag, Lacing::xiph,
+                                                     {frame_bytes(0x80, 4), frame_bytes(0x81, 5),
+                                                      frame_bytes(0x82, 6)}))});
+    }
+    for (const auto& cue : spec.text) {
+        const auto body = block(3, static_cast<std::int16_t>(cue.relative_ms), keyframe_flag,
+                                Lacing::none, {Bytes(cue.text.begin(), cue.text.end())});
+        content =
+            join({content, cue.duration_ms ? element(block_group_id,
+                                                     join({element(0xA1, body),
+                                                           uint_element(0x9B, cue.duration_ms)}))
+                                           : element(simple_block_id, body)});
+    }
+    return element(cluster_id, content);
+}
+
+/// A Matroska file whose SeekHead (first in the Segment) points to Cues after
+/// the clusters; one cue point per cluster that starts with a keyframe.
+Bytes indexed_mkv(const std::vector<ClusterSpec>& specs, bool with_cues = true,
+                  std::size_t first_cued_cluster = 0) {
+    Bytes track_data = join({track_entry(video_spec()), track_entry([] {
+                                 auto audio = aac_spec();
+                                 audio.codec_delay_ns = 0;
+                                 return audio;
+                             }())});
+    if (std::any_of(specs.begin(), specs.end(),
+                    [](const ClusterSpec& spec) { return !spec.text.empty(); })) {
+        TrackSpec subtitles;
+        subtitles.number = 3;
+        subtitles.type = 17;
+        subtitles.codec = "S_TEXT/UTF8";
+        subtitles.codec_private.clear();
+        subtitles.flag_default = false;
+        track_data = join({track_data, track_entry(subtitles)});
+    }
+    const auto info = element(info_id, uint_element(0x2AD7B1, 1'000'000));
+    const auto tracks = element(tracks_id, track_data);
+    std::vector<Bytes> clusters;
+    for (std::size_t index = 0; index < specs.size(); ++index) {
+        clusters.push_back(cluster_bytes(specs[index], static_cast<std::uint8_t>(0x10 + index)));
+    }
+    // SeekHead with one Seek whose 8-byte SeekPosition is patched below.
+    const auto fixed_position = [](std::uint64_t value) {
+        Bytes out;
+        for (int shift = 56; shift >= 0; shift -= 8) {
+            out.push_back(static_cast<std::uint8_t>(value >> shift));
+        }
+        return element(0x53AC, out);
+    };
+    const auto seek_head = [&](std::uint64_t cues_position) {
+        return element(0x114D9B74, element(0x4DBB, join({element(0x53AB, {0x1C, 0x53, 0xBB, 0x6B}),
+                                                         fixed_position(cues_position)})));
+    };
+    const auto seek_bytes = seek_head(0).size();
+    std::uint64_t position = seek_bytes + info.size() + tracks.size(); // Segment-relative.
+    Bytes cue_points;
+    Bytes all_clusters;
+    for (std::size_t index = 0; index < specs.size(); ++index) {
+        const auto& spec = specs[index];
+        if (index >= first_cued_cluster && !spec.video.empty() && spec.video.front().keyframe &&
+            spec.video.front().relative_ms == 0) {
+            cue_points =
+                join({cue_points,
+                      element(0xBB, join({uint_element(0xB3, spec.start_ms),
+                                          element(0xB7, join({uint_element(0xF7, 1),
+                                                              uint_element(0xF1, position)}))}))});
+        }
+        position += clusters[index].size();
+        all_clusters = join({all_clusters, clusters[index]});
+    }
+    const auto cues = element(0x1C53BB6B, cue_points);
+    const auto segment_data = with_cues
+                                  ? join({seek_head(position), info, tracks, all_clusters, cues})
+                                  : join({info, tracks, all_clusters});
+    const auto header =
+        element(ebml_id, join({uint_element(0x4286, 1), string_element(0x4282, "matroska")}));
+    return join({header, element(segment_id, segment_data)});
+}
+
+/// Keyframe clusters at 0, 3, 6.5, 9 and 12.5 s, 15 fps (67 ms frames) with
+/// one B-frame reordering per pair, and audio throughout.
+std::vector<ClusterSpec> regular_clusters() {
+    std::vector<ClusterSpec> specs;
+    for (const std::uint64_t start : {0u, 3000u, 6500u, 9000u, 12500u}) {
+        ClusterSpec spec;
+        spec.start_ms = start;
+        const std::int16_t span = start == 3000 || start == 9000 ? 3500 : 2500;
+        spec.video.push_back({0, true});
+        // Decode order I P B P B ...: P at +2 frames, B at +1, step 2 frames.
+        for (std::int16_t frame = 2; frame * 67 < span;
+             frame = static_cast<std::int16_t>(frame + 2)) {
+            spec.video.push_back({static_cast<std::int16_t>(frame * 67), false});
+            spec.video.push_back({static_cast<std::int16_t>((frame - 1) * 67), false});
+        }
+        spec.audio_span_ms = span;
+        specs.push_back(spec);
+    }
+    return specs;
+}
+
+void indexed_reading_tests() {
+    group = "indexed MKV";
+    const auto specs = regular_clusters();
+    const auto file = indexed_mkv(specs);
+    const auto index = MkvIndex::open(memory_reader(file), file.size());
+    check(index != nullptr, "opened from its Cues");
+    if (!index) {
+        return;
+    }
+    // 6 s grid over cue times 0, 3, 6.5, 9, 12.5: starts at 0, 6.5 and 12.5 s.
+    check(index->segment_count() == 3, "three segments on the cue grid");
+    check(index->segment_start_us(0) == 0 && index->segment_start_us(1) == 6'500'000 &&
+              index->segment_start_us(2) == 12'500'000,
+          "segments start at cue times");
+    check(index->segment_duration_us(0) == 6'500'000 && index->segment_duration_us(1) == 6'000'000,
+          "durations between cue times");
+
+    // The same file without Cues is read in full; each indexed segment must
+    // hold the same sample tables as the full scan's segment.
+    const auto plain = indexed_mkv(specs, false);
+    check(MkvIndex::open(memory_reader(plain), plain.size()) == nullptr,
+          "without Cues the full scan is used");
+    const auto full = read_mkv(memory_reader(plain), plain.size());
+    const auto layouts = plan_segments(full);
+    check(layouts.size() == 3, "the full scan plans the same three segments");
+    for (std::size_t segment = 0; segment < 3 && segment < layouts.size(); ++segment) {
+        const auto read = index->read_segment(segment, memory_reader(file));
+        for (std::size_t track = 0; track < 2; ++track) {
+            const auto range = layouts[segment].ranges[track];
+            const auto& expected = full.tracks[track].samples;
+            const auto& actual = read.samples[track];
+            // Offsets differ by the SeekHead; everything else must match.
+            bool same = actual.size() == range.count();
+            for (std::size_t sample = 0; same && sample < actual.size(); ++sample) {
+                const auto& a = actual[sample];
+                const auto& b = expected[range.first + sample];
+                same = a.size == b.size && a.decode_time == b.decode_time &&
+                       a.duration == b.duration && a.composition_offset == b.composition_offset &&
+                       a.sync == b.sync;
+            }
+            check(same, "segment " + std::to_string(segment) + " track " + std::to_string(track) +
+                            ": same samples as the full scan");
+        }
+    }
+    check(index->metadata().tracks.size() == 2 && index->metadata().tracks[0].samples.empty() &&
+              index->metadata().tracks[0].edits.size() == full.tracks[0].edits.size() &&
+              (full.tracks[0].edits.empty() || index->metadata().tracks[0].edits[0].media_time ==
+                                                   full.tracks[0].edits[0].media_time),
+          "metadata carries the full scan's video edit list, no samples");
+
+    // Served bytes: the indexed remux and the full-scan remux of the file
+    // without Cues produce the same playlist and segment bytes, offsets aside.
+    std::string indexed_entry;
+    std::string full_entry;
+    const auto indexed_texts = remux_texts(file, indexed_entry);
+    const auto full_texts = remux_texts(plain, full_entry);
+    check(indexed_texts.at("index.m3u8") == full_texts.at("index.m3u8"), "same media playlist");
+    check(indexed_texts.at("init.mp4") == full_texts.at("init.mp4"), "same init segment");
+    for (const auto* name : {"s0.m4s", "s1.m4s", "s2.m4s"}) {
+        const auto& a = indexed_texts.at(name);
+        const auto& b = full_texts.at(name);
+        // trun data offsets are relative to the moof, so the bytes match exactly.
+        check(a == b, std::string(name) + ": same bytes as the full scan");
+    }
+}
+
+void indexed_fallback_tests() {
+    group = "indexed MKV fallbacks";
+    // Cue points 25 s apart: a segment would exceed 20 s, so the full scan plans.
+    std::vector<ClusterSpec> sparse(2);
+    sparse[0].start_ms = 0;
+    sparse[0].video = {{0, true}};
+    sparse[0].audio_span_ms = 64;
+    sparse[1].start_ms = 25'000;
+    sparse[1].video = {{0, true}};
+    sparse[1].audio_span_ms = 64;
+    const auto file = indexed_mkv(sparse);
+    check(MkvIndex::open(memory_reader(file), file.size()) == nullptr,
+          "cue points more than 20 s apart fall back to the full scan");
+}
+
+void indexed_open_gop_tests() {
+    group = "indexed MKV open GOP";
+    // The second keyframe (at 6 s) is followed in decode order by two frames
+    // presented before it (5.866 and 5.933 s): open-GOP leading frames.
+    std::vector<ClusterSpec> specs(2);
+    specs[0].start_ms = 0;
+    specs[0].video = {{0, true}};
+    for (std::int16_t frame = 1; frame < 88; ++frame) {
+        specs[0].video.push_back({static_cast<std::int16_t>(frame * 67), false});
+    }
+    specs[0].audio_span_ms = 5900;
+    specs[1].start_ms = 6000;
+    specs[1].video = {{0, true}, {-134, false}, {-67, false}, {67, false}, {134, false}};
+    specs[1].audio_span_ms = 256;
+    const auto file = indexed_mkv(specs);
+    const auto index = MkvIndex::open(memory_reader(file), file.size());
+    check(index != nullptr && index->segment_count() == 2, "two segments");
+    if (!index || index->segment_count() != 2) {
+        return;
+    }
+    const auto first = index->read_segment(0, memory_reader(file));
+    const auto second = index->read_segment(1, memory_reader(file));
+    const auto& end_of_first = first.samples[0].back();
+    check(end_of_first.decode_time + end_of_first.duration == second.samples[0].front().decode_time,
+          "video decode times join at the cut");
+    check(second.samples[0].front().decode_time == 6000, "the segment decodes from its cue time");
+    // Presentation times stay the Matroska timestamps: decode + offset - delay.
+    const auto delay = index->metadata().tracks[0].edits.empty()
+                           ? 0
+                           : index->metadata().tracks[0].edits.front().media_time;
+    const auto presented = [&](const Mp4Sample& sample) {
+        return static_cast<std::int64_t>(sample.decode_time) + sample.composition_offset - delay;
+    };
+    check(presented(second.samples[0][0]) == 6000 && presented(second.samples[0][1]) == 5866 &&
+              presented(second.samples[0][2]) == 5933,
+          "keyframe and leading frames keep their presentation times");
+    const auto& last_audio = first.samples[1].back();
+    check(last_audio.decode_time + last_audio.duration == second.samples[1].front().decode_time,
+          "audio decode times join at the cut");
+}
+
+void indexed_review_tests() {
+    group = "indexed MKV: selective indexes and subtitles";
+    const auto specs = regular_clusters();
+    // The index starts at the second cluster (3 s): segment 0 would drop the
+    // first 3 s, so the full scan reads the file.
+    const auto late = indexed_mkv(specs, true, 1);
+    check(MkvIndex::open(memory_reader(late), late.size()) == nullptr,
+          "an index starting after the first video frame falls back");
+
+    // One cue at 0 s, then 25 s of video in a cluster that starts with a
+    // non-keyframe (so it gets no cue): the last segment would last 25 s.
+    std::vector<ClusterSpec> tail(2);
+    tail[0].start_ms = 0;
+    tail[0].video = {{0, true}};
+    tail[0].audio_span_ms = 64;
+    tail[1].start_ms = 25'000;
+    tail[1].video = {{0, false}};
+    tail[1].audio_span_ms = 64;
+    const auto long_tail = indexed_mkv(tail);
+    check(MkvIndex::open(memory_reader(long_tail), long_tail.size()) == nullptr,
+          "a final segment over 20 s falls back");
+
+    // Subtitles: a 14 s cue from 1 s spans the cuts at 6.5 and 12.5 s; a cue
+    // without a duration at 6 s ends at its successor at 7 s, across a cut.
+    auto with_text = specs;
+    with_text[0].text = {{1000, "Long", 14'000}};
+    with_text[1].text = {{3000, "Until next", 0}};
+    with_text[2].text = {{500, "Next", 1000}};
+    const auto file = indexed_mkv(with_text);
+    check(MkvIndex::open(memory_reader(file), file.size()) != nullptr, "indexed with subtitles");
+    std::string entry;
+    const auto texts = remux_texts(file, entry);
+    for (const auto* name : {"t0s0.vtt", "t0s1.vtt", "t0s2.vtt"}) {
+        check(texts.at(name).find("00:00:01.000 --> 00:00:15.000\nLong") != std::string::npos,
+              std::string(name) + ": the long cue is in every window it overlaps");
+    }
+    check(texts.at("t0s0.vtt").find("00:00:06.000 --> 00:00:07.000\nUntil next") !=
+              std::string::npos,
+          "a cue without a duration ends at its successor in the next segment");
+}
+
 int main() {
     try {
         sample_entry_tests();
@@ -807,6 +1110,10 @@ int main() {
         selection_and_refusal_tests();
         presentation_tests();
         subtitle_tests();
+        indexed_reading_tests();
+        indexed_fallback_tests();
+        indexed_open_gop_tests();
+        indexed_review_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';

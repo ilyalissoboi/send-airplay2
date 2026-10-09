@@ -41,6 +41,15 @@ recorded Apple TV (user: yes to all four checks); offline, its 2,048 cues
 matched ffmpeg's conversion. Open: sender-side subtitle selection over MRP,
 MP4 text tracks, HDR VIDEO-RANGE. See [hls.md](hls.md#phase-3c-result-text-subtitles-2026-10-09).
 
+**Indexed MKV start (branch `claude/hls-lazy-mkv`):** PR #30 (3c) is merged.
+MKVs with Cues are planned from the index and each segment is built on its
+first request (media server `size_on_request`). The film's startup fell from
+4.9 s to under 0.1 s, its packets, times, continuity and subtitles stay
+identical offline, and it played, seeked and ended normally on the recorded
+Apple TV (user: everything worked as expected). Files without Cues keep the
+full scan. Next on the list, as the user asked: MP4 text subtitles
+([hls.md](hls.md#planned-mp4-text-subtitles)), then the Screenbox integration.
+
 ### Standalone items (D58-D59, merged)
 
 **Active slices: the standalone items.** The user merged PR #21 (D56) as
