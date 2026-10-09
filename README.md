@@ -109,7 +109,9 @@ Receiver: Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773). Host: Windows 11 x64.
 - playback of video and audio, pause, play and seek, including seeking past
   4 GiB
 - the end of the media, and returning to the Home screen afterwards
-- recovery after an Ethernet cable was pulled during playback
+- pulling the Ethernet cable during playback: the cast ends and cleans up, and
+  a new cast works once the cable is back. The interrupted cast does not
+  reconnect or resume.
 - the C API, the C# binding and the packaged UWP app
 - HLS remux of MP4 and MKV files: H.264, HEVC, AAC, AC-3 and E-AC-3, a
   1 h 54 min film, and text subtitles in sync, with italics
