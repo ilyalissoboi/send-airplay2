@@ -90,8 +90,10 @@ struct CastSnapshot {
  *
  * Threading: start() blocks its caller. snapshot(), wait_for_change(), command()
  * and stop() may run concurrently with each other and with start(); stop()
- * cancels a pending start through the session's cancellation flag and waits for
- * it to return. The session and server stay allocated until destruction, so
+ * cancels a pending start through the session's cancellation flag and waits
+ * until that start has finished and recorded its result (start() itself then
+ * returns to its caller). The session and server stay allocated until
+ * destruction, so
  * concurrent readers never observe a dangling pointer. Destruction must follow
  * the return of every other call. No host code runs on controller threads except
  * the media source callbacks on media server workers.
