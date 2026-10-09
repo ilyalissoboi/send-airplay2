@@ -21,6 +21,9 @@ run_cast(2 "port must be 1..65535" "port bound" --address 127.0.0.1 --profile p 
 run_cast(2 "start timeout must be 1..120000" "start timeout bound" --address 127.0.0.1 --profile p --file "${media}" --start-timeout-ms 0)
 run_cast(2 "media connections must be 1..16" "media connection lower bound" --address 127.0.0.1 --profile p --file "${media}" --media-connections 0)
 run_cast(2 "media connections must be 1..16" "media connection upper bound" --address 127.0.0.1 --profile p --file "${media}" --media-connections 17)
+run_cast(2 "either --file or --hls" "file and HLS together" --address 127.0.0.1 --profile p --file "${media}" --hls "${WORK_DIR}/index.m3u8")
+run_cast(2 "plain name ending in .m3u8" "HLS entry is not a playlist" --address 127.0.0.1 --profile p --hls "${media}")
+run_cast(2 "referenced file is missing" "absent HLS playlist" --address 127.0.0.1 --profile p --hls "${WORK_DIR}/cli-cast-absent.m3u8")
 run_cast(2 "not an existing regular file" "absent media" --address 127.0.0.1 --profile p --file "${WORK_DIR}/cli-cast-absent.bin")
 # A random-looking profile is absent from the store (Windows), or the store is
 # unsupported (other platforms); both stop before the media server or receiver.

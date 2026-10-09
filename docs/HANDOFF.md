@@ -7,7 +7,18 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: standalone items (D58-D59)
+## 0. Resume here: HLS delivery (D60)
+
+**Active slice: HLS** (branch `claude/hls-support`, [hls.md](hls.md)). The user
+set the Screenbox integration aside (design PR ilyalissoboi/Screenbox#1 stays
+open) and asked to add HLS support to the base library, choosing "serve plus
+built-in remux". Phase 1 (media server resource sets, development
+`cast --hls`, the `near_end` end-of-media rule) passed on the recorded Apple TV
+with an ffmpeg-made fMP4 presentation. Next: phase 2, the built-in fMP4 writer
+with MP4 input; then MKV input and the C/C# delivery option (phase 3); growing
+presentations (phase 4). See the D60 record in section 4.
+
+### Standalone items (D58-D59, merged)
 
 **Active slices: the standalone items.** The user merged PR #21 (D56) as
 `99942d1` and asked to finish the standalone items except remote-Stop detection
@@ -1082,6 +1093,26 @@ cycles, the UWP host on a sleeping receiver. After the run the user reported tha
 since D38 was observed when the Apple TV was waking from sleep, which makes D56
 its likely cause and fix; the earlier runs were not repeated. Record:
 [receiver-validation.md](receiver-validation.md#casting-to-a-sleeping-receiver-d56-2026-10-08).
+
+**D60 (HLS delivery, 2026-10-09):** the user asked to add HLS support to the
+base library and chose "serve plus built-in remux": serve HLS presentations,
+and build them from local files with natively decodable codecs (MKV in
+particular) by remuxing to fMP4 without transcoding. Research: Apple's HLS
+authoring specification (HEVC only in fMP4, `avc1`/`hvc1`, IDR-started
+segments, 6 s targets, `EXT-X-PLAYLIST-TYPE`, `EXT-X-MAP`, no redirects).
+Engineering choices: fixed resource sets in `MediaServer` below the private
+bearer path; fMP4 only; VOD first, with segment sizes computed from sample
+tables so segments are generated on demand; original remux code from public
+specifications, no new dependency; muxed audio/video first; gzip playlists
+and TLS deliberately not used on the local network (to verify on the
+receiver). Phase 1 passed on the recorded receiver: an ffmpeg-made fMP4 VOD
+presentation played, paused, seeked and ended with MRP ownership through
+`cast --hls` (user observed). Its natural end stopped 0.08-0.10 s short of
+the playlist duration, so a URL stop within 0.5 s of the MRP duration now ends
+as `media_end` (`near_end`); a pause alone never ends a session. Windows static
+and shared suites pass. Not run: HEVC, Dolby audio, separate audio, `EVENT`,
+the C interface. Records: [hls.md](hls.md),
+[receiver-validation.md](receiver-validation.md#hls-phase-1-d60-2026-10-09).
 
 ## 5. Implemented code and verification
 

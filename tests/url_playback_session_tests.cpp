@@ -620,6 +620,46 @@ void terminal_event_tests() {
         check(session->status().end_reason == expected, "first terminal reason survives stop");
     }
 }
+/// tvOS reports URL "stopped" at the end of HLS with its last MRP position a
+/// frame or two short of the duration (D60); a mid-item stop stays a stop.
+void stopped_near_end_tests(const std::string& mrp_fixtures) {
+    group = "URL stopped near the end";
+    struct Case {
+        const char* scenario;
+        double mrp_elapsed_seconds; // Fake item duration: 131.6 s.
+        SessionEnd expected;
+    };
+    const Case cases[] = {
+        {"stopped 0.1 s before the duration", 131.5, SessionEnd::media_end},
+        {"stopped 0.5 s before the duration", 131.1, SessionEnd::media_end},
+        {"stopped 1 s before the duration", 130.6, SessionEnd::receiver_stop},
+        {"stopped mid-item", 17.0, SessionEnd::receiver_stop},
+    };
+    for (const auto& test : cases) {
+        Behavior behavior;
+        behavior.mrp_fixtures = mrp_fixtures;
+        FakeReceiver receiver(behavior);
+        auto options = options_for(receiver);
+        options.enable_mrp = true;
+        auto session = UrlPlaybackSession::start(receiver.credentials(), options);
+        check(receiver.remote_control().push_mrp_state(mrp_state_paused, test.mrp_elapsed_seconds),
+              std::string(test.scenario) + ": MRP position pushed");
+        check(eventually([&] {
+                  const auto playback = session->playback_status();
+                  return playback.reported_position_seconds &&
+                         *playback.reported_position_seconds == test.mrp_elapsed_seconds;
+              }),
+              std::string(test.scenario) + ": MRP position received");
+        check(session->status().end_reason == SessionEnd::none,
+              std::string(test.scenario) + ": a pause alone does not end the session");
+        receiver.push_state("Stopped");
+        check(eventually([&] { return session->status().cleaned_up; }),
+              std::string(test.scenario) + ": URL stop cleans automatically");
+        check(session->status().end_reason == test.expected && !session->status().failed,
+              std::string(test.scenario) + ": end reason");
+        session->stop();
+    }
+}
 void paused_connection_loss_tests() {
     group = "connection loss during ordinary pause";
     FakeReceiver receiver({});
@@ -943,6 +983,7 @@ int main(int argc, char** argv) {
         feedback_deadline_tests();
         feedback_cancel_tests();
         remote_feedback_stop_tests(mrp_fixtures);
+        stopped_near_end_tests(mrp_fixtures);
         startup_power_report_tests(mrp_fixtures);
         wake_before_play_tests(mrp_fixtures);
     } catch (const std::exception& error) {

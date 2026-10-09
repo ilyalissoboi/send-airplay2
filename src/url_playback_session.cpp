@@ -827,6 +827,7 @@ void UrlPlaybackSession::supervise() {
             if (current.end_reason != SessionEnd::none) {
                 break;
             }
+            bool mrp_near_end = false;
             if (current.failed) {
                 mark_failed(current.failure_channel, current.failure_reason);
                 request_end(SessionEnd::connection_lost);
@@ -842,6 +843,7 @@ void UrlPlaybackSession::supervise() {
                     request_end(SessionEnd::media_end);
                     break;
                 }
+                mrp_near_end = playback.near_end;
                 if (had_owned_player && !playback.owned && current.playback_state != "idle" &&
                     current.playback_state != "stopped") {
                     request_end(SessionEnd::ownership_lost);
@@ -853,6 +855,12 @@ void UrlPlaybackSession::supervise() {
                 // tvOS reports URL "stopped" before its final MRP position. Give
                 // that independent channel one second to distinguish EOF from
                 // a mid-item receiver stop. A pause alone never starts this timer.
+                // Once stopped, a position just short of the duration is EOF:
+                // HLS can stop a frame or two before the playlist's end (D60).
+                if (mrp_near_end) {
+                    request_end(SessionEnd::media_end);
+                    break;
+                }
                 const auto now = std::chrono::steady_clock::now();
                 if (!receiver_stop_deadline) {
                     receiver_stop_deadline = now + std::chrono::seconds(1);

@@ -108,10 +108,13 @@ receiver stop from pause followed by a closed connection.
 EOF uses the owned item's receiver-reported paused/stopped position at or beyond
 its positive duration. Wall-clock extrapolation or clamping never proves EOF.
 tvOS 26.6 reports URL stopped before final MRP telemetry; that state allows up
-to one second for EOF evidence before becoming receiver_stop. An ordinary
-mid-item pause remains active. Connection failure takes priority when detected
-before terminal completion. Loss of ownership ends this cast without adopting
-or controlling the replacement player.
+to one second for EOF evidence before becoming receiver_stop. Within that
+window, an owned paused/stopped MRP position within 0.5 s of the duration
+(`near_end`) also counts as EOF, because tvOS stops HLS presentations a frame or
+two short of the playlist duration (D60); `at_end` itself still requires the
+full duration. An ordinary mid-item pause remains active. Connection failure
+takes priority when detected before terminal completion. Loss of ownership ends
+this cast without adopting or controlling the replacement player.
 
 The CLI polls borrowed stdin without a detached reader or blocking getline;
 partial lines survive polls, commands are bounded to 256 printable ASCII

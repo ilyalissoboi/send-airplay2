@@ -14,11 +14,12 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slices (D58-D59):** the rest of the standalone items (remote-Stop
-  detection is deferred by the user): the macOS Keychain store (D58,
-  `claude/macos-keychain`) and the Linux Secret Service store (D59,
-  `claude/linux-secret-service`, stacked on D58), each with its own PR (find
-  them with `gh pr list --state open`).
+- **Active slice (D60):** HLS delivery on `claude/hls-support` (find its PR
+  with `gh pr list --state open`); phase 1 passed on the receiver, phase 2 (the
+  built-in fMP4 remux with MP4 input) is next. See [hls.md](hls.md). The
+  Screenbox integration is paused; its design PR is ilyalissoboi/Screenbox#1.
+- The macOS Keychain (D58) and Linux Secret Service (D59) stores are merged
+  (PRs #23-#25); remote-Stop detection stays deferred by the user.
 - [PR #22](https://github.com/ilyalissoboi/send-airplay2/pull/22), UWP x86/ARM64
   and a certification kit run (D57), was merged by the user as `8ecb8b0`.
 - [PR #21](https://github.com/ilyalissoboi/send-airplay2/pull/21), wake before

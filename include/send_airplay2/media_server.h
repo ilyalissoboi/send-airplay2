@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace send_airplay2 {
@@ -41,6 +42,17 @@ struct MediaSource {
         read_at;
 };
 
+/** One named representation of a resource set (MediaServer::start_resource_set).
+ * The name is one URL path segment: 1..64 ASCII letters, digits, '.', '_' or
+ * '-', starting with a letter or digit, unique within the set. Names appear in
+ * URLs next to the private bearer path, so they should not reveal titles.
+ * content_type follows MediaServerOptions::content_type's rules. */
+struct MediaResource {
+    std::string name;
+    std::string content_type;
+    MediaSource source;
+};
+
 struct MediaServerOptions {
     std::string receiver_address; // Numeric unicast IPv4/non-link-local IPv6; no DNS/scoped IPv6.
     std::uint16_t receiver_port = 7000; // Used only to select the local route; no datagram sent.
@@ -49,6 +61,7 @@ struct MediaServerOptions {
     std::uint32_t request_timeout_ms = 30000; // 1..600000, absolute per-request deadline.
     std::string content_type =
         "video/mp4"; // Plain type/subtype; no parameters or header injection.
+                     // Resource sets use each resource's own type instead.
     bool record_request_diagnostics = false;
 };
 
@@ -94,6 +107,15 @@ public:
      * full. Boost/OS details and private URLs are omitted from error messages. */
     [[nodiscard]] static SAP2_API std::unique_ptr<MediaServer> start(MediaSource source,
                                                                      MediaServerOptions options);
+    /** Start a server for a fixed set of 1..65536 named resources, such as an
+     * HLS playlist with its segments. Each resource is served at
+     * resource_url(name), below the same private bearer path; the bearer path
+     * itself and every other name answer 404. Every size() is called once, in
+     * table order, by this call. Everything else, including the callback
+     * contract, failures and threading, is as for start(). An invalid or
+     * duplicate name or content type throws std::invalid_argument. */
+    [[nodiscard]] static SAP2_API std::unique_ptr<MediaServer>
+    start_resource_set(std::vector<MediaResource> resources, MediaServerOptions options);
     SAP2_API ~MediaServer();
     MediaServer(const MediaServer&) = delete;
     MediaServer& operator=(const MediaServer&) = delete;
@@ -101,7 +123,12 @@ public:
     MediaServer& operator=(MediaServer&&) = delete;
 
     /// Owned URL copy, stable for the server lifetime; no logging or persistence.
+    /// For a resource set it is the private base below which resources are served.
     [[nodiscard]] SAP2_API std::string url() const;
+    /** URL of one resource of a resource set, as private as url(). Throws
+     * std::invalid_argument for a name that is not in the set, and for every
+     * name on a single-source server. */
+    [[nodiscard]] SAP2_API std::string resource_url(std::string_view name) const;
     /** Drain up to 256 closed-request records, oldest first; overflow drops the
      * oldest record. Disabled by default. Thread-safe with serving and stop(),
      * subject to the server's lifetime. Recording allocates no memory; draining

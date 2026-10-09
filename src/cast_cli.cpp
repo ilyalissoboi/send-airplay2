@@ -4,6 +4,7 @@
 #include "auth_cli.h"
 #include "credential_store.h"
 #include "file_media_source.h"
+#include "hls_directory.h"
 #include "pair_verify.h"
 #include "send_airplay2/media_server.h"
 #include "url_playback_session.h"
@@ -46,6 +47,7 @@ struct CastArguments {
     std::uint16_t port = 7000;
     std::string profile;
     std::string file;
+    std::string hls; // Development: a pre-made HLS playlist instead of --file (D60).
     std::string content_type = "video/mp4";
     std::uint32_t start_timeout_ms = 30000;
     std::uint32_t media_connections = default_cast_media_connections;
@@ -94,6 +96,8 @@ CastArguments parse_arguments(int argc, const char* const* argv) {
             arguments.profile = std::string(value);
         } else if (option == "--file") {
             arguments.file = std::string(value);
+        } else if (option == "--hls") {
+            arguments.hls = std::string(value);
         } else if (option == "--content-type") {
             arguments.content_type = std::string(value);
         } else if (option == "--start-timeout-ms") {
@@ -106,8 +110,12 @@ CastArguments parse_arguments(int argc, const char* const* argv) {
             throw std::invalid_argument("unknown option: " + std::string(option));
         }
     }
-    if (arguments.address.empty() || arguments.profile.empty() || arguments.file.empty()) {
-        throw std::invalid_argument("cast requires --address, --profile and --file");
+    if (arguments.address.empty() || arguments.profile.empty() ||
+        (arguments.file.empty() && arguments.hls.empty())) {
+        throw std::invalid_argument("cast requires --address, --profile and --file or --hls");
+    }
+    if (!arguments.file.empty() && !arguments.hls.empty()) {
+        throw std::invalid_argument("cast takes either --file or --hls, not both");
     }
     return arguments;
 }
@@ -271,7 +279,7 @@ void write_summary(const SessionStatus& session, const FileReadStats& reads) {
               << " feedback=" << session.feedback_sent << " timing=" << session.timing_answered
               << " failed=" << (session.failed ? "yes" : "no") << " reads=" << reads.reads.load()
               << " bytes=" << reads.bytes.load() << " failed_reads=" << reads.failures.load();
-    if (reads.reads.load() != 0) {
+    if (reads.highest_end.load() != 0) { // HLS files do not record one span.
         std::cout << " span=[" << reads.lowest_offset.load() << ',' << reads.highest_end.load()
                   << ')';
     }
@@ -367,9 +375,16 @@ bool control_loop(UrlPlaybackSession& session) {
 
 /// Starts media serving and the session, waits for the operator, then stops.
 int cast(const CastArguments& arguments) {
-    // A bad path is an argument error; opening a local file contacts nobody.
+    // A bad path is an argument error; opening local files contacts nobody.
     auto reads = std::make_shared<FileReadStats>();
-    auto source = open_file_media_source(arguments.file, reads);
+    std::optional<MediaSource> file;
+    std::optional<HlsDirectory> hls;
+    if (arguments.hls.empty()) {
+        file = open_file_media_source(arguments.file, reads);
+    } else {
+        hls = open_hls_directory(arguments.hls, reads);
+        std::cout << "HLS: files=" << hls->resources.size() << std::endl;
+    }
     // No network work without a trusted profile.
     auto store = native_credential_store();
     const auto credentials = store->load(arguments.profile);
@@ -385,11 +400,12 @@ int cast(const CastArguments& arguments) {
     server_options.content_type = arguments.content_type;
     server_options.record_request_diagnostics = arguments.media_log;
     server_options.max_connections = arguments.media_connections;
-    auto server = MediaServer::start(std::move(source), server_options);
+    auto server = hls ? MediaServer::start_resource_set(std::move(hls->resources), server_options)
+                      : MediaServer::start(std::move(*file), server_options);
 
     UrlPlaybackOptions options;
     options.receiver = {arguments.address, arguments.port, 0};
-    options.media_url = server->url();
+    options.media_url = hls ? server->resource_url(hls->playlist_name) : server->url();
     options.start_timeout = std::chrono::milliseconds(arguments.start_timeout_ms);
     options.record_event_structure = arguments.event_log;
     options.enable_mrp = !arguments.minimal_remote;

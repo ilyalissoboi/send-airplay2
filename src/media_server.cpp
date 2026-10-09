@@ -9,11 +9,13 @@
 #include <chrono>
 #include <cstddef>
 #include <future>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -35,6 +37,8 @@ constexpr std::uint32_t max_connections_limit = 16;
 constexpr std::uint32_t max_request_timeout_ms = 600000;
 constexpr std::size_t max_numeric_address_length = 64;
 constexpr std::size_t max_content_type_length = 128;
+constexpr std::size_t max_resource_name_length = 64;
+constexpr std::size_t max_resource_count = 65536;
 
 [[noreturn]] void invalid_options() {
     throw std::invalid_argument("Invalid media server options");
@@ -46,6 +50,30 @@ bool mime_character(char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' ||
            c == '+' || c == '.';
 }
+/// Plain type/subtype only, so a value can never add parameters or headers.
+void validate_content_type(std::string_view type) {
+    const auto slash = type.find('/');
+    if (type.size() > max_content_type_length || slash == 0 || slash == std::string_view::npos ||
+        slash + 1 == type.size()) {
+        invalid_options();
+    }
+    for (std::size_t i = 0; i < type.size(); ++i) {
+        if (i != slash && !mime_character(type[i])) {
+            invalid_options();
+        }
+    }
+}
+bool alphanumeric(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+}
+/// One path segment that needs no percent-encoding and cannot be "." or "..".
+bool valid_resource_name(std::string_view name) {
+    if (name.empty() || name.size() > max_resource_name_length || !alphanumeric(name.front())) {
+        return false;
+    }
+    return std::all_of(name.begin(), name.end(),
+                       [](char c) { return alphanumeric(c) || c == '.' || c == '_' || c == '-'; });
+}
 asio::ip::address receiver_address(const MediaServerOptions& options) {
     if (!options.receiver_port || !options.max_connections ||
         options.max_connections > max_connections_limit || !options.request_timeout_ms ||
@@ -54,16 +82,7 @@ asio::ip::address receiver_address(const MediaServerOptions& options) {
         options.receiver_address.find('\0') != std::string::npos) {
         invalid_options();
     }
-    const auto slash = options.content_type.find('/');
-    if (options.content_type.size() > max_content_type_length || slash == 0 ||
-        slash == std::string::npos || slash + 1 == options.content_type.size()) {
-        invalid_options();
-    }
-    for (std::size_t i = 0; i < options.content_type.size(); ++i) {
-        if (i != slash && !mime_character(options.content_type[i])) {
-            invalid_options();
-        }
-    }
+    validate_content_type(options.content_type);
     ErrorCode error;
     const auto address = asio::ip::make_address(options.receiver_address, error);
     if (error || address.is_unspecified() || address.is_multicast() ||
@@ -153,9 +172,18 @@ private:
 
 struct MediaServer::Impl {
     struct Session;
-    MediaSource source;
+    /// One served representation; its size is the snapshot taken at start.
+    struct Resource {
+        std::string name; // Empty for the single-source server.
+        std::string content_type;
+        std::uint64_t size = 0;
+        MediaSource source;
+    };
+    // Fixed after construction, so workers read them without locking.
+    std::vector<Resource> resources;
+    std::map<std::string, std::size_t, std::less<>> resource_index; // Resource sets only.
+    bool resource_set = false;
     MediaServerOptions options;
-    std::uint64_t representation_size;
     asio::ip::address receiver;
     std::string path;
     std::string authority;
@@ -201,13 +229,31 @@ struct MediaServer::Impl {
     // Only the network thread mutates sessions; pending source work retains its slot.
     std::set<std::shared_ptr<Session>> sessions;
 
-    Impl(MediaSource input, MediaServerOptions config)
-        : source(std::move(input)), options(std::move(config)), representation_size(0),
-          receiver(receiver_address(options)), path(random_path()) {
-        if (!source.size || !source.read_at) {
+    Impl(std::vector<MediaResource> input, bool named, MediaServerOptions config)
+        : resource_set(named), options(std::move(config)), receiver(receiver_address(options)),
+          path(random_path()) {
+        if (input.empty() || input.size() > max_resource_count || (!named && input.size() != 1)) {
             invalid_options();
         }
-        representation_size = source.size();
+        resources.reserve(input.size());
+        for (auto& resource : input) {
+            if (!resource.source.size || !resource.source.read_at) {
+                invalid_options();
+            }
+            if (named) {
+                validate_content_type(resource.content_type);
+                if (!valid_resource_name(resource.name) ||
+                    !resource_index.emplace(resource.name, resources.size()).second) {
+                    invalid_options();
+                }
+            }
+            resources.push_back({named ? std::move(resource.name) : std::string{},
+                                 named ? std::move(resource.content_type) : options.content_type, 0,
+                                 std::move(resource.source)});
+        }
+        for (auto& resource : resources) {
+            resource.size = resource.source.size();
+        }
         ErrorCode error;
         // UDP connect selects a route without sending anything to the receiver.
         asio::ip::udp::socket route(network);
@@ -254,6 +300,19 @@ struct MediaServer::Impl {
     ~Impl() {
         stop();
     }
+    /// The resource a request target names, or null (404). The single-source
+    /// server answers only its bearer path; a set answers only "path/name".
+    const Resource* find(std::string_view target) const {
+        if (!resource_set) {
+            return target == path ? &resources.front() : nullptr;
+        }
+        if (target.size() <= path.size() + 1 || target.compare(0, path.size(), path) != 0 ||
+            target[path.size()] != '/') {
+            return nullptr;
+        }
+        const auto entry = resource_index.find(target.substr(path.size() + 1));
+        return entry == resource_index.end() ? nullptr : &resources[entry->second];
+    }
     void start();
     void accept();
     void remove(const std::shared_ptr<Session>& session);
@@ -272,6 +331,7 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
     std::unique_ptr<http::response_serializer<http::empty_body>> serializer;
     std::array<std::uint8_t, body_chunk_size> chunk{};
     std::atomic_bool cancelled{false};
+    const Resource* resource = nullptr; // Set once the target resolves; owned by the server.
     std::uint64_t offset = 0;
     std::uint64_t remaining = 0;
     std::size_t chunk_length = 0;
@@ -395,7 +455,8 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
             return;
         }
         response.version(request.version());
-        if (request.target() != server.path) {
+        resource = server.find(std::string_view(request.target().data(), request.target().size()));
+        if (!resource) {
             send_error(http::status::not_found);
             return;
         }
@@ -410,13 +471,12 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
                                ? beast::string_view{}
                                : request[http::field::range];
         sap2_byte_range selection{};
-        const auto result = sap2_resolve_http_range(range.data(), range.size(),
-                                                    server.representation_size, &selection);
+        const auto result =
+            sap2_resolve_http_range(range.data(), range.size(), resource->size, &selection);
         response.set(http::field::accept_ranges, "bytes");
-        response.set(http::field::content_type, server.options.content_type);
+        response.set(http::field::content_type, resource->content_type);
         if (result == SAP2_RANGE_UNSATISFIABLE) {
-            response.set(http::field::content_range,
-                         "bytes */" + std::to_string(server.representation_size));
+            response.set(http::field::content_range, "bytes */" + std::to_string(resource->size));
             response.result(http::status::range_not_satisfiable);
             response.content_length(0);
             send_header();
@@ -427,7 +487,7 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
             response.set(http::field::content_range,
                          "bytes " + std::to_string(selection.offset) + "-" +
                              std::to_string(selection.offset + selection.length - 1) + "/" +
-                             std::to_string(server.representation_size));
+                             std::to_string(resource->size));
         }
         response.content_length(selection.length);
         offset = selection.offset;
@@ -482,8 +542,8 @@ struct MediaServer::Impl::Session : std::enable_shared_from_this<Session> {
             const MediaReadContext context{&self->server.stopped, &self->cancelled, self->deadline};
             try {
                 if (!context.should_stop()) {
-                    count = self->server.source.read_at(self->offset, self->chunk.data(), capacity,
-                                                        context);
+                    count = self->resource->source.read_at(self->offset, self->chunk.data(),
+                                                           capacity, context);
                 }
             } catch (...) {
                 // Exception text may contain host paths or secrets; never log it.
@@ -624,13 +684,28 @@ void MediaServer::Impl::stop() {
 MediaServer::MediaServer(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 MediaServer::~MediaServer() = default;
 std::unique_ptr<MediaServer> MediaServer::start(MediaSource source, MediaServerOptions options) {
-    auto impl = std::make_unique<Impl>(std::move(source), std::move(options));
+    std::vector<MediaResource> single;
+    single.push_back({{}, {}, std::move(source)});
+    auto impl = std::make_unique<Impl>(std::move(single), false, std::move(options));
+    auto server = std::unique_ptr<MediaServer>(new MediaServer(std::move(impl)));
+    server->impl_->start();
+    return server;
+}
+std::unique_ptr<MediaServer> MediaServer::start_resource_set(std::vector<MediaResource> resources,
+                                                             MediaServerOptions options) {
+    auto impl = std::make_unique<Impl>(std::move(resources), true, std::move(options));
     auto server = std::unique_ptr<MediaServer>(new MediaServer(std::move(impl)));
     server->impl_->start();
     return server;
 }
 std::string MediaServer::url() const {
     return impl_->media_url;
+}
+std::string MediaServer::resource_url(std::string_view name) const {
+    if (!impl_->resource_set || impl_->resource_index.find(name) == impl_->resource_index.end()) {
+        throw std::invalid_argument("Not a resource of this media server");
+    }
+    return impl_->media_url + "/" + std::string(name);
 }
 std::vector<MediaRequestDiagnostic> MediaServer::take_request_log() {
     return impl_->take_request_log();
