@@ -89,6 +89,16 @@ struct Mp4Movie {
 /** Read the sample tables of a progressive (non-fragmented) MP4/MOV file of
  * `file_size` bytes through `read`.
  *
+ * Text subtitle tracks (handler sbtl, text or subt) with a 3GPP Timed Text
+ * ('tx3g', the mov_text of ffmpeg and HandBrake) or ISO/IEC 14496-30 WebVTT
+ * ('wvtt') sample entry become Mp4Movie::text_tracks (tx3g bold, italic and
+ * underline style runs become WebVTT tags): their samples are read
+ * (at most 64 KiB each, 16 MiB per track, else the track is left out), timed
+ * on the presentation timeline by the track's edit list (an initial empty edit
+ * and one media edit), with the language from mdhd, DEFAULT from the tkhd
+ * enabled flag and FORCED from the tx3g "all samples are forced" display
+ * flag. Other text formats are left out, never refused.
+ *
  * Selects the first video track with an H.264 or HEVC sample entry and the
  * first audio track with an AAC, AC-3 or E-AC-3 entry. Other tracks (more
  * audio, subtitles, timed metadata) are ignored. A video track whose codec is

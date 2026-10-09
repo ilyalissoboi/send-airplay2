@@ -137,6 +137,130 @@ std::string subrip_to_webvtt(std::string_view text) {
     return tidy_lines(out);
 }
 
+std::string plain_text_to_webvtt(std::string_view text, const std::vector<TextStyleRun>& runs) {
+    struct Character {
+        std::string_view bytes;
+        unsigned style = 0; // Bit 0 bold, 1 italic, 2 underline.
+    };
+    constexpr unsigned bold = 1;
+    constexpr unsigned italic = 2;
+    constexpr unsigned underline = 4;
+    // Split into code points (an invalid byte counts as one) and style them.
+    std::vector<Character> characters;
+    for (std::size_t at = 0; at < text.size();) {
+        const auto lead = static_cast<unsigned char>(text[at]);
+        std::size_t length = lead < 0x80    ? 1
+                             : lead >= 0xF0 ? 4
+                             : lead >= 0xE0 ? 3
+                             : lead >= 0xC0 ? 2
+                                            : 1;
+        length = std::min(length, text.size() - at);
+        characters.push_back({text.substr(at, length), 0});
+        at += length;
+    }
+    for (const auto& run : runs) {
+        const unsigned style =
+            (run.bold ? bold : 0) | (run.italic ? italic : 0) | (run.underline ? underline : 0);
+        for (auto index = run.start; index < run.end && index < characters.size(); ++index) {
+            characters[index].style |= style;
+        }
+    }
+    const auto open = [&](std::string& out, unsigned style) {
+        out += (style & bold) ? "<b>" : "";
+        out += (style & italic) ? "<i>" : "";
+        out += (style & underline) ? "<u>" : "";
+    };
+    const auto close = [&](std::string& out, unsigned style) {
+        out += (style & underline) ? "</u>" : "";
+        out += (style & italic) ? "</i>" : "";
+        out += (style & bold) ? "</b>" : "";
+    };
+    const auto blank = [](const Character& c) { return c.bytes == " " || c.bytes == "\t"; };
+    std::string out;
+    std::size_t start = 0;
+    while (start <= characters.size()) {
+        // One line: up to LF, CR or CR LF.
+        auto end = start;
+        while (end < characters.size() && characters[end].bytes != "\n" &&
+               characters[end].bytes != "\r") {
+            ++end;
+        }
+        auto first = start;
+        auto last = end;
+        while (first < last && blank(characters[first])) {
+            ++first;
+        }
+        while (last > first && blank(characters[last - 1])) {
+            --last;
+        }
+        if (first < last) {
+            if (!out.empty()) {
+                out += '\n';
+            }
+            unsigned current = 0;
+            for (auto index = first; index < last; ++index) {
+                const auto& c = characters[index];
+                if (c.style != current) {
+                    close(out, current);
+                    open(out, c.style);
+                    current = c.style;
+                }
+                for (const char byte : c.bytes) {
+                    append_escaped(out, byte);
+                }
+            }
+            close(out, current);
+        }
+        if (end < characters.size() && characters[end].bytes == "\r" &&
+            end + 1 < characters.size() && characters[end + 1].bytes == "\n") {
+            ++end;
+        }
+        start = end + 1;
+    }
+    return out;
+}
+
+std::string utf16be_to_utf8(std::string_view bytes) {
+    const auto unit = [&bytes](std::size_t at) {
+        return static_cast<std::uint32_t>((static_cast<unsigned char>(bytes[at]) << 8) |
+                                          static_cast<unsigned char>(bytes[at + 1]));
+    };
+    const auto append = [](std::string& out, std::uint32_t code) {
+        if (code < 0x80) {
+            out += static_cast<char>(code);
+        } else if (code < 0x800) {
+            out += static_cast<char>(0xC0 | (code >> 6));
+            out += static_cast<char>(0x80 | (code & 0x3F));
+        } else if (code < 0x10000) {
+            out += static_cast<char>(0xE0 | (code >> 12));
+            out += static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+            out += static_cast<char>(0x80 | (code & 0x3F));
+        } else {
+            out += static_cast<char>(0xF0 | (code >> 18));
+            out += static_cast<char>(0x80 | ((code >> 12) & 0x3F));
+            out += static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+            out += static_cast<char>(0x80 | (code & 0x3F));
+        }
+    };
+    constexpr std::uint32_t replacement = 0xFFFD;
+    std::string out;
+    for (std::size_t at = 0; at + 1 < bytes.size(); at += 2) {
+        auto code = unit(at);
+        if (code >= 0xD800 && code <= 0xDBFF) {
+            if (at + 3 < bytes.size() && unit(at + 2) >= 0xDC00 && unit(at + 2) <= 0xDFFF) {
+                code = 0x10000 + ((code - 0xD800) << 10) + (unit(at + 2) - 0xDC00);
+                at += 2;
+            } else {
+                code = replacement;
+            }
+        } else if (code >= 0xDC00 && code <= 0xDFFF) {
+            code = replacement;
+        }
+        append(out, code);
+    }
+    return out;
+}
+
 std::string webvtt_cue_text(std::string_view text) {
     std::string out;
     for (std::size_t index = 0; index < text.size(); ++index) {

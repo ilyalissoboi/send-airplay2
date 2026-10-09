@@ -1,6 +1,7 @@
 # HLS delivery (D60)
 
-Status: **phases 1-3c passed on the recorded receiver; 4 not started.**
+Status: **phases 1-3c, the indexed MKV start and MP4 text subtitles passed on
+the recorded receiver; 4 not started.**
 Phases 1-3b are merged (PRs #26-#29); 3c (text subtitles) is on
 `claude/hls-subtitles` from `15acd95`. Records:
 [phase 1](#phase-1-result-2026-10-09), [phase 2](#phase-2-result-2026-10-09),
@@ -486,20 +487,51 @@ Record: [artifact](validation/native-hls-indexed-mkv-windows-2026-10-09.json).
 Not run: MKVs from other muxers on the receiver, files without Cues on the
 receiver, brokered UWP file access.
 
-## Planned: MP4 text subtitles
+## MP4 text subtitles (2026-10-09)
 
-The user asked to add native MP4 subtitle support to the list if it needs
-extra work, and it does. The MP4 reader selects only video and audio tracks.
-Subtitle tracks (`tx3g` / `mov_text` in a `text` or `sbtl` handler; `wvtt`
-per ISO/IEC 14496-30) are ignored today. Support needs:
-- reading those tracks' samples, which are small;
-- converting 3GPP Timed Text (a 16-bit length-prefixed UTF-8 string, styles
-  dropped) to WebVTT cue text, with WebVTT samples kept as WebVTT;
-- feeding them to the existing `TextTrack` path, with language from mdhd and
-  forced flags from the track.
+The user asked to add native MP4 subtitle support to the list if it needed
+extra work, then to start on it. `read_mp4` now also reads text subtitle
+tracks:
 
-The multivariant playlist, WebVTT segments and receiver behavior are already
-in place from phase 3c. Not started.
+- **Tracks read:** handler `sbtl`, `text` or `subt`, with a 3GPP Timed Text
+  (`tx3g`, ffmpeg's and HandBrake's `mov_text`) or ISO/IEC 14496-30 WebVTT
+  (`wvtt`) sample entry. Other text formats are left out, never refused.
+- **tx3g samples:** a 16-bit length, then UTF-8 text or UTF-16 after a
+  byte-order mark. Their `styl` style records keep bold, italic and
+  underline as WebVTT `<b>`/`<i>`/`<u>`, opened and closed within each line;
+  fonts, sizes and colours are dropped. Empty samples are gaps.
+- **wvtt samples:** each `vttc`'s `payl` is kept as WebVTT cue text; `vtte`
+  marks no cue.
+- **Timing:** the track's edit list (an initial empty edit and one media
+  edit) maps cues onto the presentation timeline the video and audio use.
+- **Flags:**
+  - LANGUAGE comes from mdhd, mapped to BCP 47.
+  - DEFAULT comes from the tkhd enabled flag (ffmpeg sets it for the default
+    disposition).
+  - FORCED comes from tx3g's "all samples are forced" display flag.
+- **Limits:** at most 64 KiB per sample and 16 MiB per track, else the track
+  is left out.
+- **Output:** the existing phase 3c path serves the cues, so an MP4 with
+  subtitles gets `main.m3u8`.
+
+Results:
+
+- **Offline:** for a 10-minute MP4 made with ffmpeg from the user's film
+  (tx3g with italics), all 190 cues matched ffmpeg's own WebVTT conversion,
+  times and text, italics included.
+- **Unit tests** (`remux_tests`): an empty-sample gap, an italic `styl` run,
+  UTF-16, CR LF, escaping, an empty edit shifting the cues, DEFAULT and
+  FORCED, a `wvtt` track with `vttc` and `vtte`, a QuickTime `text` entry left
+  out, and the multivariant playlist.
+- **Receiver:** the recorded Apple TV showed the subtitles without the menu
+  (DEFAULT=YES), in sync after seeks, with normal video and audio, and Home at
+  the end. A second run over the italic section rendered italics properly
+  (user).
+
+Record: [artifact](validation/native-hls-mp4-subtitles-windows-2026-10-09.json).
+
+Not run: `wvtt` on the receiver (ffmpeg cannot write it into a progressive
+MP4), UTF-16 or forced tx3g, several text tracks, files from other tools.
 
 ## Provenance
 

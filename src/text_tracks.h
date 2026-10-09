@@ -38,6 +38,29 @@ struct TextTrack {
  * are removed, and "-->", which cue text cannot contain, becomes "--&gt;". */
 [[nodiscard]] std::string webvtt_cue_text(std::string_view text);
 
+/// Bold, italic or underline over the characters [start, end) of a text,
+/// counted in Unicode code points (3GPP Timed Text style records).
+struct TextStyleRun {
+    std::size_t start = 0;
+    std::size_t end = 0;
+    bool bold = false;
+    bool italic = false;
+    bool underline = false;
+};
+
+/** UTF-8 subtitle text without markup (3GPP Timed Text) as WebVTT cue text:
+ * '&', '<' and '>' escaped, CR LF and CR to LF, each line trimmed of spaces
+ * and tabs, blank lines removed. `runs` become <b>, <i> and <u> spans, opened
+ * and closed within each line (in that nesting order), so a style never
+ * crosses a line break; overlapping runs combine. */
+[[nodiscard]] std::string plain_text_to_webvtt(std::string_view text,
+                                               const std::vector<TextStyleRun>& runs = {});
+
+/** Big-endian UTF-16 (after a byte-order mark FE FF, as 3GPP Timed Text
+ * allows) as UTF-8. Unpaired surrogates become U+FFFD; an odd trailing byte
+ * is dropped. */
+[[nodiscard]] std::string utf16be_to_utf8(std::string_view bytes);
+
 /** The Text field of a Matroska S_TEXT/ASS or S_TEXT/SSA block (RFC 9559
  * codec mappings: ReadOrder, Layer, Style, Name, MarginL, MarginR, MarginV,
  * Effect, Text) as WebVTT cue text: override blocks {...} are dropped, \N
