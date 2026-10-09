@@ -1,9 +1,10 @@
 # HLS delivery (D60)
 
-Status: **phase 1 passed on the recorded receiver; phases 2-4 not started.**
-Branch `claude/hls-support`, started 2026-10-09 from `origin/main` `2aad3c7`.
-Phase 1 record: [below](#phase-1-result-2026-10-09) and
-[receiver-validation.md](receiver-validation.md#hls-phase-1-d60-2026-10-09).
+Status: **phases 1 and 2 passed on the recorded receiver; phases 3-4 not
+started.** Phase 1 (PR #26, merged) started 2026-10-09 from `2aad3c7`; phase 2
+is on `claude/hls-remux` from `2642161`. Records:
+[phase 1](#phase-1-result-2026-10-09), [phase 2](#phase-2-result-2026-10-09)
+and [receiver-validation.md](receiver-validation.md#hls-phase-1-d60-2026-10-09).
 
 ## User request and scope
 
@@ -127,19 +128,31 @@ brokered files the same way they do for progressive casting.
    `dec3`). MP4/MOV input reads `moov`'s sample tables; MKV input reads
    `Tracks`, `Cues` and `Cluster` block headers (EBML, RFC 9559) without
    reading frame payloads.
-2. **Segmenting** cuts before a video sync sample once a segment reaches the
-   target (6 s), so each segment starts with an IDR frame (7.4), and widens
-   the target to the longest resulting segment (7.7). Audio samples go to the
-   segment whose time span contains them.
+2. **Segmenting** cuts before a video sync sample, so each segment starts
+   with an IDR frame (7.4). Segment k starts at the first sync sample whose
+   decode time is at least k x 6 s: cuts follow that grid, as ffmpeg's
+   segmenter does, so one long GOP lengthens one segment without delaying
+   every later cut (cutting 6 s after each segment's start gave a 13.9 s
+   segment on the test clip). The target duration is the longest segment,
+   rounded (7.7, RFC 8216 4.3.3.1). Audio samples go to the segment whose
+   video decode-time span contains their decode time.
 3. **Sizes before bytes.** A segment's `moof` is a function of its sample
    table only, and its `mdat` holds those samples' bytes, so every segment's
    size is known from the tables. `read_at(offset)` then builds the `moof` in
    memory and copies sample bytes from the input on demand: no temporary file,
    no full-segment buffering beyond the 64 KiB response chunk.
 4. **Writing** uses one `moof` per segment with a `traf` per track, `tfdt` with
-   absolute decode times (7.3), and `trun` with per-sample size, duration,
-   flags and composition offsets. Video sample entries are `avc1`/`hvc1`
-   (1.10); MKV HEVC with in-band parameter sets keeps them in-band.
+   the source's absolute decode times (7.3), and `trun` with per-sample size
+   and duration, plus flags and composition offsets for video (version 1 when
+   an offset is negative). Video sample entries are `avc1`/`hvc1` (1.10); MKV
+   HEVC with in-band parameter sets keeps them in-band.
+5. **Init segment** (MP4 input): `ftyp` (`iso5`), then `moov` with the source
+   `tkhd` (new track ID, zero duration), the source edit list with its last
+   media edit lasting "to the end" (duration 0, as 14496-12 allows for
+   fragmented files), and the source `stsd` sample entry copied byte for byte,
+   so codec configuration and presentation offsets match the source exactly.
+   Consequence: a source edit that trims the end of a track (the test clip's
+   audio, by a few milliseconds) is not applied.
 
 Codecs in the first remux: H.264, HEVC, AAC-LC, AC-3, E-AC-3. Other codecs are
 refused with a clear "not remuxable" result rather than served for the
@@ -168,7 +181,7 @@ follows. Not added until the remux has run on the receiver.
 | Phase | Work | Gate |
 |---|---|---|
 | 1 | Resource sets; development CLI casts a directory of pre-made fMP4 HLS (`cast --hls PLAYLIST`) | **Passed 2026-10-09:** receiver plays, pauses, seeks and ends a VOD playlist with MRP ownership |
-| 2 | fMP4 writer and MP4 demux; CLI casts an MP4 through the remux | Receiver plays the remuxed MP4 the same as progressively |
+| 2 | fMP4 writer and MP4 demux; CLI casts an MP4 through the remux | **Passed 2026-10-09:** receiver plays the remuxed MP4 the same as progressively |
 | 3 | MKV demux; C interface and C# delivery option | Receiver plays an MKV (H.264/HEVC + AAC/AC-3/E-AC-3) |
 | 4 | Growing presentations and host-supplied segments | Receiver plays an `EVENT` playlist while it grows |
 
@@ -201,6 +214,48 @@ target duration 8 s) was cast twice through `cast --hls`:
 Not run: HEVC, AC-3/E-AC-3, separate audio renditions, TS segments, gzip
 playlists, `EVENT` playlists, the C interface, the UWP host, a sleeping
 receiver. Record: [artifact](validation/native-hls-directory-windows-2026-10-09.json).
+
+## Phase 2 result (2026-10-09)
+
+Implemented (internal C++, compiled into the CLI and tests; it joins the
+library with the C interface in phase 3):
+
+- `src/mp4_demux.*`: reads `moov` (at most 64 MiB) through the random-access
+  source and builds per-sample tables from `stsz`, `stts`, `ctts`, `stss`,
+  `stsc` and `stco`/`co64` without reading sample payloads. Selects the first
+  enabled H.264/HEVC track and the first enabled AAC/AC-3/E-AC-3 track.
+  Refusals (`RemuxException`): `unsupported` for fragmented input, other video
+  or audio codecs (an unremuxable audio track is refused rather than silently
+  dropped), more than one sample description, no video, or video not starting
+  with a sync sample; `malformed` for inconsistent tables or samples outside
+  the file; `too_large` beyond the moov, sample-count or 2 GiB segment bounds.
+- `src/fmp4_writer.*`: the init segment and each segment's `moof` and `mdat`
+  header, with sizes computable without writing.
+- `src/hls_remux.*`: the segment plan, the VOD playlist, and resources whose
+  segment `read_at` regenerates the `moof` and copies samples from the source
+  on demand, forwarding the request's cancellation and deadline.
+- `airplay2-cli cast --file PATH --remux`, and the development
+  `airplay2-cli remux --file PATH --out DIR` that writes the presentation's
+  files for offline checks.
+
+Offline: the remux of the 131.6 s test clip (H.264 Main with B-frames, AAC-LC,
+edit lists on both tracks) gave 20 segments (target 8 s). ffmpeg 9.0.2
+`-c copy -f framemd5` found all 9,614 packets identical to the source in
+timestamps, duration, size and MD5; the only difference is the end-trim
+noted in item 5. `remux_tests` builds MP4 files from literal boxes and checks
+sample tables, refusals, segment boundaries, the exact playlist text and an
+exact `moof` known answer.
+
+On the recorded Apple TV 4K (tvOS 26.6), `cast --file gas.mp4 --remux`
+played in 0.86 s with MRP ownership; pause, play and seek to 100 s were
+accepted and seen; the natural end was `media_end` with MRP `at_end` (reported
+131.576 of 131.566 s), exit 0. The receiver fetched the playlist, init
+segment and each needed segment once (21 GETs, all complete). User: video and
+audio played normally, the actions were visible, Home at the end. Record:
+[artifact](validation/native-hls-remux-windows-2026-10-09.json).
+
+Not run: HEVC, AC-3/E-AC-3, long files, sources with `moov` at the end on the
+receiver (covered offline by the tests), the C interface.
 
 ## Provenance
 

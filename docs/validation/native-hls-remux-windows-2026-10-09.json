@@ -1,0 +1,276 @@
+{
+  "date": "2026-10-09",
+  "decision": "D60",
+  "scope": "HLS phase 2: airplay2-cli cast --file gas.mp4 --remux, the library's own MP4-to-fMP4 HLS remux served through a media server resource set, with --event-log and --media-log; driver-scheduled commands; observer answers recorded separately from telemetry.",
+  "receiver": {
+    "name": "Living Room",
+    "hardware": "Apple TV 4K (AppleTV14,1)",
+    "firmware": "tvOS 26.6 (23L773)",
+    "firmware_scope": "Prior user report, assumed unchanged; not queried during this test.",
+    "power": "Awake (power reports logical_devices=1)."
+  },
+  "host": "Windows 11 x64 (10.0.26200), MSVC Release static (Visual Studio 2026), this worktree's existing firewall Allow rule; network settings read, not changed",
+  "source_base": "2642161 (main after PR #26)",
+  "media": "gas.mp4 (not committed): H.264 Main 1280x720 30 fps with B-frames (ctts), AAC-LC 44.1 kHz stereo, edit lists on both tracks, 131.567 s; SHA-256 a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+  "offline_check": {
+    "command": "airplay2-cli remux --file gas.mp4 --out DIR, then ffmpeg 9.0.2 -map 0 -c copy -f framemd5 on the source and on DIR/index.m3u8",
+    "result": "20 segments, target duration 8 s, 22 files; all 9614 packets identical in stream, dts, pts, duration, size and MD5. The one difference: the last audio packet lacks the source's end-trim side data, because the last media edit lasts to the end in the init segment. ffmpeg -f null decoded the presentation without errors."
+  },
+  "tested_source_blobs": {
+    "src/mp4_demux.h": "0597e3422d978c1571f86c91ebb706c18dabe6c6",
+    "src/mp4_demux.cpp": "93b4977998549b9337743b804c5fbcc42bbe5d4b",
+    "src/fmp4_writer.h": "3afe408f9c73fc819dd829ea73d2dd48a2bb1b8e",
+    "src/fmp4_writer.cpp": "e573f2880e277fae3ba735a5ea279942574f8883",
+    "src/hls_remux.h": "16fd6f5db5709c02fb18511720cb7efef63fffca",
+    "src/hls_remux.cpp": "d90cb611245226ceccbcbb7e03c76b8df1eb0a36",
+    "src/remux_cli.cpp": "36b66bea0e05648a818820b6771036caf49e98bb",
+    "src/cast_cli.cpp": "7979292bd444c18bfb3b976597db1d28d7c10b85",
+    "include/send_airplay2/media_server.h": "b85bc775da1c184adeaad0f57e7adc95080e2046",
+    "src/media_server.cpp": "cdf071e67e0842e70782d7f6ea26ccfe9ec3c756"
+  },
+  "run": {
+    "label": "remux cast, about 2026-10-09T05:33Z",
+    "airplay2_cli_sha256": "2854256f74c53eefce8746f12ed5ce73eb14f041a03bf6d400373f6c44ecdaac",
+    "lines": [
+      "[10.0s] Tested binary SHA-256: 2854256f74c53eefce8746f12ed5ce73eb14f041a03bf6d400373f6c44ecdaac",
+      "[10.0s] HLS remux: segments=20 target_duration=8",
+      "[10.1s] Starting playback.",
+      "[11.9s] Startup: elapsed_ms=0 phase=connecting state=none status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=425 phase=insert_item state=none status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=440 phase=insert_item state=none status=200 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=440 phase=date_range state=none status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=451 phase=date_range state=none status=200 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=451 phase=item_end state=none status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=469 phase=item_end state=none status=200 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=469 phase=rate state=none status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=474 phase=rate state=none status=200 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=474 phase=waiting state=none status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=532 phase=waiting state=loading status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=540 phase=waiting state=loading status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=576 phase=waiting state=loading status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=592 phase=waiting state=loading status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=604 phase=waiting state=loading status=0 rate=unknown",
+      "[11.9s] Startup: elapsed_ms=864 phase=waiting state=playing status=0 rate=1.000000e+00",
+      "[11.9s] Startup: elapsed_ms=1882 phase=ready state=none status=0 rate=unknown",
+      "[11.9s] Receiver power: elapsed_ms=173 logical_devices=1",
+      "[11.9s] Receiver power: elapsed_ms=335 logical_devices=1",
+      "[11.9s] Startup summary: records=17 truncated=no cleaned=no",
+      "[11.9s] State: playing",
+      "[11.9s] Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop.",
+      "[20.0s] >>> sending 'status'",
+      "[20.0s] Playback: owned=yes state=playing position=9.2 duration=131.6 mrp_messages=14 heartbeats=0",
+      "[24.0s] >>> sending 'pause'",
+      "[24.0s] State: paused",
+      "[24.0s] Control: accepted",
+      "[28.0s] >>> sending 'play'",
+      "[28.1s] Control: accepted",
+      "[28.1s] State: loading",
+      "[28.1s] State: playing",
+      "[33.0s] >>> sending 'seek 100'",
+      "[33.1s] Control: accepted",
+      "[33.2s] State: loading",
+      "[33.5s] State: playing",
+      "[39.1s] >>> sending 'status'",
+      "[39.1s] Playback: owned=yes state=playing position=105.6 duration=131.6 mrp_messages=22 heartbeats=0",
+      "[65.2s] State: stopped",
+      "[66.1s] Final MRP: enabled=yes owned=yes state=paused at_end=yes reported_position=1.315764e+02 duration=1.315660e+02 rate=0.000000e+00 mrp_messages=25 heartbeats=1",
+      "[66.1s] Stopped. state=stopped events=64 remote_events=8 feedback=27 timing=25 failed=no reads=9823 bytes=51402177 failed_reads=0 span=[0,53953926) end=media_end cleaned=yes failure_channel=none failure_reason=none",
+      "[66.1s] Exit code: 0"
+    ],
+    "media_requests": [
+      {
+        "id": "1",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "677",
+        "written": "677",
+        "end": "complete"
+      },
+      {
+        "id": "2",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "1268",
+        "written": "1268",
+        "end": "complete"
+      },
+      {
+        "id": "3",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "3866400",
+        "written": "3866400",
+        "end": "complete"
+      },
+      {
+        "id": "4",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "3374328",
+        "written": "3374328",
+        "end": "complete"
+      },
+      {
+        "id": "5",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "2798490",
+        "written": "2798490",
+        "end": "complete"
+      },
+      {
+        "id": "6",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "3127886",
+        "written": "3127886",
+        "end": "complete"
+      },
+      {
+        "id": "7",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "1939461",
+        "written": "1939461",
+        "end": "complete"
+      },
+      {
+        "id": "8",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "4179344",
+        "written": "4179344",
+        "end": "complete"
+      },
+      {
+        "id": "9",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "2751906",
+        "written": "2751906",
+        "end": "complete"
+      },
+      {
+        "id": "10",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "2177693",
+        "written": "2177693",
+        "end": "complete"
+      },
+      {
+        "id": "11",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "2696011",
+        "written": "2696011",
+        "end": "complete"
+      },
+      {
+        "id": "12",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "2681412",
+        "written": "2681412",
+        "end": "complete"
+      },
+      {
+        "id": "13",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "3260865",
+        "written": "3260865",
+        "end": "complete"
+      },
+      {
+        "id": "14",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "5346959",
+        "written": "5346959",
+        "end": "complete"
+      },
+      {
+        "id": "15",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "4153998",
+        "written": "4153998",
+        "end": "complete"
+      },
+      {
+        "id": "16",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "1937921",
+        "written": "1937921",
+        "end": "complete"
+      },
+      {
+        "id": "17",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "1004256",
+        "written": "1004256",
+        "end": "complete"
+      },
+      {
+        "id": "18",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "1195088",
+        "written": "1195088",
+        "end": "complete"
+      },
+      {
+        "id": "19",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "2073305",
+        "written": "2073305",
+        "end": "complete"
+      },
+      {
+        "id": "20",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "2199737",
+        "written": "2199737",
+        "end": "complete"
+      },
+      {
+        "id": "21",
+        "method": "get",
+        "status": "200",
+        "offset": "0",
+        "declared": "560241",
+        "written": "560241",
+        "end": "complete"
+      }
+    ],
+    "media_summary": "21 GET requests, all 200 and complete: playlist (677 bytes), init segment and 19 of 20 segments, each once (one skipped by the seek); no HEAD, Range or 404; failed_reads=0.",
+    "observer": "Video and audio played normally; pause, play and seek were visible on the TV; the receiver returned to the Home screen at the end."
+  },
+  "result": "PASS for this receiver and host: the library-built fMP4 HLS of an H.264 + AAC MP4 started in 0.86 s with MRP ownership, pause/play/seek were accepted and seen, and the natural end was media_end with MRP at_end=yes (reported 131.576 of 131.566 s).",
+  "not_run": "HEVC, AC-3/E-AC-3, MKV input (phase 3), separate audio renditions, long files, the C interface and UWP host, a sleeping receiver, other receivers and firmware."
+}

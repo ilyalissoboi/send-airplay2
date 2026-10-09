@@ -2,6 +2,7 @@
 #include "send_airplay2/discovery.h"
 #include "auth_cli.h"
 #include "cast_cli.h"
+#include "remux_cli.h"
 #include "serve_cli.h"
 
 #include <charconv>
@@ -230,11 +231,14 @@ void write_usage() {
                  "       airplay2-cli cast --address IP --profile NAME (--file PATH | --hls "
                  "PLAYLIST.m3u8) [--port 7000] [--content-type video/mp4] "
                  "[--start-timeout-ms 1..120000] "
-                 "[--media-connections 1..16] [--event-log] [--media-log] [--minimal-remote]\n"
+                 "[--media-connections 1..16] [--event-log] [--media-log] [--minimal-remote] "
+                 "[--remux]\n"
+                 "       airplay2-cli remux --file PATH --out DIR\n"
                  "Auth storage supports Windows desktop; pair prompts for a hidden PIN. serve "
                  "hosts one file for a receiver to fetch. cast plays one file on a paired "
-                 "receiver (--hls: a pre-made HLS presentation, for development); type "
-                 "status, pause, play, seek SECONDS or stop. Enter tears down.\n";
+                 "receiver (--hls: a pre-made HLS presentation; --remux: the file as HLS); "
+                 "type status, pause, play, seek SECONDS or stop. Enter tears down. remux "
+                 "writes the HLS files the remux serves (development).\n";
 }
 
 } // namespace
@@ -250,6 +254,9 @@ int main(int argc, char** argv) {
     }
     if (argc >= 2 && std::string_view(argv[1]) == "cast") {
         return send_airplay2::detail::run_cast_cli(argc - 1, argv + 1);
+    }
+    if (argc >= 2 && std::string_view(argv[1]) == "remux") {
+        return send_airplay2::detail::run_remux_cli(argc - 1, argv + 1);
     }
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
         write_usage();

@@ -5,6 +5,7 @@
 #include "credential_store.h"
 #include "file_media_source.h"
 #include "hls_directory.h"
+#include "hls_remux.h"
 #include "pair_verify.h"
 #include "send_airplay2/media_server.h"
 #include "url_playback_session.h"
@@ -47,7 +48,8 @@ struct CastArguments {
     std::uint16_t port = 7000;
     std::string profile;
     std::string file;
-    std::string hls; // Development: a pre-made HLS playlist instead of --file (D60).
+    std::string hls;    // Development: a pre-made HLS playlist instead of --file (D60).
+    bool remux = false; // Serve --file as HLS built by the remux (D60).
     std::string content_type = "video/mp4";
     std::uint32_t start_timeout_ms = 30000;
     std::uint32_t media_connections = default_cast_media_connections;
@@ -84,6 +86,10 @@ CastArguments parse_arguments(int argc, const char* const* argv) {
             arguments.minimal_remote = true;
             continue;
         }
+        if (option == "--remux") {
+            arguments.remux = true;
+            continue;
+        }
         if (index + 1 >= argc) {
             throw std::invalid_argument("unknown or incomplete option: " + std::string(option));
         }
@@ -116,6 +122,9 @@ CastArguments parse_arguments(int argc, const char* const* argv) {
     }
     if (!arguments.file.empty() && !arguments.hls.empty()) {
         throw std::invalid_argument("cast takes either --file or --hls, not both");
+    }
+    if (arguments.remux && arguments.file.empty()) {
+        throw std::invalid_argument("--remux applies to --file");
     }
     return arguments;
 }
@@ -379,7 +388,12 @@ int cast(const CastArguments& arguments) {
     auto reads = std::make_shared<FileReadStats>();
     std::optional<MediaSource> file;
     std::optional<HlsDirectory> hls;
-    if (arguments.hls.empty()) {
+    if (arguments.remux) {
+        auto remuxed = remux_mp4_to_hls(open_file_media_source(arguments.file, reads));
+        std::cout << "HLS remux: segments=" << remuxed.segment_count
+                  << " target_duration=" << remuxed.target_duration_seconds << std::endl;
+        hls = HlsDirectory{std::move(remuxed.playlist_name), std::move(remuxed.resources)};
+    } else if (arguments.hls.empty()) {
         file = open_file_media_source(arguments.file, reads);
     } else {
         hls = open_hls_directory(arguments.hls, reads);
@@ -466,6 +480,10 @@ int run_cast_cli(int argc, const char* const* argv) {
         return cast(arguments);
     } catch (const std::invalid_argument& error) {
         std::cerr << "Arguments: " << error.what() << '\n';
+        return 2;
+    } catch (const RemuxException& error) {
+        std::cerr << "Remux (" << remux_failure_name(error.reason()) << "): " << error.what()
+                  << '\n';
         return 2;
     } catch (const CredentialException& error) {
         std::cerr << "Credentials: " << describe_credential_error(error.reason()) << '\n';
