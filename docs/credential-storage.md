@@ -112,7 +112,8 @@ labelled "send-airplay2 credential".
 | --- | --- |
 | Create only | libsecret's store **replaces** a matching item, so `save_new` takes a per-user lock, checks that no item exists (a malformed one counts) and then stores |
 | Lock | `flock` on `$XDG_RUNTIME_DIR/send-airplay2.<namespace>.<profile>.lock` (namespace `/` becomes `.`), opened `O_NOFOLLOW` with mode 0600, bounded at five seconds; `erase` takes it too. Without a usable `XDG_RUNTIME_DIR` the store is unavailable |
-| Absent | Lookup returns no value; `erase` reports whether anything was removed |
+| Absent | No matching item at all, checked with `secret_password_search_sync(SECRET_SEARCH_ALL)` |
+| Locked | Lookup and clear skip items in locked collections, so a match that is still present makes `load` and `erase` unavailable (never absent) and keeps `save_new`'s slot occupied; not exercised in CI, whose keyring stays unlocked |
 | Unavailable | Any `GError` (no session bus, no Secret Service, locked collection, refused prompt), or the lock; native messages are not surfaced |
 | Malformed | An empty value or one larger than 203 bytes is `invalid_record`; the decoder checks the rest |
 | Secret handling | Values pass through libsecret's `SecretValue`, which keeps secret data in its non-pageable secure memory and wipes it on release |

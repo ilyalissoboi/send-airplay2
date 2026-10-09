@@ -19,8 +19,11 @@ inline constexpr const char* secret_service_profile_attribute = "profile";
  * GNOME Keyring); otherwise every call reports unavailable, and headless hosts
  * should pass their own store. libsecret's store replaces a matching item, so
  * save_new and erase take a per-user advisory lock (flock on a file in
- * $XDG_RUNTIME_DIR, at most five seconds) around check-then-store. Calls block
- * the calling thread and are not cancellable.
+ * $XDG_RUNTIME_DIR, at most five seconds) around check-then-store. Lookup and
+ * clear skip items in locked collections, so presence is checked separately
+ * (SECRET_SEARCH_ALL): a locked match makes load and erase unavailable, never
+ * absent, and keeps save_new's slot occupied. Calls block the calling thread
+ * and are not cancellable.
  */
 [[nodiscard]] std::unique_ptr<CredentialStore>
 secret_service_credential_store(CredentialNamespace space);

@@ -157,6 +157,11 @@ public:
         const std::string name(profile);
         ValueOwner value(lookup(name));
         if (!value.get()) {
+            // Lookup skips items in a locked collection; such an item is
+            // present but unreadable, not absent.
+            if (has_item(name)) {
+                unavailable();
+            }
             return nullptr;
         }
         gsize size = 0;
@@ -176,8 +181,9 @@ public:
         CredentialBlob blob;
         encode_credentials(credentials, blob);
         const SlotLock lock(space_, name);
-        // Any existing item, readable or not, keeps the slot occupied.
-        if (ValueOwner(lookup(name)).get()) {
+        // Any existing item keeps the slot occupied: readable or not, and
+        // whether its collection is locked or not.
+        if (has_item(name)) {
             throw CredentialException(CredentialError::already_exists);
         }
         // secret_value_new copies the bytes into libsecret's secure memory.
@@ -205,7 +211,15 @@ public:
         if (error.failed()) {
             unavailable();
         }
-        return removed != FALSE;
+        if (removed != FALSE) {
+            return true;
+        }
+        // Clearing deletes only unlocked items. A match that is still there
+        // (in a locked collection) was not removed, which is not "absent".
+        if (has_item(name)) {
+            unavailable();
+        }
+        return false;
     }
 
 private:
@@ -222,6 +236,22 @@ private:
             unavailable();
         }
         return value;
+    }
+
+    /// Whether any matching item exists, including items in locked
+    /// collections (SECRET_SEARCH_ALL), without reading or unlocking secrets.
+    bool has_item(const std::string& profile) const {
+        ErrorOwner error;
+        GList* items = secret_password_search_sync(
+            credential_schema(), SECRET_SEARCH_ALL, nullptr, error.receive(),
+            secret_service_namespace_attribute, space_.c_str(), secret_service_profile_attribute,
+            profile.c_str(), nullptr);
+        const bool found = items != nullptr;
+        g_list_free_full(items, g_object_unref);
+        if (error.failed()) {
+            unavailable();
+        }
+        return found;
     }
 
     std::string space_;
