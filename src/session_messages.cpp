@@ -565,7 +565,7 @@ SessionEvent parse_session_event(const Bytes& body) {
     return output;
 }
 
-PlistValue seek_to(double seconds, std::int64_t message_id) {
+PlistValue seek_to(double seconds, std::int64_t message_id, const std::string& item_uuid) {
     if (!std::isfinite(seconds) || seconds < 0 || seconds > session_protocol::max_seek_seconds) {
         throw std::invalid_argument("Seek position out of range");
     }
@@ -575,6 +575,7 @@ PlistValue seek_to(double seconds, std::int64_t message_id) {
         {"type", "seek"},
         {"kind", "request"},
         {"messageID", message_id},
+        {"item", PlistDictionary{{"uuid", item_uuid}}},
         {"time", PlistDictionary{{"value", value},
                                  {"timescale", session_protocol::seek_timescale},
                                  {"flags", time_valid},

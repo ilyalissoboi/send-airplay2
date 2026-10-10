@@ -14,11 +14,10 @@ D62).** The user asked whether video can be cast to a Mac as to the Apple TV,
 then chose an automatic URL-only fallback. A MacBook Pro (`Mac14,10`) pairs
 after an on-screen consent and a PIN, rejects the remote-control SETUP with
 500, and plays the URL session alone. With the fallback, start, status,
-pause/resume, natural end (`media_end`) and stop passed from the CLI; seek is
-accepted and ignored in every form tried, so the start position does not
-apply on the Mac. Open: seek (the user is extracting the Mac's command
-strings), the per-session consent prompt and D30's random device ID, the C
-interface/UWP host/Screenbox on the Mac. See the D62 record in section 4 and
+pause/resume, seek, start position, natural end (`media_end`) and stop passed
+from the CLI (seek after the Mac's receiver strings showed it needs the item
+UUID; user observed). Open: the per-cast consent prompt, the C interface/UWP host/Screenbox on the Mac. See the D62
+record in section 4 and
 [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
 
 **HLS delivery** ([hls.md](hls.md)). The user set the Screenbox
@@ -1241,10 +1240,11 @@ explicit host option. Engineering choices:
   `SessionStatus::url_controls` reports it). No wake, no ownership-loss
   detection without MRP.
 - Controls are URL `/command`s: pause/play `setRate` 0/1 (H1, now confirmed
-  on the Mac), `seek` as a request with a CMTime, `stop`. Wire names follow
-  what a third-party receiver (DiPlay, GPL-3.0) documents an Apple sender
-  sending; names only, no code ([dependencies.md](dependencies.md)). Failures
-  keep the MRP command categories, so the C interface is unchanged.
+  on the Mac), `seek` as a request naming the queued item's UUID with a CMTime,
+  `stop`. Wire names follow what a third-party receiver (DiPlay, GPL-3.0)
+  documents an Apple sender sending, and the Mac receiver's own strings;
+  names only, no code ([dependencies.md](dependencies.md)). Failures keep the
+  MRP command categories, so the C interface is unchanged.
 - Progress comes from URL events (`UrlPlaybackTracker`): the last reported
   position, extrapolated by rate while playing; at/near end use reported
   positions only, with the MRP tracker's 0.5 s tolerance.
@@ -1253,11 +1253,15 @@ explicit host option. Engineering choices:
 
 Tested: unit/fake-receiver tests (fallback start, commands, progress, natural
 end, start-position seek, opt-out); on the Mac, start, status, pause/resume,
-natural end and stop passed; seek did not (the `/command` seek with and
-without request fields, legacy `/scrub` and `Start-Position-Seconds` are all
-accepted and ignored). Open: seek on macOS; whether a stable device ID (a D30
-change, user decision) stops the per-session consent prompt; the C
-interface, UWP host and Screenbox on the Mac.
+natural end and stop passed. Seek first failed in every form (the `/command`
+seek with and without request fields, legacy `/scrub`,
+`Start-Position-Seconds`: accepted and ignored). The Mac's log and the
+receiver strings the user extracted (`APRKMediaPlayer`: "Sender seek to time
+is %f for item %@") showed the seek must name the item; with `item: {uuid}`,
+seeks and the start position landed exactly (Mac log and user observed).
+The Mac's consent is asked "for client" by name with a grant period, so D30's
+random device ID is probably not why it prompts again. Open: the C interface,
+UWP host and Screenbox on the Mac.
 Record: [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
 
 ## 5. Implemented code and verification

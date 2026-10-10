@@ -337,6 +337,7 @@ private:
     bool url_controls_ = false;
     std::int64_t stream_id_ = 0;      // The URL control stream, for /command headers.
     std::int64_t url_message_id_ = 0; // Last URL request messageID; under command_mutex_.
+    std::string item_uuid_;           // Our queue item; set by start(), then only read.
 
     std::unique_ptr<TimingResponder> timing_;
     std::atomic_bool timing_stop_{false};

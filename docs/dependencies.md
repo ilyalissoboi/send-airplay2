@@ -285,8 +285,14 @@ sends: `docs/BYD_NAVIGATION.md` and `VideoInCar.kt` / `CarPlayVideo.kt` at
 read 2026-10-10. Used facts only: the command types `seek` and `stop`, a seek's
 root `time` as a CMTime dictionary, and `kind`/`messageID` on requests. No
 GPL code or text was copied; the builders are original, and their fixtures
-come from Python `plistlib`, independently of both. Receiver behavior is
-recorded separately: the macOS receiver ignored the seek.
+come from Python `plistlib`, independently of both.
+
+The seek's `item: {uuid}` comes from the macOS receiver itself: the user
+extracted printable strings near `insertPlayQueueItem` from their Mac's dyld
+shared cache (macOS AirPlay 960.13.25) and captured its unified log. Used as
+facts only (message type names, the item lookup in "Sender seek to time is %f
+for item %@"); no Apple code or binary is copied or redistributed, and the raw
+extracts are not committed.
 
 ## pyatv remote-Stop source audit (D41)
 

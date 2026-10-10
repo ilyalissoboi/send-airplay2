@@ -236,9 +236,10 @@ controls instead of failing to start. What a host sees differently:
   Position, duration and rate come from the URL session's events, the
   position extrapolated while playing. `at_end` and the `media_end` end reason
   work as on tvOS.
-- **Commands.** Pause, play and stop work (stop closes the video on the Mac).
-  Seek returns `SAP2_OK` but the Mac ignores it, so a nonzero
-  `start_position_seconds` does not apply either; see
+- **Commands.** Pause, play, seek and stop work (stop pauses, and the session
+  teardown that follows closes the video on the Mac). A nonzero
+  `start_position_seconds` is applied by a seek once the item plays, as on
+  tvOS, so about a second plays from 0 first; see
   [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
 - No wake before play and no ownership-loss end reason on such receivers.
 

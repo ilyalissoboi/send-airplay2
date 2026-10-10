@@ -49,10 +49,12 @@ receiver refuses remote control, D62):
   pyatv#2846, untested.
 - **H3:** seek is a `/command` type that is not identified yet. Candidate names
   must come from evidence, not guessing. If none is found, seek waits for the
-  control-path decision (decision 2). D62 sends `seek` with a CMTime `time`, as
-  a third-party receiver documents an Apple sender doing; **the macOS receiver
-  accepted and ignored it**, with or without `kind`/`messageID`, and ignored
-  legacy `/scrub` too. Still open.
+  control-path decision (decision 2). **Resolved for macOS (D62):** `seek` with
+  `kind` `request`, a `messageID`, `item` `{uuid}` of the queued item and a
+  CMTime `time`. Without the item the Mac accepted and ignored it (as it
+  ignored legacy `/scrub`); its receiver looks the item up by UUID. The Mac
+  answers with a `kind` `response` event and a time-jump notification. Not
+  tried on tvOS, which keeps MRP seek.
 - **H4:** closing the control and event connections ends playback on the TV.
   Supported by the minimum native session run: the user observed home-screen
   return after sender shutdown. Native EOF and selected receiver-side lifecycle

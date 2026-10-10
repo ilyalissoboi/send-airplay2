@@ -120,14 +120,14 @@ void url_control_command_tests(const std::string& directory) {
     group = "URL control /command bodies (D62)";
     check_bytes("setRate 0 pauses", command_body(set_rate(0.0)),
                 fixture(directory, "command-pause"));
-    // A request with messageID 7; 12.5 s at the millisecond timescale: value
-    // 12500, timescale 1000.
-    check_bytes("seek request with a CMTime", command_body(seek_to(12.5, 7)),
+    // A request with messageID 7 for the fixture item; 12.5 s at the
+    // millisecond timescale: value 12500, timescale 1000.
+    check_bytes("seek request with an item and a CMTime", command_body(seek_to(12.5, 7, item_uuid)),
                 fixture(directory, "command-seek"));
     check_bytes("stop", command_body(stop_playback()), fixture(directory, "command-stop"));
 
     const auto seek_value = [](double seconds) {
-        return seek_to(seconds, 1).find("time")->find("value")->as_integer();
+        return seek_to(seconds, 1, item_uuid).find("time")->find("value")->as_integer();
     };
     check(seek_value(0) == 0, "seek to zero");
     check(seek_value(0.0004) == 0 && seek_value(0.0006) == 1, "seek rounds to the millisecond");
@@ -135,7 +135,7 @@ void url_control_command_tests(const std::string& directory) {
     for (const auto seconds : {-0.001, 1e9 + 1, std::numeric_limits<double>::infinity(),
                                std::numeric_limits<double>::quiet_NaN()}) {
         try {
-            (void)seek_to(seconds, 1);
+            (void)seek_to(seconds, 1, item_uuid);
             check(false, "seek out of range accepted: " + std::to_string(seconds));
         } catch (const std::invalid_argument&) {
         }

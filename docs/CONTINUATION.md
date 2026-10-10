@@ -16,10 +16,9 @@ guide; the master handoff and dated artifacts preserve the longer history.
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
 - **Active slice: casting to a Mac (D62)** on
   `claude/airplay2-mac-casting-096627`: URL controls when a receiver rejects
-  remote control. Start, pause/play, status, natural end and stop passed on
-  the user's MacBook Pro from the CLI; seek does not work there yet (the
-  user is extracting the Mac's command strings). Open: seek, the consent prompt
-  per cast versus D30's random device ID (user decision), the C
+  remote control. Start, pause/play, seek, start position, status, natural
+  end and stop passed on the user's MacBook Pro from the CLI (seek once it
+  named the queue item). Open: the per-cast consent prompt, the C
   interface/UWP host/Screenbox on the Mac. The Mac profile is `macbook-pro`
   in Windows Credential Manager.
 - **Before that: the Screenbox integration.** HLS delivery (D60) is merged

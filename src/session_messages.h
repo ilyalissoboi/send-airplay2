@@ -117,13 +117,16 @@ constexpr double max_seek_seconds = 1e9;
  * URL-session controls for receivers that refuse remote control (D62). Wire
  * names follow what an Apple sender sends on /command, as a third-party
  * receiver (DiPlay, GPL-3.0; names only, no code) documents and handles them:
- * `{"type": "seek", "kind": "request", "messageID": N, "time": CMTime}` and
- * `{"type": "stop"}`. A seek is a request the receiver answers on the event
- * channel; `message_id` correlates that answer. The CMTime is {value,
- * timescale, flags 1 (valid), epoch 0}. `seconds` must be finite and in
- * [0, max_seek_seconds], otherwise std::invalid_argument.
+ * `{"type": "seek", "kind": "request", "messageID": N, "item": {"uuid": U},
+ * "time": CMTime}` and `{"type": "stop"}`. The macOS receiver looks up the
+ * seek's player item by its UUID (its log strings say "Sender seek to time is
+ * %f for item %@"), so a seek names the queued item. A seek is a request the
+ * receiver answers on the event channel; `message_id` correlates that answer.
+ * The CMTime is {value, timescale, flags 1 (valid), epoch 0}. `seconds` must be
+ * finite and in [0, max_seek_seconds], otherwise std::invalid_argument.
  */
-[[nodiscard]] PlistValue seek_to(double seconds, std::int64_t message_id);
+[[nodiscard]] PlistValue seek_to(double seconds, std::int64_t message_id,
+                                 const std::string& item_uuid);
 [[nodiscard]] PlistValue stop_playback();
 
 // ---- Receiver events ----

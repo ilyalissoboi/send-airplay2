@@ -1535,8 +1535,10 @@ played to the end and reported `stopped` at 131.567 s.
 when the Mac has not recently accepted this sender: a 5 s request timeout
 expired while it waited, and an unanswered prompt gave 400 after about 15 s.
 Casts a few minutes after an accepted one started without a prompt; one about
-four minutes later prompted again. What the Mac keys its memory on (the
-random per-session device ID of D30, the pairing identity, time) is not known.
+four minutes later prompted again. The Mac's log asks permission "for client
+"send-airplay2"" (the sender name) and its receiver keeps a permission grant
+period, so the memory is most likely per client and time-limited rather than
+per device ID (D30); not tested further.
 
 **Fix (D62):** a rejected remote-control SETUP now closes that session and
 starts with URL controls; with them the base SETUP may wait up to 30 s for
@@ -1548,10 +1550,40 @@ consent. Runs with the fix (`cast --event-log`, commands piped on a schedule):
 | B: start 20, seek 100, pause, stop | First attempt: prompt not accepted in time, base SETUP 400 after 15.2 s, cleaned, exit 1. Second: accepted, `playing` at 3.5 s; start seek and seek 100 both 200 without a jump; pause `paused`; stop 200 (Mac then reported `paused`), `sender_stop`, cleaned, exit 0 | First attempt: prompt seen, not accepted in time |
 | C: legacy `POST /scrub?position=100` (temporary switch) | No prompt; 200 without a jump; stop as in B | "The stop command resulted in video closing" (user, for the stop runs) |
 
-**PASS for start, status, pause/resume, natural end and stop on this receiver
-and host; seek FAIL.** The Mac answers `/command` `seek` (with or without
+At that point start, status, pause/resume, natural end and stop passed and
+seek did not: the Mac answered `/command` `seek` (with or without
 `kind`/`messageID`), legacy `/scrub` and the queue item's
-`Start-Position-Seconds` with 200 or acceptance and ignores them, so the start
-position does not apply either. Not run: the C interface, the UWP host or
+`Start-Position-Seconds` with 200 or acceptance and ignored them.
+
+**Seek diagnosis.** The user captured the Mac's unified log (`log stream`,
+ControlCenter and the AirPlay/Core Media subsystems) during run D (seeks to 60
+and 90 s, stop). Our seek arrived (a 216-byte request answered 200) with no
+player activity, whereas `setRate` logged `playerairplay_setRateCommon` and the
+Mac's own on-screen seek logged `itemfig_setCurrentTime…`. The log also showed
+the remote-control rejection as "Setup session failed: kUnsupportedErr" for
+the remote-only session, consent as "Asking delegate … for permission to
+proceed for client "send-airplay2"", and our `stop` as a pause, with the item
+removed only when our session closed. Strings the user extracted from the
+Mac's shared library cache (`grep -F insertPlayQueueItem`, 4 KB around each
+hit; used as facts only) show the receiver `APRKMediaPlayer`: it dispatches
+`/command` dictionaries by `type` (`unhandledURL`, `playbackInfo`,
+`setProperty`, `insertPlayQueueItem`, `removePlayQueueItem`, `setRate`,
+`seek`, `streamingKey`, `stop`, …), and its seek handler logs "Sender seek to
+time is %f for item %@" and "Cannot add pending seekID for item %@, UUID %@".
+It also keeps a permission grant period and timer. Our seek named no item.
+
+**Fix:** a seek now carries `item: {uuid}` of the queued item.
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| E: seek 60, seek 90, stop | Each seek: a notification with the exact target (60.000, 90.000 s) and the Mac's `kind: response` within 0.3 s; positions 63.7 and 93.9 s about 4 s later; stop, `sender_stop`, cleaned, exit 0 | Everything worked as expected |
+| F: `--start-position 45`, stop | `playing` at 1.0 s; the start seek's response at 2.3 s with 45.000 s; position 52.8 s at 10 s; stop, cleaned, exit 0 | Everything worked as expected |
+
+**PASS for start, status, pause/resume, seek, start position, natural end and
+stop on this receiver and host** (user: everything worked as expected in E and
+F). The Mac's log during E and F (filtered to seeks) read "Sender seek to time
+is 60.000000 / 90.000000 / 45.000000 for item <our UUID>", each followed by
+`SeekDidComplete` with `seekErr 0`. The start position plays about one second from 0
+before the seek, as on tvOS (D61). Not run: the C interface, the UWP host or
 Screenbox with the fix; HLS remux; other Macs, macOS versions or access
 settings; a password-protected receiver.

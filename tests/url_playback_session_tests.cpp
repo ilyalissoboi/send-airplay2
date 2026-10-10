@@ -473,6 +473,19 @@ void url_controls_command_tests() {
         check(commands[2].find("kind")->as_string() == "request" &&
                   commands[2].find("messageID")->as_integer() == 1,
               "the first seek is request messageID 1");
+        std::string queued_uuid;
+        for (const auto& request : receiver.requests()) {
+            if (request.target == "/command" && command_type(request) == "insertPlayQueueItem") {
+                const auto envelope = decode_binary_plist(request.body);
+                const auto insert =
+                    decode_binary_plist(envelope.find("params")->find("data")->as_data());
+                queued_uuid = insert.find("item")->find("uuid")->as_string();
+            }
+        }
+        const auto* seek_item = commands[2].find("item");
+        check(!queued_uuid.empty() && seek_item &&
+                  seek_item->find("uuid")->as_string() == queued_uuid,
+              "the seek names the queued item by its UUID");
         check(commands[3].find("type")->as_string() == "stop", "stop is the stop command");
     }
     for (const auto& request : receiver.requests()) {

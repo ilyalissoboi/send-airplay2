@@ -327,13 +327,13 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
             .body);
     stream_id_ = stream.stream_id;
 
-    const auto item_uuid = random_uuid();
+    item_uuid_ = random_uuid();
     if (mrp_) {
-        mrp_->expect_item(item_uuid, options_.media_url);
+        mrp_->expect_item(item_uuid_, options_.media_url);
     }
     const PlistValue commands[] = {
-        insert_play_queue_item(item_uuid, options_.media_url, options_.start_position_seconds),
-        set_interested_in_date_range(item_uuid),
+        insert_play_queue_item(item_uuid_, options_.media_url, options_.start_position_seconds),
+        set_interested_in_date_range(item_uuid_),
         set_action_at_item_end(),
         set_rate(1.0),
     };
@@ -880,7 +880,7 @@ void UrlPlaybackSession::url_command(PlaybackCommand command, double position_se
         break;
     case PlaybackCommand::seek:
         // Throws std::invalid_argument when out of range, before any request.
-        body = seek_to(position_seconds, ++url_message_id_);
+        body = seek_to(position_seconds, ++url_message_id_, item_uuid_);
         break;
     case PlaybackCommand::stop:
         body = stop_playback();

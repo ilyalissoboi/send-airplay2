@@ -7,8 +7,8 @@ C# binding and a development CLI.
 
 > **Experimental.** The API is not frozen. Receiver testing so far covers one
 > Apple TV 4K (tvOS 26.6) from a Windows 11 x64 host, as a desktop app and as a
-> packaged UWP app, and one MacBook Pro's AirPlay Receiver from the CLI, without
-> seek. Other receivers, firmware versions and host platforms are untested. See
+> packaged UWP app, and one MacBook Pro's AirPlay Receiver from the CLI. Other
+> receivers, firmware versions and host platforms are untested. See
 > [what has been tested](#tested-so-far).
 
 ## What it does
@@ -131,11 +131,10 @@ the same network"; CLI only):
 - Pairing and each new cast need the user to accept a request on the Mac
   (unless it accepted this sender a few minutes earlier); pair with
   `--timeout-ms 60000` so there is time to answer.
-- Passed: playback of video and audio, pause, play, status, the end of the
-  media, and stop. The Mac has no remote-control session, so the library
-  falls back to the URL session's own controls.
-- Not working: seek, and therefore starting at a chosen position. The Mac
-  accepts the request and ignores it.
+- Passed: playback of video and audio, pause, play, seek, starting at a
+  chosen position, status, the end of the media, and stop. The Mac has no
+  remote-control session, so the library falls back to the URL session's own
+  controls.
 
 Passing unit tests and CI does not show compatibility with any receiver. Each
 receiver result is listed in [docs/receiver-validation.md](docs/receiver-validation.md),
