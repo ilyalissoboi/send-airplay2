@@ -1,0 +1,115 @@
+# NuGet package (Screenbox step 3)
+
+Status: **packing implemented, 2026-10-10; not published.** The user chose a
+local package feed for the Screenbox integration until casting works end to
+end, with nuget.org publishing later. This document covers the package, how to
+pack it, and how a host consumes it.
+
+## Contents
+
+`SendAirPlay2.<version>.nupkg`:
+
+| Path | What |
+| --- | --- |
+| `lib/netstandard2.0/SendAirPlay2.dll`, `.xml` | The [C# binding](csharp-binding.md) and its documentation |
+| `runtimes/win-x64/native/` | `send_airplay2.dll`, `libcrypto-3-x64.dll` |
+| `runtimes/win-x86/native/` | `send_airplay2.dll`, `libcrypto-3.dll` |
+| `runtimes/win-arm64/native/` | `send_airplay2.dll`, `libcrypto-3-arm64.dll` |
+| `THIRD-PARTY-NOTICES.txt` | OpenSSL (Apache-2.0), Botan (BSD-2-Clause), Boost (BSL-1.0), from the vcpkg ports that built them |
+| `LICENSE.txt`, `README.md` | Apache-2.0; the package readme (`bindings/csharp/SendAirPlay2/PACKAGE.md`) |
+| `BUILD-INFO.txt` | Version, the binding's source commit (marked if the tree had uncommitted changes), architectures, each native library's source commit and SHA-256 |
+
+The native libraries are the UWP builds ([uwp-native-build.md](uwp-native-build.md)):
+AppContainer, the app C runtime from the `Microsoft.VCLibs.140.00` framework,
+Botan linked in, no Credential Manager. A host must use a RID-specific build
+(`win-x64`, `win-x86`, `win-arm64`) so NuGet copies them next to the app, and
+supply its own `ICredentialStore`. The package has no NuGet dependencies.
+
+**Versions** follow the C interface: `0.3.x` is `SAP2_PLAYBACK_API_VERSION` 3.
+A local pack is `0.3.0-local.<UTC yyyyMMddHHmmss>` and a CI pack
+`0.3.0-ci.<run number>`, so a host never restores a stale copy of an earlier
+pack from NuGet's global package cache under the same version.
+
+## Packing locally
+
+Build the UWP libraries first (one configured tree per architecture,
+[uwp-native-build.md](uwp-native-build.md)), then:
+
+```powershell
+./scripts/pack_nuget.ps1 -Native 'x64=build-uwp/Release','x86=build-uwp-x86/Release','arm64=build-uwp-arm64/Release' -Build
+```
+
+- `-Native` lists `arch=directory` entries; leave out an architecture that was
+  not built. The script warns that an app built for a missing architecture
+  cannot cast. ARM64 needs Visual Studio's ARM64 build tools.
+- `-Build` rebuilds each tree with CMake first. Every directory must pass
+  `check_uwp_binaries.ps1`.
+- **Provenance:** the build writes `send_airplay2.source.txt` beside the
+  library (`cmake/write_source_stamp.cmake`: the commit at link time, and
+  whether native sources had uncommitted changes). The script refuses a library
+  without a stamp, one built from uncommitted native changes, or one whose
+  commit's native sources (`src`, `include`, `CMakeLists.txt`, `cmake`,
+  `vcpkg.json`, `vcpkg-overlays`) differ from `HEAD`; rebuild it with `-Build`.
+- The notices come from the vcpkg share directory recorded in the first tree's
+  `CMakeCache.txt`; `-VcpkgShare` overrides it.
+- `-OutputDirectory` defaults to `packages-local` (ignored by git); `-Version`
+  or `-VersionSuffix` override the version.
+- Needs the .NET SDK (`dotnet pack`) and Visual Studio's `dumpbin`.
+
+## CI
+
+The `uwp` job keeps each architecture's native libraries and notice files as
+an artifact, and the `nuget` job packs all three into `nuget-package`
+(`0.3.0-ci.<run number>`), kept for 14 days. CI itself publishes nothing.
+
+## GitHub prereleases (for the Screenbox fork)
+
+Until nuget.org publishing, the Screenbox fork's CI cannot reach a local feed,
+so the user chose GitHub prereleases on this repository as the package's
+source (2026-10-10):
+
+1. Run the workflow on `main` (`gh workflow run build.yml --ref main`), so
+   `BUILD-INFO.txt` names a commit on `main`.
+2. Download that run's `nuget-package` artifact and check its
+   `BUILD-INFO.txt` (commit and the three architectures).
+3. With the user's approval for each one, create a prerelease tagged
+   `nuget-v<version>` on that commit, with the `.nupkg` as its asset.
+
+The fork pins the version in `Screenbox.Core.csproj`, and a script there
+downloads that release asset into its feed folder before restore.
+
+## Consuming from a local feed or a prerelease
+
+A host adds the output folder as a package source next to nuget.org and
+references the exact version:
+
+```xml
+<!-- nuget.config -->
+<add key="send-airplay2-local" value="..\send-airplay2\packages-local" />
+```
+
+```xml
+<PackageReference Include="SendAirPlay2" Version="0.3.0-local.20261009162323" />
+```
+
+A machine without that folder, such as a CI runner, cannot restore the
+package; the Screenbox fork fills its feed folder from the GitHub prerelease
+instead, and a developer can copy a fresh local pack into the same folder.
+
+## Notices
+
+Apps that redistribute the native libraries must keep the notices: the
+package's `THIRD-PARTY-NOTICES.txt` covers OpenSSL, Botan and Boost
+([dependencies.md](dependencies.md)). The package adds no dependency to the
+library; packing uses only the .NET SDK.
+
+## Results (2026-10-10)
+
+- A local pack from `c8feb27` plus this change with x64 and x86 (this machine
+  has no ARM64 build tools) produced the layout above; both architectures
+  passed the UWP binary checks, and `csharp_binding_tests` still passes with
+  the binding's pack properties.
+- The CI pack with all three architectures: see the PR's `nuget` job.
+
+Not covered: nuget.org publishing, package signing, an ARM64 pack on this
+machine, and a host restoring the package (Screenbox's phase 1).

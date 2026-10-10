@@ -62,6 +62,23 @@ target_compile_features(send_airplay2 PUBLIC cxx_std_17)
 target_include_directories(send_airplay2 PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 set_target_properties(send_airplay2 PROPERTIES CXX_EXTENSIONS OFF)
+# Source stamp next to the library (send_airplay2.source.txt), so packaging can
+# tell which commit a prebuilt library came from (docs/nuget-package.md). It is
+# rewritten after every build, not only on relink: a build leaves the library
+# current with the tree, so the tree's state then is the library's source, even
+# when a commit since the last link changed no native input. The paths are the
+# native build's inputs; scripts/pack_nuget.ps1 uses the same list.
+find_package(Git QUIET)
+if(GIT_EXECUTABLE)
+  set(sap2_native_paths "src include CMakeLists.txt cmake vcpkg.json vcpkg-overlays")
+  add_custom_target(send_airplay2_source_stamp ALL
+    COMMAND ${CMAKE_COMMAND} "-DGIT=${GIT_EXECUTABLE}" "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}"
+            "-DNATIVE_PATHS=${sap2_native_paths}"
+            "-DOUT=$<TARGET_FILE_DIR:send_airplay2>/send_airplay2.source.txt"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/write_source_stamp.cmake"
+    VERBATIM)
+  add_dependencies(send_airplay2_source_stamp send_airplay2)
+endif()
 if(BUILD_SHARED_LIBS)
   target_compile_definitions(send_airplay2 PUBLIC SAP2_SHARED PRIVATE SAP2_BUILDING)
 endif()

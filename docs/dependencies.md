@@ -297,3 +297,10 @@ SDK's implicit reference packages, restored from nuget.org: `NETStandard.Library
 targeting pack (MIT) for the `net8.0` runner. These are compile-time reference
 assemblies only; nothing from them is copied into the repository or shipped with
 the native library. Hosts bring their own .NET runtime.
+
+The NuGet package ([nuget-package.md](nuget-package.md)) is packed with the
+same SDK (`dotnet pack`) and adds no dependency. It ships the UWP-built
+`send_airplay2.dll` and OpenSSL's `libcrypto` per architecture, with
+`THIRD-PARTY-NOTICES.txt` reproducing the `copyright` files of the vcpkg
+`openssl`, `botan` and `boost-asio` ports that built them (Apache-2.0,
+BSD-2-Clause, BSL-1.0), as those licenses ask of binary redistribution.
