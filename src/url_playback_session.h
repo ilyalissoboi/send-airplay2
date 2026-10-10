@@ -6,6 +6,7 @@
 #include "mrp_messages.h"
 #include "receiver_stream.h"
 #include "session_messages.h"
+#include "url_playback_tracker.h"
 #include <atomic>
 #include <array>
 #include <cstddef>
@@ -60,8 +61,9 @@ struct UrlPlaybackOptions {
     ReceiverEndpoint receiver; // The AirPlay control endpoint (port 7000).
     std::string media_url;     // Private: never logged or put in errors.
     /// Sent as the queue item's Start-Position-Seconds and, when above zero,
-    /// applied by one MRP seek before start() returns: tvOS 26 plays from 0
-    /// whatever the item says (D61). The seek needs MRP (not minimal_remote).
+    /// applied by one seek before start() returns: tvOS 26 plays from 0
+    /// whatever the item says (D61). The seek uses MRP, or the URL session's
+    /// own seek with URL controls (D62); not minimal_remote.
     double start_position_seconds = 0;
     SenderIdentity identity; // A random device ID is used when empty.
     std::chrono::milliseconds request_timeout{5000};
@@ -77,6 +79,15 @@ struct UrlPlaybackOptions {
     bool record_event_structure = false;
     /// Keep false only for the recorded minimum-session experiment/tests.
     bool enable_mrp = true;
+    /// When the receiver rejects the remote-control SETUP (macOS answers 500),
+    /// close that session and play with URL controls instead of failing (D62):
+    /// commands become URL /command requests and progress comes from URL
+    /// events. False keeps the rejection a start failure.
+    bool url_controls_fallback = true;
+    /// With URL controls, how long the base SETUP may wait. macOS holds it
+    /// while asking on screen whether to allow the sender (D62); other
+    /// requests keep request_timeout. Part of neither start_timeout nor wake.
+    std::chrono::milliseconds consent_timeout{30000};
     /// Wake a sleeping receiver before playback (D56). When the MRP handshake
     /// reports logicalDeviceCount 0, send WAKE_DEVICE and wait until it reports
     /// awake and unchanged for wake_settle, at most wake_timeout; then start as
@@ -179,6 +190,9 @@ struct SessionStatus {
     SessionFailureChannel failure_channel = SessionFailureChannel::none;
     SessionFailureReason failure_reason = SessionFailureReason::none;
     SessionEnd end_reason = SessionEnd::none;
+    /// The receiver refused remote control; commands and playback status use
+    /// the URL session (D62). Fixed once start() returns.
+    bool url_controls = false;
     bool cleaned_up =
         false; // Transport workers joined and channel secrets erased; stop joins supervisor.
 };
@@ -195,6 +209,12 @@ struct SessionStatus {
  * confirmation interval. Missing rate keeps state-only compatibility. This
  * filters short startup transitions; it is not decoder/visual proof or a
  * guarantee that the receiver will continue playing after start() returns.
+ *
+ * URL controls (D62): a receiver that rejects the remote-control SETUP (macOS
+ * AirPlay Receiver) plays the same URL session without one. With
+ * url_controls_fallback the rejected session is closed and start continues
+ * without MRP: there is no wake, no ownership loss detection, commands are
+ * URL /command requests, and playback_status() comes from URL events.
  *
  * Threads (D28): the control connection is shared by the caller and the
  * feedback thread under one mutex, so one request is in flight at a time. An
@@ -238,6 +258,10 @@ public:
     /// Synchronous correlated MRP controls. A command requires ownership of
     /// our URL item; rejection is reported without changing playback locally.
     /// Teardown cancels a pending command before closing its transport.
+    /// With URL controls (D62) a command is one URL /command (setRate 1 or 0,
+    /// seek, stop) acknowledged by its HTTP status; failures are reported as
+    /// MrpException with the same categories (rejected, timeout, cancelled,
+    /// disconnected).
     void command(PlaybackCommand command, double position_seconds = 0);
     /// Block until the playback state differs from `previous`, the session
     /// fails/ends, or `timeout` passes; returns the status at that point.
@@ -260,8 +284,11 @@ private:
     /// (not_owned, cancelled or the seek's own failure); start() then tears down.
     void apply_start_position(const std::atomic_bool* cancelled);
     /// Independent verified remote session and MRP; retained until URL teardown.
-    /// enable_mrp=false preserves the isolated minimum H5 experiment.
+    /// enable_mrp=false preserves the isolated minimum H5 experiment. A rejected
+    /// SETUP closes the session and selects URL controls when allowed (D62).
     void open_remote_control(const PairCredentials& credentials, const std::atomic_bool* cancelled);
+    /// One URL /command for `command`; requires url_controls_ and command_mutex_.
+    void url_command(PlaybackCommand command, double position_seconds);
     void remote_event_loop();
     ReceiverResponse remote_request(std::string method, std::string target, Bytes body,
                                     const std::atomic_bool* cancelled, bool require_success);
@@ -270,8 +297,10 @@ private:
     [[nodiscard]] ReceiverRequest rtsp_request(std::string method, std::string target,
                                                Bytes body) const;
     /// One control request; non-2xx throws SessionException(rejected) when required.
+    /// `timeout` defaults to request_timeout.
     ReceiverResponse control_request(ReceiverRequest request, const std::atomic_bool* cancelled,
-                                     bool require_success);
+                                     bool require_success,
+                                     std::optional<std::chrono::milliseconds> timeout = {});
     void start_timing(const std::string& local_address);
     void open_event_channel(std::uint16_t event_port, const std::atomic_bool* cancelled);
     void start_feedback();
@@ -304,6 +333,11 @@ private:
     std::atomic_bool remote_event_stop_{false};
     std::thread remote_event_thread_;
     std::unique_ptr<MrpSession> mrp_;
+    /// Set by start() before any worker thread exists, then only read.
+    bool url_controls_ = false;
+    std::int64_t stream_id_ = 0;      // The URL control stream, for /command headers.
+    std::int64_t url_message_id_ = 0; // Last URL request messageID; under command_mutex_.
+    std::string item_uuid_;           // Our queue item; set by start(), then only read.
 
     std::unique_ptr<TimingResponder> timing_;
     std::atomic_bool timing_stop_{false};
@@ -319,6 +353,7 @@ private:
     mutable std::mutex state_mutex_; // Guards status_ and the stop flags' waits.
     mutable std::condition_variable state_changed_;
     SessionStatus status_;
+    UrlPlaybackTracker url_playback_;           // Fed only with URL controls (D62).
     std::optional<double> state_playback_rate_; // Rate on the latest URL state event.
     std::optional<std::chrono::steady_clock::time_point> forward_playing_since_;
     const std::chrono::steady_clock::time_point start_trace_origin_ =

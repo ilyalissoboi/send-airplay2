@@ -116,6 +116,32 @@ void command_tests(const std::string& directory) {
     check_bytes("setRate", command_body(set_rate(1.0)), fixture(directory, "command-rate"));
 }
 
+void url_control_command_tests(const std::string& directory) {
+    group = "URL control /command bodies (D62)";
+    check_bytes("setRate 0 pauses", command_body(set_rate(0.0)),
+                fixture(directory, "command-pause"));
+    // A request with messageID 7 for the fixture item; 12.5 s at the
+    // millisecond timescale: value 12500, timescale 1000.
+    check_bytes("seek request with an item and a CMTime", command_body(seek_to(12.5, 7, item_uuid)),
+                fixture(directory, "command-seek"));
+    check_bytes("stop", command_body(stop_playback()), fixture(directory, "command-stop"));
+
+    const auto seek_value = [](double seconds) {
+        return seek_to(seconds, 1, item_uuid).find("time")->find("value")->as_integer();
+    };
+    check(seek_value(0) == 0, "seek to zero");
+    check(seek_value(0.0004) == 0 && seek_value(0.0006) == 1, "seek rounds to the millisecond");
+    check(seek_value(1e9) == 1'000'000'000'000, "largest seek, 1e9 s");
+    for (const auto seconds : {-0.001, 1e9 + 1, std::numeric_limits<double>::infinity(),
+                               std::numeric_limits<double>::quiet_NaN()}) {
+        try {
+            (void)seek_to(seconds, 1, item_uuid);
+            check(false, "seek out of range accepted: " + std::to_string(seconds));
+        } catch (const std::invalid_argument&) {
+        }
+    }
+}
+
 void header_tests() {
     group = "request headers";
     SessionHeaders headers;
@@ -242,6 +268,41 @@ void event_tests(const std::string& directory) {
     check(!rate_event("private-rate", false).playback_rate,
           "rate text is not interpreted or retained");
     check(!rate_event(true, false).playback_rate, "boolean rate is not numeric");
+
+    // macOS reports progress in playbackState params and at the root of
+    // notifications (time jumps, rate changes), as CMTime dictionaries (D62).
+    const auto cm_time = [](std::int64_t value) {
+        return PlistDictionary{{"value", value}, {"timescale", 1000}, {"flags", 1}, {"epoch", 0}};
+    };
+    const auto state_with_position = parse_session_event(
+        envelope(PlistDictionary{{"type", "playbackState"},
+                                 {"params", PlistDictionary{{"playbackState", "playing"},
+                                                            {"position", cm_time(124908)},
+                                                            {"duration", cm_time(131567)},
+                                                            {"rate", 1.0}}}}));
+    check(state_with_position.position_seconds == 124.908 &&
+              state_with_position.duration_seconds == 131.567 &&
+              state_with_position.playback_rate == 1.0,
+          "playbackState params position, duration and rate");
+    const auto time_jump = parse_session_event(envelope(PlistDictionary{
+        {"type", "notification"}, {"name", "private-name"}, {"position", cm_time(0)}}));
+    check(time_jump.type == "notification" && !time_jump.playback_state &&
+              time_jump.position_seconds == 0.0 && !time_jump.playback_rate,
+          "notification root position, zero is valid");
+    const auto rate_change = parse_session_event(envelope(
+        PlistDictionary{{"type", "notification"}, {"rate", 0.0}, {"position", cm_time(60000)}}));
+    check(rate_change.playback_rate == 0.0 && rate_change.position_seconds == 60.0,
+          "notification root rate and position");
+    check(!parse_session_event(
+               envelope(PlistDictionary{{"type", "notification"}, {"position", "60"}}))
+               .position_seconds,
+          "text position is not parsed");
+    check(!parse_session_event(
+               envelope(PlistDictionary{
+                   {"type", "notification"},
+                   {"position", PlistDictionary{{"value", 1}, {"timescale", 1}, {"flags", 0}}}}))
+               .position_seconds,
+          "invalid CMTime position is unknown");
     // Diagnostic outlines carry key names and the state, never other values.
     check(describe_event_structure(fixture(directory, "event-state-params")) ==
               "type=playbackState state=playing keys=type,params,params.playbackState",
@@ -405,6 +466,7 @@ int main(int argc, char** argv) {
         const std::string directory = argv[1];
         setup_body_tests(directory);
         command_tests(directory);
+        url_control_command_tests(directory);
         header_tests();
         response_tests(directory);
         event_tests(directory);

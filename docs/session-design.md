@@ -37,17 +37,24 @@ project's `MediaServer`, with explicit start, state, controls and teardown.
 | Event messages are RTSP-style requests from the receiver; the sender answers `200 OK` with `CSeq` echoed and an empty body | pyatv source; observed traffic shape |
 | `/command` body: `{"params": {"data": <bplist of the command>}}`, HTTP/1.1 on the control connection, with `X-Apple-Session-ID` and `X-Apple-StreamID` from the type-130 SETUP | Fork source; matched the successful run |
 
-Historical hardware hypotheses (H5 passed for the recorded minimum; H1-H3
-remain optional, untested alternatives to the implemented MRP controls):
+Historical hardware hypotheses (H5 passed for the recorded minimum; H2
+remains an untested alternative; H1 and H3 became the URL controls used when a
+receiver refuses remote control, D62):
 
 - **H1:** `setRate` with rate 0 pauses and rate 1 resumes. Rate 1 is part of the
-  validated start sequence.
+  validated start sequence. **Confirmed on a macOS receiver (D62)**; not tried
+  on tvOS, which keeps MRP controls.
 - **H2:** a `playbackInfo` request (`kind` `request`, with `messageID`) gets a
   response on the event channel that includes position and duration. Seen in
   pyatv#2846, untested.
 - **H3:** seek is a `/command` type that is not identified yet. Candidate names
   must come from evidence, not guessing. If none is found, seek waits for the
-  control-path decision (decision 2).
+  control-path decision (decision 2). **Resolved for macOS (D62):** `seek` with
+  `kind` `request`, a `messageID`, `item` `{uuid}` of the queued item and a
+  CMTime `time`. Without the item the Mac accepted and ignored it (as it
+  ignored legacy `/scrub`); its receiver looks the item up by UUID. The Mac
+  answers with a `kind` `response` event and a time-jump notification. Not
+  tried on tvOS, which keeps MRP seek.
 - **H4:** closing the control and event connections ends playback on the TV.
   Supported by the minimum native session run: the user observed home-screen
   return after sender shutdown. Native EOF and selected receiver-side lifecycle

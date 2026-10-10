@@ -1525,3 +1525,94 @@ Receiver behaviour found:
 
 Not run: x86/ARM64 host builds, a sleeping receiver from Screenbox, a
 receiver without a PIN prompt, other receivers and firmware.
+
+## macOS AirPlay Receiver: URL controls (D62, 2026-10-10)
+
+The user asked whether video can be cast to a Mac as to the Apple TV.
+Receiver: the user's MacBook Pro, advertised model `Mac14,10`, AirPlay
+`srcvers` 960.13.25, macOS version not queried; AirPlay Receiver on, "Allow
+AirPlay for: Anyone on the same network", no password. Host: Windows 11 x64
+(10.0.26200), `airplay2-cli`, MSVC Release static, built in this worktree on
+top of `aa10119` (temporary diagnostics noted below were removed afterwards);
+media `gas.mp4`; a firewall Allow rule for this worktree's binary existed.
+Log: [artifact](validation/native-macos-url-controls-windows-2026-10-10.json).
+
+**Discovery.** The Mac advertised AirPlay and RAOP on port 7000, `acl=0`, no
+`pw`, features `0x38174fde4a7fcfd5`. Against the Apple TV's
+`0x3c177fde4a7fdfd5` the Mac lacks bits 12, 44, 45 and 58; community feature
+tables name bit 58 as remote control, which is consistent with what follows
+but not established by it.
+
+**Pairing.** `POST /pair-pin-start` is held while the Mac shows an "allow this
+AirPlay request" notification; unanswered, it returns 400 after about 15 s
+(the CLI's default 10 s operation timeout first reported a timeout). After the
+user accepted, the Mac showed a PIN; `pair --timeout-ms 60000` saved the
+profile and verified a fresh connection. Pairing through the Screenbox fork
+also succeeded this way (user).
+
+**The failing step.** With a paired profile, every cast failed in 66-141 ms
+with status 500. A temporary trace showed the 500 answers the remote-control
+SETUP, after that connection's pair-verify succeeded, consent given or not.
+With remote control skipped (temporary switch), the URL session's base SETUP,
+GET /info, RECORD, stream SETUP and the four start `/command`s were all 200,
+and the Mac reported `playing` at rate 1 after 1.3 s with duration 131.567 s;
+the user saw normal video and audio with the Mac's own on-screen controls, and
+an on-screen seek produced a URL notification with the new position. The Mac
+played to the end and reported `stopped` at 131.567 s.
+
+**Consent per session.** The base SETUP waits for the same on-screen consent
+when the Mac has not recently accepted this sender: a 5 s request timeout
+expired while it waited, and an unanswered prompt gave 400 after about 15 s.
+Casts a few minutes after an accepted one started without a prompt; one about
+four minutes later prompted again. The Mac's log asks permission "for client
+"send-airplay2"" (the sender name) and its receiver keeps a permission grant
+period, so the memory is most likely per client and time-limited rather than
+per device ID (D30); not tested further.
+
+**Fix (D62):** a rejected remote-control SETUP now closes that session and
+starts with URL controls; with them the base SETUP may wait up to 30 s for
+consent. Runs with the fix (`cast --event-log`, commands piped on a schedule):
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| A: status, pause, status, play, seek 100, status; to the end | Remote SETUP 500 traced; `playing` at 1.1 s; status 4.9 s at 6 s; pause: `paused` in 0.01 s, position held 8.9 s; play: `playing` again, Mac reported 8.892 s; seek 200 OK but no jump (16.7 s four seconds later); final position 131.567 s then `stopped` at 140.9 s: `media_end`, cleaned, exit 0 | Not reported |
+| B: start 20, seek 100, pause, stop | First attempt: prompt not accepted in time, base SETUP 400 after 15.2 s, cleaned, exit 1. Second: accepted, `playing` at 3.5 s; start seek and seek 100 both 200 without a jump; pause `paused`; stop 200 (Mac then reported `paused`), `sender_stop`, cleaned, exit 0 | First attempt: prompt seen, not accepted in time |
+| C: legacy `POST /scrub?position=100` (temporary switch) | No prompt; 200 without a jump; stop as in B | "The stop command resulted in video closing" (user, for the stop runs) |
+
+At that point start, status, pause/resume, natural end and stop passed and
+seek did not: the Mac answered `/command` `seek` (with or without
+`kind`/`messageID`), legacy `/scrub` and the queue item's
+`Start-Position-Seconds` with 200 or acceptance and ignored them.
+
+**Seek diagnosis.** The user captured the Mac's unified log (`log stream`,
+ControlCenter and the AirPlay/Core Media subsystems) during run D (seeks to 60
+and 90 s, stop). Our seek arrived (a 216-byte request answered 200) with no
+player activity, whereas `setRate` logged `playerairplay_setRateCommon` and the
+Mac's own on-screen seek logged `itemfig_setCurrentTime…`. The log also showed
+the remote-control rejection as "Setup session failed: kUnsupportedErr" for
+the remote-only session, consent as "Asking delegate … for permission to
+proceed for client "send-airplay2"", and our `stop` as a pause, with the item
+removed only when our session closed. Strings the user extracted from the
+Mac's shared library cache (`grep -F insertPlayQueueItem`, 4 KB around each
+hit; used as facts only) show the receiver `APRKMediaPlayer`: it dispatches
+`/command` dictionaries by `type` (`unhandledURL`, `playbackInfo`,
+`setProperty`, `insertPlayQueueItem`, `removePlayQueueItem`, `setRate`,
+`seek`, `streamingKey`, `stop`, …), and its seek handler logs "Sender seek to
+time is %f for item %@" and "Cannot add pending seekID for item %@, UUID %@".
+It also keeps a permission grant period and timer. Our seek named no item.
+
+**Fix:** a seek now carries `item: {uuid}` of the queued item.
+
+| Run | Native result | Observer |
+| --- | --- | --- |
+| E: seek 60, seek 90, stop | Each seek: a notification with the exact target (60.000, 90.000 s) and the Mac's `kind: response` within 0.3 s; positions 63.7 and 93.9 s about 4 s later; stop, `sender_stop`, cleaned, exit 0 | Everything worked as expected |
+| F: `--start-position 45`, stop | `playing` at 1.0 s; the start seek's response at 2.3 s with 45.000 s; position 52.8 s at 10 s; stop, cleaned, exit 0 | Everything worked as expected |
+
+**PASS for start, status, pause/resume, seek, start position, natural end and
+stop on this receiver and host** (user: everything worked as expected in E and
+F). The Mac's log during E and F (filtered to seeks) read "Sender seek to time
+is 60.000000 / 90.000000 / 45.000000 for item <our UUID>", each followed by
+`SeekDidComplete` with `seekErr 0`. The start position plays about one second
+from 0 before the seek, as on tvOS (D61). Not run: the C interface, the UWP host or
+Screenbox with the fix; HLS remux; other Macs, macOS versions or access
+settings; a password-protected receiver.

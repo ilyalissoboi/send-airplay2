@@ -105,6 +105,30 @@ struct StreamSetup {
 [[nodiscard]] PlistValue set_action_at_item_end();
 [[nodiscard]] PlistValue set_rate(double rate);
 
+namespace session_protocol {
+/// CMTime timescale of a URL `seek` target: millisecond resolution.
+constexpr std::int64_t seek_timescale = 1000;
+/// Largest URL `seek` target in seconds (about 31 years), so the CMTime value
+/// cannot overflow its signed 64-bit field.
+constexpr double max_seek_seconds = 1e9;
+} // namespace session_protocol
+
+/**
+ * URL-session controls for receivers that refuse remote control (D62). Wire
+ * names follow what an Apple sender sends on /command, as a third-party
+ * receiver (DiPlay, GPL-3.0; names only, no code) documents and handles them:
+ * `{"type": "seek", "kind": "request", "messageID": N, "item": {"uuid": U},
+ * "time": CMTime}` and `{"type": "stop"}`. The macOS receiver looks up the
+ * seek's player item by its UUID (its log strings say "Sender seek to time is
+ * %f for item %@"), so a seek names the queued item. A seek is a request the
+ * receiver answers on the event channel; `message_id` correlates that answer.
+ * The CMTime is {value, timescale, flags 1 (valid), epoch 0}. `seconds` must be
+ * finite and in [0, max_seek_seconds], otherwise std::invalid_argument.
+ */
+[[nodiscard]] PlistValue seek_to(double seconds, std::int64_t message_id,
+                                 const std::string& item_uuid);
+[[nodiscard]] PlistValue stop_playback();
+
 // ---- Receiver events ----
 
 /// A decoded event-channel message with fixed type/state labels; unknown
@@ -115,7 +139,11 @@ struct SessionEvent {
     std::optional<double> duration_seconds;
     /// Finite numeric params.rate (or root rate), when supplied. Zero is a
     /// stationary item even if the receiver labels the event "playing".
+    /// Notifications (for example after a seek) can carry a root rate too.
     std::optional<double> playback_rate;
+    /// Receiver-reported item position: params.position on "playbackState",
+    /// root position on other events (macOS notifications). Zero is valid.
+    std::optional<double> position_seconds;
 };
 /// Decode an event body: the same {"params": {"data": ...}} envelope, or a
 /// bare dictionary with a "type" (some receiver events are not wrapped).

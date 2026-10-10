@@ -14,13 +14,20 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
+- **Active slice: casting to a Mac (D62)** on
+  `claude/airplay2-mac-casting-096627` (PR #37): URL controls when a receiver
+  rejects remote control. Start, pause/play, seek, start position, status,
+  natural end and stop passed on the user's MacBook Pro from the CLI (seek
+  once it named the queue item). Open: the per-cast consent prompt, the C
+  interface/UWP host/Screenbox on the Mac. The Mac profile is `macbook-pro`
+  in Windows Credential Manager.
 - **Screenbox integration: done for its design (2026-10-10).**
   - Library side: HLS delivery (D60, PRs #26-#32), the UWP test host and
     start-position seek (D61, PR #34), and packaging (PR #35, prerelease
     `nuget-v0.3.0-ci.196`).
   - Fork side: PRs #1-#6 in ilyalissoboi/Screenbox.
-  - No slice is active. The next item is the user's choice: a fork "Forget
-    this device", MRP research (sender-side subtitle selection, TV-remote
+  - After D62 the next item is the user's choice: a fork "Forget this
+    device", MRP research (sender-side subtitle selection, TV-remote
     next/previous), nuget.org publishing, or HLS phase 4 (growing
     presentations).
 - The macOS Keychain (D58) and Linux Secret Service (D59) stores are merged
