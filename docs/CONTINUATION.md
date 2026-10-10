@@ -14,13 +14,15 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice: the Screenbox integration.** HLS delivery (D60) is merged
-  through MP4 text subtitles (PRs #26-#32); step 1 (D61, the UWP test host and
-  the start-position seek) is merged as PR #34; step 2 updated the design in
-  ilyalissoboi/Screenbox#1. Step 3, packaging, is on `claude/nuget-pack`
-  (find its PR with `gh pr list --state open`; [nuget-package.md](nuget-package.md)).
-  Then the Screenbox phases in that design. Later: sender-side subtitle
-  selection, HLS phase 4 (growing presentations).
+- **Screenbox integration: done for its design (2026-10-10).**
+  - Library side: HLS delivery (D60, PRs #26-#32), the UWP test host and
+    start-position seek (D61, PR #34), and packaging (PR #35, prerelease
+    `nuget-v0.3.0-ci.196`).
+  - Fork side: PRs #1-#6 in ilyalissoboi/Screenbox.
+  - No slice is active. The next item is the user's choice: a fork "Forget
+    this device", MRP research (sender-side subtitle selection, TV-remote
+    next/previous), nuget.org publishing, or HLS phase 4 (growing
+    presentations).
 - The macOS Keychain (D58) and Linux Secret Service (D59) stores are merged
   (PRs #23-#25); remote-Stop detection stays deferred by the user.
 - [PR #22](https://github.com/ilyalissoboi/send-airplay2/pull/22), UWP x86/ARM64

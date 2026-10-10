@@ -74,12 +74,45 @@ file through the remux (user decision 7), routes the system media transport
 controls through the active `IMediaPlayer`, and has explicit end-of-item rules
 for the queue; both review threads were answered and resolved.
 
-**Screenbox step 3 (branch `claude/nuget-pack`):** `scripts/pack_nuget.ps1`
-packs the binding (now 0.3.0, following API version 3) with the UWP-built
-native libraries per architecture and the OpenSSL, Botan and Boost notices;
-CI packs all three architectures as an artifact
-([nuget-package.md](nuget-package.md)). Open: how the fork's CI restores a
-package that lives only in a local feed.
+**Screenbox step 3 (merged as PR #35):** `scripts/pack_nuget.ps1` packs the
+binding (now 0.3.0, following API version 3) with the UWP-built native
+libraries per architecture and the OpenSSL, Botan and Boost notices. Each
+library carries a build-time source stamp, and CI packs all three
+architectures ([nuget-package.md](nuget-package.md)). The fork's CI cannot
+reach a local feed, so the user chose GitHub prereleases on this repository
+(fork decision 8). `nuget-v0.3.0-ci.196`, built by a workflow run on `main` at
+`aa10119`, is published with the user's approval; the fork downloads it by
+pinned version and SHA-256.
+
+**Screenbox integration (fork PRs #2-#6, merged 2026-10-10):** the fork
+casts with AirPlay per its design, all user observed on the recorded Apple
+TV from the packaged app.
+- Phase 1: the package and its notices.
+- Phase 2: receivers in the cast flyout.
+- Phase 3: PIN pairing into PasswordVault, with Pair in place of Cast.
+- Phase 4a: casting the loaded item through the remux from its position;
+  controls follow the TV, and every end returns to local playback paused at
+  the last position.
+- Phase 4b: the play queue (next item, Next/Previous, repeat one, end of the
+  queue), the Windows media controls and a "Casting to" overlay.
+
+Receiver behaviour found there, worked around in the fork, and relevant to
+any host:
+- after a seek, and after a start position's seek, the receiver briefly
+  reports the old position;
+- it reports Loading after each seek;
+- its HLS duration differs from the source's by a fraction of a second;
+- each queue item is its own session, so the TV shows no playlist and its
+  remote cannot skip items;
+- a file the remux refuses (DTS audio) cannot be cast, as designed.
+
+Next, for the user to choose:
+- a "Forget this device" action in the fork;
+- MRP research on sender-side subtitle selection and on TV-remote next and
+  previous;
+- nuget.org publishing before an upstream PR;
+- HLS phase 4 (growing presentations) and HDR `VIDEO-RANGE`.
+Record: [receiver-validation.md](receiver-validation.md#screenbox-integration-2026-10-10).
 
 ### Standalone items (D58-D59, merged)
 
@@ -2235,10 +2268,12 @@ or declaring the startup pause solved. Default cast/server budget is still four.
 
 ## 6. Screenbox integration findings
 
-User decisions on 2026-10-09 and 2026-10-10 are recorded in the fork's
-`docs/AIRPLAY_INTEGRATION.md` (fork PR #1). The latest: every file is cast
-through `CastDelivery.HlsRemux` (option B); the remux's own refusal
-(`MediaUnsupported`/`MediaMalformed`) decides eligibility.
+Status (2026-10-10): implemented in the fork through its phase 4b (fork PRs
+#2-#6, merged); see section 0. User decisions 1-9 are in the fork's
+`docs/AIRPLAY_INTEGRATION.md`. Among them: every file is cast through
+`CastDelivery.HlsRemux` (option B), and the remux's own refusal
+(`MediaUnsupported`/`MediaMalformed`) decides eligibility. The notes below
+are from the initial inspection.
 
 At the inspected Screenbox commit:
 
