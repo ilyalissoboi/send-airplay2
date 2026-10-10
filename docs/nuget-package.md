@@ -1,9 +1,11 @@
 # NuGet package (Screenbox step 3)
 
-Status: **packing implemented, 2026-10-10; not published.** The user chose a
-local package feed for the Screenbox integration until casting works end to
-end, with nuget.org publishing later. This document covers the package, how to
-pack it, and how a host consumes it.
+Status: **published as a GitHub prerelease; not on nuget.org (2026-10-10).**
+`nuget-v0.3.0-ci.196` is on this repository's GitHub releases, where the
+Screenbox fork restores it. The user chose that over a local feed, which CI
+cannot reach. nuget.org publishing is still pending, and is needed before an
+upstream Screenbox PR. This document covers the package, how to pack and
+publish it, and how a host consumes it.
 
 ## Contents
 
@@ -109,7 +111,14 @@ library; packing uses only the .NET SDK.
   has no ARM64 build tools) produced the layout above; both architectures
   passed the UWP binary checks, and `csharp_binding_tests` still passes with
   the binding's pack properties.
-- The CI pack with all three architectures: see the PR's `nuget` job.
+- The CI pack with all three architectures: a `workflow_dispatch` run on
+  `main` at `aa10119` (run 196) packed x64, x86 and ARM64, each built from
+  that commit. The user approved publishing it as the prerelease
+  `nuget-v0.3.0-ci.196` (SHA-256 `f9454330...2bb2c`); the public download
+  matched.
+- Screenbox restores it from that prerelease, in its CI and locally (fork
+  PR #2). Its x64 app output carries the package's `send_airplay2.dll`, and
+  the fork cast with it on the recorded receiver (fork PRs #3-#6).
 
 Not covered: nuget.org publishing, package signing, an ARM64 pack on this
-machine, and a host restoring the package (Screenbox's phase 1).
+machine, and ARM64 or x86 builds of the host app.
