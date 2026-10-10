@@ -217,14 +217,15 @@ void print_event_log(UrlPlaybackSession& session) {
 
 /// Retained MRP scalars after its worker is joined, not a fresh receiver query.
 /// Report the received position separately from the estimated status position.
+/// With URL controls (D62) the same scalars come from URL events instead.
 void print_final_mrp(UrlPlaybackSession& session, bool enabled) {
     const auto status = session.playback_status();
     const auto state = status.state.empty() ? "unknown" : status.state;
     std::ostringstream line;
     line.imbue(std::locale::classic());
-    line << "Final MRP: enabled=" << (enabled ? "yes" : "no")
-         << " owned=" << (status.owned ? "yes" : "no") << " state=" << state
-         << " at_end=" << (status.at_end ? "yes" : "no");
+    line << (session.status().url_controls ? "Final URL playback:" : "Final MRP:")
+         << " enabled=" << (enabled ? "yes" : "no") << " owned=" << (status.owned ? "yes" : "no")
+         << " state=" << state << " at_end=" << (status.at_end ? "yes" : "no");
     const auto scalar = [&line](const char* key, std::optional<double> value) {
         line << ' ' << key << '=';
         if (value && std::isfinite(*value)) {
@@ -449,6 +450,9 @@ int cast(const CastArguments& arguments) {
         print_start_diagnostics(diagnostics);
     }
     std::cout << "State: " << session->status().playback_state << std::endl;
+    if (session->status().url_controls) {
+        std::cout << "Receiver refused remote control; using URL controls (D62)." << std::endl;
+    }
     if (arguments.minimal_remote) {
         std::cout << "Minimal remote comparison: MRP controls unavailable. Press Enter to stop."
                   << std::endl;

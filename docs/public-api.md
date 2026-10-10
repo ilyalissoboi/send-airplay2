@@ -218,6 +218,33 @@ and checks the layout size and refusals. `api_host_arguments` covers the
 host's `--discover` refusals. Receiver evidence:
 [the D54 record](receiver-validation.md#c-discovery-interface-d54-2026-10-08).
 
+## Receivers without remote control (D62)
+
+The C interface and API version are unchanged; a receiver that rejects the
+remote-control session (the macOS AirPlay Receiver) now casts with URL
+controls instead of failing to start. What a host sees differently:
+
+- **Consent.** The Mac asks its user on screen to allow the sender, during
+  pairing and when a cast starts unless it accepted this sender recently. The
+  start then waits up to 30 s more for that answer, in addition to
+  `start_timeout_ms`; an unanswered prompt ends the start with
+  `SAP2_ERROR_RECEIVER_REJECTED` (`rejected_status` 400) after about 15 s
+  (observed through the CLI). Pairing needs the same answer before
+  the Mac shows its PIN.
+- **Status.** `owned` becomes 1 once the receiver reports our item playing; it
+  never falls back, because without remote control no other player is visible.
+  Position, duration and rate come from the URL session's events, the
+  position extrapolated while playing. `at_end` and the `media_end` end reason
+  work as on tvOS.
+- **Commands.** Pause, play and stop work (stop closes the video on the Mac).
+  Seek returns `SAP2_OK` but the Mac ignores it, so a nonzero
+  `start_position_seconds` does not apply either; see
+  [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
+- No wake before play and no ownership-loss end reason on such receivers.
+
+The C status does not say which control path is active (`sap2_cast_status`
+cannot grow compatibly); the CLI prints it.
+
 ## Threading and lifetime
 
 - `start` blocks its caller. `get_status`, `wait_for_change`, `command` and `stop`

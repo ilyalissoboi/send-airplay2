@@ -15,9 +15,6 @@ namespace pb = protobuf_wire;
 constexpr std::size_t max_identity_size = 1024;
 constexpr std::size_t max_players = 32, max_queue_items = 256;
 constexpr double cocoa_epoch_unix_seconds = 978307200.0;
-// Same bound as the URL/MRP duration match. On the recorded receiver an HLS
-// presentation of 131.567 s stopped at a reported 131.483 s (D60).
-constexpr double near_end_tolerance_seconds = 0.5;
 [[noreturn]] void malformed() {
     throw std::invalid_argument("Invalid bounded MRP message");
 }

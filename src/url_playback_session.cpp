@@ -75,6 +75,26 @@ SessionFailureReason mrp_failure_reason(MrpError reason) noexcept {
     return SessionFailureReason::other;
 }
 
+/// A URL control's transport failure in the categories MRP commands report,
+/// so hosts see one command contract whichever control path is active (D62).
+MrpError url_command_error(TransportError reason) noexcept {
+    switch (reason) {
+    case TransportError::timeout:
+        return MrpError::timeout;
+    case TransportError::cancelled:
+        return MrpError::cancelled;
+    case TransportError::invalid_message:
+    case TransportError::correlation:
+        return MrpError::malformed;
+    case TransportError::disconnected:
+    case TransportError::closed:
+    case TransportError::network:
+    case TransportError::invalid_argument:
+        return MrpError::disconnected;
+    }
+    return MrpError::disconnected;
+}
+
 /// Call only from an active catch handler. Never retain exception text or peer bytes.
 SessionFailureReason caught_failure_reason() noexcept {
     try {
@@ -285,11 +305,15 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
     control_->verify(credentials, operation(cancelled));
 
     // The base SETUP announces the timing port; the receiver queries it at once.
+    // macOS answers it only once its user allows the sender on screen (D62).
     start_timing(local_address);
-    const auto base = control_request(rtsp_request("SETUP", rtsp_uri_,
-                                                   base_setup_body(options_.identity, session_uuid_,
-                                                                   random_uuid(), timing_->port())),
-                                      cancelled, true);
+    const auto base = control_request(
+        rtsp_request(
+            "SETUP", rtsp_uri_,
+            base_setup_body(options_.identity, session_uuid_, random_uuid(), timing_->port())),
+        cancelled, true,
+        url_controls_ ? std::optional<std::chrono::milliseconds>{options_.consent_timeout}
+                      : std::nullopt);
     open_event_channel(parse_event_port(base.body), cancelled);
     start_feedback();
 
@@ -301,6 +325,7 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
                                      url_stream_setup_body(options_.identity, random_uuid())),
                         cancelled, true)
             .body);
+    stream_id_ = stream.stream_id;
 
     const auto item_uuid = random_uuid();
     if (mrp_) {
@@ -322,7 +347,7 @@ void UrlPlaybackSession::run_start(const PairCredentials& credentials,
         request.method = "POST";
         request.target = "/command";
         request.protocol = ReceiverProtocol::http;
-        request.headers = headers_.command(session_uuid_, stream.stream_id);
+        request.headers = headers_.command(session_uuid_, stream_id_);
         request.body = command_body(commands[index]);
         const auto response = control_request(std::move(request), cancelled, true);
         trace_start_phase(phases[index], response.status);
@@ -367,7 +392,18 @@ void UrlPlaybackSession::open_remote_control(const PairCredentials& credentials,
     const auto response =
         remote_control_->request(owned.request, receiver_http::max_body, operation(cancelled));
     if (response.status < 200 || response.status > 299) {
-        throw SessionException(SessionError::rejected, response.status);
+        if (!options_.url_controls_fallback) {
+            throw SessionException(SessionError::rejected, response.status);
+        }
+        // macOS AirPlay Receiver answers 500 here after pair-verify succeeds,
+        // yet plays the URL session and obeys its own /command controls (D62).
+        trace_start_phase(SessionStartPhase::connecting, response.status);
+        remote_control_->close();
+        remote_control_.reset();
+        url_controls_ = true;
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        status_.url_controls = true;
+        return;
     }
 
     Secret32 sender_write;
@@ -470,15 +506,18 @@ ReceiverRequest UrlPlaybackSession::rtsp_request(std::string method, std::string
     return request;
 }
 
-ReceiverResponse UrlPlaybackSession::control_request(ReceiverRequest request,
-                                                     const std::atomic_bool* cancelled,
-                                                     bool require_success) {
+ReceiverResponse
+UrlPlaybackSession::control_request(ReceiverRequest request, const std::atomic_bool* cancelled,
+                                    bool require_success,
+                                    std::optional<std::chrono::milliseconds> timeout) {
     const ErasedRequest owned(std::move(request));
     std::lock_guard<std::mutex> lock(control_mutex_);
     if (!control_) {
         throw TransportException(TransportError::closed);
     }
-    auto response = control_->request(owned.request, receiver_http::max_body, operation(cancelled));
+    const auto deadline =
+        timeout ? ReceiverOperation::after(*timeout, cancelled) : operation(cancelled);
+    auto response = control_->request(owned.request, receiver_http::max_body, deadline);
     if (require_success && (response.status < 200 || response.status > 299)) {
         throw SessionException(SessionError::rejected, response.status);
     }
@@ -557,6 +596,9 @@ void UrlPlaybackSession::event_loop() {
                     ++status_.unreadable_events;
                 } else {
                     ++status_.events;
+                    if (url_controls_) {
+                        url_playback_.observe(*event, std::chrono::steady_clock::now());
+                    }
                     if (event->playback_state) {
                         status_.playback_state = *event->playback_state;
                         state_playback_rate_ = event->playback_rate;
@@ -779,13 +821,26 @@ SessionStatus UrlPlaybackSession::status() const {
 }
 
 MrpPlaybackStatus UrlPlaybackSession::playback_status() const {
-    return mrp_ ? mrp_->status() : MrpPlaybackStatus{};
+    if (mrp_) {
+        return mrp_->status();
+    }
+    if (url_controls_) {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        return url_playback_.status(std::chrono::steady_clock::now());
+    }
+    return {};
 }
 
 void UrlPlaybackSession::apply_start_position(const std::atomic_bool* cancelled) {
     // tvOS 26 accepts the queue item's Start-Position-Seconds but plays from 0,
     // for HLS and progressive media alike, while an MRP seek once the item
     // plays lands (D61). A seek is also harmless where the item is honored.
+    if (url_controls_) {
+        // Our URL session's own seek needs no ownership: start has confirmed
+        // that this session's item plays (D62).
+        command(PlaybackCommand::seek, options_.start_position_seconds);
+        return;
+    }
     const auto deadline = std::chrono::steady_clock::now() + start_ownership_wait;
     while (!playback_status().owned) {
         if ((cancelled && *cancelled) || stopping_) {
@@ -804,10 +859,52 @@ void UrlPlaybackSession::command(PlaybackCommand command, double position_second
     if (stopping_) {
         throw MrpException(MrpError::cancelled);
     }
-    if (!mrp_) {
+    if (mrp_) {
+        mrp_->command(command, position_seconds, &stopping_);
+        return;
+    }
+    if (!url_controls_) {
         throw MrpException(MrpError::not_owned);
     }
-    mrp_->command(command, position_seconds, &stopping_);
+    url_command(command, position_seconds);
+}
+
+void UrlPlaybackSession::url_command(PlaybackCommand command, double position_seconds) {
+    PlistValue body;
+    switch (command) {
+    case PlaybackCommand::play:
+        body = set_rate(1.0);
+        break;
+    case PlaybackCommand::pause:
+        body = set_rate(0.0);
+        break;
+    case PlaybackCommand::seek:
+        // Throws std::invalid_argument when out of range, before any request.
+        body = seek_to(position_seconds, ++url_message_id_);
+        break;
+    case PlaybackCommand::stop:
+        body = stop_playback();
+        break;
+    }
+    ReceiverRequest request;
+    request.method = "POST";
+    request.target = "/command";
+    request.protocol = ReceiverProtocol::http;
+    request.headers = headers_.command(session_uuid_, stream_id_);
+    request.body = command_body(body);
+    ReceiverResponse response;
+    try {
+        // Teardown sets stopping_, which cancels a command still in flight.
+        response = control_request(std::move(request), &stopping_, false);
+    } catch (const TransportException& error) {
+        throw MrpException(url_command_error(error.reason()));
+    } catch (const ControlException& error) {
+        throw MrpException(error.reason() == ControlError::authentication ? MrpError::authentication
+                                                                          : MrpError::disconnected);
+    }
+    if (response.status < 200 || response.status > 299) {
+        throw MrpException(MrpError::rejected);
+    }
 }
 
 SessionStatus UrlPlaybackSession::wait_for_change(const std::string& previous,
@@ -850,7 +947,7 @@ void UrlPlaybackSession::supervise() {
             if (current.end_reason != SessionEnd::none) {
                 break;
             }
-            bool mrp_near_end = false;
+            bool near_end = false;
             if (current.failed) {
                 mark_failed(current.failure_channel, current.failure_reason);
                 request_end(SessionEnd::connection_lost);
@@ -866,21 +963,32 @@ void UrlPlaybackSession::supervise() {
                     request_end(SessionEnd::media_end);
                     break;
                 }
-                mrp_near_end = playback.near_end;
+                near_end = playback.near_end;
                 if (had_owned_player && !playback.owned && current.playback_state != "idle" &&
                     current.playback_state != "stopped") {
                     request_end(SessionEnd::ownership_lost);
                     break;
                 }
                 had_owned_player = had_owned_player || playback.owned;
+            } else if (url_controls_) {
+                // URL events are the only progress source; no ownership signal
+                // exists without MRP (D62). macOS reports the final position
+                // just before "stopped" at the natural end.
+                const auto playback = playback_status();
+                if (playback.at_end) {
+                    request_end(SessionEnd::media_end);
+                    break;
+                }
+                near_end = playback.near_end;
             }
             if (current.playback_state == "idle" || current.playback_state == "stopped") {
                 // tvOS reports URL "stopped" before its final MRP position. Give
-                // that independent channel one second to distinguish EOF from
-                // a mid-item receiver stop. A pause alone never starts this timer.
+                // that position (MRP, or a URL notification with URL controls)
+                // one second to distinguish EOF from a mid-item receiver stop.
+                // A pause alone never starts this timer.
                 // Once stopped, a position just short of the duration is EOF:
                 // HLS can stop a frame or two before the playlist's end (D60).
-                if (mrp_near_end) {
+                if (near_end) {
                     request_end(SessionEnd::media_end);
                     break;
                 }
@@ -888,7 +996,7 @@ void UrlPlaybackSession::supervise() {
                 if (!receiver_stop_deadline) {
                     receiver_stop_deadline = now + std::chrono::seconds(1);
                 }
-                if (!mrp_ || now >= *receiver_stop_deadline) {
+                if ((!mrp_ && !url_controls_) || now >= *receiver_stop_deadline) {
                     request_end(SessionEnd::receiver_stop);
                     break;
                 }

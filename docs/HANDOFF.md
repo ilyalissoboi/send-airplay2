@@ -7,9 +7,21 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: HLS delivery (D60)
+## 0. Resume here: macOS receivers (D62), after HLS delivery (D60)
 
-**Active slice: HLS** ([hls.md](hls.md)). The user set the Screenbox
+**Active slice: casting to a Mac (branch `claude/airplay2-mac-casting-096627`,
+D62).** The user asked whether video can be cast to a Mac as to the Apple TV,
+then chose an automatic URL-only fallback. A MacBook Pro (`Mac14,10`) pairs
+after an on-screen consent and a PIN, rejects the remote-control SETUP with
+500, and plays the URL session alone. With the fallback, start, status,
+pause/resume, natural end (`media_end`) and stop passed from the CLI; seek is
+accepted and ignored in every form tried, so the start position does not
+apply on the Mac. Open: seek (the user is extracting the Mac's command
+strings), the per-session consent prompt and D30's random device ID, the C
+interface/UWP host/Screenbox on the Mac. See the D62 record in section 4 and
+[receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
+
+**HLS delivery** ([hls.md](hls.md)). The user set the Screenbox
 integration aside (design PR ilyalissoboi/Screenbox#1 stays open) and asked to
 add HLS support to the base library, choosing "serve plus built-in remux".
 Phase 1 (media server resource sets, development `cast --hls`, the `near_end`
@@ -1215,6 +1227,39 @@ need the user only to watch. User decision in the same review: Screenbox casts
 every file through `CastDelivery.HlsRemux` (option B), not progressive MP4.
 Record: [receiver-validation.md](receiver-validation.md#uwp-host-hls-remux-and-start-position-d61-2026-10-10).
 
+**D62 (URL controls for receivers that refuse remote control, 2026-10-10):**
+the user asked whether video can be cast to a Mac as to the Apple TV. Found on
+a MacBook Pro (`Mac14,10`, AirPlay 960.13.25): pairing works after the user
+accepts an on-screen request (the Mac then shows a PIN; unanswered, it answers
+400 after about 15 s, so the CLI needs `--timeout-ms 60000`); the
+remote-control SETUP is rejected with 500 although its pair-verify succeeds;
+the URL session alone plays and reports state, position and duration on its
+event channel. User decision: an automatic URL-only fallback rather than an
+explicit host option. Engineering choices:
+- Any non-2xx remote-control SETUP closes that session and starts with URL
+  controls (`UrlPlaybackOptions::url_controls_fallback`, default on;
+  `SessionStatus::url_controls` reports it). No wake, no ownership-loss
+  detection without MRP.
+- Controls are URL `/command`s: pause/play `setRate` 0/1 (H1, now confirmed
+  on the Mac), `seek` as a request with a CMTime, `stop`. Wire names follow
+  what a third-party receiver (DiPlay, GPL-3.0) documents an Apple sender
+  sending; names only, no code ([dependencies.md](dependencies.md)). Failures
+  keep the MRP command categories, so the C interface is unchanged.
+- Progress comes from URL events (`UrlPlaybackTracker`): the last reported
+  position, extrapolated by rate while playing; at/near end use reported
+  positions only, with the MRP tracker's 0.5 s tolerance.
+- With URL controls the base SETUP may wait `consent_timeout` (30 s) for the
+  on-screen consent.
+
+Tested: unit/fake-receiver tests (fallback start, commands, progress, natural
+end, start-position seek, opt-out); on the Mac, start, status, pause/resume,
+natural end and stop passed; seek did not (the `/command` seek with and
+without request fields, legacy `/scrub` and `Start-Position-Seconds` are all
+accepted and ignored). Open: seek on macOS; whether a stable device ID (a D30
+change, user decision) stops the per-session consent prompt; the C
+interface, UWP host and Screenbox on the Mac.
+Record: [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
+
 ## 5. Implemented code and verification
 
 The table and section 0 summarize current components. Dated subsections preserve
@@ -1252,7 +1297,8 @@ current task list. Current next steps are in section 7.
 | `src/file_media_source.*`, `src/serve_cli.*` / `tests/file_source_tests.cpp`, `tests/cli_serve.cmake` | Private file-backed `MediaSource` and development `serve` command; adapter, loopback and real-CLI tests |
 | `src/binary_plist.*` / `tests/plist_tests.cpp`, `tests/fixtures/plist` | Private bounded `bplist00` subset codec (D27); plistlib byte-exact fixtures, literal layouts, malformed/budget cases and mutation sweeps. Integrated into private session code and compiled into its fixture test |
 | `src/channel_keys.*`, `src/event_channel.*`, `src/ntp_timing.*` | Private session keys, receiver event requests and UDP timing, with fixture/stream/loopback tests |
-| `src/session_messages.*`, `src/url_playback_session.*`, `src/cast_cli.*` | Private URL start, state, local teardown and CLI; scripted receiver tests; native-only G1 PASS; MRP controls implemented, with separate G2 record |
+| `src/session_messages.*`, `src/url_playback_session.*`, `src/cast_cli.*` | Private URL start, state, local teardown and CLI; scripted receiver tests; native-only G1 PASS; MRP controls implemented, with separate G2 record; URL controls fallback (D62) |
+| `src/url_playback_tracker.*` | URL-event progress (state, extrapolated position, at/near end) for URL controls (D62) |
 
 The range resolver handles closed, open-ended and suffix ranges for a known
 64-bit representation size. It consumes an HTTP field **value**, not a complete

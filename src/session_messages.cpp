@@ -526,22 +526,23 @@ SessionEvent parse_session_event(const Bytes& body) {
     const auto event = unwrap_envelope(body);
     SessionEvent output;
     output.type = event_type_label(require(event, "type", PlistKind::string).as_string());
-    if (output.type != "playbackState") {
-        return output;
-    }
-    // The state is in params.playbackState, or in "name" on some messages.
     const auto* params = event.find("params");
-    const auto* state = params != nullptr ? params->find("playbackState") : nullptr;
-    if (state == nullptr) {
-        state = event.find("name");
+    if (output.type == "playbackState") {
+        // The state is in params.playbackState, or in "name" on some messages.
+        const auto* state = params != nullptr ? params->find("playbackState") : nullptr;
+        if (state == nullptr) {
+            state = event.find("name");
+        }
+        if (state == nullptr || state->kind() != PlistKind::string) {
+            invalid_body();
+        }
+        output.playback_state = playback_state_label(lower_ascii(state->as_string()));
+        if (const auto* duration = params ? params->find("duration") : nullptr) {
+            output.duration_seconds = duration_seconds(*duration);
+        }
     }
-    if (state == nullptr || state->kind() != PlistKind::string) {
-        invalid_body();
-    }
-    output.playback_state = playback_state_label(lower_ascii(state->as_string()));
-    if (const auto* duration = params ? params->find("duration") : nullptr) {
-        output.duration_seconds = duration_seconds(*duration);
-    }
+    // Rate and position sit in params on playbackState and at the root of
+    // macOS notifications (rate changes, time jumps).
     const auto* rate = params ? params->find("rate") : nullptr;
     if (!rate) {
         rate = event.find("rate");
@@ -554,6 +555,34 @@ SessionEvent parse_session_event(const Bytes& body) {
             output.playback_rate = number;
         }
     }
+    const auto* position = params ? params->find("position") : nullptr;
+    if (!position) {
+        position = event.find("position");
+    }
+    if (position) {
+        output.position_seconds = duration_seconds(*position, true);
+    }
     return output;
+}
+
+PlistValue seek_to(double seconds, std::int64_t message_id) {
+    if (!std::isfinite(seconds) || seconds < 0 || seconds > session_protocol::max_seek_seconds) {
+        throw std::invalid_argument("Seek position out of range");
+    }
+    const auto value = static_cast<std::int64_t>(
+        std::llround(seconds * static_cast<double>(session_protocol::seek_timescale)));
+    return PlistDictionary{
+        {"type", "seek"},
+        {"kind", "request"},
+        {"messageID", message_id},
+        {"time", PlistDictionary{{"value", value},
+                                 {"timescale", session_protocol::seek_timescale},
+                                 {"flags", time_valid},
+                                 {"epoch", 0}}},
+    };
+}
+
+PlistValue stop_playback() {
+    return PlistDictionary{{"type", "stop"}};
 }
 } // namespace send_airplay2::detail

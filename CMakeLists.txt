@@ -48,7 +48,7 @@ endif()
 # HLS remux (D60): MP4 sample tables to fMP4 segments, no media copied.
 set(sap2_remux_sources src/mp4_demux.cpp src/mkv_demux.cpp src/sample_entries.cpp src/text_tracks.cpp src/fmp4_writer.cpp src/hls_variant.cpp src/hls_remux.cpp)
 set(sap2_mrp_sources src/protobuf_wire.cpp src/mrp_messages.cpp src/mrp_channel.cpp src/mrp_session.cpp)
-set(sap2_session_sources src/binary_plist.cpp src/session_messages.cpp src/url_playback_session.cpp ${sap2_mrp_sources})
+set(sap2_session_sources src/binary_plist.cpp src/session_messages.cpp src/url_playback_session.cpp src/url_playback_tracker.cpp ${sap2_mrp_sources})
 set(sap2_auth_sources src/auth_workflow.cpp ${sap2_credential_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
 # The playback C interface loads credentials by profile inside the library; no
 # secret or C++ type crosses its exported boundary (docs/public-api.md).

@@ -275,6 +275,19 @@ and [dictionary keys](https://developer.apple.com/documentation/coremedia/cmtime
 inspected 2026-10-07. Only field/flag facts are used; no Apple implementation
 is copied and no Core Media runtime dependency is introduced.
 
+## URL controls wire names (D62)
+
+The URL `/command` controls used when a receiver refuses remote control take
+their wire names from [DiPlay](https://github.com/shihabal3amri/DiPlay)
+(GPL-3.0), a CarPlay receiver that documents and handles what an Apple sender
+sends: `docs/BYD_NAVIGATION.md` and `VideoInCar.kt` / `CarPlayVideo.kt` at
+`main` (`VideoInCar.kt` last changed in `e59f6025b3183a5b26563937501bad3fd40b7f92`),
+read 2026-10-10. Used facts only: the command types `seek` and `stop`, a seek's
+root `time` as a CMTime dictionary, and `kind`/`messageID` on requests. No
+GPL code or text was copied; the builders are original, and their fixtures
+come from Python `plistlib`, independently of both. Receiver behavior is
+recorded separately: the macOS receiver ignored the seek.
+
 ## pyatv remote-Stop source audit (D41)
 
 On 2026-10-07, we inspected pinned upstream `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`

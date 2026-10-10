@@ -14,7 +14,15 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice: the Screenbox integration.** HLS delivery (D60) is merged
+- **Active slice: casting to a Mac (D62)** on
+  `claude/airplay2-mac-casting-096627`: URL controls when a receiver rejects
+  remote control. Start, pause/play, status, natural end and stop passed on
+  the user's MacBook Pro from the CLI; seek does not work there yet (the
+  user is extracting the Mac's command strings). Open: seek, the consent prompt
+  per cast versus D30's random device ID (user decision), the C
+  interface/UWP host/Screenbox on the Mac. The Mac profile is `macbook-pro`
+  in Windows Credential Manager.
+- **Before that: the Screenbox integration.** HLS delivery (D60) is merged
   through MP4 text subtitles (PRs #26-#32); step 1 (D61, the UWP test host and
   the start-position seek) is merged as PR #34; step 2 updated the design in
   ilyalissoboi/Screenbox#1. Step 3, packaging, is on `claude/nuget-pack`

@@ -61,7 +61,13 @@ struct MrpMessage {
 /// command result extension is malformed, rather than an implicit success.
 [[nodiscard]] bool mrp_command_succeeded(const MrpMessage& message);
 
+/// How far short of its duration a stopped item still counts as at its end.
+/// Same bound as the URL/MRP duration match. On the recorded receiver an HLS
+/// presentation of 131.567 s stopped at a reported 131.483 s (D60).
+constexpr double near_end_tolerance_seconds = 0.5;
+
 /// Only scalar telemetry is exposed to the CLI; no metadata or identifiers.
+/// Also the shape of URL-session progress when remote control is refused (D62).
 struct MrpPlaybackStatus {
     bool owned = false;
     /// Receiver-reported paused/stopped position reaches its duration. Does

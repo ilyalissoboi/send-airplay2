@@ -2,11 +2,13 @@
 // UrlPlaybackSession against a scripted fake receiver. Public synthetic
 // identities and secrets only; the fake derives its keys from literal labels.
 #include "url_playback_session.h"
+#include "url_playback_tracker.h"
 #include "fake_receiver.h"
 #include "binary_plist.h"
 #include "control_crypto.h"
 #include "control_records.h"
 #include "identity_crypto.h"
+#include "mrp_session.h"
 #include "native_socket.h"
 #include "ntp_timing.h"
 #include "pairing_tlv.h"
@@ -237,9 +239,11 @@ void remote_control_failure_tests() {
     rejected.remote_setup_status = 403;
     FakeReceiver receiver(rejected);
     const auto credentials = receiver.credentials();
+    auto strict = options_for(receiver);
+    strict.url_controls_fallback = false; // The rejection stays fatal (D62 opt-out).
     try {
-        (void)UrlPlaybackSession::start(credentials, options_for(receiver));
-        check(false, "remote SETUP rejection accepted");
+        (void)UrlPlaybackSession::start(credentials, std::move(strict));
+        check(false, "remote SETUP rejection accepted without the URL controls fallback");
     } catch (const SessionException& error) {
         check(error.reason() == SessionError::rejected && error.status() == 403,
               "remote SETUP preserves rejection status");
@@ -268,6 +272,302 @@ void remote_control_failure_tests() {
                                                return error.reason() ==
                                                       SessionError::connection_lost;
                                            });
+}
+
+// ---- URL controls (D62): receivers that refuse remote control ----
+
+/// macOS answers the remote-control SETUP with 500 after pair-verify succeeds.
+constexpr unsigned macos_remote_setup_status = 500;
+/// The test media's duration, as the recorded MacBook Pro reported it.
+constexpr double url_item_duration_seconds = 131.567;
+
+PlistValue cm_time_seconds(double seconds) {
+    return PlistDictionary{{"value", static_cast<std::int64_t>(seconds * 1000 + 0.5)},
+                           {"timescale", 1000},
+                           {"flags", 1},
+                           {"epoch", 0}};
+}
+
+Bytes enveloped(PlistValue inner) {
+    return encode_binary_plist(
+        PlistDictionary{{"params", PlistDictionary{{"data", encode_binary_plist(inner)}}}});
+}
+
+/// A playbackState event shaped like the MacBook Pro's: params carry the state,
+/// position, duration and rate.
+Bytes macos_state_event(const std::string& state, double position_seconds, double rate) {
+    return enveloped(PlistDictionary{
+        {"type", "playbackState"},
+        {"params", PlistDictionary{{"playbackState", state},
+                                   {"position", cm_time_seconds(position_seconds)},
+                                   {"duration", cm_time_seconds(url_item_duration_seconds)},
+                                   {"rate", rate}}}});
+}
+
+/// A notification with a root position, as macOS sends after a time jump and
+/// at the natural end, just before "stopped".
+Bytes macos_position_notification(double position_seconds) {
+    return enveloped(PlistDictionary{{"type", "notification"},
+                                     {"name", "synthetic-notification"},
+                                     {"position", cm_time_seconds(position_seconds)}});
+}
+
+/// The decoded commands sent after the four start commands, in order.
+std::vector<PlistValue> commands_after_start(const FakeReceiver& receiver) {
+    constexpr std::size_t start_commands = 4;
+    std::vector<PlistValue> commands;
+    std::size_t index = 0;
+    for (const auto& request : receiver.requests()) {
+        if (request.target != "/command" || index++ < start_commands) {
+            continue;
+        }
+        const auto envelope = decode_binary_plist(request.body);
+        commands.push_back(decode_binary_plist(envelope.find("params")->find("data")->as_data()));
+    }
+    return commands;
+}
+
+UrlPlaybackOptions url_controls_options(FakeReceiver& receiver) {
+    auto options = options_for(receiver);
+    options.enable_mrp = true; // The production path: the rejection precedes any data stream.
+    return options;
+}
+
+void url_playback_tracker_tests() {
+    group = "URL playback tracker (D62)";
+    const auto start = std::chrono::steady_clock::time_point{} + 1000s;
+    UrlPlaybackTracker tracker;
+    check(!tracker.status(start).owned && !tracker.status(start).position_seconds,
+          "nothing known before an event");
+
+    SessionEvent loading;
+    loading.type = "playbackState";
+    loading.playback_state = "loading";
+    tracker.observe(loading, start);
+    check(!tracker.status(start).owned, "loading does not establish the item");
+
+    SessionEvent playing;
+    playing.type = "playbackState";
+    playing.playback_state = "playing";
+    playing.position_seconds = 10.0;
+    playing.duration_seconds = url_item_duration_seconds;
+    playing.playback_rate = 1.0;
+    tracker.observe(playing, start);
+    const auto two_seconds_later = tracker.status(start + 2s);
+    check(two_seconds_later.owned && two_seconds_later.position_seconds == 12.0 &&
+              two_seconds_later.reported_position_seconds == 10.0 &&
+              two_seconds_later.duration_seconds == url_item_duration_seconds &&
+              two_seconds_later.messages == 2,
+          "playing extrapolates rate x elapsed from the reported position");
+
+    SessionEvent paused;
+    paused.type = "playbackState";
+    paused.playback_state = "paused";
+    paused.playback_rate = 0.0;
+    tracker.observe(paused, start + 3s);
+    check(tracker.status(start + 30s).position_seconds == 13.0 &&
+              tracker.status(start + 30s).reported_position_seconds == 10.0,
+          "a pause without a position keeps where play had reached");
+
+    SessionEvent jump;
+    jump.type = "notification";
+    jump.position_seconds = 0.0;
+    tracker.observe(jump, start + 31s);
+    check(tracker.status(start + 40s).position_seconds == 0.0, "a time jump to zero while paused");
+
+    SessionEvent resumed;
+    resumed.type = "playbackState";
+    resumed.playback_state = "playing";
+    resumed.playback_rate = 1.0;
+    resumed.position_seconds = 131.0;
+    tracker.observe(resumed, start + 41s);
+    check(tracker.status(start + 500s).position_seconds == url_item_duration_seconds,
+          "extrapolation is clamped to the duration");
+
+    tracker.observe(paused, start + 46s);
+    const auto paused_late = tracker.status(start + 46s);
+    check(!paused_late.at_end && !paused_late.near_end,
+          "extrapolation alone never reaches the end: reported 131 s is 0.567 s short");
+
+    SessionEvent stopped_near;
+    stopped_near.type = "playbackState";
+    stopped_near.playback_state = "stopped";
+    stopped_near.position_seconds = url_item_duration_seconds - 0.4;
+    tracker.observe(stopped_near, start + 47s);
+    const auto stopped_short = tracker.status(start + 47s);
+    check(stopped_short.near_end && !stopped_short.at_end,
+          "stopped within 0.5 s of the duration is near the end");
+
+    SessionEvent final_position;
+    final_position.type = "notification";
+    final_position.position_seconds = url_item_duration_seconds;
+    tracker.observe(final_position, start + 48s);
+    check(tracker.status(start + 48s).at_end, "stopped at the duration is at the end");
+}
+
+void url_controls_start_tests() {
+    group = "URL controls start (D62)";
+    Behavior macos;
+    macos.remote_setup_status = macos_remote_setup_status;
+    FakeReceiver receiver(macos);
+    const auto credentials = receiver.credentials();
+    SessionStartDiagnostics diagnostics;
+    auto session = UrlPlaybackSession::start(credentials, url_controls_options(receiver), nullptr,
+                                             &diagnostics);
+    const auto status = session->status();
+    check(status.url_controls && status.playback_state == "playing",
+          "start succeeds with URL controls after the remote SETUP is rejected");
+    check(receiver.remote_control().control_was_closed() &&
+              !receiver.remote_control().event_channel_opened() &&
+              sequence_without_feedback(receiver.remote_control().requests()) ==
+                  std::vector<std::string>{"SETUP <uri> RTSP/1.0"},
+          "the rejected remote session is closed after its SETUP alone");
+    const std::vector<std::string> expected{"SETUP <uri> RTSP/1.0",   "GET /info RTSP/1.0",
+                                            "RECORD <uri> RTSP/1.0",  "SETUP <uri> RTSP/1.0",
+                                            "POST /command HTTP/1.1", "POST /command HTTP/1.1",
+                                            "POST /command HTTP/1.1", "POST /command HTTP/1.1"};
+    check(sequence_without_feedback(receiver.requests()) == expected,
+          "the URL session keeps the reference request order");
+    const auto rejection =
+        std::find_if(diagnostics.entries.begin(), diagnostics.entries.begin() + diagnostics.count,
+                     [](const SessionStartTraceEntry& entry) {
+                         return entry.phase == SessionStartPhase::connecting &&
+                                entry.response_status == macos_remote_setup_status;
+                     });
+    check(rejection != diagnostics.entries.begin() + diagnostics.count,
+          "the start trace records the rejected remote SETUP status");
+    session->stop();
+    check(!session->status().failed && receiver.control_was_closed() && receiver.event_was_closed(),
+          "a clean stop closes the URL session");
+}
+
+void url_controls_command_tests() {
+    group = "URL controls commands (D62)";
+    Behavior macos;
+    macos.remote_setup_status = macos_remote_setup_status;
+    FakeReceiver receiver(macos);
+    const auto credentials = receiver.credentials();
+    auto session = UrlPlaybackSession::start(credentials, url_controls_options(receiver));
+    const auto session_uuid =
+        decode_binary_plist(receiver.requests().front().body).find("sessionUUID")->as_string();
+
+    session->command(PlaybackCommand::pause);
+    session->command(PlaybackCommand::play);
+    session->command(PlaybackCommand::seek, 12.5);
+    session->command(PlaybackCommand::stop);
+    const auto commands = commands_after_start(receiver);
+    check(commands.size() == 4, "one /command per control, got " + std::to_string(commands.size()));
+    if (commands.size() == 4) {
+        check(commands[0].find("type")->as_string() == "setRate" &&
+                  commands[0].find("rate")->as_real() == 0.0,
+              "pause is setRate 0");
+        check(commands[1].find("type")->as_string() == "setRate" &&
+                  commands[1].find("rate")->as_real() == 1.0,
+              "play is setRate 1");
+        const auto* time = commands[2].find("time");
+        check(commands[2].find("type")->as_string() == "seek" && time &&
+                  time->find("value")->as_integer() == 12500 &&
+                  time->find("timescale")->as_integer() == 1000 &&
+                  time->find("flags")->as_integer() == 1 && time->find("epoch")->as_integer() == 0,
+              "seek 12.5 s is CMTime 12500/1000");
+        check(commands[2].find("kind")->as_string() == "request" &&
+                  commands[2].find("messageID")->as_integer() == 1,
+              "the first seek is request messageID 1");
+        check(commands[3].find("type")->as_string() == "stop", "stop is the stop command");
+    }
+    for (const auto& request : receiver.requests()) {
+        if (request.target == "/command") {
+            check(request.header("x-apple-streamid") == std::to_string(stream_id) &&
+                      request.header("x-apple-session-id") == session_uuid,
+                  "URL controls use the URL control stream headers");
+        }
+    }
+    check(receiver.remote_control().requests().size() == 1,
+          "no control reaches the closed remote session");
+    try {
+        session->command(PlaybackCommand::seek, -1);
+        check(false, "negative seek accepted");
+    } catch (const std::invalid_argument&) {
+    }
+    session->stop();
+    try {
+        session->command(PlaybackCommand::pause);
+        check(false, "command after stop accepted");
+    } catch (const MrpException& error) {
+        check(error.reason() == MrpError::cancelled, "command after stop is cancelled");
+    }
+
+    Behavior rejecting = macos;
+    rejecting.reject_command = 4; // The first command after the four start commands.
+    FakeReceiver rejecting_receiver(rejecting);
+    const auto rejecting_credentials = rejecting_receiver.credentials();
+    auto rejected_session =
+        UrlPlaybackSession::start(rejecting_credentials, url_controls_options(rejecting_receiver));
+    try {
+        rejected_session->command(PlaybackCommand::pause);
+        check(false, "rejected URL command accepted");
+    } catch (const MrpException& error) {
+        check(error.reason() == MrpError::rejected, "a non-2xx /command is a rejected control");
+    }
+    check(!rejected_session->status().failed, "a rejected control does not end the session");
+}
+
+void url_controls_progress_tests() {
+    group = "URL controls progress and end (D62)";
+    Behavior macos;
+    macos.remote_setup_status = macos_remote_setup_status;
+    FakeReceiver receiver(macos);
+    const auto credentials = receiver.credentials();
+    auto session = UrlPlaybackSession::start(credentials, url_controls_options(receiver));
+    receiver.push_event_body(macos_state_event("Playing", 120.0, 1.0));
+    check(eventually([&] {
+              const auto playback = session->playback_status();
+              return playback.reported_position_seconds == 120.0;
+          }),
+          "the reported position follows URL events");
+    const auto playback = session->playback_status();
+    check(playback.owned && playback.state == "playing" &&
+              playback.duration_seconds == url_item_duration_seconds && playback.position_seconds &&
+              *playback.position_seconds >= 120.0,
+          "status shows our playing item with its duration");
+
+    // The recorded natural end: final position, then "stopped".
+    receiver.push_event_body(macos_position_notification(url_item_duration_seconds));
+    receiver.push_state("Stopped");
+    check(eventually([&] { return session->status().end_reason == SessionEnd::media_end; }),
+          "the final position before stopped is the media end");
+    session->stop();
+    check(session->status().end_reason == SessionEnd::media_end && !session->status().failed,
+          "the media end is retained after stop");
+
+    FakeReceiver stopped_receiver(macos);
+    const auto stopped_credentials = stopped_receiver.credentials();
+    auto stopped =
+        UrlPlaybackSession::start(stopped_credentials, url_controls_options(stopped_receiver));
+    stopped_receiver.push_event_body(macos_state_event("Playing", 40.0, 1.0));
+    stopped_receiver.push_state("Stopped");
+    check(eventually([&] { return stopped->status().end_reason == SessionEnd::receiver_stop; }),
+          "a mid-item stop is a receiver stop");
+}
+
+void url_controls_start_position_tests() {
+    group = "URL controls start position (D62)";
+    Behavior macos;
+    macos.remote_setup_status = macos_remote_setup_status;
+    FakeReceiver receiver(macos);
+    const auto credentials = receiver.credentials();
+    auto options = url_controls_options(receiver);
+    options.start_position_seconds = 30;
+    auto session = UrlPlaybackSession::start(credentials, std::move(options));
+    session->command(PlaybackCommand::seek, 45);
+    const auto commands = commands_after_start(receiver);
+    check(commands.size() == 2 && commands[0].find("type")->as_string() == "seek" &&
+              commands[0].find("time")->find("value")->as_integer() == 30000,
+          "the start position is applied by one URL seek before start returns");
+    check(commands.size() == 2 && commands[0].find("messageID")->as_integer() == 1 &&
+              commands[1].find("messageID")->as_integer() == 2,
+          "each seek request gets the next messageID");
+    session->stop();
 }
 
 void failure_tests() {
@@ -973,6 +1273,11 @@ int main(int argc, char** argv) {
         startup_confirmation_cancellation_tests();
         startup_trace_tests();
         remote_control_failure_tests();
+        url_playback_tracker_tests();
+        url_controls_start_tests();
+        url_controls_command_tests();
+        url_controls_progress_tests();
+        url_controls_start_position_tests();
         event_log_tests();
         remote_diagnostic_tests();
         failure_after_start_tests();
