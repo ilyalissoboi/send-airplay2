@@ -7,10 +7,16 @@ not a claim that the sender has been completed.
 The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
-## 0. Resume here: HLS delivery (D60)
+## 0. Resume here
 
-**Active slice: HLS** ([hls.md](hls.md)). The user set the Screenbox
-integration aside (design PR ilyalissoboi/Screenbox#1 stays open) and asked to
+**No slice is active (2026-10-10).** HLS delivery (D60) and the Screenbox
+integration are both done for their current scope; the last entries of this
+section record them. Wait for the user to choose the next item from the list
+in the "Screenbox integration" entry below; do not resume any phase marked
+"Next" in the history that follows.
+
+**History: HLS delivery (D60)** ([hls.md](hls.md)). The user set the Screenbox
+integration aside (design PR ilyalissoboi/Screenbox#1, since merged) and asked to
 add HLS support to the base library, choosing "serve plus built-in remux".
 Phase 1 (media server resource sets, development `cast --hls`, the `near_end`
 end-of-media rule) is merged (PR #26), and so is phase 2 (PR #27): the
@@ -116,7 +122,7 @@ Record: [receiver-validation.md](receiver-validation.md#screenbox-integration-20
 
 ### Standalone items (D58-D59, merged)
 
-**Active slices: the standalone items.** The user merged PR #21 (D56) as
+**History: the standalone items (all merged).** The user merged PR #21 (D56) as
 `99942d1` and asked to finish the standalone items except remote-Stop detection
 (deferred). UWP for other architectures with a certification kit run (D57) is
 merged (PR #22, `8ecb8b0`): x86 passed on the TV, ARM64 is built in CI only, and

@@ -1,9 +1,11 @@
 # NuGet package (Screenbox step 3)
 
-Status: **packing implemented, 2026-10-10; not published.** The user chose a
-local package feed for the Screenbox integration until casting works end to
-end, with nuget.org publishing later. This document covers the package, how to
-pack it, and how a host consumes it.
+Status: **published as a GitHub prerelease; not on nuget.org (2026-10-10).**
+`nuget-v0.3.0-ci.196` is on this repository's GitHub releases, where the
+Screenbox fork restores it. The user chose that over a local feed, which CI
+cannot reach. nuget.org publishing is still pending, and is needed before an
+upstream Screenbox PR. This document covers the package, how to pack and
+publish it, and how a host consumes it.
 
 ## Contents
 
