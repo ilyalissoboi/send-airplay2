@@ -1,5 +1,7 @@
 name: Build and test
-on: [pull_request]
+# workflow_dispatch: a run on main whose nuget-package artifact is built from a
+# commit on main, for the GitHub prereleases (docs/nuget-package.md).
+on: [pull_request, workflow_dispatch]
 permissions:
   contents: read
 env:

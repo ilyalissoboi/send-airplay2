@@ -54,9 +54,25 @@ Build the UWP libraries first (one configured tree per architecture,
 
 The `uwp` job keeps each architecture's native libraries and notice files as
 an artifact, and the `nuget` job packs all three into `nuget-package`
-(`0.3.0-ci.<run number>`), kept for 14 days. Nothing is published.
+(`0.3.0-ci.<run number>`), kept for 14 days. CI itself publishes nothing.
 
-## Consuming from a local feed
+## GitHub prereleases (for the Screenbox fork)
+
+Until nuget.org publishing, the Screenbox fork's CI cannot reach a local feed,
+so the user chose GitHub prereleases on this repository as the package's
+source (2026-10-10):
+
+1. Run the workflow on `main` (`gh workflow run build.yml --ref main`), so
+   `BUILD-INFO.txt` names a commit on `main`.
+2. Download that run's `nuget-package` artifact and check its
+   `BUILD-INFO.txt` (commit and the three architectures).
+3. With the user's approval for each one, create a prerelease tagged
+   `nuget-v<version>` on that commit, with the `.nupkg` as its asset.
+
+The fork pins the version in `Screenbox.Core.csproj`, and a script there
+downloads that release asset into its feed folder before restore.
+
+## Consuming from a local feed or a prerelease
 
 A host adds the output folder as a package source next to nuget.org and
 references the exact version:
@@ -70,7 +86,9 @@ references the exact version:
 <PackageReference Include="SendAirPlay2" Version="0.3.0-local.20261009162323" />
 ```
 
-A machine without that folder, such as a CI runner, cannot restore the package.
+A machine without that folder, such as a CI runner, cannot restore the
+package; the Screenbox fork fills its feed folder from the GitHub prerelease
+instead, and a developer can copy a fresh local pack into the same folder.
 
 ## Notices
 
