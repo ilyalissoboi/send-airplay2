@@ -1497,6 +1497,35 @@ the user) matched D57: 26 of 27, Supported APIs failing only for the .NET AOT
 runtime in the host executable. Not run: the x86 and ARM64 packages, a sleeping
 receiver from the UWP host, MKVs without Cues through brokered access.
 
+## Screenbox integration (2026-10-10)
+
+The fork ilyalissoboi/Screenbox, using `SendAirPlay2 0.3.0-ci.196` (the
+UWP-built library) in its packaged x64 app ("[Debug] Screenbox", Screenbox's
+capabilities, Private network). Living Room Apple TV 4K (AppleTV14,1), tvOS
+26.6 (23L773) assumed unchanged and not queried. All observations are the
+user's; the fork's PRs hold the code.
+
+| Fork phase | Checked on the TV | Result |
+| --- | --- | --- |
+| 2: discovery (#3) | Living Room listed in the cast flyout | As expected |
+| 3: pairing (#4) | Pair shown, a wrong PIN rejected, Cancel silent, a real PIN paired, Cast shown afterwards; repeated after removing the pairing in Credential Manager | As expected |
+| 4a: casting (#5) | Start at the current position (2:00); play/pause and seek from the app; stop from the app and from the TV remote, back to local playback paused at the last position; a natural end | As expected, after fixes found in the runs: the play/pause state after a cast, seek lag, the seek bar at start and on seek |
+| 4b: queue (#6) | The next clip at the end of media; Next/Previous; repeat one; the end of the queue; the media keys and the Windows media flyout; stopping after moving on; the overlay | As expected, after a fix for queue items created while casting |
+
+Receiver behaviour found:
+- After a seek, and right after a cast starts mid-file, the receiver reports
+  the previous position for up to about a second.
+- It reports Loading after each seek.
+- Its duration of the remuxed HLS differs from VLC's by a fraction of a
+  second.
+- Each queue item is its own session, so the Apple TV shows no playlist and
+  its remote cannot skip between items.
+- A DTS-audio clip could not be cast (the remux refuses DTS), and Screenbox
+  paused it locally, as designed.
+
+Not run: x86/ARM64 host builds, a sleeping receiver from Screenbox, a
+receiver without a PIN prompt, other receivers and firmware.
+
 ## macOS AirPlay Receiver: URL controls (D62, 2026-10-10)
 
 The user asked whether video can be cast to a Mac as to the Apple TV.
@@ -1583,7 +1612,7 @@ It also keeps a permission grant period and timer. Our seek named no item.
 stop on this receiver and host** (user: everything worked as expected in E and
 F). The Mac's log during E and F (filtered to seeks) read "Sender seek to time
 is 60.000000 / 90.000000 / 45.000000 for item <our UUID>", each followed by
-`SeekDidComplete` with `seekErr 0`. The start position plays about one second from 0
-before the seek, as on tvOS (D61). Not run: the C interface, the UWP host or
+`SeekDidComplete` with `seekErr 0`. The start position plays about one second
+from 0 before the seek, as on tvOS (D61). Not run: the C interface, the UWP host or
 Screenbox with the fix; HLS remux; other Macs, macOS versions or access
 settings; a password-protected receiver.
