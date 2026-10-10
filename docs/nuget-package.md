@@ -17,7 +17,7 @@ pack it, and how a host consumes it.
 | `runtimes/win-arm64/native/` | `send_airplay2.dll`, `libcrypto-3-arm64.dll` |
 | `THIRD-PARTY-NOTICES.txt` | OpenSSL (Apache-2.0), Botan (BSD-2-Clause), Boost (BSL-1.0), from the vcpkg ports that built them |
 | `LICENSE.txt`, `README.md` | Apache-2.0; the package readme (`bindings/csharp/SendAirPlay2/PACKAGE.md`) |
-| `BUILD-INFO.txt` | Version, source commit (marked if the tree had uncommitted changes), architectures, SHA-256 of each native file |
+| `BUILD-INFO.txt` | Version, the binding's source commit (marked if the tree had uncommitted changes), architectures, each native library's source commit and SHA-256 |
 
 The native libraries are the UWP builds ([uwp-native-build.md](uwp-native-build.md)):
 AppContainer, the app C runtime from the `Microsoft.VCLibs.140.00` framework,
@@ -44,6 +44,12 @@ Build the UWP libraries first (one configured tree per architecture,
   cannot cast. ARM64 needs Visual Studio's ARM64 build tools.
 - `-Build` rebuilds each tree with CMake first. Every directory must pass
   `check_uwp_binaries.ps1`.
+- **Provenance:** the build writes `send_airplay2.source.txt` beside the
+  library (`cmake/write_source_stamp.cmake`: the commit at link time, and
+  whether native sources had uncommitted changes). The script refuses a library
+  without a stamp, one built from uncommitted native changes, or one whose
+  commit's native sources (`src`, `include`, `CMakeLists.txt`, `cmake`,
+  `vcpkg.json`, `vcpkg-overlays`) differ from `HEAD`; rebuild it with `-Build`.
 - The notices come from the vcpkg share directory recorded in the first tree's
   `CMakeCache.txt`; `-VcpkgShare` overrides it.
 - `-OutputDirectory` defaults to `packages-local` (ignored by git); `-Version`

@@ -9,6 +9,12 @@
 # pass only the architectures that were built (an app built for one the package
 # lacks cannot cast). -Build first rebuilds each directory's CMake tree.
 #
+# Provenance: each directory needs the send_airplay2.source.txt stamp the build
+# writes beside the library (cmake/write_source_stamp.cmake). A library built
+# with uncommitted native changes, or from a commit whose native sources differ
+# from HEAD, is refused, so BUILD-INFO.txt never attributes stale binaries to
+# HEAD; it records each library's own source commit.
+#
 # Notices: the OpenSSL, Botan and Boost copyright files come from -VcpkgShare,
 # by default the vcpkg share directory recorded in the first build's
 # CMakeCache.txt. The package version is -Version, or the binding's <Version>
@@ -29,6 +35,31 @@ Set-StrictMode -Version 3
 $root = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $root 'bindings/csharp/SendAirPlay2/SendAirPlay2.csproj'
 $machines = @{ x64 = 'x64'; x86 = 'x86'; arm64 = 'ARM64' }
+# The native build's inputs; CMakeLists.txt passes the same list to the stamp.
+$nativePaths = @('src', 'include', 'CMakeLists.txt', 'cmake', 'vcpkg.json', 'vcpkg-overlays')
+
+# The source commit of the library in $directory, checked against HEAD.
+function Read-SourceStamp([string]$directory, [string]$arch) {
+    $stamp = Join-Path $directory 'send_airplay2.source.txt'
+    if (-not (Test-Path $stamp)) {
+        throw "no send_airplay2.source.txt in $directory for ${arch}: rebuild it (-Build) with git available"
+    }
+    $fields = @{}
+    foreach ($line in Get-Content $stamp) {
+        $pair = $line -split '=', 2
+        if ($pair.Count -eq 2) { $fields[$pair[0]] = $pair[1] }
+    }
+    $commit = $fields['commit']
+    if (-not $commit -or $commit -eq 'unknown') { throw "$arch was built without a known source commit" }
+    if ($fields['native_changes'] -ne 'no') { throw "$arch was built with uncommitted native changes" }
+    & git -C $root cat-file -e "$commit^{commit}" 2>$null
+    if ($LASTEXITCODE -ne 0) { throw "$arch was built from $commit, which this checkout does not have" }
+    & git -C $root diff --quiet $commit HEAD -- @nativePaths
+    if ($LASTEXITCODE -ne 0) {
+        throw "$arch was built from $commit, whose native sources differ from HEAD; rebuild it (-Build)"
+    }
+    return $commit
+}
 
 function Resolve-FromRoot([string]$path) {
     if ([IO.Path]::IsPathRooted($path)) { return $path }
@@ -75,7 +106,8 @@ foreach ($item in $Native) {
     }
     & (Join-Path $PSScriptRoot 'check_uwp_binaries.ps1') -Directory $directory -Machine $machines[$parts[0]]
     if ($LASTEXITCODE -ne 0) { throw "UWP binary checks failed for $($parts[0])" }
-    $entries += [pscustomobject]@{ Arch = $parts[0]; Directory = $directory }
+    $source = Read-SourceStamp $directory $parts[0]
+    $entries += [pscustomobject]@{ Arch = $parts[0]; Directory = $directory; Source = $source }
 }
 if ($entries.Count -eq 0) { throw 'no architectures to pack' }
 if (@($entries.Arch | Sort-Object -Unique).Count -ne $entries.Count) { throw 'an architecture is listed twice' }
@@ -113,7 +145,12 @@ $utf8 = New-Object Text.UTF8Encoding $false
 
 $commit = (& git -C $root rev-parse HEAD).Trim()
 $dirty = if (& git -C $root status --porcelain) { ' (with uncommitted changes)' } else { '' }
-$info = @("SendAirPlay2 $Version", "Source commit: $commit$dirty", "Architectures: $($entries.Arch -join ', ')", '')
+$info = @("SendAirPlay2 $Version", "Binding and package source: $commit$dirty",
+    "Architectures: $($entries.Arch -join ', ')", '')
+foreach ($entry in $entries) {
+    $info += "win-$($entry.Arch) built from $($entry.Source) (native sources identical at the binding's commit)"
+}
+$info += ''
 foreach ($entry in $entries) {
     $target = Join-Path $stage "runtimes/win-$($entry.Arch)/native"
     New-Item -ItemType Directory -Force $target | Out-Null

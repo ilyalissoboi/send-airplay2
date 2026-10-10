@@ -103,6 +103,7 @@ jobs:
           path: |
             build-uwp/Release/send_airplay2.dll
             build-uwp/Release/libcrypto-*.dll
+            build-uwp/Release/send_airplay2.source.txt
             build-uwp/vcpkg_installed/${{ matrix.arch }}-uwp/share/openssl/copyright
             build-uwp/vcpkg_installed/${{ matrix.arch }}-uwp/share/botan/copyright
             build-uwp/vcpkg_installed/${{ matrix.arch }}-uwp/share/boost-asio/copyright
