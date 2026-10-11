@@ -8,7 +8,8 @@ fallback for receivers that reject remote-control SETUP. The Screenbox fork
 has implemented its current design (PRs #1-#7), but its pinned package
 `0.3.0-ci.196` predates D62. Receiver evidence remains specific to the recorded
 Apple TV and MacBook Pro from Windows. D62 used the CLI; the active D63 slice
-has now checked desktop C API and packaged UWP playback on macOS 26.7.1.
+has now checked desktop C API and packaged UWP playback on macOS 26.7.1;
+the user reports the private Screenbox UI checks passed as well.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -26,13 +27,20 @@ guide; the master handoff and dated artifacts preserve the longer history.
   and UWP host despite user-observed natural EOF. Native commit `0ad1e36`
   recognizes the Mac's exact stopped-event root `reason: ended`; corrected
   shared C API and UWP checks report `media_end` and pass visually. Static
-  35/35 and shared 36/36 CTest passed. Screenbox validation and the new
-  main-branch prerelease/pin update remain in progress; `ci.203` lacks D63.
+  35/35 and shared 36/36 CTest passed. Native consent-time cancellation passed.
+  The user reports private Screenbox cancellation/recovery, playback controls,
+  Stop/local handoff and natural queue advance passed. Development app 1.0.0.1
+  is registered with the corrected installed DLL hash; a loaded-DLL hash was
+  not captured before the app closed. PR #39 is the active implementation and
+  evidence slice. Merge approval and the new main-branch prerelease/pin update
+  remain gates; `ci.203` lacks D63. Validate the final published package after
+  pinning it; the private x64 build is not that release.
 - **Casting to a Mac (D62)**, merged as PR #37: URL controls when a receiver
   rejects remote control. Start, pause/play, seek, start position, status,
   natural end and stop passed on the user's MacBook Pro from the CLI (seek
-  once it named the queue item). Open: the per-cast consent prompt, the C
-  interface/UWP host/Screenbox on the Mac. The Mac profile is `macbook-pro`
+  once it named the queue item). D63 adds the C API/UWP and user-observed
+  private Screenbox checks; open: the per-cast consent explanation and the
+  published Screenbox package update. The Mac profile is `macbook-pro`
   in Windows Credential Manager.
 - **Screenbox integration: done for its design (2026-10-10).**
   - Library side: HLS delivery (D60, PRs #26-#32), the UWP test host and

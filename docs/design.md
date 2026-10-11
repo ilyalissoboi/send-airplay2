@@ -10,8 +10,9 @@ fork has implemented its current design through PRs #1-#7.
 Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
 desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
 C API and packaged UWP hosts using D62's URL controls fallback. D63 recognizes
-its explicit HLS EOF reason; see the current handoff for validation scope.
-Screenbox's published package pin predates D62. Additional host,
+its explicit HLS EOF reason. The user reports the private x64 Screenbox UI
+checks passed; see the current handoff for scope and the loaded-DLL evidence
+limitation. Screenbox's published package pin predates D62. Additional host,
 receiver and firmware interoperability remains unvalidated. Current work is
 the C API/UWP/Screenbox Mac path; see [HANDOFF.md](HANDOFF.md#0-resume-here).
 

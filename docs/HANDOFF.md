@@ -12,11 +12,13 @@ checkpoint, review disposition, validation commands and ordered development queu
 **Active slice (2026-10-11): documentation reconciliation, then Screenbox on
 the Mac (step 1 below), chosen by the user.** Branch
 `codex/mac-screenbox-validation` starts at `a0fd5b9`; no PR existed at start.
-Current gates: C API static/shared and packaged UWP host on the recorded Mac,
-including HLS remux, controls, start position, natural end and consent-time
-cancellation; then prepare/verify a package from `main`, obtain the user's
-approval for its prerelease, update the fork's pins and test packaged Screenbox.
-The user is available to accept Mac prompts and observe playback in this session.
+Completed checks: C API static/shared and packaged UWP host on the recorded Mac,
+including HLS remux, controls, start position, natural end and native consent-time
+cancellation; the user also reports the private Screenbox UI checks passed.
+Remaining gates: merge PR #39 with approval, prepare/verify a package from `main`,
+obtain the user's approval for its prerelease, update the fork's pins and validate
+the published package in Screenbox. Preserve the loaded-DLL evidence limitation
+in the D63 record when describing the private Screenbox checks.
 Do not resume phases marked "Next" in the history below.
 
 **D63 in progress:** on the user's MacBook Pro (`Mac14,10`, macOS 26.7.1),
@@ -28,7 +30,19 @@ playback-state event with the exact root `reason: ended`. Native commit
 from extrapolated time or unknown reasons. The corrected shared C API and
 UWP 0.1.26.0 now report `media_end`, with the user's playback checks passing.
 Static/shared CTest: 35/35 and 36/36. A private x64 package from this native
-commit is being tested in Screenbox; it is not a published release.
+commit was prepared for Screenbox; it is not a published release. Screenbox's
+86 logic tests passed. Same-version registration left the older Screenbox DLL
+loaded; a rebuilt development version 1.0.0.1 now registers the corrected layout.
+Its installed DLL hash is verified; the running DLL was not captured before the
+app closed. Computer Use lost the UWP window's ownership during input, then the
+user stopped it with Escape. The user subsequently reported all remaining UI
+checks worked as expected: consent-time cancellation/recovery, current-position
+start, video/audio, pause/resume, forward/backward seeks, Stop/local paused
+handoff and natural queue advance. This is user-observed evidence, not automated
+Screenbox telemetry. Consent-time cancellation through the static C API passed:
+start cancelled in 5.068 s, no reads, one release, and the user observed the
+unanswered Mac prompt close.
+Record: [D63 receiver checks](receiver-validation.md#mac-c-api-packaged-uwp-and-hls-eof-d63-2026-10-11).
 The earlier main package candidate `0.3.0-ci.203` passed all 14 CI jobs but
 does not contain this fix, so it will not be used for the Screenbox update.
 
@@ -1364,6 +1378,19 @@ The Mac's consent is asked "for client" by name with a grant period, so D30's
 random device ID is probably not why it prompts again. Open: the C interface,
 UWP host and Screenbox on the Mac.
 Record: [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
+
+**D63 (Mac API/UWP validation and explicit HLS EOF, 2026-10-11):** user scope
+is the next Screenbox-on-Mac step. Hardware exposed an HLS natural-end
+classification failure in both native C API and packaged UWP, despite normal
+playback. Engineering fix: normalize the observed stopped event's exact root
+`reason: ended` to the existing terminal state. Unknown reasons and
+progress/extrapolation rules retain their existing behavior; this does not
+reopen deferred receiver-remote Stop classification. Corrected shared C API
+and UWP checks passed, with the observer confirming normal playback/controls
+and natural end. The user reports the private x64 Screenbox UI checks passed;
+its loaded DLL was not independently captured. A main-branch prerelease and
+final fork pins/validation are still pending. See the
+[D63 record](receiver-validation.md#mac-c-api-packaged-uwp-and-hls-eof-d63-2026-10-11).
 
 ## 5. Implemented code and verification
 

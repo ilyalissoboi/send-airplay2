@@ -1,0 +1,502 @@
+{
+  "date": "2026-10-11",
+  "decision": "D63",
+  "receiver": {
+    "hardware": "MacBook Pro",
+    "model": "Mac14,10",
+    "macos_version": "26.7.1 (user-reported)"
+  },
+  "host": "Windows 11 x64, Private network; existing rules/capabilities unchanged; saved credentials reused",
+  "media": {
+    "bytes": 53953926,
+    "sha256": "a91fb5c781f4a6ecc90b780dc77793403b6aac7220af7c899ba3b217129b5e65",
+    "container": "MP4",
+    "video": "H.264",
+    "audio": "AAC",
+    "duration_seconds": 131.6
+  },
+  "native_source_commit": "0ad1e365f46ec72b1b6d796ecd64fa806cfb9170",
+  "api_runs": [
+    {
+      "scenario": "progressive",
+      "linkage": "static",
+      "receiver_model": "Mac14,10",
+      "macos_version": "26.7.1",
+      "code_head": "a0fd5b98507e0effe2bac345477d0dc8b9c99486",
+      "binary_sha256": "140b791f023bad3dfede5fa308dcc3bb2cd3cc96145464ce3e8bf0673bb419fb",
+      "exit_code": 0,
+      "observations": [
+        {
+          "elapsed_seconds": 0.031,
+          "line": "Starting playback."
+        },
+        {
+          "elapsed_seconds": 13.578,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=0.9 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 13.656,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "elapsed_seconds": 15.734,
+          "line": "Status: phase=active state=playing end=none owned=yes position=3.0 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 17.718,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 17.734,
+          "line": "State: paused"
+        },
+        {
+          "elapsed_seconds": 20.703,
+          "line": "Status: phase=active state=paused end=none owned=yes position=5.0 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 22.703,
+          "line": "State: loading"
+        },
+        {
+          "elapsed_seconds": 22.734,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 22.734,
+          "line": "State: playing"
+        },
+        {
+          "elapsed_seconds": 25.718,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 29.672,
+          "line": "Status: phase=active state=playing end=none owned=yes position=63.8 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 31.656,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 35.734,
+          "line": "Status: phase=active state=playing end=none owned=yes position=13.8 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 38.718,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 38.734,
+          "line": "State: paused"
+        },
+        {
+          "elapsed_seconds": 38.765,
+          "line": "Summary: api_version=3 linkage=static start=ok phase=stopped state=paused end=sender_stop owned=yes position=16.8 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=1271 bytes=83169952 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": "User: all checks passed (video/audio, pause/resume, seeks to 60 and 10 seconds, Stop closes video).",
+      "source_scope": "Native sources identical to main a0fd5b9; new controller tests only."
+    },
+    {
+      "scenario": "hls",
+      "linkage": "shared",
+      "receiver_model": "Mac14,10",
+      "macos_version": "26.7.1",
+      "code_head": "a0fd5b98507e0effe2bac345477d0dc8b9c99486",
+      "binary_sha256": "f7196e31b77d3715578f644e26b6876619cc59cabe37cf0f831c37ecb8f8140c",
+      "exit_code": 0,
+      "observations": [
+        {
+          "elapsed_seconds": 0.14,
+          "line": "Starting playback."
+        },
+        {
+          "elapsed_seconds": 2.031,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.0 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 2.125,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "elapsed_seconds": 2.234,
+          "line": "State: loading"
+        },
+        {
+          "elapsed_seconds": 2.75,
+          "line": "State: playing"
+        },
+        {
+          "elapsed_seconds": 4.156,
+          "line": "Status: phase=active state=playing end=none owned=yes position=46.3 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 6.14,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 6.172,
+          "line": "State: paused"
+        },
+        {
+          "elapsed_seconds": 9.187,
+          "line": "Status: phase=active state=paused end=none owned=yes position=48.4 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 11.172,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 11.203,
+          "line": "State: loading"
+        },
+        {
+          "elapsed_seconds": 11.218,
+          "line": "State: playing"
+        },
+        {
+          "elapsed_seconds": 14.187,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 14.343,
+          "line": "State: loading"
+        },
+        {
+          "elapsed_seconds": 14.343,
+          "line": "State: playing"
+        },
+        {
+          "elapsed_seconds": 18.125,
+          "line": "Status: phase=active state=playing end=none owned=yes position=103.7 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 45.984,
+          "line": "State: stopped"
+        },
+        {
+          "elapsed_seconds": 46.984,
+          "line": "End: receiver_stop failure=none/none"
+        },
+        {
+          "elapsed_seconds": 47.031,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "elapsed_seconds": 47.25,
+          "line": "Summary: api_version=3 linkage=shared start=ok phase=stopped state=stopped end=receiver_stop owned=yes position=131.6 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=9819 bytes=52349161 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": "User: all checks passed; natural end, without Stop. End reason FAIL: receiver_stop.",
+      "source_scope": "Native sources identical to main a0fd5b9."
+    },
+    {
+      "scenario": "hls",
+      "linkage": "shared",
+      "receiver_model": "Mac14,10",
+      "macos_version": "26.7.1",
+      "code_head": "0ad1e365f46ec72b1b6d796ecd64fa806cfb9170",
+      "binary_sha256": "f7196e31b77d3715578f644e26b6876619cc59cabe37cf0f831c37ecb8f8140c",
+      "exit_code": 0,
+      "observations": [
+        {
+          "elapsed_seconds": 0.031,
+          "line": "Starting playback."
+        },
+        {
+          "elapsed_seconds": 5.625,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.0 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 5.656,
+          "line": "Controls: status, pause, play, seek SECONDS, stop. Press Enter to stop."
+        },
+        {
+          "elapsed_seconds": 5.656,
+          "line": "State: loading"
+        },
+        {
+          "elapsed_seconds": 5.969,
+          "line": "State: playing"
+        },
+        {
+          "elapsed_seconds": 7.687,
+          "line": "Status: phase=active state=playing end=none owned=yes position=46.7 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 9.672,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 9.687,
+          "line": "State: paused"
+        },
+        {
+          "elapsed_seconds": 12.687,
+          "line": "Status: phase=active state=paused end=none owned=yes position=48.7 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 14.672,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 14.75,
+          "line": "State: loading"
+        },
+        {
+          "elapsed_seconds": 14.765,
+          "line": "State: playing"
+        },
+        {
+          "elapsed_seconds": 17.656,
+          "line": "Control: ok"
+        },
+        {
+          "elapsed_seconds": 17.719,
+          "line": "State: loading"
+        },
+        {
+          "elapsed_seconds": 17.828,
+          "line": "State: playing"
+        },
+        {
+          "elapsed_seconds": 21.703,
+          "line": "Status: phase=active state=playing end=none owned=yes position=103.8 duration=131.6 rate=1.0 failure=none/none cleaned=no"
+        },
+        {
+          "elapsed_seconds": 49.437,
+          "line": "State: ended"
+        },
+        {
+          "elapsed_seconds": 49.484,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "elapsed_seconds": 49.5,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "elapsed_seconds": 49.734,
+          "line": "Summary: api_version=3 linkage=shared start=ok phase=stopped state=ended end=media_end owned=yes position=131.6 duration=131.6 rate=1.0 failure=none/none cleaned=yes reads=11102 bytes=58126222 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": "User: all checks passed; natural end (start 45 seconds, pause/resume, seek 100 seconds, video/audio).",
+      "source_scope": "Built with the native patch subsequently committed as 0ad1e365f46ec72b1b6d796ecd64fa806cfb9170; native sources identical to that commit.",
+      "native_library_sha256": "428df01dcbf89785d0fc7e5e809566bad1f789ed6e11ae7de50a462c8faa6069"
+    },
+    {
+      "scenario": "cancel",
+      "linkage": "static",
+      "receiver_model": "Mac14,10",
+      "macos_version": "26.7.1",
+      "code_head": "593ced25af33b1a3daddd7a2a0d6f7852ddf127c",
+      "binary_sha256": "2c29a95fc05f8cec04f6e64925864b44969d96372ef0eca3539c0f619ec65ab7",
+      "exit_code": 0,
+      "observations": [
+        {
+          "elapsed_seconds": 0.031,
+          "line": "Starting playback; stop scheduled after 5000 ms."
+        },
+        {
+          "elapsed_seconds": 5.156,
+          "line": "Cancel: start=cancelled start_ms=5068 stop_fired=yes"
+        },
+        {
+          "elapsed_seconds": 5.203,
+          "line": "Summary: api_version=3 linkage=static start=cancelled phase=start_failed state=none end=none owned=no position=unknown duration=unknown rate=unknown failure=none/none cleaned=no reads=0 bytes=0 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": "User: prompt appeared and closed. Prompt left unanswered; no consent given.",
+      "source_scope": "Native sources identical to 0ad1e365f46ec72b1b6d796ecd64fa806cfb9170; cancellation scheduled after 5000 ms."
+    }
+  ],
+  "diagnosis": {
+    "scenario": "hls-cli-reason",
+    "linkage": "static",
+    "receiver_model": "Mac14,10",
+    "macos_version": "26.7.1",
+    "code_head": "a0fd5b98507e0effe2bac345477d0dc8b9c99486",
+    "binary_sha256": "5e7458af7a6241580e12bebc9b99bef34f39c60650d4b4e8795c51385588265a",
+    "exit_code": 0,
+    "observations": [
+      {
+        "elapsed_seconds": 13.875,
+        "line": "Event: URL type=playbackState state=stopped keys=type,name,reason codes=remote type=playbackState state=stopped reason_is_ended=yes root_keys=type,name,reason params_keys=none value_keys=none"
+      },
+      {
+        "elapsed_seconds": 14.859,
+        "line": "Final URL playback: enabled=yes owned=yes state=stopped at_end=no reported_position=1.200000e+02 duration=1.315660e+02 rate=1.000000e+00 mrp_messages=37 heartbeats=0"
+      },
+      {
+        "elapsed_seconds": 14.953,
+        "line": "Stopped. state=stopped events=37 remote_events=0 feedback=6 timing=8 failed=no reads=4600 bytes=22965819 failed_reads=0 span=[0,53953926) end=receiver_stop cleaned=yes failure_channel=none failure_reason=none"
+      }
+    ],
+    "observer": "No visual observation attributed to this diagnostic.",
+    "source_scope": "Temporary bounded reason_is_ended equality diagnostic on a0fd5b9; removed before committing the fix."
+  },
+  "uwp": {
+    "baseline_version": "0.1.24.0",
+    "baseline_native_sha256": "830afabb654f95e911de9ab0c4f55ca0310606708cddb9c22ede422346433f38",
+    "fixed_version": "0.1.26.0",
+    "fixed_native_sha256": "6cccab9bdaa84c33ea49308048688d02c305f40b05724addab4de530fc1fa07a",
+    "observer": "User: baseline and corrected HLS checks passed; natural end (start 45 seconds, pause/resume, seek 100 seconds, video/audio). Pairing and brokered file selection completed by user.",
+    "notes": "First cast was rejected after about 15 seconds at consent. Retry played naturally but returned ReceiverStop; corrected package returned MediaEnd. In-place registration retained PasswordVault and the file grant.",
+    "fixed_field_log": [
+      "01:55:55.502 Native library loaded: API version 3",
+      "01:55:55.516 Package capabilities: internetClientServer=no privateNetworkClientServer=yes",
+      "01:55:55.517 Activated: CommandLineLaunch",
+      "01:55:55.518 Script: no valid script name (1-32 of a-z, 0-9 and -)",
+      "01:59:19.656 Discover: starting (5 s)",
+      "01:59:24.672 Discover: ok receivers=3",
+      "01:59:24.673 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=no",
+      "01:59:24.673 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=yes",
+      "01:59:24.674 Receiver: index=2 address=ipv4 port_set=yes features=yes expected=no",
+      "01:59:24.675 Discover: expected receiver found; address box filled",
+      "01:59:39.969 Discover: starting (5 s)",
+      "01:59:44.985 Discover: ok receivers=3",
+      "01:59:44.986 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=no",
+      "01:59:44.986 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=no",
+      "01:59:44.986 Receiver: index=2 address=ipv4 port_set=yes features=yes expected=no",
+      "01:59:44.987 Discover: expected receiver not found",
+      "02:00:36.291 Discover: starting (5 s)",
+      "02:00:41.304 Discover: ok receivers=3",
+      "02:00:41.305 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+      "02:00:41.305 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=no",
+      "02:00:41.305 Receiver: index=2 address=ipv4 port_set=yes features=yes expected=no",
+      "02:00:41.307 Discover: expected receiver found; address box filled",
+      "02:01:33.738 Pair: starting (PasswordVault store)",
+      "02:01:44.591 Pair: ok",
+      "02:01:44.593 PasswordVault credentials under 'send-airplay2': 2",
+      "02:02:16.694 Media file picked: 53953926 bytes, type .mp4",
+      "02:02:16.725 Media file remembered as gas",
+      "02:04:25.367 Activated: CommandLineLaunch",
+      "02:04:25.368 Script mac-hls: begin",
+      "02:04:25.369 Script mac-hls: line 1 cast",
+      "02:04:25.382 Script: file gas is 53953926 bytes, type .mp4",
+      "02:04:25.383 Cast: starting (PasswordVault store, delivery=HlsRemux, start=45.0 s)",
+      "02:04:40.684 Cast start: receiver_rejected after 15301 ms phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no",
+      "02:04:40.685 Cast disposed; media source released",
+      "02:04:40.685 Script mac-hls: failed at line 1 cast",
+      "02:05:10.186 Activated: CommandLineLaunch",
+      "02:05:10.187 Script mac-hls: begin",
+      "02:05:10.187 Script mac-hls: line 1 cast",
+      "02:05:10.200 Script: file gas is 53953926 bytes, type .mp4",
+      "02:05:10.200 Cast: starting (PasswordVault store, delivery=HlsRemux, start=45.0 s)",
+      "02:05:17.564 Cast start: ok after 7362 ms phase=Active state=Playing end=None owned=yes position=1.0 failure=None/None cleaned=no",
+      "02:05:17.564 Script mac-hls: line 2 wait",
+      "02:05:17.646 State: Loading",
+      "02:05:18.332 State: Playing",
+      "02:05:19.570 Script mac-hls: line 3 status",
+      "02:05:19.571 Status: phase=Active state=Playing end=None owned=yes position=46.2 failure=None/None cleaned=no",
+      "02:05:19.572 Control status: ok",
+      "02:05:19.572 Script mac-hls: line 4 pause",
+      "02:05:19.661 Control pause: ok",
+      "02:05:19.662 Script mac-hls: line 5 wait",
+      "02:05:19.702 State: Paused",
+      "02:05:22.665 Script mac-hls: line 6 status",
+      "02:05:22.666 Status: phase=Active state=Paused end=None owned=yes position=46.4 failure=None/None cleaned=no",
+      "02:05:22.666 Control status: ok",
+      "02:05:22.667 Script mac-hls: line 7 play",
+      "02:05:22.801 Control play: ok",
+      "02:05:22.801 State: Loading",
+      "02:05:22.802 Script mac-hls: line 8 wait",
+      "02:05:22.809 State: Playing",
+      "02:05:25.806 Script mac-hls: line 9 seek",
+      "02:05:26.012 Control seek 100.0: ok",
+      "02:05:26.013 Script mac-hls: line 10 wait",
+      "02:05:26.120 State: Loading",
+      "02:05:26.179 State: Playing",
+      "02:05:29.014 Script mac-hls: line 11 status",
+      "02:05:29.014 Status: phase=Active state=Playing end=None owned=yes position=102.8 failure=None/None cleaned=no",
+      "02:05:29.015 Control status: ok",
+      "02:05:29.015 Script mac-hls: line 12 wait-end",
+      "02:05:57.776 State: Stopped",
+      "02:05:58.815 Ended: phase=Ended state=Stopped end=ReceiverStop owned=yes position=131.6 failure=None/None cleaned=no",
+      "02:05:58.849 Ended cast released; media source released",
+      "02:05:59.003 Script: the cast has ended",
+      "02:05:59.004 Script mac-hls: done",
+      "02:11:54.393 Native library loaded: API version 3",
+      "02:11:54.408 Package capabilities: internetClientServer=no privateNetworkClientServer=yes",
+      "02:12:27.248 Activated: CommandLineLaunch",
+      "02:12:27.250 Script mac-hls-fixed: begin",
+      "02:12:27.250 Script mac-hls-fixed: line 1 profile",
+      "02:12:27.251 Script mac-hls-fixed: line 2 discover-model",
+      "02:12:27.252 Discover: starting (5 s)",
+      "02:12:32.256 Discover: ok receivers=3",
+      "02:12:32.257 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+      "02:12:32.257 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=no",
+      "02:12:32.258 Receiver: index=2 address=ipv4 port_set=yes features=yes expected=no",
+      "02:12:32.259 Discover: expected receiver found; address box filled",
+      "02:12:32.259 Script mac-hls-fixed: line 3 cast",
+      "02:12:32.322 Script: file gas is 53953926 bytes, type .mp4",
+      "02:12:32.323 Cast: starting (PasswordVault store, delivery=HlsRemux, start=45.0 s)",
+      "02:12:47.091 Cast start: ok after 14767 ms phase=Active state=Playing end=None owned=yes position=1.0 failure=None/None cleaned=no",
+      "02:12:47.092 Script mac-hls-fixed: line 4 wait",
+      "02:12:47.179 State: Loading",
+      "02:12:47.939 State: Playing",
+      "02:12:49.098 Script mac-hls-fixed: line 5 status",
+      "02:12:49.099 Status: phase=Active state=Playing end=None owned=yes position=46.2 failure=None/None cleaned=no",
+      "02:12:49.099 Control status: ok",
+      "02:12:49.101 Script mac-hls-fixed: line 6 pause",
+      "02:12:49.110 Control pause: ok",
+      "02:12:49.111 Script mac-hls-fixed: line 7 wait",
+      "02:12:49.148 State: Paused",
+      "02:12:52.119 Script mac-hls-fixed: line 8 status",
+      "02:12:52.120 Status: phase=Active state=Paused end=None owned=yes position=46.2 failure=None/None cleaned=no",
+      "02:12:52.120 Control status: ok",
+      "02:12:52.122 Script mac-hls-fixed: line 9 play",
+      "02:12:52.134 Control play: ok",
+      "02:12:52.134 Script mac-hls-fixed: line 10 wait",
+      "02:12:52.139 State: Loading",
+      "02:12:52.159 State: Playing",
+      "02:12:55.142 Script mac-hls-fixed: line 11 seek",
+      "02:12:55.154 Control seek 100.0: ok",
+      "02:12:55.155 Script mac-hls-fixed: line 12 wait",
+      "02:12:55.281 State: Loading",
+      "02:12:55.319 State: Playing",
+      "02:12:58.156 Script mac-hls-fixed: line 13 status",
+      "02:12:58.157 Status: phase=Active state=Playing end=None owned=yes position=102.8 failure=None/None cleaned=no",
+      "02:12:58.157 Control status: ok",
+      "02:12:58.160 Script mac-hls-fixed: line 14 wait-end",
+      "02:13:26.930 State: Ended",
+      "02:13:26.930 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=131.6 failure=None/None cleaned=no",
+      "02:13:26.973 Ended cast released; media source released",
+      "02:13:27.033 Script: the cast has ended",
+      "02:13:27.033 Script mac-hls-fixed: done"
+    ]
+  },
+  "offline_checks": {
+    "static_ctest": "35/35 pass, 43.47 s",
+    "shared_ctest": "36/36 pass, 47.24 s; includes C# binding",
+    "uwp_x64": "build and binary checks pass",
+    "screenbox_logic": "86/86 pass",
+    "format": "touched C++ clang-format dry-run and git diff --check pass"
+  },
+  "package": {
+    "private_test_version": "0.3.0-local.202610110209",
+    "sha256": "a5fdd72461efdb1a3e85d149932cbbfde3aa1385a04e36d62e51e7e2da9daa13",
+    "architectures": [
+      "x64"
+    ],
+    "native_commit": "0ad1e365f46ec72b1b6d796ecd64fa806cfb9170",
+    "package_stamp": "Binding/package source stamp reports uncommitted host/doc changes; native source stamp is clean at 0ad1e36.",
+    "screenbox_base": "2b8a53b0",
+    "development_app_version": "1.0.0.1",
+    "native_sha256": "6cccab9bdaa84c33ea49308048688d02c305f40b05724addab4de530fc1fa07a",
+    "state": "Private candidate. Same-version 1.0.0.0 registration retained the older running DLL; rebuilt 1.0.0.1 registers the new layout and installed DLL hash is verified. No release."
+  },
+  "screenbox_ui": {
+    "observer": "User: Everything worked as expected, in response to the four-item remaining UI checklist after the development 1.0.0.1 registration.",
+    "checks": {
+      "consent_time_cancellation_prompt_closes": "PASS by user report",
+      "fresh_cast_recovery_video_audio_current_position": "PASS by user report",
+      "pause_resume_forward_backward_seek_stop_local_paused_handoff": "PASS by user report",
+      "natural_end_advances_to_second_queue_item_then_stop": "PASS by user report"
+    },
+    "provenance_limit": "The installed development app version and native DLL hash were verified. No Screenbox process was available during the final inspections, so its loaded DLL hash was not independently captured. No automated Screenbox event log or exact timing is attributed to these manual checks.",
+    "automation": "Computer Use loaded, paused and sought locally in the older app, then repeatedly lost window ownership to ApplicationFrameHost.exe. The user later stopped Computer Use with physical Escape. Remaining receiver UI checks were manual."
+  },
+  "limits": "Specific receiver, firmware and Windows hosts only. Remote Stop classification remains deferred. No new main-branch prerelease published; ci.203 lacks D63."
+}
