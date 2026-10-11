@@ -5,7 +5,8 @@ not on nuget.org (2026-10-11).** Its public-download hash is verified, and
 [Screenbox fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) pins
 that version and hash. That PR merged as `31013d5e`; the fork's `main` now
 restores `ci.207`. Development Screenbox 1.0.0.2's running native/crypto DLL
-hashes match the published package. Final receiver validation remains pending.
+hashes match the published package. Final Mac receiver checks passed by user
+report for this recorded MacBook Pro/macOS/Windows x64 combination.
 The user chose GitHub releases over a machine-local package source, which CI
 cannot reach. nuget.org publishing is still pending, and is needed before an
 upstream Screenbox PR. This document covers the package, how to pack and
@@ -149,7 +150,11 @@ with its tag pointing to the exact main commit. Both the public download and a
 fresh `Get-AirPlayPackage.ps1` download match the package hash above.
 [Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) merged as `31013d5e` with the pins.
 The matching development layout is registered as private version 1.0.0.2;
-loaded native/crypto DLL hashes match the package. Final receiver validation
-remains a gate. No new
-receiver observation is attributed to these package/build checks.
+loaded native/crypto DLL hashes match the package. The user subsequently
+reported all final Screenbox Mac checks passed: cancellation/recovery,
+video/audio near 45 seconds, pause/resume, forward/backward seeks, Stop/local
+paused handoff and natural queue advance. This is a separate receiver observation,
+not a result inferred from the package/build checks; no automated cast log or
+exact timings were captured. Its scope is one MacBook Pro (`Mac14,10`, macOS
+26.7.1) from this Windows x64 development app.
 Record: [D64 package verification](validation/nuget-macos-package-windows-2026-10-11.json).

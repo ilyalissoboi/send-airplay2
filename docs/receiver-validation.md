@@ -1735,6 +1735,22 @@ flyout and reported the Mac listed. Loaded native SHA-256:
 loaded crypto SHA-256:
 `4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68`.
 Both modules load from the verified ci.207 development layout and match the
-published package. Final receiver observations remain pending; loaded-DLL
-verification alone does not establish a playback pass.
+published package. After this verification, the user performed the final Mac
+checks and answered **"All checks passed"** to this explicit checklist:
+
+- Leave consent unanswered, cancel the cast and confirm the prompt closes;
+  cast again and accept consent.
+- Confirm normal video/audio near 45 seconds, pause/resume and forward/backward seeks.
+- Stop; confirm the Mac video closes and local playback stays paused near the
+  last position.
+- Let the first of two queued test clips finish naturally without Stop and
+  confirm the second starts on the Mac.
+
+These are **PASS by user report** for development Screenbox 1.0.0.2 using the
+verified published ci.207 DLLs on one MacBook Pro (`Mac14,10`, user-reported
+macOS 26.7.1) from Windows x64. No automated Screenbox cast log, API terminal
+telemetry or exact action timings were captured. The loaded-module evidence
+closes D63's provenance gap for this final run without changing the scope of
+the earlier private-build observations. Final-package validation is complete
+for this recorded combination; broader interoperability remains unvalidated.
 Record: [D64 package checks](validation/nuget-macos-package-windows-2026-10-11.json).

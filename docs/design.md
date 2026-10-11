@@ -13,9 +13,11 @@ C API and packaged UWP hosts using D62's URL controls fallback. D63 recognizes
 its explicit HLS EOF reason. The user reports the private x64 Screenbox UI
 checks passed; see the current handoff for scope and the loaded-DLL evidence
 limitation. Screenbox's merged `main` pin is published, hash-verified `ci.207`;
-its running DLL hashes match that package. Final receiver checks remain
-pending. Additional host, receiver and firmware interoperability remains unvalidated. Current work is
-the C API/UWP/Screenbox Mac path; see [HANDOFF.md](HANDOFF.md#0-resume-here).
+its running DLL hashes match that package. Final Screenbox cancellation/recovery,
+playback/controls, Stop/local handoff and natural queue advance passed by user
+report. Additional host, receiver and firmware interoperability remains
+unvalidated. Current work is recording the final evidence for review;
+see [HANDOFF.md](HANDOFF.md#0-resume-here).
 
 ## Scope and architecture
 
@@ -146,8 +148,9 @@ brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
 
-Current gate: validate the published, hash-verified `0.3.0-ci.207` package in
-Screenbox. The fork's version/hash pin PR #8 is merged. D63 completed the C API
+The published, hash-verified `0.3.0-ci.207` package passed final Screenbox checks
+by user report with running DLLs verified. Review of the final evidence in
+native PR #41 and fork PR #9 remains. The fork's version/hash pin PR #8 is merged. D63 completed the C API
 and packaged UWP Mac checks; D64 published the verified main package with the
 user's approval. Earlier private Screenbox observations predate the review fix.
 Mac consent research, fork regression/architecture checks,

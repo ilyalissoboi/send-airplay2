@@ -51,10 +51,22 @@
       "crypto_sha256": "4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68",
       "trigger": "DLLs loaded after the user opened the Cast/device flyout and reported the Mac listed."
     },
-    "receiver_observation": "Not run for this candidate. Earlier manual checks are recorded separately in D63 and predate the review race fix."
+    "receiver_observation": {
+      "result": "PASS by user report after loaded-DLL verification; user answered All checks passed to the final checklist.",
+      "receiver": "MacBook Pro Mac14,10; user-reported macOS 26.7.1",
+      "sender": "Windows x64; development Screenbox 1.0.0.2 using published ci.207 native/crypto DLLs",
+      "checks": [
+        "Consent-time cancellation closes unanswered Mac prompt; subsequent cast succeeds after consent",
+        "Normal video/audio near 45 seconds",
+        "Pause/resume and forward/backward seeks",
+        "Stop closes Mac video; local playback stays paused near last position",
+        "Natural first-to-second queue advance without pressing Stop"
+      ],
+      "evidence_limits": "Manual UI observations; no automated cast log, API terminal telemetry or exact timings. Earlier D63 private-build results remain separate."
+    }
   },
   "documentation_merge": "Native PR #40 merged as a29212b4fef9533e9ba1c8533e5b5ec5cb5a2aa8; all 14 checks passed at 772b8508941a7266c07df8179080ef5e2bb8d261; both review threads resolved.",
   "remaining_gates": [
-    "Final package receiver playback"
+    "Review/merge final evidence documentation in native PR #41 and fork PR #9 with user approval; subsequent development choice unselected"
   ]
 }

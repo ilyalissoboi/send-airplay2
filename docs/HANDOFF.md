@@ -9,8 +9,8 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**Active slice (2026-10-11): documentation reconciliation, then Screenbox on
-the Mac (step 1 below), chosen by the user.** PR #39 merged as `2829242` on
+**Completed user-selected slice (2026-10-11): documentation reconciliation,
+then Screenbox on the Mac.** PR #39 merged as `2829242` on
 2026-10-11 after all 14 checks passed at its final head `811c022`; its review
 thread is resolved. PR #40 merged as `a29212b` with all 14 checks passed at
 `772b850` and both review threads resolved. Final validation branch
@@ -19,8 +19,10 @@ The earlier validation branch started at `a0fd5b9`.
 Completed checks: C API static/shared and packaged UWP host on the recorded Mac,
 including HLS remux, controls, start position, natural end and native consent-time
 cancellation; the user also reports the private Screenbox UI checks passed.
-Remaining gate: validate the published package in Screenbox. The fork pin PR
-and package documentation checkpoint are merged.
+Published-package Screenbox checks also passed by user report after verifying
+the running DLLs. Remaining work for this slice is review/merge of the final
+evidence documentation in native PR #41 and fork PR #9, with user approval.
+The fork pin PR and package documentation checkpoint are merged.
 Preserve the loaded-DLL evidence limitation
 in the D63 record when describing the private Screenbox checks.
 Do not resume phases marked "Next" in the history below.
@@ -40,11 +42,17 @@ The pins/docs are on fork branch `codex/airplay-mac-package`, with
 Private development app version 1.0.0.2 was used only for the built test layout;
 the manifest edit was restored. The matching layout is registered in place as
 development version 1.0.0.2. The running app's native/crypto DLL hashes match
-the published package after opening the Cast/device flyout. Final receiver
-checks remain pending. See the [D64 package record](validation/nuget-macos-package-windows-2026-10-11.json).
+the published package after opening the Cast/device flyout. The user then
+reported **"All checks passed"** for consent-time cancellation/recovery,
+video/audio near 45 seconds, pause/resume, forward/backward seeks, Stop/local
+paused handoff and natural first-to-second queue advance. This completes the
+final package gate for this recorded MacBook Pro/macOS/Windows x64 combination;
+it is user-observed UI evidence without an automated Screenbox cast log or exact
+timings. See the [D64 package record](validation/nuget-macos-package-windows-2026-10-11.json).
 
-**PR #40 review follow-up:** the restart and package summaries now identify D63
-as completed and D64's final running-DLL/receiver checks as the current gate.
+**PR #40 review follow-up (completed):** the restart and package summaries
+identified D63 as completed and D64's final running-DLL/receiver checks as the
+gate at that checkpoint; D64 has since passed as recorded above.
 Published `ci.207` and fork PR #8's pins are distinguished from the fork's
 then-merged `ci.196` pin. Screenbox PR #8's test, lint and package-build checks
 passed at `59936fe`; it has no review findings. This documentation correction
@@ -87,12 +95,14 @@ The earlier main package candidate `0.3.0-ci.203` passed all 14 CI jobs but
 does not contain this fix, so it will not be used for the Screenbox update.
 
 Current slice and remaining choices (dependencies first):
-1. **Screenbox on a Mac.** Merged `main` pins `0.3.0-ci.207` with D62/D63. Steps:
+1. **Screenbox on a Mac: done for the recorded receiver/host.** Merged `main`
+   pins `0.3.0-ci.207` with D62/D63. Completed steps:
    - **done in D63:** check D62 through the C interface and the UWP test host's script mode;
    - **done in D64:** publish approved `ci.207` from `main` and verify its
      public hash; version/hash pins merged in fork PR #8 and running DLL hashes match;
-   - test the final package from Screenbox to the MacBook Pro, which also pairs after
-     an on-screen consent.
+   - **done in D64:** final-package Screenbox cancellation/recovery, playback,
+     controls, Stop/local handoff and natural queue advance passed by user report
+     with the loaded DLLs verified. Final evidence PRs #41 / fork #9 await review.
 2. **The Mac's per-cast consent prompt:** find what makes the Mac ask again
    (D62 found the device ID is probably not the reason).
 3. **Fork follow-ups:**

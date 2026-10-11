@@ -9,9 +9,10 @@ has implemented its current design (PRs #1-#8); merged `main` now pins
 `0.3.0-ci.207`, including D62/D63. Receiver evidence remains specific to the recorded
 Apple TV and MacBook Pro from Windows. D62 used the CLI; completed D63 checked
 desktop C API and packaged UWP playback on macOS 26.7.1, and the user reports
-the earlier private Screenbox UI checks passed. The current D64 gate is
-final receiver validation of published `ci.207` in Screenbox. Its running
-native/crypto DLL hashes have been verified; fork PR #8 merged as `31013d5e`.
+the earlier private Screenbox UI checks passed. D64 completed final Screenbox
+checks of published `ci.207` by user report with running native/crypto DLL
+hashes verified; fork PR #8 merged as `31013d5e`. Final evidence documentation
+in native PR #41 and fork PR #9 awaits review/merge with user approval.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -19,14 +20,16 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **Active slice (2026-10-11):** the user chose documentation reconciliation,
+- **Completed slice (2026-10-11):** the user chose documentation reconciliation,
   then bringing D62 to Screenbox. PR #39 merged as `2829242`, final head
   `811c022` passed all 14 checks and its review thread is resolved. Continue
   final validation on `codex/mac-screenbox-final-validation` from current
   main `a29212b` (merged PR #40). C API,
   packaged UWP and private Screenbox checks are recorded below. Approved main
   package `ci.207` is now published and publicly hash-verified; fork PR #8
-  merged its pins. Running DLL hashes match; complete the final Screenbox receiver checks.
+  merged its pins. Running DLL hashes match; final Screenbox receiver checks
+  passed by user report. Review/merge the final evidence documentation with
+  user approval; subsequent development choices remain unselected.
   Follow [HANDOFF.md](HANDOFF.md) section 0 for the current gates.
 - **D63:** HLS natural end initially returned `receiver_stop` in both the C API
   and UWP host despite user-observed natural EOF. Native commit `0ad1e36`
@@ -38,32 +41,38 @@ guide; the master handoff and dated artifacts preserve the longer history.
   is registered with the corrected installed DLL hash; a loaded-DLL hash was
   not captured before the app closed. PR #39 is merged. Main workflow run
   `38107556167` built published `0.3.0-ci.207` at `2829242`; provenance and
-  public-download verification passed; `ci.203` lacks D63. Validate
-  the final published package after pinning it; the private x64 build is not
-  that release.
+  public-download verification passed; `ci.203` lacks D63. D64 below records
+  the separate final published-package validation; the earlier private x64
+  build is not that release.
   D64 publication: `ci.207` clean provenance, architecture payload hashes,
   licenses and UWP binary checks passed; all 14 main CI jobs passed.
   SHA-256 `e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
   Screenbox worktree `build-review/screenbox` has prepared pins, 86/86 logic
   tests and a matching x64 MSIX (private test version 1.0.0.2; source manifest
   restored). The matching development layout is registered as 1.0.0.2;
-  running native/crypto DLL hashes match the package; final receiver observation
-  remains pending. The DLLs loaded after opening the Cast/device flyout.
+  running native/crypto DLL hashes match the package. The DLLs loaded after
+  opening the Cast/device flyout. The user then reported **"All checks passed"**
+  for consent-time cancellation/recovery, video/audio near 45 seconds,
+  pause/resume, forward/backward seeks, Stop/local paused handoff and natural
+  queue advance. This is manual UI evidence for the recorded Mac/Windows x64
+  pair without an automated cast log or exact timings.
   The user approved publication; the public and fresh fork-script downloads
   match that hash. [Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8)
   merged as `31013d5e`; test, lint and package-build checks passed at `59936fe`.
   Native PR #40 merged as `a29212b`; all 14 checks passed at `772b850` and both
-  review threads are resolved. Receiver validation remains pending.
+  review threads are resolved. Final package receiver validation is complete
+  for this recorded receiver/host; native PR #41 and fork PR #9 record it.
   PR #39's review follow-up commits explicit EOF atomically before another
   event receive and exits the reader, preserving earlier terminal results.
   Its regression covers prompt channel closure and prior Stop/failure;
-  no new hardware observation is attributed to that follow-up.
+  that original follow-up added no new hardware observation. D64's final
+  published-package UI observations are recorded separately above.
 - **Casting to a Mac (D62)**, merged as PR #37: URL controls when a receiver
   rejects remote control. Start, pause/play, seek, start position, status,
   natural end and stop passed on the user's MacBook Pro from the CLI (seek
   once it named the queue item). D63 adds the C API/UWP and user-observed
-  private Screenbox checks; open: the per-cast consent explanation and the
-  published Screenbox package update. The Mac profile is `macbook-pro`
+  private Screenbox checks; D64 completed the published-package Screenbox gate.
+  Open: the per-cast consent explanation. The Mac profile is `macbook-pro`
   in Windows Credential Manager.
 - **Screenbox integration: done for its design (2026-10-10).**
   - Library side: HLS delivery (D60, PRs #26-#32), the UWP test host and
@@ -234,8 +243,10 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 
 The active queue is [HANDOFF.md section 0](HANDOFF.md#0-resume-here): C API/UWP
 and private Screenbox checks are recorded in completed D63; D64 published the
-approved main prerelease and merged its fork pins. Running DLL hashes match;
-complete the final-package receiver checks. Then
+approved main prerelease and merged its fork pins. Running DLL hashes match,
+and final-package receiver checks passed by user report. Review/merge the
+final evidence documentation with user approval. Subsequent development is
+unselected:
 Mac consent research, fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
