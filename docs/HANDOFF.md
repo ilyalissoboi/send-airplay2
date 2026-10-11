@@ -9,22 +9,55 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**Active slice: casting to a Mac (branch `claude/airplay2-mac-casting-096627`,
-D62).** The user asked whether video can be cast to a Mac as to the Apple TV,
-then chose an automatic URL-only fallback. A MacBook Pro (`Mac14,10`) pairs
+**No slice is active (2026-10-11).** Wait for the user to choose from the
+next steps below; do not resume any phase marked "Next" in the history that
+follows.
+
+Next steps, for the user to choose (dependencies first):
+1. **Screenbox on a Mac.** Screenbox's package (`0.3.0-ci.196`) predates D62,
+   so a Mac it lists cannot be cast to yet. Steps:
+   - check D62 through the C interface and the UWP test host's script mode;
+   - publish a new prerelease from `main` (each release needs the user's
+     approval), and pin it with its SHA-256 in the fork's
+     `Screenbox.Core.csproj` and `scripts/Get-AirPlayPackage.ps1`;
+   - test casting from Screenbox to the MacBook Pro, which also pairs after
+     an on-screen consent.
+2. **The Mac's per-cast consent prompt:** find what makes the Mac ask again
+   (D62 found the device ID is probably not the reason).
+3. **Fork follow-ups:**
+   - "Forget this AirPlay device";
+   - x86 and ARM64 builds on a device;
+   - a Chromecast regression check;
+   - a sleeping TV from Screenbox.
+4. **MRP research:** choosing subtitle (and audio) tracks from the sender,
+   and whether the TV remote's next/previous can reach the sender, which
+   currently cannot skip queue items.
+5. **HLS:**
+   - HDR `VIDEO-RANGE` in the playlists (HDR10 is announced as SDR now);
+   - Dolby Vision;
+   - growing presentations (phase 4), which a transcoding path for codecs
+     the remux refuses (DTS, VP9, AV1, MPEG-2) would need.
+6. **nuget.org publishing,** before an upstream Screenbox PR.
+7. **Deferred or untested:**
+   - remote-Stop classification (deferred by the user);
+   - Android/JNI (D04);
+   - casting from Linux and macOS hosts;
+   - receivers other than the recorded Apple TV and MacBook Pro.
+
+**Latest: casting to a Mac (D62, merged as PR #37).** The user asked whether
+video can be cast to a Mac as to the Apple TV, then chose an automatic
+URL-only fallback. A MacBook Pro (`Mac14,10`) pairs
 after an on-screen consent and a PIN, rejects the remote-control SETUP with
 500, and plays the URL session alone. With the fallback, start, status,
 pause/resume, seek, start position, natural end (`media_end`) and stop passed
 from the CLI (seek after the Mac's receiver strings showed it needs the item
 UUID; user observed). Open: the per-cast consent prompt, the C interface/UWP
-host/Screenbox on the Mac. See the D62 record in section 4 and
+host/Screenbox on the Mac (next steps 1 and 2). See the D62 record in section 4 and
 [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
 
 **Before D62 (2026-10-10):** HLS delivery (D60) and the Screenbox integration
-are both done for their current scope; the last entries of this section
-record them. After D62, wait for the user to choose the next item from the
-list in the "Screenbox integration" entry below; do not resume any phase
-marked "Next" in the history that follows.
+were done for their current scope; the last entries of this section record
+them.
 
 **History: HLS delivery (D60)** ([hls.md](hls.md)). The user set the Screenbox
 integration aside (design PR ilyalissoboi/Screenbox#1, since merged) and asked to
@@ -123,12 +156,17 @@ any host:
   remote cannot skip items;
 - a file the remux refuses (DTS audio) cannot be cast, as designed.
 
-Next, for the user to choose:
-- a "Forget this device" action in the fork;
-- MRP research on sender-side subtitle selection and on TV-remote next and
-  previous;
-- nuget.org publishing before an upstream PR;
-- HLS phase 4 (growing presentations) and HDR `VIDEO-RANGE`.
+Since then (fork PR #7, `feat/airplay-cosmetics`, 2026-10-11), the user
+asked for cosmetic changes:
+- a blurred backdrop under the "Casting to" overlay;
+- a 4-digit PIN dialog;
+- a device icon and a product-family line per AirPlay receiver.
+The icon and family come from the advertised model (`Receiver.Model`), and
+Apple-silicon `MacNN,M` identifiers come from a table of Apple's published
+identifiers. They were checked on screen, except the family line, which
+awaits the user. The fork's design doc now holds its implementation status,
+how to test a development build, its limitations and next steps. The
+consolidated next steps are at the top of this section.
 Record: [receiver-validation.md](receiver-validation.md#screenbox-integration-2026-10-10).
 
 ### Standalone items (D58-D59, merged)
