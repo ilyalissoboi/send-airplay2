@@ -1,8 +1,11 @@
 # NuGet package (Screenbox step 3)
 
-Status: **published as a GitHub prerelease; not on nuget.org (2026-10-10).**
-`nuget-v0.3.0-ci.196` is on this repository's GitHub releases, where the
-Screenbox fork restores it. The user chose that over a local feed, which CI
+Status: **`nuget-v0.3.0-ci.207` is published as a GitHub prerelease;
+not on nuget.org (2026-10-11).** Its public-download hash is verified, and
+[Screenbox fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) pins
+that version and hash. The fork's merged `main` still restores `ci.196` until
+that PR merges; final `ci.207` running-DLL and receiver validation remain pending.
+The user chose GitHub releases over a machine-local package source, which CI
 cannot reach. nuget.org publishing is still pending, and is needed before an
 upstream Screenbox PR. This document covers the package, how to pack and
 publish it, and how a host consumes it.

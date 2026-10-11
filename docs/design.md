@@ -12,8 +12,9 @@ desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
 C API and packaged UWP hosts using D62's URL controls fallback. D63 recognizes
 its explicit HLS EOF reason. The user reports the private x64 Screenbox UI
 checks passed; see the current handoff for scope and the loaded-DLL evidence
-limitation. Screenbox's published package pin predates D62. Additional host,
-receiver and firmware interoperability remains unvalidated. Current work is
+limitation. Screenbox's merged `main` pin (`ci.196`) predates D62; fork PR #8
+pins published, hash-verified `ci.207`, whose final receiver checks remain
+pending. Additional host, receiver and firmware interoperability remains unvalidated. Current work is
 the C API/UWP/Screenbox Mac path; see [HANDOFF.md](HANDOFF.md#0-resume-here).
 
 ## Scope and architecture

@@ -5,11 +5,13 @@ the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
 fallback for receivers that reject remote-control SETUP. The Screenbox fork
-has implemented its current design (PRs #1-#7), but its pinned package
+has implemented its current design (PRs #1-#7), but its merged `main` package pin
 `0.3.0-ci.196` predates D62. Receiver evidence remains specific to the recorded
-Apple TV and MacBook Pro from Windows. D62 used the CLI; the active D63 slice
-has now checked desktop C API and packaged UWP playback on macOS 26.7.1;
-the user reports the private Screenbox UI checks passed as well.
+Apple TV and MacBook Pro from Windows. D62 used the CLI; completed D63 checked
+desktop C API and packaged UWP playback on macOS 26.7.1, and the user reports
+the earlier private Screenbox UI checks passed. The current D64 gate is
+running-DLL verification and final receiver validation of published `ci.207`
+in Screenbox; fork PR #8 contains the version/hash pins and is not yet merged.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -38,7 +40,7 @@ guide; the master handoff and dated artifacts preserve the longer history.
   public-download verification passed; `ci.203` lacks D63. Validate
   the final published package after pinning it; the private x64 build is not
   that release.
-  D64 preparation: `ci.207` clean provenance, architecture payload hashes,
+  D64 publication: `ci.207` clean provenance, architecture payload hashes,
   licenses and UWP binary checks passed; all 14 main CI jobs passed.
   SHA-256 `e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
   Screenbox worktree `build-review/screenbox` has prepared pins, 86/86 logic
@@ -47,7 +49,8 @@ guide; the master handoff and dated artifacts preserve the longer history.
   loaded-DLL verification and final receiver observation remain pending.
   The user approved publication; the public and fresh fork-script downloads
   match that hash. [Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8)
-  is draft pending receiver validation; inspect its actual head/CI before edits.
+  is open for review; receiver validation remains pending. Inspect its actual
+  head/CI before edits.
   PR #39's review follow-up commits explicit EOF atomically before another
   event receive and exits the reader, preserving earlier terminal results.
   Its regression covers prompt channel closure and prior Stop/failure;
@@ -227,8 +230,9 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 ## Open issues and ordered next work
 
 The active queue is [HANDOFF.md section 0](HANDOFF.md#0-resume-here): C API/UWP
-and private Screenbox checks are recorded in D63; finish the approved main
-prerelease and Screenbox pin/final-package validation. Then
+and private Screenbox checks are recorded in completed D63; D64 published the
+approved main prerelease. Verify the running DLL and final-package receiver
+behavior, then review/merge the Screenbox pin PR with user approval. Then
 Mac consent research, fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12

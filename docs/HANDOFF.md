@@ -34,11 +34,18 @@ Screenbox's `codex/airplay-mac-package` worktree under ignored
 `build-review/screenbox` has prepared version/hash pins and a successful x64
 packaged build whose native/crypto DLLs match the artifact. Logic tests: 86/86.
 The pins/docs are on fork branch `codex/airplay-mac-package`, with
-[draft PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) open for review.
+[PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) open for review.
 Private development app version 1.0.0.2 was used only for the built test layout;
 the manifest edit was restored. The matching layout is registered in place as
 development version 1.0.0.2. Its loaded DLL and receiver behavior still need
 verification. See the [D64 package record](validation/nuget-macos-package-windows-2026-10-11.json).
+
+**PR #40 review follow-up:** the restart and package summaries now identify D63
+as completed and D64's final running-DLL/receiver checks as the current gate.
+Published `ci.207` and fork PR #8's pins are distinguished from the fork's
+still-merged `ci.196` pin. Screenbox PR #8's test, lint and package-build checks
+passed at `59936fe`; it has no review findings. This documentation correction
+adds no new receiver observation.
 
 **D63 completed and merged:** on the user's MacBook Pro (`Mac14,10`, macOS 26.7.1),
 the static progressive C API and shared HLS C API controls passed visually.
@@ -77,7 +84,7 @@ The earlier main package candidate `0.3.0-ci.203` passed all 14 CI jobs but
 does not contain this fix, so it will not be used for the Screenbox update.
 
 Current slice and remaining choices (dependencies first):
-1. **Screenbox on a Mac.** Screenbox's package (`0.3.0-ci.196`) predates D62,
+1. **Screenbox on a Mac.** Screenbox's merged `main` package (`0.3.0-ci.196`) predates D62,
    so a Mac it lists cannot be cast to yet. Steps:
    - **done in D63:** check D62 through the C interface and the UWP test host's script mode;
    - **done in D64:** publish approved `ci.207` from `main` and verify its
