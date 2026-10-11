@@ -537,6 +537,13 @@ SessionEvent parse_session_event(const Bytes& body) {
             invalid_body();
         }
         output.playback_state = playback_state_label(lower_ascii(state->as_string()));
+        // macOS HLS can stop without a final position notification. Its explicit
+        // root reason "ended" identifies EOF; other reasons never imply EOF.
+        const auto* reason = event.find("reason");
+        if (output.playback_state == "stopped" && reason && reason->kind() == PlistKind::string &&
+            reason->as_string() == "ended") {
+            output.playback_state = "ended";
+        }
         if (const auto* duration = params ? params->find("duration") : nullptr) {
             output.duration_seconds = duration_seconds(*duration);
         }

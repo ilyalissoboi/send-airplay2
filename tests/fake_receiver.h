@@ -147,6 +147,7 @@ struct EventPipe {
     Bytes outbound; // Sender to receiver (encrypted replies).
     bool ended = false;
     bool closed = false;
+    std::size_t eof_reads = 0; // Reads returning EOF after queued bytes are consumed.
 };
 
 class FakeEventStream final : public ReceiverStream {
@@ -177,6 +178,7 @@ public:
                 return count;
             }
             if (pipe_->ended) {
+                ++pipe_->eof_reads;
                 return 0;
             }
             pipe_->changed.wait_for(lock, 5ms);
@@ -602,6 +604,15 @@ public:
     void end_event_channel() {
         std::lock_guard<std::mutex> lock(mutex_);
         end_events_locked();
+    }
+    /// Count reads of the event channel's EOF, independently of sender cleanup.
+    [[nodiscard]] std::size_t event_eof_reads() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!event_pipe_) {
+            return 0;
+        }
+        std::lock_guard<std::mutex> pipe_lock(event_pipe_->mutex);
+        return event_pipe_->eof_reads;
     }
     /// Hold the next /feedback request unanswered until release_held_feedback(),
     /// like a slow receiver; return the count of earlier feedback requests.

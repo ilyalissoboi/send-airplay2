@@ -69,6 +69,8 @@ and `#` comments are skipped:
 | Command | Effect |
 | --- | --- |
 | `discover [NAME]` | One scan; fills the address (default: the form's receiver name) |
+| `discover-model MODEL` | One scan; fills the address only when exactly one receiver matches the model |
+| `profile NAME` | Sets the PasswordVault profile; NAME uses the same 1-32 character syntax as script names |
 | `cast vault\|builtin LABEL [remux\|progressive] [start=SECONDS]` | Casts the file remembered as LABEL; remux is the default |
 | `wait SECONDS` | Waits |
 | `pause`, `play`, `seek SECONDS`, `status`, `stop` | The button actions |
@@ -156,7 +158,7 @@ warnings for the binding.
 Record for D61: [receiver-validation.md](receiver-validation.md#uwp-host-hls-remux-and-start-position-d61-2026-10-10).
 
 Not covered: discovery on a Public network, pairing through the UWP-built
-library, HLS remux in the x86 or ARM64 package, MKVs without Cues through
+library on the Apple TV, HLS remux in the x86 or ARM64 package, MKVs without Cues through
 brokered access, PasswordVault roaming, desktop provisioning of the app's locker,
 an ARM64 run, and Store certification of a signed package (the D57 kit run
 on the sideloaded package, repeated on 0.1.22.0 for D61, failed only Supported

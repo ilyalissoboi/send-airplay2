@@ -3,6 +3,7 @@
 // connectors, plus active sessions against the scripted fake receiver.
 // Loopback only: no receiver, credential store or private media.
 #include "cast_controller.h"
+#include "binary_plist.h"
 #include "control_crypto.h"
 #include "fake_receiver.h"
 #include "mp4_fixture.h"
@@ -633,6 +634,133 @@ bool ends_with(const std::string& text, const std::string& suffix) {
            text.compare(text.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
+/// The public controller must inherit the production URL fallback, including
+/// HLS delivery and the seek performed before start returns (D62).
+void url_controls_delivery_tests() {
+    for (const auto delivery : {CastDelivery::progressive, CastDelivery::hls_remux}) {
+        group = delivery == CastDelivery::progressive ? "URL controls progressive delivery"
+                                                      : "URL controls HLS delivery";
+        Behavior macos;
+        macos.remote_setup_status = 500; // Recorded macOS remote-control SETUP rejection.
+        FakeReceiver receiver(macos);
+        auto probe = std::make_shared<SourceProbe>();
+        {
+            auto settings = loopback_settings();
+            settings.delivery = delivery;
+            settings.start_position_seconds = 45.0;
+            CastController controller(settings, mp4_source(probe),
+                                      fake_receiver_dependencies(receiver, true));
+            check(controller.start() == CastResult::ok, "start succeeds after remote rejection");
+            const auto started = controller.snapshot();
+            check(started.phase == CastPhase::active && started.session.url_controls &&
+                      started.playback.owned && started.playback.state == "playing",
+                  "the controller exposes URL playback without an MRP stream");
+            check(ends_with(receiver.inserted_media_url(), "/index.m3u8") ==
+                      (delivery == CastDelivery::hls_remux),
+                  "delivery selects the remux playlist or progressive resource");
+            check(receiver.remote_control().control_was_closed() &&
+                      !receiver.remote_control().event_channel_opened(),
+                  "the rejected remote session has no retained event connection");
+
+            check(controller.command(PlaybackCommand::pause, 0) == CastResult::ok,
+                  "pause uses the URL controls through the public controller");
+            check(controller.command(PlaybackCommand::play, 0) == CastResult::ok,
+                  "play uses the URL controls through the public controller");
+            check(controller.command(PlaybackCommand::seek, 60.5) == CastResult::ok,
+                  "seek uses the URL controls through the public controller");
+            check(controller.command(PlaybackCommand::stop, 0) == CastResult::ok,
+                  "the controller sends the URL stop command");
+
+            constexpr std::size_t queue_start_command_count = 4;
+            std::size_t command_count = 0;
+            std::vector<PlistValue> controls;
+            for (const auto& request : receiver.requests()) {
+                if (request.target != "/command" || command_count++ < queue_start_command_count) {
+                    continue;
+                }
+                const auto envelope = decode_binary_plist(request.body);
+                controls.push_back(
+                    decode_binary_plist(envelope.find("params")->find("data")->as_data()));
+            }
+            check(controls.size() == 5, "one start-position seek and four controls, got " +
+                                            std::to_string(controls.size()));
+            if (controls.size() == 5) {
+                check(controls[0].find("type")->as_string() == "seek" &&
+                          controls[0].find("time")->find("value")->as_integer() == 45000,
+                      "the start-position seek is sent before the host controls");
+                check(controls[1].find("type")->as_string() == "setRate" &&
+                          controls[1].find("rate")->as_real() == 0.0 &&
+                          controls[2].find("type")->as_string() == "setRate" &&
+                          controls[2].find("rate")->as_real() == 1.0,
+                      "pause and play retain their literal URL rates");
+                check(controls[3].find("type")->as_string() == "seek" &&
+                          controls[3].find("time")->find("value")->as_integer() == 60500 &&
+                          controls[3].find("time")->find("timescale")->as_integer() == 1000 &&
+                          controls[3].find("item")->find("uuid")->as_string() ==
+                              controls[0].find("item")->find("uuid")->as_string(),
+                      "both seeks name the same queued item with millisecond CMTime units");
+                check(controls[4].find("type")->as_string() == "stop", "stop is a URL command");
+            }
+            controller.stop(); // Host stop joins the session and media listener.
+            const auto stopped = controller.snapshot();
+            check(stopped.phase == CastPhase::stopped && stopped.session.cleaned_up &&
+                      stopped.session.end_reason == SessionEnd::sender_stop &&
+                      !stopped.session.failed && receiver.control_was_closed(),
+                  "sender stop records successful joined URL cleanup");
+        }
+        check(probe->releases == 1, "the controller releases the host source exactly once");
+    }
+}
+
+void url_controls_terminal_tests() {
+    group = "URL controls terminal mapping";
+    {
+        Behavior macos;
+        macos.remote_setup_status = 500;
+        FakeReceiver receiver(macos);
+        auto probe = std::make_shared<SourceProbe>();
+        {
+            CastController controller(hls_settings(), mp4_source(probe),
+                                      fake_receiver_dependencies(receiver, true));
+            check(controller.start() == CastResult::ok, "HLS start before natural end");
+            receiver.push_event_body(encode_binary_plist(PlistDictionary{
+                {"type", "playbackState"}, {"name", "stopped"}, {"reason", "ended"}}));
+            check(eventually([&] { return controller.snapshot().session.cleaned_up; }),
+                  "natural end joins cleanup without a host stop");
+            const auto ended = controller.snapshot();
+            check(ended.phase == CastPhase::ended &&
+                      ended.session.end_reason == SessionEnd::media_end && !ended.session.failed,
+                  "URL natural end maps to the public controller's media_end");
+            check(controller.command(PlaybackCommand::play, 0) == CastResult::ended,
+                  "a control after natural end reports ended");
+            controller.stop();
+            check(controller.snapshot().session.end_reason == SessionEnd::media_end &&
+                      probe->releases == 0,
+                  "host stop preserves EOF and retains the source until destruction");
+        }
+        check(probe->releases == 1, "destruction releases the source exactly once after EOF");
+    }
+    {
+        Behavior rejected;
+        rejected.remote_setup_status = 500;
+        rejected.base_setup_status = 400; // Consent rejection remains a failed URL start.
+        FakeReceiver receiver(rejected);
+        auto probe = std::make_shared<SourceProbe>();
+        {
+            CastController controller(hls_settings(), mp4_source(probe),
+                                      fake_receiver_dependencies(receiver, true));
+            check(controller.start() == CastResult::receiver_rejected,
+                  "fallback does not turn a rejected URL SETUP into success");
+            const auto failed = controller.snapshot();
+            check(failed.phase == CastPhase::start_failed && failed.rejected_status == 400 &&
+                      receiver.control_was_closed() &&
+                      receiver.remote_control().control_was_closed(),
+                  "the URL rejection retains its status and closes both connections");
+        }
+        check(probe->releases == 1, "a rejected URL start releases its host source exactly once");
+    }
+}
+
 void hls_delivery_tests() {
     group = "HLS remux delivery";
     {
@@ -762,6 +890,8 @@ int main(int argc, char** argv) {
     mrp_end_tests(mrp_fixtures);
     start_position_tests(mrp_fixtures);
     hls_delivery_tests();
+    url_controls_delivery_tests();
+    url_controls_terminal_tests();
     if (failures != 0) {
         std::cerr << failures << " failure(s)\n";
         return 1;

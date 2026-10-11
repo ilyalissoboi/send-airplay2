@@ -563,6 +563,34 @@ void url_controls_progress_tests() {
           "a mid-item stop is a receiver stop");
 }
 
+void url_controls_explicit_end_tests() {
+    group = "URL controls explicit EOF reason (D63)";
+    for (const auto* reason : {"ended", "user", "unknown"}) {
+        Behavior macos;
+        macos.remote_setup_status = macos_remote_setup_status;
+        FakeReceiver receiver(macos);
+        auto session =
+            UrlPlaybackSession::start(receiver.credentials(), url_controls_options(receiver));
+        receiver.push_event_body(macos_state_event("Playing", 100.0, 1.0));
+        receiver.push_event_body(enveloped(
+            PlistDictionary{{"type", "playbackState"}, {"name", "stopped"}, {"reason", reason}}));
+        const auto expected =
+            std::string_view(reason) == "ended" ? SessionEnd::media_end : SessionEnd::receiver_stop;
+        check(eventually([&] { return session->status().cleaned_up; }),
+              std::string("automatic cleanup for reason ") + reason);
+        const auto status = session->status();
+        check(status.end_reason == expected && !status.failed && receiver.control_was_closed() &&
+                  receiver.remote_control().control_was_closed(),
+              std::string("terminal classification and joined connections for reason ") + reason);
+        const auto playback = session->playback_status();
+        check(playback.reported_position_seconds == 100.0 && !playback.at_end,
+              std::string("EOF signal does not fabricate final progress for reason ") + reason);
+        session->stop();
+        check(session->status().end_reason == expected,
+              std::string("host stop retains the terminal reason ") + reason);
+    }
+}
+
 void url_controls_start_position_tests() {
     group = "URL controls start position (D62)";
     Behavior macos;
@@ -933,6 +961,102 @@ void terminal_event_tests() {
         check(session->status().end_reason == expected, "first terminal reason survives stop");
     }
 }
+
+/// Explicit EOF is authoritative before the receiver closes the event socket;
+/// both a native ended label and macOS's stopped/reason event use this path.
+void explicit_end_channel_closure_tests(const std::string& mrp_fixtures) {
+    group = "explicit EOF followed immediately by channel closure";
+    for (const bool url_controls : {false, true}) {
+        for (const bool stopped_reason : {false, true}) {
+            const auto scenario =
+                std::string(url_controls ? "URL fallback" : "MRP session") +
+                (stopped_reason ? ": stopped/reason ended" : ": native ended state");
+            Behavior behavior;
+            behavior.remote_setup_status = url_controls ? macos_remote_setup_status : 200;
+            behavior.mrp_fixtures = url_controls ? "" : mrp_fixtures;
+            FakeReceiver receiver(behavior);
+            auto options = options_for(receiver);
+            options.enable_mrp = !url_controls;
+            auto session = UrlPlaybackSession::start(receiver.credentials(), options);
+            if (!url_controls) {
+                // Keep cleanup blocked in its first join so the test observes the
+                // reader's exit, rather than supervisor cancellation of receive().
+                (void)receiver.remote_control().hold_feedback();
+                check(eventually([&] { return receiver.remote_control().feedback_held(); }),
+                      scenario + ": remote feedback held before EOF");
+            }
+            receiver.push_event_body(
+                enveloped(PlistDictionary{{"type", "playbackState"},
+                                          {"name", stopped_reason ? "stopped" : "ended"},
+                                          {"reason", "ended"}}));
+            receiver.end_event_channel(); // No wait for the supervisor or event acknowledgement.
+            check(eventually([&] { return session->status().end_reason != SessionEnd::none; }),
+                  scenario + ": terminal reason committed");
+            check(receiver.event_eof_reads() == 0,
+                  scenario + ": terminal reader exits before receiving channel EOF");
+            if (!url_controls) {
+                check(receiver.remote_control().release_held_feedback(),
+                      scenario + ": release feedback for ordered cleanup");
+            }
+            check(eventually([&] { return session->status().cleaned_up; }),
+                  scenario + ": cleanup joins automatically");
+            const auto status = session->status();
+            check(status.playback_state == "ended" && status.end_reason == SessionEnd::media_end &&
+                      !status.failed && status.failure_channel == SessionFailureChannel::none,
+                  scenario + ": explicit EOF survives immediate receiver closure");
+            const auto expected_close_order = url_controls
+                                                  ? std::vector<std::string>{"remote", "URL"}
+                                                  : std::vector<std::string>{"URL", "remote"};
+            check(receiver.control_close_order() == expected_close_order,
+                  scenario + ": control closure preserves the negotiated session order");
+            session->stop();
+            check(session->status().end_reason == SessionEnd::media_end,
+                  scenario + ": later host Stop preserves media end");
+        }
+    }
+}
+
+/// Keep the URL reader alive during cleanup to deliver a later EOF event after
+/// a sender Stop or an independently recorded remote-channel failure.
+void explicit_end_precedence_tests(const std::string& mrp_fixtures) {
+    group = "explicit EOF preserves earlier Stop or failure";
+    for (const auto prior_end : {SessionEnd::sender_stop, SessionEnd::connection_lost}) {
+        const auto scenario = std::string(session_end_name(prior_end));
+        Behavior behavior;
+        behavior.mrp_fixtures = mrp_fixtures;
+        FakeReceiver receiver(behavior);
+        auto options = options_for(receiver);
+        options.enable_mrp = true;
+        auto session = UrlPlaybackSession::start(receiver.credentials(), options);
+        auto& remote = receiver.remote_control();
+        (void)remote.hold_feedback();
+        check(eventually([&] { return remote.feedback_held(); }), scenario + ": feedback held");
+        std::future<void> stopping;
+        if (prior_end == SessionEnd::sender_stop) {
+            stopping = std::async(std::launch::async, [&] { session->stop(); });
+        } else {
+            remote.end_event_channel();
+        }
+        check(eventually([&] { return session->status().end_reason == prior_end; }),
+              scenario + ": earlier terminal reason established");
+        receiver.push_state("Ended");
+        check(eventually([&] { return session->status().playback_state == "ended"; }),
+              scenario + ": later explicit EOF accepted during cleanup");
+        check(remote.release_held_feedback(), scenario + ": release feedback");
+        if (stopping.valid()) {
+            stopping.get();
+        }
+        session->stop();
+        const auto status = session->status();
+        const bool expected_failure = prior_end == SessionEnd::connection_lost;
+        check(status.cleaned_up && status.end_reason == prior_end &&
+                  status.failed == expected_failure,
+              scenario + ": earlier result survives explicit EOF and cleanup");
+        check(status.failure_channel == (expected_failure ? SessionFailureChannel::remote_events
+                                                          : SessionFailureChannel::none),
+              scenario + ": earlier failure channel preserved");
+    }
+}
 /// tvOS reports URL "stopped" at the end of HLS with its last MRP position a
 /// frame or two short of the duration (D60); a mid-item stop stays a stop.
 void stopped_near_end_tests(const std::string& mrp_fixtures) {
@@ -1290,12 +1414,15 @@ int main(int argc, char** argv) {
         url_controls_start_tests();
         url_controls_command_tests();
         url_controls_progress_tests();
+        url_controls_explicit_end_tests();
         url_controls_start_position_tests();
         event_log_tests();
         remote_diagnostic_tests();
         failure_after_start_tests();
         mrp_setup_failure_tests();
         terminal_event_tests();
+        explicit_end_channel_closure_tests(mrp_fixtures);
+        explicit_end_precedence_tests(mrp_fixtures);
         paused_connection_loss_tests();
         concurrent_stop_tests();
         feedback_deadline_tests();

@@ -1616,3 +1616,103 @@ is 60.000000 / 90.000000 / 45.000000 for item <our UUID>", each followed by
 from 0 before the seek, as on tvOS (D61). Not run: the C interface, the UWP host or
 Screenbox with the fix; HLS remux; other Macs, macOS versions or access
 settings; a password-protected receiver.
+
+## Mac C API, packaged UWP and HLS EOF (D63, 2026-10-11)
+
+The user chose the Screenbox-on-Mac work queue after the documentation refresh.
+Receiver: the recorded MacBook Pro, advertised model `Mac14,10`, with macOS
+**26.7.1 supplied by the user in this session**. Host: Windows 11 x64 on a
+Private network. Existing firewall rules and app capabilities were preserved;
+desktop runs reused the saved profile and UWP used its own PasswordVault profile.
+Media: the recorded 53,953,926-byte H.264/AAC MP4 (131.6 s). Detailed sanitized
+telemetry and binary hashes:
+[D63 artifact](validation/native-macos-api-uwp-windows-2026-10-11.json).
+
+| Run | Telemetry | Observer |
+| --- | --- | --- |
+| Static progressive C API, main `a0fd5b9` native sources | Start active/playing/owned; pause held position; seek 60 then 10; sender stop cleaned, no failed reads, one source release, exit 0 | All checks passed: normal video/audio, pause/resume, both seeks and Stop closed the video |
+| Shared HLS C API, same baseline | Start 45, pause/resume, seek 100; natural finish and cleanup, but end **`receiver_stop`** | All checks passed; natural end, without pressing Stop |
+| Packaged UWP 0.1.24.0, same baseline | User paired into PasswordVault and picked the brokered file. First cast: receiver rejection after about 15 s at consent. Retry: start 45, controls and seek 100 succeeded; natural finish returned **`ReceiverStop`** and released the cast/source | All checks passed; natural end |
+| Shared HLS C API, D63 native sources `0ad1e36` | Same start and controls; state `ended`, end `media_end`, cleaned, zero failed reads, one release, exit 0 | All checks passed; natural end |
+| Packaged UWP 0.1.26.0, D63 native sources | In-place update retained credentials and file grant; script selected a unique `Mac14,10` and the saved profile. Start 45, pause held position, seek 100; state `Ended`, end `MediaEnd`, cast/source released | All checks passed; natural end |
+| Static C API consent-time cancellation, D63 native sources | Stop scheduled after 5 s; start `cancelled` in 5,068 ms, zero source reads, one release, exit 0; staged binaries restored and hashes verified | Prompt appeared and closed; left unanswered |
+
+**Classification failure and fix.** Baseline HLS played correctly but reported
+`receiver_stop`, which would prevent Screenbox advancing the queue. A CLI HLS
+diagnostic starting at 120 s reproduced it: the last reported position stayed
+120 s, duration 131.566 s, followed by a stopped playback-state event with a
+root `reason`. A temporary, bounded equality diagnostic proved that reason
+was exactly `ended`; arbitrary receiver text was not logged. The diagnostic
+was removed. Native commit `0ad1e365f46ec72b1b6d796ecd64fa806cfb9170`
+normalizes only `playbackState` / stopped / exact root `reason: ended` to the
+existing state `ended`, so the session reports `media_end`. It does not invent
+final progress, use elapsed time as EOF, interpret unknown reasons, or change
+the deferred receiver-remote Stop policy. API version remains 3.
+
+Regression checks use an independent plistlib fixture, retain the final-position
+EOF path, and cover unknown/malformed reasons, nonterminal states, joined
+cleanup and source ownership. Windows Release static CTest **35/35**, shared
+**36/36** including the C# binding, UWP x64 build/binary checks, touched C++
+clang-format and `git diff --check` passed.
+
+**Screenbox checkpoint:** fork main `2b8a53b0`, private local x64 package
+`0.3.0-local.202610110209` from D63 native commit, SHA-256
+`a5fdd72461efdb1a3e85d149932cbbfde3aa1385a04e36d62e51e7e2da9daa13`.
+VS 2026 MSBuild produced the x64 MSIX, whose native DLL matched the UWP build.
+The first registration reused development version 1.0.0.0 and did **not** replace
+the existing layout: the launched app still loaded the older DLL (SHA-256
+`63b1d8df4d581249ad04e0599e125bffd905d80479c34f67d2e4bea8775e386e`).
+The private development version was raised to 1.0.0.1 and rebuilt; Windows now
+registers the new layout under the same identity. Its DLL SHA-256 is
+`6cccab9bdaa84c33ea49308048688d02c305f40b05724addab4de530fc1fa07a`.
+Registration and the installed DLL hash were verified. The running DLL was
+not independently captured: no Screenbox process was available when inspected
+after the user reported it visible or after the completed checks. Keep this
+provenance limitation separate from the user-observed outcomes below.
+Screenbox's 86 logic tests passed. The private package records clean native
+sources at `0ad1e36`, while its binding/package stamp notes uncommitted host/doc
+changes; it is an x64 test candidate, not a reproducible published release.
+Two identical copies of the authorized clip form the test queue. Computer Use
+could load the queue, pause and seek locally in the older app, but its
+input calls repeatedly rejected the UWP window's ownership as
+`ApplicationFrameHost.exe`; refreshing the selection did not resolve that
+failure. Computer Use was subsequently stopped by the user's physical Escape
+key. The user performed the remaining checks manually and answered
+**"Everything worked as expected"** to the explicit four-item checklist:
+
+- Start casting with consent unanswered, cancel, and confirm the Mac prompt closes.
+- Cast again, accept consent, and confirm normal video/audio near the current local position.
+- Pause/resume, seek forward/backward, then Stop; confirm the Mac video closes
+  and local playback remains paused near the last position.
+- Let the first item finish naturally and confirm the second queue item starts
+  on the Mac, then Stop.
+
+These UI checks are **PASS by user report** for the development app following
+the 1.0.0.1 update. No automated Screenbox event log, loaded-DLL hash, or exact
+timing is attributed to that report. Final published-package validation remains
+a separate gate.
+
+**PR #39 review follow-up:** the review found that the event reader could publish
+`ended`, read again, and record a disconnect before the supervisor's poll committed
+`media_end`. The fix commits the terminal reason with the playback state under
+the state mutex and returns from the reader. The supervisor retains cleanup
+ownership, and an earlier recorded failure or terminal reason is preserved.
+New regressions reproduce the race against `b8bf806` (10 assertions fail), cover
+immediate closure after both forms of explicit EOF in URL-only and MRP sessions,
+and preserve a prior sender Stop or remote-channel failure. The initial test run
+with the fix had two incorrect fallback closure-order expectations; those were
+corrected to reflect remote SETUP rejection closing remote control before URL
+start. After restoring the fix, the first full static run reused the pre-fix test
+binary because the restored source retained its older timestamp; explicitly
+rebuilding it resolved that build-state issue. Final Windows Release static
+CTest **35/35 (44.38 s)** and shared **36/36 (49.75 s)**, including the C# binding,
+passed, as did touched C++ clang-format and `git diff --check`. This follow-up
+has no new hardware run; the receiver/binary records above remain the earlier
+D63 observations.
+
+No new prerelease is published. The all-architecture main candidate
+`0.3.0-ci.203` passed all 14 CI jobs but lacks D63, so it is excluded from the
+planned update. Merge approval, a new package built from main, explicit
+prerelease approval, final fork version/hash pins and validation of that
+published package remain gates. These results cover only this receiver,
+firmware and Windows hosts; they do not establish other-host interoperability.

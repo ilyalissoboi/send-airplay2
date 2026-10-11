@@ -422,6 +422,45 @@ int hex_value(char ch) {
     return ch <= '9' ? ch - '0' : ch - 'A' + 10;
 }
 
+void explicit_end_reason_tests(const std::string& directory) {
+    group = "explicit URL end reason";
+    const auto ended = parse_session_event(fixture(directory, "event-state-ended"));
+    check(ended.type == "playbackState" && ended.playback_state == "ended" &&
+              !ended.position_seconds && !ended.duration_seconds,
+          "independent macOS HLS fixture signals EOF without progress");
+    const auto event_with_reason = [](const char* state, PlistValue reason) {
+        return encode_binary_plist(PlistDictionary{
+            {"type", "playbackState"}, {"name", state}, {"reason", std::move(reason)}});
+    };
+    for (const auto* reason : {"user", "error", "unknown", "Ended", "ended-private"}) {
+        const auto body = event_with_reason("stopped", reason);
+        check(parse_session_event(body).playback_state == "stopped",
+              std::string("stop reason is not EOF: ") + reason);
+        check(describe_event_structure(body).find(reason) == std::string::npos,
+              std::string("diagnostic omits arbitrary reason: ") + reason);
+    }
+    for (auto reason : {PlistValue(0), PlistValue(true), PlistValue(PlistDictionary{})}) {
+        check(parse_session_event(event_with_reason("stopped", std::move(reason))).playback_state ==
+                  "stopped",
+              "non-string reason does not imply EOF");
+    }
+    for (const auto* state : {"playing", "paused", "idle", "loading"}) {
+        check(parse_session_event(event_with_reason(state, "ended")).playback_state == state,
+              std::string("reason cannot terminate state ") + state);
+    }
+    check(!parse_session_event(encode_binary_plist(PlistDictionary{{"type", "notification"},
+                                                                   {"name", "stopped"},
+                                                                   {"reason", "ended"}}))
+               .playback_state,
+          "a notification's reason is not a terminal playback state");
+    check(parse_session_event(encode_binary_plist(PlistDictionary{
+                                  {"type", "playbackState"},
+                                  {"name", "stopped"},
+                                  {"params", PlistDictionary{{"reason", "ended"}}}}))
+                  .playback_state == "stopped",
+          "only the observed root reason is recognized");
+}
+
 void random_identifier_tests() {
     group = "random identifiers";
     std::set<std::string> device_ids;
@@ -470,6 +509,7 @@ int main(int argc, char** argv) {
         header_tests();
         response_tests(directory);
         event_tests(directory);
+        explicit_end_reason_tests(directory);
         url_diagnostic_redaction_tests();
         buffering_diagnostic_tests();
         remote_diagnostic_tests();

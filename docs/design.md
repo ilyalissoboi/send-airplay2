@@ -1,33 +1,33 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-07 (Asia/Tokyo), after PR #12 merged into `main`. This document distinguishes proposed architecture
-from implemented behavior. HTTP single-byte-range resolution and bounded
-mDNS/DNS-SD discovery with a diagnostic CLI are implemented. Private pairing TLV8,
-HKDF-SHA512 and authenticated control-record codecs are implemented, along with
-private peer verification and PIN/SRP provisioning message processing. Bounded
-HTTP/RTSP framing and native TCP now connect these flows privately; authentication
-is tested with synthetic receivers and loopback I/O. Windows desktop credential
-storage and CLI authentication are implemented. The user confirmed live PIN
-pairing, built-in fresh-socket verification and separate-process credential reload
-on Apple TV 4K / tvOS 26.6 after
-the M6 metadata compatibility fix. Private channel keys, event I/O, timing,
-session messages and the URL session/`cast` CLI are implemented. Standalone G1
-initially failed. The minimal native remote-control SETUP/event session then
-passed G1: user-observed video/audio and home-screen return after sender shutdown.
-Broader authentication, native control validation and host gates remain.
+Implementation snapshot: 2026-10-11 (Asia/Tokyo), after PRs #1-#38 merged.
+The C++17 core implements discovery, PIN pairing, authenticated transport,
+URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
+binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
+MP4/MKV HLS remux with text subtitles and indexed MKV startup. The Screenbox
+fork has implemented its current design through PRs #1-#7.
+
+Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
+desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
+C API and packaged UWP hosts using D62's URL controls fallback. D63 recognizes
+its explicit HLS EOF reason. The user reports the private x64 Screenbox UI
+checks passed; see the current handoff for scope and the loaded-DLL evidence
+limitation. Screenbox's published package pin predates D62. Additional host,
+receiver and firmware interoperability remains unvalidated. Current work is
+the C API/UWP/Screenbox Mac path; see [HANDOFF.md](HANDOFF.md#0-resume-here).
 
 ## Scope and architecture
 
-Use a portable C++ core with an eventual versioned C ABI. Keep protocol sessions,
+Use a portable C++ core with the experimental versioned C ABI. Keep protocol sessions,
 discovery, pairing and credential serialization separate from host integration.
-C# and JNI wrappers will adapt the same core for Screenbox and Android.
+C# adapts the same core for Screenbox; Android/JNI remains future work.
 
 Media sources need read-at-offset and size callbacks, not just filesystem paths:
 Windows brokered StorageFile access and Android content URIs must be supported.
-Specify callback ownership, lifetime, cancellation and thread rules before exposing
-them in a public ABI. No exceptions or C++ objects should cross that boundary.
+The C API specifies callback ownership, lifetime, cancellation and thread rules
+([public-api.md](public-api.md)). No exceptions or C++ objects cross that boundary.
 
-Proposed components:
+Components and current state:
 
 | Component | Responsibility | State |
 |---|---|---|
@@ -37,8 +37,9 @@ Proposed components:
 | Session | Setup/event/timing/feedback lifecycle and receiver error mapping | Private URL/MRP sessions and automatic ordered cleanup implemented; selected G3 checks and remaining manual gates recorded |
 | Media server | GET/HEAD, byte sources, range responses, bounded streaming | Experimental Boost.Beast/Asio server implemented; loopback tested and Apple TV fetch observed; see media-server.md |
 | Playback | URL start, pause/resume, seek, status, stop | URL/MRP and automatic terminal cleanup implemented; G1 passed; native EOF and ten short cycles passed; G2 passed by user report; remaining manual G3 checks pending |
-| Public playback interface | Versioned C handle over session and media server | Experimental v1 implemented (D46, [public-api.md](public-api.md)); manual plan passed on one receiver/host (D48) |
-| Platform adapters | Networking, credentials, file access, host lifecycle | Desktop native networking and Windows credentials implemented; common credential design (built-in plus host-provided stores) decided in D49, [credential-interface.md](credential-interface.md); other stores, packaged hosts and media access pending |
+| Public playback interface | Versioned C handle over session and media server | Experimental v3: playback, host stores/pairing and HLS delivery; C# binding implemented; recorded Apple TV checks passed through desktop and packaged hosts |
+| Platform adapters | Networking, credentials, file access, host lifecycle | Windows Credential Manager, macOS Keychain, Linux Secret Service and host stores implemented; UWP native builds, PasswordVault and brokered StorageFile reads tested on the recorded Windows/Apple TV combination; other sender platforms remain unvalidated |
+| HLS remux | MP4/MKV to fMP4 VOD with WebVTT renditions | H.264/HEVC, AAC/AC-3/E-AC-3, MKV and MP4 text subtitles, indexed MKV startup implemented; HDR signaling and growing presentations remain work |
 | Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
 
 An AirPlay 2-capable receiver accepting an older protocol path is not proof of
@@ -78,7 +79,8 @@ using EVP X25519/Ed25519 and pinned identity credentials. Private
 [PIN pairing](pin-pairing.md) uses Botan SRP through its C FFI, preserving C++17.
 Private [receiver I/O](receiver-transport.md) and Windows desktop
 [credential storage/CLI authentication](credential-storage.md) are implemented.
-Broader hardware authentication, other OS store adapters and UWP packaging remain gates.
+Broader hardware authentication and sender interoperability remain gates. OS store
+adapters and UWP packaging are implemented; their evidence is recorded separately.
 
 ## HTTP range contract
 
@@ -100,6 +102,12 @@ Apply Range only to GET, and apply If-Range/preconditions in the future server
 before calling this function. Do not advertise the resolver as full HTTP compliance.
 
 ## Screenbox integration audit
+
+Historical upstream audit preceding integration. The fork has since implemented
+its provider/session boundary, PasswordVault pairing, HLS casting, queue and
+system media controls, local handoff and cosmetic follow-ups (PRs #1-#7).
+Its pinned package predates D62; extending its path to the Mac is active work.
+Reinspect the fork's current instructions and design before editing it.
 
 Inspected main commit: 46aadf6b20ef5d8348a6049c16c882c22ec0f84e.
 
@@ -136,6 +144,17 @@ builds. A desktop C# console success is insufficient: validate native loading,
 brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
+
+Current order: validate D62 through the C API and packaged UWP host on the Mac,
+including remux, controls, start position, natural end and consent cancellation;
+prepare a verified package from `main`, obtain approval for publication, and
+update/test Screenbox. Mac consent research, fork regression/architecture checks,
+MRP track/queue research, HDR/growing HLS, nuget.org and additional host/receiver
+proofs remain choices in [HANDOFF.md section 0](HANDOFF.md#0-resume-here).
+Remote-Stop classification is deferred by the user.
+
+The following first-slice sequence is historical, retained to explain its gates;
+it is not the current development queue.
 
 The reference baseline, Windows pairing/reuse, media fetch and private URL
 session are implemented or observed as recorded in receiver-validation.md.
@@ -190,13 +209,12 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    checks passed; this follow-up has no new hardware observation.
 4. Complete hardware authentication/restart/revocation and discovery/interface
    checks, real-file >4-GiB seeking and neutral sender-identity validation (D30).
-5. Expose the versioned session API and bindings. The experimental C playback
-   interface ([public-api.md](public-api.md), D46) is implemented and unit-tested,
-   and passed its manual plan on one receiver/host (D48); bindings remain. Prove packaged Windows C#
-   loading, brokered file access and inbound networking, then Linux/macOS/Android
-   device support and other credential stores. CI is separate from device evidence.
-6. After the standalone gate, integrate Screenbox in a dedicated fork with
-   Chromecast regression and local/remote handoff coverage. Reinspect its instructions.
+5. The versioned C API, C# binding, packaged Windows loading/brokered access,
+   inbound networking and built-in credential stores are implemented (D46-D61).
+   Linux/macOS/Android sender interoperability remains unvalidated; CI is separate
+   from device evidence.
+6. Screenbox integration is implemented in the fork. Chromecast regression and
+   additional device checks remain; reinspect its instructions before changes.
 
 Each implementation slice follows AGENTS.md: readable C++17, secret/resource RAII,
 format checks, static/shared CMake/CTest and CI at the actual PR head. No automatic

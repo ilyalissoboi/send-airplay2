@@ -101,8 +101,10 @@ namespace SendAirPlay2.UwpHost
         }
 
         /// <summary>Scans once; back on the UI thread, fills the address box and
-        /// returns true when the expected receiver has a castable address.</summary>
-        private async Task<bool> DiscoverAsync(string expected)
+        /// returns true when the expected receiver has a castable address.
+        /// Model selection requires exactly one match so a script cannot choose
+        /// arbitrarily between receivers of the same model.</summary>
+        private async Task<bool> DiscoverAsync(string expected, bool matchModel = false)
         {
             Log("Discover: starting (" + Receivers.DefaultDuration.TotalSeconds + " s)");
             var address = await Task.Run(() =>
@@ -112,10 +114,15 @@ namespace SendAirPlay2.UwpHost
                     var receivers = Receivers.Discover(Receivers.DefaultDuration);
                     Log("Discover: ok receivers=" + receivers.Count);
                     Receiver? match = null;
+                    var matchingCount = 0;
                     for (var index = 0; index < receivers.Count; ++index)
                     {
                         var receiver = receivers[index];
-                        var matches = receiver.Name == expected;
+                        var matches = (matchModel ? receiver.Model : receiver.Name) == expected;
+                        if (matches)
+                        {
+                            ++matchingCount;
+                        }
                         if (matches && match == null)
                         {
                             match = receiver;
@@ -124,6 +131,11 @@ namespace SendAirPlay2.UwpHost
                             " port_set=" + (receiver.Port != 0 ? "yes" : "no") +
                             " features=" + (receiver.Features.HasValue ? "yes" : "no") +
                             " expected=" + (matches ? "yes" : "no"));
+                    }
+                    if (matchModel && matchingCount != 1)
+                    {
+                        Log("Discover: model selection needs one match; count=" + matchingCount);
+                        return null;
                     }
                     if (match == null || match.Address.Length == 0)
                     {

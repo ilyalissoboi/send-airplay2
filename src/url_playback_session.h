@@ -221,6 +221,9 @@ struct SessionStatus {
  * event thread answers receiver requests and publishes state; a timing thread
  * answers NTP requests. A supervisor detects EOF, receiver stop, ownership
  * loss or connection failure and owns cleanup. No user code runs on these threads.
+ * An explicit URL "ended" event commits media_end with its playback state under
+ * the state mutex and finishes the reader before another receive. A previously
+ * recorded failure or terminal reason retains precedence over that event.
  *
  * Automatic cleanup and stop() use the same fixed order, even after failures: feedback,
  * URL event channel, URL control connection, timing responder, then remote
