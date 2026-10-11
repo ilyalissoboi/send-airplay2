@@ -97,7 +97,7 @@ runs the same casts through the public C API only.
 | Pairing and credentials (C) | [`pairing.h`](include/send_airplay2/pairing.h), [`credentials.h`](include/send_airplay2/credentials.h) |
 | Discovery (C) | [`receivers.h`](include/send_airplay2/receivers.h) |
 | C# (.NET Standard 2.0) | [`bindings/csharp`](bindings/csharp); see [the binding notes](docs/csharp-binding.md) |
-| NuGet package (binding + UWP native libraries) | `scripts/pack_nuget.ps1`, not published yet; see [docs/nuget-package.md](docs/nuget-package.md) |
+| NuGet package (binding + UWP native libraries) | Published as GitHub prerelease `nuget-v0.3.0-ci.196`; not on nuget.org. This package predates D62's Mac controls; see [docs/nuget-package.md](docs/nuget-package.md) |
 | Packaged UWP example | [`tools/uwp-host`](tools/uwp-host); see [its notes](docs/uwp-host.md) |
 
 The contracts and the version policy are in [docs/public-api.md](docs/public-api.md).

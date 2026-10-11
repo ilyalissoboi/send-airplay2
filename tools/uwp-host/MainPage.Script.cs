@@ -16,6 +16,8 @@ namespace SendAirPlay2.UwpHost
     /// as the buttons. Blank lines and lines starting with '#' are skipped.
     /// <list type="bullet">
     /// <item><c>discover [NAME]</c>: one scan; fills the address (default: the form's name).</item>
+    /// <item><c>discover-model MODEL</c>: one scan; requires one receiver of that model.</item>
+    /// <item><c>profile NAME</c>: selects a PasswordVault profile (script-token syntax).</item>
     /// <item><c>cast vault|builtin LABEL [remux|progressive] [start=SECONDS]</c>: casts the
     /// file remembered as LABEL (pick it once with that label); remux is the default.</item>
     /// <item><c>wait SECONDS</c>, <c>pause</c>, <c>play</c>, <c>seek SECONDS</c>, <c>status</c>, <c>stop</c>.</item>
@@ -123,6 +125,15 @@ namespace SendAirPlay2.UwpHost
             {
                 case "discover":
                     return await DiscoverAsync(rest.Length > 0 ? rest : ExpectedNameBox.Text);
+                case "discover-model":
+                    return words.Length == 2 && await DiscoverAsync(words[1], matchModel: true);
+                case "profile":
+                    if (words.Length != 2 || !IsScriptToken(words[1]))
+                    {
+                        return false;
+                    }
+                    ProfileBox.Text = words[1];
+                    return true;
                 case "cast":
                     return await ScriptCast(words);
                 case "wait":

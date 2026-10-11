@@ -234,8 +234,11 @@ controls instead of failing to start. What a host sees differently:
 - **Status.** `owned` becomes 1 once the receiver reports our item playing; it
   never falls back, because without remote control no other player is visible.
   Position, duration and rate come from the URL session's events, the
-  position extrapolated while playing. `at_end` and the `media_end` end reason
-  work as on tvOS.
+  position extrapolated while playing. `at_end` remains based on reported
+  progress. A stopped playback-state event with the exact root reason
+  `ended` is normalized to state `ended` and end reason `media_end` (D63),
+  even if the Mac omits its final HLS position. Other reasons retain the
+  existing progress-based classification; extrapolated time alone is not EOF.
 - **Commands.** Pause, play, seek and stop work (stop pauses, and the session
   teardown that follows closes the video on the Mac). A nonzero
   `start_position_seconds` is applied by a seek once the item plays, as on

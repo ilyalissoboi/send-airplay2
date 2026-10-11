@@ -1,12 +1,14 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-08 (Asia/Tokyo). PRs #12-#22 are merged; `main` contains the
-receiver-tested public playback interface (D46-D48), the D49 credential design,
-host stores plus pairing (D50-D51), the C# binding (D52), the packaged UWP test
-host (D53), the C discovery interface (D54), the UWP native build (D55), wake
-before play (D56) and UWP x86/ARM64 with a certification kit run (D57). The
-macOS Keychain store (D58) is on `claude/macos-keychain`; the Linux Secret
-Service store (D59) is stacked on it as `claude/linux-secret-service`.
+Checkpoint: 2026-10-11 (Asia/Tokyo). PRs #12-#38 are merged. `main` contains
+the experimental C API version 3, C# binding, packaged UWP host and native
+builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
+remux with text subtitles and indexed MKV startup, and D62's URL controls
+fallback for receivers that reject remote-control SETUP. The Screenbox fork
+has implemented its current design (PRs #1-#7), but its pinned package
+`0.3.0-ci.196` predates D62. Receiver evidence remains specific to the recorded
+Apple TV and MacBook Pro from Windows. D62 used the CLI; the active D63 slice
+has now checked desktop C API and packaged UWP playback on macOS 26.7.1.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -14,9 +16,18 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
-- **No slice is active (2026-10-11).** The next steps, for the user to
-  choose, are listed at the top of [HANDOFF.md](HANDOFF.md) section 0; the
-  first is bringing D62 to Screenbox (a new package prerelease).
+- **Active slice (2026-10-11):** the user chose documentation reconciliation,
+  then bringing D62 to Screenbox. Branch `codex/mac-screenbox-validation`,
+  based on `a0fd5b9`. Validate the C API and packaged UWP host on the Mac,
+  including HLS remux, then prepare a package from `main`, obtain approval
+  to publish its prerelease, and update/test Screenbox's package pins.
+  Follow [HANDOFF.md](HANDOFF.md) section 0 for the current gates.
+- **D63:** HLS natural end initially returned `receiver_stop` in both the C API
+  and UWP host despite user-observed natural EOF. Native commit `0ad1e36`
+  recognizes the Mac's exact stopped-event root `reason: ended`; corrected
+  shared C API and UWP checks report `media_end` and pass visually. Static
+  35/35 and shared 36/36 CTest passed. Screenbox validation and the new
+  main-branch prerelease/pin update remain in progress; `ci.203` lacks D63.
 - **Casting to a Mac (D62)**, merged as PR #37: URL controls when a receiver
   rejects remote control. Start, pause/play, seek, start position, status,
   natural end and stop passed on the user's MacBook Pro from the CLI (seek
@@ -61,10 +72,10 @@ guide; the master handoff and dated artifacts preserve the longer history.
   head `923d8efbee066a5a7ce37dd6e83cb891ede58a06` (D44, documentation only) passed
   all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37587291158),
   and its single review thread is resolved. PRs #1-#12 are all merged.
-- Latest implementation/test commit on `main`:
-  `ab7ec0170dbc364bfbec0e52a1b71ae92a0974a5` (D43). Later commits change
-  documentation only. Inspect `git rev-parse origin/main` rather than assuming
-  these hashes are the latest tip.
+- Latest merged implementation slice: D62, PR #37, final head `ed24ae4`
+  (all 14 CI jobs passed). `main` was `a0fd5b9` when this slice began, after
+  documentation PR #38. Inspect live refs and actual PR-head CI before writing;
+  historical D43/D40 hashes below describe those dated results only.
 - **Branch workflow (D45):** start each new slice on a fresh descriptive branch
   from current `origin/main` and publish it as its own PR. CI runs only for pull
   requests, so a branch push without a PR has no CI result. Do not reuse the
@@ -92,9 +103,10 @@ changing code.
 
 ## What is implemented
 
-The initial public interface remains experimental. Private native MP4 casting is
-implemented; old statements that this repository cannot cast are superseded.
-The public playback/session ABI and production bindings are not implemented.
+The public interface remains experimental, at API version 3. The C playback,
+pairing, credential and discovery interfaces and the C# binding are implemented.
+The packaged UWP host and Screenbox fork have receiver-tested Apple TV paths.
+JNI and Linux/macOS/Android sender interoperability remain unvalidated.
 
 - Bounded DNS-SD discovery, PIN/SRP provisioning, authenticated HAP peer
   verification, native TCP/control records and Windows Credential Manager storage.
@@ -128,6 +140,14 @@ The public playback/session ABI and production bindings are not implemented.
   seven manual checks and ten cycles on one Apple TV 4K / tvOS 26.6 / Windows 11.
 - **D48 also passed, for one selected file:** a seek past 4 GiB (37 range
   requests above 4 GiB, user-observed picture) and E-AC-3 audio, via `cast`.
+- **D50-D59:** host credential stores and pairing, C# and discovery bindings,
+  UWP builds and Windows/macOS/Linux built-in credential stores are merged.
+- **D60-D61:** API version 3 adds HLS remux delivery; MP4/MKV supported codecs,
+  text subtitle renditions, indexed MKV startup and post-start position seeking
+  passed their recorded Apple TV checks. See [hls.md](hls.md).
+- **D62:** rejected remote-control SETUP can fall back to URL controls;
+  start, status, pause/play, seek, start position, natural end and stop passed
+  from the CLI on the recorded Mac. The active slice extends host validation.
 
 D43 review fixes are in `d1011ab`, `880feb3` and `ab7ec01`: decoded MRP extension
 payloads have move-only erasing owners; event bodies are erased if acknowledgment
@@ -139,7 +159,13 @@ See [pr-review.md](pr-review.md) for reproduction and exact scope.
 
 ## Validation evidence and its limits
 
-At `ab7ec01`, Windows Release static/shared CTest passed **24/24 each**
+Current D62 receiver evidence and its limits are in
+[receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
+D62's final PR head `ed24ae4` passed all 14 CI jobs, including desktop
+static/shared checks, sanitizers, UWP architecture builds and packaging.
+Those checks do not establish receiver interoperability for additional hosts.
+
+Historical PR #12 validation: at `ab7ec01`, Windows Release static/shared CTest passed **24/24 each**
 (15.40/15.43 seconds), offline runner contracts **10/10**, and the session test
 passed five repetitions under concurrent local load. All **52 PR-changed C++
 files** passed clang-format dry-run; whitespace checks passed. All ten
@@ -156,7 +182,7 @@ it. Selected G1/G2/G3 results do not establish other receivers, firmware or host
 The user observed normal video/audio, controls in both seek directions, sender
 Stop/Home, full-clip natural EOF/Home, and selected sleep/wake and network recovery.
 
-Latest receiver-tested code head (D40):
+Historical D40 receiver-tested code head:
 `4a18b2662150768a00154ca17e222f2e701fd192`. D42 reused that runtime; D43/D44 have
 **no new receiver observation**. D42 CLI SHA-256:
 `da3f85a3f4b8f0595834b0462250859ee56c3bab89c38acdd632434d889f6e83`.
@@ -175,9 +201,12 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 
 ## Open issues and ordered next work
 
-PR #12's review process is complete and merged; no implementation blocker was
-identified for that private experimental slice. The items below are follow-up
-development, not retroactive gate failures.
+The active queue is [HANDOFF.md section 0](HANDOFF.md#0-resume-here): first
+validate D62 through the C API/UWP host and update Screenbox's package. Then
+Mac consent research, fork follow-ups, MRP track/queue research, HDR and growing
+HLS, nuget.org publishing, and additional host/receiver support remain choices.
+Remote-Stop classification stays deferred by the user. The following PR #12
+follow-up record is historical; completed items are not a new work queue.
 
 1. **Done (merged in PR #14): versioned public playback interface (D46).** The user chose
    credentials by profile name (secrets stay inside the library) and a
@@ -224,7 +253,8 @@ development, not retroactive gate failures.
    investigation. Do not relabel the original run PASS.
 5. **Other standalone gates.** Authentication after real host/receiver restart,
    wrong PIN/revocation, opted-in disposable profile deletion, departure/interface
-   changes, actual-file seek beyond 4 GiB and neutral sender identity (D30).
+   changes and neutral sender identity (D30). A selected actual-file seek
+   beyond 4 GiB passed in D48; broader files/hosts remain untested.
    The selected D42 network check is already PASS; broaden it rather than claiming
    it has never run. Cooperative duration-based ownership can misidentify a
    concurrent same-duration takeover and does not guarantee exclusive ownership.
@@ -240,13 +270,14 @@ development, not retroactive gate failures.
    build without the Credential Manager adapter, against the app C runtime, is
    **done in D55** (Botan static through an overlay port; D57 added x86, ARM64 in CI
    and a certification kit run; formerly WACK and x86/ARM64 not
-   run); (d) macOS Keychain and Linux Secret Service
-   adapters, then Linux/macOS/Android device support. Botan UWP packaging is
+   run); (d) **done in D58-D59:** macOS Keychain and Linux Secret Service
+   adapters. Linux/macOS/Android sender device support remains. Botan UWP packaging is
    resolved for x64 by the D55 overlay port; desktop/CI success is not
    packaged-host proof.
-7. **Screenbox integration.** After the standalone gate, re-read that repository's
-   current instructions and work in its dedicated fork. Test Chromecast regressions
-   and local/remote handoff. This session changed no Screenbox source or project.
+7. **Screenbox integration:** implemented in the fork through PRs #1-#7.
+   Re-read its current instructions before changes. The active slice brings
+   D62 to its pinned package; Chromecast regressions and additional architecture
+   and sleeping-TV checks remain follow-ups.
 
 Settled choices: original Apache-2.0 code; in-tree plist/protobuf codecs;
 synchronous session threads (D28); MRP controls (D29); configurable reference
@@ -314,9 +345,9 @@ are the portable evidence. Review a historical driver's staging paths and output
 filters before reusing it with a new binary; do not blindly run it or publish its
 raw output. Previously staged allowed executables were restored with hash checks.
 
-No hardware cast or implementation automation is left running at this checkpoint.
-Inspect live PR/CI status in the new session. The user previously could observe the TV within 30 seconds and later
-performed Ethernet removal/reconnection, but future availability must be checked.
+No hardware cast or implementation automation was left running when this slice
+began. Inspect live PR/CI status in a new session. The user confirmed availability
+to observe the Mac during this slice; later sessions must check availability again.
 Batch manual checkpoints if they are unavailable; unattended telemetry never
 substitutes for visual video/audio/Home observations.
 
@@ -329,8 +360,7 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue send-airplay2 from AGENTS.md, docs/HANDOFF.md, docs/design.md,
-> docs/receiver-validation.md and docs/CONTINUATION.md. PR #12 is merged; check
-> `origin/main` and any open PR before writing. Start the next slice on a fresh
-> branch from `main` with its own PR; ask me before merging. Preserve D42 PASS and
-> its limits. Use the ordered follow-up queue and confirm the proposed next slice
-> with me without reopening settled decisions.
+> docs/receiver-validation.md and docs/CONTINUATION.md. Resume the active D62
+> C API/UWP/Screenbox slice on its actual PR head. Inspect `origin/main` and
+> open PRs before writing. Preserve receiver-specific evidence and historical
+> failures. Ask before merging and before publishing each package prerelease.
