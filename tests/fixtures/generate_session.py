@@ -141,6 +141,8 @@ def event(name: str, value) -> None:
 # an event type the session only counts.
 event("state-params", {"type": "playbackState", "params": {"playbackState": "Playing"}})
 event("state-name", {"type": "playbackState", "name": "Loading"})
+# macOS HLS EOF (26.7.1): no final position, but an explicit root reason.
+event("state-ended", {"type": "playbackState", "name": "stopped", "reason": "ended"})
 # CMTime-shaped duration observed on tvOS 26.6; all values are synthetic.
 event("state-duration", {"type": "playbackState", "params": {
     "playbackState": "Playing", "duration": {

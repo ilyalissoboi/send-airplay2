@@ -133,6 +133,9 @@ constexpr double max_seek_seconds = 1e9;
 
 /// A decoded event-channel message with fixed type/state labels; unknown
 /// strings become "other". State is set only for "playbackState" events.
+/// A stopped event with the exact root reason "ended" becomes state "ended",
+/// an explicit EOF signal even when macOS HLS omits the final position. Unknown
+/// reasons are neither retained nor interpreted; numeric progress is unchanged.
 struct SessionEvent {
     std::string type;
     std::optional<std::string> playback_state;

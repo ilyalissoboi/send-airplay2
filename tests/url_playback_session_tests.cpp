@@ -563,6 +563,34 @@ void url_controls_progress_tests() {
           "a mid-item stop is a receiver stop");
 }
 
+void url_controls_explicit_end_tests() {
+    group = "URL controls explicit EOF reason (D63)";
+    for (const auto* reason : {"ended", "user", "unknown"}) {
+        Behavior macos;
+        macos.remote_setup_status = macos_remote_setup_status;
+        FakeReceiver receiver(macos);
+        auto session =
+            UrlPlaybackSession::start(receiver.credentials(), url_controls_options(receiver));
+        receiver.push_event_body(macos_state_event("Playing", 100.0, 1.0));
+        receiver.push_event_body(enveloped(
+            PlistDictionary{{"type", "playbackState"}, {"name", "stopped"}, {"reason", reason}}));
+        const auto expected =
+            std::string_view(reason) == "ended" ? SessionEnd::media_end : SessionEnd::receiver_stop;
+        check(eventually([&] { return session->status().cleaned_up; }),
+              std::string("automatic cleanup for reason ") + reason);
+        const auto status = session->status();
+        check(status.end_reason == expected && !status.failed && receiver.control_was_closed() &&
+                  receiver.remote_control().control_was_closed(),
+              std::string("terminal classification and joined connections for reason ") + reason);
+        const auto playback = session->playback_status();
+        check(playback.reported_position_seconds == 100.0 && !playback.at_end,
+              std::string("EOF signal does not fabricate final progress for reason ") + reason);
+        session->stop();
+        check(session->status().end_reason == expected,
+              std::string("host stop retains the terminal reason ") + reason);
+    }
+}
+
 void url_controls_start_position_tests() {
     group = "URL controls start position (D62)";
     Behavior macos;
@@ -1290,6 +1318,7 @@ int main(int argc, char** argv) {
         url_controls_start_tests();
         url_controls_command_tests();
         url_controls_progress_tests();
+        url_controls_explicit_end_tests();
         url_controls_start_position_tests();
         event_log_tests();
         remote_diagnostic_tests();

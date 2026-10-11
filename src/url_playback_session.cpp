@@ -972,8 +972,9 @@ void UrlPlaybackSession::supervise() {
                 had_owned_player = had_owned_player || playback.owned;
             } else if (url_controls_) {
                 // URL events are the only progress source; no ownership signal
-                // exists without MRP (D62). macOS reports the final position
-                // just before "stopped" at the natural end.
+                // exists without MRP (D62). Progressive macOS playback reports
+                // the final position before "stopped"; HLS can instead provide
+                // the explicit EOF reason normalized to "ended" above.
                 const auto playback = playback_status();
                 if (playback.at_end) {
                     request_end(SessionEnd::media_end);
