@@ -3,8 +3,9 @@
 Status: **`nuget-v0.3.0-ci.207` is published as a GitHub prerelease;
 not on nuget.org (2026-10-11).** Its public-download hash is verified, and
 [Screenbox fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) pins
-that version and hash. The fork's merged `main` still restores `ci.196` until
-that PR merges; final `ci.207` running-DLL and receiver validation remain pending.
+that version and hash. That PR merged as `31013d5e`; the fork's `main` now
+restores `ci.207`. Development Screenbox 1.0.0.2's running native/crypto DLL
+hashes match the published package. Final receiver validation remains pending.
 The user chose GitHub releases over a machine-local package source, which CI
 cannot reach. nuget.org publishing is still pending, and is needed before an
 upstream Screenbox PR. This document covers the package, how to pack and
@@ -146,8 +147,9 @@ All 14 main CI jobs passed. The user approved publication, and
 [ci.207 is published](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207)
 with its tag pointing to the exact main commit. Both the public download and a
 fresh `Get-AirPlayPackage.ps1` download match the package hash above.
-[Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) contains the pins.
+[Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) merged as `31013d5e` with the pins.
 The matching development layout is registered as private version 1.0.0.2;
-loaded-DLL verification and final receiver validation remain gates. No new
+loaded native/crypto DLL hashes match the package. Final receiver validation
+remains a gate. No new
 receiver observation is attributed to these package/build checks.
 Record: [D64 package verification](validation/nuget-macos-package-windows-2026-10-11.json).

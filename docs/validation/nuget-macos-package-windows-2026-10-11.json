@@ -31,7 +31,9 @@
     "base_commit": "2b8a53b0",
     "branch": "codex/airplay-mac-package",
     "prepared_commit": "33228bceef27001764af950d9718eab79254ad90",
-    "pins": "Version and SHA-256 pushed in draft fork PR #8; public download verified.",
+    "pins": "Version and SHA-256 merged as fork main 31013d5e4fe49dfd0893a12b7521773596446684 in PR #8; public download verified.",
+    "merge_commit": "31013d5e4fe49dfd0893a12b7521773596446684",
+    "ci": "Test, xaml-lint and package build passed at 59936fecaaf24f230353e18390045615d518fb3a; release job skipped for PR.",
     "pr_url": "https://github.com/ilyalissoboi/Screenbox/pull/8",
     "build": "VS 2026 MSBuild Release x64 packaged build passed using the exact CI artifact.",
     "logic_tests": "86/86 pass, 491 ms; no skipped tests.",
@@ -40,12 +42,19 @@
     "native_sha256": "3a81ef19bbbf7288a9fc71b3264445a5eaa787dd952d10e86fb4d22591f8d8e7",
     "crypto_sha256": "4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68",
     "payload_verification": "Both native DLL hashes match the verified CI package exactly.",
-    "installation": "Matching extracted MSIX layout registered in place as development version 1.0.0.2; app identity/data preserved. Running-DLL verification pending.",
+    "installation": "Matching extracted MSIX layout registered in place as development version 1.0.0.2; app identity/data preserved.",
+    "loaded_dll_verification": {
+      "result": "PASS; both running process module hashes match the published package.",
+      "app_version": "1.0.0.2",
+      "layout": "build-review/screenbox-layout-ci207",
+      "native_sha256": "3a81ef19bbbf7288a9fc71b3264445a5eaa787dd952d10e86fb4d22591f8d8e7",
+      "crypto_sha256": "4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68",
+      "trigger": "DLLs loaded after the user opened the Cast/device flyout and reported the Mac listed."
+    },
     "receiver_observation": "Not run for this candidate. Earlier manual checks are recorded separately in D63 and predate the review race fix."
   },
+  "documentation_merge": "Native PR #40 merged as a29212b4fef9533e9ba1c8533e5b5ec5cb5a2aa8; all 14 checks passed at 772b8508941a7266c07df8179080ef5e2bb8d261; both review threads resolved.",
   "remaining_gates": [
-    "Inspect actual fork PR head CI",
-    "Verify running DLL and final package receiver playback",
-    "User review/merge of fork PR #8 and native documentation PR #40"
+    "Final package receiver playback"
   ]
 }

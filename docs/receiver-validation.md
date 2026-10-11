@@ -1726,7 +1726,15 @@ Its public download and a fresh Screenbox script download match SHA-256
 `e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
 Provenance, all six native DLL hashes, license/notices and all three UWP binary
 property checks passed. Screenbox's exact-package x64 build and 86/86 logic
-tests passed; fork PR #8 contains the pins. Development layout 1.0.0.2 is
-registered in place, preserving app data. Running-DLL verification and final
-receiver observations remain pending. This checkpoint adds no hardware pass.
+tests passed; fork PR #8 merged as `31013d5e` with the pins. Native PR #40
+merged as `a29212b` after all 14 checks passed at `772b850`.
+Development layout 1.0.0.2 is registered in place, preserving app data.
+The running app's DLLs were inspected after the user opened the Cast/device
+flyout and reported the Mac listed. Loaded native SHA-256:
+`3a81ef19bbbf7288a9fc71b3264445a5eaa787dd952d10e86fb4d22591f8d8e7`;
+loaded crypto SHA-256:
+`4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68`.
+Both modules load from the verified ci.207 development layout and match the
+published package. Final receiver observations remain pending; loaded-DLL
+verification alone does not establish a playback pass.
 Record: [D64 package checks](validation/nuget-macos-package-windows-2026-10-11.json).

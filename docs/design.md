@@ -1,19 +1,19 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-11 (Asia/Tokyo), after PRs #1-#39 merged.
+Implementation snapshot: 2026-10-11 (Asia/Tokyo), after PRs #1-#40 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
 MP4/MKV HLS remux with text subtitles and indexed MKV startup. The Screenbox
-fork has implemented its current design through PRs #1-#7.
+fork has implemented its current design through PRs #1-#8, including the Mac package pin.
 
 Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
 desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
 C API and packaged UWP hosts using D62's URL controls fallback. D63 recognizes
 its explicit HLS EOF reason. The user reports the private x64 Screenbox UI
 checks passed; see the current handoff for scope and the loaded-DLL evidence
-limitation. Screenbox's merged `main` pin (`ci.196`) predates D62; fork PR #8
-pins published, hash-verified `ci.207`, whose final receiver checks remain
+limitation. Screenbox's merged `main` pin is published, hash-verified `ci.207`;
+its running DLL hashes match that package. Final receiver checks remain
 pending. Additional host, receiver and firmware interoperability remains unvalidated. Current work is
 the C API/UWP/Screenbox Mac path; see [HANDOFF.md](HANDOFF.md#0-resume-here).
 
@@ -147,7 +147,7 @@ brokered file access and inbound network serving in a packaged UWP host early.
 ## Ordered next changes and acceptance gates
 
 Current gate: validate the published, hash-verified `0.3.0-ci.207` package in
-Screenbox and review the fork's version/hash pin PR #8. D63 completed the C API
+Screenbox. The fork's version/hash pin PR #8 is merged. D63 completed the C API
 and packaged UWP Mac checks; D64 published the verified main package with the
 user's approval. Earlier private Screenbox observations predate the review fix.
 Mac consent research, fork regression/architecture checks,

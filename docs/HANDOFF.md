@@ -12,13 +12,15 @@ checkpoint, review disposition, validation commands and ordered development queu
 **Active slice (2026-10-11): documentation reconciliation, then Screenbox on
 the Mac (step 1 below), chosen by the user.** PR #39 merged as `2829242` on
 2026-10-11 after all 14 checks passed at its final head `811c022`; its review
-thread is resolved. The package continuation branch `codex/mac-screenbox-package`
-starts at that main commit. The validation branch started at `a0fd5b9`.
+thread is resolved. PR #40 merged as `a29212b` with all 14 checks passed at
+`772b850` and both review threads resolved. Final validation branch
+`codex/mac-screenbox-final-validation` starts at that main commit.
+The earlier validation branch started at `a0fd5b9`.
 Completed checks: C API static/shared and packaged UWP host on the recorded Mac,
 including HLS remux, controls, start position, natural end and native consent-time
 cancellation; the user also reports the private Screenbox UI checks passed.
-Remaining gates: validate the published package in Screenbox and review/merge
-the fork pin PR and this documentation checkpoint with user approval.
+Remaining gate: validate the published package in Screenbox. The fork pin PR
+and package documentation checkpoint are merged.
 Preserve the loaded-DLL evidence limitation
 in the D63 record when describing the private Screenbox checks.
 Do not resume phases marked "Next" in the history below.
@@ -34,16 +36,17 @@ Screenbox's `codex/airplay-mac-package` worktree under ignored
 `build-review/screenbox` has prepared version/hash pins and a successful x64
 packaged build whose native/crypto DLLs match the artifact. Logic tests: 86/86.
 The pins/docs are on fork branch `codex/airplay-mac-package`, with
-[PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) open for review.
+[PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) merged as `31013d5e`.
 Private development app version 1.0.0.2 was used only for the built test layout;
 the manifest edit was restored. The matching layout is registered in place as
-development version 1.0.0.2. Its loaded DLL and receiver behavior still need
-verification. See the [D64 package record](validation/nuget-macos-package-windows-2026-10-11.json).
+development version 1.0.0.2. The running app's native/crypto DLL hashes match
+the published package after opening the Cast/device flyout. Final receiver
+checks remain pending. See the [D64 package record](validation/nuget-macos-package-windows-2026-10-11.json).
 
 **PR #40 review follow-up:** the restart and package summaries now identify D63
 as completed and D64's final running-DLL/receiver checks as the current gate.
 Published `ci.207` and fork PR #8's pins are distinguished from the fork's
-still-merged `ci.196` pin. Screenbox PR #8's test, lint and package-build checks
+then-merged `ci.196` pin. Screenbox PR #8's test, lint and package-build checks
 passed at `59936fe`; it has no review findings. This documentation correction
 adds no new receiver observation.
 
@@ -84,11 +87,10 @@ The earlier main package candidate `0.3.0-ci.203` passed all 14 CI jobs but
 does not contain this fix, so it will not be used for the Screenbox update.
 
 Current slice and remaining choices (dependencies first):
-1. **Screenbox on a Mac.** Screenbox's merged `main` package (`0.3.0-ci.196`) predates D62,
-   so a Mac it lists cannot be cast to yet. Steps:
+1. **Screenbox on a Mac.** Merged `main` pins `0.3.0-ci.207` with D62/D63. Steps:
    - **done in D63:** check D62 through the C interface and the UWP test host's script mode;
    - **done in D64:** publish approved `ci.207` from `main` and verify its
-     public hash; version/hash pins are in fork PR #8;
+     public hash; version/hash pins merged in fork PR #8 and running DLL hashes match;
    - test the final package from Screenbox to the MacBook Pro, which also pairs after
      an on-screen consent.
 2. **The Mac's per-cast consent prompt:** find what makes the Mac ask again
