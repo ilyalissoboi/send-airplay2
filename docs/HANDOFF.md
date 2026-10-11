@@ -43,6 +43,17 @@ Screenbox telemetry. Consent-time cancellation through the static C API passed:
 start cancelled in 5.068 s, no reads, one release, and the user observed the
 unanswered Mac prompt close.
 Record: [D63 receiver checks](receiver-validation.md#mac-c-api-packaged-uwp-and-hls-eof-d63-2026-10-11).
+**PR #39 review follow-up:** the review identified a race between an accepted
+explicit EOF and the next event-channel read returning EOF. The reader now
+commits `media_end` with the playback state under the same mutex and exits;
+the supervisor still owns ordered cleanup. An earlier recorded failure or
+terminal reason is preserved. Regression coverage includes immediate closure
+with native `ended` and Mac stopped/reason events in MRP and URL-only sessions,
+and a later EOF after an earlier Stop or remote-channel failure. This follow-up
+adds offline validation, not a new receiver observation; the hardware and
+private Screenbox hashes above describe the earlier `0ad1e36` sources.
+Final review-fix CTest: static 35/35, shared 36/36 including C#; format/diff checks
+passed. The regressions fail against the prior `b8bf806` implementation.
 The earlier main package candidate `0.3.0-ci.203` passed all 14 CI jobs but
 does not contain this fix, so it will not be used for the Screenbox update.
 

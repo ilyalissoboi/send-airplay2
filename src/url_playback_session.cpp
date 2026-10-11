@@ -578,6 +578,7 @@ void UrlPlaybackSession::event_loop() {
                 mrp_) {
                 mrp_->confirm_url_playing(*event->duration_seconds);
             }
+            const bool explicit_end = event && event->playback_state == "ended";
             {
                 std::lock_guard<std::mutex> lock(state_mutex_);
                 if (options_.record_event_structure) {
@@ -611,9 +612,18 @@ void UrlPlaybackSession::event_loop() {
                         append_start_trace_locked(start_state(*event->playback_state), 0,
                                                   event->playback_rate);
                     }
+                    // Commit EOF with its state, before another channel can report
+                    // closure. A previously recorded failure or end keeps precedence.
+                    if (explicit_end && status_.end_reason == SessionEnd::none && !status_.failed) {
+                        status_.end_reason = SessionEnd::media_end;
+                        stopping_ = true;
+                    }
                 }
             }
             state_changed_.notify_all();
+            if (explicit_end) {
+                return; // The supervisor joins this reader and owns ordered cleanup.
+            }
         }
     } catch (...) {
         if (!event_stop_) {
@@ -974,7 +984,7 @@ void UrlPlaybackSession::supervise() {
                 // URL events are the only progress source; no ownership signal
                 // exists without MRP (D62). Progressive macOS playback reports
                 // the final position before "stopped"; HLS can instead provide
-                // the explicit EOF reason normalized to "ended" above.
+                // the explicit EOF reason committed by the event reader.
                 const auto playback = playback_status();
                 if (playback.at_end) {
                     request_end(SessionEnd::media_end);

@@ -498,5 +498,15 @@
     "provenance_limit": "The installed development app version and native DLL hash were verified. No Screenbox process was available during the final inspections, so its loaded DLL hash was not independently captured. No automated Screenbox event log or exact timing is attributed to these manual checks.",
     "automation": "Computer Use loaded, paused and sought locally in the older app, then repeatedly lost window ownership to ApplicationFrameHost.exe. The user later stopped Computer Use with physical Escape. Remaining receiver UI checks were manual."
   },
+  "review_followup": {
+    "reviewed_head": "b8bf8069f10f4ce7cdf39cdff079face4048a48b",
+    "change": "Commit explicit media_end with playback state under the state mutex, then exit the URL event reader before another receive. Preserve an earlier recorded failure or terminal reason; supervisor retains ordered cleanup ownership.",
+    "regression_before_fix": "New session tests failed with 10 assertions against the reviewed implementation.",
+    "coverage": "Immediate channel closure after native ended and macOS stopped/reason-ended events, with URL-only and MRP sessions; EOF after earlier sender Stop or remote-channel failure.",
+    "static_ctest": "35/35 pass, 44.38 s; rebuilt the stale pre-fix test binary after source restoration retained its older timestamp.",
+    "shared_ctest": "36/36 pass, 49.75 s; includes C# binding.",
+    "format": "Touched C++ clang-format dry-run and git diff --check pass.",
+    "receiver_scope": "Offline regression follow-up only. No new hardware run; all receiver observations and private package hashes in this artifact describe the prior D63 builds."
+  },
   "limits": "Specific receiver, firmware and Windows hosts only. Remote Stop classification remains deferred. No new main-branch prerelease published; ci.203 lacks D63."
 }

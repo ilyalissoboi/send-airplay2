@@ -35,6 +35,10 @@ guide; the master handoff and dated artifacts preserve the longer history.
   evidence slice. Merge approval and the new main-branch prerelease/pin update
   remain gates; `ci.203` lacks D63. Validate the final published package after
   pinning it; the private x64 build is not that release.
+  PR #39's review follow-up commits explicit EOF atomically before another
+  event receive and exits the reader, preserving earlier terminal results.
+  Its regression covers prompt channel closure and prior Stop/failure;
+  no new hardware observation is attributed to that follow-up.
 - **Casting to a Mac (D62)**, merged as PR #37: URL controls when a receiver
   rejects remote control. Start, pause/play, seek, start position, status,
   natural end and stop passed on the user's MacBook Pro from the CLI (seek

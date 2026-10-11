@@ -239,6 +239,9 @@ controls instead of failing to start. What a host sees differently:
   `ended` is normalized to state `ended` and end reason `media_end` (D63),
   even if the Mac omits its final HLS position. Other reasons retain the
   existing progress-based classification; extrapolated time alone is not EOF.
+  Explicit EOF commits the terminal reason with the state before another event
+  receive, so a following channel closure cannot replace it with connection
+  loss. An earlier recorded failure or terminal reason retains precedence.
 - **Commands.** Pause, play, seek and stop work (stop pauses, and the session
   teardown that follows closes the video on the Mac). A nonzero
   `start_position_seconds` is applied by a seek once the item plays, as on

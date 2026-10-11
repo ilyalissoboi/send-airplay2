@@ -1692,6 +1692,24 @@ the 1.0.0.1 update. No automated Screenbox event log, loaded-DLL hash, or exact
 timing is attributed to that report. Final published-package validation remains
 a separate gate.
 
+**PR #39 review follow-up:** the review found that the event reader could publish
+`ended`, read again, and record a disconnect before the supervisor's poll committed
+`media_end`. The fix commits the terminal reason with the playback state under
+the state mutex and returns from the reader. The supervisor retains cleanup
+ownership, and an earlier recorded failure or terminal reason is preserved.
+New regressions reproduce the race against `b8bf806` (10 assertions fail), cover
+immediate closure after both forms of explicit EOF in URL-only and MRP sessions,
+and preserve a prior sender Stop or remote-channel failure. The initial test run
+with the fix had two incorrect fallback closure-order expectations; those were
+corrected to reflect remote SETUP rejection closing remote control before URL
+start. After restoring the fix, the first full static run reused the pre-fix test
+binary because the restored source retained its older timestamp; explicitly
+rebuilding it resolved that build-state issue. Final Windows Release static
+CTest **35/35 (44.38 s)** and shared **36/36 (49.75 s)**, including the C# binding,
+passed, as did touched C++ clang-format and `git diff --check`. This follow-up
+has no new hardware run; the receiver/binary records above remain the earlier
+D63 observations.
+
 No new prerelease is published. The all-architecture main candidate
 `0.3.0-ci.203` passed all 14 CI jobs but lacks D63, so it is excluded from the
 planned update. Merge approval, a new package built from main, explicit
