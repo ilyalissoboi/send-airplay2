@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-11 (Asia/Tokyo). PRs #12-#38 are merged. `main` contains
+Checkpoint: 2026-10-11 (Asia/Tokyo). PRs #12-#39 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -18,9 +18,11 @@ guide; the master handoff and dated artifacts preserve the longer history.
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
 - **Active slice (2026-10-11):** the user chose documentation reconciliation,
-  then bringing D62 to Screenbox. Branch `codex/mac-screenbox-validation`,
-  based on `a0fd5b9`. Validate the C API and packaged UWP host on the Mac,
-  including HLS remux, then prepare a package from `main`, obtain approval
+  then bringing D62 to Screenbox. PR #39 merged as `2829242`, final head
+  `811c022` passed all 14 checks and its review thread is resolved. Continue
+  packaging on `codex/mac-screenbox-package` from that main commit. C API,
+  packaged UWP and private Screenbox checks are recorded below; prepare a
+  package from `main`, obtain approval
   to publish its prerelease, and update/test Screenbox's package pins.
   Follow [HANDOFF.md](HANDOFF.md) section 0 for the current gates.
 - **D63:** HLS natural end initially returned `receiver_stop` in both the C API
@@ -31,10 +33,19 @@ guide; the master handoff and dated artifacts preserve the longer history.
   The user reports private Screenbox cancellation/recovery, playback controls,
   Stop/local handoff and natural queue advance passed. Development app 1.0.0.1
   is registered with the corrected installed DLL hash; a loaded-DLL hash was
-  not captured before the app closed. PR #39 is the active implementation and
-  evidence slice. Merge approval and the new main-branch prerelease/pin update
-  remain gates; `ci.203` lacks D63. Validate the final published package after
-  pinning it; the private x64 build is not that release.
+  not captured before the app closed. PR #39 is merged. Main workflow run
+  `38107556167` prepares `0.3.0-ci.207` at `2829242`; verification, prerelease
+  approval and the fork pin update remain gates; `ci.203` lacks D63. Validate
+  the final published package after pinning it; the private x64 build is not
+  that release.
+  D64 preparation: `ci.207` clean provenance, architecture payload hashes,
+  licenses and UWP binary checks passed; all 14 main CI jobs passed.
+  SHA-256 `e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
+  Screenbox worktree `build-review/screenbox` has prepared pins, 86/86 logic
+  tests and a matching x64 MSIX (private test version 1.0.0.2; source manifest
+  restored). It is not installed and has no new receiver observation. The
+  pins/docs are saved locally at fork commit `33228bce`. The fork PR waits for
+  approved publication so CI can fetch the exact asset.
   PR #39's review follow-up commits explicit EOF atomically before another
   event receive and exits the reader, preserving earlier terminal results.
   Its regression covers prompt channel closure and prior Stop/failure;
@@ -84,9 +95,9 @@ guide; the master handoff and dated artifacts preserve the longer history.
   head `923d8efbee066a5a7ce37dd6e83cb891ede58a06` (D44, documentation only) passed
   all ten [CI checks](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37587291158),
   and its single review thread is resolved. PRs #1-#12 are all merged.
-- Latest merged implementation slice: D62, PR #37, final head `ed24ae4`
-  (all 14 CI jobs passed). `main` was `a0fd5b9` when this slice began, after
-  documentation PR #38. Inspect live refs and actual PR-head CI before writing;
+- Latest merged implementation slice: D63, PR #39, final head `811c022`
+  (all 14 CI jobs passed), merged as `2829242`. `main` was `a0fd5b9` when the
+  validation slice began, after documentation PR #38. Inspect live refs and actual PR-head CI before writing;
   historical D43/D40 hashes below describe those dated results only.
 - **Branch workflow (D45):** start each new slice on a fresh descriptive branch
   from current `origin/main` and publish it as its own PR. CI runs only for pull
@@ -213,8 +224,9 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 
 ## Open issues and ordered next work
 
-The active queue is [HANDOFF.md section 0](HANDOFF.md#0-resume-here): first
-validate D62 through the C API/UWP host and update Screenbox's package. Then
+The active queue is [HANDOFF.md section 0](HANDOFF.md#0-resume-here): C API/UWP
+and private Screenbox checks are recorded in D63; finish the approved main
+prerelease and Screenbox pin/final-package validation. Then
 Mac consent research, fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12

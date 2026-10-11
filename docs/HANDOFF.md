@@ -10,16 +10,32 @@ checkpoint, review disposition, validation commands and ordered development queu
 ## 0. Resume here
 
 **Active slice (2026-10-11): documentation reconciliation, then Screenbox on
-the Mac (step 1 below), chosen by the user.** Branch
-`codex/mac-screenbox-validation` starts at `a0fd5b9`; no PR existed at start.
+the Mac (step 1 below), chosen by the user.** PR #39 merged as `2829242` on
+2026-10-11 after all 14 checks passed at its final head `811c022`; its review
+thread is resolved. The package continuation branch `codex/mac-screenbox-package`
+starts at that main commit. The validation branch started at `a0fd5b9`.
 Completed checks: C API static/shared and packaged UWP host on the recorded Mac,
 including HLS remux, controls, start position, natural end and native consent-time
 cancellation; the user also reports the private Screenbox UI checks passed.
-Remaining gates: merge PR #39 with approval, prepare/verify a package from `main`,
+Remaining gates: prepare/verify a package from `main`,
 obtain the user's approval for its prerelease, update the fork's pins and validate
 the published package in Screenbox. Preserve the loaded-DLL evidence limitation
 in the D63 record when describing the private Screenbox checks.
 Do not resume phases marked "Next" in the history below.
+Main workflow run `38107556167` (run number 207) was dispatched at `2829242`
+to prepare `0.3.0-ci.207` with D62/D63 and the review race fix. Clean source
+stamps, all architecture payload hashes, licenses/notices and local UWP binary
+checks passed. Candidate SHA-256:
+`e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
+All 14 jobs in the main workflow passed; nothing is published.
+Screenbox's `codex/airplay-mac-package` worktree under ignored
+`build-review/screenbox` has prepared version/hash pins and a successful x64
+packaged build whose native/crypto DLLs match the artifact. Logic tests: 86/86.
+The prepared pins/docs are saved locally as fork commit `33228bce`; its PR
+waits for approved publication so CI can download the asset.
+Private development app version 1.0.0.2 was used only for the built test layout;
+the manifest edit was restored. The new layout is not installed and has no
+receiver observation yet. See the [D64 preparation record](validation/nuget-macos-package-windows-2026-10-11.json).
 
 **D63 in progress:** on the user's MacBook Pro (`Mac14,10`, macOS 26.7.1),
 the static progressive C API and shared HLS C API controls passed visually.
@@ -60,7 +76,7 @@ does not contain this fix, so it will not be used for the Screenbox update.
 Current slice and remaining choices (dependencies first):
 1. **Screenbox on a Mac.** Screenbox's package (`0.3.0-ci.196`) predates D62,
    so a Mac it lists cannot be cast to yet. Steps:
-   - check D62 through the C interface and the UWP test host's script mode;
+   - **done in D63:** check D62 through the C interface and the UWP test host's script mode;
    - publish a new prerelease from `main` (each release needs the user's
      approval), and pin it with its SHA-256 in the fork's
      `Screenbox.Core.csproj` and `scripts/Get-AirPlayPackage.ps1`;

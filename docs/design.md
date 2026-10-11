@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-11 (Asia/Tokyo), after PRs #1-#38 merged.
+Implementation snapshot: 2026-10-11 (Asia/Tokyo), after PRs #1-#39 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and

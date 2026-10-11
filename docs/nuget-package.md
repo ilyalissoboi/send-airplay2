@@ -122,3 +122,25 @@ library; packing uses only the .NET SDK.
 
 Not covered: nuget.org publishing, package signing, an ARM64 pack on this
 machine, and ARM64 or x86 builds of the host app.
+
+## Mac update candidate (D64, 2026-10-11)
+
+PR #39 merged as main `2829242335280419a97b080ae2098d90f8a55b18`; its final
+head `811c022` passed all 14 checks. Main workflow run
+[38107556167](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38107556167)
+produced `SendAirPlay2.0.3.0-ci.207.nupkg`, SHA-256
+`e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
+It includes D62 URL controls and D63 explicit HLS EOF handling plus the
+event-channel closure race fix. The prior `ci.203` candidate lacks D63 and
+was excluded from this update.
+
+The binding and all three native source stamps name that clean main commit;
+all six DLL payload hashes match `BUILD-INFO.txt`. Package layout, license and
+dependency notices, and extracted x64/x86/ARM64 UWP binary checks passed.
+Screenbox's prepared pin restored this exact artifact; VS 2026 MSBuild produced
+an x64 MSIX with matching native/crypto DLL hashes and its 86 logic tests passed.
+All 14 main CI jobs passed. **This candidate is not published**;
+explicit prerelease approval, public-download hash verification, the fork PR
+and final package receiver validation remain gates. No new receiver observation
+is attributed to these package/build checks.
+Record: [D64 package preparation](validation/nuget-macos-package-windows-2026-10-11.json).
