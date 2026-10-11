@@ -21,9 +21,9 @@ guide; the master handoff and dated artifacts preserve the longer history.
   then bringing D62 to Screenbox. PR #39 merged as `2829242`, final head
   `811c022` passed all 14 checks and its review thread is resolved. Continue
   packaging on `codex/mac-screenbox-package` from that main commit. C API,
-  packaged UWP and private Screenbox checks are recorded below; prepare a
-  package from `main`, obtain approval
-  to publish its prerelease, and update/test Screenbox's package pins.
+  packaged UWP and private Screenbox checks are recorded below. Approved main
+  package `ci.207` is now published and publicly hash-verified; fork PR #8
+  contains its pins. Verify the running DLL and final Screenbox receiver checks.
   Follow [HANDOFF.md](HANDOFF.md) section 0 for the current gates.
 - **D63:** HLS natural end initially returned `receiver_stop` in both the C API
   and UWP host despite user-observed natural EOF. Native commit `0ad1e36`
@@ -34,8 +34,8 @@ guide; the master handoff and dated artifacts preserve the longer history.
   Stop/local handoff and natural queue advance passed. Development app 1.0.0.1
   is registered with the corrected installed DLL hash; a loaded-DLL hash was
   not captured before the app closed. PR #39 is merged. Main workflow run
-  `38107556167` prepares `0.3.0-ci.207` at `2829242`; verification, prerelease
-  approval and the fork pin update remain gates; `ci.203` lacks D63. Validate
+  `38107556167` built published `0.3.0-ci.207` at `2829242`; provenance and
+  public-download verification passed; `ci.203` lacks D63. Validate
   the final published package after pinning it; the private x64 build is not
   that release.
   D64 preparation: `ci.207` clean provenance, architecture payload hashes,
@@ -43,9 +43,11 @@ guide; the master handoff and dated artifacts preserve the longer history.
   SHA-256 `e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
   Screenbox worktree `build-review/screenbox` has prepared pins, 86/86 logic
   tests and a matching x64 MSIX (private test version 1.0.0.2; source manifest
-  restored). It is not installed and has no new receiver observation. The
-  pins/docs are saved locally at fork commit `33228bce`. The fork PR waits for
-  approved publication so CI can fetch the exact asset.
+  restored). The matching development layout is registered as 1.0.0.2;
+  loaded-DLL verification and final receiver observation remain pending.
+  The user approved publication; the public and fresh fork-script downloads
+  match that hash. [Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8)
+  is draft pending receiver validation; inspect its actual head/CI before edits.
   PR #39's review follow-up commits explicit EOF atomically before another
   event receive and exits the reader, preserving earlier terminal results.
   Its regression covers prompt channel closure and prior Stop/failure;

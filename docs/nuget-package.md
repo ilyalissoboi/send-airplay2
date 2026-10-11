@@ -123,7 +123,7 @@ library; packing uses only the .NET SDK.
 Not covered: nuget.org publishing, package signing, an ARM64 pack on this
 machine, and ARM64 or x86 builds of the host app.
 
-## Mac update candidate (D64, 2026-10-11)
+## Published Mac update (D64, 2026-10-11)
 
 PR #39 merged as main `2829242335280419a97b080ae2098d90f8a55b18`; its final
 head `811c022` passed all 14 checks. Main workflow run
@@ -139,8 +139,12 @@ all six DLL payload hashes match `BUILD-INFO.txt`. Package layout, license and
 dependency notices, and extracted x64/x86/ARM64 UWP binary checks passed.
 Screenbox's prepared pin restored this exact artifact; VS 2026 MSBuild produced
 an x64 MSIX with matching native/crypto DLL hashes and its 86 logic tests passed.
-All 14 main CI jobs passed. **This candidate is not published**;
-explicit prerelease approval, public-download hash verification, the fork PR
-and final package receiver validation remain gates. No new receiver observation
-is attributed to these package/build checks.
-Record: [D64 package preparation](validation/nuget-macos-package-windows-2026-10-11.json).
+All 14 main CI jobs passed. The user approved publication, and
+[ci.207 is published](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207)
+with its tag pointing to the exact main commit. Both the public download and a
+fresh `Get-AirPlayPackage.ps1` download match the package hash above.
+[Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) contains the pins.
+The matching development layout is registered as private version 1.0.0.2;
+loaded-DLL verification and final receiver validation remain gates. No new
+receiver observation is attributed to these package/build checks.
+Record: [D64 package verification](validation/nuget-macos-package-windows-2026-10-11.json).

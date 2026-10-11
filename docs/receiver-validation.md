@@ -1710,9 +1710,23 @@ passed, as did touched C++ clang-format and `git diff --check`. This follow-up
 has no new hardware run; the receiver/binary records above remain the earlier
 D63 observations.
 
-No new prerelease is published. The all-architecture main candidate
+At the D63 checkpoint no new prerelease was published. The all-architecture main candidate
 `0.3.0-ci.203` passed all 14 CI jobs but lacks D63, so it is excluded from the
-planned update. Merge approval, a new package built from main, explicit
-prerelease approval, final fork version/hash pins and validation of that
-published package remain gates. These results cover only this receiver,
+planned update. D64 below records subsequent merge/package publication;
+final published-package receiver validation remains a separate gate. These results cover only this receiver,
 firmware and Windows hosts; they do not establish other-host interoperability.
+
+### Published main package checkpoint (D64, 2026-10-11)
+
+PR #39 merged as `2829242`. Main workflow run `38107556167` passed all 14 jobs
+and produced `0.3.0-ci.207`, including the review race fix. With explicit user
+approval, the exact artifact was published as
+[nuget-v0.3.0-ci.207](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207).
+Its public download and a fresh Screenbox script download match SHA-256
+`e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
+Provenance, all six native DLL hashes, license/notices and all three UWP binary
+property checks passed. Screenbox's exact-package x64 build and 86/86 logic
+tests passed; fork PR #8 contains the pins. Development layout 1.0.0.2 is
+registered in place, preserving app data. Running-DLL verification and final
+receiver observations remain pending. This checkpoint adds no hardware pass.
+Record: [D64 package checks](validation/nuget-macos-package-windows-2026-10-11.json).

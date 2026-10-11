@@ -18,9 +18,12 @@
   },
   "provenance": "All binding/native source stamps match clean main commit.",
   "notices": "Apache-2.0 license and OpenSSL/Botan/Boost notices present.",
-  "publication": "Not published; approval required.",
+  "publication": "Explicit user approval received; exact artifact published as GitHub prerelease nuget-v0.3.0-ci.207. NuGet.org publication remains deferred.",
   "date": "2026-10-11",
-  "decision": "D64 package preparation after D63",
+  "decision": "D64 package publication after D63",
+  "release_url": "https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207",
+  "release_tag_commit": "2829242335280419a97b080ae2098d90f8a55b18",
+  "public_download": "SHA-256 matches the CI artifact and recorded pin; fresh Screenbox Get-AirPlayPackage.ps1 download also matches.",
   "workflow_url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/38107556167",
   "ci": "Main workflow completed successfully; all 14 jobs passed at main 2829242335280419a97b080ae2098d90f8a55b18.",
   "uwp_binary_properties": "x64, x86 and ARM64 checks passed locally on extracted package payloads.",
@@ -28,7 +31,8 @@
     "base_commit": "2b8a53b0",
     "branch": "codex/airplay-mac-package",
     "prepared_commit": "33228bceef27001764af950d9718eab79254ad90",
-    "pins": "Version and SHA-256 saved in the local prepared commit; prerelease not published and fork PR not opened yet.",
+    "pins": "Version and SHA-256 pushed in draft fork PR #8; public download verified.",
+    "pr_url": "https://github.com/ilyalissoboi/Screenbox/pull/8",
     "build": "VS 2026 MSBuild Release x64 packaged build passed using the exact CI artifact.",
     "logic_tests": "86/86 pass, 491 ms; no skipped tests.",
     "private_app_version": "1.0.0.2 (temporary testing bump; restored from the fork source after building)",
@@ -36,13 +40,12 @@
     "native_sha256": "3a81ef19bbbf7288a9fc71b3264445a5eaa787dd952d10e86fb4d22591f8d8e7",
     "crypto_sha256": "4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68",
     "payload_verification": "Both native DLL hashes match the verified CI package exactly.",
-    "installation": "New MSIX layout prepared but not registered; prior development installation preserved.",
+    "installation": "Matching extracted MSIX layout registered in place as development version 1.0.0.2; app identity/data preserved. Running-DLL verification pending.",
     "receiver_observation": "Not run for this candidate. Earlier manual checks are recorded separately in D63 and predate the review race fix."
   },
   "remaining_gates": [
-    "Explicit prerelease approval",
-    "Publish exact artifact and verify public download hash",
-    "Open/test the fork pin PR",
-    "Verify running DLL and final package receiver playback"
+    "Inspect actual fork PR head CI",
+    "Verify running DLL and final package receiver playback",
+    "User review/merge of fork PR #8 and native documentation PR #40"
   ]
 }

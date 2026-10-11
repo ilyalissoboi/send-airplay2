@@ -145,10 +145,11 @@ brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
 
-Current order: validate D62 through the C API and packaged UWP host on the Mac,
-including remux, controls, start position, natural end and consent cancellation;
-prepare a verified package from `main`, obtain approval for publication, and
-update/test Screenbox. Mac consent research, fork regression/architecture checks,
+Current gate: validate the published, hash-verified `0.3.0-ci.207` package in
+Screenbox and review the fork's version/hash pin PR #8. D63 completed the C API
+and packaged UWP Mac checks; D64 published the verified main package with the
+user's approval. Earlier private Screenbox observations predate the review fix.
+Mac consent research, fork regression/architecture checks,
 MRP track/queue research, HDR/growing HLS, nuget.org and additional host/receiver
 proofs remain choices in [HANDOFF.md section 0](HANDOFF.md#0-resume-here).
 Remote-Stop classification is deferred by the user.

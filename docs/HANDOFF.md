@@ -17,9 +17,9 @@ starts at that main commit. The validation branch started at `a0fd5b9`.
 Completed checks: C API static/shared and packaged UWP host on the recorded Mac,
 including HLS remux, controls, start position, natural end and native consent-time
 cancellation; the user also reports the private Screenbox UI checks passed.
-Remaining gates: prepare/verify a package from `main`,
-obtain the user's approval for its prerelease, update the fork's pins and validate
-the published package in Screenbox. Preserve the loaded-DLL evidence limitation
+Remaining gates: validate the published package in Screenbox and review/merge
+the fork pin PR and this documentation checkpoint with user approval.
+Preserve the loaded-DLL evidence limitation
 in the D63 record when describing the private Screenbox checks.
 Do not resume phases marked "Next" in the history below.
 Main workflow run `38107556167` (run number 207) was dispatched at `2829242`
@@ -27,17 +27,20 @@ to prepare `0.3.0-ci.207` with D62/D63 and the review race fix. Clean source
 stamps, all architecture payload hashes, licenses/notices and local UWP binary
 checks passed. Candidate SHA-256:
 `e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
-All 14 jobs in the main workflow passed; nothing is published.
+All 14 jobs in the main workflow passed. The user approved publication;
+[ci.207 is published](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207).
+The public download and a fresh fork-script download match that SHA-256.
 Screenbox's `codex/airplay-mac-package` worktree under ignored
 `build-review/screenbox` has prepared version/hash pins and a successful x64
 packaged build whose native/crypto DLLs match the artifact. Logic tests: 86/86.
-The prepared pins/docs are saved locally as fork commit `33228bce`; its PR
-waits for approved publication so CI can download the asset.
+The pins/docs are on fork branch `codex/airplay-mac-package`, with
+[draft PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) open for review.
 Private development app version 1.0.0.2 was used only for the built test layout;
-the manifest edit was restored. The new layout is not installed and has no
-receiver observation yet. See the [D64 preparation record](validation/nuget-macos-package-windows-2026-10-11.json).
+the manifest edit was restored. The matching layout is registered in place as
+development version 1.0.0.2. Its loaded DLL and receiver behavior still need
+verification. See the [D64 package record](validation/nuget-macos-package-windows-2026-10-11.json).
 
-**D63 in progress:** on the user's MacBook Pro (`Mac14,10`, macOS 26.7.1),
+**D63 completed and merged:** on the user's MacBook Pro (`Mac14,10`, macOS 26.7.1),
 the static progressive C API and shared HLS C API controls passed visually.
 HLS finished naturally but reported `receiver_stop` through both the C API
 and packaged UWP host. The Mac omits the final position and sends a stopped
@@ -77,10 +80,9 @@ Current slice and remaining choices (dependencies first):
 1. **Screenbox on a Mac.** Screenbox's package (`0.3.0-ci.196`) predates D62,
    so a Mac it lists cannot be cast to yet. Steps:
    - **done in D63:** check D62 through the C interface and the UWP test host's script mode;
-   - publish a new prerelease from `main` (each release needs the user's
-     approval), and pin it with its SHA-256 in the fork's
-     `Screenbox.Core.csproj` and `scripts/Get-AirPlayPackage.ps1`;
-   - test casting from Screenbox to the MacBook Pro, which also pairs after
+   - **done in D64:** publish approved `ci.207` from `main` and verify its
+     public hash; version/hash pins are in fork PR #8;
+   - test the final package from Screenbox to the MacBook Pro, which also pairs after
      an on-screen consent.
 2. **The Mac's per-cast consent prompt:** find what makes the Mac ask again
    (D62 found the device ID is probably not the reason).
