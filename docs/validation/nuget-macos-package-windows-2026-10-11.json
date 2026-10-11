@@ -1,0 +1,51 @@
+{
+  "version": "0.3.0-ci.207",
+  "main_commit": "2829242335280419a97b080ae2098d90f8a55b18",
+  "workflow_run": 38107556167,
+  "package_sha256": "e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d",
+  "architectures": [
+    "x64",
+    "x86",
+    "arm64"
+  ],
+  "payload_sha256": {
+    "runtimes/win-x64/native/send_airplay2.dll": "3a81ef19bbbf7288a9fc71b3264445a5eaa787dd952d10e86fb4d22591f8d8e7",
+    "runtimes/win-x64/native/libcrypto-3-x64.dll": "4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68",
+    "runtimes/win-x86/native/send_airplay2.dll": "36e311f12aca582bd9eb7a0a0086f4c23e6835cdcb8197cbb700527fd1cb23d7",
+    "runtimes/win-x86/native/libcrypto-3.dll": "837df1f13b6cfc56874f57266f95ccd1c4b56ad49da330d8f34f3667b0850a79",
+    "runtimes/win-arm64/native/send_airplay2.dll": "f17c708bb4d7aaa1b7adc86bfe19d046603076d4c3ef6d98eb0b12d9d3b8d5c9",
+    "runtimes/win-arm64/native/libcrypto-3-arm64.dll": "b34511b61c7c15dbef82a0e70d2e37d1955b9c5eaf6346e5cc42c360ff3483d3"
+  },
+  "provenance": "All binding/native source stamps match clean main commit.",
+  "notices": "Apache-2.0 license and OpenSSL/Botan/Boost notices present.",
+  "publication": "Explicit user approval received; exact artifact published as GitHub prerelease nuget-v0.3.0-ci.207. NuGet.org publication remains deferred.",
+  "date": "2026-10-11",
+  "decision": "D64 package publication after D63",
+  "release_url": "https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207",
+  "release_tag_commit": "2829242335280419a97b080ae2098d90f8a55b18",
+  "public_download": "SHA-256 matches the CI artifact and recorded pin; fresh Screenbox Get-AirPlayPackage.ps1 download also matches.",
+  "workflow_url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/38107556167",
+  "ci": "Main workflow completed successfully; all 14 jobs passed at main 2829242335280419a97b080ae2098d90f8a55b18.",
+  "uwp_binary_properties": "x64, x86 and ARM64 checks passed locally on extracted package payloads.",
+  "screenbox": {
+    "base_commit": "2b8a53b0",
+    "branch": "codex/airplay-mac-package",
+    "prepared_commit": "33228bceef27001764af950d9718eab79254ad90",
+    "pins": "Version and SHA-256 pushed in draft fork PR #8; public download verified.",
+    "pr_url": "https://github.com/ilyalissoboi/Screenbox/pull/8",
+    "build": "VS 2026 MSBuild Release x64 packaged build passed using the exact CI artifact.",
+    "logic_tests": "86/86 pass, 491 ms; no skipped tests.",
+    "private_app_version": "1.0.0.2 (temporary testing bump; restored from the fork source after building)",
+    "msix_sha256": "48275e22c21d73c368c9ada498a4185c5048df861cad335d138bb5c75f83bb1e",
+    "native_sha256": "3a81ef19bbbf7288a9fc71b3264445a5eaa787dd952d10e86fb4d22591f8d8e7",
+    "crypto_sha256": "4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68",
+    "payload_verification": "Both native DLL hashes match the verified CI package exactly.",
+    "installation": "Matching extracted MSIX layout registered in place as development version 1.0.0.2; app identity/data preserved. Running-DLL verification pending.",
+    "receiver_observation": "Not run for this candidate. Earlier manual checks are recorded separately in D63 and predate the review race fix."
+  },
+  "remaining_gates": [
+    "Inspect actual fork PR head CI",
+    "Verify running DLL and final package receiver playback",
+    "User review/merge of fork PR #8 and native documentation PR #40"
+  ]
+}

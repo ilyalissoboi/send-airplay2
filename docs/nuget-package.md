@@ -1,8 +1,11 @@
 # NuGet package (Screenbox step 3)
 
-Status: **published as a GitHub prerelease; not on nuget.org (2026-10-10).**
-`nuget-v0.3.0-ci.196` is on this repository's GitHub releases, where the
-Screenbox fork restores it. The user chose that over a local feed, which CI
+Status: **`nuget-v0.3.0-ci.207` is published as a GitHub prerelease;
+not on nuget.org (2026-10-11).** Its public-download hash is verified, and
+[Screenbox fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) pins
+that version and hash. The fork's merged `main` still restores `ci.196` until
+that PR merges; final `ci.207` running-DLL and receiver validation remain pending.
+The user chose GitHub releases over a machine-local package source, which CI
 cannot reach. nuget.org publishing is still pending, and is needed before an
 upstream Screenbox PR. This document covers the package, how to pack and
 publish it, and how a host consumes it.
@@ -122,3 +125,29 @@ library; packing uses only the .NET SDK.
 
 Not covered: nuget.org publishing, package signing, an ARM64 pack on this
 machine, and ARM64 or x86 builds of the host app.
+
+## Published Mac update (D64, 2026-10-11)
+
+PR #39 merged as main `2829242335280419a97b080ae2098d90f8a55b18`; its final
+head `811c022` passed all 14 checks. Main workflow run
+[38107556167](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38107556167)
+produced `SendAirPlay2.0.3.0-ci.207.nupkg`, SHA-256
+`e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
+It includes D62 URL controls and D63 explicit HLS EOF handling plus the
+event-channel closure race fix. The prior `ci.203` candidate lacks D63 and
+was excluded from this update.
+
+The binding and all three native source stamps name that clean main commit;
+all six DLL payload hashes match `BUILD-INFO.txt`. Package layout, license and
+dependency notices, and extracted x64/x86/ARM64 UWP binary checks passed.
+Screenbox's prepared pin restored this exact artifact; VS 2026 MSBuild produced
+an x64 MSIX with matching native/crypto DLL hashes and its 86 logic tests passed.
+All 14 main CI jobs passed. The user approved publication, and
+[ci.207 is published](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207)
+with its tag pointing to the exact main commit. Both the public download and a
+fresh `Get-AirPlayPackage.ps1` download match the package hash above.
+[Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) contains the pins.
+The matching development layout is registered as private version 1.0.0.2;
+loaded-DLL verification and final receiver validation remain gates. No new
+receiver observation is attributed to these package/build checks.
+Record: [D64 package verification](validation/nuget-macos-package-windows-2026-10-11.json).

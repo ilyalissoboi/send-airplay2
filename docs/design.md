@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-11 (Asia/Tokyo), after PRs #1-#38 merged.
+Implementation snapshot: 2026-10-11 (Asia/Tokyo), after PRs #1-#39 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -12,8 +12,9 @@ desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
 C API and packaged UWP hosts using D62's URL controls fallback. D63 recognizes
 its explicit HLS EOF reason. The user reports the private x64 Screenbox UI
 checks passed; see the current handoff for scope and the loaded-DLL evidence
-limitation. Screenbox's published package pin predates D62. Additional host,
-receiver and firmware interoperability remains unvalidated. Current work is
+limitation. Screenbox's merged `main` pin (`ci.196`) predates D62; fork PR #8
+pins published, hash-verified `ci.207`, whose final receiver checks remain
+pending. Additional host, receiver and firmware interoperability remains unvalidated. Current work is
 the C API/UWP/Screenbox Mac path; see [HANDOFF.md](HANDOFF.md#0-resume-here).
 
 ## Scope and architecture
@@ -145,10 +146,11 @@ brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
 
-Current order: validate D62 through the C API and packaged UWP host on the Mac,
-including remux, controls, start position, natural end and consent cancellation;
-prepare a verified package from `main`, obtain approval for publication, and
-update/test Screenbox. Mac consent research, fork regression/architecture checks,
+Current gate: validate the published, hash-verified `0.3.0-ci.207` package in
+Screenbox and review the fork's version/hash pin PR #8. D63 completed the C API
+and packaged UWP Mac checks; D64 published the verified main package with the
+user's approval. Earlier private Screenbox observations predate the review fix.
+Mac consent research, fork regression/architecture checks,
 MRP track/queue research, HDR/growing HLS, nuget.org and additional host/receiver
 proofs remain choices in [HANDOFF.md section 0](HANDOFF.md#0-resume-here).
 Remote-Stop classification is deferred by the user.
