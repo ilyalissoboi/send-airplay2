@@ -9,10 +9,32 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**Current development: D66 Screenbox Forget-device follow-up (2026-10-12),
+**D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
+`8a40ec3` after all 14 checks passed at final head `8978188`. Screenbox PR #10
+merged as `8bfd3dd9` after test, XAML lint and package build passed at final head
+`47016474` (release skipped for PR). No further implementation slice is selected.
+Preserve the recorded receiver/build limits and manual UI confirmation preference.
+
+**Latest request: audio-feature effort assessment (2026-10-12).** The user
+requests audio-file casting, including audio-only speakers such as HomePod,
+and video with unsupported audio such as DTS; they ask about retaining 5.1/7.1.
+See [assessment and proposed gates](audio-features-assessment.md). Speaker audio
+needs a new audio transport/session; DTS fallback can reuse video/HLS while
+decoding/encoding only audio. Rough scope estimates: 4-8 working weeks for
+speaker-inclusive audio, 3-5 for DTS stereo/5.1 fallback, plus 1-2 for verified
+7.1 if the codec/receiver spike succeeds. Shared work reduces combined effort.
+These are engineering estimates/proposals, not implementation authorization or
+new receiver evidence. Further implementation remains unselected.
+
+**User's validation corrections:** Chromecast video verification is deferred
+because no suitable local receiver is available. Casting to a sleeping Apple TV
+was already verified earlier, per the user; exact earlier build/date is not
+provided here. Do not schedule that passed check again as an uncompleted gate.
+
+**Completed D66 Screenbox Forget-device follow-up (2026-10-12),
 chosen by the user after the D65 investigation.** Fork branch
 `codex/airplay-forget-device` starts at merged main `2cee2ea7`;
-[fork PR #10](https://github.com/ilyalissoboi/Screenbox/pull/10) is ready for review;
+[fork PR #10](https://github.com/ilyalissoboi/Screenbox/pull/10) is merged as `8bfd3dd9`;
 implementation head `a3d64831`, followed by validation documentation `35285224`.
 Review follow-up `f05c10e6` applies the Forget busy guard before both AirPlay and
 Chromecast eligibility. All 99 logic tests pass; restoring the reviewed bypass
@@ -23,7 +45,7 @@ on the same footer row. Its x64 package passed and was registered in place as
 1.0.0.5, preserving data/pairings; source manifest restored. Computer Use verified
 the running executable/native modules and observed both buttons aligned without
 overlap. No new Forget/Pair/Cast action or receiver playback was performed in
-that layout inspection. Inspect the actual current PR head's CI before merging.
+that layout inspection. Final-head CI and merge are recorded above.
 The Mac playback observations below predate these follow-ups and remain
 attributed to `a3d64831`.
 The button,
@@ -36,10 +58,10 @@ another Apple TV's paired actions retained, Forget hidden for Chromecast and
 during active casting, restored Cast after user re-pairing, and local paused
 handoff after Stop. The user confirmed normal Mac video/audio, pause/resume and
 Stop closing its video. All three fork CI checks passed at implementation head
-`a3d64831`; inspect checks/review at the actual current head before merging.
+`a3d64831`; final-head checks also passed as recorded above.
 No native/package change is needed; the fork retains published `0.3.0-ci.207`.
 This completes the initial D66 build/UI gate for the recorded Mac/Windows x64 only;
-review/user-approved merge remains. Never remove other profiles as a diagnostic.
+the review and user-approved merges are complete. Never remove other profiles as a diagnostic.
 See the [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).
 
 **Latest UI request and confirmation preference (2026-10-12):** the user wants
@@ -69,9 +91,9 @@ Grant age/expiry across casts is a working hypothesis from this pattern; the exa
 renewal rule and cache key are unproven. No numeric grant value appeared in the
 captured log; no shipping C++ or sender-policy change is justified. The temporary
 name experiment was restored byte-for-byte and the normal CLI rebuilt.
-Initial investigation complete; documentation/evidence PR #42 remains open.
-Its attribution review is resolved and all 14 checks passed at `6642d18`.
-The user has selected D66 above; merging PR #42 still needs user approval.
+Initial investigation complete; documentation/evidence PR #42 merged as `8a40ec3`.
+Its attribution review is resolved and all 14 checks passed at final head `8978188`.
+D66 above is also merged; further development is unselected.
 See [D65 study](macos-receiver-consent.md) and
 [artifact](validation/native-macos-consent-windows-2026-10-12.json).
 
@@ -175,10 +197,11 @@ Current slice and remaining choices (dependencies first):
    identifiers do not necessarily re-prompt. Exact grant duration/key/renewal
    remain optional research. Review the D65 evidence; no sender fix is proposed.
 3. **Fork follow-ups:**
-   - **D66 "Forget this AirPlay device": implemented/validated; fork PR #10 awaits review/merge**;
+   - **D66 "Forget this AirPlay device": implemented/validated and merged in fork PR #10**;
    - x86 and ARM64 builds on a device;
-   - a Chromecast regression check;
-   - a sleeping TV from Screenbox.
+   - Chromecast video regression is deferred: no suitable local receiver;
+   - sleeping Apple TV casting is already verified by user report; broader
+     wake/receiver cases remain optional, not a repeated required gate.
 4. **MRP research:** choosing subtitle (and audio) tracks from the sender,
    and whether the TV remote's next/previous can reach the sender, which
    currently cannot skip queue items.

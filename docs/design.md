@@ -1,12 +1,12 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#41 merged.
+Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#42 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
 MP4/MKV HLS remux with text subtitles and indexed MKV startup. The Screenbox
-fork has implemented its current design through PRs #1-#9, including the Mac
-package pin and final validation record.
+fork has implemented its current design through PRs #1-#10, including the Mac
+package pin, final validation record and Forget-device follow-up.
 
 Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
 desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
@@ -21,9 +21,16 @@ unvalidated. D65's initial consent investigation motivates a grant-age/expiry
 hypothesis without establishing per-run H/J UI prompt attribution, a numeric
 timer or cache key. The synthetic
 name comparison and fresh random session identifiers retained short-term reuse;
-no shipping sender-policy change is proposed. Current work is reviewing that
-research evidence;
+no shipping sender-policy change is proposed. D65's research evidence and D66's
+Screenbox follow-up are merged; further development is unselected;
 see [HANDOFF.md](HANDOFF.md#0-resume-here).
+
+The user requests assessment of speaker-inclusive audio-file casting and
+unsupported video-audio conversion, including DTS surround feasibility.
+[The assessment](audio-features-assessment.md) separates new audio transport
+from audio-only transcoding over existing video/HLS, proposes shared decoding
+and describes codec/receiver/packaging gates. No backend, output-surround policy
+or feature implementation is selected by this assessment request.
 
 ## Scope and architecture
 
@@ -164,8 +171,8 @@ D65 completed an initial controlled Mac consent study; its
 The user selected D66, "Forget this AirPlay device" in Screenbox: remove only
 the selected local pairing, offer Pair on success and retain paired state on
 storage failure. Logic, x64 packaged build and forget → pair → cast UI validation
-passed for the recorded Mac, with loaded binaries verified; fork PR #10 awaits
-review/user-approved merge. Other-device preservation was checked through
+passed for the recorded Mac, with loaded binaries verified; fork PR #10 merged
+as `8bfd3dd9`. D65 evidence PR #42 merged as `8a40ec3`. Other-device preservation was checked through
 paired UI state, not a new Apple TV cast; no Chromecast playback regression is claimed.
 Deeper grant research, fork regression/architecture checks,
 MRP track/queue research, HDR/growing HLS, nuget.org and additional host/receiver
@@ -232,8 +239,10 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    inbound networking and built-in credential stores are implemented (D46-D61).
    Linux/macOS/Android sender interoperability remains unvalidated; CI is separate
    from device evidence.
-6. Screenbox integration is implemented in the fork. Chromecast regression and
-   additional device checks remain; reinspect its instructions before changes.
+6. Screenbox integration is implemented in the fork. Chromecast video regression
+   is deferred for unavailable hardware; sleeping Apple TV casting is already
+   verified by user report. Additional architecture/receiver checks remain;
+   reinspect its instructions before changes.
 
 Each implementation slice follows AGENTS.md: readable C++17, secret/resource RAII,
 format checks, static/shared CMake/CTest and CI at the actual PR head. No automatic

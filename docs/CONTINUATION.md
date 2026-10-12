@@ -1,11 +1,11 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#41 are merged. `main` contains
+Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#42 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
 fallback for receivers that reject remote-control SETUP. The Screenbox fork
-has implemented its current design (PRs #1-#9); merged `main` now pins
+has implemented its current design and Forget follow-up (PRs #1-#10); merged `main` now pins
 `0.3.0-ci.207`, including D62/D63. Receiver evidence remains specific to the recorded
 Apple TV and MacBook Pro from Windows. D62 used the CLI; completed D63 checked
 desktop C API and packaged UWP playback on macOS 26.7.1, and the user reports
@@ -15,18 +15,28 @@ hashes verified; fork PR #8 merged as `31013d5e`. Final evidence documentation
 in native PR #41 and fork PR #9 is merged. D65's initial consent investigation
 is complete: eleven clean casts, reuse across process/session/name changes, and
 re-prompting during an equal-idle chain. Exact timer/key/renewal remain unproven;
-no sender behavior change is proposed. Current development is D66's Screenbox
-Forget-device follow-up; D65 evidence PR #42 also awaits user-approved merge.
+no sender behavior change is proposed. D65 evidence PR #42 merged as `8a40ec3`
+and D66 Screenbox PR #10 merged as `8bfd3dd9`. All 14 native checks and three
+fork checks passed at final heads `8978188` and `47016474`. Further development
+is unselected; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+Latest user request is an [audio-feature effort assessment](audio-features-assessment.md):
+audio files must include audio-only speakers/HomePod; evaluate DTS conversion
+including 5.1/7.1 feasibility. This authorizes analysis, not implementation.
+Chromecast video validation is deferred (no suitable local receiver); sleeping
+Apple TV casting was already verified earlier by user report, with no new
+build/date attribution supplied. Do not repeat it as an uncompleted gate.
 
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
 - **D66 (2026-10-12):** user selected "Forget this AirPlay device" in Screenbox.
   Fork branch `codex/airplay-forget-device` starts from merged main `2cee2ea7`;
-  [fork PR #10](https://github.com/ilyalissoboi/Screenbox/pull/10) is ready for review:
+  [fork PR #10](https://github.com/ilyalissoboi/Screenbox/pull/10) merged as `8bfd3dd9`;
+  final head `47016474` passed test, XAML lint and package build (release skipped).
   implementation `a3d64831`, validation docs `35285224`.
   Review fix `f05c10e6` applies the Forget guard before Chromecast and AirPlay
   eligibility; 99/99 tests pass and the reviewed bypass fails two regression
@@ -35,7 +45,7 @@ guide; the master handoff and dated artifacts preserve the longer history.
   row as Cast. Its x64 package passed, was registered in place as 1.0.0.5 and
   preserves data/pairings. Computer Use verified running modules and the compact
   row without overlap; no new credential action or receiver playback. Inspect
-  actual-head CI before merge. The Mac playback evidence below predates these
+  Final-head CI passed. The Mac playback evidence below predates these
   follow-ups, with no new receiver claim.
   UI/local-only removal is implemented with target-only deletion, idempotence,
   failure feedback, selection-change protection and pairing/start/cast guards.
@@ -45,7 +55,7 @@ guide; the master handoff and dated artifacts preserve the longer history.
   other receiver's paired actions retained, Chromecast/active-cast visibility,
   restored Cast after user re-pairing and local paused handoff. The user confirmed
   normal Mac video/audio, pause/resume and Stop closure. All three CI checks passed
-  at `a3d64831`; inspect actual-head checks/review before user-approved merge.
+  at `a3d64831`; final-head checks and the user-approved merge are also complete.
   [The artifact](validation/screenbox-forget-macos-windows-2026-10-12.json) records
   exact hashes and limits. Preserve the existing package pin and all other pairings.
   Latest requested refinement `1ba38e55`: group Forget immediately before Cast
@@ -57,7 +67,7 @@ guide; the master handoff and dated artifacts preserve the longer history.
   visual UI confirmation, print steps in chat and ask the user to confirm;
   do not use the Computer Use skill. Retain prior observations as historical.
 - **D65 (2026-10-12):** user chose consent investigation after reviewing public
-  documentation. Continue on `codex/macos-consent-investigation` from main
+  documentation. Completed branch `codex/macos-consent-investigation` began at main
   `671e714`. All eleven desktop CLI casts start/Stop cleanly with saved pairing;
   receiver logs and observer reports are separately attributed in
   [the study](macos-receiver-consent.md) and
@@ -68,8 +78,8 @@ guide; the master handoff and dated artifacts preserve the longer history.
   prompt were explicitly observed. Equal 45.078-second idle gaps and the log
   pattern motivate a grant-age hypothesis; J's UI prompt is not individually confirmed.
   Exact duration/key/renewal are unresolved; no shipping C++ change remains.
-  PR #42's attribution review is resolved and all 14 checks passed at `6642d18`.
-  Merge still requires user approval. D66 is the selected development follow-up.
+  PR #42's attribution review is resolved and all 14 checks passed at final
+  head `8978188`; it merged as `8a40ec3`. D66 is also complete and merged.
 - **Completed slice (2026-10-11):** the user chose documentation reconciliation,
   then bringing D62 to Screenbox. PR #39 merged as `2829242`, final head
   `811c022` passed all 14 checks and its review thread is resolved. The
@@ -79,7 +89,7 @@ guide; the master handoff and dated artifacts preserve the longer history.
   package `ci.207` is now published and publicly hash-verified; fork PR #8
   merged its pins. Running DLL hashes match; final Screenbox receiver checks
   passed by user report. Native PR #41 merged as `671e714` with all 14 checks
-  passed at `997b0be`; fork PR #9 merged as `2cee2ea7`. D66 is the current development slice.
+  passed at `997b0be`; fork PR #9 merged as `2cee2ea7`. D65/D66 have since completed and merged.
   Follow [HANDOFF.md](HANDOFF.md) section 0 for the current gates.
 - **D63:** HLS natural end initially returned `receiver_stop` in both the C API
   and UWP host despite user-observed natural EOF. Native commit `0ad1e36`
@@ -296,9 +306,9 @@ and private Screenbox checks are recorded in completed D63; D64 published the
 approved main prerelease and merged its fork pins. Running DLL hashes match,
 and final-package receiver checks passed by user report; final evidence PRs
 are merged. D65's initial Mac consent investigation is complete and its evidence
-awaits merge with user approval. D66's Forget-device feature is selected and
-implemented and build/UI validated in the fork; PR #10 awaits review/merge. Further
-grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
+is merged in PR #42. D66's Forget-device feature is implemented and build/UI
+validated in the fork, merged in PR #10. Further development is unselected.
+Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
 follow-up record is historical; completed items are not a new work queue.
@@ -369,10 +379,11 @@ follow-up record is historical; completed items are not a new work queue.
    adapters. Linux/macOS/Android sender device support remains. Botan UWP packaging is
    resolved for x64 by the D55 overlay port; desktop/CI success is not
    packaged-host proof.
-7. **Screenbox integration:** implemented in the fork through PRs #1-#7.
-   Re-read its current instructions before changes. The active slice brings
-   D62 to its pinned package; Chromecast regressions and additional architecture
-   and sleeping-TV checks remain follow-ups.
+7. **Screenbox integration:** the historical PR #12 queue has since completed
+   through fork PR #10, including the Mac package and Forget follow-up.
+   Re-read its current instructions before changes. Chromecast video regression
+   is deferred for unavailable hardware; sleeping Apple TV casting is already
+   verified by user report. Additional architecture/receiver checks remain.
 
 Settled choices: original Apache-2.0 code; in-tree plist/protobuf codecs;
 synchronous session threads (D28); MRP controls (D29); configurable reference
@@ -455,8 +466,8 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue send-airplay2 from AGENTS.md, docs/HANDOFF.md, docs/design.md,
-> docs/receiver-validation.md and docs/CONTINUATION.md. Resume D66 in the
-> Screenbox fork on its actual PR head. Inspect `origin/main` and
-> open PRs before writing. The current development slice is D66 Screenbox Forget;
-> D65 evidence PR #42 remains open. Preserve receiver-specific evidence and historical
+> docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
+> merged in native PR #42 and Screenbox PR #10. Inspect `origin/main` and
+> open PRs before writing; choose the next slice with the user instead of
+> repeating completed checks. Preserve receiver-specific evidence and historical
 > failures. Ask before merging and before publishing each package prerelease.

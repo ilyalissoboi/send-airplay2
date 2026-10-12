@@ -67,7 +67,7 @@
     "exe_sha256": "32f0511682339177df1c520d21d19776578a73d74ac72355764caf6651ee4c08",
     "loaded_verification": "Running executable and native/crypto module paths/hashes match the extracted layout; native hashes remain identical to ci.207 above.",
     "observation": "Computer Use observed Forget at the left and Cast at the right on the same footer row without overlap for the paired Mac selection.",
-    "scope": "Sender layout only; no additional Forget/Pair/Cast action or receiver playback performed. The authorized local clip was loaded and paused to expose the flyout. Inspect actual-head CI before merging."
+    "scope": "Sender layout only; no additional Forget/Pair/Cast action or receiver playback performed. The authorized local clip was loaded and paused to expose the flyout. Final-head CI and merge are recorded in merge_checkpoint below."
   },
   "grouped_footer_refinement": {
     "commit": "1ba38e559d422d28b7552fd6413b115ab16eb400",
@@ -83,6 +83,19 @@
     "future_preference": "For visual UI changes, print verification instructions in chat and ask the user to confirm manually; do not use the Computer Use skill for visual confirmation."
   },
   "scope": "One previously recorded MacBook Pro Mac14,10 (user-reported macOS 26.7.1) from Windows x64 Screenbox 1.0.0.3. Earlier sender UI observed with Computer Use; receiver pixels/audio observed by user. Later grouped-footer confirmation in 1.0.0.6 was manual. No raw credential reads, PIN capture, private identifiers or screenshots committed. No receiver setting or native sender-policy change.",
-  "remaining_gates": ["Feature PR review and user-approved merges"],
+  "merge_checkpoint": {
+    "date": "2026-10-12",
+    "native_pr": "https://github.com/ilyalissoboi/send-airplay2/pull/42",
+    "native_merge_commit": "8a40ec3dbb3f123c58009a300c16069002a795e8",
+    "native_final_head": "89781886de754640b41b205b28d8561d05126e21",
+    "native_ci": "All 14 checks passed at final head.",
+    "screenbox_pr": "https://github.com/ilyalissoboi/Screenbox/pull/10",
+    "screenbox_merge_commit": "8bfd3dd987ed1a28fde2536566a40a0233840456",
+    "screenbox_final_head": "4701647446a533e75c6160bc2daffa2f3a0baa0b",
+    "screenbox_ci": "Test, xaml-lint and package build passed at final head; release skipped for PR.",
+    "review": "Attribution review in native PR #42 and Chromecast busy-guard review in fork PR #10 are resolved.",
+    "next_development": "Unselected; no new receiver observation or shipping source/package change in this merge checkpoint."
+  },
+  "remaining_gates": [],
   "result": "PASS for the recorded receiver/host after running-binary verification; sender UI observed with Computer Use and receiver playback/closure confirmed by user"
 }

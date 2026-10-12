@@ -1835,8 +1835,8 @@ and macOS 26.7.1 are the previously recorded user-reported configuration; receiv
 pixels/audio were observed by the user. No new automated cast log, exact timing,
 raw credential/PIN capture, committed screenshots or x86/ARM64 run. Failure,
 idempotence, selection changes and busy guards are offline test evidence.
-All three fork CI checks passed at implementation `a3d64831`; inspect actual PR
-head checks and review before merging with user approval.
+All three fork CI checks passed at implementation `a3d64831` and at final
+head `47016474`; PR #10 merged as `8bfd3dd9`.
 
 Record: [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).
 
@@ -1856,7 +1856,7 @@ and native module paths/hashes match the extracted MSIX. Computer Use observed
 the paired Mac's Forget button on the left and Cast on the right, aligned on
 the same row without overlap. This is sender-layout evidence only: no additional
 Forget/Pair/Cast action or receiver playback was performed. Exact hashes are in
-the D66 artifact; inspect actual-head CI before merge.
+the D66 artifact; final-head CI and merge are recorded below.
 
 **Grouped/padded footer (`1ba38e55`):** the user requested Forget immediately
 beside Cast at the bottom right and space between the list and actions. The
@@ -1870,3 +1870,18 @@ No exact name-length case was recorded. This is user-observed sender-layout
 confirmation, not new receiver playback or credential deletion/re-pairing.
 The Computer Use skill was not used for this check; future visual confirmation
 must use written checks and the user's report, per their preference.
+
+**Merge checkpoint (2026-10-12):** native PR #42 merged as `8a40ec3` after all
+14 checks passed at final head `8978188`. Fork PR #10 merged as `8bfd3dd9` after
+test, XAML lint and package build passed at final head `47016474` (release skipped).
+The review threads are resolved. This closes the D65/D66 review/merge gates;
+it adds no receiver observation or additional host/firmware coverage.
+
+**User clarification (2026-10-12):** no local Chromecast receiver accepting
+video is currently available, so that regression is deferred. The user states
+casting to a sleeping Apple TV was already verified earlier; the exact earlier
+Screenbox build/date is not supplied in this clarification. Treat it as completed
+user-reported behavior instead of scheduling a duplicate required gate. Preserve
+the dated earlier candidate records' own not-run limitations; this clarification
+does not retroactively add hardware evidence to those binaries. The subsequent
+[audio-feature assessment](audio-features-assessment.md) adds no new receiver run.
