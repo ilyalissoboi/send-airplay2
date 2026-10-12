@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#43 are merged. `main` contains
+Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#44 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -30,14 +30,16 @@ The subsequent research checkpoint merged in native PR #43 as `aa0f25e`
 Latest user decision D67 defers audio-file casting, including audio-only
 speakers/HomePod, and DTS conversion retaining 5.1/7.1 output because suitable
 local test hardware is unavailable. Preserve the [assessment](audio-features-assessment.md).
-The next slice to detail is [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md).
+The completed next-slice plan is [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md).
 This authorizes documentation/planning, not implementation or dependencies.
 Obtain implementation authorization before beginning the codec/packaging spike.
 Do not start speaker or surround-output probes as prerequisites for this plan.
-Native PR #44's selection review is addressed in the plan: ambiguous MP4/MKV
+Native PR #44 merged as `12c24a7` after all 14 checks passed at final head
+`bc4b381`; its selection review is resolved. In the plan, ambiguous MP4/MKV
 audio requires explicit source-track selection, with native/binding probe and
-selection support in scope. Fork PR #12 is already merged with no review
-findings; its pinned link is the initial draft, so follow the current native
+selection support in scope. Fork PR #12 merged as `ce782356` at head `0cd9ff56`,
+with no review findings or CI checks reported (docs-only). Its pinned link is
+the initial draft, so follow the current native
 plan for the revised contract. No feature implementation is added by this fix.
 Chromecast video validation is deferred (no suitable local receiver); sleeping
 Apple TV casting was already verified earlier by user report, with no new
@@ -321,8 +323,10 @@ and final-package receiver checks passed by user report; final evidence PRs
 are merged. D65's initial Mac consent investigation is complete and its evidence
 is merged in PR #42. D66's Forget-device feature is implemented and build/UI
 validated in the fork, merged in PR #10. Research PR #43 and fork PR #11 are
-also merged. D67's active next-slice plan is stereo AAC downmix for video;
-speaker audio and surround-preserving output are deferred for unavailable
+also merged. D67's stereo AAC plan and review are complete in native PR #44,
+with the companion fork checkpoint merged in PR #12. After implementation
+authorization, the next gate is the codec/packaging spike. Speaker audio and
+surround-preserving output are deferred for unavailable
 test hardware. No implementation has started.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
@@ -484,7 +488,8 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > Continue send-airplay2 from AGENTS.md, docs/HANDOFF.md, docs/design.md,
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
-> merged. Read D67's stereo AAC casting plan; speaker audio and 5.1/7.1 output
+> merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
+> Read the stereo AAC casting plan; speaker audio and 5.1/7.1 output
 > are deferred for unavailable hardware. Obtain implementation authorization
 > before starting code or dependency adoption. Inspect `origin/main` and open
 > PRs before writing, without repeating completed checks. Preserve receiver-specific
