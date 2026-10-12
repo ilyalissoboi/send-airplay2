@@ -16,6 +16,22 @@ function(sap2_codec_warnings target)
   endif()
 endfunction()
 find_package(FFMPEG 9.0 REQUIRED)
+set(sap2_decoder_root "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+# Private optional adapter: no FFmpeg dependency in the shipping playback target.
+add_library(sap2_audio_decoder STATIC
+  "${sap2_decoder_root}/src/audio_decoder_source.cpp"
+  "${sap2_decoder_root}/src/media_track_inventory.cpp"
+  "${sap2_decoder_root}/src/mp4_demux.cpp"
+  "${sap2_decoder_root}/src/mkv_demux.cpp"
+  "${sap2_decoder_root}/src/sample_entries.cpp"
+  "${sap2_decoder_root}/src/text_tracks.cpp")
+target_compile_features(sap2_audio_decoder PUBLIC cxx_std_17)
+target_include_directories(sap2_audio_decoder PUBLIC
+  "${sap2_decoder_root}/src" "${sap2_decoder_root}/include")
+target_include_directories(sap2_audio_decoder SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})
+target_link_libraries(sap2_audio_decoder PRIVATE ${FFMPEG_LIBRARIES})
+sap2_codec_warnings(sap2_audio_decoder)
+set_target_properties(sap2_audio_decoder PROPERTIES CXX_EXTENSIONS OFF)
 add_library(sap2_codec_probe SHARED probe.cpp)
 target_compile_features(sap2_codec_probe PRIVATE cxx_std_17)
 target_compile_definitions(sap2_codec_probe PRIVATE SAP2_CODEC_PROBE_BUILD)
@@ -30,6 +46,12 @@ if(WINDOWS_STORE)
   add_custom_command(TARGET sap2_codec_probe POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${sap2_codec_runtime_dlls} "$<TARGET_FILE_DIR:sap2_codec_probe>" COMMAND_EXPAND_LISTS)
 elseif(BUILD_TESTING)
+  add_executable(sap2_audio_decoder_tests decoder_source_tests.cpp)
+  target_link_libraries(sap2_audio_decoder_tests PRIVATE sap2_audio_decoder)
+  sap2_codec_warnings(sap2_audio_decoder_tests)
+  add_test(NAME audio_decoder_source COMMAND sap2_audio_decoder_tests
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/decoder")
+  set_tests_properties(audio_decoder_source PROPERTIES TIMEOUT 60)
   add_executable(sap2_codec_probe_tests probe_tests.cpp)
   target_link_libraries(sap2_codec_probe_tests PRIVATE sap2_codec_probe)
   target_include_directories(sap2_codec_probe_tests SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})

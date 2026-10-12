@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -86,6 +87,12 @@ struct Mp4Movie {
 [[nodiscard]] bool remuxable_video_codec(const std::string& codec);
 /// Audio sample entries the remux writes: AAC in mp4a, AC-3 and E-AC-3.
 [[nodiscard]] bool remuxable_audio_codec(const std::string& codec);
+/** Read the esds DecoderConfigDescriptor's objectTypeIndication from one complete
+ * mp4a sample entry. Fourcc mp4a alone does not imply AAC (it can describe DTS).
+ * Returns empty for a non-mp4a entry or absent esds; malformed descriptors throw
+ * RemuxException. Does not advertise decoder support or change remux selection.
+ */
+[[nodiscard]] std::optional<std::uint8_t> mp4_audio_object_type(const Bytes& sample_entry);
 
 /** Read the sample tables of a progressive (non-fragmented) MP4/MOV file of
  * `file_size` bytes through `read`.

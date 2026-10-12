@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#48 merged.
+Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#49 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -50,8 +50,11 @@ D69's subsequent Proceed authorizes a private [source inventory/selection and
 seek-metadata increment](audio-source-inventory.md), merged in PR #48 as `5d46479`
 after all 16 checks passed at final head `c816709`. It separates supported-video
 indexing from audio remuxability and preserves original audio identities/clocks
-before decoder filtering. Actual decoder seeking and generated stereo HLS audio
-remain the next integration gates.
+before decoder filtering. D70's subsequent authorized private
+[decoder adapter](audio-decoder-source.md) matches those identities to actual
+streams and tests compressed-input seek windows on edited timestamps, including
+resampler phase and format changes. Generated stereo HLS audio and its public,
+packaged and receiver gates remain next.
 
 ## Scope and architecture
 
@@ -78,7 +81,7 @@ Components and current state:
 | Platform adapters | Networking, credentials, file access, host lifecycle | Windows Credential Manager, macOS Keychain, Linux Secret Service and host stores implemented; UWP native builds, PasswordVault and brokered StorageFile reads tested on the recorded Windows/Apple TV combination; other sender platforms remain unvalidated |
 | HLS remux | MP4/MKV to fMP4 VOD with WebVTT renditions | H.264/HEVC, AAC/AC-3/E-AC-3, MKV and MP4 text subtitles, indexed MKV startup implemented; HDR signaling and growing presentations remain work |
 | Audio transport | Separate RAOP/AirPlay audio path for audio-only speakers | D67 deferred: suitable test hardware unavailable |
-| Audio conversion | Surround source audio to stereo AAC alongside copied video | D68 offline codec spike merged; D69 source inventory/index/seek-metadata foundation implemented, production AAC HLS remains work |
+| Audio conversion | Surround source audio to stereo AAC alongside copied video | D68 codec spike and D69 source foundations merged; D70 selected-stream/seek-window adapter implemented in offline scope; production stereo AAC HLS remains work |
 
 An AirPlay 2-capable receiver accepting an older protocol path is not proof of
 an AirPlay 2 session implementation. Record the negotiated path in test results.

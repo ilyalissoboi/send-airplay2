@@ -9,6 +9,26 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D70 selected decoder increment (2026-10-13), authorized by the user's Proceed.**
+PR #49 merged as `a7905db` after all 16 checks passed at `e8697f1` in run
+`38271333676`. Branch `codex/audio-decoder-seeking` starts from that main checkpoint.
+The optional private [selected decoder/seek-window adapter](audio-decoder-source.md)
+connects native MP4/MKV identities to actual FFmpeg streams, preserves source
+channels in 48 kHz PCM, rebuilds decoder/resampler history and validates edited
+timestamps. MP4 `mp4a` object types distinguish DTS from AAC; a documented
+Matroska metadata bridge retains 64-bit TrackNumber and rejects tag impersonation.
+Actual compressed AAC/AC-3/E-AC-3/DTS-core fixtures pass the desktop decoder and
+existing codec-probe checks, including resampling phase, edits/CodecDelay exactly
+once, forward/backward seeks, format changes, EOF and callback/lifecycle failures.
+The x64 UWP adapter/probe builds and app CRT/import inspection pass; this is
+compile/binary evidence, not a new packaged adapter runtime or receiver run.
+Full local baseline CTest passes static 35/35 and shared 36/36; actual current-head
+CI remains a separate gate. Formatting, whitespace and fixture provenance checks
+are part of the PR gate.
+Stereo downmix/AAC fMP4/HLS generation/cache and public/packaged/receiver gates
+remain next. DTS-HD/dependent-substream and long-movie performance proof remain
+unvalidated; speaker/surround-output work stays deferred. No package is published.
+
 **D69 native source increment (2026-10-12), authorized by the user's Proceed.**
 PR #46 is merged as `cb9d641`; the separate merge-checkpoint documentation PR
 #47 merged as `031acae` after all 16 checks passed at `3173128` in run
@@ -28,8 +48,9 @@ seek metadata. See [contracts and validation scope](audio-source-inventory.md).
 Focused synthetic checks and full local static/shared CTest pass (35/35, 36/36).
 The final PR-head CI gate is complete. No new delivery mode, ABI/binding/CLI option,
 encoded HLS, package publication or receiver observation is added by this increment.
-Actual decoder stream matching/seeking, audio fMP4/HLS generation/cache and the
-public/packaged/receiver gates remain next; speaker/surround work stays deferred.
+D70 supplies selected-stream/window decoding in its recorded scope; audio fMP4/HLS
+generation/cache and public/packaged/receiver gates remain next. Speaker/surround
+work stays deferred.
 The subsequent Proceed supersedes the earlier proposal-only authorization text.
 
 **Main integration (2026-10-13):** merged PR #48 integrated PR #47's documentation
@@ -86,9 +107,8 @@ and Release-only UWP inspections pass. Final automatic PR CI passed at `579bb44`
 with cold codec jobs at 5m01s desktop/3m59s UWP. Preserve the earlier packaged
 artifact's source/profile attribution. This changes build configuration only.
 
-**Next native increment:** build on D69's MP4/MKV source inventory, deterministic
-selection and source seek metadata with actual decoder stream matching and
-compressed-input seek/timestamp validation. Then connect stereo AAC to independent
+**Next native increment after D70:** connect selected decoded PCM through stereo
+downmix and AAC encoding to independent
 fMP4/HLS audio resources with bounded lazy generation/cache, preserving compressed
 video. The spike's small single-stream callback contract and PCM window experiment
 do not supply those movie contracts. Public ABI/binding/CLI integration and

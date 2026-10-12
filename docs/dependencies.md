@@ -3,6 +3,32 @@
 The project remains Apache-2.0. Record revisions and licensing here before
 incorporating external code or adding dependencies.
 
+## Native decoder adapter (D70)
+
+The user's 2026-10-13 Proceed authorizes selected-stream decoding and compressed
+input seek/timestamp validation before HLS generation. It reuses the optional
+FFmpeg 9.0.2 LGPL profile recorded below; the shipping playback library does not
+link or load that backend in this increment. The adapter and tests are original
+Apache-2.0 code, using public libavformat/libavcodec/libswresample APIs.
+
+Before implementation, the pinned `n9.0.2` `libavformat/mov.c` and
+`libavformat/matroskadec.c` sources and public AVStream/demuxing contracts were
+inspected. MOV exposes `tkhd.track_ID` in AVStream.id and applies edits; Matroska
+does not expose TrackNumber there and subtracts CodecDelay from packet timestamps.
+The project-owned overlay patch `0054-matroska-track-number.patch` exports the
+original TrackNumber as reserved stream metadata, avoiding ordinal/name matching.
+It modifies the existing LGPL FFmpeg source; retain it with the source/configuration
+and notices on redistribution. No third-party source is copied into the adapter.
+The patch preserves the full unsigned identity as hexadecimal text and prevents
+file-authored tags, including case variants, from overriding that reserved key.
+
+References: [AVStream](https://ffmpeg.org/doxygen/trunk/structAVStream.html) and
+[demuxing](https://ffmpeg.org/doxygen/trunk/group__lavf__decoding.html), inspected
+2026-10-13. The pinned source, rather than changing trunk docs, determines this
+backend's format-specific behavior. New compressed test media is synthesized
+locally from original channel tones with a development-only FFmpeg executable;
+its generator, arguments and hashes are recorded alongside the fixtures.
+
 ## Native source inventory (D69)
 
 D69's native source inventory adds no dependency or copied implementation.

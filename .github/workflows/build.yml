@@ -175,13 +175,13 @@ jobs:
       - name: Build and test desktop probe
         if: matrix.kind == 'desktop'
         run: |
-          cmake --build build-codec --config Release --target sap2_codec_probe_tests
+          cmake --build build-codec --config Release --target sap2_codec_probe_tests sap2_audio_decoder_tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          ctest --test-dir build-codec -C Release -R '^audio_codec_probe$' --output-on-failure
+          ctest --test-dir build-codec -C Release -R '^audio_(codec_probe|decoder_source)$' --output-on-failure
       - name: Build and inspect AppContainer probe
         if: matrix.kind == 'uwp'
         run: |
-          cmake --build build-codec --config Release --target sap2_codec_probe
+          cmake --build build-codec --config Release --target sap2_codec_probe sap2_audio_decoder
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ./tools/audio-codec-spike/check_binaries.ps1 -Directory build-codec/Release
       - name: Save completed codec dependency binaries even after a later failure

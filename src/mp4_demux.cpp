@@ -352,7 +352,7 @@ std::vector<Box> audio_entry_children(const Box& entry) {
     return children(entry.begin + entry.header + fields, entry.size - entry.header - fields);
 }
 
-bool aac_entry(const Box& entry) {
+std::optional<std::uint8_t> audio_entry_object_type(const Box& entry) {
     auto boxes = audio_entry_children(entry);
     const auto* esds = find(boxes, fourcc("esds"));
     if (!esds) {
@@ -361,7 +361,10 @@ bool aac_entry(const Box& entry) {
             esds = find(boxes, fourcc("esds"));
         }
     }
-    return esds && esds_object_type(*esds) == aac_object_type;
+    return esds ? std::optional<std::uint8_t>{esds_object_type(*esds)} : std::nullopt;
+}
+bool aac_entry(const Box& entry) {
+    return audio_entry_object_type(entry) == aac_object_type;
 }
 
 /// The only stsd entry. More than one description would need per-sample
@@ -664,6 +667,14 @@ bool remuxable_video_codec(const std::string& codec) {
 }
 bool remuxable_audio_codec(const std::string& codec) {
     return codec == "mp4a" || codec == "ac-3" || codec == "ec-3";
+}
+std::optional<std::uint8_t> mp4_audio_object_type(const Bytes& sample_entry) {
+    const auto entries = children(sample_entry.data(), sample_entry.size());
+    if (entries.size() != 1) {
+        malformed("audio description must contain exactly one sample entry");
+    }
+    return entries.front().type == fourcc("mp4a") ? audio_entry_object_type(entries.front())
+                                                  : std::nullopt;
 }
 
 namespace {
