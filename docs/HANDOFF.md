@@ -12,19 +12,35 @@ checkpoint, review disposition, validation commands and ordered development queu
 **D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
 `8a40ec3` after all 14 checks passed at final head `8978188`. Screenbox PR #10
 merged as `8bfd3dd9` after test, XAML lint and package build passed at final head
-`47016474` (release skipped for PR). No further implementation slice is selected.
+`47016474` (release skipped for PR). The subsequent research checkpoint is merged:
+native PR #43 as `aa0f25e` (14 checks passed at `789f029`) and fork PR #11 as
+`f596fd5e` (docs-only; no CI checks reported).
 Preserve the recorded receiver/build limits and manual UI confirmation preference.
 
-**Latest request: audio-feature effort assessment (2026-10-12).** The user
-requests audio-file casting, including audio-only speakers such as HomePod,
-and video with unsupported audio such as DTS; they ask about retaining 5.1/7.1.
-See [assessment and proposed gates](audio-features-assessment.md). Speaker audio
-needs a new audio transport/session; DTS fallback can reuse video/HLS while
-decoding/encoding only audio. Rough scope estimates: 4-8 working weeks for
-speaker-inclusive audio, 3-5 for DTS stereo/5.1 fallback, plus 1-2 for verified
-7.1 if the codec/receiver spike succeeds. Shared work reduces combined effort.
-These are engineering estimates/proposals, not implementation authorization or
-new receiver evidence. Further implementation remains unselected.
+**Latest decision D67: document research and plan stereo AAC (2026-10-12).**
+The user defers audio-file casting (including HomePod/audio-only speakers) and
+DTS conversion retaining 5.1/7.1 output because suitable local test hardware is
+unavailable. Preserve their [research and effort assessment](audio-features-assessment.md),
+including separate speaker transport and 7.1 encoder/layout limitations.
+The next slice to detail is [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md).
+It proposes optional in-process audio decoding/encoding, unchanged compressed
+video, deterministic track selection, separate stereo HLS audio, bounded
+generation/cache, ABI/binding and packaged gates. The implementation allowance
+is 3-5 working weeks, unmeasured, with receiver/Screenbox work separately scoped.
+This request authorizes documentation/planning, not feature code, dependency
+adoption or publication. No new receiver test has run. Obtain implementation
+authorization before starting the plan; do not start the deferred speaker or
+surround-output experiments as prerequisites.
+
+**D67 review follow-up (2026-10-12):** native PR #44 remains the open planning
+PR. Its review identified that MP4 file order can select commentary instead of
+main audio. The revised plan requires explicit source-track selection for
+multiple enabled MP4 tracks (and ambiguous MKV defaults), includes a bounded
+track probe and CLI/C API/C# selection contract, and adds acceptance cases for
+commentary-first/reversed order and invalid/unsupported selection without
+fallback. This changes the proposed plan only. Fork PR #12 is already merged
+and has no review findings; its immutable plan link points to the initial
+draft, so use the current native plan for the revised selection contract.
 
 **User's validation corrections:** Chromecast video verification is deferred
 because no suitable local receiver is available. Casting to a sleeping Apple TV
@@ -93,7 +109,7 @@ captured log; no shipping C++ or sender-policy change is justified. The temporar
 name experiment was restored byte-for-byte and the normal CLI rebuilt.
 Initial investigation complete; documentation/evidence PR #42 merged as `8a40ec3`.
 Its attribution review is resolved and all 14 checks passed at final head `8978188`.
-D66 above is also merged; further development is unselected.
+D66 above is also merged; D67's next-slice plan is recorded at the top.
 See [D65 study](macos-receiver-consent.md) and
 [artifact](validation/native-macos-consent-windows-2026-10-12.json).
 
