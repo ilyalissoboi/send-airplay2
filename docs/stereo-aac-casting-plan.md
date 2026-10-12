@@ -4,6 +4,13 @@ Planning decision D67: 2026-10-12. Baseline: native merged main `aa0f25e`
 (PR #43), Screenbox merged main `f596fd5e` (PR #11). This document specifies
 the next implementation slice; it does not implement or validate it.
 
+**Implementation authorization/status:** the user's subsequent Proceed
+authorizes D68's [codec/packaging spike](stereo-aac-codec-spike.md). Its optional
+development probe and offline AppContainer host are implemented and tested in
+the recorded Windows x64 scope. This supersedes the initial planning-only
+authorization below. Production HLS conversion, source selection and receiver
+validation remain work; no new casting mode or package release is implemented.
+
 ## User decision and deferred work
 
 The user selected video-file casting with surround audio **downmixed to stereo

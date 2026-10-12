@@ -3,6 +3,39 @@
 The project remains Apache-2.0. Record revisions and licensing here before
 incorporating external code or adding dependencies.
 
+## Optional FFmpeg codec spike (D68)
+
+The authorized stereo-AAC codec/packaging spike uses FFmpeg **9.0.2**, from
+tag `n9.0.2`. The optional overlay starts from the MIT-licensed FFmpeg port and
+patches in pinned vcpkg `434307da09bc05b2c86996dccc8b2351fc0d5d37`; the existing
+`vcpkg-overlays/LICENSE-vcpkg.txt` retains that notice. The curated port pins
+the release archive SHA-512 to
+`21bf3fbcdfd2f41ea6edeab40433fecfe362b09ecaa177a652471b54f9357011b4f74dab18245ab1c26f1a473b94205490baecb42289afd2effd603cd0b22b59`.
+No FFmpeg implementation source is copied into tracked project code.
+The project adds `0053-wav-guid-dependency.patch` to the upstream Makefile:
+WAV demuxing links the shared Wave64 GUID constants even when the Wave64
+demuxer is disabled. Without it the x64 UWP link fails on `ff_w64_guid_data`.
+This does not enable Wave64 input. The CMake finder/wrapper in the overlay are
+original Apache-2.0 project files; upstream's separate BSD finder is not copied.
+
+The spike restricts the port to `avformat`, `avcodec`, `avutil` and
+`swresample`, with GPL, nonfree, version-3 additions, programs, network and
+hardware acceleration disabled. Intended decoders are AAC, AC-3, E-AC-3,
+DTS (`dca`) and fixture PCM; the output encoder is native AAC. Runtime
+configuration/license checks must verify the actual build. FFmpeg is an
+optional dependency of the development probe, not of the existing casting
+library or published `ci.207` package. The core remains Apache-2.0.
+
+The configured build is intended to use LGPL-2.1-or-later dynamic libraries.
+Retain the exact source, vcpkg patches/build configuration and FFmpeg's notices
+with any redistributed probe package; consult
+[upstream licensing guidance](https://ffmpeg.org/legal.html). A build/configuration
+check does not replace distribution compliance. The locally installed GPL
+`ffmpeg.exe` may generate project-owned test media as a development tool only;
+its binary/source is not incorporated or redistributed. Generated fixtures must
+record their generator, command and hashes separately. DTS-HD profile support
+requires a suitable fixture; do not infer it from decoder registration alone.
+
 ## OpenSSL
 
 The pairing/transport foundation links `OpenSSL::Crypto` (OpenSSL 3.5 or newer)

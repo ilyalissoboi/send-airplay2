@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+# Original minimal finder for this project's four-library dynamic profile.
+include(FindPackageHandleStandardArgs)
+include(SelectLibraryConfigurations)
+set(FFMPEG_VERSION "@FFMPEG_VERSION@")
+find_path(FFMPEG_INCLUDE_DIR libavcodec/avcodec.h)
+set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INCLUDE_DIR}")
+set(FFMPEG_LIBRARIES)
+foreach(component IN ITEMS avformat avcodec swresample avutil)
+  find_library(FFMPEG_${component}_LIBRARY_RELEASE NAMES ${component})
+  find_library(FFMPEG_${component}_LIBRARY_DEBUG NAMES ${component} PATH_SUFFIXES debug/lib)
+  select_library_configurations(FFMPEG_${component})
+  list(APPEND FFMPEG_LIBRARIES ${FFMPEG_${component}_LIBRARY})
+endforeach()
+find_package_handle_standard_args(FFMPEG REQUIRED_VARS FFMPEG_INCLUDE_DIR
+  FFMPEG_avformat_LIBRARY FFMPEG_avcodec_LIBRARY FFMPEG_swresample_LIBRARY FFMPEG_avutil_LIBRARY
+  VERSION_VAR FFMPEG_VERSION)

@@ -23,6 +23,19 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**Current work D68:** the user's Proceed authorizes the stereo-AAC codec/UWP
+packaging spike. The optional development DLL and separate offline packaged
+host are implemented; desktop, AppContainer import and packaged codec/cache
+checks pass in the recorded Windows x64 scope, with loaded-module hashes
+verified. Baseline CTest passes 35 static/36 shared. No receiver test or casting
+delivery mode is added. Read [the spike](stereo-aac-codec-spike.md) and its
+[artifact](validation/stereo-aac-codec-spike-windows-2026-10-12.json) before
+resuming production HLS conversion/track selection. Do not ask for the same
+implementation authorization again; speaker/surround output remain deferred.
+Planning PR #44 is merged as `12c24a7`, with all 14 checks passed at `bc4b381`
+and the selection review resolved. Merge-checkpoint PR #45 is open (14 checks
+passed). Inspect actual open heads before editing; ask before merging/publishing.
+
 The subsequent research checkpoint merged in native PR #43 as `aa0f25e`
 (14 checks passed at final head `789f029`) and fork PR #11 as `f596fd5e`
 (docs-only; no CI checks reported). All prior PRs are merged.
@@ -31,8 +44,8 @@ Latest user decision D67 defers audio-file casting, including audio-only
 speakers/HomePod, and DTS conversion retaining 5.1/7.1 output because suitable
 local test hardware is unavailable. Preserve the [assessment](audio-features-assessment.md).
 The next slice to detail is [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md).
-This authorizes documentation/planning, not implementation or dependencies.
-Obtain implementation authorization before beginning the codec/packaging spike.
+That initial request authorized documentation/planning; the subsequent Proceed
+authorizes the codec/packaging spike recorded above.
 Do not start speaker or surround-output probes as prerequisites for this plan.
 Native PR #44's selection review is addressed in the plan: ambiguous MP4/MKV
 audio requires explicit source-track selection, with native/binding probe and
@@ -484,9 +497,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > Continue send-airplay2 from AGENTS.md, docs/HANDOFF.md, docs/design.md,
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
-> merged. Read D67's stereo AAC casting plan; speaker audio and 5.1/7.1 output
-> are deferred for unavailable hardware. Obtain implementation authorization
-> before starting code or dependency adoption. Inspect `origin/main` and open
+> merged. D68's subsequent Proceed authorizes the codec/packaging implementation
+> gate. Read its spike/evidence and D67's stereo AAC plan; speaker audio and
+> 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same
+> implementation authorization again. Inspect `origin/main` and open
 > PRs before writing, without repeating completed checks. Preserve receiver-specific
 > evidence and historical failures. Ask before merging and before publishing each
 > package prerelease.

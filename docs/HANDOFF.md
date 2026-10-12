@@ -9,6 +9,26 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D68 codec/packaging spike (2026-10-12), authorized by the user's Proceed.**
+The optional, separate FFmpeg 9.0.2 development probe implements host-callback
+decoding, explicit stereo downmix/resampling and native AAC encoding/roundtrip
+verification. Desktop offline checks pass, including owned AAC/AC-3/E-AC-3/
+DTS-core 5.1 fixtures, PCM 5.1/7.1 channel isolation, headroom, short reads,
+cancel/output failure and a bounded encoder-window experiment. The x64
+AppContainer DLLs pass app CRT/import checks; the separate Native AOT/MSIX
+host passes all eight offline codec/storage/lifecycle cases. Its five loaded
+module hashes match the registered package. Baseline static/shared CTest pass
+35/35 and 36/36; no receiver run or published package change is included.
+See [spike implementation/evidence](stereo-aac-codec-spike.md) and
+[artifact](validation/stereo-aac-codec-spike-windows-2026-10-12.json).
+The window experiment needs preroll and lookahead; it does not establish movie
+seek/priming/HLS behavior. Production audio renditions/cache and source-track
+probe/selection remain the next work in D67; DTS-HD/dependent-substream inputs
+need suitable fixtures. Speaker audio and discrete surround output remain
+deferred. The initial planning-only authorization text below is historical;
+the user's Proceed authorizes this implementation gate without re-confirmation.
+The separate merge-checkpoint PR #45 is still open; its 14 checks passed.
+
 **D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
 `8a40ec3` after all 14 checks passed at final head `8978188`. Screenbox PR #10
 merged as `8bfd3dd9` after test, XAML lint and package build passed at final head
@@ -32,13 +52,14 @@ adoption or publication. No new receiver test has run. Obtain implementation
 authorization before starting the plan; do not start the deferred speaker or
 surround-output experiments as prerequisites.
 
-**D67 review follow-up (2026-10-12):** native PR #44 remains the open planning
-PR. Its review identified that MP4 file order can select commentary instead of
+**D67 review follow-up (2026-10-12):** native PR #44 merged as `12c24a7`;
+all 14 checks passed at final head `bc4b381` and the selection thread is resolved.
+Its review identified that MP4 file order can select commentary instead of
 main audio. The revised plan requires explicit source-track selection for
 multiple enabled MP4 tracks (and ambiguous MKV defaults), includes a bounded
 track probe and CLI/C API/C# selection contract, and adds acceptance cases for
 commentary-first/reversed order and invalid/unsupported selection without
-fallback. This changes the proposed plan only. Fork PR #12 is already merged
+fallback. This changes the proposed plan only. Fork PR #12 merged as `ce782356`
 and has no review findings; its immutable plan link points to the initial
 draft, so use the current native plan for the revised selection contract.
 

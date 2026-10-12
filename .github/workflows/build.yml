@@ -128,6 +128,36 @@ jobs:
           path: build-ci-package/*.nupkg
           if-no-files-found: error
           retention-days: 14
+  audio-codec-spike:
+    # Optional development DLL only. Does not change the shipping library/package.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache dependency binaries
+        uses: actions/cache@v4
+        with:
+          path: build-vcpkg-cache
+          key: vcpkg-codec-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-overlays/**') }}
+          restore-keys: vcpkg-codec-${{ runner.os }}-
+      - name: Bootstrap pinned vcpkg
+        shell: bash
+        run: |
+          mkdir -p build-vcpkg-cache
+          git clone https://github.com/microsoft/vcpkg.git build-tools/vcpkg
+          git -C build-tools/vcpkg checkout 434307da09bc05b2c86996dccc8b2351fc0d5d37
+          MSYS_NO_PATHCONV=1 cmd.exe /c 'build-tools\vcpkg\bootstrap-vcpkg.bat' -disableMetrics
+      - name: Configure desktop probe
+        run: cmake -S . -B build-codec -DBUILD_SHARED_LIBS=ON -DSAP2_AUDIO_CODEC_SPIKE=ON "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_FEATURES=audio-codec-spike "-DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/vcpkg-overlays/ports"
+      - name: Build and test desktop probe
+        run: |
+          cmake --build build-codec --config Release --target sap2_codec_probe_tests
+          ctest --test-dir build-codec -C Release -R '^audio_codec_probe$' --output-on-failure
+      - name: Configure AppContainer probe (separate installed directory)
+        run: cmake -S . -B build-codec-uwp -A x64 -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0 -DBUILD_SHARED_LIBS=ON -DSAP2_AUDIO_CODEC_SPIKE=ON "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-uwp -DVCPKG_MANIFEST_FEATURES=audio-codec-spike "-DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/vcpkg-overlays/ports"
+      - name: Build and inspect AppContainer probe
+        run: |
+          cmake --build build-codec-uwp --config Release --target sap2_codec_probe
+          ./tools/audio-codec-spike/check_binaries.ps1 -Directory build-codec-uwp/tools/audio-codec-spike/Release
   sanitizers:
     runs-on: ubuntu-latest
     steps:

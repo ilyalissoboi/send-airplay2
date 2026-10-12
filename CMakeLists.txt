@@ -102,6 +102,14 @@ function(sap2_warnings target)
   endif()
 endfunction()
 sap2_warnings(send_airplay2)
+option(SAP2_AUDIO_CODEC_SPIKE "Build the separate optional stereo AAC development probe" OFF)
+if(SAP2_AUDIO_CODEC_SPIKE)
+  # Enable CTest before the subdirectory; the WindowsStore probe runs only packaged.
+  if(NOT WINDOWS_STORE)
+    include(CTest)
+  endif()
+  add_subdirectory(tools/audio-codec-spike)
+endif()
 # A UWP (WindowsStore) build produces the AppContainer library only: its
 # programs and tests could not run outside a package (docs/uwp-native-build.md).
 if(WINDOWS_STORE)

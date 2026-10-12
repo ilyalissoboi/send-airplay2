@@ -1886,6 +1886,15 @@ the dated earlier candidate records' own not-run limitations; this clarification
 does not retroactively add hardware evidence to those binaries. The subsequent
 [audio-feature assessment](audio-features-assessment.md) adds no new receiver run.
 
+**D68 offline codec/packaging gate (2026-10-12):** the separate stereo-AAC
+development probe passes desktop codec/channel/window tests, x64 AppContainer
+binary inspection and all eight offline Native AOT/MSIX codec/cache/lifecycle
+cases. Five loaded module hashes match the extracted package. Baseline static
+and shared CTest pass 35/35 and 36/36. See [the spike](stereo-aac-codec-spike.md)
+and [artifact](validation/stereo-aac-codec-spike-windows-2026-10-12.json).
+No receiver, speaker, surround-output or HLS-conversion playback test is added;
+these results must not expand the existing Apple TV/Mac interoperability claims.
+
 **D67 planning disposition (2026-10-12):** the user defers audio-file casting,
 including audio-only speakers/HomePod, and DTS conversion preserving 5.1/7.1
 because suitable local test hardware is unavailable. The next documented slice

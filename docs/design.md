@@ -35,6 +35,12 @@ separate stereo audio rendition and bounded cache while copying supported video.
 Existing delivery defaults remain unchanged. This is planning authorization;
 no backend is added or receiver support established by the documentation.
 
+D68's subsequent authorized [codec/packaging spike](stereo-aac-codec-spike.md)
+adds a separate optional development DLL and offline packaged host. Existing
+casting delivery and published packages are unchanged. Native HLS conversion,
+production selection and receiver proof remain next gates; offline PCM window
+tests are not evidence of complete movie seeking or receiver compatibility.
+
 ## Scope and architecture
 
 Use a portable C++ core with the experimental versioned C ABI. Keep protocol sessions,
