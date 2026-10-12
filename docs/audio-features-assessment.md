@@ -42,8 +42,10 @@ MP4/MKV inventory/selection, independent video indexing and source seek metadata
 Actual decoder stream matching/seeking and encoded audio delivery remain next.
 PR #47's D68 documentation checkpoint merged as `031acae`; merged PR #48 includes
 that checkpoint alongside its native foundations. Follow
-[the handoff](HANDOFF.md#0-resume-here) and inspect the active PR's actual head
-before continuing implementation. This integration adds no receiver observation.
+[the handoff](HANDOFF.md#0-resume-here) and inspect open PRs before continuing.
+If a PR for the next slice is already open, inspect its actual head and continue
+on its branch. Otherwise start a fresh branch from current `origin/main` and open
+that slice's own PR; ask before merging. This integration adds no receiver observation.
 
 ## User scope and corrected validation queue
 
