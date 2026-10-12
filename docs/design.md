@@ -25,6 +25,13 @@ no shipping sender-policy change is proposed. D65's research evidence and D66's
 Screenbox follow-up are merged; further development is unselected;
 see [HANDOFF.md](HANDOFF.md#0-resume-here).
 
+The user requests assessment of speaker-inclusive audio-file casting and
+unsupported video-audio conversion, including DTS surround feasibility.
+[The assessment](audio-features-assessment.md) separates new audio transport
+from audio-only transcoding over existing video/HLS, proposes shared decoding
+and describes codec/receiver/packaging gates. No backend, output-surround policy
+or feature implementation is selected by this assessment request.
+
 ## Scope and architecture
 
 Use a portable C++ core with the experimental versioned C ABI. Keep protocol sessions,
@@ -232,8 +239,10 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
    inbound networking and built-in credential stores are implemented (D46-D61).
    Linux/macOS/Android sender interoperability remains unvalidated; CI is separate
    from device evidence.
-6. Screenbox integration is implemented in the fork. Chromecast regression and
-   additional device checks remain; reinspect its instructions before changes.
+6. Screenbox integration is implemented in the fork. Chromecast video regression
+   is deferred for unavailable hardware; sleeping Apple TV casting is already
+   verified by user report. Additional architecture/receiver checks remain;
+   reinspect its instructions before changes.
 
 Each implementation slice follows AGENTS.md: readable C++17, secret/resource RAII,
 format checks, static/shared CMake/CTest and CI at the actual PR head. No automatic

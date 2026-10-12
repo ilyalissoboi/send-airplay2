@@ -23,6 +23,13 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+Latest user request is an [audio-feature effort assessment](audio-features-assessment.md):
+audio files must include audio-only speakers/HomePod; evaluate DTS conversion
+including 5.1/7.1 feasibility. This authorizes analysis, not implementation.
+Chromecast video validation is deferred (no suitable local receiver); sleeping
+Apple TV casting was already verified earlier by user report, with no new
+build/date attribution supplied. Do not repeat it as an uncompleted gate.
+
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
@@ -372,10 +379,11 @@ follow-up record is historical; completed items are not a new work queue.
    adapters. Linux/macOS/Android sender device support remains. Botan UWP packaging is
    resolved for x64 by the D55 overlay port; desktop/CI success is not
    packaged-host proof.
-7. **Screenbox integration:** implemented in the fork through PRs #1-#7.
-   Re-read its current instructions before changes. The active slice brings
-   D62 to its pinned package; Chromecast regressions and additional architecture
-   and sleeping-TV checks remain follow-ups.
+7. **Screenbox integration:** the historical PR #12 queue has since completed
+   through fork PR #10, including the Mac package and Forget follow-up.
+   Re-read its current instructions before changes. Chromecast video regression
+   is deferred for unavailable hardware; sleeping Apple TV casting is already
+   verified by user report. Additional architecture/receiver checks remain.
 
 Settled choices: original Apache-2.0 code; in-tree plist/protobuf codecs;
 synchronous session threads (D28); MRP controls (D29); configurable reference

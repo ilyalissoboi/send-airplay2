@@ -15,6 +15,22 @@ merged as `8bfd3dd9` after test, XAML lint and package build passed at final hea
 `47016474` (release skipped for PR). No further implementation slice is selected.
 Preserve the recorded receiver/build limits and manual UI confirmation preference.
 
+**Latest request: audio-feature effort assessment (2026-10-12).** The user
+requests audio-file casting, including audio-only speakers such as HomePod,
+and video with unsupported audio such as DTS; they ask about retaining 5.1/7.1.
+See [assessment and proposed gates](audio-features-assessment.md). Speaker audio
+needs a new audio transport/session; DTS fallback can reuse video/HLS while
+decoding/encoding only audio. Rough scope estimates: 4-8 working weeks for
+speaker-inclusive audio, 3-5 for DTS stereo/5.1 fallback, plus 1-2 for verified
+7.1 if the codec/receiver spike succeeds. Shared work reduces combined effort.
+These are engineering estimates/proposals, not implementation authorization or
+new receiver evidence. Further implementation remains unselected.
+
+**User's validation corrections:** Chromecast video verification is deferred
+because no suitable local receiver is available. Casting to a sleeping Apple TV
+was already verified earlier, per the user; exact earlier build/date is not
+provided here. Do not schedule that passed check again as an uncompleted gate.
+
 **Completed D66 Screenbox Forget-device follow-up (2026-10-12),
 chosen by the user after the D65 investigation.** Fork branch
 `codex/airplay-forget-device` starts at merged main `2cee2ea7`;
@@ -183,8 +199,9 @@ Current slice and remaining choices (dependencies first):
 3. **Fork follow-ups:**
    - **D66 "Forget this AirPlay device": implemented/validated and merged in fork PR #10**;
    - x86 and ARM64 builds on a device;
-   - a Chromecast regression check;
-   - a sleeping TV from Screenbox.
+   - Chromecast video regression is deferred: no suitable local receiver;
+   - sleeping Apple TV casting is already verified by user report; broader
+     wake/receiver cases remain optional, not a repeated required gate.
 4. **MRP research:** choosing subtitle (and audio) tracks from the sender,
    and whether the TV remote's next/previous can reach the sender, which
    currently cannot skip queue items.

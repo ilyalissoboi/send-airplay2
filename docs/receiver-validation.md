@@ -1876,3 +1876,12 @@ must use written checks and the user's report, per their preference.
 test, XAML lint and package build passed at final head `47016474` (release skipped).
 The review threads are resolved. This closes the D65/D66 review/merge gates;
 it adds no receiver observation or additional host/firmware coverage.
+
+**User clarification (2026-10-12):** no local Chromecast receiver accepting
+video is currently available, so that regression is deferred. The user states
+casting to a sleeping Apple TV was already verified earlier; the exact earlier
+Screenbox build/date is not supplied in this clarification. Treat it as completed
+user-reported behavior instead of scheduling a duplicate required gate. Preserve
+the dated earlier candidate records' own not-run limitations; this clarification
+does not retroactively add hardware evidence to those binaries. The subsequent
+[audio-feature assessment](audio-features-assessment.md) adds no new receiver run.
