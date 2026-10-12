@@ -1,6 +1,6 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-11 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-12 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
@@ -9,20 +9,37 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**Current slice: D65 Mac consent investigation (2026-10-12), chosen by the user
+after public-documentation research.** Branch `codex/macos-consent-investigation`
+starts at main `671e714` (merged PR #41). Eleven consent/start/Stop casts passed
+with the saved pairing and default privacy policy. Short-term reuse survived
+fresh process/session identifiers and a temporary display-name comparison.
+In a timed chain with equal 45.078-second idle gaps, the receiver prompted at
+H/J but not I/K; K's corrected user report is no prompt. Request H-to-J was
+116.157 seconds, with prompt-free I between them. This supports receiver grant
+age/expiry across casts over the last idle interval alone, but the exact timer,
+renewal rule and cache key are unproven. No numeric grant value appeared in the
+captured log; no shipping C++ or sender-policy change is justified. The temporary
+name experiment was restored byte-for-byte and the normal CLI rebuilt.
+Initial investigation complete; review the documentation/evidence PR before
+choosing further development. See [D65 study](macos-receiver-consent.md) and
+[artifact](validation/native-macos-consent-windows-2026-10-12.json).
+
 **Completed user-selected slice (2026-10-11): documentation reconciliation,
 then Screenbox on the Mac.** PR #39 merged as `2829242` on
 2026-10-11 after all 14 checks passed at its final head `811c022`; its review
 thread is resolved. PR #40 merged as `a29212b` with all 14 checks passed at
-`772b850` and both review threads resolved. Final validation branch
-`codex/mac-screenbox-final-validation` starts at that main commit.
+`772b850` and both review threads resolved. PR #41 merged as `671e714` after
+all 14 checks passed at `997b0be`; fork PR #9 merged as `2cee2ea7` with the
+matching final evidence documentation. The earlier final-validation branch
+`codex/mac-screenbox-final-validation` started at `a29212b`.
 The earlier validation branch started at `a0fd5b9`.
 Completed checks: C API static/shared and packaged UWP host on the recorded Mac,
 including HLS remux, controls, start position, natural end and native consent-time
 cancellation; the user also reports the private Screenbox UI checks passed.
 Published-package Screenbox checks also passed by user report after verifying
-the running DLLs. Remaining work for this slice is review/merge of the final
-evidence documentation in native PR #41 and fork PR #9, with user approval.
-The fork pin PR and package documentation checkpoint are merged.
+the running DLLs. Final evidence documentation in native PR #41 and fork PR #9
+is merged; this D64 slice is complete for the recorded receiver/host.
 Preserve the loaded-DLL evidence limitation
 in the D63 record when describing the private Screenbox checks.
 Do not resume phases marked "Next" in the history below.
@@ -102,9 +119,11 @@ Current slice and remaining choices (dependencies first):
      public hash; version/hash pins merged in fork PR #8 and running DLL hashes match;
    - **done in D64:** final-package Screenbox cancellation/recovery, playback,
      controls, Stop/local handoff and natural queue advance passed by user report
-     with the loaded DLLs verified. Final evidence PRs #41 / fork #9 await review.
-2. **The Mac's per-cast consent prompt:** find what makes the Mac ask again
-   (D62 found the device ID is probably not the reason).
+     with the loaded DLLs verified. Final evidence PRs #41 / fork #9 are merged.
+2. **Mac consent: initial D65 investigation complete.** Controlled repeats
+   support an expiring receiver grant; display-name changes and random session
+   identifiers do not necessarily re-prompt. Exact grant duration/key/renewal
+   remain optional research. Review the D65 evidence; no sender fix is proposed.
 3. **Fork follow-ups:**
    - "Forget this AirPlay device";
    - x86 and ARM64 builds on a device;
@@ -125,15 +144,15 @@ Current slice and remaining choices (dependencies first):
    - casting from Linux and macOS hosts;
    - receivers other than the recorded Apple TV and MacBook Pro.
 
-**Latest: casting to a Mac (D62, merged as PR #37).** The user asked whether
+**Historical implementation: casting to a Mac (D62, merged as PR #37).** The user asked whether
 video can be cast to a Mac as to the Apple TV, then chose an automatic
 URL-only fallback. A MacBook Pro (`Mac14,10`) pairs
 after an on-screen consent and a PIN, rejects the remote-control SETUP with
 500, and plays the URL session alone. With the fallback, start, status,
 pause/resume, seek, start position, natural end (`media_end`) and stop passed
 from the CLI (seek after the Mac's receiver strings showed it needs the item
-UUID; user observed). Open: the per-cast consent prompt, the C interface/UWP
-host/Screenbox on the Mac (next steps 1 and 2). See the D62 record in section 4 and
+UUID; user observed). D63/D64 subsequently completed C API/UWP/Screenbox checks;
+D65 above records the consent investigation. See the D62 record in section 4 and
 [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
 
 **Before D62 (2026-10-10):** HLS delivery (D60) and the Screenbox integration

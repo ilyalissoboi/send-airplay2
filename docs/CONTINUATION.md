@@ -1,18 +1,21 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-11 (Asia/Tokyo). PRs #12-#40 are merged. `main` contains
+Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#41 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
 fallback for receivers that reject remote-control SETUP. The Screenbox fork
-has implemented its current design (PRs #1-#8); merged `main` now pins
+has implemented its current design (PRs #1-#9); merged `main` now pins
 `0.3.0-ci.207`, including D62/D63. Receiver evidence remains specific to the recorded
 Apple TV and MacBook Pro from Windows. D62 used the CLI; completed D63 checked
 desktop C API and packaged UWP playback on macOS 26.7.1, and the user reports
 the earlier private Screenbox UI checks passed. D64 completed final Screenbox
 checks of published `ci.207` by user report with running native/crypto DLL
 hashes verified; fork PR #8 merged as `31013d5e`. Final evidence documentation
-in native PR #41 and fork PR #9 awaits review/merge with user approval.
+in native PR #41 and fork PR #9 is merged. D65's initial consent investigation
+is complete: eleven clean casts, reuse across process/session/name changes, and
+re-prompting during an equal-idle chain. Exact timer/key/renewal remain unproven;
+no sender behavior change is proposed. Current work is the D65 evidence PR.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
@@ -20,16 +23,28 @@ guide; the master handoff and dated artifacts preserve the longer history.
 ## Repository, branch and user authorization
 
 - Repository: [ilyalissoboi/send-airplay2](https://github.com/ilyalissoboi/send-airplay2).
+- **D65 (2026-10-12):** user chose consent investigation after reviewing public
+  documentation. Continue on `codex/macos-consent-investigation` from main
+  `671e714`. All eleven desktop CLI casts start/Stop cleanly with saved pairing;
+  receiver logs and observer reports are separately attributed in
+  [the study](macos-receiver-consent.md) and
+  [artifact](validation/native-macos-consent-windows-2026-10-12.json).
+  Fresh random per-session identities and a synthetic name comparison retained
+  short-term reuse. H/J prompted in the timed chain, I/K had no delegate sequence,
+  and the corrected K observer report is no prompt. Equal 45.078-second idle gaps
+  did not prevent J re-prompting, supporting grant age/expiry over last idle alone.
+  Exact duration/key/renewal are unresolved; no shipping C++ change remains.
+  Review/merge the evidence PR with user approval; further work is unselected.
 - **Completed slice (2026-10-11):** the user chose documentation reconciliation,
   then bringing D62 to Screenbox. PR #39 merged as `2829242`, final head
-  `811c022` passed all 14 checks and its review thread is resolved. Continue
-  final validation on `codex/mac-screenbox-final-validation` from current
-  main `a29212b` (merged PR #40). C API,
+  `811c022` passed all 14 checks and its review thread is resolved. The
+  historical final validation was on `codex/mac-screenbox-final-validation`
+  from `a29212b` (merged PR #40). C API,
   packaged UWP and private Screenbox checks are recorded below. Approved main
   package `ci.207` is now published and publicly hash-verified; fork PR #8
   merged its pins. Running DLL hashes match; final Screenbox receiver checks
-  passed by user report. Review/merge the final evidence documentation with
-  user approval; subsequent development choices remain unselected.
+  passed by user report. Native PR #41 merged as `671e714` with all 14 checks
+  passed at `997b0be`; fork PR #9 merged as `2cee2ea7`. D65 is the current slice.
   Follow [HANDOFF.md](HANDOFF.md) section 0 for the current gates.
 - **D63:** HLS natural end initially returned `receiver_stop` in both the C API
   and UWP host despite user-observed natural EOF. Native commit `0ad1e36`
@@ -244,10 +259,10 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 The active queue is [HANDOFF.md section 0](HANDOFF.md#0-resume-here): C API/UWP
 and private Screenbox checks are recorded in completed D63; D64 published the
 approved main prerelease and merged its fork pins. Running DLL hashes match,
-and final-package receiver checks passed by user report. Review/merge the
-final evidence documentation with user approval. Subsequent development is
-unselected:
-Mac consent research, fork follow-ups, MRP track/queue research, HDR and growing
+and final-package receiver checks passed by user report; final evidence PRs
+are merged. D65's initial Mac consent investigation is complete and its evidence
+awaits review/merge with user approval. Further grant-timer/key research,
+fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
 follow-up record is historical; completed items are not a new work queue.

@@ -1754,3 +1754,50 @@ closes D63's provenance gap for this final run without changing the scope of
 the earlier private-build observations. Final-package validation is complete
 for this recorded combination; broader interoperability remains unvalidated.
 Record: [D64 package checks](validation/nuget-macos-package-windows-2026-10-11.json).
+
+## Mac receiver consent recurrence (D65, 2026-10-12)
+
+The user authorized investigation after public documentation research and
+confirmed the Mac remained on macOS 26.7.1. Main base `671e714` contains merged
+PR #41; final Screenbox documentation fork PR #9 is also merged as `2cee2ea7`.
+The D64 package/playback gate above is complete, not new work to repeat.
+
+Eleven short desktop CLI casts reused the recorded Mac (`Mac14,10`), existing
+pairing and authorized clip. Every cast reached playing, received scripted
+Stop eight seconds after ready, exited 0 with `sender_stop`, cleaned up and
+reported zero failed reads. Staged binaries were restored with hash checks.
+No enrollment, credential export, receiver setting, firewall rule or sender
+privacy-policy change was made. The temporary name-only comparison is documented
+with its binary hash; no persistent C++ change remains.
+
+Individually reported prompt outcomes: A/C/D/F appeared and were accepted;
+B/E/G were prompt-free. The changed display name in E reached the receiver
+(`send-airplay2-consent-probe`) without a new prompt, as confirmed by the log
+and user. Source audit shows the baseline still generates new random device,
+session/client/item identifiers and headers, so recent permission reuse survives
+that established per-cast identity policy in these tests.
+
+H/I/J/K used equal measured idle gaps of 45.078 seconds for each repeat.
+The user reported more than one prompt in that chain; their final K report was
+corrected to **no prompt**. The complete capture shows delegate/should-ask
+sequences at H and J, but request-only logs at I and K. H-to-I receiver permission
+requests were 60.640 seconds apart; I-to-J 55.517; H-to-J 116.157; J-to-K 57.475.
+Request timestamps are not acceptance timestamps. An internal request-processor
+permission message alone does not establish that a notification appeared.
+
+**Interpretation:** consent reuse is consistent with receiver grant age/expiry
+across casts. Recent successful playback and an equal short idle gap did not
+prevent J from re-prompting. The capture emitted no numeric grant duration or
+reset/expiry value; exact timer, renewal rule and cache key remain unproven.
+Name and random-device-ID changes are not demonstrated causes of every prompt.
+No sender fix or permanent identity change is justified by this slice.
+
+This adds consent/start/Stop evidence for one Mac/firmware/Windows/profile
+combination, not new controls/seek/EOF or alternate-host interoperability.
+Only timestamps, fixed event categories, scalar sender telemetry and the two
+synthetic sender names are retained; raw log, endpoints and identifiers are not
+committed. Further timer/key/context comparisons are optional, with no automatic
+re-pairing or receiver access-policy changes.
+
+Study: [public sources, audit and results](macos-receiver-consent.md).
+Record: [D65 redacted artifact](validation/native-macos-consent-windows-2026-10-12.json).

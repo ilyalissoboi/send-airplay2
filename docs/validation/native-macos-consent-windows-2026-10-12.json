@@ -1,0 +1,1524 @@
+{
+  "date": "2026-10-12",
+  "decision": "D65 Mac receiver consent investigation",
+  "receiver": {
+    "model": "Mac14,10",
+    "macos_version": "26.7.1 (user confirmed unchanged)"
+  },
+  "sender": "Windows x64 desktop CLI; existing native paired profile; authorized H.264/AAC gas.mp4",
+  "source_base": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+  "comparison_patch": "Run E only: temporary SenderIdentity::name default changed to send-airplay2-consent-probe; source restored byte-for-byte and normal CLI rebuilt. No shipping C++ change.",
+  "identity_policy": "Fresh random device/session/client/item identifiers and headers; saved pairing reused. No host MAC, enrollment, credential export, receiver-settings or firewall change.",
+  "driver": "Private bounded process runner; endpoints/raw child output omitted; Stop eight seconds after ready; staged files restored and hashes checked.",
+  "receiver_log_source": {
+    "bytes": 24734,
+    "sha256": "c98e4ecf5a55e00625256cef0a068746823e0676c34c2142badf906dcb557300",
+    "privacy": "Only timestamp, fixed event category and allowlisted synthetic client labels retained; raw log not committed."
+  },
+  "receiver_grant_value_messages": 0,
+  "chain_observer": "User reported more than one cast prompted in H/I/J/K; corrected final K report to no prompt. Log shows delegate/should-ask sequences in H and J; request-only in I and K.",
+  "chain_request_intervals_seconds": {
+    "H_to_I": 60.64,
+    "I_to_J": 55.517,
+    "H_to_J": 116.157,
+    "J_to_K": 57.475
+  },
+  "interpretation": "Recent permission reuse survives fresh session identifiers and the display-name comparison. A prompt recurs during equal-idle repeated casts, supporting grant age/expiry rather than last idle alone. Exact timer, renewal rule and cache key remain unproven.",
+  "limits": [
+    "One receiver/OS/host/profile/network context",
+    "No grant numeric value or expiry/reset log emitted in this capture",
+    "Request timestamps are not acceptance timestamps",
+    "No alternate pairing, host/address/account/network or lock/sleep comparison",
+    "Consent/start/Stop checks add no new pause/seek/EOF claim"
+  ],
+  "cases": [
+    {
+      "case": "A",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:07:40.729147+00:00",
+      "finished_utc": "2026-10-12T03:07:52.708994+00:00",
+      "idle_since_previous_exit_ms": null,
+      "ready_elapsed_ms": 3750,
+      "total_elapsed_ms": 11812,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "Prompt appeared; accepted",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:07:41.364",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:07:41.364",
+          "category": "delegate_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:07:41.364",
+          "category": "should_ask_permission",
+          "client": "not_recorded"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 304,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 1955,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1962,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 1962,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1969,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 1969,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1977,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 1977,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1985,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 1985,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2138,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2146,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2195,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2616,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 3648,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "B",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:08:14.427992+00:00",
+      "finished_utc": "2026-10-12T03:08:24.530448+00:00",
+      "idle_since_previous_exit_ms": 21719,
+      "ready_elapsed_ms": 1969,
+      "total_elapsed_ms": 10063,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "No prompt appeared",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:08:14.720",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 84,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 400,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 409,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 409,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 418,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 418,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 425,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 425,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 433,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 433,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 550,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 562,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 648,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 856,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1880,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "C",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:10:28.766430+00:00",
+      "finished_utc": "2026-10-12T03:10:50.436588+00:00",
+      "idle_since_previous_exit_ms": 124234,
+      "ready_elapsed_ms": 13390,
+      "total_elapsed_ms": 21609,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "Prompt appeared; accepted",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:10:29.082",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:10:29.082",
+          "category": "delegate_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:10:29.082",
+          "category": "should_ask_permission",
+          "client": "not_recorded"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 63,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 11435,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 11443,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 11443,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 11450,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 11450,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 11459,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 11459,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 11466,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 11466,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 11512,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 11521,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 11721,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 11818,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 12287,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 13296,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "D",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:14:30.002865+00:00",
+      "finished_utc": "2026-10-12T03:14:43.176598+00:00",
+      "idle_since_previous_exit_ms": 219563,
+      "ready_elapsed_ms": 4891,
+      "total_elapsed_ms": 13047,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "Prompt appeared; accepted",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:14:30.387",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:14:30.387",
+          "category": "delegate_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:14:30.387",
+          "category": "should_ask_permission",
+          "client": "not_recorded"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 107,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 2791,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2799,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 2799,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2810,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 2810,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2817,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 2817,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2825,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 2825,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2896,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2917,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 3055,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 3238,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 3780,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 4784,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "E",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "name-probe",
+      "source_patch": "SenderIdentity::name only",
+      "binary_sha256": "c5a173c95c287c552777d4adc9e5e3a365abe9138132f820e3cf99cfa7a299c4",
+      "started_utc": "2026-10-12T03:15:04.098193+00:00",
+      "finished_utc": "2026-10-12T03:15:14.350657+00:00",
+      "idle_since_previous_exit_ms": 20922,
+      "ready_elapsed_ms": 2047,
+      "total_elapsed_ms": 10125,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "No prompt appeared",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:15:04.431",
+          "category": "request_permission",
+          "client": "send-airplay2-consent-probe"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 71,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 242,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 249,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 249,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 256,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 256,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 265,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 265,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 272,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 272,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 328,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 419,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 599,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 948,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1954,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "F",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:16:42.089235+00:00",
+      "finished_utc": "2026-10-12T03:16:58.680716+00:00",
+      "idle_since_previous_exit_ms": 87734,
+      "ready_elapsed_ms": 8390,
+      "total_elapsed_ms": 16562,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "Prompt appeared; accepted",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:16:42.429",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:16:42.429",
+          "category": "delegate_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:16:42.429",
+          "category": "should_ask_permission",
+          "client": "not_recorded"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 177,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 6467,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6474,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 6474,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6484,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 6484,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6495,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 6495,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6504,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 6504,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6589,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6609,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6698,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6812,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 7263,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 8278,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "G",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:18:01.234640+00:00",
+      "finished_utc": "2026-10-12T03:18:11.793337+00:00",
+      "idle_since_previous_exit_ms": 62547,
+      "ready_elapsed_ms": 2344,
+      "total_elapsed_ms": 10516,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "No prompt appeared",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:18:01.599",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 208,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 370,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 380,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 380,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 388,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 388,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 396,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 396,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 403,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 403,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 440,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 448,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 694,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 796,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1255,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2260,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "H",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:20:54.144121+00:00",
+      "finished_utc": "2026-10-12T03:21:09.868441+00:00",
+      "idle_since_previous_exit_ms": 162343,
+      "ready_elapsed_ms": 7594,
+      "total_elapsed_ms": 15672,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "Not individually reported; chain user report: more than one cast prompted",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:20:54.564",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:20:54.564",
+          "category": "delegate_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:20:54.564",
+          "category": "should_ask_permission",
+          "client": "not_recorded"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 170,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 6102,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6110,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 6110,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6120,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 6120,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6127,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 6127,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6136,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 6136,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6203,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6225,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6325,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 6477,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 7497,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "I",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:21:54.942927+00:00",
+      "finished_utc": "2026-10-12T03:22:05.413262+00:00",
+      "idle_since_previous_exit_ms": 45078,
+      "ready_elapsed_ms": 2266,
+      "total_elapsed_ms": 10422,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "Not individually reported; chain user report: more than one cast prompted",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:21:55.204",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 111,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 383,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 390,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 390,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 397,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 397,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 405,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 405,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 416,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 416,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 502,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 510,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 643,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 727,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1156,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2173,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "J",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:22:50.479158+00:00",
+      "finished_utc": "2026-10-12T03:23:02.806774+00:00",
+      "idle_since_previous_exit_ms": 45078,
+      "ready_elapsed_ms": 4125,
+      "total_elapsed_ms": 12282,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "Not individually reported; chain user report: more than one cast prompted",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:22:50.721",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:22:50.721",
+          "category": "delegate_permission",
+          "client": "send-airplay2"
+        },
+        {
+          "mac_local_time": "2026-10-12 12:22:50.721",
+          "category": "should_ask_permission",
+          "client": "not_recorded"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 79,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 2197,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2205,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 2205,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2211,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 2211,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2220,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 2220,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2240,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 2240,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2295,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2485,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2588,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 3010,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 4037,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    },
+    {
+      "case": "K",
+      "source_commit": "671e7142ac5a29691b302e3b25961e19372b9cf2",
+      "variant": "default",
+      "source_patch": "none",
+      "binary_sha256": "2184ac873431d621258f9c6560fa4c5aba0ca3cca543f453f4f3907a523210ed",
+      "started_utc": "2026-10-12T03:23:47.884070+00:00",
+      "finished_utc": "2026-10-12T03:23:58.340296+00:00",
+      "idle_since_previous_exit_ms": 45078,
+      "ready_elapsed_ms": 2250,
+      "total_elapsed_ms": 10406,
+      "exit_code": 0,
+      "terminal": {
+        "state": "paused",
+        "failed": false,
+        "failed_reads": 0,
+        "end": "sender_stop",
+        "cleaned": true
+      },
+      "staged_files_restored": true,
+      "observer": "No prompt; corrected user report",
+      "receiver_log_events": [
+        {
+          "mac_local_time": "2026-10-12 12:23:48.196",
+          "category": "request_permission",
+          "client": "send-airplay2"
+        }
+      ],
+      "startup": [
+        {
+          "elapsed_ms": 0,
+          "phase": "connecting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 142,
+          "phase": "connecting",
+          "state": "none",
+          "status": 500
+        },
+        {
+          "elapsed_ms": 343,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 348,
+          "phase": "insert_item",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 348,
+          "phase": "date_range",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 356,
+          "phase": "date_range",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 356,
+          "phase": "item_end",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 364,
+          "phase": "item_end",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 364,
+          "phase": "rate",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 372,
+          "phase": "rate",
+          "state": "none",
+          "status": 200
+        },
+        {
+          "elapsed_ms": 372,
+          "phase": "waiting",
+          "state": "none",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 408,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 639,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 726,
+          "phase": "waiting",
+          "state": "loading",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 1133,
+          "phase": "waiting",
+          "state": "playing",
+          "status": 0
+        },
+        {
+          "elapsed_ms": 2151,
+          "phase": "ready",
+          "state": "none",
+          "status": 0
+        }
+      ]
+    }
+  ],
+  "validation": "All 11 casts exited 0, sender_stop, cleaned=true, failed=false, failed_reads=0; no persistent C++ delta; header byte restoration and clang-format dry-run passed."
+}
