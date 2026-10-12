@@ -14,6 +14,11 @@ output**, because suitable local test hardware is unavailable. The research
 below remains useful, but its surround/speaker experiments and implementation
 are not the active queue.
 
+The stereo-AAC planning PR #44 subsequently merged as `12c24a7`, with all
+14 checks passed at final head `bc4b381` and its selection review resolved.
+The companion Screenbox checkpoint PR #12 merged as `ce782356` (docs-only;
+no CI checks reported). Planning is complete; implementation has not started.
+
 The selected next slice to detail is **video with surround audio downmixed to
 stereo AAC**. See the [implementation plan](stereo-aac-casting-plan.md) for source
 selection, codec backend, timeline, HLS/cache, ABI/packaging and acceptance gates.

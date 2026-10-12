@@ -1,13 +1,14 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#43 merged.
+Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#44 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
 MP4/MKV HLS remux with text subtitles and indexed MKV startup. The Screenbox
 fork has implemented its current design through PRs #1-#10, including the Mac
 package pin, final validation record and Forget-device follow-up; PR #11 adds
-the research checkpoint without changing runtime behavior.
+the research checkpoint and PR #12 the next-slice planning checkpoint, without
+changing runtime behavior.
 
 Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
 desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
@@ -30,7 +31,9 @@ The [audio-feature assessment](audio-features-assessment.md) records the
 speaker-inclusive audio-file and DTS 5.1/7.1 research. D67 defers those
 implementations for lack of suitable local test hardware and selects
 [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md)
-as the next slice to detail. The plan proposes an optional decoder/encoder,
+as the next slice. Planning PR #44 merged as `12c24a7` after all 14 checks passed
+at `bc4b381`, including the resolved explicit-track-selection review.
+The plan proposes an optional decoder/encoder,
 separate stereo audio rendition and bounded cache while copying supported video.
 Existing delivery defaults remain unchanged. This is planning authorization;
 no backend is added or receiver support established by the documentation.
