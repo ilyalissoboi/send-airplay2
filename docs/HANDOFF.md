@@ -34,6 +34,13 @@ deferred. The initial planning-only authorization text below is historical;
 the user's Proceed authorizes this implementation gate without re-confirmation.
 The separate merge-checkpoint PR #45 merged as `e92e29e`; its 14 checks passed.
 
+**PR #47 review follow-up:** the linked audio-feature assessment now separates
+the completed, merged D68 offline codec/packaging probe from unfinished production
+HLS conversion. Its D67 planning-only authorization is historical, and speaker/
+surround work remains deferred. The subsequent authorized D69 source foundations
+are tracked in separate open PR #48; this documentation branch does not contain
+that native increment. This correction adds no runtime or receiver evidence.
+
 **D68 CI follow-up (2026-10-12):** spike PR #46 is merged. At `6a5777d`, all
 14 baseline jobs passed and the desktop codec test passed, but the serial
 66m24s probe job failed at UWP configure: PowerShell passed an unquoted `10.0`
