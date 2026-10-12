@@ -29,6 +29,7 @@ vcpkg_from_github(
         0051-fix-msvc-undef-flags.patch
         0052-fix-disable-unstable-swscale-link.patch
         0053-wav-guid-dependency.patch # wavdec's shared GUID data even without W64 demuxing.
+        0054-matroska-track-number.patch # Original TrackNumber for exact source selection.
 )
 
 if(SOURCE_PATH MATCHES " ")

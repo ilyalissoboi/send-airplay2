@@ -1,0 +1,340 @@
+{
+  "license": "Apache-2.0; original synthesized input and resulting test media",
+  "generator": "generate_decoder_fixtures.py",
+  "tool_version": "ffmpeg version 9.0.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+  "tool_configuration": "configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-cairo --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libsvtjpegxs --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper",
+  "tool_distribution": "development use only; not incorporated or redistributed",
+  "encoder_commands": [
+    [
+      "-f",
+      "lavfi",
+      "-i",
+      "color=black:s=16x16:r=2:d=3",
+      "-c:v",
+      "libx264",
+      "-bf",
+      "0",
+      "-g",
+      "1",
+      "-an",
+      "video.mp4"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "commentary.wav",
+      "-i",
+      "main.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-map",
+      "2:a",
+      "-map_metadata",
+      "-1",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "384k",
+      "movie.mp4"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "main.wav",
+      "-i",
+      "commentary.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-map",
+      "2:a",
+      "-map_metadata",
+      "-1",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "384k",
+      "movie.mp4"
+    ],
+    [
+      "-i",
+      "commentary.wav",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "comment.mka"
+    ],
+    [
+      "-i",
+      "main.wav",
+      "-c:a",
+      "dca",
+      "-strict",
+      "-2",
+      "-b:a",
+      "1411200",
+      "main.mka"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "comment.mka",
+      "-i",
+      "main.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-map",
+      "2:a",
+      "-c:v",
+      "copy",
+      "-c:a:0",
+      "copy",
+      "-c:a:1",
+      "dca",
+      "-b:a:1",
+      "1411200",
+      "-strict",
+      "-2",
+      "compressed.mp4"
+    ],
+    [
+      "-i",
+      "main.wav",
+      "-c:a",
+      "ac3",
+      "-strict",
+      "-2",
+      "-b:a",
+      "448k",
+      "main.mka"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "comment.mka",
+      "-i",
+      "main.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-map",
+      "2:a",
+      "-c:v",
+      "copy",
+      "-c:a:0",
+      "copy",
+      "-c:a:1",
+      "ac3",
+      "-b:a:1",
+      "448k",
+      "-strict",
+      "-2",
+      "compressed.mp4"
+    ],
+    [
+      "-i",
+      "commentary.wav",
+      "-c:a",
+      "ac3",
+      "-b:a",
+      "192k",
+      "stereo.mka"
+    ],
+    [
+      "-i",
+      "main.wav",
+      "-c:a",
+      "eac3",
+      "-strict",
+      "-2",
+      "-b:a",
+      "448k",
+      "main.mka"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "comment.mka",
+      "-i",
+      "main.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-map",
+      "2:a",
+      "-c:v",
+      "copy",
+      "-c:a:0",
+      "copy",
+      "-c:a:1",
+      "eac3",
+      "-b:a:1",
+      "448k",
+      "-strict",
+      "-2",
+      "compressed.mp4"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "main.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "aac",
+      "-ar",
+      "44100",
+      "-b:a",
+      "384k",
+      "resampled.mp4"
+    ]
+  ],
+  "inputs": [
+    {
+      "channels": 6,
+      "rate": 48000,
+      "frames": 144000,
+      "frequencies_hz": [
+        310,
+        470,
+        630,
+        80,
+        790,
+        950
+      ],
+      "sha256": "619bdedae23bd319c34c3a273e7aa785616360b0a1ef9d817943abe528137039"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 144000,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "518a33d0076e1c106eccb937fb6453def7a8f172559052abca8b2b6bc0d92927"
+    }
+  ],
+  "identities": {
+    "video": 11,
+    "commentary": 7,
+    "main": 42
+  },
+  "matroska_timestamp_scale_ns": 1000000,
+  "delay_case_ns": 20000000,
+  "preroll_case_ns": 80000000,
+  "fixtures": [
+    {
+      "file": "aac-44100.mp4",
+      "bytes": 147291,
+      "sha256": "3628f90b6c28ec22f091069407f3e324a3ebf9c759b42c7e6d7a9452cc7b409b"
+    },
+    {
+      "file": "aac-commentary-first.mp4",
+      "bytes": 244094,
+      "sha256": "ee46d8f5349bdc1122a7d6efc9a8e34c82d5aa3c6d9ae52a447173177fa3af3e"
+    },
+    {
+      "file": "aac-disabled.mp4",
+      "bytes": 244094,
+      "sha256": "48937358530e896619fff2ba0b1531c6e86f510b6d227bca01ea39d740ae0717"
+    },
+    {
+      "file": "aac-edits.mp4",
+      "bytes": 244106,
+      "sha256": "7a736ac46e76928de08d79f55dbbf362fa8337e11bc3053babecfb4521e843e6"
+    },
+    {
+      "file": "aac-main-first.mp4",
+      "bytes": 244094,
+      "sha256": "40a206f746677a48cdde48eace2d0fe1f989da94d76d748dc78333ac15d9c278"
+    },
+    {
+      "file": "aac-protected.mp4",
+      "bytes": 244094,
+      "sha256": "bfdcaef80af0b6cfe46719e4121e503b632b3ec6d0575bb0d1e442b8dd678c60"
+    },
+    {
+      "file": "aac-unknown.mp4",
+      "bytes": 244094,
+      "sha256": "b6a8cf222908a7fb8eb3c71f20868c334ff2ecbd349f24ea957dc3cb7ad94d74"
+    },
+    {
+      "file": "ac3-commentary-first.mkv",
+      "bytes": 226007,
+      "sha256": "0b50e503b344a6b36445faecd23cc0e7ac073c64ae0434a48c4cb26201eb9e06"
+    },
+    {
+      "file": "ac3-commentary-first.mp4",
+      "bytes": 221569,
+      "sha256": "d00a6410642284de240a57dcfdae0fd97be2f8cfcc2ce39f4f54c485be18dc53"
+    },
+    {
+      "file": "ac3-format-change.mkv",
+      "bytes": 178903,
+      "sha256": "21fbfb978e37e649c28c6629c24b5f0f1be734d65ead90aefe32c8d20a07a28d"
+    },
+    {
+      "file": "dts-commentary-first.mkv",
+      "bytes": 598939,
+      "sha256": "c83cc0cbed998b4068ec650671a975567eb514126f1a972fc9e6054447a83187"
+    },
+    {
+      "file": "dts-commentary-first.mp4",
+      "bytes": 583810,
+      "sha256": "0f27014a561b1ab00cf73e22eb44b82373bbf33ac1efd09787e07280e1bb6a2e"
+    },
+    {
+      "file": "dts-delay.mkv",
+      "bytes": 598954,
+      "sha256": "70afdce1bf261a39cd9d7d806ea06031bf68a3d9cd9939abd79935361745ef24"
+    },
+    {
+      "file": "dts-large-id.mkv",
+      "bytes": 601202,
+      "sha256": "89322571d3a8845e0ad52ccaa797831458771d71b4e8f0173aa510e2aa57ab06"
+    },
+    {
+      "file": "dts-main-first.mkv",
+      "bytes": 598939,
+      "sha256": "d69735c71529d9ed32bc531f5e5676f472329337023294660ff401f8c9a8494e"
+    },
+    {
+      "file": "dts-spoofed-tags.mkv",
+      "bytes": 599039,
+      "sha256": "2051901657cdd1010bf7b7e763135bc1920b5c8f3638ad833067a30e34386db1"
+    },
+    {
+      "file": "eac3-commentary-first.mkv",
+      "bytes": 226008,
+      "sha256": "f2c74f8566dbd7c735f24bd8c63ab2bc9196eb961feb7874aa2e9a8b99be3e46"
+    },
+    {
+      "file": "eac3-commentary-first.mp4",
+      "bytes": 221571,
+      "sha256": "0f0df487ca6b44034e4db494620500cdbd6fbe726306c4c7ddde2c9e67ccd832"
+    }
+  ]
+}

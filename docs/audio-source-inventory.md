@@ -102,9 +102,10 @@ with the repository clang-format policy and whitespace checks. PR #48 merged as
 `38268265899`; both metadata review findings are fixed and resolved. None of these
 tests is a receiver run.
 
-Still required: bind these identities to actual decoder streams, prove compressed
-audio seeks/resampler history and frame changes, generate AAC with correct
-priming/padding/fMP4 timing, expose separate audio HLS resources with bounded
+D70's subsequently authorized [decoder adapter](audio-decoder-source.md) binds
+these identities to actual streams and tests compressed seek windows, resampler
+history and frame-change refusals in its recorded offline scope. Still required:
+generate AAC with correct priming/padding/fMP4 timing, expose separate audio HLS resources with bounded
 generation/cache, extend the public ABI/bindings/CLI, then run packaged/receiver
 gates. This increment supplies metadata and packet-anchor arithmetic, not decoded
 seek accuracy, new receiver interoperability or a package publication. Audio-only

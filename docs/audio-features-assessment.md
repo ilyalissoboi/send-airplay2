@@ -39,7 +39,10 @@ The later Proceed also authorized D69's native source foundations, implemented
 in [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48), merged as
 `5d46479` after all 16 checks passed at final head `c816709`:
 MP4/MKV inventory/selection, independent video indexing and source seek metadata.
-Actual decoder stream matching/seeking and encoded audio delivery remain next.
+D70's subsequently authorized [private decoder adapter](audio-decoder-source.md)
+implements stream matching and compressed seek windows in its recorded offline
+scope. Production stereo AAC/HLS delivery and public/packaged/receiver gates
+remain next; D70 adds no receiver observation.
 PR #47's D68 documentation checkpoint merged as `031acae`; merged PR #48 includes
 that checkpoint alongside its native foundations. Follow
 [the handoff](HANDOFF.md#0-resume-here) and inspect open PRs before continuing.

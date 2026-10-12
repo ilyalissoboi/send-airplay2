@@ -1,0 +1,33 @@
+diff --git a/libavformat/matroskadec.c b/libavformat/matroskadec.c
+--- a/libavformat/matroskadec.c
++++ b/libavformat/matroskadec.c
+@@ -1840,6 +1840,10 @@ static void matroska_convert_tag(AVFormatContext *s, EbmlList *list,
+             snprintf(key, sizeof(key), "%s/%s", prefix, tags[i].name);
+         else
+             av_strlcpy(key, tags[i].name, sizeof(key));
++        /* File tags must not impersonate the decoder's original identity. */
++        if (!av_strcasecmp(key, "sap2_matroska_track_number"))
++            continue;
++
+         if (tags[i].def || !lang) {
+             av_dict_set(metadata, key, tags[i].string, 0);
+             if (tags[i].sub.nb_elem)
+@@ -3253,6 +3253,18 @@ static int matroska_parse_tracks(AVFormatContext *s)
+             av_free(key_id_base64);
+             return AVERROR(ENOMEM);
+         }
++        /* Project bridge: TrackNumber is not AVStream.index or AVStream.id.
++         * Hex preserves the complete unsigned identity without truncation. */
++        {
++            char track_number[17];
++            snprintf(track_number, sizeof(track_number), "%" PRIx64, track->num);
++            ret = av_dict_set(&st->metadata, "sap2_matroska_track_number",
++                              track_number, 0);
++            if (ret < 0) {
++                av_free(key_id_base64);
++                return ret;
++            }
++        }
+         par = st->codecpar;
+ 
+         par->codec_id  = codec_id;

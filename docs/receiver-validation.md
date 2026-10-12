@@ -1903,6 +1903,14 @@ See [contracts and limits](audio-source-inventory.md).
 The source timing helpers are not compressed-audio decoder seek proof; no stereo
 HLS conversion, new packaged runtime or receiver observation is added.
 
+**D70 selected decoder windows (2026-10-13):** actual compressed AAC/AC-3/E-AC-3/
+DTS-core 5.1 fixtures pass identity, seek/timestamp/resampling and lifecycle checks
+through the private adapter; the preserved codec probe also passes. UWP x64
+compilation and codec DLL app CRT/import inspection pass. See
+[contracts and evidence limits](audio-decoder-source.md). This is desktop offline
+and UWP build evidence, not a new packaged adapter runtime, stereo HLS playback,
+receiver interoperability result or package publication.
+
 **D67 planning disposition (2026-10-12):** the user defers audio-file casting,
 including audio-only speakers/HomePod, and DTS conversion preserving 5.1/7.1
 because suitable local test hardware is unavailable. The next documented slice

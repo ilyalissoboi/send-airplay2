@@ -17,8 +17,10 @@ passed at `579bb44`. This supersedes the initial planning-only
 authorization below. D69's later authorized [source foundations](audio-source-inventory.md)
 merged in PR #48 as `5d46479` after all 16 checks passed at `c816709`, adding
 inventory/selection, independent video indexing and seek metadata.
-Actual decoder stream matching/seeking, production HLS conversion and receiver
-validation remain work; no new casting mode or package release is implemented.
+D70's subsequent authorized [private decoder adapter](audio-decoder-source.md)
+implements selected-stream/seek-window decoding in its recorded offline scope.
+Production HLS conversion and public/packaged/receiver validation remain work;
+no new casting mode or package release is implemented.
 
 ## User decision and deferred work
 
@@ -249,9 +251,10 @@ Publishing a new prerelease and merging remain separate approval steps.
    check two channels, expected per-channel contributions, clipping, sync,
    duration and segment joins. Preserve existing subtitle coverage.
    **D69 checkpoint:** source inventory/selection across MP4/MKV, independent video
-   indexing and source seek metadata merged in PR #48 as `5d46479`. Actual decoder
-   stream matching and compressed-input seek/timestamp validation remain next,
-   before lazy stereo audio resource generation. Public probe/selection contracts
+   indexing and source seek metadata merged in PR #48 as `5d46479`. D70 connects
+   those identities to actual decoder streams and validates compressed seek
+   windows in its documented offline scope. Stereo AAC epochs/priming and lazy
+   HLS audio resource generation remain next. Public probe/selection contracts
    remain part of the API/host gate.
 3. **API and host gate.** Extend ABI/bindings/CLI and optional-backend CI. Cover
    MP4 AAC-commentary-before-DTS and reversed-order fixtures: both require
