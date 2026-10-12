@@ -12,7 +12,8 @@ reported). Those planning merges add no codec code, dependencies or receiver pro
 **Implementation authorization/status:** the user's subsequent Proceed
 authorizes D68's [codec/packaging spike](stereo-aac-codec-spike.md). Its optional
 development probe and offline AppContainer host are implemented and tested in
-the recorded Windows x64 scope. This supersedes the initial planning-only
+the recorded Windows x64 scope, merged in PR #46 as `cb9d641` after all 16 checks
+passed at `579bb44`. This supersedes the initial planning-only
 authorization below. Production HLS conversion, source selection and receiver
 validation remain work; no new casting mode or package release is implemented.
 
@@ -235,11 +236,19 @@ Publishing a new prerelease and merging remain separate approval steps.
    test files. Establish the supported decoder matrix, downmix policy, priming
    and random-access segment strategy. A full-file offline conversion can be a
    comparison oracle only.
+   **D68 checkpoint:** the development codec/build/storage/window probe is merged
+   in PR #46. Read its evidence and retain the remaining DTS-HD/dependent-substream
+   fixture and compressed-input seek/priming/HLS limits; do not repeat completed
+   probe checks or interpret the PCM window experiment as production movie seeking.
 2. **Native conversion and presentation.** Implement independent audio payloads,
    stereo encoder, audio rendition, lazy generation and quota/cleanup contracts.
    Verify compressed video payload hashes remain identical; decode output and
    check two channels, expected per-channel contributions, clipping, sync,
    duration and segment joins. Preserve existing subtitle coverage.
+   Recommended first increment: production selected-track inventory/selection
+   across MP4/MKV and decoder seek/timestamp handling, before lazy stereo audio
+   resource generation. This is an engineering sequencing proposal within this
+   phase; public probe/selection contracts remain part of the API/host gate.
 3. **API and host gate.** Extend ABI/bindings/CLI and optional-backend CI. Cover
    MP4 AAC-commentary-before-DTS and reversed-order fixtures: both require
    selection when unspecified; explicit DTS selects DTS in either order.
@@ -267,5 +276,6 @@ This is unmeasured; codec licensing/build and seek/priming/cache work dominate
 the uncertainty, along with track probing/selection across two demuxers.
 Screenbox product integration and waiting for suitable receiver hardware are
 additional. Revisit the estimate after the first spike rather than
-promising a completion date. The next session should obtain implementation
-authorization before beginning this sequence.
+promising a completion date. The subsequent Proceed authorized the D68
+codec/packaging gate recorded above; that initial planning-only authorization
+limit must not cause a repeat permission request for the completed spike.

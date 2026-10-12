@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#45 merged.
+Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#46 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -39,6 +39,7 @@ Existing delivery defaults remain unchanged. This is planning authorization;
 no backend is added or receiver support established by the documentation.
 
 D68's subsequent authorized [codec/packaging spike](stereo-aac-codec-spike.md)
+merged in PR #46 as `cb9d641` after all 16 checks passed at `579bb44`. It
 adds a separate optional development DLL and offline packaged host. Existing
 casting delivery and published packages are unchanged. Native HLS conversion,
 production selection and receiver proof remain next gates; offline PCM window
