@@ -3,6 +3,16 @@
 The project remains Apache-2.0. Record revisions and licensing here before
 incorporating external code or adding dependencies.
 
+## Native source inventory (D69)
+
+D69's native source inventory adds no dependency or copied implementation.
+Matroska SeekPreRoll (`0x56BB`), CodecDelay sign/units and deprecated
+TrackTimestampScale/TrackOffset behavior were verified against the official
+[Matroska element specification](https://www.matroska.org/technical/elements.html)
+on 2026-10-12, alongside RFC 9559. Only format facts are used; no RFC code
+components or third-party implementation were copied. The inventory, selection,
+clock arithmetic and synthetic fixtures are original Apache-2.0 code.
+
 ## Optional FFmpeg codec spike (D68)
 
 The authorized stereo-AAC codec/packaging spike uses FFmpeg **9.0.2**, from

@@ -4,12 +4,15 @@
 #include "hls_remux.h"
 #include "mp4_demux.h"
 #include "mp4_fixture.h"
+#include "media_track_inventory.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -559,6 +562,217 @@ void mp4_text_exclusion_tests() {
           "an unreadable text layout leaves out the track, not the movie");
 }
 
+void source_inventory_tests() {
+    group = "MP4 source identities and selection";
+    auto video = video_spec();
+    video.source_id = 11;
+    auto commentary = audio_spec();
+    commentary.source_id = 7;
+    auto main_audio = audio_spec(audio_entry("dtsc", {}));
+    main_audio.source_id = 42;
+    // Main audio uses independent byte offsets: four 16-byte chunks in mdat.
+    main_audio.stbl_extra =
+        join({full_box("stts", 0, 0, words({1, 16, 50})),
+              full_box("stsc", 0, 0, words({1, 1, 4, 1})), full_box("stsz", 0, 0, words({4, 16})),
+              full_box("stco", 0, 0, words({4, 24, 40, 56, 72}))});
+    for (const bool commentary_first : {true, false}) {
+        const auto file =
+            mp4_file(commentary_first ? std::vector<TrackSpec>{video, commentary, main_audio}
+                                      : std::vector<TrackSpec>{video, main_audio, commentary});
+        const auto scenario = std::string(commentary_first ? "commentary first" : "main first");
+        const auto inventory = probe_mp4_tracks(memory_reader(file), file.size());
+        check(inventory.tracks.size() == 3 && inventory.tracks[0].id == 11,
+              scenario + ": unfiltered identities");
+        check(select_source_audio(inventory).status == AudioSelectionStatus::selection_required,
+              scenario + ": no file-order or codec-preference fallback");
+        const auto selected = select_source_audio(inventory, 42);
+        check(selected.status == AudioSelectionStatus::selected &&
+                  inventory.tracks[selected.track_index].codec == "dtsc" &&
+                  inventory.tracks[selected.track_index].id == 42,
+              scenario + ": DTS identity selects main audio");
+        const auto indexed = read_mp4_source_audio(memory_reader(file), file.size(), 42);
+        check(indexed.codec == "dtsc" && indexed.samples.size() == 16 &&
+                  indexed.samples.front().offset == 24 && indexed.samples[4].offset == 40,
+              scenario + ": selected DTS packet offsets, not commentary offsets");
+        const auto video_only = read_mp4_video_source(memory_reader(file), file.size());
+        check(video_only.tracks.size() == 1 && video_only.tracks[0].samples[3].offset == 121 &&
+                  video_only.tracks[0].sample_entry == avc1_entry(),
+              scenario + ": copied-video index independent of DTS support");
+        check(read_mp4(memory_reader(file), file.size()).tracks[1].codec == "mp4a",
+              scenario + ": legacy remux selection preserved");
+        for (const std::uint64_t invalid_id : {0u, 11u, 999u}) {
+            check(select_source_audio(inventory, invalid_id).status ==
+                      AudioSelectionStatus::invalid_selection,
+                  scenario + ": invalid/non-audio identity " + std::to_string(invalid_id));
+        }
+    }
+    main_audio.tkhd_flags = 0;
+    const auto disabled = mp4_file({video, main_audio, commentary});
+    const auto disabled_inventory = probe_mp4_tracks(memory_reader(disabled), disabled.size());
+    check(disabled_inventory.tracks.size() == 3 && !disabled_inventory.tracks[1].enabled &&
+              select_source_audio(disabled_inventory).track_index == 2 &&
+              select_source_audio(disabled_inventory, 42).status ==
+                  AudioSelectionStatus::invalid_selection,
+          "disabled DTS is listed but cannot be selected");
+    auto unknown = audio_spec(audio_entry("Opus", {}));
+    unknown.source_id = 55;
+    const auto unsupported = mp4_file({video, unknown, commentary});
+    const auto unknown_inventory = probe_mp4_tracks(memory_reader(unsupported), unsupported.size());
+    const auto unknown_choice = select_source_audio(unknown_inventory, 55);
+    check(unknown_choice.status == AudioSelectionStatus::selected &&
+              unknown_inventory.tracks[unknown_choice.track_index].codec == "Opus",
+          "unsupported explicit identity remains selected for later backend refusal");
+    const auto silent = mp4_file({video});
+    const auto silent_inventory = probe_mp4_tracks(memory_reader(silent), silent.size());
+    check(select_source_audio(silent_inventory).status == AudioSelectionStatus::video_only &&
+              select_source_audio(silent_inventory, 7).status ==
+                  AudioSelectionStatus::invalid_selection,
+          "no audio: automatic video-only, explicit absent identity invalid");
+    commentary.source_id = 11;
+    const auto duplicate = mp4_file({video, commentary});
+    expect_failure(RemuxFailure::malformed, "duplicate identity",
+                   [&] { (void)probe_mp4_tracks(memory_reader(duplicate), duplicate.size()); });
+    commentary.source_id = 0;
+    const auto zero = mp4_file({video, commentary});
+    expect_failure(RemuxFailure::malformed, "zero identity",
+                   [&] { (void)probe_mp4_tracks(memory_reader(zero), zero.size()); });
+    const auto too_many = mp4_file(std::vector<TrackSpec>(129, audio_spec()));
+    expect_failure(RemuxFailure::too_large, "129 tracks exceed literal boundary",
+                   [&] { (void)probe_mp4_tracks(memory_reader(too_many), too_many.size()); });
+}
+
+void source_inventory_bounds_tests() {
+    group = "MP4 source inventory boundaries";
+    const auto maximum = mp4_file(std::vector<TrackSpec>(128, audio_spec()));
+    check(probe_mp4_tracks(memory_reader(maximum), maximum.size()).tracks.size() == 128,
+          "literal 128-track boundary accepted");
+    auto text = audio_spec();
+    text.handler = "text";
+    text.source_id = 63;
+    const auto with_text = mp4_file({video_spec(), text});
+    const auto text_inventory = probe_mp4_tracks(memory_reader(with_text), with_text.size());
+    check(text_inventory.tracks[1].kind == SourceTrackKind::other &&
+              select_source_audio(text_inventory, 63).status ==
+                  AudioSelectionStatus::invalid_selection,
+          "non-audio subtitle identity retained but invalid for audio selection");
+    auto encrypted_audio = audio_spec(audio_entry("enca", {}));
+    encrypted_audio.source_id = 12;
+    const auto encrypted = mp4_file({video_spec(), encrypted_audio});
+    check(probe_mp4_tracks(memory_reader(encrypted), encrypted.size()).tracks[1].encoded,
+          "encrypted sample entry retained as protected metadata");
+    expect_failure(RemuxFailure::unsupported, "encrypted selected audio index", [&] {
+        (void)read_mp4_source_audio(memory_reader(encrypted), encrypted.size(), 12);
+    });
+    Bytes excessive_headers;
+    for (int index = 0; index < 4097; ++index) {
+        const auto free_box = box("free", {});
+        excessive_headers.insert(excessive_headers.end(), free_box.begin(), free_box.end());
+    }
+    expect_failure(RemuxFailure::too_large, "4097 top-level headers exceed probe work limit", [&] {
+        (void)probe_mp4_tracks(memory_reader(excessive_headers), excessive_headers.size());
+    });
+}
+
+void source_probe_io_tests() {
+    group = "source probe borrowed I/O";
+    const auto file = std::make_shared<const Bytes>(mp4_file({video_spec(), audio_spec()}));
+    OpenContext open;
+    auto input = memory_media(file, 3);
+    std::size_t size_calls = 0;
+    input.size = [&] {
+        ++size_calls;
+        return static_cast<std::uint64_t>(file->size());
+    };
+    const auto base_read = input.read_at;
+    input.read_at = [&](std::uint64_t offset, std::uint8_t* out, std::size_t capacity,
+                        const MediaReadContext& context) {
+        check(capacity <= 65536, "literal host read-capacity boundary");
+        check(offset < 24 || offset >= 196, "metadata probe does not read MP4 mdat payload");
+        return base_read(offset, out, capacity, context);
+    };
+    const auto inventory = probe_media_tracks(input, open.context);
+    check(inventory.tracks.size() == 2 && size_calls == 1,
+          "three-byte short reads and one size call");
+    const auto expect_read_failure = [&](const char* scenario) {
+        try {
+            (void)probe_media_tracks(input, open.context);
+            check(false, std::string(scenario) + ": accepted");
+        } catch (const std::runtime_error&) {
+        }
+    };
+    open.cancelled = true;
+    expect_read_failure("cancel before size");
+    check(size_calls == 1, "pre-cancelled probe never reaches source size");
+    open.cancelled = false;
+    input.read_at = [&](std::uint64_t offset, std::uint8_t* out, std::size_t capacity,
+                        const MediaReadContext& context) {
+        const auto count = base_read(offset, out, capacity, context);
+        open.cancelled = true;
+        return count;
+    };
+    expect_read_failure("cancel during callback");
+    open.cancelled = false;
+    input.read_at = [](std::uint64_t, std::uint8_t*, std::size_t, const MediaReadContext&) {
+        return std::size_t{0};
+    };
+    expect_read_failure("premature zero");
+    input.read_at = [](std::uint64_t, std::uint8_t*, std::size_t capacity,
+                       const MediaReadContext&) { return capacity + 1; };
+    expect_read_failure("oversized callback result");
+    input.read_at = base_read;
+    open.context.deadline = std::chrono::steady_clock::now();
+    const auto before_deadline_size_calls = size_calls;
+    expect_read_failure("expired absolute deadline");
+    check(size_calls == before_deadline_size_calls, "expired probe stops before size");
+}
+
+void source_audio_timeline_tests() {
+    group = "MP4 source audio edit/seek timeline";
+    auto spec = audio_spec(audio_entry("dtsc", {}));
+    // Empty edit: 600 movie ticks = 1 s; media edit: 2400 ticks = 4 s,
+    // starting at 100 track ticks = 1 s. Independent of codec support.
+    spec.edts =
+        box("edts",
+            full_box("elst", 0, 0, words({2, 600, 0xffffffff, 0x00010000, 2400, 100, 0x00010000})));
+    const auto file = mp4_file({video_spec(), spec});
+    const auto audio = read_mp4_source_audio(memory_reader(file), file.size(), 2);
+    const auto seek = plan_mp4_audio_seek(audio, 600, 2'250'000'000, 50);
+    check(seek.sample_index == 3 && seek.discard_before_ticks == 225 && !seek.initial_silence,
+          "2.25 s presentation -> media tick 225, preroll anchors packet at tick 150");
+    const auto backward = plan_mp4_audio_seek(audio, 600, 1'250'000'000, 50);
+    check(backward.sample_index == 1 && backward.discard_before_ticks == 125,
+          "backward query is independent of preceding forward query");
+    const auto empty = plan_mp4_audio_seek(audio, 600, 500'000'000, 200);
+    check(empty.initial_silence && empty.sample_index == 0 && empty.discard_before_ticks == 100,
+          "empty edit is explicit silence; preroll saturates at first packet");
+    check(plan_mp4_audio_seek(audio, 600, 5'000'000'000, 0).sample_index == 16,
+          "media edit's exact end gives EOF");
+    auto thirds = audio;
+    thirds.edits.front().segment_duration = 1;
+    thirds.edits.back().segment_duration = 12;
+    check(plan_mp4_audio_seek(thirds, 3, 333'333'333, 0).initial_silence &&
+              !plan_mp4_audio_seek(thirds, 3, 333'333'334, 0).initial_silence,
+          "one-third-second empty edit does not end one nanosecond early");
+    const auto before_end = plan_mp4_audio_seek(thirds, 3, 4'333'333'333, 0);
+    check(before_end.sample_index == 9 && before_end.discard_before_ticks == 499 &&
+              plan_mp4_audio_seek(thirds, 3, 4'333'333'334, 0).sample_index == 16,
+          "fractional edit end and media offset retain exact rational boundaries");
+    auto complex = audio;
+    complex.edits.back().rate_fraction = 1;
+    expect_failure(RemuxFailure::unsupported, "fractional edit rate",
+                   [&] { (void)plan_mp4_audio_seek(complex, 600, 0, 0); });
+    auto reordered = audio;
+    reordered.samples.front().composition_offset = 1;
+    expect_failure(RemuxFailure::unsupported, "audio composition offset",
+                   [&] { validate_mp4_audio_index(reordered); });
+    auto overflow = audio;
+    overflow.edits.clear();
+    overflow.timescale = std::numeric_limits<std::uint32_t>::max();
+    expect_failure(RemuxFailure::unsupported, "timestamp conversion overflow", [&] {
+        (void)plan_mp4_audio_seek(overflow, 600, std::numeric_limits<std::uint64_t>::max(), 0);
+    });
+}
+
 int main() {
     try {
         demux_tests();
@@ -569,6 +783,10 @@ int main() {
         presentation_tests();
         mp4_text_tests();
         mp4_text_exclusion_tests();
+        source_inventory_tests();
+        source_inventory_bounds_tests();
+        source_probe_io_tests();
+        source_audio_timeline_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';

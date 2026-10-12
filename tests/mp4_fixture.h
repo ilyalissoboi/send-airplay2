@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <optional>
 #include <vector>
 
 namespace send_airplay2::test::mp4_fixture {
@@ -105,6 +106,7 @@ inline Bytes audio_entry(const char* codec, const Bytes& children) {
 }
 
 struct TrackSpec {
+    std::optional<std::uint32_t> source_id; ///< Override file-order IDs, including malformed zero.
     const char* handler = "vide";
     Bytes entry;
     std::uint32_t timescale = video_timescale;
@@ -203,7 +205,8 @@ inline Bytes mp4_file(const std::vector<TrackSpec>& tracks, bool fragmented = fa
     Bytes moov_payload = full_box("mvhd", 0, 0, mvhd_fields);
     for (std::size_t index = 0; index < tracks.size(); ++index) {
         moov_payload =
-            join({moov_payload, track(tracks[index], static_cast<std::uint32_t>(index + 1))});
+            join({moov_payload, track(tracks[index], tracks[index].source_id.value_or(
+                                                         static_cast<std::uint32_t>(index + 1)))});
     }
     file = join({file, box("moov", moov_payload)});
     if (fragmented) {

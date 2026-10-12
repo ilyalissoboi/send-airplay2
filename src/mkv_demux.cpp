@@ -2,12 +2,16 @@
 // Reads Matroska (RFC 9559; EBML, RFC 8794) block tables for the HLS remux
 // (D60). Written from the specifications; no third-party code.
 #include "mkv_demux.h"
+#include "media_track_inventory.h"
 #include "sample_entries.h"
 #include "text_tracks.h"
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -35,6 +39,9 @@ constexpr std::uint32_t id_default_duration = 0x23E383;
 constexpr std::uint32_t id_language = 0x22B59C;
 constexpr std::uint32_t id_content_encodings = 0x6D80;
 constexpr std::uint32_t id_codec_delay = 0x56AA;
+constexpr std::uint32_t id_seek_preroll = 0x56BB;
+constexpr std::uint32_t id_track_timestamp_scale = 0x23314F;
+constexpr std::uint32_t id_track_offset = 0x537F;
 constexpr std::uint32_t id_name = 0x536E;
 constexpr std::uint32_t id_language_bcp47 = 0x22B59D;
 constexpr std::uint32_t id_flag_forced = 0x55AA;
@@ -261,7 +268,9 @@ struct TrackInfo {
     Bytes codec_private;
     std::uint64_t default_duration_ns = 0;
     std::uint64_t codec_delay_ns = 0; // Priming to discard (RFC 9559 CodecDelay).
-    std::string language = "eng";     // The Matroska default.
+    std::uint64_t seek_preroll_ns = 0;
+    bool standard_timeline = true;
+    std::string language = "eng"; // The Matroska default.
     std::string language_bcp47;
     std::string name;
     bool forced = false;
@@ -302,6 +311,15 @@ TrackInfo read_track_entry(const Bytes& data, const Element& entry) {
             break;
         case id_codec_delay:
             track.codec_delay_ns = unsigned_value(data, field);
+            break;
+        case id_seek_preroll:
+            track.seek_preroll_ns = unsigned_value(data, field);
+            break;
+        case id_track_timestamp_scale:
+            track.standard_timeline = track.standard_timeline && float_value(data, field) == 1.0;
+            break;
+        case id_track_offset:
+            track.standard_timeline = track.standard_timeline && unsigned_value(data, field) == 0;
             break;
         case id_language:
             track.language = string_value(data, field);
@@ -399,7 +417,7 @@ bool text_codec(const std::string& codec_id) {
  * every enabled text subtitle track. Text subtitles are optional extras:
  * tracks that cannot be served (bitmap formats, ContentEncodings) are left
  * out, not refused. */
-std::vector<TrackInfo> select_tracks(const std::vector<TrackInfo>& infos) {
+std::vector<TrackInfo> select_tracks(const std::vector<TrackInfo>& infos, bool video_only = false) {
     const TrackInfo* video = nullptr;
     const TrackInfo* audio = nullptr;
     bool saw_video = false;
@@ -413,7 +431,7 @@ std::vector<TrackInfo> select_tracks(const std::vector<TrackInfo>& infos) {
             if (!video && remuxable_video(info)) {
                 video = &info;
             }
-        } else if (info.type == track_type_audio) {
+        } else if (info.type == track_type_audio && !video_only) {
             saw_audio = true;
             if (remuxable_audio(info) &&
                 (!audio || (info.default_track && !audio->default_track))) {
@@ -427,6 +445,9 @@ std::vector<TrackInfo> select_tracks(const std::vector<TrackInfo>& infos) {
     }
     if (saw_audio && !audio) {
         unsupported("audio codec is not remuxable (AAC, AC-3 or E-AC-3 only)");
+    }
+    if (video_only && !video->standard_timeline) {
+        unsupported("non-default video TrackTimestampScale or TrackOffset");
     }
     for (const auto* info : {video, audio}) {
         if (info && info->encoded) {
@@ -906,13 +927,16 @@ struct CuePoint {
 struct MkvLayout {
     Element segment;
     std::uint64_t timestamp_scale = default_timestamp_scale;
-    std::vector<TrackInfo> selected; // select_tracks() order.
+    std::vector<TrackInfo> selected;      // select_tracks() order.
+    std::vector<TrackInfo> source_tracks; // Unfiltered metadata for the new source probe.
     std::uint64_t first_cluster = 0;
     std::optional<std::uint64_t> cues; // Absolute offset of the Cues element.
     std::optional<double> duration;    // Info Duration, in TimestampScale ticks.
 };
 
-MkvLayout read_layout(WindowReader& reader, std::uint64_t file_size) {
+enum class TrackReadMode { remux, video_source, inventory };
+MkvLayout read_layout(WindowReader& reader, std::uint64_t file_size,
+                      TrackReadMode mode = TrackReadMode::remux) {
     MkvLayout layout;
     const auto ebml = read_element(reader, 0, file_size);
     if (ebml.id != id_ebml) {
@@ -933,7 +957,11 @@ MkvLayout read_layout(WindowReader& reader, std::uint64_t file_size) {
         malformed("no Segment after the EBML header");
     }
     bool have_tracks = false;
+    std::size_t element_count = 0;
     for (auto position = layout.segment.data; position < layout.segment.end();) {
+        if (mode == TrackReadMode::inventory && ++element_count > max_source_metadata_elements) {
+            throw RemuxException(RemuxFailure::too_large, "MKV: too many metadata elements");
+        }
         const auto element = read_element(reader, position, layout.segment.end());
         if (element.id == id_cluster) {
             layout.first_cluster = position;
@@ -956,14 +984,25 @@ MkvLayout read_layout(WindowReader& reader, std::uint64_t file_size) {
                 unsupported("TimestampScale that does not divide one second");
             }
         } else if (element.id == id_tracks) {
+            if (mode == TrackReadMode::inventory && have_tracks) {
+                malformed("duplicate Tracks element");
+            }
             const auto data = load(reader, element);
             std::vector<TrackInfo> infos;
             for (const auto& entry : children(data, 0, data.size())) {
                 if (entry.id == id_track_entry) {
+                    if (mode == TrackReadMode::inventory && infos.size() == max_source_tracks) {
+                        throw RemuxException(RemuxFailure::too_large,
+                                             "MKV: too many source tracks");
+                    }
                     infos.push_back(read_track_entry(data, entry));
                 }
             }
-            layout.selected = select_tracks(infos);
+            if (mode == TrackReadMode::inventory) {
+                layout.source_tracks = std::move(infos);
+            } else {
+                layout.selected = select_tracks(infos, mode == TrackReadMode::video_source);
+            }
             have_tracks = true;
         } else if (element.id == id_seek_head) {
             const auto data = load(reader, element);
@@ -1268,10 +1307,19 @@ struct MkvIndex::Impl {
 };
 
 std::unique_ptr<MkvIndex> MkvIndex::open(const RandomReader& read, std::uint64_t file_size) {
+    return open_tracks(read, file_size, false);
+}
+std::unique_ptr<MkvIndex> MkvIndex::open_video_source(const RandomReader& read,
+                                                      std::uint64_t file_size) {
+    return open_tracks(read, file_size, true);
+}
+std::unique_ptr<MkvIndex> MkvIndex::open_tracks(const RandomReader& read, std::uint64_t file_size,
+                                                bool video_only) {
     auto impl = std::make_unique<Impl>();
     impl->file_size = file_size;
     WindowReader reader(read, file_size);
-    impl->layout = read_layout(reader, file_size);
+    impl->layout = read_layout(reader, file_size,
+                               video_only ? TrackReadMode::video_source : TrackReadMode::remux);
     auto& layout = impl->layout;
     if (!layout.cues || !layout.first_cluster) {
         return nullptr;
@@ -1440,7 +1488,8 @@ bool starts_like_matroska(const std::uint8_t* data, std::size_t size) {
     return size >= 4 && data[0] == 0x1A && data[1] == 0x45 && data[2] == 0xDF && data[3] == 0xA3;
 }
 
-Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size) {
+namespace {
+Mp4Movie read_mkv_tracks(const RandomReader& read, std::uint64_t file_size, bool video_only) {
     WindowReader reader(read, file_size);
     const auto ebml = read_element(reader, 0, file_size);
     if (ebml.id != id_ebml) {
@@ -1488,7 +1537,7 @@ Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size) {
             }
             have_tracks = true;
             // Choose the tracks before any cluster, so blocks of others are skipped.
-            for (auto& info : select_tracks(infos)) {
+            for (auto& info : select_tracks(infos, video_only)) {
                 selected.push_back({std::move(info), {}, std::nullopt, {}});
             }
             for (auto& track : selected) {
@@ -1520,5 +1569,46 @@ Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size) {
         }
     }
     return movie;
+}
+} // namespace
+
+Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size) {
+    return read_mkv_tracks(read, file_size, false);
+}
+Mp4Movie read_mkv_video_source(const RandomReader& read, std::uint64_t file_size) {
+    return read_mkv_tracks(read, file_size, true);
+}
+
+MediaTrackInventory probe_mkv_tracks(const RandomReader& read, std::uint64_t file_size) {
+    WindowReader reader(read, file_size);
+    const auto layout = read_layout(reader, file_size, TrackReadMode::inventory);
+    MediaTrackInventory inventory;
+    inventory.container = SourceContainer::matroska;
+    inventory.timestamp_scale_ns = layout.timestamp_scale;
+    if (layout.first_cluster) {
+        inventory.first_cluster_offset = layout.first_cluster;
+    }
+    inventory.cues_offset = layout.cues;
+    for (const auto& info : layout.source_tracks) {
+        SourceTrack track;
+        track.id = info.number;
+        track.kind = info.type == track_type_audio   ? SourceTrackKind::audio
+                     : info.type == track_type_video ? SourceTrackKind::video
+                                                     : SourceTrackKind::other;
+        track.enabled = info.enabled;
+        track.default_track = info.default_track;
+        track.encoded = info.encoded;
+        track.standard_timeline = info.standard_timeline;
+        track.codec = info.codec_id;
+        track.configuration = info.codec_private;
+        track.language = language_tag(info.language, info.language_bcp47);
+        track.name = info.name;
+        track.codec_delay_ns = info.codec_delay_ns;
+        track.seek_preroll_ns = info.seek_preroll_ns;
+        track.default_duration_ns = info.default_duration_ns;
+        inventory.tracks.push_back(std::move(track));
+    }
+    validate_source_tracks(inventory);
+    return inventory;
 }
 } // namespace send_airplay2::detail

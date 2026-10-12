@@ -23,6 +23,13 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**Active D69:** the subsequent Proceed authorizes the native source increment.
+Its [inventory/selection/index/seek-metadata foundation](audio-source-inventory.md)
+is implemented on a fresh branch from merged main `cb9d641`; inspect its current
+PR head before writing. Merge-checkpoint docs PR #47 remains separate. This is
+private native work before actual decoder seeking and stereo HLS resources;
+no new ABI/delivery value, package publication or receiver test is included.
+
 **Current work D68:** the user's Proceed authorizes the stereo-AAC codec/UWP
 packaging spike. The optional development DLL and separate offline packaged
 host are implemented; desktop, AppContainer import and packaged codec/cache
@@ -351,9 +358,10 @@ is merged in PR #42. D66's Forget-device feature is implemented and build/UI
 validated in the fork, merged in PR #10. Research PR #43 and fork PR #11 are
 also merged. D67's stereo AAC plan and review are complete in native PR #44,
 with the companion fork checkpoint merged in PR #12. After implementation
-authorization, the next gate is the codec/packaging spike. Speaker audio and
+authorization, the next gate was the codec/packaging spike, now completed in PR #46.
+D69 implements the first native source increment described above. Speaker audio and
 surround-preserving output are deferred for unavailable
-test hardware. No implementation has started.
+test hardware. Production decoded AAC/HLS generation remains work.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12

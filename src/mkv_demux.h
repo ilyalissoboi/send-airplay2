@@ -40,6 +40,12 @@ namespace send_airplay2::detail {
  * track metadata or 4,000,000 frames per track.
  */
 [[nodiscard]] Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size);
+/// Metadata-only inventory through the first Cluster; retains disabled/unsupported
+/// identities and nanosecond CodecDelay/SeekPreRoll without scanning audio frames.
+[[nodiscard]] MediaTrackInventory probe_mkv_tracks(const RandomReader& read,
+                                                   std::uint64_t file_size);
+/// Index supported video/text independently of audio codec support/selection.
+[[nodiscard]] Mp4Movie read_mkv_video_source(const RandomReader& read, std::uint64_t file_size);
 
 /** A Matroska file opened from its Cues index (D60), so start-up reads the
  * track metadata, the index and two segments instead of every block header.
@@ -76,6 +82,9 @@ public:
      * @throws RemuxException; exceptions from `read` propagate. */
     [[nodiscard]] static std::unique_ptr<MkvIndex> open(const RandomReader& read,
                                                         std::uint64_t file_size);
+    /// Same indexed video/text contract as open(), without indexing/filtering audio.
+    [[nodiscard]] static std::unique_ptr<MkvIndex> open_video_source(const RandomReader& read,
+                                                                     std::uint64_t file_size);
     ~MkvIndex();
     MkvIndex(const MkvIndex&) = delete;
     MkvIndex& operator=(const MkvIndex&) = delete;
@@ -107,6 +116,8 @@ public:
     [[nodiscard]] Segment read_segment(std::size_t segment, const RandomReader& read) const;
 
 private:
+    static std::unique_ptr<MkvIndex> open_tracks(const RandomReader& read, std::uint64_t file_size,
+                                                 bool video_only);
     struct Impl;
     explicit MkvIndex(std::unique_ptr<Impl> impl);
     std::unique_ptr<Impl> impl_;

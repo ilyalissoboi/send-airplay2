@@ -1895,6 +1895,12 @@ and [artifact](validation/stereo-aac-codec-spike-windows-2026-10-12.json).
 No receiver, speaker, surround-output or HLS-conversion playback test is added;
 these results must not expand the existing Apple TV/Mac interoperability claims.
 
+**D69 native source foundation (2026-10-12):** synthetic MP4/MKV inventory,
+selection, video/packet-index and seek-clock cases pass, alongside local static
+35/35 and shared 36/36 CTest. See [contracts and limits](audio-source-inventory.md).
+The source timing helpers are not compressed-audio decoder seek proof; no stereo
+HLS conversion, new packaged runtime or receiver observation is added.
+
 **D67 planning disposition (2026-10-12):** the user defers audio-file casting,
 including audio-only speakers/HomePod, and DTS conversion preserving 5.1/7.1
 because suitable local test hardware is unavailable. The next documented slice

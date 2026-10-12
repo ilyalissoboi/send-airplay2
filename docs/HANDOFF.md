@@ -9,6 +9,19 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D69 native source increment (2026-10-12), authorized by the user's Proceed.**
+PR #46 is merged as `cb9d641`; the separate merge-checkpoint documentation PR
+#47 is open. D69 begins the native-integration phase with unfiltered MP4/MKV
+track inventory, stable container identities, deterministic audio selection,
+video indexing independent of remuxable audio, and edit/CodecDelay/preroll
+seek metadata. See [contracts and validation scope](audio-source-inventory.md).
+Focused synthetic checks and full local static/shared CTest pass (35/35, 36/36).
+Current-head CI is a separate gate. No new delivery mode, ABI/binding/CLI option,
+encoded HLS, package publication or receiver observation is added by this increment.
+Actual decoder stream matching/seeking, audio fMP4/HLS generation/cache and the
+public/packaged/receiver gates remain next; speaker/surround work stays deferred.
+The subsequent Proceed supersedes the earlier proposal-only authorization text.
+
 **D68 codec/packaging spike (2026-10-12), authorized by the user's Proceed.**
 The optional, separate FFmpeg 9.0.2 development probe implements host-callback
 decoding, explicit stereo downmix/resampling and native AAC encoding/roundtrip

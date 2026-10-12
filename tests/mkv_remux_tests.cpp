@@ -3,14 +3,17 @@
 // network or private media.
 #include "hls_remux.h"
 #include "mkv_demux.h"
+#include "media_track_inventory.h"
 #include "sample_entries.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <initializer_list>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -259,8 +262,11 @@ struct TrackSpec {
     std::string codec = "V_MPEG4/ISO/AVC";
     Bytes codec_private{1, 0x64, 0, 0x1f, 0xff};
     bool flag_default = true;
+    bool enabled = true;
     bool encoded = false;
     std::uint64_t codec_delay_ns = 0;
+    std::uint64_t seek_preroll_ns = 0;
+    float timestamp_scale = 1.0F;
     std::uint64_t display_width = 0; // Omitted when zero.
     // Subtitle tracks (type 17): written when not empty / true.
     std::string name;
@@ -278,6 +284,15 @@ Bytes track_entry(const TrackSpec& spec) {
     }
     if (spec.codec_delay_ns) {
         data = join({data, uint_element(0x56AA, spec.codec_delay_ns)});
+    }
+    if (spec.seek_preroll_ns) {
+        data = join({data, uint_element(0x56BB, spec.seek_preroll_ns)});
+    }
+    if (spec.timestamp_scale != 1.0F) {
+        data = join({data, float_element(0x23314F, spec.timestamp_scale)});
+    }
+    if (!spec.enabled) {
+        data = join({data, uint_element(0xB9, 0)});
     }
     if (spec.encoded) {
         data = join({data, element(0x6D80, element(0x6240, uint_element(0x5031, 0)))});
@@ -859,9 +874,10 @@ Bytes cluster_bytes(const ClusterSpec& spec, std::uint8_t cluster_id_byte) {
 /// A Matroska file whose SeekHead (first in the Segment) points to Cues after
 /// the clusters; one cue point per cluster that starts with a keyframe.
 Bytes indexed_mkv(const std::vector<ClusterSpec>& specs, bool with_cues = true,
-                  std::size_t first_cued_cluster = 0) {
-    Bytes track_data = join({track_entry(video_spec()), track_entry([] {
+                  std::size_t first_cued_cluster = 0, const std::string& audio_codec = "A_AAC") {
+    Bytes track_data = join({track_entry(video_spec()), track_entry([&audio_codec] {
                                  auto audio = aac_spec();
+                                 audio.codec = audio_codec;
                                  audio.codec_delay_ns = 0;
                                  return audio;
                              }())});
@@ -1103,6 +1119,149 @@ void indexed_review_tests() {
           "a cue without a duration ends at its successor in the next segment");
 }
 
+void source_inventory_tests() {
+    group = "Matroska unfiltered source selection";
+    auto commentary = aac_spec(7);
+    commentary.flag_default = false;
+    commentary.name = "Commentary";
+    auto main_audio = aac_spec(42);
+    main_audio.codec = "A_DTS";
+    main_audio.codec_private.clear();
+    main_audio.name = "Main";
+    main_audio.language = "jpn";
+    main_audio.seek_preroll_ns = 80'000'000;
+    const auto cluster =
+        element(cluster_id, join({uint_element(0xE7, 0),
+                                  element(simple_block_id, block(1, 0, keyframe_flag, Lacing::none,
+                                                                 {frame_bytes(0x10, 20)})),
+                                  element(simple_block_id, block(7, 0, keyframe_flag, Lacing::none,
+                                                                 {frame_bytes(0x80, 4)}))}));
+    for (const bool commentary_first : {true, false}) {
+        const auto tracks = commentary_first
+                                ? std::vector<TrackSpec>{video_spec(), commentary, main_audio}
+                                : std::vector<TrackSpec>{video_spec(), main_audio, commentary};
+        const auto file = mkv_file(tracks, cluster);
+        const auto inventory = probe_mkv_tracks(memory_reader(file), file.size());
+        const auto selected = select_source_audio(inventory);
+        check(selected.status == AudioSelectionStatus::selected &&
+                  inventory.tracks[selected.track_index].id == 42 &&
+                  inventory.tracks[selected.track_index].codec == "A_DTS",
+              std::string(commentary_first ? "commentary first" : "main first") +
+                  ": default DTS chosen before decoder filtering");
+        const auto& main = inventory.tracks[selected.track_index];
+        check(main.name == "Main" && main.language == "ja" && main.codec_delay_ns == 21'333'333 &&
+                  main.seek_preroll_ns == 80'000'000 && inventory.timestamp_scale_ns == 1'000'000 &&
+                  inventory.first_cluster_offset,
+              "original labels, clocks, CodecDelay and SeekPreRoll retained");
+        const auto video = read_mkv_video_source(memory_reader(file), file.size());
+        check(video.tracks.size() == 1 && video.tracks[0].samples.size() == 1,
+              "video index survives unremuxable default DTS");
+        check(read_mkv(memory_reader(file), file.size()).tracks[1].codec == "mp4a",
+              "legacy remux still picks remuxable AAC");
+        check(select_source_audio(inventory, 1).status == AudioSelectionStatus::invalid_selection &&
+                  select_source_audio(inventory, 0).status ==
+                      AudioSelectionStatus::invalid_selection &&
+                  select_source_audio(inventory, 999).status ==
+                      AudioSelectionStatus::invalid_selection,
+              "non-audio, zero and absent explicit IDs are invalid");
+    }
+    for (const bool both_default : {false, true}) {
+        commentary.flag_default = both_default;
+        main_audio.flag_default = both_default;
+        const auto file = mkv_file({video_spec(), commentary, main_audio}, cluster);
+        const auto inventory = probe_mkv_tracks(memory_reader(file), file.size());
+        check(select_source_audio(inventory).status == AudioSelectionStatus::selection_required,
+              both_default ? "duplicate defaults require selection"
+                           : "absent defaults require selection");
+        check(select_source_audio(inventory, 42).status == AudioSelectionStatus::selected,
+              "explicit ID resolves ambiguous defaults");
+    }
+    main_audio.enabled = false;
+    const auto disabled = mkv_file({video_spec(), commentary, main_audio}, cluster);
+    const auto inventory = probe_mkv_tracks(memory_reader(disabled), disabled.size());
+    check(select_source_audio(inventory).track_index == 1 &&
+              select_source_audio(inventory, 42).status == AudioSelectionStatus::invalid_selection,
+          "disabled main listed; sole enabled commentary chosen automatically");
+    commentary.enabled = false;
+    const auto silent = mkv_file({video_spec(), commentary, main_audio}, cluster);
+    const auto silent_inventory = probe_mkv_tracks(memory_reader(silent), silent.size());
+    check(select_source_audio(silent_inventory).status == AudioSelectionStatus::video_only &&
+              select_source_audio(silent_inventory, 7).status ==
+                  AudioSelectionStatus::invalid_selection,
+          "all disabled: video-only automatic mode, explicit disabled invalid");
+    main_audio.enabled = true;
+    main_audio.encoded = true;
+    const auto encoded = mkv_file({video_spec(), main_audio}, cluster);
+    const auto encoded_inventory = probe_mkv_tracks(memory_reader(encoded), encoded.size());
+    const auto encoded_choice = select_source_audio(encoded_inventory, 42);
+    check(encoded_choice.status == AudioSelectionStatus::selected &&
+              encoded_inventory.tracks[encoded_choice.track_index].encoded,
+          "protected selected track retained for refusal, no fallback");
+    main_audio.number = 1;
+    const auto duplicate = mkv_file({video_spec(), main_audio}, cluster);
+    expect_failure(RemuxFailure::malformed, "duplicate source number",
+                   [&] { (void)probe_mkv_tracks(memory_reader(duplicate), duplicate.size()); });
+    main_audio.number = 0;
+    const auto zero = mkv_file({video_spec(), main_audio}, cluster);
+    expect_failure(RemuxFailure::malformed, "zero source number",
+                   [&] { (void)probe_mkv_tracks(memory_reader(zero), zero.size()); });
+    const auto oversized = mkv_file(std::vector<TrackSpec>(129, main_audio), cluster);
+    expect_failure(RemuxFailure::too_large, "129 source tracks literal boundary",
+                   [&] { (void)probe_mkv_tracks(memory_reader(oversized), oversized.size()); });
+}
+
+void source_seek_time_tests() {
+    group = "Matroska source audio seek clocks";
+    SourceTrack audio;
+    audio.kind = SourceTrackKind::audio;
+    audio.codec_delay_ns = 21'333'333;
+    audio.seek_preroll_ns = 80'000'000;
+    const auto forward = plan_mkv_audio_seek_time(audio, 45'000'000'000, 0);
+    check(forward.discard_before_timestamp_ns == 45'021'333'333 &&
+              forward.seek_timestamp_ns == 44'941'333'333,
+          "45 s audible time adds delay, subtracts declared preroll without rounding");
+    const auto longer = plan_mkv_audio_seek_time(audio, 45'000'000'000, 100'000'000);
+    check(longer.seek_timestamp_ns == 44'921'333'333,
+          "decoder requirement can extend container preroll");
+    const auto backward = plan_mkv_audio_seek_time(audio, 0, 0);
+    check(backward.seek_timestamp_ns == 0 && backward.discard_before_timestamp_ns == 21'333'333,
+          "backward-to-start target saturates at zero and preserves discard timestamp");
+    expect_failure(RemuxFailure::unsupported, "CodecDelay addition overflow", [&] {
+        (void)plan_mkv_audio_seek_time(audio, std::numeric_limits<std::uint64_t>::max(), 0);
+    });
+    auto scaled_spec = aac_spec();
+    scaled_spec.timestamp_scale = 2.0F;
+    const auto scaled_file = mkv_file({video_spec(), scaled_spec}, {});
+    const auto scaled_inventory = probe_mkv_tracks(memory_reader(scaled_file), scaled_file.size());
+    check(!scaled_inventory.tracks[1].standard_timeline,
+          "non-default track time scale is retained as unsupported timeline metadata");
+    expect_failure(RemuxFailure::unsupported, "scaled track seek refuses guessed timestamps",
+                   [&] { (void)plan_mkv_audio_seek_time(scaled_inventory.tracks[1], 0, 0); });
+}
+
+void source_video_index_tests() {
+    group = "Matroska indexed video independent of DTS";
+    const auto file = indexed_mkv(regular_clusters(), true, 0, "A_DTS");
+    expect_failure(RemuxFailure::unsupported, "legacy DTS-only refusal",
+                   [&] { (void)MkvIndex::open(memory_reader(file), file.size()); });
+    const auto source = MkvIndex::open_video_source(memory_reader(file), file.size());
+    check(source != nullptr, "video-only source index opens DTS movie");
+    if (!source) {
+        return;
+    }
+    check(source->metadata().tracks.size() == 1 && source->segment_count() == 3,
+          "video index has no silently substituted audio track");
+    const auto late = source->read_segment(2, memory_reader(file));
+    const auto first = source->read_segment(0, memory_reader(file));
+    check(late.samples.size() == 1 && first.samples.size() == 1 && !late.samples[0].empty() &&
+              !first.samples[0].empty() &&
+              late.samples[0].front().offset > first.samples[0].front().offset,
+          "cold later and backward video requests use their indexed payload offsets");
+    const auto inventory = probe_mkv_tracks(memory_reader(file), file.size());
+    check(inventory.cues_offset && inventory.first_cluster_offset && inventory.tracks.size() == 2,
+          "probe retains index locators and original unsupported source identity");
+}
+
 int main() {
     try {
         sample_entry_tests();
@@ -1114,6 +1273,9 @@ int main() {
         indexed_fallback_tests();
         indexed_open_gop_tests();
         indexed_review_tests();
+        source_inventory_tests();
+        source_seek_time_tests();
+        source_video_index_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';

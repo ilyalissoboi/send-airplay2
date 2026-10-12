@@ -2,12 +2,19 @@
 // Reads ISO base media file format sample tables (ISO/IEC 14496-12) for the
 // HLS remux (D60). Written from the specification; no third-party code.
 #include "mp4_demux.h"
+#include "media_track_inventory.h"
 #include "text_tracks.h"
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 namespace send_airplay2::detail {
 namespace {
@@ -180,10 +187,15 @@ struct TopLevel {
     std::uint64_t moov_size = 0;
 };
 
-TopLevel scan_top_level(const RandomReader& read, std::uint64_t file_size) {
+TopLevel scan_top_level(const RandomReader& read, std::uint64_t file_size,
+                        std::size_t box_limit = std::numeric_limits<std::size_t>::max()) {
     std::optional<TopLevel> moov;
     std::uint64_t position = 0;
+    std::size_t box_count = 0;
     while (position < file_size) {
+        if (++box_count > box_limit) {
+            throw RemuxException(RemuxFailure::too_large, "MP4: too many top-level boxes");
+        }
         std::array<std::uint8_t, large_box_header_bytes> header{};
         if (file_size - position < box_header_bytes) {
             malformed("truncated top-level box");
@@ -223,6 +235,14 @@ TopLevel scan_top_level(const RandomReader& read, std::uint64_t file_size) {
         throw RemuxException(RemuxFailure::too_large, "MP4: moov box larger than 64 MiB");
     }
     return *moov;
+}
+
+Bytes read_moov(const RandomReader& read, std::uint64_t file_size,
+                std::size_t box_limit = std::numeric_limits<std::size_t>::max()) {
+    const auto location = scan_top_level(read, file_size, box_limit);
+    Bytes moov(static_cast<std::size_t>(location.moov_size));
+    read(location.moov_offset, moov.data(), moov.size());
+    return moov;
 }
 
 /// Timescale from mvhd or mdhd, whose layouts agree up to that field.
@@ -504,6 +524,24 @@ struct TrackCandidate {
     bool remuxable;
 };
 
+std::uint32_t track_handler(const std::vector<Box>& trak) {
+    const auto mdia = children(require(trak, fourcc("mdia")));
+    auto handler = require(mdia, fourcc("hdlr")).payload();
+    handler.full_box_version();
+    handler.skip(4); // pre_defined (QuickTime component type).
+    return handler.u32();
+}
+
+std::uint64_t source_track_id(const std::vector<Box>& trak) {
+    auto header = require(trak, fourcc("tkhd")).payload();
+    const auto version = header.full_box_version();
+    if (version > 1) {
+        unsupported("unknown track header version");
+    }
+    header.skip(version == 1 ? 16 : 8); // Creation/modification times.
+    return header.u32();
+}
+
 std::optional<TrackCandidate> describe_track(const std::vector<Box>& trak) {
     constexpr std::uint32_t track_enabled_flag = 0x1;
     const auto& tkhd = require(trak, fourcc("tkhd"));
@@ -767,10 +805,9 @@ std::optional<TextTrack> read_text_track(const std::vector<Box>& trak, const Ran
 }
 } // namespace
 
-Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size) {
-    const auto location = scan_top_level(read, file_size);
-    Bytes moov(static_cast<std::size_t>(location.moov_size));
-    read(location.moov_offset, moov.data(), moov.size());
+namespace {
+Mp4Movie read_mp4_tracks(const RandomReader& read, std::uint64_t file_size, bool video_only) {
+    const auto moov = read_moov(read, file_size);
     const auto boxes = children(moov.data(), moov.size());
     if (find(boxes, fourcc("mvex"))) {
         unsupported("fragmented input is not remuxed");
@@ -787,6 +824,9 @@ Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size) {
             continue;
         }
         auto trak = children(box);
+        if (video_only && track_handler(trak) == fourcc("soun")) {
+            continue;
+        }
         const auto candidate = describe_track(trak);
         if (!candidate || !candidate->enabled) {
             continue;
@@ -827,5 +867,91 @@ Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size) {
         }
     }
     return movie;
+}
+} // namespace
+
+Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size) {
+    return read_mp4_tracks(read, file_size, false);
+}
+Mp4Movie read_mp4_video_source(const RandomReader& read, std::uint64_t file_size) {
+    return read_mp4_tracks(read, file_size, true);
+}
+
+MediaTrackInventory probe_mp4_tracks(const RandomReader& read, std::uint64_t file_size) {
+    const auto moov = read_moov(read, file_size, max_source_metadata_elements);
+    const auto boxes = children(moov.data(), moov.size());
+    if (find(boxes, fourcc("mvex"))) {
+        unsupported("fragmented source inventory");
+    }
+    MediaTrackInventory inventory;
+    inventory.container = SourceContainer::mp4;
+    inventory.movie_timescale = header_timescale(require(boxes, fourcc("mvhd")).payload());
+    for (const auto& box : boxes) {
+        if (box.type != fourcc("trak")) {
+            continue;
+        }
+        if (inventory.tracks.size() == max_source_tracks) {
+            throw RemuxException(RemuxFailure::too_large, "MP4: too many source tracks");
+        }
+        const auto trak = children(box);
+        SourceTrack track;
+        track.id = source_track_id(trak);
+        const auto handler = track_handler(trak);
+        track.kind = handler == fourcc("soun")   ? SourceTrackKind::audio
+                     : handler == fourcc("vide") ? SourceTrackKind::video
+                                                 : SourceTrackKind::other;
+        auto header = require(trak, fourcc("tkhd")).payload();
+        header.skip(1); // Version.
+        const auto flags = (static_cast<std::uint32_t>(header.u8()) << 16) | header.u16();
+        track.enabled = (flags & 1U) != 0;
+        const auto mdia = children(require(trak, fourcc("mdia")));
+        std::uint16_t language = 0;
+        track.timescale = header_timescale(require(mdia, fourcc("mdhd")).payload(), &language);
+        track.language = unpacked_language(language);
+        track.edits = edit_list(trak);
+        if (track.kind != SourceTrackKind::other) {
+            const auto minf = children(require(mdia, fourcc("minf")));
+            const auto stbl = children(require(minf, fourcc("stbl")));
+            const auto entry = sample_entry(require(stbl, fourcc("stsd")));
+            track.codec = fourcc_text(entry.type);
+            track.configuration = entry.copy();
+            track.encoded = entry.type == fourcc("enca") || entry.type == fourcc("encv");
+        }
+        inventory.tracks.push_back(std::move(track));
+    }
+    validate_source_tracks(inventory);
+    return inventory;
+}
+
+Mp4Track read_mp4_source_audio(const RandomReader& read, std::uint64_t file_size,
+                               std::uint64_t track_id) {
+    const auto inventory = probe_mp4_tracks(read, file_size);
+    const auto selection = select_source_audio(inventory, track_id);
+    if (selection.status != AudioSelectionStatus::selected) {
+        throw std::invalid_argument("invalid source audio track identity");
+    }
+    if (inventory.tracks[selection.track_index].encoded) {
+        unsupported("encrypted source audio");
+    }
+    const auto moov = read_moov(read, file_size, max_source_metadata_elements);
+    for (const auto& box : children(moov.data(), moov.size())) {
+        if (box.type == fourcc("trak")) {
+            const auto trak = children(box);
+            if (source_track_id(trak) == track_id) {
+                const auto candidate = describe_track(trak);
+                if (!candidate || candidate->kind != TrackKind::audio || !candidate->enabled) {
+                    malformed("source audio changed while indexing");
+                }
+                auto audio = read_track(trak, *candidate, file_size);
+                if (candidate->sample_entry.copy() !=
+                    inventory.tracks[selection.track_index].configuration) {
+                    malformed("source audio configuration changed while indexing");
+                }
+                validate_mp4_audio_index(audio);
+                return audio;
+            }
+        }
+    }
+    malformed("source audio disappeared while indexing");
 }
 } // namespace send_airplay2::detail
