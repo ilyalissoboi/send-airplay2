@@ -25,6 +25,7 @@ extern "C" {
 #include <limits>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <string_view>
 #include <system_error>
 #include <utility>
