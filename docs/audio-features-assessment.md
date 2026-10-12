@@ -5,9 +5,9 @@ Assessment: 2026-10-12, against native main `8a40ec3` and Screenbox main
 not a new receiver test. The initial assessment did not select implementation;
 the user's subsequent planning decision is recorded below.
 
-## Current disposition (D67, 2026-10-12)
+## Current disposition (D68 merge checkpoint, 2026-10-12)
 
-All prior PRs are merged, including the research checkpoint in native PR #43
+The research checkpoint is merged in native PR #43
 (`aa0f25e`) and Screenbox PR #11 (`f596fd5e`). The user now defers **audio-file
 casting including audio-only speakers** and **DTS conversion preserving 5.1/7.1
 output**, because suitable local test hardware is unavailable. The research
@@ -17,13 +17,31 @@ are not the active queue.
 The stereo-AAC planning PR #44 subsequently merged as `12c24a7`, with all
 14 checks passed at final head `bc4b381` and its selection review resolved.
 The companion Screenbox checkpoint PR #12 merged as `ce782356` (docs-only;
-no CI checks reported). Planning is complete; implementation has not started.
+no CI checks reported). Planning is complete. The subsequent user-authorized
+D68 codec/packaging spike is implemented and merged in
+[PR #46](https://github.com/ilyalissoboi/send-airplay2/pull/46) as `cb9d641`;
+all 16 CI checks passed at final head `579bb44`. The optional development probe
+decodes host-callback inputs, downmixes to stereo and encodes AAC. Desktop offline
+and Windows x64 packaged AppContainer checks passed in their recorded scope;
+see [the spike and its evidence](stereo-aac-codec-spike.md). Do not repeat that
+completed gate or treat it as production HLS conversion or receiver proof.
 
-The selected next slice to detail is **video with surround audio downmixed to
+The selected feature is **video with surround audio downmixed to
 stereo AAC**. See the [implementation plan](stereo-aac-casting-plan.md) for source
 selection, codec backend, timeline, HLS/cache, ABI/packaging and acceptance gates.
-This is a documentation/planning request, not authorization to implement or add
-dependencies. No audio-only, DTS or new stereo-conversion hardware test has run.
+The original D67 request authorized documentation/planning; the subsequent
+Proceed authorized D68 implementation. Production stereo AAC fMP4/HLS resources,
+bounded generation/cache, public integration and receiver gates remain unfinished.
+No audio-only, DTS or new stereo-conversion hardware test has run. Speaker audio
+and surround-preserving output remain deferred for unavailable test hardware.
+
+The later Proceed also authorized D69's native source foundations, implemented
+in separate open [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48):
+MP4/MKV inventory/selection, independent video indexing and source seek metadata.
+Actual decoder stream matching/seeking and encoded audio delivery remain next.
+That increment is not included in this D68 documentation checkpoint; follow
+[the handoff](HANDOFF.md#0-resume-here) and inspect the active PR's actual head
+before continuing implementation.
 
 ## User scope and corrected validation queue
 
@@ -40,13 +58,16 @@ dependencies. No audio-only, DTS or new stereo-conversion hardware test has run.
 - Future visual UI changes require written instructions and manual user
   confirmation, without the Computer Use skill.
 
-## Current implementation and reusable pieces
+## Existing casting implementation and reusable pieces
 
 The in-tree remux is container conversion, not decoding/transcoding. MP4 and MKV
 track selection require H.264/HEVC video; a file with audio but no remuxable
 audio track is rejected. If an otherwise DTS-bearing file also has a remuxable
 AAC/AC-3/E-AC-3 track, existing selection can use that alternative. That is not
-DTS support and does not promise the user's desired language/track.
+DTS support and does not promise the user's desired language/track. The merged
+D68 probe is separate from this casting path; its offline DTS-core decoding
+checks do not add a casting delivery mode. D69's private source foundations are
+tracked separately above.
 
 Relevant code:
 

@@ -6,6 +6,15 @@ surround-preserving output remain deferred. This development probe is separate
 from the existing casting library, playback ABI, C# binding and published
 `0.3.0-ci.207` package. It is not a new casting delivery mode.
 
+Merged checkpoint: [PR #46](https://github.com/ilyalissoboi/send-airplay2/pull/46)
+merged as `cb9d641` on 2026-10-12. All 16 checks passed at final head `579bb44`
+in [automatic PR run 38246014059](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38246014059)
+(attempt 2). Transient GitHub HTTP 504 downloading the x86/ARM64 bootstrap tool
+passed a failed-job retry, including the dependent package job. The codec jobs
+passed on the first attempt, in 5m01s desktop/3m59s UWP with cold dependencies.
+The earlier packaged runtime evidence retains its recorded source/module hashes;
+this merge adds no receiver result or package publication.
+
 ## Implementation and build profile
 
 `SAP2_AUDIO_CODEC_SPIKE=ON` builds `sap2_codec_probe`, a separate dynamic library,
@@ -189,7 +198,7 @@ The updated runs were explicitly dispatched on the branch because documentation
 conflicts with merged PR #45 (`e92e29e`) prevented the automatic `pull_request`
 workflow. The branch integrates that checkpoint and resolves the conflicting
 handoff/authorization history while preserving D68's implementation evidence.
-Inspect checks for the actual PR head before merging.
+The final automatic PR run and merge checkpoint are recorded above.
 
 Local validation also passed the standalone Release codec test and all five
 AppContainer inspections, with Debug FFmpeg libraries absent in both dedicated
