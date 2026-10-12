@@ -1,12 +1,13 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#42 merged.
+Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#43 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
 MP4/MKV HLS remux with text subtitles and indexed MKV startup. The Screenbox
 fork has implemented its current design through PRs #1-#10, including the Mac
-package pin, final validation record and Forget-device follow-up.
+package pin, final validation record and Forget-device follow-up; PR #11 adds
+the research checkpoint without changing runtime behavior.
 
 Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
 desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
@@ -22,15 +23,17 @@ hypothesis without establishing per-run H/J UI prompt attribution, a numeric
 timer or cache key. The synthetic
 name comparison and fresh random session identifiers retained short-term reuse;
 no shipping sender-policy change is proposed. D65's research evidence and D66's
-Screenbox follow-up are merged; further development is unselected;
+Screenbox follow-up and subsequent research checkpoint are merged;
 see [HANDOFF.md](HANDOFF.md#0-resume-here).
 
-The user requests assessment of speaker-inclusive audio-file casting and
-unsupported video-audio conversion, including DTS surround feasibility.
-[The assessment](audio-features-assessment.md) separates new audio transport
-from audio-only transcoding over existing video/HLS, proposes shared decoding
-and describes codec/receiver/packaging gates. No backend, output-surround policy
-or feature implementation is selected by this assessment request.
+The [audio-feature assessment](audio-features-assessment.md) records the
+speaker-inclusive audio-file and DTS 5.1/7.1 research. D67 defers those
+implementations for lack of suitable local test hardware and selects
+[video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md)
+as the next slice to detail. The plan proposes an optional decoder/encoder,
+separate stereo audio rendition and bounded cache while copying supported video.
+Existing delivery defaults remain unchanged. This is planning authorization;
+no backend is added or receiver support established by the documentation.
 
 ## Scope and architecture
 
@@ -56,7 +59,8 @@ Components and current state:
 | Public playback interface | Versioned C handle over session and media server | Experimental v3: playback, host stores/pairing and HLS delivery; C# binding implemented; recorded Apple TV checks passed through desktop and packaged hosts |
 | Platform adapters | Networking, credentials, file access, host lifecycle | Windows Credential Manager, macOS Keychain, Linux Secret Service and host stores implemented; UWP native builds, PasswordVault and brokered StorageFile reads tested on the recorded Windows/Apple TV combination; other sender platforms remain unvalidated |
 | HLS remux | MP4/MKV to fMP4 VOD with WebVTT renditions | H.264/HEVC, AAC/AC-3/E-AC-3, MKV and MP4 text subtitles, indexed MKV startup implemented; HDR signaling and growing presentations remain work |
-| Audio transport | Separate RAOP/AirPlay audio path when required by scope | Deferred beyond first video proof |
+| Audio transport | Separate RAOP/AirPlay audio path for audio-only speakers | D67 deferred: suitable test hardware unavailable |
+| Audio conversion | Surround source audio to stereo AAC alongside copied video | D67 next-slice plan only; not implemented |
 
 An AirPlay 2-capable receiver accepting an older protocol path is not proof of
 an AirPlay 2 session implementation. Record the negotiated path in test results.

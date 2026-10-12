@@ -1885,3 +1885,14 @@ user-reported behavior instead of scheduling a duplicate required gate. Preserve
 the dated earlier candidate records' own not-run limitations; this clarification
 does not retroactively add hardware evidence to those binaries. The subsequent
 [audio-feature assessment](audio-features-assessment.md) adds no new receiver run.
+
+**D67 planning disposition (2026-10-12):** the user defers audio-file casting,
+including audio-only speakers/HomePod, and DTS conversion preserving 5.1/7.1
+because suitable local test hardware is unavailable. The next documented slice
+is [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md).
+No codec implementation, audio-speaker test, discrete-surround output test or
+stereo-conversion receiver test has run. Future offline downmix/segment tests
+must remain separate from manually observed receiver playback and output mapping.
+Research PR #43 merged as `aa0f25e`, with 14 checks passed at `789f029`; fork
+docs PR #11 merged as `f596fd5e` with no CI checks reported. Those merges add
+documentation, not new receiver or firmware coverage.

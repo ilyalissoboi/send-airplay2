@@ -2,7 +2,23 @@
 
 Assessment: 2026-10-12, against native main `8a40ec3` and Screenbox main
 `8bfd3dd9`. This is a proposal based on source inspection and primary sources,
-not an implementation decision or a new receiver test.
+not a new receiver test. The initial assessment did not select implementation;
+the user's subsequent planning decision is recorded below.
+
+## Current disposition (D67, 2026-10-12)
+
+All prior PRs are merged, including the research checkpoint in native PR #43
+(`aa0f25e`) and Screenbox PR #11 (`f596fd5e`). The user now defers **audio-file
+casting including audio-only speakers** and **DTS conversion preserving 5.1/7.1
+output**, because suitable local test hardware is unavailable. The research
+below remains useful, but its surround/speaker experiments and implementation
+are not the active queue.
+
+The selected next slice to detail is **video with surround audio downmixed to
+stereo AAC**. See the [implementation plan](stereo-aac-casting-plan.md) for source
+selection, codec backend, timeline, HLS/cache, ABI/packaging and acceptance gates.
+This is a documentation/planning request, not authorization to implement or add
+dependencies. No audio-only, DTS or new stereo-conversion hardware test has run.
 
 ## User scope and corrected validation queue
 
@@ -10,8 +26,8 @@ not an implementation decision or a new receiver test.
   video whose audio is unsupported by Apple TV, such as DTS.
 - Audio-file casting must include audio-only AirPlay speakers such as HomePod,
   rather than only the existing Apple TV/Mac URL-video receivers.
-- The user asks whether DTS can retain 5.1/7.1 surround. Both are evaluated
-  below; a stereo-only first version has not been selected.
+- The user asked whether DTS can retain 5.1/7.1 surround. Both are evaluated
+  below and now deferred; the next planned output is explicitly stereo AAC.
 - Chromecast video regression is deferred: no suitable local receiver is
   available. The user says casting to a sleeping Apple TV was already verified
   earlier. Do not schedule that check again as an uncompleted gate. The exact
@@ -195,25 +211,24 @@ validation needs channel-identification fixtures and a suitable actual output
 system, with the user reporting results. A lossless ALAC/FLAC route is a later
 alternative needing its own multichannel HLS proof and writer work.
 
-## Suggested order and acceptance gates
+## Deferred acceptance gates
 
-1. Run a small format/packaging spike: copied video plus DTS-to-5.1 output,
-   then a distinct eight-channel AAC fixture using the existing development
-   HLS-directory path. Check all channel positions, video sync, seeks and end
-   behavior manually on the Apple TV. Separately prove WAV/PCM delivery to the
-   chosen speaker. These are proposed experiments; none ran in this assessment.
-2. Implement the shared decoder/source/cancellation backend and DTS 5.1 fallback
-   as the first useful shipping slice. Use segment/seek/priming tests and
-   receiver-observed channel mapping; do not silently downmix a requested
-   surround policy.
-3. Complete 7.1 only after the format spike passes; otherwise report the blocker
-   instead of weakening the requirement without a user decision.
-4. Implement the audio speaker session and reuse the common decoder. Validate
-   one identified speaker/model/firmware first, then broaden receivers separately.
+Resume only after suitable hardware is available and the user selects this work:
 
-If speaker support is the higher product priority, steps 2/4 can be reversed
-after the two feasibility probes. Screenbox music/queue/SMTC/volume/artwork
-integration is a separate follow-up, roughly another 5-10 engineering days once
+- **Surround output:** first prove copied video plus DTS-to-5.1 output on an
+  Apple TV with an actual six-channel output system. Test a separate eight-channel
+  AAC fixture for 7.1, with correct side/back mapping. The development HLS-directory
+  path can support a probe, but does not establish packaged C API support.
+  Check channel positions, sync, seeks and end behavior manually. Do not silently
+  downmix a requested surround-preserving policy if a codec/receiver spike fails.
+- **Audio-only speakers:** first prove WAV/PCM delivery and teardown on an
+  identified speaker/model/firmware, then implement file decoding and controls.
+  Apple TV/Mac URL-audio success alone does not satisfy the speaker requirement.
+
+Neither experiment ran during this research. The active next plan is stereo
+AAC video casting; it does not require these deferred probes. Screenbox
+music/queue/SMTC/volume/artwork integration is a separate follow-up, roughly
+another 5-10 engineering days once
 the native APIs work. Broad portable packaging or receiver matrices can add
 further time. No feature implementation or prerequisite experiment is authorized
 merely by this effort assessment.
