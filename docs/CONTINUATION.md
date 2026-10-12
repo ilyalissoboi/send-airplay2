@@ -36,6 +36,14 @@ Planning PR #44 is merged as `12c24a7`, with all 14 checks passed at `bc4b381`
 and the selection review resolved. Merge-checkpoint PR #45 is open (14 checks
 passed). Inspect actual open heads before editing; ask before merging/publishing.
 
+Spike PR #46's initial `6a5777d` CI head failed after 66m24s at UWP configure
+(`10.0` lost its decimal in an unquoted PowerShell argument); the desktop codec
+test and all 14 baseline jobs passed. The CI follow-up isolates FFmpeg dependencies,
+builds Release only, parallelizes desktop/UWP and saves completed binary-cache
+entries even after failure. Updated-head checks/timings are pending. Read the
+[CI follow-up](stereo-aac-codec-spike.md#ci-failure-and-runtime-follow-up-2026-10-12)
+and use its standalone reproduction paths rather than assuming the root layout.
+
 The subsequent research checkpoint merged in native PR #43 as `aa0f25e`
 (14 checks passed at final head `789f029`) and fork PR #11 as `f596fd5e`
 (docs-only; no CI checks reported). All prior PRs are merged.

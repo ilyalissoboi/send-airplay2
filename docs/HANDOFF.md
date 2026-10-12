@@ -29,6 +29,15 @@ deferred. The initial planning-only authorization text below is historical;
 the user's Proceed authorizes this implementation gate without re-confirmation.
 The separate merge-checkpoint PR #45 is still open; its 14 checks passed.
 
+**D68 CI follow-up (2026-10-12):** spike PR #46 is open. At `6a5777d`, all
+14 baseline jobs passed and the desktop codec test passed, but the serial
+66m24s probe job failed at UWP configure: PowerShell passed an unquoted `10.0`
+as `10`. The follow-up uses quoted argument arrays, a standalone codec-only
+manifest, dedicated Release-only triplets, parallel desktop/UWP jobs and explicit
+dependency-cache saving after failure. See [timings and reproduction](stereo-aac-codec-spike.md#ci-failure-and-runtime-follow-up-2026-10-12).
+Updated-head hosted checks/timings are pending; preserve the earlier packaged
+artifact's source/profile attribution. This changes build configuration only.
+
 **D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
 `8a40ec3` after all 14 checks passed at final head `8978188`. Screenbox PR #10
 merged as `8bfd3dd9` after test, XAML lint and package build passed at final head

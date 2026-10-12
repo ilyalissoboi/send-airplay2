@@ -91,28 +91,32 @@ and receiver proof. Do not replace those gates with this PCM experiment.
 
 ## Reproduce
 
-Use the README's pinned vcpkg toolchain. Keep optional desktop and AppContainer
-installed directories separate from baseline builds to avoid manifest pruning.
+Use the README's pinned vcpkg toolchain. The standalone probe manifest installs
+only FFmpeg and its build helpers; the root's optional feature remains available
+for integration work with the casting dependencies. Keep each profile's installed
+directory separate from baseline builds to avoid manifest pruning. The dedicated
+triplets below build Release dependencies only; use the ordinary desktop/UWP
+triplets and separate build directories if Debug dependencies are needed.
 From a Visual Studio 2026 developer shell:
 
 ```powershell
-cmake -S . -B build-codec -G "Visual Studio 18 2026" -A x64 `
-  "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+cmake -S tools/audio-codec-spike -B build-codec -G "Visual Studio 18 2026" -A x64 `
+  "-DCMAKE_TOOLCHAIN_FILE=$PWD/build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" `
   "-DVCPKG_OVERLAY_PORTS=$PWD/vcpkg-overlays/ports" `
-  "-DVCPKG_MANIFEST_FEATURES=audio-codec-spike" `
-  "-DSAP2_AUDIO_CODEC_SPIKE=ON" "-DBUILD_SHARED_LIBS=ON"
+  "-DVCPKG_OVERLAY_TRIPLETS=$PWD/tools/audio-codec-spike/triplets" `
+  "-DVCPKG_TARGET_TRIPLET=x64-windows-codec-release"
 cmake --build build-codec --config Release --target sap2_codec_probe_tests
 ctest --test-dir build-codec -C Release -R '^audio_codec_probe$' --output-on-failure
 
-cmake -S . -B build-codec-uwp -G "Visual Studio 18 2026" -A x64 `
+cmake -S tools/audio-codec-spike -B build-codec-uwp -G "Visual Studio 18 2026" -A x64 `
   "-DCMAKE_SYSTEM_NAME=WindowsStore" "-DCMAKE_SYSTEM_VERSION=10.0" `
-  "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+  "-DCMAKE_TOOLCHAIN_FILE=$PWD/build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" `
   "-DVCPKG_OVERLAY_PORTS=$PWD/vcpkg-overlays/ports" `
-  "-DVCPKG_TARGET_TRIPLET=x64-uwp" "-DVCPKG_MANIFEST_FEATURES=audio-codec-spike" `
-  "-DSAP2_AUDIO_CODEC_SPIKE=ON" "-DBUILD_SHARED_LIBS=ON"
+  "-DVCPKG_OVERLAY_TRIPLETS=$PWD/tools/audio-codec-spike/triplets" `
+  "-DVCPKG_TARGET_TRIPLET=x64-uwp-codec-release"
 cmake --build build-codec-uwp --config Release --target sap2_codec_probe
 ./tools/audio-codec-spike/check_binaries.ps1 `
-  -Directory build-codec-uwp/tools/audio-codec-spike/Release
+  -Directory build-codec-uwp/Release
 ```
 
 The separate `tools/audio-codec-spike/uwp-host` project uses the existing modern
@@ -130,12 +134,14 @@ or Computer Use is needed for this offline runtime test.
 ```powershell
 msbuild tools/audio-codec-spike/uwp-host/CodecSpike.csproj /restore `
   /p:Configuration=Release /p:Platform=x64 /p:GenerateAppxPackageOnBuild=true `
-  /p:AppxBundle=Never /p:UapAppxPackageBuildMode=SideloadOnly
+  /p:AppxBundle=Never /p:UapAppxPackageBuildMode=SideloadOnly `
+  /p:ProbeNativeDir="$PWD/build-codec-uwp/Release" `
+  /p:ProbeFfmpegShare="$PWD/build-codec-uwp/vcpkg_installed/x64-uwp-codec-release/share/ffmpeg"
 ```
 
 `ProbeFfmpegShare` selects the matching installed FFmpeg notice directory;
-override its local default when using the reproduction command's per-build
-`vcpkg_installed/x64-uwp/share/ffmpeg`. The project packages FFmpeg and vcpkg
+override its local default as above when using the standalone per-build layout.
+The project packages FFmpeg and vcpkg
 notices. The recorded private development version is 0.1.0.1; updates must use
 a higher version and preserve this test identity's data.
 
@@ -143,6 +149,26 @@ Binary inspection, successful package creation and runtime results are distinct
 gates. AppContainer/app CRT/import checks are not WACK/Store certification.
 Ship exact source/patches/configuration and notices with any redistributed probe
 build; this spike does not authorize publication of a new package prerelease.
+
+## CI failure and runtime follow-up (2026-10-12)
+
+At PR #46 head `6a5777d`, [run 38233668327](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38233668327)
+took **66m24s** for the serial probe job. Desktop configure took **45m40s**,
+including Botan **26 min**, OpenSSL **9.1 min** and FFmpeg **7.4 min**.
+The build/codec test step took **six seconds** and passed. UWP configure then
+took **20m01s**, including FFmpeg **7.3 min**, and failed because the unquoted
+PowerShell `-DCMAKE_SYSTEM_VERSION=10.0` argument reached CMake as `10`.
+All 14 baseline jobs passed. The cold binary cache was not saved because its
+post-step was skipped after failure.
+
+The follow-up quotes all configure arguments, uses the standalone codec-only
+manifest and dedicated Release-only triplets, and runs desktop and UWP as
+independent matrix jobs. Both preserve the existing offline test and AppContainer
+inspection gates. Explicit cache restore/save uses run-specific keys with stable
+restore prefixes and vcpkg ABI validation, preserving completed packages even if
+a later step fails. It does not cache or skip the tests. Actual hosted runtime
+improvement must be measured on the updated PR head; the earlier packaged runtime
+hash evidence describes the recorded package, not these new build profiles.
 
 ## Remaining gates
 

@@ -130,15 +130,26 @@ jobs:
           retention-days: 14
   audio-codec-spike:
     # Optional development DLL only. Does not change the shipping library/package.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { kind: desktop, triplet: x64-windows-codec-release }
+          - { kind: uwp, triplet: x64-uwp-codec-release }
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cache dependency binaries
-        uses: actions/cache@v4
+      - name: Restore codec dependency binaries
+        id: codec-cache
+        uses: actions/cache/restore@v4
         with:
           path: build-vcpkg-cache
-          key: vcpkg-codec-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-overlays/**') }}
-          restore-keys: vcpkg-codec-${{ runner.os }}-
+          # A run-specific key can save newly built ABIs after a partial failure.
+          # vcpkg validates every restored package's ABI, including compiler/profile.
+          key: vcpkg-codec-release-v1-${{ matrix.kind }}-${{ hashFiles('tools/audio-codec-spike/vcpkg.json', 'tools/audio-codec-spike/triplets/**', 'vcpkg-overlays/ports/ffmpeg/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vcpkg-codec-release-v1-${{ matrix.kind }}-${{ hashFiles('tools/audio-codec-spike/vcpkg.json', 'tools/audio-codec-spike/triplets/**', 'vcpkg-overlays/ports/ffmpeg/**') }}-
+            vcpkg-codec-release-v1-${{ matrix.kind }}-
       - name: Bootstrap pinned vcpkg
         shell: bash
         run: |
@@ -146,18 +157,39 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git build-tools/vcpkg
           git -C build-tools/vcpkg checkout 434307da09bc05b2c86996dccc8b2351fc0d5d37
           MSYS_NO_PATHCONV=1 cmd.exe /c 'build-tools\vcpkg\bootstrap-vcpkg.bat' -disableMetrics
-      - name: Configure desktop probe
-        run: cmake -S . -B build-codec -DBUILD_SHARED_LIBS=ON -DSAP2_AUDIO_CODEC_SPIKE=ON "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_FEATURES=audio-codec-spike "-DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/vcpkg-overlays/ports"
+      - name: Configure isolated Release probe
+        shell: pwsh
+        run: |
+          $probeArguments = @(
+            '-S', 'tools/audio-codec-spike', '-B', 'build-codec', '-A', 'x64',
+            '-DBUILD_TESTING=ON',
+            '-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake',
+            '-DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}',
+            '-DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/tools/audio-codec-spike/triplets',
+            '-DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/vcpkg-overlays/ports'
+          )
+          if ('${{ matrix.kind }}' -eq 'uwp') {
+            $probeArguments += '-DCMAKE_SYSTEM_NAME=WindowsStore', '-DCMAKE_SYSTEM_VERSION=10.0'
+          }
+          cmake @probeArguments
       - name: Build and test desktop probe
+        if: matrix.kind == 'desktop'
         run: |
           cmake --build build-codec --config Release --target sap2_codec_probe_tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           ctest --test-dir build-codec -C Release -R '^audio_codec_probe$' --output-on-failure
-      - name: Configure AppContainer probe (separate installed directory)
-        run: cmake -S . -B build-codec-uwp -A x64 -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0 -DBUILD_SHARED_LIBS=ON -DSAP2_AUDIO_CODEC_SPIKE=ON "-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-uwp -DVCPKG_MANIFEST_FEATURES=audio-codec-spike "-DVCPKG_OVERLAY_PORTS=${{ github.workspace }}/vcpkg-overlays/ports"
       - name: Build and inspect AppContainer probe
+        if: matrix.kind == 'uwp'
         run: |
-          cmake --build build-codec-uwp --config Release --target sap2_codec_probe
-          ./tools/audio-codec-spike/check_binaries.ps1 -Directory build-codec-uwp/tools/audio-codec-spike/Release
+          cmake --build build-codec --config Release --target sap2_codec_probe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tools/audio-codec-spike/check_binaries.ps1 -Directory build-codec/Release
+      - name: Save completed codec dependency binaries even after a later failure
+        if: ${{ !cancelled() && hashFiles('build-vcpkg-cache/**/*.zip') != '' && steps.codec-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: build-vcpkg-cache
+          key: ${{ steps.codec-cache.outputs.cache-primary-key }}
   sanitizers:
     runs-on: ubuntu-latest
     steps:
