@@ -32,6 +32,16 @@ adoption or publication. No new receiver test has run. Obtain implementation
 authorization before starting the plan; do not start the deferred speaker or
 surround-output experiments as prerequisites.
 
+**D67 review follow-up (2026-10-12):** native PR #44 remains the open planning
+PR. Its review identified that MP4 file order can select commentary instead of
+main audio. The revised plan requires explicit source-track selection for
+multiple enabled MP4 tracks (and ambiguous MKV defaults), includes a bounded
+track probe and CLI/C API/C# selection contract, and adds acceptance cases for
+commentary-first/reversed order and invalid/unsupported selection without
+fallback. This changes the proposed plan only. Fork PR #12 is already merged
+and has no review findings; its immutable plan link points to the initial
+draft, so use the current native plan for the revised selection contract.
+
 **User's validation corrections:** Chromecast video verification is deferred
 because no suitable local receiver is available. Casting to a sleeping Apple TV
 was already verified earlier, per the user; exact earlier build/date is not

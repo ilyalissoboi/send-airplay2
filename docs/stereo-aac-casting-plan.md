@@ -50,11 +50,32 @@ and choosing tracks from the Screenbox UI are separate work.
 
 Current MP4/MKV selection filters audio by whether it can be remuxed. In the
 new mode, select the intended source **before** applying decoder support:
-first enabled audio for MP4; default-flagged enabled audio, otherwise first
-enabled audio, for MKV. If that track cannot be decoded, return unsupported;
-do not silently substitute an AAC commentary track for default DTS. Record
-this automatic selection contract in the CLI, C API and binding documentation.
-Explicit track/language selection can follow separately.
+
+- **Explicit selection:** accept a source-container audio track identity, not
+  an index in the filtered remux result. It takes precedence over automatic
+  selection. A missing, disabled or non-audio identity is invalid selection;
+  a valid selected track with an unsupported decoder/profile returns unsupported.
+  Neither case falls back to another track.
+- **MP4/MOV automatic selection:** use the sole enabled audio track. With two
+  or more enabled audio tracks, require explicit selection. Do not infer the
+  intended track from file order, codec preference or the enabled flag. The first
+  version does not implement MP4 alternate-track/default-selection semantics.
+- **MKV automatic selection:** use the sole enabled audio track, or the unique
+  default-flagged enabled audio track among several. Multiple enabled tracks with
+  zero or multiple default flags require explicit selection rather than file-order
+  fallback.
+
+For either container, automatic mode with no enabled audio retains video-only
+behavior. An explicit identity still must pass validation; it cannot fall back
+to video-only output if the requested audio is absent or disabled.
+
+In particular, an enabled AAC commentary track preceding enabled main DTS in
+an MP4 must report selection-required without an explicit identity. Selecting
+the DTS track must decode that track, even if AAC is earlier or easier to remux.
+Language/role metadata can help a caller choose, but must not be guessed from
+codec or file order. Record this contract in the CLI, C API and binding docs.
+Explicit native/binding selection is part of this slice; a Screenbox track
+picker remains separate product work.
 
 Use an optional in-process FFmpeg backend (`libavformat`, `libavcodec`,
 `libavutil`, `libswresample`) for audio discovery, decoding, channel mapping,
@@ -156,16 +177,22 @@ cast's cache. Startup failures and allocation/I/O failures need the same cleanup
 
 Propose a new named delivery value such as `HlsStereoAac`, separate from
 `HlsRemux`. Bump the experimental API version when changing the interface;
-append any cache/output options using `struct_size` and test tail-padding and
-layout on x86/x64/ARM64. Older structs retain existing defaults. Old libraries
-must reject an unknown mode, and a backend-disabled build must report that
+append source-audio selection and any cache/output options using `struct_size`
+and test tail-padding and layout on x86/x64/ARM64. Older structs retain existing
+defaults. Old libraries must reject an unknown mode, and a backend-disabled build must report that
 the requested mode is unavailable. Distinguish malformed input, unsupported
-codec/profile, backend availability, cache limits and conversion failure without
-exposing source paths or receiver details. Exact names/result additions are
-to be settled in the implementation review.
+codec/profile, selection-required/invalid-selection, backend availability,
+cache limits and conversion failure without exposing source paths or receiver
+details. Exact names/result additions are to be settled in the implementation
+review.
 
-Expose the same opt-in mode in the CLI, C++ interface and C# binding; test size
-initializers, exception containment, release-once ownership and cancellation.
+Expose the same opt-in mode and explicit source-audio selection in the CLI,
+C++ interface and C# binding. Add a bounded source-track probe so callers can
+obtain selectable container identities and available language/role metadata;
+document cancellation and ownership without leaking source paths. Automatic
+selection is the default for older/shorter option structs, subject to the new
+mode's ambiguity rules. Test size initializers, exception containment,
+release-once ownership and cancellation.
 Keep the optional backend disabled in the baseline build and avoid loading
 codec DLLs for existing remux-only callers. Follow CMake/CTest static/shared
 checks in README and add the enabled-backend configurations to CI.
@@ -177,9 +204,12 @@ validation on x64; cross-compilation is not proof of x86/ARM64 playback.
 
 Screenbox integration follows the native/binding gate: pin an approved package,
 opt local video casting into the new policy, provide conversion/cache failure
-feedback, and preserve pause/Stop/queue handoff. LibVLC's decoder does not
-automatically supply this native backend. Keep pairing data and package identity;
-verify loaded DLL hashes before attributing receiver results to a build. Any
+feedback, and preserve pause/Stop/queue handoff. Until a host can supply an
+explicit track identity, ambiguous files fail with selection-required feedback;
+Screenbox must not guess an identity or silently retry another audio track.
+LibVLC's decoder does not automatically supply this native backend. Keep pairing
+data and package identity; verify loaded DLL hashes before attributing receiver
+results to a build. Any
 visual change requires written user checks, without Computer Use, per the user.
 Publishing a new prerelease and merging remain separate approval steps.
 
@@ -198,8 +228,14 @@ Publishing a new prerelease and merging remain separate approval steps.
    Verify compressed video payload hashes remain identical; decode output and
    check two channels, expected per-channel contributions, clipping, sync,
    duration and segment joins. Preserve existing subtitle coverage.
-3. **API and host gate.** Extend ABI/bindings/CLI and optional-backend CI. Exercise
-   malformed/truncated/unsupported inputs, long files, cold forward/backward
+3. **API and host gate.** Extend ABI/bindings/CLI and optional-backend CI. Cover
+   MP4 AAC-commentary-before-DTS and reversed-order fixtures: both require
+   selection when unspecified; explicit DTS selects DTS in either order.
+   Also cover sole-enabled-track selection, disabled tracks, missing/non-audio
+   identities, an unsupported explicitly selected track without fallback, and
+   MKV unique/absent/duplicate default flags. Verify probe identities select the
+   same source in both demuxers. Exercise malformed/truncated/unsupported inputs,
+   long files, cold forward/backward
    seeks, out-of-order and duplicate requests, HEAD/ranges, deadline expiry,
    quota/I/O failure and Stop during probing/encoding/read. Run applicable static
    and shared CTest, pure-C ABI and C# checks; build the packaged x64 host using
@@ -216,7 +252,8 @@ Planning allowance: roughly **15-25 engineering days (3-5 working weeks)** for
 one experienced developer through native/API/packaged readiness, consistent
 with the earlier conversion estimate but now restricted to stereo output.
 This is unmeasured; codec licensing/build and seek/priming/cache work dominate
-the uncertainty. Screenbox product integration and waiting for suitable receiver
-hardware are additional. Revisit the estimate after the first spike rather than
+the uncertainty, along with track probing/selection across two demuxers.
+Screenbox product integration and waiting for suitable receiver hardware are
+additional. Revisit the estimate after the first spike rather than
 promising a completion date. The next session should obtain implementation
 authorization before beginning this sequence.

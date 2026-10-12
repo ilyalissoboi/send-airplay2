@@ -34,6 +34,11 @@ The next slice to detail is [video with surround audio downmixed to stereo AAC](
 This authorizes documentation/planning, not implementation or dependencies.
 Obtain implementation authorization before beginning the codec/packaging spike.
 Do not start speaker or surround-output probes as prerequisites for this plan.
+Native PR #44's selection review is addressed in the plan: ambiguous MP4/MKV
+audio requires explicit source-track selection, with native/binding probe and
+selection support in scope. Fork PR #12 is already merged with no review
+findings; its pinned link is the initial draft, so follow the current native
+plan for the revised contract. No feature implementation is added by this fix.
 Chromecast video validation is deferred (no suitable local receiver); sleeping
 Apple TV casting was already verified earlier by user report, with no new
 build/date attribution supplied. Do not repeat it as an uncompleted gate.
