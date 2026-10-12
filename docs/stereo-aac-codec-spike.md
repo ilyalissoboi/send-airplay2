@@ -166,9 +166,30 @@ manifest and dedicated Release-only triplets, and runs desktop and UWP as
 independent matrix jobs. Both preserve the existing offline test and AppContainer
 inspection gates. Explicit cache restore/save uses run-specific keys with stable
 restore prefixes and vcpkg ABI validation, preserving completed packages even if
-a later step fails. It does not cache or skip the tests. Actual hosted runtime
-improvement must be measured on the updated PR head; the earlier packaged runtime
-hash evidence describes the recorded package, not these new build profiles.
+a later step fails. It does not cache or skip the tests. The earlier packaged
+runtime hash evidence describes the recorded package, not these new build profiles.
+
+At implementation head `22f14a0`, [hosted run 38243945234](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38243945234)
+passed both codec jobs, including dependency-cache saves:
+
+| Profile | Full job duration, first cache population | Result |
+| --- | --- | --- |
+| Desktop x64 Release | 5m10s | Codec CTest passed |
+| UWP x64 Release | 3m45s | All five DLL inspections passed |
+
+These jobs execute in parallel, reducing the codec gate's elapsed time from
+66m24s to approximately **5m11s**, about **92% shorter**. This is the codec gate,
+not the whole workflow; the baseline jobs have their own build/test times.
+The first updated run was explicitly dispatched on the branch because no Actions
+run appeared after pushing. Inspect checks for the actual PR head before merging.
+
+Local validation also passed the standalone Release codec test and all five
+AppContainer inspections, with Debug FFmpeg libraries absent in both dedicated
+profiles. The root's optional build still passes its codec test. A fresh local
+desktop installed directory restored all seven dependencies from the binary
+cache, installing them in **622 ms** without compiling FFmpeg. That installation
+duration excludes compiler detection/generation and waiting on another local
+vcpkg process; it is not an end-to-end hosted-cache runtime claim.
 
 ## Remaining gates
 

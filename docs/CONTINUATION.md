@@ -40,7 +40,9 @@ Spike PR #46's initial `6a5777d` CI head failed after 66m24s at UWP configure
 (`10.0` lost its decimal in an unquoted PowerShell argument); the desktop codec
 test and all 14 baseline jobs passed. The CI follow-up isolates FFmpeg dependencies,
 builds Release only, parallelizes desktop/UWP and saves completed binary-cache
-entries even after failure. Updated-head checks/timings are pending. Read the
+entries even after failure. At implementation head `22f14a0`, hosted run
+`38243945234` passes both codec jobs in 5m10s desktop/3m45s UWP, in parallel;
+the codec gate is about 92% shorter. Verify checks for the actual PR head. Read the
 [CI follow-up](stereo-aac-codec-spike.md#ci-failure-and-runtime-follow-up-2026-10-12)
 and use its standalone reproduction paths rather than assuming the root layout.
 

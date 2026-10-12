@@ -35,8 +35,12 @@ The separate merge-checkpoint PR #45 is still open; its 14 checks passed.
 as `10`. The follow-up uses quoted argument arrays, a standalone codec-only
 manifest, dedicated Release-only triplets, parallel desktop/UWP jobs and explicit
 dependency-cache saving after failure. See [timings and reproduction](stereo-aac-codec-spike.md#ci-failure-and-runtime-follow-up-2026-10-12).
-Updated-head hosted checks/timings are pending; preserve the earlier packaged
-artifact's source/profile attribution. This changes build configuration only.
+At implementation head `22f14a0`, hosted run `38243945234` passes desktop and
+UWP codec jobs in 5m10s and 3m45s respectively, in parallel (about 92% less elapsed
+codec-gate time). Both save dependency caches; local standalone/root codec tests
+and Release-only UWP inspections pass. Inspect the actual current PR head's checks
+before merging; preserve the earlier packaged artifact's source/profile
+attribution. This changes build configuration only.
 
 **D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
 `8a40ec3` after all 14 checks passed at final head `8978188`. Screenbox PR #10
