@@ -27,7 +27,7 @@ probe/selection remain the next work in D67; DTS-HD/dependent-substream inputs
 need suitable fixtures. Speaker audio and discrete surround output remain
 deferred. The initial planning-only authorization text below is historical;
 the user's Proceed authorizes this implementation gate without re-confirmation.
-The separate merge-checkpoint PR #45 is still open; its 14 checks passed.
+The separate merge-checkpoint PR #45 merged as `e92e29e`; its 14 checks passed.
 
 **D68 CI follow-up (2026-10-12):** spike PR #46 is open. At `6a5777d`, all
 14 baseline jobs passed and the desktop codec test passed, but the serial
@@ -37,7 +37,10 @@ manifest, dedicated Release-only triplets, parallel desktop/UWP jobs and explici
 dependency-cache saving after failure. See [timings and reproduction](stereo-aac-codec-spike.md#ci-failure-and-runtime-follow-up-2026-10-12).
 At implementation head `22f14a0`, hosted run `38243945234` passes desktop and
 UWP codec jobs in 5m10s and 3m45s respectively, in parallel (about 92% less elapsed
-codec-gate time). Both save dependency caches; local standalone/root codec tests
+codec-gate time). Run `38244731622` at `e3680a3` passes all 16 jobs and confirms
+hosted cache reuse at 1m06s desktop/1m16s UWP. PR #45's merged documentation
+checkpoint is integrated to resolve the conflicts blocking automatic PR CI.
+Both save dependency caches; local standalone/root codec tests
 and Release-only UWP inspections pass. Inspect the actual current PR head's checks
 before merging; preserve the earlier packaged artifact's source/profile
 attribution. This changes build configuration only.
@@ -55,7 +58,7 @@ The user defers audio-file casting (including HomePod/audio-only speakers) and
 DTS conversion retaining 5.1/7.1 output because suitable local test hardware is
 unavailable. Preserve their [research and effort assessment](audio-features-assessment.md),
 including separate speaker transport and 7.1 encoder/layout limitations.
-The next slice to detail is [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md).
+The completed next-slice plan is [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md).
 It proposes optional in-process audio decoding/encoding, unchanged compressed
 video, deterministic track selection, separate stereo HLS audio, bounded
 generation/cache, ABI/binding and packaged gates. The implementation allowance
@@ -65,16 +68,21 @@ adoption or publication. No new receiver test has run. Obtain implementation
 authorization before starting the plan; do not start the deferred speaker or
 surround-output experiments as prerequisites.
 
-**D67 review follow-up (2026-10-12):** native PR #44 merged as `12c24a7`;
-all 14 checks passed at final head `bc4b381` and the selection thread is resolved.
-Its review identified that MP4 file order can select commentary instead of
+**D67 planning/review gate complete (2026-10-12):** native PR #44 merged as
+`12c24a7`; all 14 checks passed at final head `bc4b381` and the selection review
+thread is resolved. Its review identified that MP4 file order can select commentary instead of
 main audio. The revised plan requires explicit source-track selection for
 multiple enabled MP4 tracks (and ambiguous MKV defaults), includes a bounded
 track probe and CLI/C API/C# selection contract, and adds acceptance cases for
 commentary-first/reversed order and invalid/unsupported selection without
 fallback. This changes the proposed plan only. Fork PR #12 merged as `ce782356`
-and has no review findings; its immutable plan link points to the initial
+at head `0cd9ff56`, with no review findings or CI checks reported (docs-only).
+Its immutable plan link points to the initial
 draft, so use the current native plan for the revised selection contract.
+The subsequent Proceed authorized D68's codec/packaging spike, recorded above.
+The planning merge itself adds no runtime dependency,
+package publication or receiver evidence; speaker audio and surround output
+remain deferred for unavailable hardware.
 
 **User's validation corrections:** Chromecast video verification is deferred
 because no suitable local receiver is available. Casting to a sleeping Apple TV

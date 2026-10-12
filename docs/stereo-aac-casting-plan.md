@@ -4,6 +4,11 @@ Planning decision D67: 2026-10-12. Baseline: native merged main `aa0f25e`
 (PR #43), Screenbox merged main `f596fd5e` (PR #11). This document specifies
 the next implementation slice; it does not implement or validate it.
 
+Planning complete: native PR #44 merged as `12c24a7`, with all 14 checks passed
+at final head `bc4b381` and the source-track-selection review resolved.
+Screenbox checkpoint PR #12 merged as `ce782356` (docs-only; no CI checks
+reported). Those planning merges add no codec code, dependencies or receiver proof.
+
 **Implementation authorization/status:** the user's subsequent Proceed
 authorizes D68's [codec/packaging spike](stereo-aac-codec-spike.md). Its optional
 development probe and offline AppContainer host are implemented and tested in

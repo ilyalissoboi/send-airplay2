@@ -1905,3 +1905,9 @@ must remain separate from manually observed receiver playback and output mapping
 Research PR #43 merged as `aa0f25e`, with 14 checks passed at `789f029`; fork
 docs PR #11 merged as `f596fd5e` with no CI checks reported. Those merges add
 documentation, not new receiver or firmware coverage.
+
+**D67 planning merge checkpoint (2026-10-12):** native PR #44 merged as
+`12c24a7`, with the selection review resolved and all 14 checks passed at final
+head `bc4b381`. Fork PR #12 merged as `ce782356` at `0cd9ff56` (docs-only;
+no CI checks reported). The planning gate is complete. No conversion backend,
+new package or receiver run is added; the deferred hardware gates remain deferred.

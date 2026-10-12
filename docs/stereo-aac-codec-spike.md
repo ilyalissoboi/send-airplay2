@@ -170,18 +170,26 @@ a later step fails. It does not cache or skip the tests. The earlier packaged
 runtime hash evidence describes the recorded package, not these new build profiles.
 
 At implementation head `22f14a0`, [hosted run 38243945234](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38243945234)
-passed both codec jobs, including dependency-cache saves:
+passed all 16 jobs, including codec dependency-cache saves. At documentation head
+`e3680a3`, [run 38244731622](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38244731622)
+also passed all 16 and verified hosted binary-cache reuse:
 
-| Profile | Full job duration, first cache population | Result |
-| --- | --- | --- |
-| Desktop x64 Release | 5m10s | Codec CTest passed |
-| UWP x64 Release | 3m45s | All five DLL inspections passed |
+| Profile | Full job, first cache population | Full job, cached dependencies | Result |
+| --- | --- | --- | --- |
+| Desktop x64 Release | 5m10s | 1m06s | Codec CTest passed |
+| UWP x64 Release | 3m45s | 1m16s | All five DLL inspections passed |
 
 These jobs execute in parallel, reducing the codec gate's elapsed time from
 66m24s to approximately **5m11s**, about **92% shorter**. This is the codec gate,
 not the whole workflow; the baseline jobs have their own build/test times.
-The first updated run was explicitly dispatched on the branch because no Actions
-run appeared after pushing. Inspect checks for the actual PR head before merging.
+Both cached jobs restored all seven vcpkg packages and ran their checks; package
+installation took 242 ms desktop and 228 ms UWP, excluding other job steps.
+The cached codec gate takes **1m16s**, about **98% shorter** than the original job.
+The updated runs were explicitly dispatched on the branch because documentation
+conflicts with merged PR #45 (`e92e29e`) prevented the automatic `pull_request`
+workflow. The branch integrates that checkpoint and resolves the conflicting
+handoff/authorization history while preserving D68's implementation evidence.
+Inspect checks for the actual PR head before merging.
 
 Local validation also passed the standalone Release codec test and all five
 AppContainer inspections, with Debug FFmpeg libraries absent in both dedicated
