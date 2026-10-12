@@ -16,14 +16,14 @@
     "privacy": "Only timestamp, fixed event category and allowlisted synthetic client labels retained; raw log not committed."
   },
   "receiver_grant_value_messages": 0,
-  "chain_observer": "User reported more than one cast prompted in H/I/J/K; corrected final K report to no prompt. Log shows delegate/should-ask sequences in H and J; request-only in I and K.",
+  "chain_observer": "User reported more than one cast prompted in H/I/J/K; corrected final K report to no prompt. H/I/J were not individually reported. Log shows delegate/should-ask sequences in H and J (prompt candidates, not confirmed UI); request-only in I and K.",
   "chain_request_intervals_seconds": {
     "H_to_I": 60.64,
     "I_to_J": 55.517,
     "H_to_J": 116.157,
     "J_to_K": 57.475
   },
-  "interpretation": "Recent permission reuse survives fresh session identifiers and the display-name comparison. A prompt recurs during equal-idle repeated casts, supporting grant age/expiry rather than last idle alone. Exact timer, renewal rule and cache key remain unproven.",
+  "interpretation": "Recent permission reuse survives fresh session identifiers and the display-name comparison. Multiple prompts were reported during equal-idle repeats, but H/J UI attribution is log-derived and not individually confirmed. Grant age/expiry is a working hypothesis, not a demonstrated alternative to last idle alone. Exact timer, renewal rule and cache key remain unproven.",
   "limits": [
     "One receiver/OS/host/profile/network context",
     "No grant numeric value or expiry/reset log emitted in this capture",

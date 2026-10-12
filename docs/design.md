@@ -17,8 +17,9 @@ limitation. Screenbox's merged `main` pin is published, hash-verified `ci.207`;
 its running DLL hashes match that package. Final Screenbox cancellation/recovery,
 playback/controls, Stop/local handoff and natural queue advance passed by user
 report. Additional host, receiver and firmware interoperability remains
-unvalidated. D65's initial consent investigation supports grant age/expiry
-across casts without establishing a numeric timer or cache key. The synthetic
+unvalidated. D65's initial consent investigation motivates a grant-age/expiry
+hypothesis without establishing per-run H/J UI prompt attribution, a numeric
+timer or cache key. The synthetic
 name comparison and fresh random session identifiers retained short-term reuse;
 no shipping sender-policy change is proposed. Current work is reviewing that
 research evidence;

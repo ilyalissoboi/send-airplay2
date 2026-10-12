@@ -14,10 +14,11 @@ after public-documentation research.** Branch `codex/macos-consent-investigation
 starts at main `671e714` (merged PR #41). Eleven consent/start/Stop casts passed
 with the saved pairing and default privacy policy. Short-term reuse survived
 fresh process/session identifiers and a temporary display-name comparison.
-In a timed chain with equal 45.078-second idle gaps, the receiver prompted at
-H/J but not I/K; K's corrected user report is no prompt. Request H-to-J was
-116.157 seconds, with prompt-free I between them. This supports receiver grant
-age/expiry across casts over the last idle interval alone, but the exact timer,
+In a timed chain with equal 45.078-second idle gaps, the user reported multiple
+prompts and explicitly corrected K to no prompt. Logs have delegate/should-ask
+sequences at H/J and request-only at I/K; H/J are log-derived prompt candidates,
+not individually confirmed UI observations. Request H-to-J was 116.157 seconds.
+Grant age/expiry across casts is a working hypothesis from this pattern; the exact timer,
 renewal rule and cache key are unproven. No numeric grant value appeared in the
 captured log; no shipping C++ or sender-policy change is justified. The temporary
 name experiment was restored byte-for-byte and the normal CLI rebuilt.

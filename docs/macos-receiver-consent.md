@@ -103,11 +103,14 @@ at I and K. H-to-I permission requests were 60.640 seconds apart; I-to-J
 55.517 seconds; H-to-J 116.157 seconds; J-to-K 57.475 seconds. These are
 receiver request timestamps, not user acceptance times.
 
-J re-prompted even though the immediately preceding cast had the same idle
-gap as the prompt-free I/K repeats. Successful recent casting alone did not
-prevent re-prompting in this sequence. That supports grant age/expiry across
-casts over a rule based solely on the last idle interval. It does not establish
-a precise lifetime or whether particular activities can renew permission.
+The delegate/should-ask sequences make H/J log-derived prompt candidates;
+neither was individually confirmed by the observer. I's lack of that sequence
+does not independently prove that no UI notification appeared. The user
+confirmed only multiple prompts in the chain and corrected K to no prompt.
+These observations and the timing pattern motivate grant age/expiry as a
+working hypothesis; they do not establish that J's UI re-prompt proves an
+age-based rule instead of a last-idle rule. Per-run UI attribution, a precise
+lifetime and renewal behavior remain unproven.
 
 ## Interpretation and remaining limits
 

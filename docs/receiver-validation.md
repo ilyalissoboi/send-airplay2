@@ -1785,9 +1785,12 @@ requests were 60.640 seconds apart; I-to-J 55.517; H-to-J 116.157; J-to-K 57.475
 Request timestamps are not acceptance timestamps. An internal request-processor
 permission message alone does not establish that a notification appeared.
 
-**Interpretation:** consent reuse is consistent with receiver grant age/expiry
-across casts. Recent successful playback and an equal short idle gap did not
-prevent J from re-prompting. The capture emitted no numeric grant duration or
+**Interpretation:** H/J are log-derived prompt candidates, not individually
+confirmed UI observations; the lack of a delegate sequence at I does not alone
+prove a prompt-free UI. Only multiple prompts in the chain and corrected K=no
+prompt were explicitly reported. Grant age/expiry is a working hypothesis
+from that evidence and timing pattern, not a demonstrated J re-prompt rule.
+The capture emitted no numeric grant duration or
 reset/expiry value; exact timer, renewal rule and cache key remain unproven.
 Name and random-device-ID changes are not demonstrated causes of every prompt.
 No sender fix or permanent identity change is justified by this slice.

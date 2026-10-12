@@ -30,9 +30,10 @@ guide; the master handoff and dated artifacts preserve the longer history.
   [the study](macos-receiver-consent.md) and
   [artifact](validation/native-macos-consent-windows-2026-10-12.json).
   Fresh random per-session identities and a synthetic name comparison retained
-  short-term reuse. H/J prompted in the timed chain, I/K had no delegate sequence,
-  and the corrected K observer report is no prompt. Equal 45.078-second idle gaps
-  did not prevent J re-prompting, supporting grant age/expiry over last idle alone.
+  short-term reuse. H/J are log-derived prompt candidates, I/K had no delegate
+  sequence, and only the aggregate multiple-prompt report and corrected K=no
+  prompt were explicitly observed. Equal 45.078-second idle gaps and the log
+  pattern motivate a grant-age hypothesis; J's UI prompt is not individually confirmed.
   Exact duration/key/renewal are unresolved; no shipping C++ change remains.
   Review/merge the evidence PR with user approval; further work is unselected.
 - **Completed slice (2026-10-11):** the user chose documentation reconciliation,
