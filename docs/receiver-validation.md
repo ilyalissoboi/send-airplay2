@@ -1857,3 +1857,16 @@ the paired Mac's Forget button on the left and Cast on the right, aligned on
 the same row without overlap. This is sender-layout evidence only: no additional
 Forget/Pair/Cast action or receiver playback was performed. Exact hashes are in
 the D66 artifact; inspect actual-head CI before merge.
+
+**Grouped/padded footer (`1ba38e55`):** the user requested Forget immediately
+beside Cast at the bottom right and space between the list and actions. The
+right-aligned horizontal group uses 8-DIP spacing and a 12-DIP top margin.
+VS 2026 MSBuild x64 packaged build passed; private development 1.0.0.6 was
+registered in place, preserving data/pairings, and the source manifest restored.
+Following written instructions to open the Cast flyout, select a paired AirPlay
+device and scroll to the list bottom, the user answered **Yes** to correct
+grouping and clear separation from device names (longer names if available).
+No exact name-length case was recorded. This is user-observed sender-layout
+confirmation, not new receiver playback or credential deletion/re-pairing.
+The Computer Use skill was not used for this check; future visual confirmation
+must use written checks and the user's report, per their preference.

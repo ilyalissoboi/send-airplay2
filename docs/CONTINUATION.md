@@ -32,7 +32,7 @@ guide; the master handoff and dated artifacts preserve the longer history.
   eligibility; 99/99 tests pass and the reviewed bypass fails two regression
   cases. The review thread is resolved; its x64 package passed as 1.0.0.4.
   User-requested `4c346af8` shortens the label to Forget and uses the same footer
-  row as Cast. Its x64 package passed, is registered in place as 1.0.0.5 and
+  row as Cast. Its x64 package passed, was registered in place as 1.0.0.5 and
   preserves data/pairings. Computer Use verified running modules and the compact
   row without overlap; no new credential action or receiver playback. Inspect
   actual-head CI before merge. The Mac playback evidence below predates these
@@ -48,6 +48,14 @@ guide; the master handoff and dated artifacts preserve the longer history.
   at `a3d64831`; inspect actual-head checks/review before user-approved merge.
   [The artifact](validation/screenbox-forget-macos-windows-2026-10-12.json) records
   exact hashes and limits. Preserve the existing package pin and all other pairings.
+  Latest requested refinement `1ba38e55`: group Forget immediately before Cast
+  at the bottom right, with 8-DIP button spacing and 12-DIP separation from the
+  list. Its x64 package passed and is registered in place as 1.0.0.6, source
+  manifest restored. The user answered Yes to the written grouping/list-spacing
+  check; longer names were conditional if available, with no exact length recorded.
+  This is manual layout confirmation only. **User preference:** for future
+  visual UI confirmation, print steps in chat and ask the user to confirm;
+  do not use the Computer Use skill. Retain prior observations as historical.
 - **D65 (2026-10-12):** user chose consent investigation after reviewing public
   documentation. Continue on `codex/macos-consent-investigation` from main
   `671e714`. All eleven desktop CLI casts start/Stop cleanly with saved pairing;

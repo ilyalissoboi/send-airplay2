@@ -69,7 +69,20 @@
     "observation": "Computer Use observed Forget at the left and Cast at the right on the same footer row without overlap for the paired Mac selection.",
     "scope": "Sender layout only; no additional Forget/Pair/Cast action or receiver playback performed. The authorized local clip was loaded and paused to expose the flyout. Inspect actual-head CI before merging."
   },
-  "scope": "One previously recorded MacBook Pro Mac14,10 (user-reported macOS 26.7.1) from Windows x64 Screenbox 1.0.0.3. Sender UI observed with Computer Use; receiver pixels/audio observed by user. No raw credential reads, PIN capture, private identifiers or screenshots committed. No receiver setting or native sender-policy change.",
+  "grouped_footer_refinement": {
+    "commit": "1ba38e559d422d28b7552fd6413b115ab16eb400",
+    "request": "Group Forget immediately before Cast at the bottom right and separate the action row from the device list.",
+    "layout": "Right-aligned horizontal action group; 8-DIP spacing between buttons and 12-DIP top margin.",
+    "build": "PASS: VS 2026 MSBuild Release x64 package; temporary source manifest version restored after building.",
+    "installation": "Development 1.0.0.6 registered in place, preserving identity, app data and pairings.",
+    "msix_sha256": "3f4ba3a3fd483c5e351724865558d0ebe6d847c551b750114024d32fed03e026",
+    "exe_sha256": "fa30f5c106d4c285354c47779f687af126f8d84d115a0d6519e625ebdee37bb2",
+    "native_payload": "Both DLL hashes remain identical to ci.207 recorded above.",
+    "manual_confirmation": "User answered Yes after instructions to open the flyout, select a paired AirPlay device and scroll to the bottom, checking adjacent bottom-right buttons and separation from device names, including longer names if available.",
+    "limits": "No exact device-name length recorded; no new credential operation or receiver playback performed. No Computer Use visual confirmation for this revision.",
+    "future_preference": "For visual UI changes, print verification instructions in chat and ask the user to confirm manually; do not use the Computer Use skill for visual confirmation."
+  },
+  "scope": "One previously recorded MacBook Pro Mac14,10 (user-reported macOS 26.7.1) from Windows x64 Screenbox 1.0.0.3. Earlier sender UI observed with Computer Use; receiver pixels/audio observed by user. Later grouped-footer confirmation in 1.0.0.6 was manual. No raw credential reads, PIN capture, private identifiers or screenshots committed. No receiver setting or native sender-policy change.",
   "remaining_gates": ["Feature PR review and user-approved merges"],
   "result": "PASS for the recorded receiver/host after running-binary verification; sender UI observed with Computer Use and receiver playback/closure confirmed by user"
 }

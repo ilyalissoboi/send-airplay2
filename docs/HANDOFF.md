@@ -19,7 +19,7 @@ Chromecast eligibility. All 99 logic tests pass; restoring the reviewed bypass
 fails the two Chromecast regression cases. The review thread is resolved and
 its x64 package passed as private version 1.0.0.4. User-requested revision
 `4c346af8` shortens the visible label to **Forget** and puts it left of Cast
-on the same footer row. Its x64 package passed and is registered in place as
+on the same footer row. Its x64 package passed and was registered in place as
 1.0.0.5, preserving data/pairings; source manifest restored. Computer Use verified
 the running executable/native modules and observed both buttons aligned without
 overlap. No new Forget/Pair/Cast action or receiver playback was performed in
@@ -41,6 +41,20 @@ No native/package change is needed; the fork retains published `0.3.0-ci.207`.
 This completes the initial D66 build/UI gate for the recorded Mac/Windows x64 only;
 review/user-approved merge remains. Never remove other profiles as a diagnostic.
 See the [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).
+
+**Latest UI request and confirmation preference (2026-10-12):** the user wants
+Forget immediately beside Cast in a group at the bottom right, with separation
+between the device list and actions. Fork revision `1ba38e55` groups all action
+buttons, using 8 DIPs between visible buttons and a 12-DIP top margin. Its x64
+package passed, was installed in place as development 1.0.0.6 and the source
+manifest restored. The user answered **Yes** to the written manual check of
+button grouping and separation from device names at the bottom of the list
+(longer names if available; no exact name-length case recorded). This adds
+sender-layout confirmation, not new credential operations or receiver playback.
+Moving forward, do not use the
+Computer Use skill to confirm visual UI changes. Print verification steps in
+chat and ask the user to confirm manually; record their result separately from
+build/CI success. Earlier Computer Use observations remain historical evidence.
 
 **D65 Mac consent investigation (2026-10-12), chosen by the user
 after public-documentation research.** Branch `codex/macos-consent-investigation`
