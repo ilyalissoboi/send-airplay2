@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#46 are merged. `main` contains
+Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#47 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,16 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**Active D69:** the subsequent Proceed authorizes the native source increment.
+Its [inventory/selection/index/seek-metadata foundation](audio-source-inventory.md)
+is implemented in open PR #48, originally branched from merged main `cb9d641`.
+Review head `fc63a327` passed all 16 checks in run `38263819070`. PR #48 now
+integrates PR #47's merged checkpoint `031acae`, resolving documentation conflicts
+without native changes. Inspect the resulting PR head and its CI before writing
+or merging. This is private native work before actual decoder seeking and stereo
+HLS resources;
+no new ABI/delivery value, package publication or receiver test is included.
 
 **Completed D68:** the user's Proceed authorized the stereo-AAC codec/UWP
 packaging spike. PR #46 merged as `cb9d641` after all 16 checks passed at
@@ -356,14 +366,14 @@ validated in the fork, merged in PR #10. Research PR #43 and fork PR #11 are
 also merged. D67's stereo AAC plan and review are complete in native PR #44,
 with the companion fork checkpoint merged in PR #12. The subsequently authorized
 D68 codec/packaging spike is implemented and merged in native PR #46 as
-`cb9d641`, with all 16 final-head checks passing. The next proposed increment
-starts D67's native conversion/presentation phase with production MP4/MKV
-selected-track inventory/selection and decoder seek/timestamp handling, followed
-by separate stereo AAC fMP4/HLS resources and bounded lazy generation/cache.
+`cb9d641`, with all 16 final-head checks passing. D69 implements the first native
+source increment described above. Actual decoder stream matching and compressed
+input seeking/timestamps are next, followed by separate stereo AAC fMP4/HLS
+resources and bounded lazy generation/cache.
 Public API/binding/CLI and receiver/Screenbox gates follow the plan. The spike's
 single-stream/short-input probe is not a production movie source adapter.
 Speaker audio and surround-preserving output remain deferred for unavailable
-test hardware. No production HLS conversion implementation has started.
+test hardware. Production decoded AAC/HLS generation remains unfinished.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12

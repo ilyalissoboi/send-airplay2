@@ -10,6 +10,7 @@
 #include <vector>
 
 namespace send_airplay2::detail {
+struct MediaTrackInventory;
 using Bytes = std::vector<std::uint8_t>;
 
 /// Why an input cannot be remuxed. Messages never contain paths or media data.
@@ -111,5 +112,15 @@ struct Mp4Movie {
  * @throws RemuxException as above; exceptions from `read` propagate.
  */
 [[nodiscard]] Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size);
+/// Metadata-only source inventory, including unremuxable and disabled tracks.
+/// Same progressive-input/moov limits as read_mp4; at most 128 source tracks.
+[[nodiscard]] MediaTrackInventory probe_mp4_tracks(const RandomReader& read,
+                                                   std::uint64_t file_size);
+/// Build the selected enabled audio track's packet index without a codec filter.
+/// Refuses encrypted entries; absent/disabled/non-audio identity is invalid_argument.
+[[nodiscard]] Mp4Track read_mp4_source_audio(const RandomReader& read, std::uint64_t file_size,
+                                             std::uint64_t track_id);
+/// Index supported video/text independently of audio codec support/selection.
+[[nodiscard]] Mp4Movie read_mp4_video_source(const RandomReader& read, std::uint64_t file_size);
 } // namespace send_airplay2::detail
 #endif

@@ -39,9 +39,10 @@ The later Proceed also authorized D69's native source foundations, implemented
 in separate open [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48):
 MP4/MKV inventory/selection, independent video indexing and source seek metadata.
 Actual decoder stream matching/seeking and encoded audio delivery remain next.
-That increment is not included in this D68 documentation checkpoint; follow
+PR #47's D68 documentation checkpoint merged as `031acae`; PR #48 now integrates
+that checkpoint alongside its native foundations. Follow
 [the handoff](HANDOFF.md#0-resume-here) and inspect the active PR's actual head
-before continuing implementation.
+before continuing implementation. This integration adds no receiver observation.
 
 ## User scope and corrected validation queue
 

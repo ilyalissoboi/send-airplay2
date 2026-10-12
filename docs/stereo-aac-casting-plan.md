@@ -14,7 +14,9 @@ authorizes D68's [codec/packaging spike](stereo-aac-codec-spike.md). Its optiona
 development probe and offline AppContainer host are implemented and tested in
 the recorded Windows x64 scope, merged in PR #46 as `cb9d641` after all 16 checks
 passed at `579bb44`. This supersedes the initial planning-only
-authorization below. Production HLS conversion, source selection and receiver
+authorization below. D69's later authorized [source foundations](audio-source-inventory.md)
+in open PR #48 add inventory/selection, independent video indexing and seek metadata.
+Actual decoder stream matching/seeking, production HLS conversion and receiver
 validation remain work; no new casting mode or package release is implemented.
 
 ## User decision and deferred work
@@ -245,10 +247,11 @@ Publishing a new prerelease and merging remain separate approval steps.
    Verify compressed video payload hashes remain identical; decode output and
    check two channels, expected per-channel contributions, clipping, sync,
    duration and segment joins. Preserve existing subtitle coverage.
-   Recommended first increment: production selected-track inventory/selection
-   across MP4/MKV and decoder seek/timestamp handling, before lazy stereo audio
-   resource generation. This is an engineering sequencing proposal within this
-   phase; public probe/selection contracts remain part of the API/host gate.
+   **D69 checkpoint:** source inventory/selection across MP4/MKV, independent video
+   indexing and source seek metadata are implemented in open PR #48. Actual decoder
+   stream matching and compressed-input seek/timestamp validation remain next,
+   before lazy stereo audio resource generation. Public probe/selection contracts
+   remain part of the API/host gate.
 3. **API and host gate.** Extend ABI/bindings/CLI and optional-backend CI. Cover
    MP4 AAC-commentary-before-DTS and reversed-order fixtures: both require
    selection when unspecified; explicit DTS selects DTS in either order.
