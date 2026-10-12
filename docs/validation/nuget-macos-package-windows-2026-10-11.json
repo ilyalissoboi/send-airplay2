@@ -66,7 +66,6 @@
     }
   },
   "documentation_merge": "Native PR #40 merged as a29212b4fef9533e9ba1c8533e5b5ec5cb5a2aa8; all 14 checks passed at 772b8508941a7266c07df8179080ef5e2bb8d261; both review threads resolved.",
-  "remaining_gates": [
-    "Review/merge final evidence documentation in native PR #41 and fork PR #9 with user approval; subsequent development choice unselected"
-  ]
+  "documentation_completion": "Native PR #41 merged as 671e7142ac5a29691b302e3b25961e19372b9cf2; fork PR #9 merged as 2cee2ea70bf73633d37fe3ea9b1ee786272ad287. D64 final-package evidence is merged; later D65/D66 work is recorded separately.",
+  "remaining_gates": []
 }

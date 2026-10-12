@@ -9,7 +9,28 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**Current slice: D65 Mac consent investigation (2026-10-12), chosen by the user
+**Current development: D66 Screenbox Forget-device follow-up (2026-10-12),
+chosen by the user after the D65 investigation.** Fork branch
+`codex/airplay-forget-device` starts at merged main `2cee2ea7`;
+[fork PR #10](https://github.com/ilyalissoboi/Screenbox/pull/10) is ready for review;
+implementation head `a3d64831`, followed by validation documentation `35285224`.
+The button,
+target-only/idempotent local removal, failure feedback and busy/selection guards
+are implemented; 96/96 logic tests and the VS 2026 MSBuild x64 package pass.
+Development version 1.0.0.3 is registered in place, preserving app data/pairings;
+the source manifest was restored. The running executable and native/crypto
+module hashes match the extracted MSIX. Computer Use verified Forget → Pair,
+another Apple TV's paired actions retained, Forget hidden for Chromecast and
+during active casting, restored Cast after user re-pairing, and local paused
+handoff after Stop. The user confirmed normal Mac video/audio, pause/resume and
+Stop closing its video. All three fork CI checks passed at implementation head
+`a3d64831`; inspect checks/review at the actual current head before merging.
+No native/package change is needed; the fork retains published `0.3.0-ci.207`.
+This completes D66's build/UI gate for the recorded Mac/Windows x64 only;
+review/user-approved merge remains. Never remove other profiles as a diagnostic.
+See the [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).
+
+**D65 Mac consent investigation (2026-10-12), chosen by the user
 after public-documentation research.** Branch `codex/macos-consent-investigation`
 starts at main `671e714` (merged PR #41). Eleven consent/start/Stop casts passed
 with the saved pairing and default privacy policy. Short-term reuse survived
@@ -22,8 +43,10 @@ Grant age/expiry across casts is a working hypothesis from this pattern; the exa
 renewal rule and cache key are unproven. No numeric grant value appeared in the
 captured log; no shipping C++ or sender-policy change is justified. The temporary
 name experiment was restored byte-for-byte and the normal CLI rebuilt.
-Initial investigation complete; review the documentation/evidence PR before
-choosing further development. See [D65 study](macos-receiver-consent.md) and
+Initial investigation complete; documentation/evidence PR #42 remains open.
+Its attribution review is resolved and all 14 checks passed at `6642d18`.
+The user has selected D66 above; merging PR #42 still needs user approval.
+See [D65 study](macos-receiver-consent.md) and
 [artifact](validation/native-macos-consent-windows-2026-10-12.json).
 
 **Completed user-selected slice (2026-10-11): documentation reconciliation,
@@ -126,7 +149,7 @@ Current slice and remaining choices (dependencies first):
    identifiers do not necessarily re-prompt. Exact grant duration/key/renewal
    remain optional research. Review the D65 evidence; no sender fix is proposed.
 3. **Fork follow-ups:**
-   - "Forget this AirPlay device";
+   - **D66 "Forget this AirPlay device": implemented/validated; fork PR #10 awaits review/merge**;
    - x86 and ARM64 builds on a device;
    - a Chromecast regression check;
    - a sleeping TV from Screenbox.

@@ -159,9 +159,15 @@ by user report with running DLLs verified. Final evidence in native PR #41 and
 fork PR #9 is merged. The fork's version/hash pin PR #8 is merged. D63 completed the C API
 and packaged UWP Mac checks; D64 published the verified main package with the
 user's approval. Earlier private Screenbox observations predate the review fix.
-D65 completed an initial controlled Mac consent study; review its
-[evidence and limits](macos-receiver-consent.md) before selecting deeper grant
-research or another slice. Fork regression/architecture checks,
+D65 completed an initial controlled Mac consent study; its
+[evidence and limits](macos-receiver-consent.md) do not justify a sender change.
+The user selected D66, "Forget this AirPlay device" in Screenbox: remove only
+the selected local pairing, offer Pair on success and retain paired state on
+storage failure. Logic, x64 packaged build and forget → pair → cast UI validation
+passed for the recorded Mac, with loaded binaries verified; fork PR #10 awaits
+review/user-approved merge. Other-device preservation was checked through
+paired UI state, not a new Apple TV cast; no Chromecast playback regression is claimed.
+Deeper grant research, fork regression/architecture checks,
 MRP track/queue research, HDR/growing HLS, nuget.org and additional host/receiver
 proofs remain choices in [HANDOFF.md section 0](HANDOFF.md#0-resume-here).
 Remote-Stop classification is deferred by the user.

@@ -1804,3 +1804,38 @@ re-pairing or receiver access-policy changes.
 
 Study: [public sources, audit and results](macos-receiver-consent.md).
 Record: [D65 redacted artifact](validation/native-macos-consent-windows-2026-10-12.json).
+
+## Screenbox Forget-device UI (D66, 2026-10-12)
+
+User-selected follow-up in fork PR #10, implementation `a3d64831` from main
+`2cee2ea7`, followed by validation documentation `35285224`. No native sender,
+package pin, receiver settings or consent-policy change. The existing published
+`0.3.0-ci.207` supports selected-profile removal.
+
+96/96 Screenbox logic tests pass with synthetic profile storage and no XAML
+objects. VS 2026 MSBuild Release x64 packaged build passed; private development
+version 1.0.0.3 was registered in place and the source manifest restored.
+Before UI testing, the running executable and both loaded AirPlay DLL paths/hashes
+matched the extracted MSIX. See the artifact for exact fingerprints and the local
+working-tree build provenance limitation; this is not a release package.
+
+Computer Use observed the paired Mac's separate Cast/Forget actions, clicked
+Forget and observed Pair with Forget hidden, selected the Apple TV and observed
+its paired Cast/Forget actions retained, then selected Chromecast and observed
+Forget hidden. These are sender UI observations, not raw-vault inspection or a
+Chromecast/Apple TV playback regression. The user handled Mac consent/PIN and
+answered "Done"; restored paired Cast/Forget actions were independently observed.
+Computer Use started the authorized clip, observed Forget hidden during active
+casting, operated pause/resume and Stop, then observed local paused playback near
+the last remote position. The user reported "Video and audio are playing normally"
+and confirmed pause/resume and Stop closing the Mac video.
+
+**PASS for this recorded MacBook Pro/Windows x64 combination.** Receiver identity
+and macOS 26.7.1 are the previously recorded user-reported configuration; receiver
+pixels/audio were observed by the user. No new automated cast log, exact timing,
+raw credential/PIN capture, committed screenshots or x86/ARM64 run. Failure,
+idempotence, selection changes and busy guards are offline test evidence.
+All three fork CI checks passed at implementation `a3d64831`; inspect actual PR
+head checks and review before merging with user approval.
+
+Record: [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).

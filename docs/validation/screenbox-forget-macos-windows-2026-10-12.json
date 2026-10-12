@@ -1,0 +1,52 @@
+{
+  "decision": "D66: user-selected Screenbox Forget this AirPlay device",
+  "date": "2026-10-12",
+  "screenbox": {
+    "repository": "https://github.com/ilyalissoboi/Screenbox",
+    "pr": "https://github.com/ilyalissoboi/Screenbox/pull/10",
+    "branch": "codex/airplay-forget-device",
+    "base_commit": "2cee2ea70bf73633d37fe3ea9b1ee786272ad287",
+    "implementation_commit": "a3d64831c9814e6052c01d56e7a954568a92db1a",
+    "build_source_note": "The local package was built from the feature working tree before the implementation commit completed; shipping source inputs match that commit. The only temporary product-source edit was development manifest version 1.0.0.3, restored after building. This is not a clean release provenance claim.",
+    "build": "PASS: Visual Studio 2026 MSBuild Release x64 packaged build; sandbox worker startup stalled, so the successful retry ran outside the sandbox with one worker.",
+    "private_version": "1.0.0.3",
+    "installation": "Matching extracted MSIX layout registered in place under the existing Screenbox development identity; app data and pairings preserved.",
+    "msix_sha256": "69cba0b6e71d3b5c56c3c25041b78d8b86101a931c0739ad865695a48bb12632",
+    "exe_sha256": "2b664d5d91680ef390f0bf215450fafd03d1357a3a0c1ed51e913fa7f9a4a543",
+    "native_sha256": "3a81ef19bbbf7288a9fc71b3264445a5eaa787dd952d10e86fb4d22591f8d8e7",
+    "crypto_sha256": "4f6db0813f6405a92cf7c661e6df6e3aef4edc98b06ef21446b67ffbd357fd68",
+    "loaded_verification": "PASS: running development executable and both native module paths/hashes match the extracted package before Forget and casting. Native modules loaded after opening the Cast flyout.",
+    "library_package": "0.3.0-ci.207, unchanged"
+  },
+  "offline_validation": {
+    "logic_tests": { "total": 96, "passed": 96, "failed": 0, "skipped": 0 },
+    "coverage": [
+      "Only selected synthetic profile removed; other profile retained",
+      "Already-absent profile succeeds, including unavailable renderer",
+      "Storage failure preserves pairing and reports an error",
+      "Selection changes during pending removal do not change the new selection's paired state",
+      "Pair/Cast/Forget blocked during removal; Forget blocked during pairing/start/active cast",
+      "No selected device or unpaired selection offers no Forget action"
+    ],
+    "style": "Touched XAML formatted with XamlStyler, C# whitespace formatting and git diff --check passed.",
+    "ci": "Test, xaml-lint and packaged build passed at implementation head a3d64831c9814e6052c01d56e7a954568a92db1a; release skipped for PR."
+  },
+  "computer_use_observations": [
+    "Paired Mac selection shows separate Cast and Forget buttons without overlap",
+    "Forget changes selected Mac to Pair and hides Forget",
+    "Another paired Apple TV continues to offer Cast and Forget",
+    "Chromecast selection offers Cast and hides Forget; no Chromecast playback performed",
+    "After user re-pairing, Mac selection offers Cast and Forget again",
+    "Casting the authorized test clip succeeds; active cast view hides Forget",
+    "Pause/resume icons and progress respond to controls",
+    "Stop returns Screenbox to local paused playback near the last remote position"
+  ],
+  "user_observations": {
+    "pairing": "User answered Done after handling Mac consent/PIN and leaving the flyout open; Computer Use independently observed restored Cast/Forget actions.",
+    "video_audio": "User reports video and audio are playing normally after the re-paired cast.",
+    "pause_resume_stop": "User answered Confirmed to pause/resume working on the Mac and Stop closing its video."
+  },
+  "scope": "One previously recorded MacBook Pro Mac14,10 (user-reported macOS 26.7.1) from Windows x64 Screenbox 1.0.0.3. Sender UI observed with Computer Use; receiver pixels/audio observed by user. No raw credential reads, PIN capture, private identifiers or screenshots committed. No receiver setting or native sender-policy change.",
+  "remaining_gates": ["Feature PR review and user-approved merges"],
+  "result": "PASS for the recorded receiver/host after running-binary verification; sender UI observed with Computer Use and receiver playback/closure confirmed by user"
+}
