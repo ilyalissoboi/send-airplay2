@@ -13,7 +13,9 @@ checkpoint, review disposition, validation commands and ordered development queu
 PR #46 is merged as `cb9d641`; the separate merge-checkpoint documentation PR
 #47 merged as `031acae` after all 16 checks passed at `3173128` in run
 `38266370992`. Native [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48)
-started at `cb9d641`. Its initial `8db422e` head passed all 16 checks
+merged as `5d46479` on 2026-10-13 after all 16 checks passed at final head
+`c816709` in run `38268265899`; both metadata review threads are resolved.
+It started at `cb9d641`. Its initial `8db422e` head passed all 16 checks
 in run `38260999701`. Review follow-up permits any nonzero Matroska timestamp
 scale in inventory (index restrictions stay separate), and records first MP4
 sample descriptions/counts for subtitle/metadata identities as well as A/V.
@@ -24,16 +26,16 @@ track inventory, stable container identities, deterministic audio selection,
 video indexing independent of remuxable audio, and edit/CodecDelay/preroll
 seek metadata. See [contracts and validation scope](audio-source-inventory.md).
 Focused synthetic checks and full local static/shared CTest pass (35/35, 36/36).
-Current-head CI is a separate gate. No new delivery mode, ABI/binding/CLI option,
+The final PR-head CI gate is complete. No new delivery mode, ABI/binding/CLI option,
 encoded HLS, package publication or receiver observation is added by this increment.
 Actual decoder stream matching/seeking, audio fMP4/HLS generation/cache and the
 public/packaged/receiver gates remain next; speaker/surround work stays deferred.
 The subsequent Proceed supersedes the earlier proposal-only authorization text.
 
-**Main integration (2026-10-13):** PR #48 integrates merged PR #47's documentation
+**Main integration (2026-10-13):** merged PR #48 integrated PR #47's documentation
 checkpoint, preserving both D68's completed evidence and D69's source foundations.
 Conflicts are limited to the handoff/continuation text; native sources are unchanged
-from `fc63a327`. Inspect CI for the resulting PR head before merging. This adds
+from `fc63a327`. All 16 checks passed at the resulting `c816709` head. This adds
 no package publication or receiver evidence.
 
 **D68 codec/packaging spike merged (2026-10-12), authorized by the user's Proceed.**

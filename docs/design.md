@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#47 merged.
+Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#48 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -47,7 +47,8 @@ Offline PCM window tests are not evidence of complete movie seeking or receiver
 compatibility.
 
 D69's subsequent Proceed authorizes a private [source inventory/selection and
-seek-metadata increment](audio-source-inventory.md). It separates supported-video
+seek-metadata increment](audio-source-inventory.md), merged in PR #48 as `5d46479`
+after all 16 checks passed at final head `c816709`. It separates supported-video
 indexing from audio remuxability and preserves original audio identities/clocks
 before decoder filtering. Actual decoder seeking and generated stereo HLS audio
 remain the next integration gates.
