@@ -1,6 +1,6 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-12 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-13 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
@@ -11,12 +11,14 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 **D69 native source increment (2026-10-12), authorized by the user's Proceed.**
 PR #46 is merged as `cb9d641`; the separate merge-checkpoint documentation PR
-#47 is open. Native [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48)
-starts at that main checkpoint. Its initial `8db422e` head passed all 16 checks
+#47 merged as `031acae` after all 16 checks passed at `3173128` in run
+`38266370992`. Native [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48)
+started at `cb9d641`. Its initial `8db422e` head passed all 16 checks
 in run `38260999701`. Review follow-up permits any nonzero Matroska timestamp
 scale in inventory (index restrictions stay separate), and records first MP4
 sample descriptions/counts for subtitle/metadata identities as well as A/V.
-The regression fixes pass full local static/shared checks; inspect final-head CI.
+The regression fixes pass full local static/shared checks and all 16 CI checks
+at `fc63a327` in run `38263819070`.
 D69 begins the native-integration phase with unfiltered MP4/MKV
 track inventory, stable container identities, deterministic audio selection,
 video indexing independent of remuxable audio, and edit/CodecDelay/preroll
@@ -28,7 +30,18 @@ Actual decoder stream matching/seeking, audio fMP4/HLS generation/cache and the
 public/packaged/receiver gates remain next; speaker/surround work stays deferred.
 The subsequent Proceed supersedes the earlier proposal-only authorization text.
 
-**D68 codec/packaging spike (2026-10-12), authorized by the user's Proceed.**
+**Main integration (2026-10-13):** PR #48 integrates merged PR #47's documentation
+checkpoint, preserving both D68's completed evidence and D69's source foundations.
+Conflicts are limited to the handoff/continuation text; native sources are unchanged
+from `fc63a327`. Inspect CI for the resulting PR head before merging. This adds
+no package publication or receiver evidence.
+
+**D68 codec/packaging spike merged (2026-10-12), authorized by the user's Proceed.**
+Native [PR #46](https://github.com/ilyalissoboi/send-airplay2/pull/46) merged
+as `cb9d641`; all 16 checks passed at final head `579bb44` in automatic PR run
+`38246014059` (attempt 2). The x86/ARM64 vcpkg bootstrap downloads initially
+received GitHub HTTP 504 and passed the failed-job retry, including the dependent
+package job. This closes the spike's build/packaging/CI/merge checkpoint.
 The optional, separate FFmpeg 9.0.2 development probe implements host-callback
 decoding, explicit stereo downmix/resampling and native AAC encoding/roundtrip
 verification. Desktop offline checks pass, including owned AAC/AC-3/E-AC-3/
@@ -41,14 +54,21 @@ module hashes match the registered package. Baseline static/shared CTest pass
 See [spike implementation/evidence](stereo-aac-codec-spike.md) and
 [artifact](validation/stereo-aac-codec-spike-windows-2026-10-12.json).
 The window experiment needs preroll and lookahead; it does not establish movie
-seek/priming/HLS behavior. Production audio renditions/cache and source-track
-probe/selection remain the next work in D67; DTS-HD/dependent-substream inputs
+seek/priming/HLS behavior. D69 adds source-track probe/selection foundations;
+production audio renditions/cache remain work. DTS-HD/dependent-substream inputs
 need suitable fixtures. Speaker audio and discrete surround output remain
 deferred. The initial planning-only authorization text below is historical;
 the user's Proceed authorizes this implementation gate without re-confirmation.
 The separate merge-checkpoint PR #45 merged as `e92e29e`; its 14 checks passed.
 
-**D68 CI follow-up (2026-10-12):** spike PR #46 is open. At `6a5777d`, all
+**PR #47 review follow-up:** the linked audio-feature assessment now separates
+the completed, merged D68 offline codec/packaging probe from unfinished production
+HLS conversion. Its D67 planning-only authorization is historical, and speaker/
+surround work remains deferred. The subsequent authorized D69 source foundations
+were tracked separately in PR #48 at that checkpoint; PR #48 now integrates
+the merged documentation. This correction adds no runtime or receiver evidence.
+
+**D68 CI follow-up (2026-10-12):** spike PR #46 is merged. At `6a5777d`, all
 14 baseline jobs passed and the desktop codec test passed, but the serial
 66m24s probe job failed at UWP configure: PowerShell passed an unquoted `10.0`
 as `10`. The follow-up uses quoted argument arrays, a standalone codec-only
@@ -60,9 +80,19 @@ codec-gate time). Run `38244731622` at `e3680a3` passes all 16 jobs and confirms
 hosted cache reuse at 1m06s desktop/1m16s UWP. PR #45's merged documentation
 checkpoint is integrated to resolve the conflicts blocking automatic PR CI.
 Both save dependency caches; local standalone/root codec tests
-and Release-only UWP inspections pass. Inspect the actual current PR head's checks
-before merging; preserve the earlier packaged artifact's source/profile
-attribution. This changes build configuration only.
+and Release-only UWP inspections pass. Final automatic PR CI passed at `579bb44`,
+with cold codec jobs at 5m01s desktop/3m59s UWP. Preserve the earlier packaged
+artifact's source/profile attribution. This changes build configuration only.
+
+**Next native increment:** build on D69's MP4/MKV source inventory, deterministic
+selection and source seek metadata with actual decoder stream matching and
+compressed-input seek/timestamp validation. Then connect stereo AAC to independent
+fMP4/HLS audio resources with bounded lazy generation/cache, preserving compressed
+video. The spike's small single-stream callback contract and PCM window experiment
+do not supply those movie contracts. Public ABI/binding/CLI integration and
+receiver/Screenbox proof follow the plan's gates; deferred speaker/surround work
+is not a prerequisite. This integration starts no further implementation slice
+and publishes no package.
 
 **D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
 `8a40ec3` after all 14 checks passed at final head `8978188`. Screenbox PR #10

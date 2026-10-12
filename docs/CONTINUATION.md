@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#45 are merged. `main` contains
+Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#47 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -25,13 +25,19 @@ guide; the master handoff and dated artifacts preserve the longer history.
 
 **Active D69:** the subsequent Proceed authorizes the native source increment.
 Its [inventory/selection/index/seek-metadata foundation](audio-source-inventory.md)
-is implemented on a fresh branch from merged main `cb9d641`; inspect its current
-PR head before writing. Merge-checkpoint docs PR #47 remains separate. This is
-private native work before actual decoder seeking and stereo HLS resources;
+is implemented in open PR #48, originally branched from merged main `cb9d641`.
+Review head `fc63a327` passed all 16 checks in run `38263819070`. PR #48 now
+integrates PR #47's merged checkpoint `031acae`, resolving documentation conflicts
+without native changes. Inspect the resulting PR head and its CI before writing
+or merging. This is private native work before actual decoder seeking and stereo
+HLS resources;
 no new ABI/delivery value, package publication or receiver test is included.
 
-**Current work D68:** the user's Proceed authorizes the stereo-AAC codec/UWP
-packaging spike. The optional development DLL and separate offline packaged
+**Completed D68:** the user's Proceed authorized the stereo-AAC codec/UWP
+packaging spike. PR #46 merged as `cb9d641` after all 16 checks passed at
+final head `579bb44` in run `38246014059` (attempt 2; transient GitHub HTTP 504
+bootstrap downloads on x86/ARM64 passed the failed-job retry).
+The optional development DLL and separate offline packaged
 host are implemented; desktop, AppContainer import and packaged codec/cache
 checks pass in the recorded Windows x64 scope, with loaded-module hashes
 verified. Baseline CTest passes 35 static/36 shared. No receiver test or casting
@@ -52,7 +58,8 @@ entries even after failure. At implementation head `22f14a0`, hosted run
 the codec gate is about 92% shorter. Run `38244731622` at `e3680a3` passes all 16
 jobs with cached codec jobs at 1m06s desktop/1m16s UWP. The merged PR #45
 documentation is integrated to resolve conflicts blocking automatic PR CI.
-Verify checks for the actual PR head. Read the
+Final automatic PR CI passed at `579bb44`, with cold codec jobs at 5m01s
+desktop/3m59s UWP. Read the
 [CI follow-up](stereo-aac-codec-spike.md#ci-failure-and-runtime-follow-up-2026-10-12)
 and use its standalone reproduction paths rather than assuming the root layout.
 
@@ -357,11 +364,16 @@ are merged. D65's initial Mac consent investigation is complete and its evidence
 is merged in PR #42. D66's Forget-device feature is implemented and build/UI
 validated in the fork, merged in PR #10. Research PR #43 and fork PR #11 are
 also merged. D67's stereo AAC plan and review are complete in native PR #44,
-with the companion fork checkpoint merged in PR #12. After implementation
-authorization, the next gate was the codec/packaging spike, now completed in PR #46.
-D69 implements the first native source increment described above. Speaker audio and
-surround-preserving output are deferred for unavailable
-test hardware. Production decoded AAC/HLS generation remains work.
+with the companion fork checkpoint merged in PR #12. The subsequently authorized
+D68 codec/packaging spike is implemented and merged in native PR #46 as
+`cb9d641`, with all 16 final-head checks passing. D69 implements the first native
+source increment described above. Actual decoder stream matching and compressed
+input seeking/timestamps are next, followed by separate stereo AAC fMP4/HLS
+resources and bounded lazy generation/cache.
+Public API/binding/CLI and receiver/Screenbox gates follow the plan. The spike's
+single-stream/short-input probe is not a production movie source adapter.
+Speaker audio and surround-preserving output remain deferred for unavailable
+test hardware. Production decoded AAC/HLS generation remains unfinished.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
