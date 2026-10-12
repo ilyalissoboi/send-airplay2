@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#47 are merged. `main` contains
+Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#48 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,14 +23,15 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Active D69:** the subsequent Proceed authorizes the native source increment.
+**Completed D69:** the subsequent Proceed authorized the native source increment.
 Its [inventory/selection/index/seek-metadata foundation](audio-source-inventory.md)
-is implemented in open PR #48, originally branched from merged main `cb9d641`.
-Review head `fc63a327` passed all 16 checks in run `38263819070`. PR #48 now
-integrates PR #47's merged checkpoint `031acae`, resolving documentation conflicts
-without native changes. Inspect the resulting PR head and its CI before writing
-or merging. This is private native work before actual decoder seeking and stereo
-HLS resources;
+merged in PR #48 as `5d46479` after all 16 checks passed at final head `c816709`
+in run `38268265899`; both metadata review findings are fixed and resolved.
+It originally branched from main `cb9d641` and integrated PR #47's merged
+checkpoint `031acae`, resolving documentation conflicts without native changes
+from tested review head `fc63a327`. Start any next implementation slice on a fresh
+branch from current `origin/main` with its own PR. Actual decoder stream matching,
+compressed-input seeking/timestamps and then stereo HLS resources remain next;
 no new ABI/delivery value, package publication or receiver test is included.
 
 **Completed D68:** the user's Proceed authorized the stereo-AAC codec/UWP
@@ -366,7 +367,7 @@ validated in the fork, merged in PR #10. Research PR #43 and fork PR #11 are
 also merged. D67's stereo AAC plan and review are complete in native PR #44,
 with the companion fork checkpoint merged in PR #12. The subsequently authorized
 D68 codec/packaging spike is implemented and merged in native PR #46 as
-`cb9d641`, with all 16 final-head checks passing. D69 implements the first native
+`cb9d641`, with all 16 final-head checks passing. D69 merged the first native
 source increment described above. Actual decoder stream matching and compressed
 input seeking/timestamps are next, followed by separate stereo AAC fMP4/HLS
 resources and bounded lazy generation/cache.

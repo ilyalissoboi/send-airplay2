@@ -15,7 +15,8 @@ development probe and offline AppContainer host are implemented and tested in
 the recorded Windows x64 scope, merged in PR #46 as `cb9d641` after all 16 checks
 passed at `579bb44`. This supersedes the initial planning-only
 authorization below. D69's later authorized [source foundations](audio-source-inventory.md)
-in open PR #48 add inventory/selection, independent video indexing and seek metadata.
+merged in PR #48 as `5d46479` after all 16 checks passed at `c816709`, adding
+inventory/selection, independent video indexing and seek metadata.
 Actual decoder stream matching/seeking, production HLS conversion and receiver
 validation remain work; no new casting mode or package release is implemented.
 
@@ -248,7 +249,7 @@ Publishing a new prerelease and merging remain separate approval steps.
    check two channels, expected per-channel contributions, clipping, sync,
    duration and segment joins. Preserve existing subtitle coverage.
    **D69 checkpoint:** source inventory/selection across MP4/MKV, independent video
-   indexing and source seek metadata are implemented in open PR #48. Actual decoder
+   indexing and source seek metadata merged in PR #48 as `5d46479`. Actual decoder
    stream matching and compressed-input seek/timestamp validation remain next,
    before lazy stereo audio resource generation. Public probe/selection contracts
    remain part of the API/host gate.

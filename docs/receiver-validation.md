@@ -1897,7 +1897,9 @@ these results must not expand the existing Apple TV/Mac interoperability claims.
 
 **D69 native source foundation (2026-10-12):** synthetic MP4/MKV inventory,
 selection, video/packet-index and seek-clock cases pass, alongside local static
-35/35 and shared 36/36 CTest. See [contracts and limits](audio-source-inventory.md).
+35/35 and shared 36/36 CTest. PR #48 merged as `5d46479` on 2026-10-13 after all
+16 checks passed at final head `c816709` in run `38268265899`.
+See [contracts and limits](audio-source-inventory.md).
 The source timing helpers are not compressed-audio decoder seek proof; no stereo
 HLS conversion, new packaged runtime or receiver observation is added.
 

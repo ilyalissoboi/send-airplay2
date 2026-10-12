@@ -97,8 +97,10 @@ checks are `remux_tests` and `mkv_remux_tests`.
 
 Local Windows x64 validation: full static **35/35** and shared **36/36** CTest
 passed, including the existing pure-C/ABI/C# binding checks. Touched C++ is checked
-with the repository clang-format policy and whitespace checks. CI for the actual
-implementation PR head is a separate gate; none of these tests is a receiver run.
+with the repository clang-format policy and whitespace checks. PR #48 merged as
+`5d46479` on 2026-10-13 after all 16 checks passed at final head `c816709` in run
+`38268265899`; both metadata review findings are fixed and resolved. None of these
+tests is a receiver run.
 
 Still required: bind these identities to actual decoder streams, prove compressed
 audio seeks/resampler history and frame changes, generate AAC with correct

@@ -36,10 +36,11 @@ No audio-only, DTS or new stereo-conversion hardware test has run. Speaker audio
 and surround-preserving output remain deferred for unavailable test hardware.
 
 The later Proceed also authorized D69's native source foundations, implemented
-in separate open [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48):
+in [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48), merged as
+`5d46479` after all 16 checks passed at final head `c816709`:
 MP4/MKV inventory/selection, independent video indexing and source seek metadata.
 Actual decoder stream matching/seeking and encoded audio delivery remain next.
-PR #47's D68 documentation checkpoint merged as `031acae`; PR #48 now integrates
+PR #47's D68 documentation checkpoint merged as `031acae`; merged PR #48 includes
 that checkpoint alongside its native foundations. Follow
 [the handoff](HANDOFF.md#0-resume-here) and inspect the active PR's actual head
 before continuing implementation. This integration adds no receiver observation.
