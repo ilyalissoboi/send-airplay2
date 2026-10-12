@@ -1,0 +1,70 @@
+{
+  "license": "Apache-2.0; original synthesized input and resulting test media",
+  "generator": "generate_fixtures.py",
+  "tool_version": "ffmpeg version 9.0.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+  "tool_configuration": "configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-cairo --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libsvtjpegxs --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper",
+  "tool_distribution": "development use only; not incorporated or redistributed",
+  "input": {
+    "channels": 6,
+    "sample_rate": 48000,
+    "frames": 4800,
+    "channel_mask": "0x3f",
+    "frequencies_hz": [
+      310,
+      470,
+      630,
+      80,
+      790,
+      950
+    ],
+    "sha256": "89fcde82b8e3996d668df2a220bd0f947488f8e45899c6fa7d7eea6b1b65b148"
+  },
+  "fixtures": [
+    {
+      "file": "aac-51.m4a",
+      "bytes": 6570,
+      "sha256": "cdc9be6b90b50c5c22f81af42ab97b449789433a472da09df0193860062a56a9",
+      "encoder_arguments": [
+        "-c:a",
+        "aac",
+        "-b:a",
+        "384k"
+      ]
+    },
+    {
+      "file": "ac3-51.mka",
+      "bytes": 7767,
+      "sha256": "696a26ab779b31ab0b739bd60f0f6965626b64671b63fdc472b4d10ea9e4c188",
+      "encoder_arguments": [
+        "-c:a",
+        "ac3",
+        "-b:a",
+        "448k"
+      ]
+    },
+    {
+      "file": "eac3-51.mka",
+      "bytes": 7769,
+      "sha256": "377c21a2c803772586829be09e6ff6e3e0212669c858f789003cfb39183605ac",
+      "encoder_arguments": [
+        "-c:a",
+        "eac3",
+        "-b:a",
+        "448k"
+      ]
+    },
+    {
+      "file": "dts-core-51.mka",
+      "bytes": 19474,
+      "sha256": "984355ad6ad9db94876fe5340c677e8b43e3bbd208153e73edf7382bf8e3728f",
+      "encoder_arguments": [
+        "-c:a",
+        "dca",
+        "-strict",
+        "-2",
+        "-b:a",
+        "1411200"
+      ]
+    }
+  ]
+}

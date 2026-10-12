@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#44 are merged. `main` contains
+Checkpoint: 2026-10-12 (Asia/Tokyo). PRs #12-#45 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,6 +23,32 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**Current work D68:** the user's Proceed authorizes the stereo-AAC codec/UWP
+packaging spike. The optional development DLL and separate offline packaged
+host are implemented; desktop, AppContainer import and packaged codec/cache
+checks pass in the recorded Windows x64 scope, with loaded-module hashes
+verified. Baseline CTest passes 35 static/36 shared. No receiver test or casting
+delivery mode is added. Read [the spike](stereo-aac-codec-spike.md) and its
+[artifact](validation/stereo-aac-codec-spike-windows-2026-10-12.json) before
+resuming production HLS conversion/track selection. Do not ask for the same
+implementation authorization again; speaker/surround output remain deferred.
+Planning PR #44 is merged as `12c24a7`, with all 14 checks passed at `bc4b381`
+and the selection review resolved. Merge-checkpoint PR #45 merged as `e92e29e`
+(14 checks passed). Inspect actual open heads before editing; ask before merging/publishing.
+
+Spike PR #46's initial `6a5777d` CI head failed after 66m24s at UWP configure
+(`10.0` lost its decimal in an unquoted PowerShell argument); the desktop codec
+test and all 14 baseline jobs passed. The CI follow-up isolates FFmpeg dependencies,
+builds Release only, parallelizes desktop/UWP and saves completed binary-cache
+entries even after failure. At implementation head `22f14a0`, hosted run
+`38243945234` passes both codec jobs in 5m10s desktop/3m45s UWP, in parallel;
+the codec gate is about 92% shorter. Run `38244731622` at `e3680a3` passes all 16
+jobs with cached codec jobs at 1m06s desktop/1m16s UWP. The merged PR #45
+documentation is integrated to resolve conflicts blocking automatic PR CI.
+Verify checks for the actual PR head. Read the
+[CI follow-up](stereo-aac-codec-spike.md#ci-failure-and-runtime-follow-up-2026-10-12)
+and use its standalone reproduction paths rather than assuming the root layout.
+
 The subsequent research checkpoint merged in native PR #43 as `aa0f25e`
 (14 checks passed at final head `789f029`) and fork PR #11 as `f596fd5e`
 (docs-only; no CI checks reported). All prior PRs are merged.
@@ -31,8 +57,8 @@ Latest user decision D67 defers audio-file casting, including audio-only
 speakers/HomePod, and DTS conversion retaining 5.1/7.1 output because suitable
 local test hardware is unavailable. Preserve the [assessment](audio-features-assessment.md).
 The completed next-slice plan is [video with surround audio downmixed to stereo AAC](stereo-aac-casting-plan.md).
-This authorizes documentation/planning, not implementation or dependencies.
-Obtain implementation authorization before beginning the codec/packaging spike.
+That initial request authorized documentation/planning; the subsequent Proceed
+authorizes the codec/packaging spike recorded above.
 Do not start speaker or surround-output probes as prerequisites for this plan.
 Native PR #44 merged as `12c24a7` after all 14 checks passed at final head
 `bc4b381`; its selection review is resolved. In the plan, ambiguous MP4/MKV
@@ -40,7 +66,7 @@ audio requires explicit source-track selection, with native/binding probe and
 selection support in scope. Fork PR #12 merged as `ce782356` at head `0cd9ff56`,
 with no review findings or CI checks reported (docs-only). Its pinned link is
 the initial draft, so follow the current native
-plan for the revised contract. No feature implementation is added by this fix.
+plan for the revised contract. That planning review added no conversion code.
 Chromecast video validation is deferred (no suitable local receiver); sleeping
 Apple TV casting was already verified earlier by user report, with no new
 build/date attribution supplied. Do not repeat it as an uncompleted gate.
@@ -489,9 +515,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> Read the stereo AAC casting plan; speaker audio and 5.1/7.1 output
-> are deferred for unavailable hardware. Obtain implementation authorization
-> before starting code or dependency adoption. Inspect `origin/main` and open
+> D68's subsequent Proceed authorizes the codec/packaging implementation
+> gate. Read its spike/evidence and D67's stereo AAC plan; speaker audio and
+> 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same
+> implementation authorization again. Inspect `origin/main` and open
 > PRs before writing, without repeating completed checks. Preserve receiver-specific
 > evidence and historical failures. Ask before merging and before publishing each
 > package prerelease.

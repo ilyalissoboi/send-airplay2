@@ -30,6 +30,11 @@ C# binding and a development CLI.
 Not in scope: DRM-protected media, screen mirroring, system audio capture,
 multiroom audio and transcoding.
 
+An optional [offline stereo-AAC codec/packaging spike](docs/stereo-aac-codec-spike.md)
+now exercises audio decoding/downmixing in a separate development DLL and
+AppContainer host. It does not add transcoding to casting or change the
+published package. Production HLS conversion remains under development.
+
 ## Build
 
 You need CMake 3.20+, a C++17 compiler and these development packages:

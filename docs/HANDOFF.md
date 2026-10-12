@@ -9,6 +9,42 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D68 codec/packaging spike (2026-10-12), authorized by the user's Proceed.**
+The optional, separate FFmpeg 9.0.2 development probe implements host-callback
+decoding, explicit stereo downmix/resampling and native AAC encoding/roundtrip
+verification. Desktop offline checks pass, including owned AAC/AC-3/E-AC-3/
+DTS-core 5.1 fixtures, PCM 5.1/7.1 channel isolation, headroom, short reads,
+cancel/output failure and a bounded encoder-window experiment. The x64
+AppContainer DLLs pass app CRT/import checks; the separate Native AOT/MSIX
+host passes all eight offline codec/storage/lifecycle cases. Its five loaded
+module hashes match the registered package. Baseline static/shared CTest pass
+35/35 and 36/36; no receiver run or published package change is included.
+See [spike implementation/evidence](stereo-aac-codec-spike.md) and
+[artifact](validation/stereo-aac-codec-spike-windows-2026-10-12.json).
+The window experiment needs preroll and lookahead; it does not establish movie
+seek/priming/HLS behavior. Production audio renditions/cache and source-track
+probe/selection remain the next work in D67; DTS-HD/dependent-substream inputs
+need suitable fixtures. Speaker audio and discrete surround output remain
+deferred. The initial planning-only authorization text below is historical;
+the user's Proceed authorizes this implementation gate without re-confirmation.
+The separate merge-checkpoint PR #45 merged as `e92e29e`; its 14 checks passed.
+
+**D68 CI follow-up (2026-10-12):** spike PR #46 is open. At `6a5777d`, all
+14 baseline jobs passed and the desktop codec test passed, but the serial
+66m24s probe job failed at UWP configure: PowerShell passed an unquoted `10.0`
+as `10`. The follow-up uses quoted argument arrays, a standalone codec-only
+manifest, dedicated Release-only triplets, parallel desktop/UWP jobs and explicit
+dependency-cache saving after failure. See [timings and reproduction](stereo-aac-codec-spike.md#ci-failure-and-runtime-follow-up-2026-10-12).
+At implementation head `22f14a0`, hosted run `38243945234` passes desktop and
+UWP codec jobs in 5m10s and 3m45s respectively, in parallel (about 92% less elapsed
+codec-gate time). Run `38244731622` at `e3680a3` passes all 16 jobs and confirms
+hosted cache reuse at 1m06s desktop/1m16s UWP. PR #45's merged documentation
+checkpoint is integrated to resolve the conflicts blocking automatic PR CI.
+Both save dependency caches; local standalone/root codec tests
+and Release-only UWP inspections pass. Inspect the actual current PR head's checks
+before merging; preserve the earlier packaged artifact's source/profile
+attribution. This changes build configuration only.
+
 **D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
 `8a40ec3` after all 14 checks passed at final head `8978188`. Screenbox PR #10
 merged as `8bfd3dd9` after test, XAML lint and package build passed at final head
@@ -43,8 +79,8 @@ fallback. This changes the proposed plan only. Fork PR #12 merged as `ce782356`
 at head `0cd9ff56`, with no review findings or CI checks reported (docs-only).
 Its immutable plan link points to the initial
 draft, so use the current native plan for the revised selection contract.
-The next implementation gate is the codec/packaging spike after the user
-authorizes implementation. The planning merge adds no runtime dependency,
+The subsequent Proceed authorized D68's codec/packaging spike, recorded above.
+The planning merge itself adds no runtime dependency,
 package publication or receiver evidence; speaker audio and surround output
 remain deferred for unavailable hardware.
 

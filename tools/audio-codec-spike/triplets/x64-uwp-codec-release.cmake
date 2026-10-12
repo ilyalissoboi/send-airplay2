@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# Dedicated probe profile; baseline AppContainer triplets are unchanged.
+set(VCPKG_TARGET_ARCHITECTURE x64)
+set(VCPKG_CRT_LINKAGE dynamic)
+set(VCPKG_LIBRARY_LINKAGE dynamic)
+set(VCPKG_BUILD_TYPE release)
+set(VCPKG_CMAKE_SYSTEM_NAME WindowsStore)
+set(VCPKG_CMAKE_SYSTEM_VERSION 10.0)

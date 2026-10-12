@@ -10,3 +10,6 @@ bindings/csharp/**/obj/
 tools/uwp-host/bin/
 tools/uwp-host/obj/
 tools/uwp-host/AppPackages/
+tools/audio-codec-spike/uwp-host/bin/
+tools/audio-codec-spike/uwp-host/obj/
+tools/audio-codec-spike/uwp-host/AppPackages/

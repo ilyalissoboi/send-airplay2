@@ -1,0 +1,3 @@
+This restricted FFmpeg overlay is for the send-airplay2 audio codec spike only.
+Use find_package(FFMPEG 9.0 REQUIRED), FFMPEG_INCLUDE_DIRS and FFMPEG_LIBRARIES.
+GPL/nonfree features and non-audio component additions are rejected.
