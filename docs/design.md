@@ -1,11 +1,12 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-11 (Asia/Tokyo), after PRs #1-#40 merged.
+Implementation snapshot: 2026-10-12 (Asia/Tokyo), after PRs #1-#41 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
 MP4/MKV HLS remux with text subtitles and indexed MKV startup. The Screenbox
-fork has implemented its current design through PRs #1-#8, including the Mac package pin.
+fork has implemented its current design through PRs #1-#9, including the Mac
+package pin and final validation record.
 
 Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
 desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
@@ -16,7 +17,12 @@ limitation. Screenbox's merged `main` pin is published, hash-verified `ci.207`;
 its running DLL hashes match that package. Final Screenbox cancellation/recovery,
 playback/controls, Stop/local handoff and natural queue advance passed by user
 report. Additional host, receiver and firmware interoperability remains
-unvalidated. Current work is recording the final evidence for review;
+unvalidated. D65's initial consent investigation motivates a grant-age/expiry
+hypothesis without establishing per-run H/J UI prompt attribution, a numeric
+timer or cache key. The synthetic
+name comparison and fresh random session identifiers retained short-term reuse;
+no shipping sender-policy change is proposed. Current work is reviewing that
+research evidence;
 see [HANDOFF.md](HANDOFF.md#0-resume-here).
 
 ## Scope and architecture
@@ -149,11 +155,19 @@ brokered file access and inbound network serving in a packaged UWP host early.
 ## Ordered next changes and acceptance gates
 
 The published, hash-verified `0.3.0-ci.207` package passed final Screenbox checks
-by user report with running DLLs verified. Review of the final evidence in
-native PR #41 and fork PR #9 remains. The fork's version/hash pin PR #8 is merged. D63 completed the C API
+by user report with running DLLs verified. Final evidence in native PR #41 and
+fork PR #9 is merged. The fork's version/hash pin PR #8 is merged. D63 completed the C API
 and packaged UWP Mac checks; D64 published the verified main package with the
 user's approval. Earlier private Screenbox observations predate the review fix.
-Mac consent research, fork regression/architecture checks,
+D65 completed an initial controlled Mac consent study; its
+[evidence and limits](macos-receiver-consent.md) do not justify a sender change.
+The user selected D66, "Forget this AirPlay device" in Screenbox: remove only
+the selected local pairing, offer Pair on success and retain paired state on
+storage failure. Logic, x64 packaged build and forget → pair → cast UI validation
+passed for the recorded Mac, with loaded binaries verified; fork PR #10 awaits
+review/user-approved merge. Other-device preservation was checked through
+paired UI state, not a new Apple TV cast; no Chromecast playback regression is claimed.
+Deeper grant research, fork regression/architecture checks,
 MRP track/queue research, HDR/growing HLS, nuget.org and additional host/receiver
 proofs remain choices in [HANDOFF.md section 0](HANDOFF.md#0-resume-here).
 Remote-Stop classification is deferred by the user.

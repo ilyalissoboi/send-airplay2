@@ -1754,3 +1754,119 @@ closes D63's provenance gap for this final run without changing the scope of
 the earlier private-build observations. Final-package validation is complete
 for this recorded combination; broader interoperability remains unvalidated.
 Record: [D64 package checks](validation/nuget-macos-package-windows-2026-10-11.json).
+
+## Mac receiver consent recurrence (D65, 2026-10-12)
+
+The user authorized investigation after public documentation research and
+confirmed the Mac remained on macOS 26.7.1. Main base `671e714` contains merged
+PR #41; final Screenbox documentation fork PR #9 is also merged as `2cee2ea7`.
+The D64 package/playback gate above is complete, not new work to repeat.
+
+Eleven short desktop CLI casts reused the recorded Mac (`Mac14,10`), existing
+pairing and authorized clip. Every cast reached playing, received scripted
+Stop eight seconds after ready, exited 0 with `sender_stop`, cleaned up and
+reported zero failed reads. Staged binaries were restored with hash checks.
+No enrollment, credential export, receiver setting, firewall rule or sender
+privacy-policy change was made. The temporary name-only comparison is documented
+with its binary hash; no persistent C++ change remains.
+
+Individually reported prompt outcomes: A/C/D/F appeared and were accepted;
+B/E/G were prompt-free. The changed display name in E reached the receiver
+(`send-airplay2-consent-probe`) without a new prompt, as confirmed by the log
+and user. Source audit shows the baseline still generates new random device,
+session/client/item identifiers and headers, so recent permission reuse survives
+that established per-cast identity policy in these tests.
+
+H/I/J/K used equal measured idle gaps of 45.078 seconds for each repeat.
+The user reported more than one prompt in that chain; their final K report was
+corrected to **no prompt**. The complete capture shows delegate/should-ask
+sequences at H and J, but request-only logs at I and K. H-to-I receiver permission
+requests were 60.640 seconds apart; I-to-J 55.517; H-to-J 116.157; J-to-K 57.475.
+Request timestamps are not acceptance timestamps. An internal request-processor
+permission message alone does not establish that a notification appeared.
+
+**Interpretation:** H/J are log-derived prompt candidates, not individually
+confirmed UI observations; the lack of a delegate sequence at I does not alone
+prove a prompt-free UI. Only multiple prompts in the chain and corrected K=no
+prompt were explicitly reported. Grant age/expiry is a working hypothesis
+from that evidence and timing pattern, not a demonstrated J re-prompt rule.
+The capture emitted no numeric grant duration or
+reset/expiry value; exact timer, renewal rule and cache key remain unproven.
+Name and random-device-ID changes are not demonstrated causes of every prompt.
+No sender fix or permanent identity change is justified by this slice.
+
+This adds consent/start/Stop evidence for one Mac/firmware/Windows/profile
+combination, not new controls/seek/EOF or alternate-host interoperability.
+Only timestamps, fixed event categories, scalar sender telemetry and the two
+synthetic sender names are retained; raw log, endpoints and identifiers are not
+committed. Further timer/key/context comparisons are optional, with no automatic
+re-pairing or receiver access-policy changes.
+
+Study: [public sources, audit and results](macos-receiver-consent.md).
+Record: [D65 redacted artifact](validation/native-macos-consent-windows-2026-10-12.json).
+
+## Screenbox Forget-device UI (D66, 2026-10-12)
+
+User-selected follow-up in fork PR #10, implementation `a3d64831` from main
+`2cee2ea7`, followed by validation documentation `35285224`. No native sender,
+package pin, receiver settings or consent-policy change. The existing published
+`0.3.0-ci.207` supports selected-profile removal.
+
+96/96 Screenbox logic tests pass with synthetic profile storage and no XAML
+objects. VS 2026 MSBuild Release x64 packaged build passed; private development
+version 1.0.0.3 was registered in place and the source manifest restored.
+Before UI testing, the running executable and both loaded AirPlay DLL paths/hashes
+matched the extracted MSIX. See the artifact for exact fingerprints and the local
+working-tree build provenance limitation; this is not a release package.
+
+Computer Use observed the paired Mac's separate Cast/Forget actions, clicked
+Forget and observed Pair with Forget hidden, selected the Apple TV and observed
+its paired Cast/Forget actions retained, then selected Chromecast and observed
+Forget hidden. These are sender UI observations, not raw-vault inspection or a
+Chromecast/Apple TV playback regression. The user handled Mac consent/PIN and
+answered "Done"; restored paired Cast/Forget actions were independently observed.
+Computer Use started the authorized clip, observed Forget hidden during active
+casting, operated pause/resume and Stop, then observed local paused playback near
+the last remote position. The user reported "Video and audio are playing normally"
+and confirmed pause/resume and Stop closing the Mac video.
+
+**PASS for this recorded MacBook Pro/Windows x64 combination.** Receiver identity
+and macOS 26.7.1 are the previously recorded user-reported configuration; receiver
+pixels/audio were observed by the user. No new automated cast log, exact timing,
+raw credential/PIN capture, committed screenshots or x86/ARM64 run. Failure,
+idempotence, selection changes and busy guards are offline test evidence.
+All three fork CI checks passed at implementation `a3d64831`; inspect actual PR
+head checks and review before merging with user approval.
+
+Record: [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).
+
+**PR #10 review follow-up (`f05c10e6`):** selecting Chromecast while Forget was
+pending could bypass the Cast busy state. Eligibility now applies the Forget
+guard before either provider. All 99 logic tests pass; reinstating the reviewed
+bypass fails the two Chromecast cases, and the fixed source was restored
+byte-for-byte before rebuilding the full passing suite. The review thread is
+resolved; its x64 package passed as private version 1.0.0.4. This is offline command-eligibility
+validation, not a new receiver observation; the Mac UI record above remains
+attributed to `a3d64831`.
+
+**Compact footer refinement (`4c346af8`):** the user requested label **Forget**
+and placement beside Cast. The x64 package passed, was registered in place as
+private version 1.0.0.5 and its source manifest restored. Running executable
+and native module paths/hashes match the extracted MSIX. Computer Use observed
+the paired Mac's Forget button on the left and Cast on the right, aligned on
+the same row without overlap. This is sender-layout evidence only: no additional
+Forget/Pair/Cast action or receiver playback was performed. Exact hashes are in
+the D66 artifact; inspect actual-head CI before merge.
+
+**Grouped/padded footer (`1ba38e55`):** the user requested Forget immediately
+beside Cast at the bottom right and space between the list and actions. The
+right-aligned horizontal group uses 8-DIP spacing and a 12-DIP top margin.
+VS 2026 MSBuild x64 packaged build passed; private development 1.0.0.6 was
+registered in place, preserving data/pairings, and the source manifest restored.
+Following written instructions to open the Cast flyout, select a paired AirPlay
+device and scroll to the list bottom, the user answered **Yes** to correct
+grouping and clear separation from device names (longer names if available).
+No exact name-length case was recorded. This is user-observed sender-layout
+confirmation, not new receiver playback or credential deletion/re-pairing.
+The Computer Use skill was not used for this check; future visual confirmation
+must use written checks and the user's report, per their preference.

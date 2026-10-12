@@ -1,6 +1,6 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-11 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-12 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
@@ -9,20 +9,87 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**Current development: D66 Screenbox Forget-device follow-up (2026-10-12),
+chosen by the user after the D65 investigation.** Fork branch
+`codex/airplay-forget-device` starts at merged main `2cee2ea7`;
+[fork PR #10](https://github.com/ilyalissoboi/Screenbox/pull/10) is ready for review;
+implementation head `a3d64831`, followed by validation documentation `35285224`.
+Review follow-up `f05c10e6` applies the Forget busy guard before both AirPlay and
+Chromecast eligibility. All 99 logic tests pass; restoring the reviewed bypass
+fails the two Chromecast regression cases. The review thread is resolved and
+its x64 package passed as private version 1.0.0.4. User-requested revision
+`4c346af8` shortens the visible label to **Forget** and puts it left of Cast
+on the same footer row. Its x64 package passed and was registered in place as
+1.0.0.5, preserving data/pairings; source manifest restored. Computer Use verified
+the running executable/native modules and observed both buttons aligned without
+overlap. No new Forget/Pair/Cast action or receiver playback was performed in
+that layout inspection. Inspect the actual current PR head's CI before merging.
+The Mac playback observations below predate these follow-ups and remain
+attributed to `a3d64831`.
+The button,
+target-only/idempotent local removal, failure feedback and busy/selection guards
+are implemented; 96/96 logic tests and the VS 2026 MSBuild x64 package pass.
+Initial development version 1.0.0.3 was registered in place, preserving app data/pairings;
+the source manifest was restored. The running executable and native/crypto
+module hashes match the extracted MSIX. Computer Use verified Forget → Pair,
+another Apple TV's paired actions retained, Forget hidden for Chromecast and
+during active casting, restored Cast after user re-pairing, and local paused
+handoff after Stop. The user confirmed normal Mac video/audio, pause/resume and
+Stop closing its video. All three fork CI checks passed at implementation head
+`a3d64831`; inspect checks/review at the actual current head before merging.
+No native/package change is needed; the fork retains published `0.3.0-ci.207`.
+This completes the initial D66 build/UI gate for the recorded Mac/Windows x64 only;
+review/user-approved merge remains. Never remove other profiles as a diagnostic.
+See the [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).
+
+**Latest UI request and confirmation preference (2026-10-12):** the user wants
+Forget immediately beside Cast in a group at the bottom right, with separation
+between the device list and actions. Fork revision `1ba38e55` groups all action
+buttons, using 8 DIPs between visible buttons and a 12-DIP top margin. Its x64
+package passed, was installed in place as development 1.0.0.6 and the source
+manifest restored. The user answered **Yes** to the written manual check of
+button grouping and separation from device names at the bottom of the list
+(longer names if available; no exact name-length case recorded). This adds
+sender-layout confirmation, not new credential operations or receiver playback.
+Moving forward, do not use the
+Computer Use skill to confirm visual UI changes. Print verification steps in
+chat and ask the user to confirm manually; record their result separately from
+build/CI success. Earlier Computer Use observations remain historical evidence.
+
+**D65 Mac consent investigation (2026-10-12), chosen by the user
+after public-documentation research.** Branch `codex/macos-consent-investigation`
+starts at main `671e714` (merged PR #41). Eleven consent/start/Stop casts passed
+with the saved pairing and default privacy policy. Short-term reuse survived
+fresh process/session identifiers and a temporary display-name comparison.
+In a timed chain with equal 45.078-second idle gaps, the user reported multiple
+prompts and explicitly corrected K to no prompt. Logs have delegate/should-ask
+sequences at H/J and request-only at I/K; H/J are log-derived prompt candidates,
+not individually confirmed UI observations. Request H-to-J was 116.157 seconds.
+Grant age/expiry across casts is a working hypothesis from this pattern; the exact timer,
+renewal rule and cache key are unproven. No numeric grant value appeared in the
+captured log; no shipping C++ or sender-policy change is justified. The temporary
+name experiment was restored byte-for-byte and the normal CLI rebuilt.
+Initial investigation complete; documentation/evidence PR #42 remains open.
+Its attribution review is resolved and all 14 checks passed at `6642d18`.
+The user has selected D66 above; merging PR #42 still needs user approval.
+See [D65 study](macos-receiver-consent.md) and
+[artifact](validation/native-macos-consent-windows-2026-10-12.json).
+
 **Completed user-selected slice (2026-10-11): documentation reconciliation,
 then Screenbox on the Mac.** PR #39 merged as `2829242` on
 2026-10-11 after all 14 checks passed at its final head `811c022`; its review
 thread is resolved. PR #40 merged as `a29212b` with all 14 checks passed at
-`772b850` and both review threads resolved. Final validation branch
-`codex/mac-screenbox-final-validation` starts at that main commit.
+`772b850` and both review threads resolved. PR #41 merged as `671e714` after
+all 14 checks passed at `997b0be`; fork PR #9 merged as `2cee2ea7` with the
+matching final evidence documentation. The earlier final-validation branch
+`codex/mac-screenbox-final-validation` started at `a29212b`.
 The earlier validation branch started at `a0fd5b9`.
 Completed checks: C API static/shared and packaged UWP host on the recorded Mac,
 including HLS remux, controls, start position, natural end and native consent-time
 cancellation; the user also reports the private Screenbox UI checks passed.
 Published-package Screenbox checks also passed by user report after verifying
-the running DLLs. Remaining work for this slice is review/merge of the final
-evidence documentation in native PR #41 and fork PR #9, with user approval.
-The fork pin PR and package documentation checkpoint are merged.
+the running DLLs. Final evidence documentation in native PR #41 and fork PR #9
+is merged; this D64 slice is complete for the recorded receiver/host.
 Preserve the loaded-DLL evidence limitation
 in the D63 record when describing the private Screenbox checks.
 Do not resume phases marked "Next" in the history below.
@@ -102,11 +169,13 @@ Current slice and remaining choices (dependencies first):
      public hash; version/hash pins merged in fork PR #8 and running DLL hashes match;
    - **done in D64:** final-package Screenbox cancellation/recovery, playback,
      controls, Stop/local handoff and natural queue advance passed by user report
-     with the loaded DLLs verified. Final evidence PRs #41 / fork #9 await review.
-2. **The Mac's per-cast consent prompt:** find what makes the Mac ask again
-   (D62 found the device ID is probably not the reason).
+     with the loaded DLLs verified. Final evidence PRs #41 / fork #9 are merged.
+2. **Mac consent: initial D65 investigation complete.** Controlled repeats
+   support an expiring receiver grant; display-name changes and random session
+   identifiers do not necessarily re-prompt. Exact grant duration/key/renewal
+   remain optional research. Review the D65 evidence; no sender fix is proposed.
 3. **Fork follow-ups:**
-   - "Forget this AirPlay device";
+   - **D66 "Forget this AirPlay device": implemented/validated; fork PR #10 awaits review/merge**;
    - x86 and ARM64 builds on a device;
    - a Chromecast regression check;
    - a sleeping TV from Screenbox.
@@ -125,15 +194,15 @@ Current slice and remaining choices (dependencies first):
    - casting from Linux and macOS hosts;
    - receivers other than the recorded Apple TV and MacBook Pro.
 
-**Latest: casting to a Mac (D62, merged as PR #37).** The user asked whether
+**Historical implementation: casting to a Mac (D62, merged as PR #37).** The user asked whether
 video can be cast to a Mac as to the Apple TV, then chose an automatic
 URL-only fallback. A MacBook Pro (`Mac14,10`) pairs
 after an on-screen consent and a PIN, rejects the remote-control SETUP with
 500, and plays the URL session alone. With the fallback, start, status,
 pause/resume, seek, start position, natural end (`media_end`) and stop passed
 from the CLI (seek after the Mac's receiver strings showed it needs the item
-UUID; user observed). Open: the per-cast consent prompt, the C interface/UWP
-host/Screenbox on the Mac (next steps 1 and 2). See the D62 record in section 4 and
+UUID; user observed). D63/D64 subsequently completed C API/UWP/Screenbox checks;
+D65 above records the consent investigation. See the D62 record in section 4 and
 [receiver-validation.md](receiver-validation.md#macos-airplay-receiver-url-controls-d62-2026-10-10).
 
 **Before D62 (2026-10-10):** HLS delivery (D60) and the Screenbox integration

@@ -7,7 +7,8 @@ C# binding and a development CLI.
 
 > **Experimental.** The API is not frozen. Receiver testing so far covers one
 > Apple TV 4K (tvOS 26.6) from a Windows 11 x64 host, as a desktop app and as a
-> packaged UWP app, and one MacBook Pro's AirPlay Receiver from the CLI. Other
+> packaged UWP app, and one MacBook Pro's AirPlay Receiver from the CLI, C API,
+> packaged UWP host and x64 Screenbox. Other
 > receivers, firmware versions and host platforms are untested. See
 > [what has been tested](#tested-so-far).
 
@@ -97,7 +98,7 @@ runs the same casts through the public C API only.
 | Pairing and credentials (C) | [`pairing.h`](include/send_airplay2/pairing.h), [`credentials.h`](include/send_airplay2/credentials.h) |
 | Discovery (C) | [`receivers.h`](include/send_airplay2/receivers.h) |
 | C# (.NET Standard 2.0) | [`bindings/csharp`](bindings/csharp); see [the binding notes](docs/csharp-binding.md) |
-| NuGet package (binding + UWP native libraries) | Published as GitHub prerelease `nuget-v0.3.0-ci.196`; not on nuget.org. This package predates D62's Mac controls; see [docs/nuget-package.md](docs/nuget-package.md) |
+| NuGet package (binding + UWP native libraries) | Published as GitHub prerelease `nuget-v0.3.0-ci.207`, including Mac controls and explicit HLS EOF handling; not on nuget.org. See [docs/nuget-package.md](docs/nuget-package.md) |
 | Packaged UWP example | [`tools/uwp-host`](tools/uwp-host); see [its notes](docs/uwp-host.md) |
 
 The contracts and the version policy are in [docs/public-api.md](docs/public-api.md).
@@ -127,14 +128,17 @@ Receiver: Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773). Host: Windows 11 x64.
 - Linux, macOS and Android hosts have not cast to a receiver.
 
 **Mac as receiver** (MacBook Pro, Mac14,10, AirPlay Receiver set to "Anyone on
-the same network"; CLI only):
-- Pairing and each new cast need the user to accept a request on the Mac
-  (unless it accepted this sender a few minutes earlier); pair with
-  `--timeout-ms 60000` so there is time to answer.
+the same network"; macOS 26.7.1, Windows x64 sender):
+- Pairing and casts can require acceptance on the Mac. Recent consent can be
+  reused, but repeat casts can prompt again; exact grant lifetime/key are not
+  established. See [the consent investigation](docs/macos-receiver-consent.md).
+  Pair with `--timeout-ms 60000` so there is time to answer.
 - Passed: playback of video and audio, pause, play, seek, starting at a
   chosen position, status, the end of the media, and stop. The Mac has no
   remote-control session, so the library falls back to the URL session's own
-  controls.
+  controls. The C API, packaged UWP host, HLS remux and final published-package
+  Screenbox controls/Stop/natural queue advance also passed for this recorded
+  receiver/host; Screenbox results are by user report with loaded DLLs verified.
 
 Passing unit tests and CI does not show compatibility with any receiver. Each
 receiver result is listed in [docs/receiver-validation.md](docs/receiver-validation.md),
