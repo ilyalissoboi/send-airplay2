@@ -980,7 +980,8 @@ MkvLayout read_layout(WindowReader& reader, std::uint64_t file_size,
                 }
             }
             if (layout.timestamp_scale == 0 ||
-                nanoseconds_per_second % layout.timestamp_scale != 0) {
+                (mode != TrackReadMode::inventory &&
+                 nanoseconds_per_second % layout.timestamp_scale != 0)) {
                 unsupported("TimestampScale that does not divide one second");
             }
         } else if (element.id == id_tracks) {

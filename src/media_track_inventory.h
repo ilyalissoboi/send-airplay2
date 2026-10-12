@@ -24,9 +24,10 @@ struct SourceTrack {
     std::string codec;             ///< Original fourcc or Matroska CodecID; no support guarantee.
     std::string language;
     std::string name;    ///< Available container label, without inferred role or commentary status.
-    Bytes configuration; ///< Complete MP4 sample entry, or Matroska CodecPrivate.
-    std::uint32_t timescale = 0; ///< MP4 mdhd ticks/second; zero for Matroska.
-    std::vector<Mp4Edit> edits;  ///< MP4 media offsets retained in their original timebases.
+    Bytes configuration; ///< First complete MP4 sample entry, or Matroska CodecPrivate.
+    std::uint32_t sample_description_count = 0; ///< MP4 stsd count; zero when absent or Matroska.
+    std::uint32_t timescale = 0;                ///< MP4 mdhd ticks/second; zero for Matroska.
+    std::vector<Mp4Edit> edits; ///< MP4 media offsets retained in their original timebases.
     std::uint64_t codec_delay_ns = 0;
     std::uint64_t seek_preroll_ns = 0;
     std::uint64_t default_duration_ns = 0;

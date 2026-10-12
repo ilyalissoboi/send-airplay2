@@ -542,6 +542,52 @@ std::uint64_t source_track_id(const std::vector<Box>& trak) {
     return header.u32();
 }
 
+/// Inventory copies the first description and records the full count, without
+/// deciding whether its codec or description switching can be decoded/remuxed.
+void describe_source_entries(const std::vector<Box>& mdia, SourceTrack& track) {
+    const auto required = track.kind != SourceTrackKind::other;
+    const auto* minf_box = find(mdia, fourcc("minf"));
+    if (!minf_box) {
+        if (required) {
+            malformed("missing minf box");
+        }
+        return;
+    }
+    const auto minf = children(*minf_box);
+    const auto* stbl_box = find(minf, fourcc("stbl"));
+    if (!stbl_box) {
+        if (required) {
+            malformed("missing stbl box");
+        }
+        return;
+    }
+    const auto stbl = children(*stbl_box);
+    const auto* stsd = find(stbl, fourcc("stsd"));
+    if (!stsd) {
+        if (required) {
+            malformed("missing stsd box");
+        }
+        return;
+    }
+    auto cursor = stsd->payload();
+    cursor.full_box_version();
+    track.sample_description_count = cursor.entry_count(box_header_bytes);
+    constexpr std::size_t stsd_prefix_bytes = full_box_fields + sizeof(std::uint32_t);
+    const auto descriptions = children(stsd->begin + stsd->header + stsd_prefix_bytes,
+                                       stsd->size - stsd->header - stsd_prefix_bytes);
+    if (descriptions.size() != track.sample_description_count) {
+        malformed("source sample description count disagrees with entries");
+    }
+    if (descriptions.empty()) {
+        return;
+    }
+    track.codec = fourcc_text(descriptions.front().type);
+    track.configuration = descriptions.front().copy();
+    track.encoded = std::any_of(descriptions.begin(), descriptions.end(), [](const Box& entry) {
+        return entry.type == fourcc("enca") || entry.type == fourcc("encv");
+    });
+}
+
 std::optional<TrackCandidate> describe_track(const std::vector<Box>& trak) {
     constexpr std::uint32_t track_enabled_flag = 0x1;
     const auto& tkhd = require(trak, fourcc("tkhd"));
@@ -909,14 +955,7 @@ MediaTrackInventory probe_mp4_tracks(const RandomReader& read, std::uint64_t fil
         track.timescale = header_timescale(require(mdia, fourcc("mdhd")).payload(), &language);
         track.language = unpacked_language(language);
         track.edits = edit_list(trak);
-        if (track.kind != SourceTrackKind::other) {
-            const auto minf = children(require(mdia, fourcc("minf")));
-            const auto stbl = children(require(minf, fourcc("stbl")));
-            const auto entry = sample_entry(require(stbl, fourcc("stsd")));
-            track.codec = fourcc_text(entry.type);
-            track.configuration = entry.copy();
-            track.encoded = entry.type == fourcc("enca") || entry.type == fourcc("encv");
-        }
+        describe_source_entries(mdia, track);
         inventory.tracks.push_back(std::move(track));
     }
     validate_source_tracks(inventory);

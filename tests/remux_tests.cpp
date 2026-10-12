@@ -649,12 +649,30 @@ void source_inventory_bounds_tests() {
     auto text = audio_spec();
     text.handler = "text";
     text.source_id = 63;
+    text.entry = tx3g_entry(0);
+    text.stsd_entries = 2;
     const auto with_text = mp4_file({video_spec(), text});
     const auto text_inventory = probe_mp4_tracks(memory_reader(with_text), with_text.size());
     check(text_inventory.tracks[1].kind == SourceTrackKind::other &&
               select_source_audio(text_inventory, 63).status ==
                   AudioSelectionStatus::invalid_selection,
           "non-audio subtitle identity retained but invalid for audio selection");
+    check(text_inventory.tracks[1].codec == "tx3g" &&
+              text_inventory.tracks[1].configuration == tx3g_entry(0) &&
+              text_inventory.tracks[1].sample_description_count == 2,
+          "subtitle's first complete sample entry and full description count retained");
+    auto metadata = audio_spec(audio_entry("mett", {}));
+    metadata.handler = "meta";
+    metadata.source_id = 64;
+    const auto with_metadata = mp4_file({video_spec(), metadata});
+    const auto metadata_inventory =
+        probe_mp4_tracks(memory_reader(with_metadata), with_metadata.size());
+    check(metadata_inventory.tracks[1].kind == SourceTrackKind::other &&
+              metadata_inventory.tracks[1].codec == "mett" &&
+              metadata_inventory.tracks[1].configuration == audio_entry("mett", {}) &&
+              select_source_audio(metadata_inventory, 64).status ==
+                  AudioSelectionStatus::invalid_selection,
+          "timed metadata's sample entry retained, still ineligible for audio");
     auto encrypted_audio = audio_spec(audio_entry("enca", {}));
     encrypted_audio.source_id = 12;
     const auto encrypted = mp4_file({video_spec(), encrypted_audio});

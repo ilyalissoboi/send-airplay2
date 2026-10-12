@@ -11,7 +11,13 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 **D69 native source increment (2026-10-12), authorized by the user's Proceed.**
 PR #46 is merged as `cb9d641`; the separate merge-checkpoint documentation PR
-#47 is open. D69 begins the native-integration phase with unfiltered MP4/MKV
+#47 is open. Native [PR #48](https://github.com/ilyalissoboi/send-airplay2/pull/48)
+starts at that main checkpoint. Its initial `8db422e` head passed all 16 checks
+in run `38260999701`. Review follow-up permits any nonzero Matroska timestamp
+scale in inventory (index restrictions stay separate), and records first MP4
+sample descriptions/counts for subtitle/metadata identities as well as A/V.
+The regression fixes pass full local static/shared checks; inspect final-head CI.
+D69 begins the native-integration phase with unfiltered MP4/MKV
 track inventory, stable container identities, deterministic audio selection,
 video indexing independent of remuxable audio, and edit/CodecDelay/preroll
 seek metadata. See [contracts and validation scope](audio-source-inventory.md).

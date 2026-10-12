@@ -1239,6 +1239,20 @@ void source_seek_time_tests() {
                    [&] { (void)plan_mkv_audio_seek_time(scaled_inventory.tracks[1], 0, 0); });
 }
 
+void source_timestamp_scale_tests() {
+    group = "Matroska inventory timestamp-scale independence";
+    const auto file = mkv_file({video_spec(), aac_spec()}, {}, 1'000'003);
+    const auto inventory = probe_mkv_tracks(memory_reader(file), file.size());
+    check(inventory.timestamp_scale_ns == 1'000'003 && inventory.tracks.size() == 2 &&
+              select_source_audio(inventory).status == AudioSelectionStatus::selected,
+          "valid non-dividing scale retained without block timestamp conversion");
+    expect_failure(RemuxFailure::unsupported, "video index keeps its integral-clock limit",
+                   [&] { (void)MkvIndex::open_video_source(memory_reader(file), file.size()); });
+    const auto zero_scale = mkv_file({video_spec(), aac_spec()}, {}, 0);
+    expect_failure(RemuxFailure::unsupported, "zero timestamp scale remains refused",
+                   [&] { (void)probe_mkv_tracks(memory_reader(zero_scale), zero_scale.size()); });
+}
+
 void source_video_index_tests() {
     group = "Matroska indexed video independent of DTS";
     const auto file = indexed_mkv(regular_clusters(), true, 0, "A_DTS");
@@ -1275,6 +1289,7 @@ int main() {
         indexed_review_tests();
         source_inventory_tests();
         source_seek_time_tests();
+        source_timestamp_scale_tests();
         source_video_index_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()

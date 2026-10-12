@@ -14,7 +14,9 @@ value, public ABI/binding/CLI option or encoded HLS resource.
   Both are retained in a 64-bit field, without substituting a filtered array
   index or generated HLS track ID. Zero or duplicate identities are malformed.
 - Include enabled and disabled video, audio and other tracks, including unknown
-  codecs and protected entries. Preserve original codec/sample configuration,
+  codecs and protected entries. Preserve the first complete MP4 sample entry
+  (including subtitle/timed-metadata entries) and its full description count,
+  or Matroska CodecPrivate,
   MP4 language/edit clocks, and Matroska labels, normalized language tags,
   default flags, CodecDelay, SeekPreRoll and DefaultDuration. MP4 labels/roles
   beyond its language code are not parsed in this increment.
@@ -36,8 +38,11 @@ The limits are 128 tracks, 4096 top-level MP4 or pre-cluster Matroska elements,
 the existing 64-MiB MP4 moov/16-MiB Matroska metadata limits, and for the host
 adapter 128 MiB of requested bytes and 1,048,576 read callbacks. Matroska's bounded
 16-KiB reader window can fetch nearby payload bytes, but the inventory does not
-scan or decode frames. Unsupported multi-description/fragmented MP4 layouts retain
-the current parser restrictions. These are engineering bounds, not receiver limits.
+scan or decode frames. Inventory retains any nonzero Matroska TimestampScale
+verbatim; the native video index separately requires a scale dividing one second.
+MP4 inventory records multiple descriptions, while selected audio/video indexing
+retains its single-description restriction. Fragmented MP4 remains unsupported.
+These are engineering bounds, not receiver limits.
 
 ## Video indexing and audio clocks
 
