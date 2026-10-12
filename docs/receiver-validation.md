@@ -1839,3 +1839,21 @@ All three fork CI checks passed at implementation `a3d64831`; inspect actual PR
 head checks and review before merging with user approval.
 
 Record: [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).
+
+**PR #10 review follow-up (`f05c10e6`):** selecting Chromecast while Forget was
+pending could bypass the Cast busy state. Eligibility now applies the Forget
+guard before either provider. All 99 logic tests pass; reinstating the reviewed
+bypass fails the two Chromecast cases, and the fixed source was restored
+byte-for-byte before rebuilding the full passing suite. The review thread is
+resolved; its x64 package passed as private version 1.0.0.4. This is offline command-eligibility
+validation, not a new receiver observation; the Mac UI record above remains
+attributed to `a3d64831`.
+
+**Compact footer refinement (`4c346af8`):** the user requested label **Forget**
+and placement beside Cast. The x64 package passed, was registered in place as
+private version 1.0.0.5 and its source manifest restored. Running executable
+and native module paths/hashes match the extracted MSIX. Computer Use observed
+the paired Mac's Forget button on the left and Cast on the right, aligned on
+the same row without overlap. This is sender-layout evidence only: no additional
+Forget/Pair/Cast action or receiver playback was performed. Exact hashes are in
+the D66 artifact; inspect actual-head CI before merge.

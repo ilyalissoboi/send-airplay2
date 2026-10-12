@@ -28,10 +28,19 @@ guide; the master handoff and dated artifacts preserve the longer history.
   Fork branch `codex/airplay-forget-device` starts from merged main `2cee2ea7`;
   [fork PR #10](https://github.com/ilyalissoboi/Screenbox/pull/10) is ready for review:
   implementation `a3d64831`, validation docs `35285224`.
+  Review fix `f05c10e6` applies the Forget guard before Chromecast and AirPlay
+  eligibility; 99/99 tests pass and the reviewed bypass fails two regression
+  cases. The review thread is resolved; its x64 package passed as 1.0.0.4.
+  User-requested `4c346af8` shortens the label to Forget and uses the same footer
+  row as Cast. Its x64 package passed, is registered in place as 1.0.0.5 and
+  preserves data/pairings. Computer Use verified running modules and the compact
+  row without overlap; no new credential action or receiver playback. Inspect
+  actual-head CI before merge. The Mac playback evidence below predates these
+  follow-ups, with no new receiver claim.
   UI/local-only removal is implemented with target-only deletion, idempotence,
   failure feedback, selection-change protection and pairing/start/cast guards.
   Logic tests pass 96/96 and the VS 2026 MSBuild x64 package passed. Private
-  development 1.0.0.3 is registered in place; source manifest restored. Running
+  development 1.0.0.3 was registered in place; source manifest restored. Running
   executable/native module hashes match. Computer Use verified Forget → Pair,
   other receiver's paired actions retained, Chromecast/active-cast visibility,
   restored Cast after user re-pairing and local paused handoff. The user confirmed

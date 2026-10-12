@@ -14,10 +14,22 @@ chosen by the user after the D65 investigation.** Fork branch
 `codex/airplay-forget-device` starts at merged main `2cee2ea7`;
 [fork PR #10](https://github.com/ilyalissoboi/Screenbox/pull/10) is ready for review;
 implementation head `a3d64831`, followed by validation documentation `35285224`.
+Review follow-up `f05c10e6` applies the Forget busy guard before both AirPlay and
+Chromecast eligibility. All 99 logic tests pass; restoring the reviewed bypass
+fails the two Chromecast regression cases. The review thread is resolved and
+its x64 package passed as private version 1.0.0.4. User-requested revision
+`4c346af8` shortens the visible label to **Forget** and puts it left of Cast
+on the same footer row. Its x64 package passed and is registered in place as
+1.0.0.5, preserving data/pairings; source manifest restored. Computer Use verified
+the running executable/native modules and observed both buttons aligned without
+overlap. No new Forget/Pair/Cast action or receiver playback was performed in
+that layout inspection. Inspect the actual current PR head's CI before merging.
+The Mac playback observations below predate these follow-ups and remain
+attributed to `a3d64831`.
 The button,
 target-only/idempotent local removal, failure feedback and busy/selection guards
 are implemented; 96/96 logic tests and the VS 2026 MSBuild x64 package pass.
-Development version 1.0.0.3 is registered in place, preserving app data/pairings;
+Initial development version 1.0.0.3 was registered in place, preserving app data/pairings;
 the source manifest was restored. The running executable and native/crypto
 module hashes match the extracted MSIX. Computer Use verified Forget → Pair,
 another Apple TV's paired actions retained, Forget hidden for Chromecast and
@@ -26,7 +38,7 @@ handoff after Stop. The user confirmed normal Mac video/audio, pause/resume and
 Stop closing its video. All three fork CI checks passed at implementation head
 `a3d64831`; inspect checks/review at the actual current head before merging.
 No native/package change is needed; the fork retains published `0.3.0-ci.207`.
-This completes D66's build/UI gate for the recorded Mac/Windows x64 only;
+This completes the initial D66 build/UI gate for the recorded Mac/Windows x64 only;
 review/user-approved merge remains. Never remove other profiles as a diagnostic.
 See the [D66 artifact](validation/screenbox-forget-macos-windows-2026-10-12.json).
 

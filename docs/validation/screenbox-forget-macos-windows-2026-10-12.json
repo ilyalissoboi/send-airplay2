@@ -46,6 +46,29 @@
     "video_audio": "User reports video and audio are playing normally after the re-paired cast.",
     "pause_resume_stop": "User answered Confirmed to pause/resume working on the Mac and Stop closing its video."
   },
+  "review_followup": {
+    "comment": "https://github.com/ilyalissoboi/Screenbox/pull/10#discussion_r4244615241",
+    "fix_commit": "f05c10e6",
+    "change": "Apply the shared IsForgetting busy guard before both AirPlay and Chromecast cast eligibility; a selection change to Chromecast cannot enable Cast during pending removal.",
+    "logic_tests": { "total": 99, "passed": 99, "failed": 0, "skipped": 0 },
+    "regression_check": "Restoring the reviewed Chromecast-only bypass fails exactly the two Chromecast eligibility cases (97 pass, 2 fail); fixed source restored byte-for-byte, then full suite rebuilt and 99/99 passed.",
+    "receiver_scope": "The UI/receiver observations above predate this eligibility-only fix and describe a3d64831. No new receiver observation is claimed for f05c10e6.",
+    "build": "PASS: VS 2026 MSBuild Release x64 package at review-fix source head; temporary development version 1.0.0.4 restored in source after building, registered in place with existing identity/data preserved.",
+    "msix_sha256": "9f6493f5b30e5a909d653b2c4fe9ae9eed4f02f0a2a2935bc09dc9b40e71b367",
+    "exe_sha256": "a75759afd2f446ecda41c58e9537a59bf376534db23a96de4a8363ff574a2bbf",
+    "interruption": "User stopped Computer Use with Escape before the review-fix UI inspection; no running-module or receiver observation was added for 1.0.0.4. Later label/row refinement has its own layout inspection below."
+  },
+  "ui_refinement": {
+    "commit": "4c346af8526cca91e85f9c4244ca8234cd4cf44d",
+    "request": "User requested visible label Forget and placement on the same row as Cast.",
+    "build": "PASS: VS 2026 MSBuild Release x64 packaged build; only temporary manifest version 1.0.0.5, restored afterward.",
+    "installation": "Development 1.0.0.5 registered in place, preserving identity, app data and saved pairings.",
+    "msix_sha256": "a5499439deb049c9beb4cf2b945ec4ae241370a835791dad7e91d7d4ca128948",
+    "exe_sha256": "32f0511682339177df1c520d21d19776578a73d74ac72355764caf6651ee4c08",
+    "loaded_verification": "Running executable and native/crypto module paths/hashes match the extracted layout; native hashes remain identical to ci.207 above.",
+    "observation": "Computer Use observed Forget at the left and Cast at the right on the same footer row without overlap for the paired Mac selection.",
+    "scope": "Sender layout only; no additional Forget/Pair/Cast action or receiver playback performed. The authorized local clip was loaded and paused to expose the flyout. Inspect actual-head CI before merging."
+  },
   "scope": "One previously recorded MacBook Pro Mac14,10 (user-reported macOS 26.7.1) from Windows x64 Screenbox 1.0.0.3. Sender UI observed with Computer Use; receiver pixels/audio observed by user. No raw credential reads, PIN capture, private identifiers or screenshots committed. No receiver setting or native sender-policy change.",
   "remaining_gates": ["Feature PR review and user-approved merges"],
   "result": "PASS for the recorded receiver/host after running-binary verification; sender UI observed with Computer Use and receiver playback/closure confirmed by user"
