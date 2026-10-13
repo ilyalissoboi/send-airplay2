@@ -108,7 +108,8 @@ Baseline Windows Release static/shared CTest passes 36/36 and 37/37; enabled
 shared passes 38/38. Named private-hook cases retain independent literal fragment
 counts and failure codes. The existing UWP host compiles, all six UWP native DLLs
 pass import inspection, and the default shared DLL has no validation export.
-Formatting/diff checks pass. Actual final PR-head CI remains the merge gate.
+Formatting/diff checks pass. Implementation head `5a4e5e3` passed all 16 checks
+in run `38415880324`; actual final PR-head CI remains the merge gate.
 
 Real-file
 startup/read-volume/cache/seek measurements follow, then manually observed stereo
