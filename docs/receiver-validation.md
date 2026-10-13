@@ -1942,8 +1942,16 @@ No receiver, speaker, discrete-surround, new packaged builder runtime or package
 publication is included. Manually observed lip sync/seeks/controls/EOF remain
 required after explicit public/packaged integration; offline PCM is not that proof.
 PR #51 merged as `e09c57f` with all 16 checks passed at final head `475ae61`
-in run `38330651001`, and both review threads resolved. The final declaration follow-up omits master/audio
-independence claims for cold AAC synthesis, on fresh branch
-`codex/aac-hls-independence`: its original `9994955` was pushed after PR #51
-had merged and was not included. Inspect its own PR-head CI separately; neither
-code change adds receiver evidence.
+in run `38330651001`, and both review threads resolved. The final declaration
+follow-up in PR #52 merged as `c092c9b`, after all 16 checks passed at `6716f1a` in run `38331920914`. Master/audio independence claims
+remain omitted for cold AAC synthesis; copied video keeps its tag.
+
+**D72 offline readiness increment (2026-10-13):** a real 16.5-second long video
+GOP retains its packet bytes while audio is split into three bounded segments.
+Synthetic one-hour DTS callbacks with packet offsets beyond 4 GiB pass late and
+backward cold decoding, exact global PTS/end and deterministic I/O bounds.
+Terminal source/seal/read failures cancel audio work and retain fixed diagnostics;
+request cancellation/admission/explicit Stop remain nonfatal. See
+[contracts, measurements and remaining gates](stereo-aac-readiness.md).
+These are offline native tests: no real hour-long file, new receiver observation,
+packaged builder runtime, audio-only speaker or discrete-surround result is added.

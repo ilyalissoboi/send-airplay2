@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#51 are merged. `main` contains
+Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#52 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,7 +23,7 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D71 merged; declaration follow-up active:** the private
+**D71 merged:** the private
 [stereo AAC HLS builder/cache](stereo-aac-hls.md) merged in PR #51 as `e09c57f`,
 with all 16 checks passed at final head `475ae61` in run `38330651001`; both
 review threads are resolved. Private audio resources/cache, compressed joins,
@@ -31,22 +31,39 @@ copied video/subtitles, edits/short-source silence and selected lifecycle checks
 pass offline tests. Baseline static/shared passes 35/35 and 36/36; optional
 codec/decoder/HLS passes 3/3; x64 UWP compilation passes.
 
-Branch `codex/aac-hls-independence` starts from `e09c57f` for the final playlist
-declaration correction. Original follow-up `9994955` was pushed after PR #51's
-merge and was not included. Continue this fresh branch's own open PR, inspect
-its actual head/checks, and ask before merging. The composed master/audio omit
-an unproven independence claim for cold AAC synthesis; video keeps its tag.
-Then complete the documented authoring/performance edges and explicit
-playback/C ABI/binding/CLI/cache-host integration, followed by packaged/receiver
-gates. No new package, packaged builder runtime or receiver observation is added.
-Speaker/surround output remains deferred. Do not resume the merged implementation PR.
+**D71 declaration follow-up merged:** [PR #52](https://github.com/ilyalissoboi/send-airplay2/pull/52)
+merged as `c092c9b` at final head `6716f1a`; all 16 checks passed in run
+`38331920914`. It contains the master/audio independence correction missed by
+PR #51's merge; copied video retains its declaration. The merge gate is complete.
+
+**D72 readiness implemented; PR #53 open (2026-10-13).**
+[PR #53](https://github.com/ilyalissoboi/send-airplay2/pull/53) implements private
+long-GOP audio splitting, terminal source/cache failure reporting and synthetic
+one-hour / >4-GiB cold-seek scaling. All 16 checks passed at implementation head
+`93ae7d8` in run `38335644638`; no review threads were present at that head.
+Local codec CTest passes 4/4, static/shared baseline 35/35 and 36/36, runner 10/10,
+and x64 UWP compilation/import checks pass. The following documentation checkpoint
+changes no native code; inspect the actual final PR head/checks before merging.
+Read [contracts and remaining gates](stereo-aac-readiness.md). Authoring metadata,
+real-file/host performance, public/storage integration, packaged runtime and
+receiver proof remain next. No receiver/package evidence is added. Continue its
+branch if review changes are needed; ask before merging or publishing.
+
+**D72 readiness branch:** branch `codex/aac-hls-readiness` starts from `c092c9b`.
+The latest Proceed authorizes the [native readiness increment](stereo-aac-readiness.md):
+bounded audio segments for long copied-video GOPs, first terminal cache/conversion
+failure reporting and synthetic hour-long / >4-GiB seek scaling. Inspect its own
+PR/head before writing; ask before merging. Authoring bandwidth/timeline limits,
+real-file/host performance and explicit public/storage contracts remain gates;
+packaged runtime and manual receiver checks follow. No package publication or new
+receiver observation is added; speaker/surround work stays deferred.
 
 **Completed D70:** private [selected decoder/seek windows](audio-decoder-source.md)
 merged in PR #50 as `65bb8a7`, with all 16 checks passed at final head `8b1adf2`
 in run `38280966375`. The optional include review is fixed/resolved. Its branch
 started at PR #49 checkpoint `a7905db`. Desktop actual compressed decoding and
 x64 UWP compilation/import inspection passed; packaged adapter runtime and
-receiver evidence were not added. Preserve those limits. D71 is the next increment;
+receiver evidence were not added. Preserve those limits. D71 is merged and D72 is active;
 do not repeat the completed decoder merge gate.
 
 **Completed D69:** the subsequent Proceed authorized the native source increment.
@@ -400,8 +417,10 @@ bounded lazy generation/cache in its recorded private offline scope.
 Public API/binding/CLI and receiver/Screenbox gates follow the plan. The spike's
 single-stream/short-input probe is not a production movie source adapter.
 Speaker audio and surround-preserving output remain deferred for unavailable
-test hardware. Explicit playback/public/storage contracts, authoring/performance
-edges, packaged runtime and stereo-conversion receiver validation remain unfinished.
+test hardware. D72 now checks private long-GOP splitting, terminal failure
+reporting and synthetic cold-seek scaling. Accurate authoring metadata and real-file
+performance, explicit playback/public/storage contracts, packaged runtime and
+stereo-conversion receiver validation remain unfinished.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
@@ -563,8 +582,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68-D70 are merged. D71's latest Proceed authorizes the private stereo AAC
-> HLS/cache increment; read its contracts and inspect the actual PR head. Read
+> D68-D71 and the PR #52 declaration follow-up are merged. D72's latest Proceed
+> authorizes native readiness; read stereo-aac-readiness.md and inspect its actual
+> PR head before writing. Read
 > the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same
 > implementation authorization again. Inspect `origin/main` and open

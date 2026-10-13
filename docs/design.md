@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#49 merged.
+Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#52 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -55,7 +55,9 @@ before decoder filtering. D70's subsequent authorized private
 streams and tests compressed-input seek windows on edited timestamps, including
 resampler phase and format changes; PR #50 merged as `65bb8a7` with 16 passing
 checks at `8b1adf2`. D71 now implements private stereo HLS audio/cache in its
-offline scope; explicit public, packaged and receiver gates remain next.
+offline scope, merged in PR #51 with PR #52 correcting declaration scope.
+D72 adds [native readiness](stereo-aac-readiness.md) checks; authoring, real-file
+performance, explicit public, packaged and receiver gates remain next.
 
 ## Scope and architecture
 
@@ -283,3 +285,14 @@ Video/subtitle payloads stay copied; the shipping remux defaults remain. Matrosk
 joins use an opt-in validated fixed-frame clock. Authoring/performance edges,
 explicit public delivery/storage contracts, packaged runtime and receiver proof
 remain separate gates; no audio-only speaker or discrete-surround work resumes.
+
+## D72 native stereo AAC readiness
+
+Long copied-video GOPs use additional bounded AAC audio segments rather than
+oversized encoder epochs. The private builder reports its first terminal
+conversion/cache failure for the future controller and stops further audio work.
+Original fixture and synthetic one-hour callback tests check global timestamps,
+exact EOF, bounded source I/O and offsets beyond 4 GiB. See [the evidence and
+remaining gates](stereo-aac-readiness.md). Common rendition targets are retained;
+long video segments, authoring bandwidth estimates and cold AAC synthesis remain
+explicit limitations. Shipping APIs/packages and receiver evidence are unchanged.

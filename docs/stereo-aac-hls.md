@@ -28,9 +28,10 @@ DRC or clipping. Nonfinite PCM, unsupported speaker masks or a mixed value beyon
 normalized headroom fail. This matrix is an engineering choice, not a receiver
 speaker-mapping observation or a claim of surround output.
 
-Output is 48 kHz, stereo, AAC-LC, nominal 192 kbit/s ABR. Each segment uses its
-absolute video boundary rounded once to the 48 kHz clock, then snapped down to
-the AAC 1024-sample grid; the final end remains exact to that clock. Independent
+Output is 48 kHz, stereo, AAC-LC, nominal 192 kbit/s ABR. Audio cuts use
+absolute video boundaries rounded once to the 48 kHz clock, then snapped down to
+the AAC 1024-sample grid. D72 splits long gaps on the absolute six-second grid;
+the final end remains exact to that clock. Independent
 EXTINF rounding is never accumulated to locate audio boundaries. An
 audio segment can round up after grid snapping; its finalized durations raise
 the common target of audio, video and subtitle playlists together. A bounded
@@ -71,12 +72,15 @@ data is at most 1 MiB, with AAC packets at most 8192 bytes. No full-movie PCM ca
 
 A mandatory quota admits the movie using twice the nominal AAC byte rate plus
 segment overhead, and checks actual sealed fragment bytes before every seal.
-There is no eviction or regeneration after success. Generation/seal failure poisons
-unsealed entries; no tentative size is published and future jobs cannot continue
-with an invalid decoder. Admission is an estimate, not a guarantee that actual
-encoding will fit the quota. Generation/seal failures stop future unsealed jobs;
-a storage-read failure fails its request. The future playback controller must
-propagate these failures as terminal and tear down the cast.
+There is no eviction or regeneration after success. Admission remains an estimate,
+not a guarantee of fitting actual encoding. D72 makes generation/seal/read failures
+terminal across all generated audio fragments, including previously sealed fragments. It
+cancels shared work and reports the first fixed category through `failure()`;
+callback exception text is discarded. Request cancellation/deadline, queue admission
+refusal and explicit Stop do not poison the cast. The future controller must observe
+that signal and stop playback/MediaServer; video and playlist callbacks retain the
+existing remux lifetime contract. Stop owns joining and cache cleanup. See
+[readiness contracts](stereo-aac-readiness.md).
 
 `stop` is idempotent: cancel/join the worker, wait for active cache callbacks,
 release the decoder, clear storage once, release callback objects and resources.
@@ -89,15 +93,17 @@ be forcibly interrupted by C++.
 Accepted video currently has zero decode origin, no trim/empty/complex video edits,
 and either no composition delay or a single unit-rate reorder edit cancelling the
 initial composition delay and covering the complete decode span. Each audio
-segment must be nonempty and at most seven seconds; longer GOP spans fail rather
-than violate the ten-second epoch budget. Movie duration is at most seven days.
+segment must be nonempty and at most seven seconds. D72 splits longer GOP spans
+into extra audio segments while copying the video segment unchanged; it does not
+shorten the video GOP or establish its receiver/authoring suitability. Movie duration is at most seven days.
 Protected media, format changes, discontinuities, unsupported layouts/profiles
 and D70's other source limits remain refusals. DTS-HD/dependent E-AC-3 are unproven.
 
 Master bandwidth values include estimated AAC allowances, and indexed MKV video
 already uses cluster-span estimates. They are not measured VOD averages/peaks.
-Measured bandwidth/authoring validation, broader timelines/long-GOP policy and
-long-movie performance remain explicit gates before public integration.
+Measured bandwidth/authoring validation, broader timelines and real-file/host
+performance remain explicit gates before public integration. D72 adds bounded
+long-GOP audio policy and synthetic one-hour cold-seek evidence, not those proofs.
 
 ## Offline validation and its limits
 
@@ -163,6 +169,8 @@ are preserved; only the original rounding fixture is added.
 
 Merge checkpoint: PR #51 merged as `e09c57f` at final head `475ae61`, with all
 16 checks passed in run `38330651001` and both review threads resolved. The final
-independence declaration correction was pushed as `9994955` after that merge and
-is carried separately on fresh branch `codex/aac-hls-independence` from main.
-Inspect its own PR-head checks before merging; it adds no receiver observation.
+independence declaration correction originally pushed after that merge is now in
+PR #52, merged as `c092c9b` at final head `6716f1a`, with all 16 checks passed
+in run `38331920914`. D72's [readiness increment](stereo-aac-readiness.md) adds
+a real long-GOP fixture and synthetic scaling/failure checks without new receiver
+or packaged runtime evidence.

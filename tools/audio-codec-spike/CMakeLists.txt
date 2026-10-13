@@ -52,6 +52,13 @@ if(WINDOWS_STORE)
   add_custom_command(TARGET sap2_codec_probe POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${sap2_codec_runtime_dlls} "$<TARGET_FILE_DIR:sap2_codec_probe>" COMMAND_EXPAND_LISTS)
 elseif(BUILD_TESTING)
+  add_executable(sap2_stereo_aac_readiness_tests stereo_aac_readiness_tests.cpp)
+  target_link_libraries(sap2_stereo_aac_readiness_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
+  target_include_directories(sap2_stereo_aac_readiness_tests SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})
+  sap2_codec_warnings(sap2_stereo_aac_readiness_tests)
+  add_test(NAME stereo_aac_readiness COMMAND sap2_stereo_aac_readiness_tests
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/hls")
+  set_tests_properties(stereo_aac_readiness PROPERTIES TIMEOUT 60)
   add_executable(sap2_stereo_aac_hls_tests stereo_aac_hls_tests.cpp)
   target_link_libraries(sap2_stereo_aac_hls_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
   target_include_directories(sap2_stereo_aac_hls_tests SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})

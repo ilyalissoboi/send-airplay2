@@ -3,6 +3,17 @@
 The project remains Apache-2.0. Record revisions and licensing here before
 incorporating external code or adding dependencies.
 
+## Stereo AAC readiness (D72)
+
+The user's 2026-10-13 Proceed continues the merged D71 private builder with
+bounded long-GOP audio planning, terminal failure reporting and offline scaling
+checks before public integration. All additions are original Apache-2.0 code,
+reusing the pinned LGPL FFmpeg profile and existing original compressed fixtures.
+No new dependency or third-party implementation is adopted. The virtual long
+movie uses project-authored ISO BMFF tables and repeats owned encoded packets;
+it is synthetic read-at evidence, not a real-file or receiver interoperability test.
+Any additional encoded fixture records its generator, tool profile and hashes.
+
 ## Stereo AAC rendition (D71)
 
 The user's 2026-10-13 Proceed authorizes stereo downmix/AAC encoding, separate
