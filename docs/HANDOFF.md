@@ -23,6 +23,10 @@ Local codec/decoder/HLS CTest passes 3/3; baseline static/shared passes 35/35 an
 36/36; x64 UWP compilation passes. Actual-head CI is a separate PR gate.
 PR #51 review fixes derive a common rendition target after audio snapping and
 arm host cache cleanup before all startup failures, with regression tests.
+Review-fix head `475ae61` passes all 16 CI checks in run `38330651001`; both
+review threads are resolved. The final declaration follow-up omits master/audio
+INDEPENDENT-SEGMENTS because cold AAC synthesis needs history; copied video keeps
+its tag. Local suites still pass; inspect actual final-head CI separately.
 Public ABI/playback/bindings/CLI, authoring/performance edge gates, authorized
 host storage, packaged runtime and receiver observations remain next. No package
 is published; speaker audio and discrete surround output remain deferred.

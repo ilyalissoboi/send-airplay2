@@ -32,7 +32,11 @@ short-source silence and bounded cache lifecycle pass offline tests. Baseline
 static/shared passes 35/35 and 36/36; optional codec/decoder/HLS passes 3/3;
 x64 UWP compilation passes. Actual-head CI remains separate.
 PR #51 review fixes cover snapped target duration across all renditions and
-once-only provisioned-cache cleanup on early startup failures. Complete documented
+once-only provisioned-cache cleanup on early startup failures.
+Review-fix head `475ae61` passes all 16 checks in run `38330651001`; both threads
+are resolved. The final master declaration follow-up avoids an unproven AAC
+independence claim; inspect the actual final PR head's checks separately. Complete
+the documented
 authoring/performance edges and explicit playback/C ABI/binding/CLI/cache-host
 integration next, then packaged/receiver gates. No publication, new packaged
 runtime or receiver observation is added. Speaker/surround output stays deferred.

@@ -188,7 +188,13 @@ std::string codec_string(const Mp4Track& track) {
 std::string multivariant_playlist(const VariantStream& variant,
                                   const std::vector<SubtitleRendition>& subtitles,
                                   const AudioRendition* audio) {
-    std::string out = "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-INDEPENDENT-SEGMENTS\n";
+    std::string out = "#EXTM3U\n#EXT-X-VERSION:7\n";
+    // A master independence tag applies to every rendition. The optional AAC
+    // path has a cold synthesis-overlap frame, so only its video playlist makes
+    // the independence claim; the legacy master remains unchanged.
+    if (!audio) {
+        out += "#EXT-X-INDEPENDENT-SEGMENTS\n";
+    }
     if (audio) {
         out += "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",NAME=\"Stereo\",LANGUAGE=" +
                quoted(audio->language) +

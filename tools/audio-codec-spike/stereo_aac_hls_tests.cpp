@@ -484,6 +484,11 @@ void movie_join(const std::filesystem::path& path) {
     expect(store.seals == 0 && hls->presentation().segment_count == 3,
            "startup must not encode the full movie");
     const auto master = text(resource(*hls, "main.m3u8"), context.value);
+    expect(
+        master.find("#EXT-X-INDEPENDENT-SEGMENTS") == std::string::npos &&
+            text(resource(*hls, "index.m3u8"), context.value).find("#EXT-X-INDEPENDENT-SEGMENTS") !=
+                std::string::npos,
+        "only copied video claims independent segments; cold AAC requires overlap history");
     expect(master.find("TYPE=AUDIO") != std::string::npos &&
                master.find("CHANNELS=\"2\"") != std::string::npos &&
                master.find("mp4a.40.2") != std::string::npos &&
