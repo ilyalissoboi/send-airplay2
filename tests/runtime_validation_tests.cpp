@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "../src/runtime_validation.h"
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -17,6 +18,11 @@
 namespace {
 using Bytes = std::vector<std::uint8_t>;
 struct Source {
+    Source() = default;
+    Source(const Source&) = delete;
+    Source& operator=(const Source&) = delete;
+    Source(Source&&) = delete;
+    Source& operator=(Source&&) = delete;
     Bytes bytes;
     unsigned released = 0;
     std::size_t read_limit = 1021;
@@ -41,6 +47,11 @@ struct Source {
     }
 };
 struct Cache {
+    Cache() = default;
+    Cache(const Cache&) = delete;
+    Cache& operator=(const Cache&) = delete;
+    Cache(Cache&&) = delete;
+    Cache& operator=(Cache&&) = delete;
     std::map<std::uint64_t, Bytes> sealed;
     unsigned seals = 0, clears = 0, releases = 0;
     bool fail_read = false;
@@ -88,7 +99,24 @@ struct Cache {
         return {sizeof(sap2_aac_fragment_store), this, seal, read, clear, release};
     }
 };
-void run(const std::filesystem::path& path, std::uint32_t mode) {
+struct ValidationScenario {
+    const char* name;
+    std::uint32_t mode;
+    std::uint32_t expected_failure;
+    std::uint64_t expected_segments;
+    unsigned expected_seals;
+};
+// Independent fixture expectations: all three owned movies have 16.5 s of video,
+// hence three audio fragments; failure values are the fixed C API categories.
+constexpr std::array<ValidationScenario, 2> delivery_scenarios{
+    {{"cold-concurrent-cached-reads", 0, 0, 3, 3}, {"cache-cancellation-and-retry", 1, 0, 3, 3}}};
+constexpr std::array<ValidationScenario, 3> failure_scenarios{
+    {{"terminal-cache-read-failure", 2, 6, 3, 1},
+     {"terminal-source-refusal", 3, 3, 3, 0},
+     {"invalid-original-track", 4, 0, 0, 0}}};
+constexpr ValidationScenario read_budget_refusal{"tiny-read-budget-refusal", 5, 5, 0, 0};
+void validate_scenario(const std::filesystem::path& path, const ValidationScenario& scenario) {
+    const auto mode = scenario.mode;
     Source source;
     std::ifstream file(path, std::ios::binary);
     if (!file) {
@@ -105,8 +133,9 @@ void run(const std::filesystem::path& path, std::uint32_t mode) {
     const auto result =
         sap2_runtime_validate(&source_table, &cache_table, mode == 4 ? 11 : 42, mode, &report);
     if (result != SAP2_OK || source.released != 1 || cache.clears != 1 || cache.releases != 1 ||
-        !cache.sealed.empty() ||
-        (mode <= 1 && (!report.audio_segments || cache.seals != report.audio_segments))) {
+        !cache.sealed.empty() || report.failure != scenario.expected_failure ||
+        report.audio_segments != scenario.expected_segments ||
+        cache.seals != scenario.expected_seals) {
         throw std::runtime_error(
             "mode=" + std::to_string(mode) + " result=" + std::to_string(result) + " failure=" +
             std::to_string(report.failure) + " segments=" + std::to_string(report.audio_segments) +
@@ -122,13 +151,28 @@ int main(int argc, char** argv) {
     }
     static_assert(sizeof(sap2_runtime_report) == 48, "private report ABI");
     for (const auto* name : {"dts.mp4", "dts.mkv", "aac.mp4"}) {
-        for (std::uint32_t mode = 0; mode <= (std::string(name) == "dts.mp4" ? 5U : 4U); ++mode) {
+        const auto path = std::filesystem::path(argv[1]) / name;
+        const auto check = [&](const ValidationScenario& scenario) {
             try {
-                run(std::filesystem::path(argv[1]) / name, mode);
+                validate_scenario(path, scenario);
+                return true;
             } catch (const std::exception& error) {
-                std::cerr << name << " " << error.what() << '\n';
+                std::cerr << name << " " << scenario.name << " " << error.what() << '\n';
+                return false;
+            }
+        };
+        for (const auto& scenario : delivery_scenarios) {
+            if (!check(scenario)) {
                 return 1;
             }
+        }
+        for (const auto& scenario : failure_scenarios) {
+            if (!check(scenario)) {
+                return 1;
+            }
+        }
+        if (std::string(name) == "dts.mp4" && !check(read_budget_refusal)) {
+            return 1;
         }
     }
     std::cout << "16 offline runtime scenarios passed\n";

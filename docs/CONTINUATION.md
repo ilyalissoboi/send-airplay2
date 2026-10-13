@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#55 are merged. `main` contains
+Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#55 are merged. `main` contains
 the experimental C API version 4, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -68,8 +68,13 @@ merged PR #55. [The offline runtime gate](stereo-aac-uwp-runtime.md) uses a
 separate Native AOT/MSIX identity, the enabled production core and a private
 OFF-by-default validation export, brokered StorageFile callbacks and app-owned
 TemporaryFolder storage. It does not access credentials or a receiver. Packaged
-results, exact binary/source attribution and real-file/receiver limits must be
-recorded before closing this gate. Speaker audio and discrete surround remain
+results and attribution are in [the artifact](validation/stereo-aac-uwp-runtime-windows-2026-10-13.json).
+Draft [PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) has a PASS
+bundled 0.1.0.2 run at `9371502`, with matching loaded hashes for all six DLLs.
+The corrected 0.1.0.3 picker run at `5a4e5e3` is pending manual selection.
+Baseline static/shared 36/36 and 37/37, enabled shared 38/38, six-DLL UWP imports
+and existing-host compilation pass. Inspect actual final-head CI before merging;
+real-file performance and receiver checks remain next. Speaker audio and discrete surround remain
 hardware-deferred. Ask before merging or publishing; visual checks use written
 manual instructions, without Computer Use.
 

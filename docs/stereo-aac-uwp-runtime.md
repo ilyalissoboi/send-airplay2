@@ -88,8 +88,23 @@ and outcomes separately from desktop CTest and compile-only UWP inspection.
 
 ## Current evidence and next work
 
-Runtime validation is in progress. Before closing this slice, record a complete
-packaged run, loaded-module hashes and the exact source checkpoint. Real-file
+[PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) is a draft.
+The [dated artifact](validation/stereo-aac-uwp-runtime-windows-2026-10-13.json)
+records a PASS bundled run at implementation `9371502`, package 0.1.0.2, on
+Windows 11 x64 build 26200. All six actually loaded module hashes match the
+registered layout. Its three borrowed probes, 16 preparation/resource scenarios
+and nine public lifecycle cases pass. Child removal and sibling preservation
+were asserted; no receiver was contacted. Package 0.1.0.3 at `5a4e5e3` fixes
+bare picker activation and is waiting for manual selection; its six loaded DLL
+hashes match its own layout. This pending run is not attributed a PASS.
+
+Baseline Windows Release static/shared CTest passes 36/36 and 37/37; enabled
+shared passes 38/38. Named private-hook cases retain independent literal fragment
+counts and failure codes. The existing UWP host compiles, all six UWP native DLLs
+pass import inspection, and the default shared DLL has no validation export.
+Formatting/diff checks pass. Actual final PR-head CI remains the merge gate.
+
+Real-file
 startup/read-volume/cache/seek measurements follow, then manually observed stereo
 video/audio, controls, Stop and natural EOF on available Apple TV/Mac receivers.
 Approved package publication and Screenbox integration follow those gates.
