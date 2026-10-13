@@ -30,6 +30,40 @@ def rewrite_ids(data, order):
     return b"".join(rewrite(kind, body) for kind, body in source.boxes(data))
 
 
+def video_rounding_boundary(data):
+    """Independently author 6.484, 6.490, 3.526 s video spans in a 48 kHz clock.
+
+    33 original I-frames; mark only samples 1/14/27 as sync to control HLS cuts.
+    moov follows mdat, so changed table sizes do not move source packet bytes.
+    """
+    durations = [23940] * 12 + [23952] + [23960] * 12 + [24000] + [24178] * 6 + [24180]
+    assert len(durations) == 33 and sum(durations) == 792000
+    def rewrite(kind, body, track_id=0):
+        if kind == b"trak":
+            tkhd = next(payload for child, payload in source.boxes(body) if child == b"tkhd")
+            identity_at = 20 if tkhd[0] == 1 else 12
+            track_id = int.from_bytes(tkhd[identity_at:identity_at + 4], "big")
+        if track_id == 11:
+            if kind == b"mdhd":
+                body = bytearray(body)
+                assert body[0] == 0
+                body[12:16] = (48000).to_bytes(4, "big")
+                body[16:20] = (792000).to_bytes(4, "big")
+            elif kind == b"stts":
+                body = b"\0" * 4 + len(durations).to_bytes(4, "big")
+                body += b"".join((1).to_bytes(4, "big") + duration.to_bytes(4, "big") for duration in durations)
+            elif kind == b"stss":
+                body = b"\0" * 4 + (3).to_bytes(4, "big") + b"".join(sample.to_bytes(4, "big") for sample in (1, 14, 27))
+            elif kind == b"stbl" and not any(child == b"stss" for child, _ in source.boxes(body)):
+                # All-sync input omits stss; add an explicit conservative sync table.
+                body += source.box(b"stss", b"\0" * 4 + (3).to_bytes(4, "big") +
+                                   b"".join(sample.to_bytes(4, "big") for sample in (1, 14, 27)))
+        if kind in (b"moov", b"trak", b"mdia", b"minf", b"stbl", b"edts"):
+            body = b"".join(rewrite(child, payload, track_id) for child, payload in source.boxes(body))
+        return source.box(kind, body)
+    return b"".join(rewrite(kind, body) for kind, body in source.boxes(data))
+
+
 def generate(directory):
     directory.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=directory) as temporary:
@@ -51,6 +85,8 @@ def generate(directory):
             source.run("-i", str(video), "-i", str(wav), "-map", "0:v", "-map", "1:a", "-c:v", "copy",
                        "-c:a", codec, "-strict", "-2", "-b:a", "1411200" if name == "dts" else "448k", str(movie))
             (directory / f"{name}.mp4").write_bytes(source.rewrite_movie(movie.read_bytes(), [11, 42]))
+            if name == "aac":
+                (directory / "aac-rounding.mp4").write_bytes(video_rounding_boundary((directory / "aac.mp4").read_bytes()))
             if name == "dts":
                 captions = temp / "captions.srt"
                 captions.write_text("1\n00:00:01,000 --> 00:00:02,000\nOriginal caption\n", encoding="utf-8")
@@ -82,6 +118,8 @@ def generate(directory):
         "tool_distribution": "development only; not incorporated or redistributed",
         "inputs": inputs, "encoder_commands": source.ENCODER_COMMANDS,
         "identities": {"video": 11, "main": 42}, "frames_48khz": 792000,
+        "rounding_video": {"timescale": 48000, "segment_samples": [311232, 311520, 169248],
+                           "sync_samples_one_based": [1, 14, 27]},
         "fixtures": records}, indent=2) + "\n", encoding="utf-8")
 
 

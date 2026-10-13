@@ -1934,7 +1934,7 @@ receiver or packaged runtime evidence.
 
 **D71 offline HLS/cache increment (2026-10-13):** selected surround source PCM
 becomes separate stereo AAC resources alongside copied video and subtitles.
-Nine compressed movies pass global duration/joins, video payload, subtitles,
+Ten compressed movies pass global duration/joins, video payload, subtitles,
 edits/short-source silence and selected cache lifecycle tests. Codec/decoder/HLS
 CTest passes 3/3, baseline static/shared 35/35 and 36/36, and x64 UWP compilation
 passes. See [cold synthesis, final padding, clock and authoring limits](stereo-aac-hls.md).

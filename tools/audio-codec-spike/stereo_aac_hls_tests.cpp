@@ -27,6 +27,7 @@ extern "C" {
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -114,12 +115,15 @@ struct Store {
                 }};
     }
 };
-const MediaResource& resource(const StereoAacHls& hls, const std::string& name) {
-    const auto& all = hls.presentation().resources;
+const MediaResource& resource(const RemuxedHls& hls, const std::string& name) {
+    const auto& all = hls.resources;
     const auto found =
         std::find_if(all.begin(), all.end(), [&](const auto& value) { return value.name == name; });
     expect(found != all.end(), "missing resource " + name);
     return *found;
+}
+const MediaResource& resource(const StereoAacHls& hls, const std::string& name) {
+    return resource(hls.presentation(), name);
 }
 Bytes read(const MediaResource& source, const MediaReadContext& context) {
     const auto size = media_resource_size(source, context);
@@ -406,6 +410,14 @@ void copied_video_and_subtitles(Source& source, const StereoAacHls& hls,
                    text(resource(hls, "t0s0.vtt"), context).find("Original caption") !=
                        std::string::npos,
                "original subtitle association and cues preserved");
+        auto video_hls = remux_to_hls(source.callbacks(), nullptr, true, &context);
+        raise_composition_target_duration(video_hls, 7);
+        expect(
+            text(resource(video_hls, "index.m3u8"), context).find("#EXT-X-TARGETDURATION:7\n") !=
+                    std::string::npos &&
+                text(resource(video_hls, "t0.m3u8"), context).find("#EXT-X-TARGETDURATION:7\n") !=
+                    std::string::npos,
+            "composition target raises video and subtitle playlists together");
     }
 }
 
@@ -517,6 +529,67 @@ void quota_admission(const std::filesystem::path& path) {
     } catch (const AudioDecodeException& error) {
         expect(error.reason() == AudioDecodeFailure::too_large, "quota admission category");
     }
+}
+void snapped_target_duration(const std::filesystem::path& path) {
+    Source source(path);
+    Store store;
+    Context context;
+    auto hls = StereoAacHls::open(source.callbacks(), store.callbacks(), 2 * 1024 * 1024,
+                                  context.value, 42);
+    const auto audio = text(resource(*hls, "audio.m3u8"), context.value);
+    const auto video = text(resource(*hls, "index.m3u8"), context.value);
+    expect(audio.find("#EXTINF:6.506667,") != std::string::npos &&
+               video.find("#EXTINF:6.490000,") != std::string::npos,
+           "literal snapped rounding-boundary durations");
+    expect(audio.find("#EXT-X-TARGETDURATION:7\n") != std::string::npos &&
+               video.find("#EXT-X-TARGETDURATION:7\n") != std::string::npos &&
+               hls->presentation().target_duration_seconds == 7,
+           "snapped audio raises shared target across half-second rounding boundary");
+    auto bytes = read(resource(*hls, "audio-init.mp4"), context.value);
+    for (std::size_t index = 0; index < 3; ++index) {
+        const auto segment =
+            read(resource(*hls, "a" + std::to_string(index) + ".m4s"), context.value);
+        bytes.insert(bytes.end(), segment.begin(), segment.end());
+    }
+    expect(MovieDecoder(bytes).decode().size() == 792000 * 2,
+           "rounding-target fix retains exact VOD end");
+}
+void expect_startup_failure(MediaSource source, Store& store, const MediaReadContext& context,
+                            std::optional<std::uint64_t> selected_id, const std::string& scenario) {
+    store.sealed.emplace(99, Bytes{0}); // Already provisioned, cast-owned host object.
+    try {
+        (void)StereoAacHls::open(std::move(source), store.callbacks(), 2 * 1024 * 1024, context,
+                                 selected_id);
+        throw std::logic_error(scenario + " was accepted");
+    } catch (const std::runtime_error&) {
+        expect(store.clears == 1 && store.seals == 0 && store.sealed.empty(),
+               scenario + " clears provisioned cache exactly once");
+    }
+}
+void startup_failure_cleanup(const std::filesystem::path& path) {
+    Source source(path);
+    Context context;
+    Store size_failure;
+    auto callbacks = source.callbacks();
+    callbacks.size = []() -> std::uint64_t {
+        throw std::runtime_error("injected source size failure");
+    };
+    expect_startup_failure(std::move(callbacks), size_failure, context.value, 42, "throwing size");
+    Store malformed;
+    const MediaSource invalid{
+        [] { return std::uint64_t{4}; },
+        [](std::uint64_t, std::uint8_t* output, std::size_t capacity, const MediaReadContext&) {
+            std::memset(output, 0, capacity);
+            return capacity;
+        }};
+    expect_startup_failure(invalid, malformed, context.value, 42, "malformed probe");
+    Store selection;
+    expect_startup_failure(source.callbacks(), selection, context.value, 11, "non-audio selection");
+    Context cancelled;
+    cancelled.cancelled = true;
+    Store cancellation;
+    expect_startup_failure(source.callbacks(), cancellation, cancelled.value, 42,
+                           "cancelled startup");
 }
 void established_eof_format(const std::filesystem::path& path) {
     Source source(path);
@@ -636,6 +709,8 @@ int main(int argc, char** argv) {
             movie_join(fixtures / name);
         }
         quota_admission(fixtures / "dts.mp4");
+        snapped_target_duration(fixtures / "aac-rounding.mp4");
+        startup_failure_cleanup(fixtures / "aac.mp4");
         established_eof_format(fixtures / "aac-short.mp4");
         waiter_cancellation(fixtures / "dts.mp4");
         cast_stop(fixtures / "dts.mp4");

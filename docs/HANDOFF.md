@@ -21,6 +21,8 @@ validated fixed-frame Matroska clock to stabilize seek phase. Video timeline,
 GOP, bandwidth estimates and cold AAC synthesis limits are documented explicitly.
 Local codec/decoder/HLS CTest passes 3/3; baseline static/shared passes 35/35 and
 36/36; x64 UWP compilation passes. Actual-head CI is a separate PR gate.
+PR #51 review fixes derive a common rendition target after audio snapping and
+arm host cache cleanup before all startup failures, with regression tests.
 Public ABI/playback/bindings/CLI, authoring/performance edge gates, authorized
 host storage, packaged runtime and receiver observations remain next. No package
 is published; speaker audio and discrete surround output remain deferred.

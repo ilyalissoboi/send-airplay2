@@ -12,6 +12,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
 
@@ -102,9 +103,10 @@ std::uint32_t target_from(const std::vector<std::uint64_t>& durations_us) {
     return target;
 }
 
-std::string media_playlist_text(const std::vector<std::uint64_t>& durations_us) {
+std::string media_playlist_text(const std::vector<std::uint64_t>& durations_us,
+                                std::uint32_t target = 0) {
     return "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:" +
-           std::to_string(target_from(durations_us)) +
+           std::to_string(target ? target : target_from(durations_us)) +
            "\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXT-X-INDEPENDENT-SEGMENTS\n"
            "#EXT-X-MAP:URI=\"" +
            std::string(init_name) + "\"\n" + segment_lines(durations_us, segment_name) +
@@ -112,9 +114,9 @@ std::string media_playlist_text(const std::vector<std::uint64_t>& durations_us) 
 }
 
 std::string subtitle_playlist_text(const std::vector<std::uint64_t>& durations_us,
-                                   std::size_t track) {
+                                   std::size_t track, std::uint32_t target = 0) {
     return "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:" +
-           std::to_string(target_from(durations_us)) +
+           std::to_string(target ? target : target_from(durations_us)) +
            "\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n" +
            segment_lines(durations_us,
                          [track](std::size_t index) { return text_segment_name(track, index); }) +
@@ -578,6 +580,40 @@ RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
     return result;
 }
 } // namespace
+
+void raise_composition_target_duration(RemuxedHls& presentation, std::uint32_t minimum_seconds) {
+    if (minimum_seconds <= presentation.target_duration_seconds) {
+        return;
+    }
+    if (presentation.durations_us.empty()) {
+        throw std::invalid_argument("HLS target update requires composition metadata");
+    }
+    presentation.target_duration_seconds = minimum_seconds;
+    for (auto& resource : presentation.resources) {
+        std::string text;
+        if (resource.name == playlist_name) {
+            text = media_playlist_text(presentation.durations_us, minimum_seconds);
+        } else {
+            constexpr std::string_view suffix = ".m3u8";
+            if (resource.name.size() < suffix.size() ||
+                resource.name.compare(resource.name.size() - suffix.size(), suffix.size(),
+                                      suffix) != 0) {
+                continue;
+            }
+            for (std::size_t track = 0; track < presentation.text_track_count; ++track) {
+                if (resource.name == text_playlist_name(track)) {
+                    text =
+                        subtitle_playlist_text(presentation.durations_us, track, minimum_seconds);
+                    break;
+                }
+            }
+        }
+        if (!text.empty()) {
+            resource.source =
+                memory_source(std::make_shared<const Bytes>(text.begin(), text.end()));
+        }
+    }
+}
 
 std::vector<SegmentLayout> plan_segments(const Mp4Movie& movie, std::uint32_t target_seconds) {
     const auto& video = movie.tracks.at(0);

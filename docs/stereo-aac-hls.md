@@ -31,7 +31,9 @@ speaker-mapping observation or a claim of surround output.
 Output is 48 kHz, stereo, AAC-LC, nominal 192 kbit/s ABR. Each segment uses its
 absolute video boundary rounded once to the 48 kHz clock, then snapped down to
 the AAC 1024-sample grid; the final end remains exact to that clock. Independent
-EXTINF rounding is never accumulated to locate audio boundaries. A bounded
+EXTINF rounding is never accumulated to locate audio boundaries. An
+audio segment can round up after grid snapping; its finalized durations raise
+the common target of audio, video and subtitle playlists together. A bounded
 encoder epoch uses 48 AAC frames of preroll and lookahead (1.024 seconds each),
 retaining only canonical packets. Late and backward requests do not convert the
 whole movie first. Startup decodes/encodes only one tiny window to establish the
@@ -98,9 +100,11 @@ long-movie performance remain explicit gates before public integration.
 
 ## Offline validation and its limits
 
-Nine original 16.5-second movies include actual compressed AAC, AC-3, E-AC-3 and
+Ten original 16.5-second movies include actual compressed AAC, AC-3, E-AC-3 and
 DTS-core MP4, DTS Matroska, B-frame video, text subtitles, short audio and edited
-audio. The generator, tool configuration, arguments, input tones and SHA-256s are
+audio. A variable-frame-duration video's 6.490-second span
+becomes 6.506667 seconds of AAC, requiring a shared target duration of seven.
+The generator, tool configuration, arguments, input tones and SHA-256s are
 in `tools/audio-codec-spike/fixtures/hls/provenance.json`. No downloaded media or
 development FFmpeg executable is redistributed; the optional backend retains
 the pinned LGPL profile recorded in [dependencies](dependencies.md).
@@ -124,7 +128,8 @@ artifact-free receiver seeking. Final
 AAC codec output contains padding; tests trim only according to independently
 demuxed packet/frame presentation duration, not a guessed test-file length.
 
-Quota admission, cooperative cancel during decoder reads, waiter cancellation
+Quota admission, startup cleanup after size/probe/selection/cancellation failure,
+cooperative cancel during decoder reads, waiter cancellation
 and absolute expiry, Stop while generating/waiting, retained-resource refusal,
 atomic seal failure and failure poisoning are checked. Desktop codec, decoder
 and HLS suites pass 3/3. Baseline static/shared CTest pass 35/35 and 36/36. The
@@ -143,3 +148,10 @@ cache callbacks, and test a new packaged runtime. Then manually observe Apple TV
 and Mac video/audio, lip sync, cold/forward/backward seeks, pause/resume, Stop,
 natural end and queue continuation. No package publication or merge is authorized
 by this implementation checkpoint alone.
+
+PR #51 review follow-up: finalized snapped audio durations determine the common
+target, which is also raised in video/subtitle playlists. A startup RAII owner
+arms host cache cleanup before context validation, allocation, size, probe and
+selection. Regression checks cover the rounding boundary, consistent subtitle
+targets and once-only cleanup on those early failures. Existing fixture hashes
+are preserved; only the original rounding fixture is added.

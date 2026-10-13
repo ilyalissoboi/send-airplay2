@@ -42,6 +42,30 @@ void check_request(const MediaReadContext& context) {
             "invalid AAC HLS request context");
     require(!context.should_stop(), AudioDecodeFailure::stopped, "AAC HLS request stopped");
 }
+/// Arm host cleanup before context validation, allocations or source callbacks.
+/// Transfer is noexcept; exactly one of this guard or Impl owns clear afterward.
+class StoreCleanup {
+public:
+    explicit StoreCleanup(AacFragmentStore store) noexcept : store_(std::move(store)) {}
+    ~StoreCleanup() {
+        if (store_.clear) {
+            try {
+                store_.clear();
+            } catch (...) { /* Nonthrowing host cleanup contract. */
+            }
+        }
+    }
+    StoreCleanup(const StoreCleanup&) = delete;
+    StoreCleanup& operator=(const StoreCleanup&) = delete;
+    StoreCleanup(StoreCleanup&&) = delete;
+    StoreCleanup& operator=(StoreCleanup&&) = delete;
+    AacFragmentStore release() noexcept {
+        return std::exchange(store_, {});
+    }
+
+private:
+    AacFragmentStore store_;
+};
 std::string seconds_text(std::uint64_t samples) {
     const auto us = (samples * microseconds_per_second + sample_rate / 2) / sample_rate;
     auto fraction = std::to_string(us % microseconds_per_second);
@@ -302,10 +326,14 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
                                                  std::uint64_t quota,
                                                  const MediaReadContext& context,
                                                  std::optional<std::uint64_t> selected_id) {
+    const bool valid_store = store.seal && store.read_at && store.clear;
+    StoreCleanup cleanup(std::move(store));
     check_request(context);
-    require(source.size && source.read_at && store.seal && store.read_at && store.clear &&
-                quota > 0,
+    require(source.size && source.read_at && valid_store && quota > 0,
             AudioDecodeFailure::source_error, "AAC HLS requires source, storage and quota");
+    auto impl = std::make_shared<Impl>();
+    impl->store = cleanup.release();
+    impl->quota = quota;
     const auto size = source.size();
     source.size = [size] { return size; };
     const auto inventory = probe_media_tracks(source, context);
@@ -315,9 +343,6 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     require(selection.status == AudioSelectionStatus::selected,
             AudioDecodeFailure::invalid_selection, "AAC HLS has no selected audio");
     const auto& selected = inventory.tracks.at(selection.track_index);
-    auto impl = std::make_shared<Impl>();
-    impl->store = std::move(store);
-    impl->quota = quota;
     impl->decoder = AudioDecoderSource::open(source, context, selected.id, true);
     auto presentation = remux_to_hls(source, context.request_cancelled, true, &context);
     require(presentation.zero_origin_video, AudioDecodeFailure::unsupported,
@@ -336,6 +361,16 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
                 "AAC HLS segment exceeds seven seconds or is empty");
         impl->boundaries.push_back(end);
     }
+    auto target = presentation.target_duration_seconds;
+    for (std::size_t index = 0; index < presentation.segment_count; ++index) {
+        const auto segment_samples = impl->boundaries[index + 1] - impl->boundaries[index];
+        const auto rounded_seconds =
+            static_cast<std::uint32_t>((segment_samples + sample_rate / 2) / sample_rate);
+        target = std::max(target, rounded_seconds);
+    }
+    // Audio snapping can move a segment across an integer-rounding boundary.
+    // All renditions share the larger target, including video and subtitles.
+    raise_composition_target_duration(presentation, target);
     const auto duration = impl->boundaries.back();
     require(duration > 0 && duration <= maximum_movie_samples, AudioDecodeFailure::too_large,
             "AAC HLS duration bound");

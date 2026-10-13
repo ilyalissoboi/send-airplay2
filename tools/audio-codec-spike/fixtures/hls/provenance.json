@@ -209,11 +209,29 @@
     "main": 42
   },
   "frames_48khz": 792000,
+  "rounding_video": {
+    "timescale": 48000,
+    "segment_samples": [
+      311232,
+      311520,
+      169248
+    ],
+    "sync_samples_one_based": [
+      1,
+      14,
+      27
+    ]
+  },
   "fixtures": [
     {
       "file": "aac-edits.mp4",
       "bytes": 172282,
       "sha256": "9992a43918da90756d13526b84c111e735f159c26fc01b3d20b58e95deae86de"
+    },
+    {
+      "file": "aac-rounding.mp4",
+      "bytes": 932142,
+      "sha256": "6272088513323013a3548529b7ce6c2d257377aa4ecab6af6674f81d12f1e168"
     },
     {
       "file": "aac-short.mp4",

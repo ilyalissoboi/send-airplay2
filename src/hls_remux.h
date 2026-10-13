@@ -74,6 +74,9 @@ struct RemuxedHls {
     std::vector<std::uint64_t> video_boundaries_48khz;
     bool zero_origin_video = false;
 };
+/// Private composition only: raise the video/subtitle playlist target together.
+/// Requires durations_us populated by the video_only path; payloads are untouched.
+void raise_composition_target_duration(RemuxedHls& presentation, std::uint32_t minimum_seconds);
 
 /** Build an fMP4 VOD HLS presentation (D60) over a progressive MP4/MOV or a
  * Matroska source, chosen by its first bytes, without copying its media: the
