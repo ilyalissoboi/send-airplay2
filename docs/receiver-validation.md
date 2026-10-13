@@ -1955,3 +1955,14 @@ request cancellation/admission/explicit Stop remain nonfatal. See
 [contracts, measurements and remaining gates](stereo-aac-readiness.md).
 These are offline native tests: no real hour-long file, new receiver observation,
 packaged builder runtime, audio-only speaker or discrete-surround result is added.
+
+**D72 merge checkpoint:** PR #53 merged as `25b84a1`, with all 16 checks
+passed at final head `6bf1bd2` in run `38336511817`. No receiver evidence added.
+
+**D73 offline authoring policy (2026-10-13):** contiguous-window bitrate
+calculations and isolated first-period AAC estimates pass regular compressed MP4
+fixture audits. Indexed-MKV cluster estimates and short/edited early-ending audio
+fail whole-VOD accuracy audits explicitly. A real 33-second video GOP is refused
+before calibration/sealing, with cache cleanup. See [policy and evidence](stereo-aac-authoring.md).
+These checks do not establish Apple-wide authoring conformance, real-file/host
+performance or a new receiver/packaged runtime result. Speaker/surround stays deferred.

@@ -73,6 +73,62 @@ void boundary_planning() {
     expect_error([] { (void)plan_stereo_aac_boundaries(std::vector<std::uint64_t>(100803)); },
                  AudioDecodeFailure::unsupported, "boundary count admission");
 }
+template <class Function>
+void expect_remux_error(Function action, RemuxFailure category, const std::string& scenario) {
+    try {
+        action();
+    } catch (const RemuxException& error) {
+        expect(error.reason() == category, scenario + ": wrong category");
+        return;
+    }
+    throw std::runtime_error(scenario + ": unexpectedly accepted");
+}
+void authoring_calculations() {
+    const auto grouped = hls_bit_rates({1000000, 1000000, 1000000}, {100, 500, 100}, 4);
+    expect(grouped.peak == 2400 && grouped.average == 1867,
+           "literal grouped peak excludes individual one-second 4000 bps spike");
+    const auto catchup = hls_bit_rates({100000, 5900000}, {9000, 1000}, 6);
+    expect(catchup.peak == 13334 && catchup.average == 13334,
+           "short catch-up segment grouped with its neighbor, not 720000 bps");
+    const auto inclusive = hls_bit_rates({9000000, 1}, {1000, 1000000}, 6);
+    expect(inclusive.peak == 889, "upper 1.5-target boundary excludes following microsecond spike");
+    const auto tiny = hls_bit_rates({1}, {1}, 1);
+    expect(tiny.peak == 8000000 && tiny.average == 8000000,
+           "explicit complete-short-presentation fallback and byte-to-bit units");
+    const auto large = hls_bit_rates({20000000}, {1ULL << 40}, 20);
+    expect(large.peak == 439804651111ULL && large.average == 439804651111ULL,
+           "literal one-TiB multiplication and upward rounding");
+    expect_remux_error([] { (void)hls_bit_rates({0}, {1}, 6); }, RemuxFailure::malformed,
+                       "zero duration refused");
+    expect_remux_error([] { (void)hls_bit_rates({1, 1}, {1}, 6); }, RemuxFailure::malformed,
+                       "rate table mismatch");
+    expect_remux_error([] { (void)hls_bit_rates({1}, {(1ULL << 40) + 1}, 6); },
+                       RemuxFailure::too_large, "byte multiplication bound");
+    expect_remux_error([] { (void)hls_bit_rates({604800000001ULL}, {1}, 6); },
+                       RemuxFailure::too_large, "duration sum bound");
+    expect_remux_error([] { (void)hls_bit_rates({1}, {1}, 21); }, RemuxFailure::too_large,
+                       "target bound");
+    expect_remux_error(
+        [] {
+            (void)hls_bit_rates(std::vector<std::uint64_t>(201603, 1),
+                                std::vector<std::uint64_t>(201603, 1), 6);
+        },
+        RemuxFailure::too_large, "rate table count bound");
+    expect_remux_error(
+        [] {
+            (void)hls_bit_rates(std::vector<std::uint64_t>(2100, 3000),
+                                std::vector<std::uint64_t>(2100, 1), 6);
+        },
+        RemuxFailure::too_large, "inspection CPU budget");
+    expect_remux_error(
+        [] { (void)add_hls_bit_rates({std::numeric_limits<std::uint64_t>::max(), 1}, {1, 1}); },
+        RemuxFailure::too_large, "rendition sum overflow");
+    validate_stereo_video_spans({20000000, 1});
+    expect_remux_error([] { validate_stereo_video_spans({20000001}); }, RemuxFailure::unsupported,
+                       "long GOP including last segment refused");
+    expect_remux_error([] { validate_stereo_video_spans({0}); }, RemuxFailure::malformed,
+                       "empty video span refused");
+}
 void long_gop(const std::filesystem::path& path) {
     Context context;
     Source source(path);
@@ -117,6 +173,22 @@ void long_gop(const std::filesystem::path& path) {
     }
     expect(MovieDecoder(movie).decode().size() == 1584000,
            "long GOP split audio independent MOV decode and exact 16.5 second end");
+}
+void refuse_long_gop(const std::filesystem::path& path) {
+    Source source(path);
+    Store store;
+    Context context;
+    try {
+        (void)StereoAacHls::open(source.callbacks(), store.callbacks(), 4 * 1024 * 1024,
+                                 context.value, 42);
+        throw std::logic_error("33-second GOP accepted");
+    } catch (const RemuxException& error) {
+        expect(error.reason() == RemuxFailure::unsupported &&
+                   std::string(error.what()) ==
+                       "stereo HLS copied video segment exceeds twenty seconds",
+               "33-second encoded GOP refused by explicit admission policy");
+    }
+    expect(store.seals == 0 && store.clears == 1, "long GOP refusal cleans cache before any seal");
 }
 void terminal_cache_failure(const std::filesystem::path& path) {
     for (int mode = 0; mode < 3; ++mode) {
@@ -252,7 +324,7 @@ void hour_cold_seeks(const std::filesystem::path& path) {
     expect(hls->presentation().segment_count == 600 && hls->audio_segment_count() == 600 &&
                store.seals == 0 && source.size_calls == 1,
            "one-hour metadata startup does not eagerly convert audio");
-    expect(source.metadata_bytes <= 32 * 1024 * 1024 && source.payload_bytes <= 1024 * 1024,
+    expect(source.metadata_bytes <= 32 * 1024 * 1024 && source.payload_bytes <= 4 * 1024 * 1024,
            "one-hour startup bounded I/O metadata=" + std::to_string(source.metadata_bytes) +
                " payload=" + std::to_string(source.payload_bytes));
     auto init = read(resource(*hls, "audio-init.mp4"), context.value);
@@ -342,7 +414,9 @@ int main(int argc, char** argv) {
         expect(argc == 2, "readiness fixture directory");
         const std::filesystem::path fixtures(argv[1]);
         boundary_planning();
+        authoring_calculations();
         long_gop(fixtures / "aac-long-gop.mp4");
+        refuse_long_gop(fixtures / "aac-too-long-gop.mp4");
         terminal_cache_failure(fixtures / "dts.mp4");
         cancelled_cache_read(fixtures / "dts.mp4");
         terminal_generation_failure(fixtures / "dts.mp4");

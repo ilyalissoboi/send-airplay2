@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#52 merged.
+Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#53 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -296,3 +296,14 @@ exact EOF, bounded source I/O and offsets beyond 4 GiB. See [the evidence and
 remaining gates](stereo-aac-readiness.md). Common rendition targets are retained;
 long video segments, authoring bandwidth estimates and cold AAC synthesis remain
 explicit limitations. Shipping APIs/packages and receiver evidence are unchanged.
+
+## D73 stereo AAC authoring policy
+
+The first-period AAC estimate is measured with an isolated decoder under the
+same encode/fragment settings. Contiguous-window rate calculations include fMP4
+and WebVTT bytes; indexed MKV size estimates stay explicitly identified. A
+20-second copied-video span cap is an engineering limit, including the final span,
+not Apple's nominal six-second recommendation. See [the measured and failed
+audits](stereo-aac-authoring.md). Lazy conversion cannot promise whole-VOD accuracy
+from one period. This policy and its validation preserve that limitation before
+public integration; no broad authoring or receiver conformance is claimed.
