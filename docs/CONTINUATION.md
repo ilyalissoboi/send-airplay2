@@ -44,7 +44,7 @@ terminal cache/source failure reporting and synthetic one-hour / >4-GiB seeking
 are implemented in the recorded offline scope. No new receiver or package result
 is added. Do not resume its closed branch.
 
-**D73 authoring increment:** the latest Proceed authorizes fresh branch
+**D73 authoring implemented; [PR #54](https://github.com/ilyalissoboi/send-airplay2/pull/54) open:** the latest Proceed authorizes fresh branch
 `codex/aac-hls-authoring` from `25b84a1`. Read [policy and audit evidence](stereo-aac-authoring.md).
 It measures a bounded first AAC period in an isolated decoder, calculates
 contiguous-window HLS rates for copied MP4/video/subtitles, records lazy/MKV estimate
@@ -53,6 +53,13 @@ not guaranteed by a first-period estimate; early-ending audio and indexed-MKV
 estimates have explicit failed audits. Public/storage integration, real-file/host
 performance, packaged runtime and manual receiver checks follow. Speaker audio
 and discrete surround remain deferred. Inspect its own PR/head; ask before merging.
+
+Implementation head `3cd620e` passes local codec 4/4, static/shared 35/35 and 36/36,
+runner 10/10 and x64 UWP compilation/import checks. Six whole-fixture MP4 audits
+meet the recorded bandwidth tolerance; three known estimate limitations fail it
+and remain explicitly asserted. The audit artifact records tested source hashes.
+This checkpoint changes documentation only; inspect the final PR-head CI before
+merging. No hardware test or new package publication is included.
 
 **Completed D70:** private [selected decoder/seek windows](audio-decoder-source.md)
 merged in PR #50 as `65bb8a7`, with all 16 checks passed at final head `8b1adf2`

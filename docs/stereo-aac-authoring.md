@@ -91,3 +91,8 @@ Next: integrate the explicit stereo delivery/selection/cache contracts through
 playback/C ABI/bindings/CLI with failure supervision, carrying estimate provenance
 and these limits. Then check real-file/host performance, a new packaged runtime
 and manually observed Apple TV/Mac playback. Ask before merging or publishing.
+
+Implementation checkpoint: [PR #54](https://github.com/ilyalissoboi/send-airplay2/pull/54)
+is open. At `3cd620e`, local codec 4/4, static/shared 35/35 and 36/36, runner
+10/10 and x64 UWP compilation/import checks pass. This documentation follow-up
+changes no native behavior; inspect the actual final PR-head CI before merging.
