@@ -8,8 +8,29 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <vector>
 
 namespace send_airplay2::detail {
+/// First terminal failure, independent of request cancellation or explicit Stop.
+/// Fixed categories only; no host exception text, paths or receiver details.
+enum class StereoAacHlsFailure {
+    none,
+    unsupported,
+    malformed,
+    source_error,
+    codec_error,
+    resource_limit,
+    cache_error,
+    generation_timeout
+};
+/** Plan sample-clock audio cuts from absolute video boundaries at 48 kHz.
+ * Preserve usable snapped video cuts; split long gaps on the absolute six-second
+ * grid. All nonfinal cuts lie on AAC frames, final end is exact, each span <=7 s.
+ * Requires increasing boundaries from zero, <=7 days and <=100802 boundaries.
+ * Throws AudioDecodeException for invalid bounds; no PCM/source I/O is performed.
+ */
+[[nodiscard]] std::vector<std::uint64_t>
+plan_stereo_aac_boundaries(const std::vector<std::uint64_t>& video_boundaries);
 /// Borrowed during a cache callback; combines cast stop with request cancellation.
 struct AacCacheContext {
     const MediaReadContext& request;
@@ -37,10 +58,14 @@ struct AacFragmentStore {
  * borrow their request contexts. Same-segment requests coalesce; cancelling one
  * waiter does not cancel generation. Four pending jobs, <=10 s PCM per epoch,
  * <=1 MiB encoded epoch and a mandatory per-cast sealed-byte quota.
- * Call stop after stopping the MediaServer. stop is idempotent, cancels/joins work,
- * waits for cache readers, clears storage and releases source/resource callbacks.
- * Retained audio-resource copies become inert. Retained video copies retain their
- * source as in remux_to_hls, so the host must release those before releasing storage.
+ * Conversion/seal/read failures are terminal: all generated audio fragment requests fail,
+ * generation cancels, and failure() retains the first fixed category. The host must stop its media
+ * server/playback on that signal; video/playlist callbacks keep their remux lifetime contract.
+ * Request cancellation, admission refusal and explicit Stop do not report terminal failure. Failed
+ * storage is released by Stop, not callbacks. Call stop after stopping the MediaServer. stop is
+ * idempotent, cancels/joins work, waits for cache readers, clears storage and releases
+ * source/resource callbacks. Retained audio-resource copies become inert. Retained video copies
+ * retain their source as in remux_to_hls, so the host must release those before releasing storage.
  * Callbacks must cooperate and must not reenter stop; C++ cannot interrupt them.
  * No caller may concurrently mutate presentation() or stop/destroy this object.
  */
@@ -55,6 +80,10 @@ public:
     StereoAacHls(StereoAacHls&&) = delete;
     StereoAacHls& operator=(StereoAacHls&&) = delete;
     [[nodiscard]] const RemuxedHls& presentation() const noexcept;
+    /// Audio count may exceed the video's segment_count for long GOPs.
+    [[nodiscard]] std::size_t audio_segment_count() const noexcept;
+    /// Thread-safe while this owner is alive; first failure persists after Stop.
+    [[nodiscard]] StereoAacHlsFailure failure() const noexcept;
     void stop() noexcept;
 
 private:

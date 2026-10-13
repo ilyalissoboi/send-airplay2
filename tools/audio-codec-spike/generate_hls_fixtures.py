@@ -70,6 +70,11 @@ def generate(directory):
         temp = Path(temporary)
         wav = temp / "main.wav"
         inputs = [source.wave(wav, 6, frames=792000)]
+        long_gop = temp / "long-gop.mp4"
+        source.run("-f", "lavfi", "-i", "color=black:s=16x16:r=2:d=16.5", "-i", str(wav),
+                   "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-bf", "0", "-g", "66",
+                   "-sc_threshold", "0", "-c:a", "aac", "-b:a", "448k", str(long_gop))
+        (directory / "aac-long-gop.mp4").write_bytes(source.rewrite_movie(long_gop.read_bytes(), [11, 42]))
         video = temp / "video.mp4"
         source.run("-f", "lavfi", "-i", "color=black:s=16x16:r=2:d=16.5", "-c:v", "libx264",
                    "-bf", "0", "-g", "1", "-an", str(video))
@@ -120,6 +125,7 @@ def generate(directory):
         "identities": {"video": 11, "main": 42}, "frames_48khz": 792000,
         "rounding_video": {"timescale": 48000, "segment_samples": [311232, 311520, 169248],
                            "sync_samples_one_based": [1, 14, 27]},
+        "long_gop_video": {"frames": 33, "sync_samples_one_based": [1], "contains_p_frames": True},
         "fixtures": records}, indent=2) + "\n", encoding="utf-8")
 
 

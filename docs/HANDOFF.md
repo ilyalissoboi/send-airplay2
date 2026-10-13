@@ -24,12 +24,10 @@ Local codec/decoder/HLS CTest passes 3/3; baseline static/shared passes 35/35 an
 36/36; x64 UWP compilation passes. The implementation CI/merge gate is complete.
 PR #51 review fixes derive a common rendition target after audio snapping and
 arm host cache cleanup before all startup failures, with regression tests.
-**Active declaration follow-up:** branch `codex/aac-hls-independence` starts
-from merged main `e09c57f`. The final INDEPENDENT-SEGMENTS correction was pushed
-after PR #51 had merged, so its original `9994955` was not included. This fresh
-follow-up omits the master/audio independence claim because cold AAC synthesis
-needs history; copied video keeps its tag. Local suites pass. Continue its own
-open PR and inspect the actual head/checks; do not write on the closed PR #51.
+**D71 declaration follow-up merged:** [PR #52](https://github.com/ilyalissoboi/send-airplay2/pull/52)
+merged as `c092c9b` at final head `6716f1a`; all 16 checks passed in run
+`38331920914`. It contains the master/audio independence correction missed by
+PR #51's merge; copied video retains its declaration. The merge gate is complete.
 Public ABI/playback/bindings/CLI, authoring/performance edge gates, authorized
 host storage, packaged runtime and receiver observations remain next. No package
 is published; speaker audio and discrete surround output remain deferred.
@@ -134,10 +132,13 @@ and Release-only UWP inspections pass. Final automatic PR CI passed at `579bb44`
 with cold codec jobs at 5m01s desktop/3m59s UWP. Preserve the earlier packaged
 artifact's source/profile attribution. This changes build configuration only.
 
-**Next native increment after D71:** close the documented authoring/performance
-edges and connect the private builder to explicit playback/ABI/binding/CLI
-contracts and per-cast authorized host storage. Packaged runtime and manual
-receiver/Screenbox proof follow. The current package remains `0.3.0-ci.207`;
+**Active D72 native readiness increment:** the subsequent Proceed authorizes
+long-GOP audio splitting, terminal cache/conversion failure reporting and
+synthetic one-hour / >4-GiB cold-seek scaling checks on fresh branch
+`codex/aac-hls-readiness` from merged PR #52. Read [contracts and limits](stereo-aac-readiness.md).
+Measured authoring metadata and real-file/host performance remain gates before
+explicit playback/ABI/binding/CLI contracts and authorized host storage. Packaged
+runtime and manual receiver/Screenbox proof follow. The current package remains `0.3.0-ci.207`;
 ask before publishing a new package or merging the slice PR.
 
 **D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
@@ -1684,6 +1685,16 @@ and natural end. The user reports the private x64 Screenbox UI checks passed;
 its loaded DLL was not independently captured. A main-branch prerelease and
 final fork pins/validation are still pending. See the
 [D63 record](receiver-validation.md#mac-c-api-packaged-uwp-and-hls-eof-d63-2026-10-11).
+
+**D72 (engineering increment, 2026-10-13):** preserve copied long-GOP video while
+splitting audio on the absolute six-second AAC grid; retain common playlist
+targets. Publish the first fixed terminal conversion/cache category, cancel shared
+work and reject all further generated-fragment reads; request cancellation,
+admission refusal and Stop remain local or intentional. The future controller must observe failure and stop its media
+server/playback. Synthetic one-hour callback tests exercise 64-bit packet offsets
+and bounded lazy seeks; they are not real-file or receiver evidence. See
+[readiness contracts and validation](stereo-aac-readiness.md). No public ABI,
+package, receiver or deferred speaker/surround implementation is added.
 
 ## 5. Implemented code and verification
 

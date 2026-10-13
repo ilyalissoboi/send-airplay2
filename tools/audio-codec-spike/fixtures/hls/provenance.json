@@ -40,6 +40,31 @@
       "lavfi",
       "-i",
       "color=black:s=16x16:r=2:d=16.5",
+      "-i",
+      "main.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "libx264",
+      "-bf",
+      "0",
+      "-g",
+      "66",
+      "-sc_threshold",
+      "0",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "448k",
+      "long-gop.mp4"
+    ],
+    [
+      "-f",
+      "lavfi",
+      "-i",
+      "color=black:s=16x16:r=2:d=16.5",
       "-c:v",
       "libx264",
       "-bf",
@@ -229,6 +254,11 @@
       "sha256": "9992a43918da90756d13526b84c111e735f159c26fc01b3d20b58e95deae86de"
     },
     {
+      "file": "aac-long-gop.mp4",
+      "bytes": 931583,
+      "sha256": "1e17988abc0041f5eaa776ef199f16c2ce512fb815f180b1bd1f1841365bb5bb"
+    },
+    {
       "file": "aac-rounding.mp4",
       "bytes": 932142,
       "sha256": "6272088513323013a3548529b7ce6c2d257377aa4ecab6af6674f81d12f1e168"
@@ -273,5 +303,12 @@
       "bytes": 927909,
       "sha256": "07bffe00aeaefb10b71b5cfad6f2dbe62ed1964ba92689f7bc07fcdfa78c7974"
     }
-  ]
+  ],
+  "long_gop_video": {
+    "frames": 33,
+    "sync_samples_one_based": [
+      1
+    ],
+    "contains_p_frames": true
+  }
 }
