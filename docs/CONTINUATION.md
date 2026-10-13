@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#50 are merged. `main` contains
+Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#51 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,23 +23,23 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Active D71:** the latest Proceed authorizes the optional private
-[stereo AAC HLS builder/cache](stereo-aac-hls.md). Branch `codex/stereo-aac-hls`
-starts from merged PR #50 `65bb8a7`; continue [PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51)
-and inspect its actual head before editing. Multi-segment compressed audio joins,
-copied video, subtitles, edits,
-short-source silence and bounded cache lifecycle pass offline tests. Baseline
-static/shared passes 35/35 and 36/36; optional codec/decoder/HLS passes 3/3;
-x64 UWP compilation passes. Actual-head CI remains separate.
-PR #51 review fixes cover snapped target duration across all renditions and
-once-only provisioned-cache cleanup on early startup failures.
-Review-fix head `475ae61` passes all 16 checks in run `38330651001`; both threads
-are resolved. The final master declaration follow-up avoids an unproven AAC
-independence claim; inspect the actual final PR head's checks separately. Complete
-the documented
-authoring/performance edges and explicit playback/C ABI/binding/CLI/cache-host
-integration next, then packaged/receiver gates. No publication, new packaged
-runtime or receiver observation is added. Speaker/surround output stays deferred.
+**D71 merged; declaration follow-up active:** the private
+[stereo AAC HLS builder/cache](stereo-aac-hls.md) merged in PR #51 as `e09c57f`,
+with all 16 checks passed at final head `475ae61` in run `38330651001`; both
+review threads are resolved. Private audio resources/cache, compressed joins,
+copied video/subtitles, edits/short-source silence and selected lifecycle checks
+pass offline tests. Baseline static/shared passes 35/35 and 36/36; optional
+codec/decoder/HLS passes 3/3; x64 UWP compilation passes.
+
+Branch `codex/aac-hls-independence` starts from `e09c57f` for the final playlist
+declaration correction. Original follow-up `9994955` was pushed after PR #51's
+merge and was not included. Continue this fresh branch's own open PR, inspect
+its actual head/checks, and ask before merging. The composed master/audio omit
+an unproven independence claim for cold AAC synthesis; video keeps its tag.
+Then complete the documented authoring/performance edges and explicit
+playback/C ABI/binding/CLI/cache-host integration, followed by packaged/receiver
+gates. No new package, packaged builder runtime or receiver observation is added.
+Speaker/surround output remains deferred. Do not resume the merged implementation PR.
 
 **Completed D70:** private [selected decoder/seek windows](audio-decoder-source.md)
 merged in PR #50 as `65bb8a7`, with all 16 checks passed at final head `8b1adf2`

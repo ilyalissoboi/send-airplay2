@@ -9,9 +9,10 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D71 stereo AAC HLS increment (2026-10-13), authorized by the user's Proceed.**
-[PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51), branch
-`codex/stereo-aac-hls`, starts from merged PR #50 (`65bb8a7`). The optional
+**D71 stereo AAC HLS increment merged (2026-10-13).**
+[PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51) merged as `e09c57f`,
+with all 16 checks passed at final head `475ae61` in run `38330651001` and both
+review threads resolved. It started from merged PR #50 (`65bb8a7`). The optional
 private [stereo AAC HLS builder](stereo-aac-hls.md) connects selected PCM to the
 fixed downmix, AAC encoding, separate audio resources and bounded host-backed
 lazy cache. Copied video and subtitles retain their original payloads/associations.
@@ -20,13 +21,15 @@ coalescing and cleanup pass desktop offline checks. The HLS builder opts into a
 validated fixed-frame Matroska clock to stabilize seek phase. Video timeline,
 GOP, bandwidth estimates and cold AAC synthesis limits are documented explicitly.
 Local codec/decoder/HLS CTest passes 3/3; baseline static/shared passes 35/35 and
-36/36; x64 UWP compilation passes. Actual-head CI is a separate PR gate.
+36/36; x64 UWP compilation passes. The implementation CI/merge gate is complete.
 PR #51 review fixes derive a common rendition target after audio snapping and
 arm host cache cleanup before all startup failures, with regression tests.
-Review-fix head `475ae61` passes all 16 CI checks in run `38330651001`; both
-review threads are resolved. The final declaration follow-up omits master/audio
-INDEPENDENT-SEGMENTS because cold AAC synthesis needs history; copied video keeps
-its tag. Local suites still pass; inspect actual final-head CI separately.
+**Active declaration follow-up:** branch `codex/aac-hls-independence` starts
+from merged main `e09c57f`. The final INDEPENDENT-SEGMENTS correction was pushed
+after PR #51 had merged, so its original `9994955` was not included. This fresh
+follow-up omits the master/audio independence claim because cold AAC synthesis
+needs history; copied video keeps its tag. Local suites pass. Continue its own
+open PR and inspect the actual head/checks; do not write on the closed PR #51.
 Public ABI/playback/bindings/CLI, authoring/performance edge gates, authorized
 host storage, packaged runtime and receiver observations remain next. No package
 is published; speaker audio and discrete surround output remain deferred.

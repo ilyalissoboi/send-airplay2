@@ -160,3 +160,9 @@ arms host cache cleanup before context validation, allocation, size, probe and
 selection. Regression checks cover the rounding boundary, consistent subtitle
 targets and once-only cleanup on those early failures. Existing fixture hashes
 are preserved; only the original rounding fixture is added.
+
+Merge checkpoint: PR #51 merged as `e09c57f` at final head `475ae61`, with all
+16 checks passed in run `38330651001` and both review threads resolved. The final
+independence declaration correction was pushed as `9994955` after that merge and
+is carried separately on fresh branch `codex/aac-hls-independence` from main.
+Inspect its own PR-head checks before merging; it adds no receiver observation.
