@@ -17,22 +17,36 @@ terminal cache/source failure reporting and synthetic one-hour / >4-GiB seeking
 are implemented in the recorded offline scope. No new receiver or package result
 is added. Do not resume its closed branch.
 
-**D73 authoring implemented; [PR #54](https://github.com/ilyalissoboi/send-airplay2/pull/54) open:** the latest Proceed authorizes fresh branch
-`codex/aac-hls-authoring` from `25b84a1`. Read [policy and audit evidence](stereo-aac-authoring.md).
-It measures a bounded first AAC period in an isolated decoder, calculates
-contiguous-window HLS rates for copied MP4/video/subtitles, records lazy/MKV estimate
-provenance and refuses copied video spans over 20 seconds. Whole-VOD accuracy is
-not guaranteed by a first-period estimate; early-ending audio and indexed-MKV
-estimates have explicit failed audits. Public/storage integration, real-file/host
-performance, packaged runtime and manual receiver checks follow. Speaker audio
-and discrete surround remain deferred. Inspect its own PR/head; ask before merging.
+**D73 authoring merged (2026-10-13).**
+[PR #54](https://github.com/ilyalissoboi/send-airplay2/pull/54) merged as `6923332`.
+Final head `1d34596` passed all 16 checks in run `38339986770`; no review threads
+were present. Its implementation head `3cd620e` passed codec 4/4, static/shared
+35/35 and 36/36, runner 10/10 and x64 UWP compilation/import checks. Read
+[policy and audit evidence](stereo-aac-authoring.md): six MP4 audits meet the
+recorded tolerance; three estimate limitations remain explicit failed audits.
+No whole-VOD accuracy guarantee, hardware result or publication is added.
 
-Implementation head `3cd620e` passes local codec 4/4, static/shared 35/35 and 36/36,
-runner 10/10 and x64 UWP compilation/import checks. Six whole-fixture MP4 audits
-meet the recorded bandwidth tolerance; three known estimate limitations fail it
-and remain explicitly asserted. The audit artifact records tested source hashes.
-This checkpoint changes documentation only; inspect the final PR-head CI before
-merging. No hardware test or new package publication is included.
+**D74 implemented; [PR #55](https://github.com/ilyalissoboi/send-airplay2/pull/55) open:**
+implementation head `4f5f369` contains the locally tested integration. The user's latest
+Proceed authorizes fresh branch `codex/stereo-aac-playback` from merged PR #54
+(`6923332`). Read [the integration contract](stereo-aac-playback.md). API 4 adds
+explicit delivery, borrowed source-track probe/selection, host-owned fragment
+storage/quota, C# and CLI options, and ordered terminal conversion cleanup.
+The optional core backend defaults OFF; old option/status layouts and delivery
+defaults remain supported. The new binding requires an API 4 development binary.
+Packaged integrated runtime, real-file performance and receiver observations
+remain later gates; speaker audio and discrete surround remain hardware-deferred.
+Published package/Screenbox pin stays `0.3.0-ci.207`. Inspect this slice's actual
+PR head; ask before merging or publishing. Local Windows Release gates pass:
+baseline static/shared 36/36 and 37/37 with final changed-controller/host/binding
+rechecks, enabled shared 37/37, and integrated x64 UWP compilation plus inspection
+of all six native/codec DLLs. Formatting and diff checks pass. Actual PR-head CI
+remains the merge gate; no packaged run, receiver result or publication is added.
+PR #55's P2 review follow-up drains a confirmed-but-interrupted local session
+synchronously before returning a failed start, and records START_FAILED only
+after session/HTTP/conversion/cache cleanup. A deterministic publication-boundary
+regression passes baseline static/shared, enabled controller/C API/binding checks
+and the integrated x64 UWP build/import check. Inspect the final review-fix head's CI.
 
 **D71 stereo AAC HLS increment merged (2026-10-13).**
 [PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51) merged as `e09c57f`,

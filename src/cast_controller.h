@@ -5,6 +5,7 @@
 #include "mrp_messages.h"
 #include "pair_verify.h"
 #include "url_playback_session.h"
+#include "prepared_stereo_media.h"
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -15,6 +16,8 @@
 #include <mutex>
 #include <string>
 #include <string_view>
+#include <thread>
+#include <optional>
 
 namespace send_airplay2::detail {
 /// Result categories of the public playback interface. Values equal the
@@ -41,13 +44,21 @@ enum class CastResult : std::int32_t {
     profile_exists = 18,
     pin_timeout = 19,
     media_unsupported = 20,
-    media_malformed = 21
+    media_malformed = 21,
+    audio_selection_required = 22,
+    audio_track_invalid = 23,
+    media_codec = 24,
+    media_cache = 25,
+    media_source = 26,
+    media_limit = 27,
+    media_generation_timeout = 28
 };
 
 /// How the media reaches the receiver (SAP2_DELIVERY_*).
 enum class CastDelivery {
-    progressive, ///< One representation of CastSettings::content_type.
-    hls_remux    ///< HLS built from the source by remux_to_hls (D60).
+    progressive,   ///< One representation of CastSettings::content_type.
+    hls_remux,     ///< HLS built from the source by remux_to_hls (D60).
+    stereo_aac_hls ///< Explicit selected-audio conversion; optional backend and host cache.
 };
 
 /// Handle lifecycle. `ended` is derived from the session's own end reason while
@@ -64,6 +75,9 @@ struct CastSettings {
     std::uint32_t media_connections = 16;
     double start_position_seconds = 0;
     CastDelivery delivery = CastDelivery::progressive;
+    std::optional<std::uint64_t> audio_track_id;
+    std::uint64_t cache_quota_bytes = 0;
+    AacFragmentStore fragment_store;
 };
 
 /// Returns null only when no credentials are stored under the profile.
@@ -77,6 +91,14 @@ struct CastDependencies {
     /// for scripted fakes (shorter intervals, no MRP data stream). Production
     /// and the C interface leave it empty.
     std::function<void(UrlPlaybackOptions&)> adjust_session;
+    /// Synchronous test hook after confirmed session start, before publication.
+    /// Production leaves empty; the hook must not reenter this controller.
+    std::function<void()> after_session_start;
+    /// Optional private seam; production uses prepare_stereo_media().
+    std::function<std::unique_ptr<PreparedStereoMedia>(MediaSource, AacFragmentStore, std::uint64_t,
+                                                       const MediaReadContext&,
+                                                       std::optional<std::uint64_t>)>
+        prepare_stereo;
 };
 
 /// Controller fields are read together; session and MRP status are each copied
@@ -87,6 +109,11 @@ struct CastSnapshot {
     unsigned rejected_status = 0;             // HTTP status for receiver_rejected.
     SessionStatus session;                    // Default until a session exists.
     MrpPlaybackStatus playback;
+    StereoAacHlsFailure media_failure = StereoAacHlsFailure::none;
+    bool media_failure_first = false;
+    bool media_cleaned_up = false;
+    std::uint64_t selected_audio_id = 0;
+    std::uint32_t authoring_flags = 0;
 };
 
 /**
@@ -105,8 +132,9 @@ struct CastSnapshot {
  * returns to its caller). The session and server stay allocated until
  * destruction, so
  * concurrent readers never observe a dangling pointer. Destruction must follow
- * the return of every other call. No host code runs on controller threads except
- * the media source callbacks on media server workers.
+ * the return of every other call. Startup invokes source/cache callbacks on its
+ * caller; HTTP workers and the conversion worker invoke reads/seals. Cache clear
+ * may run on the media supervisor or Stop caller, after those workers drain.
  *
  * start() and command() report failures as CastResult and never throw.
  * snapshot() and wait_for_change() may throw std::bad_alloc.
@@ -136,6 +164,11 @@ private:
     /// Throws the underlying failure; `server`/`session` hold what was started.
     void run_start(std::unique_ptr<MediaServer>& server,
                    std::unique_ptr<UrlPlaybackSession>& session);
+    void monitor_media() noexcept;
+    void join_media_monitor() noexcept;
+    void drain_media(UrlPlaybackSession* session, MediaServer* server) noexcept;
+    /// Called with state_mutex_ held; observes the first media cause without I/O/allocation.
+    void observe_media_failure_locked(const UrlPlaybackSession* session) noexcept;
 
     const CastSettings settings_;
     const CastDependencies dependencies_;
@@ -143,6 +176,7 @@ private:
     // session is destroyed first, then the server joins its workers, then the
     // controller's own source copy releases the host context.
     const MediaSource source_;
+    std::unique_ptr<PreparedStereoMedia> prepared_media_;
 
     std::atomic_bool cancel_requested_{false}; // Borrowed by UrlPlaybackSession::start.
     mutable std::mutex state_mutex_;           // Guards the fields below.
@@ -150,10 +184,18 @@ private:
     CastPhase phase_ = CastPhase::created;
     CastResult start_result_ = CastResult::ok;
     unsigned rejected_status_ = 0;
+    bool media_failure_first_ = false;
+    std::atomic<StereoAacHlsFailure> media_failure_{StereoAacHlsFailure::none};
+    std::atomic_bool media_cleaned_up_{false};
+    std::atomic_bool sender_stop_requested_{false};
+    std::atomic_bool monitor_cancelled_{false};
+    std::thread media_monitor_;
+    std::mutex monitor_join_mutex_;
     std::unique_ptr<MediaServer> server_;
     std::unique_ptr<UrlPlaybackSession> session_;
 
     std::mutex teardown_mutex_; // Serializes session/server stop between stop() callers.
+    std::mutex stop_mutex_;     // Serializes public Stop through all cache cleanup.
 };
 
 /// Map a failure raised while starting a cast, pairing or removing a profile.

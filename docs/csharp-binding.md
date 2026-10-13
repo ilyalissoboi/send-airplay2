@@ -1,5 +1,12 @@
 # C# binding (D52)
 
+**D74 update:** the development binding targets API 4 and adds
+`CastDelivery.StereoAacHls`, original audio track selection, `MediaTracks.Probe`,
+`AacFragmentStore`/`FileAacFragmentStore`, and conversion status. Read
+[the integration contract](stereo-aac-playback.md) for ownership, opt-in builds
+and validation limits. Published `ci.207` remains the API 3 package; these new
+bindings require a matching API 4 development library.
+
 Status: **implemented, experimental, offline-tested only.** Snapshot 2026-10-08
 (Asia/Tokyo). Step 2a of D49 ([credential-interface.md](credential-interface.md)):
 a C# binding over the experimental C interface. The packaged UWP test app (step

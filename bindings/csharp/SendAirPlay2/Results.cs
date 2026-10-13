@@ -51,6 +51,20 @@ namespace SendAirPlay2
         MediaUnsupported = 20,
         /// <summary>HLS remux: the container's structure is invalid.</summary>
         MediaMalformed = 21,
+        /// <summary>More than one eligible source audio track; select an original ID.</summary>
+        AudioSelectionRequired = 22,
+        /// <summary>The selected ID is absent, disabled, or not audio.</summary>
+        AudioTrackInvalid = 23,
+        /// <summary>Audio decoding or AAC encoding failed.</summary>
+        MediaCodec = 24,
+        /// <summary>Fragment storage failed.</summary>
+        MediaCache = 25,
+        /// <summary>The immutable source could not be read.</summary>
+        MediaSource = 26,
+        /// <summary>A conversion resource bound or cache quota was exceeded.</summary>
+        MediaLimit = 27,
+        /// <summary>Preparation or fragment generation exceeded its deadline.</summary>
+        MediaGenerationTimeout = 28,
     }
 
     /// <summary>A failed library call, with its fixed result code.</summary>
@@ -86,6 +100,11 @@ namespace SendAirPlay2
 
         /// <summary>The loaded native library's interface version.</summary>
         public static int ApiVersion => (int)Native.sap2_playback_api_version();
+        /// <summary>Whether the loaded binary includes the optional stereo AAC backend.</summary>
+        public static bool StereoAacAvailable
+        {
+            get { RequireCompatibleLibrary(); return Native.sap2_stereo_aac_available() != 0; }
+        }
 
         /// <summary>The library's fixed name for a result code, such as "connection".</summary>
         public static string ResultName(ResultCode result)
@@ -161,6 +180,8 @@ namespace SendAirPlay2
         OwnershipLost = 4,
         /// <summary>A receiver connection failed.</summary>
         ConnectionLost = 5,
+        /// <summary>Conversion failed before another terminal reason was observed.</summary>
+        MediaFailure = 6,
     }
 
     /// <summary>Local channel of the first failure (SAP2_FAILURE_CHANNEL_*).</summary>
@@ -228,6 +249,10 @@ namespace SendAirPlay2
             PositionSeconds = status.HasPosition != 0 ? status.PositionSeconds : (double?)null;
             DurationSeconds = status.HasDuration != 0 ? status.DurationSeconds : (double?)null;
             PlaybackRate = status.HasPlaybackRate != 0 ? status.PlaybackRate : (double?)null;
+            MediaFailure = (MediaFailure)status.MediaFailure;
+            MediaCleanedUp = status.MediaCleanedUp != 0;
+            AuthoringFlags = (AuthoringFlags)status.AuthoringFlags;
+            SelectedAudioId = status.SelectedAudioId;
         }
 
         /// <summary>Handle phase.</summary>
@@ -256,5 +281,47 @@ namespace SendAirPlay2
         public double? DurationSeconds { get; }
         /// <summary>Playback rate, if known.</summary>
         public double? PlaybackRate { get; }
+        /// <summary>Local conversion failure, independent of receiver channel failures.</summary>
+        public MediaFailure MediaFailure { get; }
+        /// <summary>Session, HTTP reads, conversion worker and cache have drained.</summary>
+        public bool MediaCleanedUp { get; }
+        /// <summary>Master-playlist estimate provenance, not a whole-VOD accuracy claim.</summary>
+        public AuthoringFlags AuthoringFlags { get; }
+        /// <summary>Original selected source audio ID, or zero if none was prepared.</summary>
+        public ulong SelectedAudioId { get; }
+    }
+
+    /// <summary>Fixed conversion categories.</summary>
+    public enum MediaFailure
+    {
+        /// <summary>No conversion failure.</summary>
+        None = 0,
+        /// <summary>Unsupported source.</summary>
+        Unsupported = 1,
+        /// <summary>Malformed source.</summary>
+        Malformed = 2,
+        /// <summary>Source read failure.</summary>
+        Source = 3,
+        /// <summary>Decoder or encoder failure.</summary>
+        Codec = 4,
+        /// <summary>Resource or quota bound.</summary>
+        Limit = 5,
+        /// <summary>Host cache failure.</summary>
+        Cache = 6,
+        /// <summary>Generation deadline.</summary>
+        Timeout = 7,
+    }
+    /// <summary>Estimate provenance in the generated master playlist.</summary>
+    [Flags]
+    public enum AuthoringFlags
+    {
+        /// <summary>No estimate flags.</summary>
+        None = 0,
+        /// <summary>AAC rate comes from a bounded representative startup encode.</summary>
+        AudioEstimated = 1,
+        /// <summary>Copied media sizes are estimated.</summary>
+        CopiedSizesEstimated = 2,
+        /// <summary>Subtitle payload sizes were not measured.</summary>
+        SubtitleSizesUnmeasured = 4,
     }
 }

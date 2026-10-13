@@ -139,6 +139,113 @@ internal static class Program
         CredentialStore = store,
     };
 
+    private sealed class CacheCounters
+    {
+        internal int Clears, Releases;
+    }
+    private sealed class CountingCache : AacFragmentStore
+    {
+        private readonly CacheCounters counters;
+        internal CountingCache(CacheCounters counters) { this.counters = counters; }
+        protected override void Seal(ulong index, byte[] bytes, ReadControl control) => throw new IOException("synthetic cache failure");
+        protected override int Read(ulong index, ulong offset, byte[] buffer, int count, ReadControl control) => 0;
+        protected override void Clear() => Interlocked.Increment(ref counters.Clears);
+        protected override void OnReleased() => Interlocked.Increment(ref counters.Releases);
+    }
+    private static void ConversionOwnershipAndProbe()
+    {
+        group = "conversion ownership and probe";
+        var counters = new CacheCounters();
+        var source = new CountingSource();
+        var options = LoopbackOptions(new MemoryStore(new MemoryStore.Counters()));
+        options.Delivery = CastDelivery.StereoAacHls;
+        options.FragmentStore = new CountingCache(counters);
+        options.CacheQuotaBytes = 1024 * 1024;
+        if (SendAirPlay2Library.StereoAacAvailable)
+        {
+            using (var cast = Cast.Create(options, source))
+            {
+                GC.Collect(); GC.WaitForPendingFinalizers();
+                Check(counters.Clears == 0 && counters.Releases == 0, "callbacks stay rooted before Stop");
+                cast.Stop(); cast.Stop();
+                Check(counters.Clears == 1 && counters.Releases == 0 && cast.GetStatus().MediaCleanedUp,
+                      "never-started Stop clears once, and status extension layout matches");
+            }
+            Check(source.Releases == 1 && counters.Clears == 1 && counters.Releases == 1,
+                  "destroy releases managed source and cache exactly once");
+        }
+        else
+        {
+            Check(ResultOf(() => Cast.Create(options, source)) == ResultCode.Unsupported,
+                  "codec-free library explicitly refuses conversion");
+            Check(source.Releases == 1 && counters.Clears == 1 && counters.Releases == 1,
+                  "managed Create failure owns cache/source cleanup");
+        }
+        var borrowed = new CountingSource();
+        var cancelled = new CancellationToken(true);
+        Check(ResultOf(() => MediaTracks.Probe(borrowed, TimeSpan.FromSeconds(1), cancelled)) == ResultCode.Cancelled,
+              "probe cancellation is contained at the native boundary");
+        Check(borrowed.Releases == 0, "probe borrows source even on failure");
+        using (Cast.Create(LoopbackOptions(new MemoryStore(new MemoryStore.Counters())), borrowed)) { }
+        Check(borrowed.Releases == 1, "borrowed probe source can subsequently transfer to a cast");
+    }
+
+    private static void FilesystemCacheCallbacks()
+    {
+        group = "filesystem cache callbacks";
+        var root = Path.Combine(Path.GetTempPath(), "sap2-managed-cache-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var sibling = Path.Combine(root, "keep.txt");
+        File.WriteAllText(sibling, "host-owned sibling");
+        var cache = new FileAacFragmentStore(root);
+        var checkedCallbacks = false;
+        try
+        {
+            using (var table = new AacFragmentStore.NativeTable(cache))
+            {
+                var callbacks = Marshal.PtrToStructure<SendAirPlay2.Native.FragmentStore>(table.Pointer);
+                var seal = Marshal.GetDelegateForFunctionPointer<SendAirPlay2.Native.SealCallback>(callbacks.Seal);
+                var read = Marshal.GetDelegateForFunctionPointer<SendAirPlay2.Native.FragmentReadCallback>(callbacks.ReadAt);
+                SendAirPlay2.Native.ReadAtCallback sourceRead = (_, offset, output, capacity, control) =>
+                {
+                    if (!checkedCallbacks)
+                    {
+                        checkedCallbacks = true;
+                        var bytes = Marshal.AllocHGlobal(6);
+                        var result = Marshal.AllocHGlobal(4);
+                        try
+                        {
+                            Marshal.Copy(new byte[] { 10, 20, 30, 40, 50, 60 }, 0, bytes, 6);
+                            Check(seal(IntPtr.Zero, 9, bytes, new UIntPtr(6), control) == (int)ResultCode.Ok,
+                                  "managed filesystem seal accepts real borrowed native control");
+                            Check(read(IntPtr.Zero, 9, 2, result, new UIntPtr(4), control).ToUInt64() == 4 &&
+                                  Marshal.ReadByte(result) == 30 && Marshal.ReadByte(result, 3) == 60,
+                                  "managed cache preserves positional bytes");
+                            Check(seal(IntPtr.Zero, 9, bytes, new UIntPtr(6), control) == (int)ResultCode.MediaCache,
+                                  "duplicate fragment exception is contained in seal thunk");
+                        }
+                        finally { Marshal.FreeHGlobal(bytes); Marshal.FreeHGlobal(result); }
+                    }
+                    return UIntPtr.Zero; // Probe failure is expected; only its borrowed control is needed.
+                };
+                var source = new SendAirPlay2.Native.MediaSource
+                {
+                    StructSize = (uint)Marshal.SizeOf<SendAirPlay2.Native.MediaSource>(), Size = 4096,
+                    ReadAt = Marshal.GetFunctionPointerForDelegate(sourceRead)
+                };
+                SendAirPlay2.Native.CancelCallback cancel = _ => 0;
+                var probeResult = SendAirPlay2.Native.sap2_media_probe(ref source, 10000, IntPtr.Zero, cancel, out var tracks);
+                SendAirPlay2.Native.sap2_track_list_free(tracks);
+                Check(probeResult != 0 && checkedCallbacks, "native probe supplied callback control without taking source ownership");
+                GC.KeepAlive(sourceRead); GC.KeepAlive(cancel);
+            }
+        }
+        finally { cache.ReleaseUnowned(); }
+        Check(File.Exists(sibling) && Directory.GetDirectories(root).Length == 0,
+              "managed clear removes cast child and keeps host-owned sibling");
+        File.Delete(sibling); Directory.Delete(root, false);
+    }
+
     private static void VersionAndLayout()
     {
         group = "version and layout";
@@ -157,6 +264,9 @@ internal static class Program
         var castSize = Marshal.SizeOf<SendAirPlay2.Native.CastOptions>();
         SendAirPlay2.Native.sap2_cast_options_init_sized(ref cast, new UIntPtr((uint)castSize));
         Check(cast.StructSize == castSize, $"cast options size {castSize} matches the library");
+        Check(castSize == (IntPtr.Size == 8 ? 104 : 80) &&
+              Marshal.SizeOf<SendAirPlay2.Native.CastStatus>() == 104,
+              "literal v4 option/status sizes preserve both native ABIs");
         Check(cast.ReceiverPort == 7000 && cast.StartTimeoutMs == 30000 &&
                   cast.MediaConnections == 16 && cast.CredentialStore == IntPtr.Zero &&
                   cast.Delivery == (uint)CastDelivery.Progressive,
@@ -418,6 +528,8 @@ internal static class Program
         try
         {
             VersionAndLayout();
+            ConversionOwnershipAndProbe();
+            FilesystemCacheCallbacks();
             SourceOwnership();
             CallbackLifetime();
             CastWithStore();

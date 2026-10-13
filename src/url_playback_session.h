@@ -257,6 +257,8 @@ public:
     UrlPlaybackSession& operator=(UrlPlaybackSession&&) = delete;
 
     [[nodiscard]] SessionStatus status() const;
+    /// Allocation-free terminal observation for media supervision; includes MRP failure.
+    [[nodiscard]] bool terminal() const noexcept;
     [[nodiscard]] MrpPlaybackStatus playback_status() const;
     /// Synchronous correlated MRP controls. A command requires ownership of
     /// our URL item; rejection is reported without changing playback locally.

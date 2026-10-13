@@ -39,8 +39,10 @@ extern "C" {
  * 1: playback. 2: host credential stores, pairing, profile removal, and the
  *    PROFILE_EXISTS and PIN_TIMEOUT results. 3: the delivery option (HLS
  *    remux) and the MEDIA_UNSUPPORTED and MEDIA_MALFORMED results. Option
- *    structs of earlier versions (shorter struct_size) are still accepted. */
-#define SAP2_PLAYBACK_API_VERSION 3u
+ *    structs of earlier versions (shorter struct_size) are still accepted.
+ * 4: optional stereo AAC delivery, track probe, host fragment storage and
+ *    conversion failure/status extensions. */
+#define SAP2_PLAYBACK_API_VERSION 4u
 
 /* Results. Fixed-width values for foreign-function bindings. */
 #define SAP2_OK 0
@@ -66,9 +68,17 @@ extern "C" {
 /* Version 3, SAP2_DELIVERY_HLS_REMUX only: the media cannot be remuxed. */
 #define SAP2_ERROR_MEDIA_UNSUPPORTED 20 /* Container, codec or size the remux does not take. */
 #define SAP2_ERROR_MEDIA_MALFORMED 21   /* The container's structure is invalid. */
+#define SAP2_ERROR_AUDIO_SELECTION_REQUIRED 22
+#define SAP2_ERROR_AUDIO_TRACK_INVALID 23
+#define SAP2_ERROR_MEDIA_CODEC 24
+#define SAP2_ERROR_MEDIA_CACHE 25
+#define SAP2_ERROR_MEDIA_SOURCE 26
+#define SAP2_ERROR_MEDIA_LIMIT 27
+#define SAP2_ERROR_MEDIA_GENERATION_TIMEOUT 28
 
 /* Handle phases. ENDED means the session cleaned itself up after an end reason;
- * the media server keeps its listener until sap2_cast_stop() or destroy. */
+ * legacy delivery keeps HTTP until Stop/destroy. Stereo delivery also drains
+ * HTTP/conversion/cache automatically; check media_cleaned_up separately. */
 #define SAP2_PHASE_CREATED 0
 #define SAP2_PHASE_STARTING 1
 #define SAP2_PHASE_ACTIVE 2
@@ -94,6 +104,21 @@ extern "C" {
 #define SAP2_END_RECEIVER_STOP 3
 #define SAP2_END_OWNERSHIP_LOST 4
 #define SAP2_END_CONNECTION_LOST 5
+#define SAP2_END_MEDIA_FAILURE                                                                     \
+    6 /* Conversion failed before another terminal reason was observed. */
+
+/* Local conversion categories, independent of receiver channel failures. */
+#define SAP2_MEDIA_FAILURE_NONE 0u
+#define SAP2_MEDIA_FAILURE_UNSUPPORTED 1u
+#define SAP2_MEDIA_FAILURE_MALFORMED 2u
+#define SAP2_MEDIA_FAILURE_SOURCE 3u
+#define SAP2_MEDIA_FAILURE_CODEC 4u
+#define SAP2_MEDIA_FAILURE_LIMIT 5u
+#define SAP2_MEDIA_FAILURE_CACHE 6u
+#define SAP2_MEDIA_FAILURE_TIMEOUT 7u
+#define SAP2_AUTHORING_AUDIO_ESTIMATED 1u
+#define SAP2_AUTHORING_COPIED_SIZES_ESTIMATED 2u
+#define SAP2_AUTHORING_SUBTITLE_SIZES_UNMEASURED 4u
 
 /* First observed failure: local channel and fixed category, no peer text. */
 #define SAP2_FAILURE_CHANNEL_NONE 0
@@ -129,6 +154,10 @@ extern "C" {
  * then ignored. See docs/hls.md. */
 #define SAP2_DELIVERY_PROGRESSIVE 0u
 #define SAP2_DELIVERY_HLS_REMUX 1u
+/* Version 4, opt-in build: copy video and convert selected audio to 48 kHz,
+ * stereo AAC-LC. Requires a host-owned per-cast fragment store and quota.
+ * Selection uses original source IDs before codec filtering; no fallback. */
+#define SAP2_DELIVERY_STEREO_AAC_HLS 2u
 
 /* Option bounds. */
 #define SAP2_DEFAULT_RECEIVER_PORT 7000u
@@ -140,6 +169,8 @@ extern "C" {
 
 /** Runtime interface version; compare with SAP2_PLAYBACK_API_VERSION. */
 SAP2_API uint32_t sap2_playback_api_version(void);
+/** Nonzero only when this binary was built with SAP2_STEREO_AAC=ON. */
+SAP2_API int sap2_stereo_aac_available(void);
 
 /** Static fixed name for a result code ("ok", "invalid_argument", ...).
  * Unknown values return "unknown". Never NULL; never free it. */
@@ -150,7 +181,7 @@ typedef struct sap2_read_control sap2_read_control;
 
 /** Nonzero when the read should end now: the server is stopping, the request was
  * cancelled, or its absolute deadline passed. Poll during slow work. Returns
- * nonzero for NULL. Callable only from inside the read_at that received it. */
+ * nonzero for NULL. Callable only inside the read_at/seal that received it. */
 SAP2_API int sap2_read_should_stop(const sap2_read_control* control);
 
 /** Host-provided immutable media representation, such as a brokered file.
@@ -158,8 +189,10 @@ SAP2_API int sap2_read_should_stop(const sap2_read_control* control);
  * read_at copies up to `capacity` (at most 64 KiB) bytes starting at `offset`
  * into `buffer` and returns the count. Short reads are fine. Returning 0 before
  * the declared end fails that one HTTP request; the receiver may retry with a
- * new range. read_at runs concurrently on up to media_connections library
- * threads, so it must be thread-safe, must not retain `buffer` or `control`,
+ * new range in legacy delivery; stereo conversion source errors are terminal.
+ * Remux/probe/preparation read on their caller, and conversion reads on its
+ * worker. HTTP reads run on up to media_connections threads. All callbacks
+ * must be thread-safe, must not retain `buffer` or `control`,
  * and must not call any sap2_cast function for the owning handle.
  *
  * Ownership: after sap2_cast_create() returns SAP2_OK the handle owns
@@ -174,6 +207,64 @@ typedef struct sap2_media_source {
                       const sap2_read_control* control);
     void (*release)(void* context);
 } sap2_media_source;
+
+/** Per-cast immutable fragment storage, with host-selected backing storage.
+ * All callbacks must contain exceptions and must not call cast functions.
+ * seal publishes the complete fragment atomically, returning SAP2_OK on success;
+ * bytes (at most 1 MiB) and control are borrowed only during that call.
+ * read_at supports concurrent positional short reads (at most 64 KiB); zero
+ * before the fragment's end or a count above capacity is a terminal cache error.
+ * Poll control during slow seal/read work. Retain neither buffers nor control.
+ * clear is called exactly once after conversion workers and HTTP reads drain,
+ * including failed start and destroy without start; remove only this cast's data.
+ * Ownership transfers only on successful create. release, if provided, runs once
+ * at destroy after clear and all callbacks. No callback runs on failed create.
+ */
+typedef struct sap2_aac_fragment_store {
+    uint32_t struct_size;
+    void* context;
+    int32_t (*seal)(void* context, uint64_t index, const uint8_t* bytes, size_t length,
+                    const sap2_read_control* control);
+    size_t (*read_at)(void* context, uint64_t index, uint64_t offset, uint8_t* buffer,
+                      size_t capacity, const sap2_read_control* control);
+    void (*clear)(void* context);
+    void (*release)(void* context);
+} sap2_aac_fragment_store;
+
+#define SAP2_TRACK_OTHER 0u
+#define SAP2_TRACK_VIDEO 1u
+#define SAP2_TRACK_AUDIO 2u
+#define SAP2_CONTAINER_MP4 1u
+#define SAP2_CONTAINER_MATROSKA 2u
+/** Metadata only: IDs are original source track IDs, never filtered indexes.
+ * Text is bounded file data, possibly truncated UTF-8; treat it as untrusted.
+ * Probe support does not imply codec or receiver support. */
+typedef struct sap2_media_track {
+    uint32_t struct_size;
+    uint32_t kind;
+    uint64_t id;
+    uint32_t enabled;
+    uint32_t default_track;
+    uint32_t encoded;
+    uint32_t standard_timeline;
+    char codec[64];
+    char language[64];
+    char name[256];
+} sap2_media_track;
+typedef struct sap2_track_list sap2_track_list;
+/** Synchronous metadata probe, available without the codec backend. Borrows the
+ * source, never calls release. Deadline is 1..120000 ms. Optional should_cancel
+ * must be thread-safe, nonthrowing, and valid for this call; controls poll it too.
+ * *tracks is NULL on failure. Free the successful list with sap2_track_list_free.
+ */
+SAP2_API int32_t sap2_media_probe(const sap2_media_source* source, uint32_t timeout_ms,
+                                  void* context, int (*should_cancel)(void*),
+                                  sap2_track_list** tracks);
+SAP2_API size_t sap2_track_list_count(const sap2_track_list* tracks);
+SAP2_API uint32_t sap2_track_list_container(const sap2_track_list* tracks);
+SAP2_API int32_t sap2_track_list_get(const sap2_track_list* tracks, size_t index,
+                                     sap2_media_track* track);
+SAP2_API void sap2_track_list_free(sap2_track_list* tracks);
 
 typedef struct sap2_cast_options {
     uint32_t struct_size;
@@ -202,6 +293,11 @@ typedef struct sap2_cast_options {
      * structs of earlier versions. */
     uint32_t reserved;
     uint32_t delivery;
+    /* Version 4: keep ID beyond the full v3 size, including x86 tail padding. */
+    uint32_t reserved_v4;
+    uint64_t audio_track_id;    /* 0 auto; otherwise an original enabled audio ID. */
+    uint64_t cache_quota_bytes; /* Explicit finite quota, required for stereo delivery. */
+    const sap2_aac_fragment_store* fragment_store;
 } sap2_cast_options;
 
 /** Fill defaults for a struct of `struct_size` bytes, the caller's sizeof.
@@ -241,6 +337,12 @@ typedef struct sap2_cast_status {
     double position_seconds;
     double duration_seconds;
     double playback_rate;
+    /* Version 4 extension; written only if the complete extension fits. */
+    uint32_t media_failure;    /* SAP2_MEDIA_FAILURE_* */
+    uint32_t media_cleaned_up; /* Session, HTTP reads, conversion and cache drained. */
+    uint32_t authoring_flags;  /* SAP2_AUTHORING_* estimates; not an accuracy gate. */
+    uint32_t reserved_v4;
+    uint64_t selected_audio_id; /* Original ID; 0 for no prepared audio. */
 } sap2_cast_status;
 
 typedef struct sap2_cast sap2_cast;
@@ -257,7 +359,11 @@ SAP2_API int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_m
  * read_at on this thread; SAP2_ERROR_MEDIA_UNSUPPORTED or _MALFORMED if it
  * cannot be remuxed), start the media server, authenticate both receiver
  * sessions and start playback. The remux reads precede start_timeout_ms and
- * can be cancelled by sap2_cast_stop() like the rest of the start. Blocks until playback is
+ * can be cancelled by sap2_cast_stop() like the rest of the start. Stereo AAC
+ * delivery probes/selects and prepares under a separate 120-second deadline,
+ * before the receiver timeout, invoking source/cache callbacks on this caller.
+ * Selection/codec/source/cache/limit failures retain fixed categories and never
+ * retry a different audio track. Blocks until playback is
  * confirmed (one continuous second of forward playing within start_timeout_ms), failure, or
  * cancellation by sap2_cast_stop() from another thread. If the receiver
  * reports itself asleep, start first wakes it and waits up to 10 s for it to
@@ -285,13 +391,14 @@ SAP2_API int32_t sap2_cast_wait_for_change(sap2_cast* cast, uint32_t previous_st
 SAP2_API int32_t sap2_cast_command(sap2_cast* cast, uint32_t command, double position_seconds);
 
 /** Local teardown: cancel a pending start or command, stop the session in its
- * fixed order, then stop the media server and join all its read callbacks.
+ * fixed order, then stop the media server and join all its read callbacks,
+ * then stop/join conversion and clear the per-cast cache if present.
  * Idempotent and thread-safe with other calls on the same handle; the first end
  * reason is kept (SAP2_END_SENDER_STOP if none). Must not be called from
- * read_at. After it returns no read_at runs. Returns SAP2_OK. */
+ * read_at/seal/clear. After it returns no read_at or seal runs. Returns SAP2_OK. */
 SAP2_API int32_t sap2_cast_stop(sap2_cast* cast);
 
-/** Stop if needed, release the media source and free the handle. NULL is a
+/** Stop if needed, release the media source/cache contexts and free the handle. NULL is a
  * no-op. Every other call on this handle must have returned, and none may follow. */
 SAP2_API void sap2_cast_destroy(sap2_cast* cast);
 

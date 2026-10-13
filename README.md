@@ -28,14 +28,15 @@ C# binding and a development CLI.
   can also be cast as is.
 
 Not in scope: DRM-protected media, screen mirroring, system audio capture,
-multiroom audio and transcoding.
+multiroom audio and general video transcoding.
 
 An optional [offline stereo-AAC codec/packaging spike](docs/stereo-aac-codec-spike.md)
 now exercises audio decoding/downmixing in a separate development DLL and
 AppContainer host. It does not add transcoding to casting or change the
-published package. An optional private [stereo AAC HLS builder/cache](docs/stereo-aac-hls.md)
-now passes compressed-movie offline tests; public playback integration, packaged
-runtime and receiver validation remain under development.
+published package. The optional [stereo AAC playback integration](docs/stereo-aac-playback.md)
+adds explicit video delivery with a selected source audio track downmixed to
+stereo AAC, host-owned cache callbacks and API version 4. It defaults OFF and
+has offline validation only; packaged runtime and receiver validation remain gates.
 
 ## Build
 

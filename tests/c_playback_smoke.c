@@ -56,9 +56,23 @@ struct options_v2 {
     double start_position_seconds;
     const sap2_credential_store* credential_store;
 };
+struct options_v3 {
+    uint32_t struct_size;
+    const char* receiver_address;
+    uint16_t receiver_port;
+    const char* profile;
+    const char* content_type;
+    uint32_t start_timeout_ms;
+    uint32_t media_connections;
+    double start_position_seconds;
+    const sap2_credential_store* credential_store;
+    uint32_t reserved;
+    uint32_t delivery;
+};
 
 static sap2_cast_options valid_options(void) {
     sap2_cast_options options;
+    memset(&options, 0, sizeof(options));
     sap2_cast_options_init(&options);
     options.receiver_address = "127.0.0.1";
     /* Absent by construction; a real profile would never use this name. */
@@ -81,7 +95,7 @@ static int create_result(const sap2_cast_options* options) {
 
 static void version_and_names(void) {
     check(sap2_playback_api_version() == SAP2_PLAYBACK_API_VERSION, "runtime version");
-    check(SAP2_PLAYBACK_API_VERSION == 3, "the delivery option is version 3");
+    check(SAP2_PLAYBACK_API_VERSION == 4, "stereo delivery is version 4");
     check(strcmp(sap2_result_name(SAP2_ERROR_MEDIA_UNSUPPORTED), "media_unsupported") == 0 &&
               strcmp(sap2_result_name(SAP2_ERROR_MEDIA_MALFORMED), "media_malformed") == 0,
           "remux result names");
@@ -144,6 +158,12 @@ static void option_defaults(void) {
     sap2_cast_options_init_sized(&options, v1_size - 1);
     check(untouched((const unsigned char*)&options, sizeof(options)),
           "sized init ignores a struct smaller than version 1");
+    memset(&options, 0xA5, sizeof(options));
+    sap2_cast_options_init_sized(&options, sizeof(struct options_v3));
+    check(offsetof(sap2_cast_options, audio_track_id) >= sizeof(struct options_v3) &&
+              untouched((const unsigned char*)&options + sizeof(struct options_v3),
+                        sizeof(options) - sizeof(struct options_v3)),
+          "version 4 fields lie beyond v3 including x86 padding; sized init preserves canary");
     sap2_cast_options_init(NULL);
     sap2_cast_options_init_sized(NULL, sizeof(options));
 }
@@ -179,7 +199,7 @@ static void argument_validation(void) {
     options.credential_store = NULL;
     options.delivery = SAP2_DELIVERY_HLS_REMUX;
     check(create_result(&options) == SAP2_OK, "HLS remux delivery is accepted at create");
-    options.delivery = 2;
+    options.delivery = 99;
     check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT, "unknown delivery");
     /* A version 2 host passes sizeof its struct, tail padding included (4 bytes
      * on 32-bit targets); delivery lies beyond it and is never read. */
@@ -239,7 +259,12 @@ static void unstarted_lifecycle(void) {
     check(status.phase == SAP2_PHASE_CREATED && status.start_result == SAP2_OK &&
               status.playback_state == SAP2_STATE_NONE && status.end_reason == SAP2_END_NONE,
           "created snapshot");
-    status.struct_size = sizeof(status) - 1;
+    memset(&status, 0xA5, sizeof(status));
+    status.struct_size = 80; /* Literal status size published in API versions 1..3. */
+    check(sap2_cast_get_status(cast, &status) == SAP2_OK &&
+              untouched((const unsigned char*)&status + 80, sizeof(status) - 80),
+          "old status layout remains accepted without extension writes");
+    status.struct_size = offsetof(sap2_cast_status, media_failure) - 1;
     check(sap2_cast_get_status(cast, &status) == SAP2_ERROR_INVALID_ARGUMENT,
           "truncated status struct");
     status.struct_size = sizeof(status);

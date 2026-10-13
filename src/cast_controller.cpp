@@ -18,6 +18,8 @@ namespace {
 // The receiver keeps open-ended range requests while it buffers; use the media
 // server's maximum per-request budget, as the `cast` CLI does.
 constexpr std::uint32_t media_request_timeout_ms = 600000;
+constexpr auto media_preparation_timeout = std::chrono::seconds(120);
+constexpr auto media_monitor_interval = std::chrono::milliseconds(20);
 
 /// A local failure that already has its public category.
 class CastFailure : public std::runtime_error {
@@ -39,7 +41,70 @@ CastDependencies with_defaults(CastDependencies dependencies) {
     if (!dependencies.load_credentials) {
         dependencies.load_credentials = native_loader();
     }
+    if (!dependencies.prepare_stereo) {
+        dependencies.prepare_stereo = prepare_stereo_media;
+    }
     return dependencies;
+}
+CastSettings with_cache_cleanup(CastSettings settings) {
+    if (settings.fragment_store.clear) {
+        auto cleared = std::make_shared<std::atomic_bool>(false);
+        auto clear = std::move(settings.fragment_store.clear);
+        settings.fragment_store.clear = [cleared, clear = std::move(clear)] {
+            if (!cleared->exchange(true)) {
+                clear();
+            }
+        };
+    }
+    return settings;
+}
+CastResult media_result(MediaPreparationFailure reason) noexcept {
+    switch (reason) {
+    case MediaPreparationFailure::backend_unavailable:
+        return CastResult::unsupported;
+    case MediaPreparationFailure::unsupported:
+        return CastResult::media_unsupported;
+    case MediaPreparationFailure::malformed:
+        return CastResult::media_malformed;
+    case MediaPreparationFailure::selection_required:
+        return CastResult::audio_selection_required;
+    case MediaPreparationFailure::invalid_selection:
+        return CastResult::audio_track_invalid;
+    case MediaPreparationFailure::source_error:
+        return CastResult::media_source;
+    case MediaPreparationFailure::codec_error:
+        return CastResult::media_codec;
+    case MediaPreparationFailure::resource_limit:
+        return CastResult::media_limit;
+    case MediaPreparationFailure::cache_error:
+        return CastResult::media_cache;
+    case MediaPreparationFailure::timeout:
+        return CastResult::media_generation_timeout;
+    case MediaPreparationFailure::cancelled:
+        return CastResult::cancelled;
+    }
+    return CastResult::internal;
+}
+CastResult conversion_result(StereoAacHlsFailure reason) noexcept {
+    switch (reason) {
+    case StereoAacHlsFailure::none:
+        return CastResult::ok;
+    case StereoAacHlsFailure::unsupported:
+        return CastResult::media_unsupported;
+    case StereoAacHlsFailure::malformed:
+        return CastResult::media_malformed;
+    case StereoAacHlsFailure::source_error:
+        return CastResult::media_source;
+    case StereoAacHlsFailure::codec_error:
+        return CastResult::media_codec;
+    case StereoAacHlsFailure::resource_limit:
+        return CastResult::media_limit;
+    case StereoAacHlsFailure::cache_error:
+        return CastResult::media_cache;
+    case StereoAacHlsFailure::generation_timeout:
+        return CastResult::media_generation_timeout;
+    }
+    return CastResult::internal;
 }
 
 CastResult transport_result(TransportError reason) noexcept {
@@ -198,6 +263,8 @@ CastResult cast_start_result(const std::exception_ptr& failure,
     } catch (const RemuxException& error) {
         return error.reason() == RemuxFailure::malformed ? CastResult::media_malformed
                                                          : CastResult::media_unsupported;
+    } catch (const MediaPreparationException& error) {
+        return media_result(error.reason());
     } catch (const std::invalid_argument&) {
         return CastResult::invalid_argument;
     } catch (const std::bad_alloc&) {
@@ -227,8 +294,8 @@ CastResult cast_command_result(const std::exception_ptr& failure) noexcept {
 
 CastController::CastController(CastSettings settings, MediaSource source,
                                CastDependencies dependencies)
-    : settings_(std::move(settings)), dependencies_(with_defaults(std::move(dependencies))),
-      source_(std::move(source)) {}
+    : settings_(with_cache_cleanup(std::move(settings))),
+      dependencies_(with_defaults(std::move(dependencies))), source_(std::move(source)) {}
 
 CastController::~CastController() {
     stop();
@@ -247,6 +314,22 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
     std::optional<RemuxedHls> remuxed;
     if (settings_.delivery == CastDelivery::hls_remux) {
         remuxed = remux_to_hls(source_, &cancel_requested_);
+    } else if (settings_.delivery == CastDelivery::stereo_aac_hls) {
+        const MediaReadContext context{&cancel_requested_, &cancel_requested_,
+                                       std::chrono::steady_clock::now() +
+                                           media_preparation_timeout};
+        auto prepared = dependencies_.prepare_stereo(source_, settings_.fragment_store,
+                                                     settings_.cache_quota_bytes, context,
+                                                     settings_.audio_track_id);
+        if (!prepared) {
+            throw CastFailure(CastResult::internal);
+        }
+        {
+            std::lock_guard<std::mutex> lock(state_mutex_);
+            prepared_media_ = std::move(prepared);
+        }
+        // Begin supervision before any HTTP fetch can start conversion.
+        media_monitor_ = std::thread([this] { monitor_media(); });
     }
 
     MediaServerOptions server_options;
@@ -256,9 +339,14 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
     server_options.request_timeout_ms = media_request_timeout_ms;
     server_options.content_type = settings_.content_type;
     try {
-        server =
-            remuxed ? MediaServer::start_resource_set(std::move(remuxed->resources), server_options)
-                    : MediaServer::start(source_, server_options);
+        if (prepared_media_) {
+            server = MediaServer::start_resource_set(prepared_media_->presentation().resources,
+                                                     server_options);
+        } else {
+            server = remuxed ? MediaServer::start_resource_set(std::move(remuxed->resources),
+                                                               server_options)
+                             : MediaServer::start(source_, server_options);
+        }
     } catch (const std::invalid_argument&) {
         throw; // Address or content type rejected by the server's own validation.
     } catch (const std::bad_alloc&) {
@@ -269,7 +357,10 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
 
     UrlPlaybackOptions options;
     options.receiver = {settings_.receiver_address, settings_.receiver_port, 0};
-    options.media_url = remuxed ? server->resource_url(remuxed->playlist_name) : server->url();
+    options.media_url = prepared_media_
+                            ? server->resource_url(prepared_media_->presentation().playlist_name)
+                        : remuxed ? server->resource_url(remuxed->playlist_name)
+                                  : server->url();
     options.start_position_seconds = settings_.start_position_seconds;
     options.start_timeout = settings_.start_timeout;
     options.connect = dependencies_.connect;
@@ -277,6 +368,9 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
         dependencies_.adjust_session(options);
     }
     session = UrlPlaybackSession::start(*credentials, std::move(options), &cancel_requested_);
+    if (dependencies_.after_session_start) {
+        dependencies_.after_session_start();
+    }
 }
 
 CastResult CastController::start() noexcept {
@@ -294,26 +388,41 @@ CastResult CastController::start() noexcept {
     try {
         run_start(server, session);
     } catch (...) {
-        // A requested stop wins over the category the interrupted step raised.
-        result = cancel_requested_ ? CastResult::cancelled
-                                   : cast_start_result(std::current_exception(), rejected_status);
-    }
-    if (!session && server) {
-        // UrlPlaybackSession::start has already joined its own cleanup.
-        server->stop();
+        // Preserve the first observed cause; late conversion failure must not
+        // replace an earlier user Stop with a different start result.
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        result = media_failure_first_ ? conversion_result(media_failure_.load())
+                 : cancel_requested_ ? CastResult::cancelled
+                                     : cast_start_result(std::current_exception(), rejected_status);
     }
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
-        if (session) {
-            // A stop() that arrived after the session started still tears it
-            // down; report the start as cancelled so the caller does not race it.
-            if (cancel_requested_) {
-                result = CastResult::cancelled;
-            }
-            phase_ = CastPhase::active;
-        } else {
-            phase_ = CastPhase::start_failed;
+        // Linearize publication against Stop and fatal conversion, including a
+        // failure the polling monitor has not observed yet. Keep starting until
+        // failed-start cleanup completes, so Stop cannot return ahead of it.
+        observe_media_failure_locked(session.get());
+        if (cancel_requested_) {
+            result = media_failure_first_ ? conversion_result(media_failure_.load())
+                                          : CastResult::cancelled;
         }
+        if (session && result == CastResult::ok) {
+            phase_ = CastPhase::active;
+            start_result_ = result;
+            server_ = std::move(server);
+            session_ = std::move(session);
+            state_changed_.notify_all();
+            return result;
+        }
+    }
+    monitor_cancelled_ = true;
+    state_changed_.notify_all();
+    join_media_monitor();
+    // Also drain a confirmed but interrupted local session. A failure return
+    // guarantees every session/server/conversion worker and cache callback ended.
+    drain_media(session.get(), server.get());
+    {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        phase_ = CastPhase::start_failed;
         start_result_ = result;
         rejected_status_ = rejected_status;
         server_ = std::move(server);
@@ -331,6 +440,13 @@ CastSnapshot CastController::snapshot() const {
         snapshot.phase = phase_;
         snapshot.start_result = start_result_;
         snapshot.rejected_status = rejected_status_;
+        snapshot.media_failure = media_failure_.load();
+        snapshot.media_failure_first = media_failure_first_;
+        snapshot.media_cleaned_up = media_cleaned_up_.load();
+        if (prepared_media_) {
+            snapshot.selected_audio_id = prepared_media_->selected_audio_id();
+            snapshot.authoring_flags = prepared_media_->authoring_flags();
+        }
         session = session_.get();
     }
     if (session) {
@@ -392,7 +508,9 @@ CastResult CastController::command(PlaybackCommand command, double position_seco
 }
 
 void CastController::stop() noexcept {
+    sender_stop_requested_ = true;
     cancel_requested_ = true;
+    std::lock_guard<std::mutex> stopped(stop_mutex_);
     UrlPlaybackSession* session = nullptr;
     MediaServer* server = nullptr;
     {
@@ -404,17 +522,82 @@ void CastController::stop() noexcept {
         if (phase_ == CastPhase::active) {
             session = session_.get();
             server = server_.get();
+        } else if (phase_ == CastPhase::created) {
+            // Close the create/start race before invoking host cache cleanup.
+            phase_ = CastPhase::stopped;
         }
     }
-    if (session) {
-        std::lock_guard<std::mutex> teardown(teardown_mutex_);
-        session->stop();
-        server->stop(); // After session cleanup; joins every source read.
-    }
+    monitor_cancelled_ = true;
+    state_changed_.notify_all();
+    join_media_monitor();
+    drain_media(session, server);
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
         phase_ = CastPhase::stopped;
     }
+    state_changed_.notify_all();
+}
+void CastController::join_media_monitor() noexcept {
+    std::lock_guard<std::mutex> join(monitor_join_mutex_);
+    if (media_monitor_.joinable()) {
+        media_monitor_.join();
+    }
+}
+void CastController::drain_media(UrlPlaybackSession* session, MediaServer* server) noexcept {
+    std::lock_guard<std::mutex> teardown(teardown_mutex_);
+    if (session) {
+        session->stop();
+    }
+    if (server) {
+        server->stop();
+    }
+    if (prepared_media_) {
+        prepared_media_->stop();
+    }
+    if (settings_.fragment_store.clear) {
+        try {
+            settings_.fragment_store.clear();
+        } catch (...) {
+        }
+    }
+    media_cleaned_up_ = true;
+}
+void CastController::monitor_media() noexcept {
+    for (;;) {
+        UrlPlaybackSession* session = nullptr;
+        MediaServer* server = nullptr;
+        CastPhase phase;
+        {
+            std::unique_lock<std::mutex> lock(state_mutex_);
+            state_changed_.wait_for(lock, media_monitor_interval,
+                                    [this] { return monitor_cancelled_.load(); });
+            if (monitor_cancelled_) {
+                return;
+            }
+            phase = phase_;
+            session = session_.get();
+            server = server_.get();
+            observe_media_failure_locked(session);
+        }
+        if (phase == CastPhase::active && session &&
+            (media_failure_.load() != StereoAacHlsFailure::none || session->terminal())) {
+            drain_media(session, server);
+            state_changed_.notify_all();
+            return;
+        }
+    }
+}
+void CastController::observe_media_failure_locked(const UrlPlaybackSession* session) noexcept {
+    if (!prepared_media_ || media_failure_.load() != StereoAacHlsFailure::none) {
+        return;
+    }
+    const auto failure = prepared_media_->failure();
+    if (failure == StereoAacHlsFailure::none) {
+        return;
+    }
+    media_failure_first_ = !sender_stop_requested_ && !(session && session->terminal());
+    media_failure_ = failure;
+    cancel_requested_ = true;
     state_changed_.notify_all();
 }
 } // namespace send_airplay2::detail
