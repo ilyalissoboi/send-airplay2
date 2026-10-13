@@ -1941,3 +1941,9 @@ passes. See [cold synthesis, final padding, clock and authoring limits](stereo-a
 No receiver, speaker, discrete-surround, new packaged builder runtime or package
 publication is included. Manually observed lip sync/seeks/controls/EOF remain
 required after explicit public/packaged integration; offline PCM is not that proof.
+PR #51 merged as `e09c57f` with all 16 checks passed at final head `475ae61`
+in run `38330651001`, and both review threads resolved. The final declaration follow-up omits master/audio
+independence claims for cold AAC synthesis, on fresh branch
+`codex/aac-hls-independence`: its original `9994955` was pushed after PR #51
+had merged and was not included. Inspect its own PR-head CI separately; neither
+code change adds receiver evidence.
