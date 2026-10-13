@@ -299,6 +299,14 @@ struct InputAudioFormat {
     int sample_format = -1;
     int channels = 0;
     std::uint64_t channel_mask = 0;
+    bool established = false; ///< True only after an actual decoded frame passes validation.
+};
+/// Opt-in fixed-frame sample grid for HLS joins. Seed at presentation start;
+/// rounded Matroska timestamps alone cannot define a stable seek epoch phase.
+struct AudioCadence {
+    bool enabled = false;
+    int frame_samples = 0;
+    std::int64_t origin_input_sample = 0;
 };
 } // namespace
 
@@ -312,6 +320,7 @@ struct AudioDecoderSource::Impl {
     int stream_index = -1;
     bool usable = true;
     InputAudioFormat input_format;
+    AudioCadence cadence;
 
     Impl(const MediaSource& source, std::uint64_t size) : reader{source, size} {}
     void open_format() {
@@ -402,15 +411,25 @@ namespace {
 class WindowDecoder {
 public:
     WindowDecoder(AVCodecContext& codec, AVStream& stream, Reader& reader,
-                  InputAudioFormat& input_format, DecodedAudioWindow& output, std::uint32_t count)
+                  InputAudioFormat& input_format, AudioCadence& cadence, DecodedAudioWindow& output,
+                  std::uint32_t count)
         : codec_(codec), stream_(stream), reader_(reader), expected_format_(input_format),
-          output_(output), count_(count), frame_(av_frame_alloc()), packet_(av_packet_alloc()) {
+          cadence_(cadence), output_(output), count_(count), frame_(av_frame_alloc()),
+          packet_(av_packet_alloc()) {
         require(frame_ && packet_, AudioDecodeFailure::codec_error,
                 "audio window allocation failed");
         const auto quantum = av_rescale_q_rnd(1, stream.time_base, output_clock, AV_ROUND_UP);
         require(quantum > 0 && quantum <= output_rate, AudioDecodeFailure::unsupported,
                 "audio timestamp clock is unsupported");
         output_.timestamp_precision_samples = static_cast<std::uint32_t>(quantum);
+        // A previously established format also describes an empty post-EOF
+        // window, even when a far-late seek returns no additional frames.
+        if (input_format.established && input_format.sample_format >= 0 &&
+            input_format.channels > 0 && input_format.channels <= 8 &&
+            input_format.channel_mask != 0) {
+            output_.channels = static_cast<std::uint32_t>(input_format.channels);
+            output_.channel_mask = input_format.channel_mask;
+        }
     }
     void run(AVFormatContext& format) {
         std::size_t packets = 0;
@@ -451,6 +470,7 @@ private:
     AVStream& stream_;
     Reader& reader_;
     InputAudioFormat& expected_format_;
+    AudioCadence& cadence_;
     DecodedAudioWindow& output_;
     std::uint32_t count_;
     Frame frame_;
@@ -465,7 +485,7 @@ private:
     std::int64_t covered_ = 0;
     bool complete_ = false;
 
-    void configure(const AVFrame& frame, std::int64_t timestamp) {
+    void configure(const AVFrame& frame, std::int64_t timestamp, std::int64_t input_position) {
         require(frame.ch_layout.order == AV_CHANNEL_ORDER_NATIVE &&
                     av_channel_layout_check(&frame.ch_layout) && frame.ch_layout.nb_channels >= 1 &&
                     frame.ch_layout.nb_channels <= 8 && frame.sample_rate >= 8000 &&
@@ -483,7 +503,8 @@ private:
                      expected_format_.channel_mask == input_mask_),
                 AudioDecodeFailure::unsupported,
                 "selected audio format changed across seek epochs");
-        expected_format_ = {input_rate_, input_format_, frame.ch_layout.nb_channels, input_mask_};
+        expected_format_ = {input_rate_, input_format_, frame.ch_layout.nb_channels, input_mask_,
+                            true};
         output_.channels = static_cast<std::uint32_t>(frame.ch_layout.nb_channels);
         output_.channel_mask = input_mask_;
         output_.samples.assign(static_cast<std::size_t>(count_) * output_.channels, 0.0F);
@@ -498,16 +519,14 @@ private:
         require(resampler_ != nullptr, AudioDecodeFailure::codec_error,
                 "resampler allocation failed");
         checked(swr_init(resampler_.get()));
-        align_resampler_phase(frame);
+        align_resampler_phase(frame, input_position);
     }
     /// Start each epoch on the same rational input/output phase as presentation
     /// sample zero. Dummy history is discarded during preroll, never a seek offset.
-    void align_resampler_phase(const AVFrame& frame) {
+    void align_resampler_phase(const AVFrame& frame, std::int64_t input_position) {
         const auto period = input_rate_ / std::gcd(input_rate_, output_rate);
         require(period <= 8192, AudioDecodeFailure::unsupported,
                 "audio resampling phase period is unsupported");
-        const auto input_position =
-            av_rescale_q(frame.pts, stream_.time_base, AVRational{1, input_rate_});
         const auto padding = static_cast<int>((input_position % period + period) % period);
         next_output_ =
             av_rescale_q(input_position - padding, AVRational{1, input_rate_}, output_clock);
@@ -527,22 +546,54 @@ private:
                                        static_cast<AVSampleFormat>(input_format_)));
         convert(silence->extended_data, padding);
     }
+    std::int64_t input_position(const AVFrame& frame) {
+        const auto position =
+            av_rescale_q(frame.pts, stream_.time_base, AVRational{1, frame.sample_rate});
+        if (!cadence_.enabled) {
+            return position;
+        }
+        const auto quantum =
+            av_rescale_q_rnd(1, stream_.time_base, AVRational{1, frame.sample_rate}, AV_ROUND_UP);
+        if (!cadence_.frame_samples) {
+            require(output_.first_sample == 0 && frame.nb_samples > 2 * (quantum + 1),
+                    AudioDecodeFailure::unsupported,
+                    "canonical Matroska clock must start at zero with unambiguous frames");
+            cadence_.frame_samples = frame.nb_samples;
+            cadence_.origin_input_sample = position;
+        }
+        require(frame.nb_samples == cadence_.frame_samples, AudioDecodeFailure::unsupported,
+                "canonical Matroska frame cadence changed");
+        const auto distance = position - cadence_.origin_input_sample;
+        const auto step = cadence_.frame_samples;
+        const auto frame_number =
+            distance >= 0 ? (distance + step / 2) / step : -((-distance + step / 2) / step);
+        const auto snapped = cadence_.origin_input_sample + frame_number * step;
+        require(position >= snapped - quantum - 1 && position <= snapped + quantum + 1,
+                AudioDecodeFailure::unsupported,
+                "Matroska timestamp is off the canonical frame grid");
+        return snapped;
+    }
     void consume(const AVFrame& frame) {
         reader_.check();
         require(frame.nb_samples > 0 && frame.nb_samples <= maximum_frame_samples &&
-                    frame.pts != AV_NOPTS_VALUE,
+                    frame.pts != AV_NOPTS_VALUE && frame.sample_rate >= 8000 &&
+                    frame.sample_rate <= 192000,
                 AudioDecodeFailure::unsupported, "audio frame timestamp or length is unsupported");
         if (codec_.codec_id == AV_CODEC_ID_DTS) {
             require(codec_.profile == AV_PROFILE_DTS, AudioDecodeFailure::unsupported,
                     "DTS input is outside the tested core profile");
         }
-        const auto timestamp = av_rescale_q(frame.pts, stream_.time_base, output_clock);
+        const auto position = input_position(frame);
+        const auto timestamp =
+            cadence_.enabled
+                ? av_rescale_q(position, AVRational{1, frame.sample_rate}, output_clock)
+                : av_rescale_q(frame.pts, stream_.time_base, output_clock);
         require(timestamp >= -static_cast<std::int64_t>(maximum_input_samples) &&
                     timestamp <= static_cast<std::int64_t>(maximum_presentation_samples),
                 AudioDecodeFailure::unsupported,
                 "audio frame timestamp exceeds presentation bounds");
         if (!resampler_) {
-            configure(frame, timestamp);
+            configure(frame, timestamp, position);
         }
         require(frame.sample_rate == input_rate_ && frame.format == input_format_ &&
                     frame.ch_layout.order == AV_CHANNEL_ORDER_NATIVE &&
@@ -615,10 +666,14 @@ private:
 
 AudioDecoderSource::AudioDecoderSource(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 AudioDecoderSource::~AudioDecoderSource() = default;
+void validate_audio_codec_backend() {
+    validate_backend();
+}
 
 std::unique_ptr<AudioDecoderSource>
 AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& context,
-                         std::optional<std::uint64_t> explicit_track_id) {
+                         std::optional<std::uint64_t> explicit_track_id,
+                         bool canonical_matroska_clock) {
     require(source.size && source.read_at, AudioDecodeFailure::source_error,
             "audio source callbacks missing");
     validate_backend();
@@ -638,6 +693,8 @@ AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& cont
     auto impl = std::make_unique<Impl>(snapshot, size);
     impl->selected = inventory.tracks[selection.track_index];
     impl->container = inventory.container;
+    impl->cadence.enabled =
+        canonical_matroska_clock && inventory.container == SourceContainer::matroska;
     validate_timeline(impl->selected, inventory.container);
     (void)source_codec(impl->selected, inventory.container);
     require(impl->selected.seek_preroll_ns <= 10ULL * 1'000'000'000,
@@ -661,7 +718,7 @@ DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, s
         window.source_track_id = impl_->selected.id;
         window.first_sample = first_sample;
         WindowDecoder decoder(*impl_->codec, *impl_->format->streams[impl_->stream_index],
-                              impl_->reader, impl_->input_format, window, count);
+                              impl_->reader, impl_->input_format, impl_->cadence, window, count);
         decoder.run(*impl_->format);
         impl_->reader.check();
         return window;

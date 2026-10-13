@@ -1927,3 +1927,17 @@ documentation, not new receiver or firmware coverage.
 head `bc4b381`. Fork PR #12 merged as `ce782356` at `0cd9ff56` (docs-only;
 no CI checks reported). The planning gate is complete. No conversion backend,
 new package or receiver run is added; the deferred hardware gates remain deferred.
+
+**D70 merge checkpoint (2026-10-13):** PR #50 merged as `65bb8a7`, after all
+16 CI checks passed at final head `8b1adf2` in run `38280966375`. This adds no
+receiver or packaged runtime evidence.
+
+**D71 offline HLS/cache increment (2026-10-13):** selected surround source PCM
+becomes separate stereo AAC resources alongside copied video and subtitles.
+Ten compressed movies pass global duration/joins, video payload, subtitles,
+edits/short-source silence and selected cache lifecycle tests. Codec/decoder/HLS
+CTest passes 3/3, baseline static/shared 35/35 and 36/36, and x64 UWP compilation
+passes. See [cold synthesis, final padding, clock and authoring limits](stereo-aac-hls.md).
+No receiver, speaker, discrete-surround, new packaged builder runtime or package
+publication is included. Manually observed lip sync/seeks/controls/EOF remain
+required after explicit public/packaged integration; offline PCM is not that proof.

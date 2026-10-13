@@ -9,9 +9,29 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D70 selected decoder increment (2026-10-13), authorized by the user's Proceed.**
-PR #49 merged as `a7905db` after all 16 checks passed at `e8697f1` in run
-`38271333676`. Branch `codex/audio-decoder-seeking` starts from that main checkpoint.
+**D71 stereo AAC HLS increment (2026-10-13), authorized by the user's Proceed.**
+[PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51), branch
+`codex/stereo-aac-hls`, starts from merged PR #50 (`65bb8a7`). The optional
+private [stereo AAC HLS builder](stereo-aac-hls.md) connects selected PCM to the
+fixed downmix, AAC encoding, separate audio resources and bounded host-backed
+lazy cache. Copied video and subtitles retain their original payloads/associations.
+Compressed multi-segment joins, edited/short audio, B-frames, cache cancellation,
+coalescing and cleanup pass desktop offline checks. The HLS builder opts into a
+validated fixed-frame Matroska clock to stabilize seek phase. Video timeline,
+GOP, bandwidth estimates and cold AAC synthesis limits are documented explicitly.
+Local codec/decoder/HLS CTest passes 3/3; baseline static/shared passes 35/35 and
+36/36; x64 UWP compilation passes. Actual-head CI is a separate PR gate.
+PR #51 review fixes derive a common rendition target after audio snapping and
+arm host cache cleanup before all startup failures, with regression tests.
+Public ABI/playback/bindings/CLI, authoring/performance edge gates, authorized
+host storage, packaged runtime and receiver observations remain next. No package
+is published; speaker audio and discrete surround output remain deferred.
+
+**D70 selected decoder increment merged (2026-10-13).**
+PR #50 merged as `65bb8a7` after all 16 checks passed at final head `8b1adf2`
+in run `38280966375`; its optional-include review is fixed and resolved.
+It branched from PR #49 checkpoint `a7905db` (`e8697f1`, 16 passing checks
+in run `38271333676`).
 The optional private [selected decoder/seek-window adapter](audio-decoder-source.md)
 connects native MP4/MKV identities to actual FFmpeg streams, preserves source
 channels in 48 kHz PCM, rebuilds decoder/resampler history and validates edited
@@ -22,11 +42,11 @@ existing codec-probe checks, including resampling phase, edits/CodecDelay exactl
 once, forward/backward seeks, format changes, EOF and callback/lifecycle failures.
 The x64 UWP adapter/probe builds and app CRT/import inspection pass; this is
 compile/binary evidence, not a new packaged adapter runtime or receiver run.
-Full local baseline CTest passes static 35/35 and shared 36/36; actual current-head
-CI remains a separate gate. Formatting, whitespace and fixture provenance checks
+Full local baseline CTest passes static 35/35 and shared 36/36; the final-head
+CI and merge gate are complete. Formatting, whitespace and fixture provenance checks
 are part of the PR gate.
-Stereo downmix/AAC fMP4/HLS generation/cache and public/packaged/receiver gates
-remain next. DTS-HD/dependent-substream and long-movie performance proof remain
+D71 above now supplies private stereo downmix/AAC fMP4/HLS generation/cache;
+public/packaged/receiver gates remain next. DTS-HD/dependent-substream and long-movie performance proof remain
 unvalidated; speaker/surround-output work stays deferred. No package is published.
 
 **D69 native source increment (2026-10-12), authorized by the user's Proceed.**
@@ -48,8 +68,8 @@ seek metadata. See [contracts and validation scope](audio-source-inventory.md).
 Focused synthetic checks and full local static/shared CTest pass (35/35, 36/36).
 The final PR-head CI gate is complete. No new delivery mode, ABI/binding/CLI option,
 encoded HLS, package publication or receiver observation is added by this increment.
-D70 supplies selected-stream/window decoding in its recorded scope; audio fMP4/HLS
-generation/cache and public/packaged/receiver gates remain next. Speaker/surround
+D70 supplies selected-stream/window decoding; D71 adds private audio fMP4/HLS
+generation/cache in its offline scope. Public/packaged/receiver gates remain next. Speaker/surround
 work stays deferred.
 The subsequent Proceed supersedes the earlier proposal-only authorization text.
 
@@ -107,14 +127,11 @@ and Release-only UWP inspections pass. Final automatic PR CI passed at `579bb44`
 with cold codec jobs at 5m01s desktop/3m59s UWP. Preserve the earlier packaged
 artifact's source/profile attribution. This changes build configuration only.
 
-**Next native increment after D70:** connect selected decoded PCM through stereo
-downmix and AAC encoding to independent
-fMP4/HLS audio resources with bounded lazy generation/cache, preserving compressed
-video. The spike's small single-stream callback contract and PCM window experiment
-do not supply those movie contracts. Public ABI/binding/CLI integration and
-receiver/Screenbox proof follow the plan's gates; deferred speaker/surround work
-is not a prerequisite. This integration starts no further implementation slice
-and publishes no package.
+**Next native increment after D71:** close the documented authoring/performance
+edges and connect the private builder to explicit playback/ABI/binding/CLI
+contracts and per-cast authorized host storage. Packaged runtime and manual
+receiver/Screenbox proof follow. The current package remains `0.3.0-ci.207`;
+ask before publishing a new package or merging the slice PR.
 
 **D65 and D66 are complete and merged (2026-10-12).** Native PR #42 merged as
 `8a40ec3` after all 14 checks passed at final head `8978188`. Screenbox PR #10

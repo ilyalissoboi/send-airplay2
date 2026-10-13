@@ -12,6 +12,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
 
@@ -43,6 +44,16 @@ bool earlier(std::uint64_t a, std::uint32_t a_scale, std::uint64_t b, std::uint3
 std::uint64_t ticks_to_us(std::uint64_t ticks, std::uint32_t timescale) {
     return ticks / timescale * microseconds_per_second +
            ((ticks % timescale) * microseconds_per_second + timescale / 2) / timescale;
+}
+std::uint64_t ticks_to_audio_samples(std::uint64_t ticks, std::uint32_t timescale) {
+    constexpr std::uint64_t audio_rate = 48000;
+    constexpr std::uint64_t maximum_composition_seconds = 7 * 24 * 3600;
+    if (ticks / timescale > maximum_composition_seconds ||
+        (ticks / timescale == maximum_composition_seconds && ticks % timescale != 0)) {
+        throw RemuxException(RemuxFailure::too_large, "HLS audio composition exceeds seven days");
+    }
+    return ticks / timescale * audio_rate +
+           ((ticks % timescale) * audio_rate + timescale / 2) / timescale;
 }
 
 std::uint64_t track_end_time(const Mp4Track& track) {
@@ -92,9 +103,10 @@ std::uint32_t target_from(const std::vector<std::uint64_t>& durations_us) {
     return target;
 }
 
-std::string media_playlist_text(const std::vector<std::uint64_t>& durations_us) {
+std::string media_playlist_text(const std::vector<std::uint64_t>& durations_us,
+                                std::uint32_t target = 0) {
     return "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:" +
-           std::to_string(target_from(durations_us)) +
+           std::to_string(target ? target : target_from(durations_us)) +
            "\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXT-X-INDEPENDENT-SEGMENTS\n"
            "#EXT-X-MAP:URI=\"" +
            std::string(init_name) + "\"\n" + segment_lines(durations_us, segment_name) +
@@ -102,9 +114,9 @@ std::string media_playlist_text(const std::vector<std::uint64_t>& durations_us) 
 }
 
 std::string subtitle_playlist_text(const std::vector<std::uint64_t>& durations_us,
-                                   std::size_t track) {
+                                   std::size_t track, std::uint32_t target = 0) {
     return "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:" +
-           std::to_string(target_from(durations_us)) +
+           std::to_string(target ? target : target_from(durations_us)) +
            "\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n" +
            segment_lines(durations_us,
                          [track](std::size_t index) { return text_segment_name(track, index); }) +
@@ -298,14 +310,22 @@ MediaSource segment_source(std::shared_ptr<const Presentation> presentation, std
 
 /// Reads through MediaSource::read_at until `length` bytes arrive, under a
 /// fixed deadline, for the demuxer's moov and box headers.
-RandomReader source_reader(const MediaSource& input, const std::atomic_bool* cancelled) {
-    return [&input, cancelled](std::uint64_t offset, std::uint8_t* output, std::size_t length) {
+RandomReader source_reader(const MediaSource& input, const std::atomic_bool* cancelled,
+                           const MediaReadContext* startup_context) {
+    return [&input, cancelled, startup_context](std::uint64_t offset, std::uint8_t* output,
+                                                std::size_t length) {
         const std::atomic_bool not_stopped{false};
         const std::atomic_bool not_cancelled{false};
-        const MediaReadContext context{&not_stopped, cancelled ? cancelled : &not_cancelled,
-                                       std::chrono::steady_clock::now() + demux_read_deadline};
+        const MediaReadContext context =
+            startup_context
+                ? *startup_context
+                : MediaReadContext{&not_stopped, cancelled ? cancelled : &not_cancelled,
+                                   std::chrono::steady_clock::now() + demux_read_deadline};
         constexpr std::size_t max_read = 64 * 1024; // MediaSource's read capacity bound.
         while (length) {
+            if (context.should_stop()) {
+                throw std::runtime_error("remux startup cancelled or expired");
+            }
             const auto wanted = std::min(length, max_read);
             const auto count = input.read_at(offset, output, wanted, context);
             if (count == 0 || count > wanted) {
@@ -443,7 +463,7 @@ std::size_t read_indexed_segment(const IndexedPresentation& presentation,
 /// The resources of an indexed MKV: playlists and init segment built now;
 /// every media and WebVTT segment sized and built on its first request.
 RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
-                         std::uint64_t frame_rate_milli) {
+                         std::uint64_t frame_rate_milli, bool video_only) {
     auto presentation = std::make_shared<IndexedPresentation>();
     presentation->input = std::move(input);
     presentation->index = std::move(index);
@@ -466,6 +486,32 @@ RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
     result.segment_count = count;
     result.text_track_count = metadata.text_tracks.size();
     result.target_duration_seconds = target_from(durations);
+    if (video_only) {
+        result.durations_us = durations;
+        result.zero_origin_video = index_ref.segment_start_us(0) == 0;
+        for (std::size_t segment = 0; segment < count; ++segment) {
+            result.video_boundaries_48khz.push_back(ticks_to_audio_samples(
+                index_ref.segment_start_us(segment), microseconds_per_second));
+        }
+        const auto last_start = index_ref.segment_start_us(count - 1);
+        const auto last_duration = index_ref.segment_duration_us(count - 1);
+        constexpr std::uint64_t maximum_composition_us = 7ULL * 24 * 3600 * microseconds_per_second;
+        if (last_start > maximum_composition_us ||
+            last_duration > maximum_composition_us - last_start) {
+            throw RemuxException(RemuxFailure::too_large,
+                                 "HLS audio composition exceeds seven days");
+        }
+        result.video_boundaries_48khz.push_back(
+            ticks_to_audio_samples(last_start + last_duration, microseconds_per_second));
+        result.subtitles = subtitle_renditions(metadata);
+    }
+    std::vector<std::uint64_t> estimates;
+    for (std::size_t segment = 0; segment < count; ++segment) {
+        estimates.push_back(index_ref.estimated_segment_bytes(segment));
+    }
+    if (video_only) {
+        result.variant = variant_stream(metadata, durations, estimates, {}, frame_rate_milli);
+    }
     result.resources.push_back(
         {playlist_name, playlist_type, text(media_playlist_text(durations)), {}});
     result.resources.push_back(
@@ -495,10 +541,6 @@ RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
     }
     // Advertised bit rates use the index's cluster spans: segment sizes are
     // not known before their first request.
-    std::vector<std::uint64_t> estimates;
-    for (std::size_t segment = 0; segment < count; ++segment) {
-        estimates.push_back(index_ref.estimated_segment_bytes(segment));
-    }
     result.playlist_name = multivariant_name;
     result.resources.push_back(
         {multivariant_name,
@@ -538,6 +580,40 @@ RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
     return result;
 }
 } // namespace
+
+void raise_composition_target_duration(RemuxedHls& presentation, std::uint32_t minimum_seconds) {
+    if (minimum_seconds <= presentation.target_duration_seconds) {
+        return;
+    }
+    if (presentation.durations_us.empty()) {
+        throw std::invalid_argument("HLS target update requires composition metadata");
+    }
+    presentation.target_duration_seconds = minimum_seconds;
+    for (auto& resource : presentation.resources) {
+        std::string text;
+        if (resource.name == playlist_name) {
+            text = media_playlist_text(presentation.durations_us, minimum_seconds);
+        } else {
+            constexpr std::string_view suffix = ".m3u8";
+            if (resource.name.size() < suffix.size() ||
+                resource.name.compare(resource.name.size() - suffix.size(), suffix.size(),
+                                      suffix) != 0) {
+                continue;
+            }
+            for (std::size_t track = 0; track < presentation.text_track_count; ++track) {
+                if (resource.name == text_playlist_name(track)) {
+                    text =
+                        subtitle_playlist_text(presentation.durations_us, track, minimum_seconds);
+                    break;
+                }
+            }
+        }
+        if (!text.empty()) {
+            resource.source =
+                memory_source(std::make_shared<const Bytes>(text.begin(), text.end()));
+        }
+    }
+}
 
 std::vector<SegmentLayout> plan_segments(const Mp4Movie& movie, std::uint32_t target_seconds) {
     const auto& video = movie.tracks.at(0);
@@ -620,26 +696,36 @@ std::string subtitle_playlist(const Mp4Movie& movie, const std::vector<SegmentLa
     return subtitle_playlist_text(durations_of(movie, segments), track);
 }
 
-RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
+RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled, bool video_only,
+                        const MediaReadContext* startup_context) {
     if (!input.size || !input.read_at) {
         throw std::invalid_argument("remux requires a media source");
     }
     auto presentation = std::make_shared<Presentation>();
     presentation->input = std::move(input);
     const auto file_size = presentation->input.size();
-    const auto reader = source_reader(presentation->input, cancelled);
+    const auto reader = source_reader(presentation->input, cancelled, startup_context);
     std::array<std::uint8_t, 4> magic{};
     if (file_size >= magic.size()) {
         reader(0, magic.data(), magic.size());
     }
     const bool matroska = starts_like_matroska(magic.data(), magic.size());
     if (matroska) {
-        if (auto index = MkvIndex::open(reader, file_size)) {
+        if (auto index = video_only ? MkvIndex::open_video_source(reader, file_size)
+                                    : MkvIndex::open(reader, file_size)) {
             const auto rate = index->frame_rate_milli();
-            return remux_indexed(std::move(presentation->input), std::move(index), rate);
+            return remux_indexed(std::move(presentation->input), std::move(index), rate,
+                                 video_only);
         }
     }
-    presentation->movie = matroska ? read_mkv(reader, file_size) : read_mp4(reader, file_size);
+    presentation->movie =
+        matroska
+            ? (video_only ? read_mkv_video_source(reader, file_size) : read_mkv(reader, file_size))
+            : (video_only ? read_mp4_video_source(reader, file_size) : read_mp4(reader, file_size));
+    if (video_only) {
+        const auto& video = presentation->movie.tracks.front();
+        (void)ticks_to_audio_samples(track_end_time(video), video.timescale);
+    }
     presentation->segments = plan_segments(presentation->movie);
 
     RemuxedHls result;
@@ -677,6 +763,38 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
     const auto& movie = presentation->movie;
     const auto& segments = presentation->segments;
     result.text_track_count = movie.text_tracks.size();
+    if (video_only) {
+        result.durations_us = durations_of(movie, segments);
+        result.subtitles = subtitle_renditions(movie);
+        const auto& video_metadata = movie.tracks.at(0);
+        for (const auto& segment : segments) {
+            result.video_boundaries_48khz.push_back(ticks_to_audio_samples(
+                video_metadata.samples.at(segment.ranges.front().first).decode_time,
+                video_metadata.timescale));
+        }
+        result.video_boundaries_48khz.push_back(
+            ticks_to_audio_samples(track_end_time(video_metadata), video_metadata.timescale));
+        result.variant = variant_stream(movie, result.durations_us, sizes, {},
+                                        video_frame_rate_milli(video_metadata));
+        // The private AAC composition currently accepts a zero-origin, untrimmed
+        // video timeline. A single reorder edit is allowed when it cancels initial
+        // composition delay; finite edits must cover the complete decode span.
+        result.zero_origin_video = video_metadata.samples.front().decode_time == 0;
+        if (!video_metadata.edits.empty()) {
+            const auto& edit = video_metadata.edits.front();
+            const auto span = track_end_time(video_metadata);
+            result.zero_origin_video =
+                result.zero_origin_video && video_metadata.edits.size() == 1 &&
+                edit.rate_integer == 1 && edit.rate_fraction == 0 &&
+                edit.media_time == video_metadata.samples.front().composition_offset &&
+                (edit.segment_duration == 0 ||
+                 ticks_to_us(edit.segment_duration, movie.timescale) ==
+                     ticks_to_us(span, video_metadata.timescale));
+        } else {
+            result.zero_origin_video =
+                result.zero_origin_video && video_metadata.samples.front().composition_offset == 0;
+        }
+    }
     if (movie.text_tracks.empty()) {
         return result;
     }
@@ -702,6 +820,8 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled) {
         }
     }
     result.playlist_name = multivariant_name;
+    result.variant =
+        variant_stream(movie, durations, sizes, webvtt_sizes, video_frame_rate_milli(video));
     result.resources.push_back(
         {multivariant_name,
          playlist_type,

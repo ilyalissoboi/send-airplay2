@@ -30,6 +30,8 @@ public:
 private:
     AudioDecodeFailure reason_;
 };
+/// Refuse a backend outside the pinned four-library, network-disabled LGPL profile.
+void validate_audio_codec_backend();
 
 /// Owned interleaved float PCM, preserving the selected source channel layout.
 /// first_sample and frame count use the edited, audible presentation clock at 48 kHz.
@@ -60,13 +62,19 @@ struct DecodedAudioWindow {
  * A failed window invalidates the object; discard it and any tentative output.
  * Known native layouts and AAC/AC-3/E-AC-3/DTS-core only. Layout/rate/format changes,
  * discontinuities, protected/unknown inputs and complex edits are refused.
+ * canonical_matroska_clock opts into a fixed-frame grid for HLS: first read must
+ * start at zero, frame sizes must remain constant and exceed twice the clock
+ * quantum. Rounded timestamps may snap only within one tick of that grid.
+ * This stabilizes relative seek phase; initial absolute clock precision remains
+ * container-limited. Default decoding retains its original clock policy.
  */
 class AudioDecoderSource {
 public:
     static constexpr std::uint32_t output_rate = 48000;
     [[nodiscard]] static std::unique_ptr<AudioDecoderSource>
     open(const MediaSource& source, const MediaReadContext& context,
-         std::optional<std::uint64_t> explicit_track_id = {});
+         std::optional<std::uint64_t> explicit_track_id = {},
+         bool canonical_matroska_clock = false);
     ~AudioDecoderSource();
     AudioDecoderSource(const AudioDecoderSource&) = delete;
     AudioDecoderSource& operator=(const AudioDecoderSource&) = delete;

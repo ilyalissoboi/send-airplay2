@@ -186,8 +186,14 @@ std::string codec_string(const Mp4Track& track) {
 }
 
 std::string multivariant_playlist(const VariantStream& variant,
-                                  const std::vector<SubtitleRendition>& subtitles) {
+                                  const std::vector<SubtitleRendition>& subtitles,
+                                  const AudioRendition* audio) {
     std::string out = "#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-INDEPENDENT-SEGMENTS\n";
+    if (audio) {
+        out += "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",NAME=\"Stereo\",LANGUAGE=" +
+               quoted(audio->language) +
+               ",DEFAULT=YES,AUTOSELECT=YES,CHANNELS=\"2\",URI=" + quoted(audio->uri) + '\n';
+    }
     for (const auto& subtitle : subtitles) {
         out += "#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"subs\",NAME=" + quoted(subtitle.name) +
                ",LANGUAGE=" + quoted(subtitle.language) +
@@ -214,6 +220,9 @@ std::string multivariant_playlist(const VariantStream& variant,
     }
     if (!subtitles.empty()) {
         out += ",SUBTITLES=\"subs\"";
+    }
+    if (audio) {
+        out += ",AUDIO=\"audio\"";
     }
     out += '\n' + variant.uri + '\n';
     return out;
