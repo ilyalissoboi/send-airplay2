@@ -130,8 +130,9 @@ final changed-controller/host/binding rechecks; enabled shared 37/37; integrated
 x64 UWP core compilation and six-DLL AppContainer/app-CRT/import inspection.
 The selected compressed AAC-commentary/DTS MP4 passes explicit ID 42 startup
 in both physical audio-track orders, and automatic selection refuses both.
-Formatting/diff checks pass. Actual PR-head CI remains a merge gate.
-After this PR's merge gate,
+Formatting/diff checks pass. PR #55 merged as `774198d` at final head `74e9ea9`;
+all 16 CI checks passed in run `38407164325`, attempt 2, and its review is resolved.
+D75 now implements [the integrated AppContainer gate](stereo-aac-uwp-runtime.md);
 the next slice should validate a host-authorized AppContainer source/cache adapter
 with the integrated DLL, record hashes/notices and bounded real-file performance.
 Then validate stereo output/controls/seeks/EOF on available Apple TV/Mac receivers

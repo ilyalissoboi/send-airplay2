@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5" IgnorableNamespaces="uap uap5">
+  <Identity Name="SendAirPlay2.StereoRuntimeValidation" Publisher="CN=send-airplay2 test" Version="0.1.0.2" />
+  <Properties>
+    <DisplayName>send-airplay2 offline stereo runtime validation</DisplayName>
+    <PublisherDisplayName>send-airplay2 (test)</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.18362.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Resources><Resource Language="x-generate" /></Resources>
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="SendAirPlay2.UwpHost.App">
+      <uap:VisualElements DisplayName="send-airplay2 offline stereo runtime validation" Description="Offline integrated HLS and AppContainer storage test"
+        BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <uap5:Extension Category="windows.appExecutionAlias" Executable="StereoRuntimeValidation.exe" EntryPoint="SendAirPlay2.UwpHost.App">
+          <uap5:AppExecutionAlias><uap5:ExecutionAlias Alias="sap2-stereo-runtime.exe" /></uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>

@@ -3,6 +3,15 @@
 The project remains Apache-2.0. Record revisions and licensing here before
 incorporating external code or adding dependencies.
 
+## Integrated runtime validation (D75)
+
+The offline AppContainer harness, TemporaryFolder adapter and optional private
+validation hook are original Apache-2.0 code. They reuse the already adopted
+FFmpeg 9.0.2 LGPL profile and project-owned D71 fixtures; no dependency or copied
+implementation is added. The local development package carries the exact
+FFmpeg/OpenSSL/Botan/Boost/vcpkg notices and the existing FFmpeg overlay/profile
+record. This is local testing, not package publication or a new distribution profile.
+
 ## Stereo AAC readiness (D72)
 
 D74's explicitly enabled playback integration reuses the same pinned FFmpeg

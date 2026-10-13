@@ -1,8 +1,8 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#54 merged.
+Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#55 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
-URL/MRP playback and joined cleanup, the experimental C API version 3 and C#
+URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
 MP4/MKV HLS remux with text subtitles and indexed MKV startup. The Screenbox
 fork has implemented its current design through PRs #1-#10, including the Mac
@@ -10,10 +10,10 @@ package pin, final validation record and Forget-device follow-up; PR #11 adds
 the research checkpoint and PR #12 the next-slice planning checkpoint, without
 changing runtime behavior.
 
-**D74 active:** [explicit stereo AAC playback integration](stereo-aac-playback.md)
-extends the development branch to API 4 with original track probe/selection,
+**D74 merged (PR #55, `774198d`):** [explicit stereo AAC playback integration](stereo-aac-playback.md)
+extends the core to API 4 with original track probe/selection,
 host fragment storage, binding/CLI options and terminal conversion supervision.
-Its backend defaults OFF. D73's authoring PR #54 is merged; preserve its known
+Its backend defaults OFF. **D75 active:** [AppContainer runtime/storage gate](stereo-aac-uwp-runtime.md). D73's authoring PR #54 is merged; preserve its known
 estimate limitations. Packaged integrated runtime, real-file performance and
 receiver evidence remain later gates. This branch adds no package or Screenbox pin.
 

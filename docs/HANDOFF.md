@@ -26,27 +26,25 @@ were present. Its implementation head `3cd620e` passed codec 4/4, static/shared
 recorded tolerance; three estimate limitations remain explicit failed audits.
 No whole-VOD accuracy guarantee, hardware result or publication is added.
 
-**D74 implemented; [PR #55](https://github.com/ilyalissoboi/send-airplay2/pull/55) open:**
-implementation head `4f5f369` contains the locally tested integration. The user's latest
-Proceed authorizes fresh branch `codex/stereo-aac-playback` from merged PR #54
-(`6923332`). Read [the integration contract](stereo-aac-playback.md). API 4 adds
-explicit delivery, borrowed source-track probe/selection, host-owned fragment
-storage/quota, C# and CLI options, and ordered terminal conversion cleanup.
-The optional core backend defaults OFF; old option/status layouts and delivery
-defaults remain supported. The new binding requires an API 4 development binary.
-Packaged integrated runtime, real-file performance and receiver observations
-remain later gates; speaker audio and discrete surround remain hardware-deferred.
-Published package/Screenbox pin stays `0.3.0-ci.207`. Inspect this slice's actual
-PR head; ask before merging or publishing. Local Windows Release gates pass:
-baseline static/shared 36/36 and 37/37 with final changed-controller/host/binding
-rechecks, enabled shared 37/37, and integrated x64 UWP compilation plus inspection
-of all six native/codec DLLs. Formatting and diff checks pass. Actual PR-head CI
-remains the merge gate; no packaged run, receiver result or publication is added.
-PR #55's P2 review follow-up drains a confirmed-but-interrupted local session
-synchronously before returning a failed start, and records START_FAILED only
-after session/HTTP/conversion/cache cleanup. A deterministic publication-boundary
-regression passes baseline static/shared, enabled controller/C API/binding checks
-and the integrated x64 UWP build/import check. Inspect the final review-fix head's CI.
+**D74 merged (2026-10-13).**
+[PR #55](https://github.com/ilyalissoboi/send-airplay2/pull/55) merged as `774198d`.
+Final head `74e9ea9` passed all 16 checks in run `38407164325`, attempt 2;
+the late-start cleanup review thread is resolved. API 4 explicit stereo delivery,
+original track probe/selection, host cache, binding/CLI and terminal supervision
+are implemented in the recorded offline scope. Default builds remain codec-free.
+No package is published; Screenbox stays on `0.3.0-ci.207`. Read
+[the contract](stereo-aac-playback.md); do not resume the closed D74 branch.
+
+**D75 active: integrated AppContainer runtime/storage validation.**
+The user's Proceed authorizes fresh branch `codex/stereo-aac-uwp-runtime` from
+merged PR #55. [The offline runtime gate](stereo-aac-uwp-runtime.md) uses a
+separate Native AOT/MSIX identity, the enabled production core and a private
+OFF-by-default validation export, brokered StorageFile callbacks and app-owned
+TemporaryFolder storage. It does not access credentials or a receiver. Packaged
+results, exact binary/source attribution and real-file/receiver limits must be
+recorded before closing this gate. Speaker audio and discrete surround remain
+hardware-deferred. Ask before merging or publishing; visual checks use written
+manual instructions, without Computer Use.
 
 **D71 stereo AAC HLS increment merged (2026-10-13).**
 [PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51) merged as `e09c57f`,

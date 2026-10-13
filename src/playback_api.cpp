@@ -8,6 +8,11 @@
 #include "credential_store.h"
 #include "host_credentials.h"
 #include "media_track_inventory.h"
+#ifdef SAP2_RUNTIME_VALIDATION
+#include "runtime_validation.h"
+#include <future>
+#include <vector>
+#endif
 
 #include <chrono>
 #include <algorithm>
@@ -871,3 +876,169 @@ int32_t sap2_forget_profile(const char* profile, const sap2_credential_store* cr
     }
 }
 } // extern "C"
+
+#ifdef SAP2_RUNTIME_VALIDATION
+namespace {
+/// Bounded offline fetch with the same resource callbacks used by HTTP workers.
+Bytes validation_read(const send_airplay2::MediaResource& resource,
+                      const MediaReadContext& context) {
+    constexpr std::uint64_t max_validation_resource_bytes = 16U * 1024U * 1024U;
+    constexpr std::size_t validation_read_chunk = 4093;
+    const auto size = send_airplay2::media_resource_size(resource, context);
+    if (!size || size > max_validation_resource_bytes) {
+        throw std::runtime_error("validation resource bound");
+    }
+    Bytes bytes(static_cast<std::size_t>(size));
+    std::size_t offset = 0;
+    while (offset < bytes.size()) {
+        const auto capacity = std::min(validation_read_chunk, bytes.size() - offset);
+        const auto count =
+            resource.source.read_at(offset, bytes.data() + offset, capacity, context);
+        if (!count || count > capacity || context.should_stop()) {
+            throw std::runtime_error("validation resource read");
+        }
+        offset += count;
+    }
+    return bytes;
+}
+std::uint64_t validation_elapsed(std::chrono::steady_clock::time_point begin) {
+    return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          std::chrono::steady_clock::now() - begin)
+                                          .count());
+}
+} // namespace
+extern "C" int32_t sap2_runtime_validate(const sap2_media_source* source,
+                                         const sap2_aac_fragment_store* store, uint64_t audio_id,
+                                         uint32_t mode, sap2_runtime_report* report) {
+    if (!source || source->struct_size < sizeof(*source) || !source->read_at || !source->release ||
+        !store || store->struct_size < sizeof(*store) || !store->seal || !store->read_at ||
+        !store->clear || !store->release || !report || report->struct_size != sizeof(*report) ||
+        mode > 5) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    *report = {};
+    report->struct_size = sizeof(*report);
+    bool ownership_transferred = false;
+    try {
+        auto host_source = std::make_shared<HostSource>(*source);
+        auto host_store = std::make_shared<HostFragmentStore>(*store);
+        host_source->arm();
+        host_store->arm();
+        ownership_transferred = true;
+        std::atomic_bool stopped{false};
+        std::atomic_bool cancelled{false};
+        const MediaReadContext context{
+            &stopped, &cancelled, std::chrono::steady_clock::now() + std::chrono::seconds(120)};
+        auto media_source = media_source_for(host_source);
+        bool generation_started = false;
+        const auto read_source = media_source.read_at;
+        media_source.read_at = [&](std::uint64_t offset, std::uint8_t* bytes, std::size_t size,
+                                   const MediaReadContext& read_context) {
+            // Mode 3 refuses source reads only after preparation, not during inventory.
+            return mode == 3 && generation_started ? std::size_t{0}
+                                                   : read_source(offset, bytes, size, read_context);
+        };
+        bool cancel_cache_read = false;
+        auto fragment_store = fragment_store_for(host_store);
+        const auto read_fragment = fragment_store.read_at;
+        fragment_store.read_at = [&](std::size_t index, std::uint64_t offset, std::uint8_t* bytes,
+                                     std::size_t capacity, const AacCacheContext& cache_context) {
+            if (cancel_cache_read) {
+                cancelled = true;
+            }
+            return read_fragment(index, offset, bytes, capacity, cache_context);
+        };
+        const auto begin = std::chrono::steady_clock::now();
+        std::unique_ptr<PreparedStereoMedia> prepared;
+        try {
+            prepared = prepare_stereo_media(
+                std::move(media_source), std::move(fragment_store), 512U * 1024U * 1024U, context,
+                audio_id ? std::optional<std::uint64_t>{audio_id} : std::nullopt);
+        } catch (const MediaPreparationException& error) {
+            if (error.reason() == MediaPreparationFailure::resource_limit) {
+                report->failure = SAP2_MEDIA_FAILURE_LIMIT;
+            }
+            return ((mode == 4 && error.reason() == MediaPreparationFailure::invalid_selection) ||
+                    (mode == 5 && error.reason() == MediaPreparationFailure::resource_limit))
+                       ? SAP2_OK
+                       : SAP2_ERROR_INTERNAL;
+        }
+        if (mode == 4) {
+            return SAP2_ERROR_INTERNAL;
+        }
+        report->preparation_ms = validation_elapsed(begin);
+        report->selected_audio_id = prepared->selected_audio_id();
+        generation_started = true;
+        const auto& resources = prepared->presentation().resources;
+        std::vector<const send_airplay2::MediaResource*> audio;
+        for (const auto& resource : resources) {
+            if (resource.name.size() > 5 && resource.name.front() == 'a' &&
+                resource.name.substr(resource.name.size() - 4) == ".m4s") {
+                audio.push_back(&resource);
+            }
+        }
+        if (audio.empty()) {
+            return SAP2_ERROR_INTERNAL;
+        }
+        report->audio_segments = audio.size();
+        const auto request_begin = std::chrono::steady_clock::now();
+        if (mode == 1) {
+            cancel_cache_read = true;
+            bool refused = false;
+            try {
+                (void)validation_read(*audio.back(), context);
+            } catch (...) {
+                refused = true;
+            }
+            cancel_cache_read = false;
+            cancelled = false;
+            if (!refused || prepared->failure() != StereoAacHlsFailure::none) {
+                return SAP2_ERROR_INTERNAL;
+            }
+        }
+        try {
+            // Cold forward seek, sealed reread, backward seek, then all resources to EOF.
+            const auto fetch_late = [&] { return validation_read(*audio.back(), context); };
+            auto first = std::async(std::launch::async, fetch_late);
+            auto second = std::async(std::launch::async, fetch_late);
+            const auto late = first.get();
+            if (late != second.get() || late != validation_read(*audio.back(), context)) {
+                return SAP2_ERROR_INTERNAL;
+            }
+            for (const auto& resource : resources) {
+                report->resource_bytes += validation_read(resource, context).size();
+            }
+        } catch (...) {
+            report->failure = static_cast<std::uint32_t>(prepared->failure());
+            prepared->stop();
+            prepared->stop();
+            const auto expected =
+                mode == 2 ? StereoAacHlsFailure::cache_error : StereoAacHlsFailure::source_error;
+            return (mode == 2 || mode == 3) &&
+                           report->failure == static_cast<std::uint32_t>(expected)
+                       ? SAP2_OK
+                       : SAP2_ERROR_INTERNAL;
+        }
+        report->request_ms = validation_elapsed(request_begin);
+        report->failure = static_cast<std::uint32_t>(prepared->failure());
+        // Retained audio callbacks become inert after ordered stop; no further source reads.
+        auto retained = *audio.front();
+        prepared->stop();
+        prepared->stop();
+        bool refused = false;
+        try {
+            (void)validation_read(retained, context);
+        } catch (...) {
+            refused = true;
+        }
+        return mode <= 1 && !report->failure && refused ? SAP2_OK : SAP2_ERROR_INTERNAL;
+    } catch (...) {
+        if (!ownership_transferred) {
+            store->clear(store->context);
+            store->release(store->context);
+            source->release(source->context);
+        }
+        return SAP2_ERROR_INTERNAL;
+    }
+}
+#endif
