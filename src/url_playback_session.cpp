@@ -807,6 +807,12 @@ void UrlPlaybackSession::finish_start_trace(SessionStartDiagnostics& diagnostics
     diagnostics = start_trace_;
 }
 
+bool UrlPlaybackSession::terminal() const noexcept {
+    const auto remote_failure = mrp_ ? mrp_->failure() : std::optional<MrpError>{};
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    return status_.end_reason != SessionEnd::none || status_.failed || remote_failure.has_value();
+}
+
 SessionStatus UrlPlaybackSession::status() const {
     // Read MRP first: intentional command cancellation follows request_end().
     // The later state snapshot must retain that normal end rather than combine

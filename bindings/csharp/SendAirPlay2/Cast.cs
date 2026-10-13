@@ -17,6 +17,8 @@ namespace SendAirPlay2
         /// <see cref="ResultCode.MediaUnsupported"/> or
         /// <see cref="ResultCode.MediaMalformed"/>.</summary>
         HlsRemux = 1,
+        /// <summary>Copy video and convert selected audio to stereo AAC using an opt-in native build.</summary>
+        StereoAacHls = 2,
     }
 
     /// <summary>Options for <see cref="Cast.Create"/> (sap2_cast_options).</summary>
@@ -51,6 +53,12 @@ namespace SendAirPlay2
 
         /// <summary>Progressive (the default) or HLS built by the library's remux.</summary>
         public CastDelivery Delivery { get; set; } = CastDelivery.Progressive;
+        /// <summary>Original source track ID, or null for deterministic automatic selection.</summary>
+        public ulong? AudioTrackId { get; set; }
+        /// <summary>Mandatory finite sealed-byte quota for stereo AAC delivery.</summary>
+        public ulong CacheQuotaBytes { get; set; }
+        /// <summary>Per-cast host storage. Ownership transfers to Create, including its failure cleanup.</summary>
+        public AacFragmentStore? FragmentStore { get; set; }
     }
 
     /// <summary>Owns one native cast; releases it in the finalizer if not disposed.</summary>
@@ -138,6 +146,7 @@ namespace SendAirPlay2
                 using (var profile = new Native.Utf8String(options.Profile))
                 using (var contentType = new Native.Utf8String(options.ContentType))
                 using (var storeTable = new CredentialStoreThunks.NativeTable(store))
+                using (var fragmentTable = new AacFragmentStore.NativeTable(options.FragmentStore))
                 {
                     nativeOptions.ReceiverAddress = address.Pointer;
                     nativeOptions.ReceiverPort = options.ReceiverPort;
@@ -148,7 +157,14 @@ namespace SendAirPlay2
                     nativeOptions.StartPositionSeconds = options.StartPositionSeconds;
                     nativeOptions.CredentialStore = storeTable.Pointer;
                     nativeOptions.Delivery = (uint)options.Delivery;
+                    if (options.AudioTrackId == 0) { throw new ArgumentOutOfRangeException(nameof(options.AudioTrackId)); }
+                    nativeOptions.AudioTrackId = options.AudioTrackId ?? 0;
+                    nativeOptions.CacheQuotaBytes = options.CacheQuotaBytes;
+                    nativeOptions.FragmentStore = fragmentTable.Pointer;
                     var nativeSource = source.ToNative();
+                    // Allocate roots before native ownership can transfer. A later
+                    // allocation failure must not leave live native callbacks unrooted.
+                    var callbackOwners = new object?[] { source.Callbacks, store, options.FragmentStore };
                     var result = Native.sap2_cast_create(ref nativeOptions, ref nativeSource,
                                                          out var created);
                     if (result != (int)ResultCode.Ok)
@@ -157,9 +173,10 @@ namespace SendAirPlay2
                         throw new SendAirPlay2Exception((ResultCode)result);
                     }
                     // The native cast owns the source now; its destroy releases it.
+                    created.KeepAlive(callbackOwners);
                     transferred = true;
-                    created.KeepAlive(new object?[] { source.Callbacks, store });
-                    return new Cast(created);
+                    try { return new Cast(created); }
+                    catch { created.Dispose(); throw; }
                 }
             }
             finally
@@ -167,6 +184,7 @@ namespace SendAirPlay2
                 if (!transferred)
                 {
                     source.ReleaseUnowned();
+                    options.FragmentStore?.ReleaseUnowned();
                 }
             }
         }

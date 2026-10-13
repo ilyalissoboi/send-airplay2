@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "cast_cli.h"
+#include "api_host_cli.h"
 #include "cli_input.h"
 #include "auth_cli.h"
 #include "credential_store.h"
@@ -479,6 +480,18 @@ int cast(const CastArguments& arguments) {
 } // namespace
 
 int run_cast_cli(int argc, const char* const* argv) {
+    for (int index = 1; index < argc; ++index) {
+        const std::string_view option = argv[index];
+        if (option == "--stereo-aac" || option == "--probe-tracks") {
+            return run_api_host(argc, argv);
+        }
+        // Do not interpret option values (including paths beginning with --)
+        // as delivery flags. Legacy boolean options do not consume a value.
+        if (option != "--remux" && option != "--event-log" && option != "--media-log" &&
+            option != "--minimal-remote" && index + 1 < argc) {
+            ++index;
+        }
+    }
     CastArguments arguments;
     try {
         arguments = parse_arguments(argc, argv);

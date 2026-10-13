@@ -7,7 +7,8 @@
 # properties only: this is not Store certification (WACK) or a run test.
 param(
     [Parameter(Mandatory = $true)][string]$Directory,
-    [ValidateSet('x64', 'x86', 'ARM64')][string]$Machine = 'x64'
+    [ValidateSet('x64', 'x86', 'ARM64')][string]$Machine = 'x64',
+    [switch]$StereoAac
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,7 +34,15 @@ if (-not $crypto) {
     Fail 'libcrypto DLL was not staged beside send_airplay2.dll'
 }
 
-foreach ($dll in @($library, $crypto.FullName) | Where-Object { $_ }) {
+$checkedDlls = @($library, $crypto.FullName) | Where-Object { $_ }
+if ($StereoAac) {
+    foreach ($codecName in @('avformat-63.dll', 'avcodec-63.dll', 'avutil-61.dll', 'swresample-7.dll')) {
+        $codecPath = Join-Path $Directory $codecName
+        if (-not (Test-Path -LiteralPath $codecPath)) { Fail "Missing $codecName" }
+        else { $checkedDlls += $codecPath }
+    }
+}
+foreach ($dll in $checkedDlls) {
     $name = Split-Path $dll -Leaf
     $headers = (& $dumpbin /nologo /headers $dll) -join "`n"
     if ($headers -notmatch 'App Container') {

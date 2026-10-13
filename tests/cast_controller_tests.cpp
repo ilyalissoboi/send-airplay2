@@ -10,6 +10,16 @@
 #include "credential_store.h"
 #include "mrp_session.h"
 #include "receiver_http.h"
+#ifdef SAP2_HAS_STEREO_AAC
+#include "file_media_source.h"
+#include <boost/asio.hpp>
+#include <boost/beast.hpp>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <map>
+#include <mutex>
+#endif
 
 #include <algorithm>
 #include <atomic>
@@ -25,6 +35,7 @@
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -604,9 +615,13 @@ void command_argument_tests() {
 } // namespace
 
 /// The synthetic MP4 of mp4_fixture.h as a host source, counting reads.
-MediaSource mp4_source(const std::shared_ptr<SourceProbe>& probe) {
+MediaSource mp4_source(const std::shared_ptr<SourceProbe>& probe,
+                       std::vector<send_airplay2::test::mp4_fixture::TrackSpec> tracks = {}) {
     using namespace send_airplay2::test::mp4_fixture;
-    const auto file = std::make_shared<const Bytes>(mp4_file({video_spec(), audio_spec()}));
+    if (tracks.empty()) {
+        tracks = {video_spec(), audio_spec()};
+    }
+    const auto file = std::make_shared<const Bytes>(mp4_file(tracks));
     auto marker = std::make_shared<ReleaseMarker>(probe);
     MediaSource source;
     source.size = [file, marker] { return static_cast<std::uint64_t>(file->size()); };
@@ -870,9 +885,381 @@ void start_position_tests(const std::string& fixtures) {
     }
 }
 
+struct ConversionProbe {
+    std::atomic<StereoAacHlsFailure> failure{StereoAacHlsFailure::none};
+    std::atomic<int> stops{0};
+    std::atomic<int> clears{0};
+};
+class ScriptedConversion final : public PreparedStereoMedia {
+public:
+    ScriptedConversion(RemuxedHls presentation, AacFragmentStore store,
+                       std::shared_ptr<ConversionProbe> probe)
+        : presentation_(std::move(presentation)), store_(std::move(store)),
+          probe_(std::move(probe)) {}
+    const RemuxedHls& presentation() const noexcept override {
+        return presentation_;
+    }
+    StereoAacHlsFailure failure() const noexcept override {
+        return probe_->failure.load();
+    }
+    std::uint64_t selected_audio_id() const noexcept override {
+        return 47;
+    }
+    std::uint32_t authoring_flags() const noexcept override {
+        return authoring_audio_estimated;
+    }
+    void stop() noexcept override {
+        if (!stopped_.exchange(true)) {
+            ++probe_->stops;
+            if (store_.clear) {
+                store_.clear();
+            }
+        }
+    }
+
+private:
+    RemuxedHls presentation_;
+    AacFragmentStore store_;
+    std::shared_ptr<ConversionProbe> probe_;
+    std::atomic_bool stopped_{false};
+};
+CastSettings conversion_settings(const std::shared_ptr<ConversionProbe>& probe) {
+    auto settings = loopback_settings();
+    settings.delivery = CastDelivery::stereo_aac_hls;
+    settings.audio_track_id = 47;
+    settings.cache_quota_bytes = 1024 * 1024;
+    settings.fragment_store.seal = [](std::size_t, const Bytes&, const AacCacheContext&) {};
+    settings.fragment_store.read_at = [](std::size_t, std::uint64_t, std::uint8_t*, std::size_t,
+                                         const AacCacheContext&) { return std::size_t{0}; };
+    settings.fragment_store.clear = [probe] { ++probe->clears; };
+    return settings;
+}
+void scripted_conversion(CastDependencies& dependencies,
+                         const std::shared_ptr<ConversionProbe>& probe) {
+    dependencies.prepare_stereo =
+        [probe](MediaSource source, AacFragmentStore store, std::uint64_t quota,
+                const MediaReadContext& context,
+                std::optional<std::uint64_t> selected) -> std::unique_ptr<PreparedStereoMedia> {
+        check(selected == 47 && quota == 1024 * 1024 && !context.should_stop(),
+              "controller passes original selection, quota and live preparation context");
+        return std::make_unique<ScriptedConversion>(remux_to_hls(source), std::move(store), probe);
+    };
+}
+void conversion_start_failure_tests() {
+    group = "conversion startup failure";
+    auto probe = std::make_shared<ConversionProbe>();
+    std::atomic_bool entered{false};
+    auto dependencies = stored_credentials(blocking_connector(entered));
+    scripted_conversion(dependencies, probe);
+    CastController controller(conversion_settings(probe),
+                              mp4_source(std::make_shared<SourceProbe>()), dependencies);
+    auto start = std::async(std::launch::async, [&] { return controller.start(); });
+    check(eventually([&] { return entered.load(); }),
+          "start reached cancellable receiver connection");
+    probe->failure = StereoAacHlsFailure::cache_error;
+    check(start.wait_for(2s) == std::future_status::ready,
+          "terminal conversion failure interrupts start");
+    check(start.get() == CastResult::media_cache, "cache failure wins over transport cancellation");
+    const auto snapshot = controller.snapshot();
+    check(snapshot.phase == CastPhase::start_failed && snapshot.media_failure_first &&
+              snapshot.media_cleaned_up,
+          "failed start records terminal category after cleanup");
+    controller.stop();
+    check(probe->stops == 1 && probe->clears == 1, "failed start and later Stop clear once");
+}
+void conversion_terminal_tests() {
+    group = "conversion terminal supervision";
+    for (const bool natural_end : {false, true}) {
+        auto probe = std::make_shared<ConversionProbe>();
+        FakeReceiver receiver({});
+        auto dependencies = fake_receiver_dependencies(receiver);
+        scripted_conversion(dependencies, probe);
+        CastController controller(conversion_settings(probe),
+                                  mp4_source(std::make_shared<SourceProbe>()), dependencies);
+        check(controller.start() == CastResult::ok, "scripted converted presentation starts");
+        check(ends_with(receiver.inserted_media_url(), "/index.m3u8"),
+              "prepared playlist URL reaches receiver");
+        if (natural_end) {
+            receiver.push_state("Ended");
+        } else {
+            probe->failure = StereoAacHlsFailure::source_error;
+        }
+        check(eventually([&] { return controller.snapshot().media_cleaned_up; }),
+              natural_end ? "natural end drains conversion and cache"
+                          : "source failure drains conversion and cache");
+        auto snapshot = controller.snapshot();
+        check(probe->stops == 1 && probe->clears == 1 && snapshot.session.cleaned_up &&
+                  receiver.control_close_order() == url_then_remote,
+              "session cleanup precedes final conversion/cache cleanup");
+        check(snapshot.selected_audio_id == 47 && snapshot.authoring_flags == 1,
+              "immutable source selection and literal estimate flag persist after cleanup");
+        check(snapshot.media_failure_first == !natural_end,
+              "conversion failure overrides only a conversion-led end");
+        check(controller.command(PlaybackCommand::play, 0) == CastResult::ended,
+              "terminal conversion prevents further commands");
+        controller.stop();
+        snapshot = controller.snapshot();
+        check(probe->clears == 1 &&
+                  snapshot.session.end_reason ==
+                      (natural_end ? SessionEnd::media_end : SessionEnd::sender_stop),
+              "later Stop preserves prior receiver end and cleanup count");
+    }
+    auto probe = std::make_shared<ConversionProbe>();
+    {
+        CastController controller(conversion_settings(probe),
+                                  probed_source(std::make_shared<SourceProbe>()));
+        controller.stop();
+        controller.stop();
+    }
+    check(probe->clears == 1, "never-started cast clears its per-cast cache exactly once");
+}
+void conversion_stop_first_tests() {
+    group = "user Stop before conversion failure";
+    auto probe = std::make_shared<ConversionProbe>();
+    std::atomic_bool entered{false};
+    CastController* observed = nullptr; // Published before the async start begins.
+    auto dependencies = stored_credentials(
+        [&](const ReceiverEndpoint&,
+            const ReceiverOperation& operation) -> std::unique_ptr<ReceiverStream> {
+            entered = true;
+            while (operation.cancelled && !operation.cancelled->load()) {
+                operation.check();
+                std::this_thread::sleep_for(1ms);
+            }
+            probe->failure = StereoAacHlsFailure::cache_error;
+            check(eventually([&] {
+                      return observed->snapshot().media_failure == StereoAacHlsFailure::cache_error;
+                  }),
+                  "supervisor observes the deliberately late conversion failure");
+            throw TransportException(TransportError::cancelled);
+        });
+    scripted_conversion(dependencies, probe);
+    CastController controller(conversion_settings(probe),
+                              mp4_source(std::make_shared<SourceProbe>()), dependencies);
+    observed = &controller;
+    auto start = std::async(std::launch::async, [&] { return controller.start(); });
+    check(eventually([&] { return entered.load(); }),
+          "receiver start reached cancellable operation");
+    controller.stop();
+    check(start.get() == CastResult::cancelled && !controller.snapshot().media_failure_first &&
+              probe->clears == 1,
+          "late cache failure keeps the earlier user cancellation and cleanup once");
+}
+
+// Real compressed fixtures exercise the controller's production factory, HTTP
+// delivery and terminal worker signal. The receiver remains scripted/loopback.
+#ifdef SAP2_HAS_STEREO_AAC
+unsigned fetch_resource(const std::string& playlist_url, const std::string& name) {
+    namespace asio = boost::asio;
+    namespace beast = boost::beast;
+    const auto slash = playlist_url.find('/', 7);
+    const auto authority = playlist_url.substr(7, slash - 7);
+    const auto colon = authority.rfind(':');
+    const auto path = playlist_url.substr(slash, playlist_url.rfind('/') - slash + 1) + name;
+    asio::io_context context;
+    beast::tcp_stream stream(context);
+    stream.expires_after(3s);
+    stream.connect({asio::ip::make_address(authority.substr(0, colon)),
+                    static_cast<std::uint16_t>(std::stoul(authority.substr(colon + 1)))});
+    beast::http::request<beast::http::empty_body> request{beast::http::verb::get, path, 11};
+    request.set(beast::http::field::host, authority);
+    request.set(beast::http::field::connection, "close");
+    beast::http::write(stream, request);
+    beast::flat_buffer buffer;
+    beast::http::response<beast::http::vector_body<std::uint8_t>> response;
+    beast::http::read(stream, buffer, response);
+    check(response.result_int() != 200 || !response.body().empty(),
+          "successful AAC resource has bytes");
+    return response.result_int();
+}
+void real_conversion_tests(const std::filesystem::path& fixtures) {
+    group = "enabled production conversion";
+    for (const auto* filename : {"dts.mp4", "dts.mkv", "aac.mp4"}) {
+        auto probe = std::make_shared<ConversionProbe>();
+        std::mutex mutex;
+        std::map<std::size_t, Bytes> fragments;
+        std::atomic_bool fail_reads{false};
+        auto settings = conversion_settings(probe);
+        settings.audio_track_id.reset();
+        if (std::string_view(filename) == "dts.mp4") {
+            settings.audio_track_id = 42;
+        }
+        settings.cache_quota_bytes = 16 * 1024 * 1024;
+        settings.fragment_store.seal = [&](std::size_t index, const Bytes& bytes,
+                                           const AacCacheContext& context) {
+            check(!context.should_stop(), "seal sees live conversion control");
+            std::lock_guard<std::mutex> lock(mutex);
+            fragments.emplace(index, bytes);
+        };
+        settings.fragment_store.read_at = [&](std::size_t index, std::uint64_t offset,
+                                              std::uint8_t* output, std::size_t capacity,
+                                              const AacCacheContext& context) -> std::size_t {
+            if (fail_reads || context.should_stop()) {
+                return 0;
+            }
+            std::lock_guard<std::mutex> lock(mutex);
+            const auto& bytes = fragments.at(index);
+            const auto count = std::min<std::size_t>(
+                {capacity, 509, bytes.size() - static_cast<std::size_t>(offset)});
+            std::memcpy(output, bytes.data() + offset, count);
+            return count;
+        };
+        settings.fragment_store.clear = [&] {
+            std::lock_guard<std::mutex> lock(mutex);
+            fragments.clear();
+            ++probe->clears;
+        };
+        FakeReceiver receiver({});
+        auto source =
+            open_file_media_source(fixtures / filename, std::make_shared<FileReadStats>());
+        CastController controller(settings, source, fake_receiver_dependencies(receiver));
+        check(controller.start() == CastResult::ok,
+              std::string(filename) + ": real selected decoder starts");
+        const auto url = receiver.inserted_media_url();
+        check(ends_with(url, "/main.m3u8") && controller.snapshot().selected_audio_id == 42,
+              std::string(filename) + ": production composition and original ID");
+        check(fetch_resource(url, "audio.m3u8") == 200 && fetch_resource(url, "a0.m4s") == 200,
+              std::string(filename) + ": lazy AAC fragment reaches HTTP client");
+        fail_reads = true;
+        try {
+            (void)fetch_resource(url, "a0.m4s");
+        } catch (const boost::system::system_error&) { /* Supervisor may close the failing HTTP
+                                                          request. */
+        }
+        check(eventually([&] { return controller.snapshot().media_cleaned_up; }),
+              std::string(filename) + ": fatal sealed-cache read drains controller");
+        const auto snapshot = controller.snapshot();
+        check(snapshot.media_failure == StereoAacHlsFailure::cache_error &&
+                  snapshot.media_failure_first && snapshot.session.cleaned_up &&
+                  probe->clears == 1 && fragments.empty(),
+              std::string(filename) + ": fixed cache failure and complete cleanup");
+        controller.stop();
+        check(probe->clears == 1, "later Stop does not clear cache twice");
+    }
+}
+void real_selection_order_tests(const std::filesystem::path& decoder_fixtures) {
+    group = "real AAC commentary and DTS source order";
+    // Original D70 fixture has AAC commentary ID 7 before DTS main ID 42.
+    // Reorder only contiguous trak boxes for the second case: payload offsets,
+    // source IDs and total moov size stay fixed. No production parser authors input.
+    const auto owned_fixture = decoder_fixtures / "dts-commentary-first.mp4";
+    std::ifstream input(owned_fixture, std::ios::binary);
+    Bytes original{std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+    check(!original.empty(), "owned AAC-commentary/DTS movie fixture exists");
+    constexpr std::size_t box_header_bytes = 8;
+    constexpr std::size_t box_type_offset = 4;
+    const auto box_size = [&](std::size_t offset, std::size_t end) {
+        if (offset > end || end - offset < box_header_bytes) {
+            throw std::logic_error("fixture box header");
+        }
+        std::uint32_t size = 0;
+        for (std::size_t byte = 0; byte < box_type_offset; ++byte) {
+            size = (size << 8) | original[offset + byte];
+        }
+        if (size < box_header_bytes || size > end - offset) {
+            throw std::logic_error("fixture box extent");
+        }
+        return static_cast<std::size_t>(size);
+    };
+    Bytes reversed = original;
+    for (std::size_t offset = 0; offset < original.size();) {
+        const auto size = box_size(offset, original.size());
+        if (std::memcmp(original.data() + offset + box_type_offset, "moov", 4) == 0) {
+            std::vector<std::pair<std::size_t, std::size_t>> tracks;
+            for (auto child = offset + box_header_bytes; child < offset + size;) {
+                const auto length = box_size(child, offset + size);
+                if (std::memcmp(original.data() + child + box_type_offset, "trak", 4) == 0) {
+                    tracks.emplace_back(child, length);
+                }
+                child += length;
+            }
+            if (tracks.size() != 3 || tracks[1].first + tracks[1].second != tracks[2].first) {
+                throw std::logic_error("fixture audio track adjacency");
+            }
+            std::rotate(reversed.begin() + static_cast<std::ptrdiff_t>(tracks[1].first),
+                        reversed.begin() + static_cast<std::ptrdiff_t>(tracks[2].first),
+                        reversed.begin() +
+                            static_cast<std::ptrdiff_t>(tracks[2].first + tracks[2].second));
+            break;
+        }
+        offset += size;
+    }
+    for (const auto* bytes : {&original, &reversed}) {
+        auto owner = std::make_shared<const Bytes>(*bytes);
+        MediaSource source{[owner] { return static_cast<std::uint64_t>(owner->size()); },
+                           [owner](std::uint64_t offset, std::uint8_t* output, std::size_t capacity,
+                                   const MediaReadContext& context) {
+                               if (context.should_stop() || offset >= owner->size()) {
+                                   return std::size_t{0};
+                               }
+                               const auto count = std::min<std::size_t>(
+                                   capacity, owner->size() - static_cast<std::size_t>(offset));
+                               std::memcpy(output, owner->data() + offset, count);
+                               return count;
+                           }};
+        auto probe = std::make_shared<ConversionProbe>();
+        auto settings = conversion_settings(probe);
+        settings.audio_track_id.reset();
+        settings.cache_quota_bytes = 16 * 1024 * 1024;
+        {
+            CastController ambiguous(
+                settings, source, stored_credentials(failing_connector(TransportError::network)));
+            check(ambiguous.start() == CastResult::audio_selection_required,
+                  bytes == &original ? "AAC-before-DTS requires selection"
+                                     : "DTS-before-AAC requires selection");
+        }
+        settings.audio_track_id = 42;
+        FakeReceiver receiver({});
+        CastController selected(settings, source, fake_receiver_dependencies(receiver));
+        check(selected.start() == CastResult::ok && selected.snapshot().selected_audio_id == 42,
+              bytes == &original ? "explicit DTS ID selects main after AAC commentary"
+                                 : "explicit DTS ID selects main before AAC commentary");
+        selected.stop();
+        check(probe->clears == 2, "both real-file selection cases clean their own cast cache");
+    }
+}
+void production_selection_tests() {
+    group = "production selection before codec filtering";
+    using namespace send_airplay2::test::mp4_fixture;
+    auto commentary = audio_spec();
+    commentary.source_id = 7;
+    auto unsupported = audio_spec();
+    unsupported.source_id = 42;
+    // Literal unsupported fourcc; retain a valid container/sample-entry layout.
+    constexpr std::size_t sample_entry_type_offset = 4; // After the 32-bit big-endian box size.
+    std::memcpy(unsupported.entry.data() + sample_entry_type_offset, "zzzz", 4);
+    auto video = video_spec();
+    video.source_id = 11;
+    for (const bool reversed : {false, true}) {
+        const auto tracks = reversed ? std::vector<TrackSpec>{video, unsupported, commentary}
+                                     : std::vector<TrackSpec>{video, commentary, unsupported};
+        for (const auto& choice : std::vector<std::pair<std::optional<std::uint64_t>, CastResult>>{
+                 {{}, CastResult::audio_selection_required},
+                 {42, CastResult::media_unsupported},
+                 {11, CastResult::audio_track_invalid},
+                 {99, CastResult::audio_track_invalid}}) {
+            auto probe = std::make_shared<ConversionProbe>();
+            auto settings = conversion_settings(probe);
+            settings.audio_track_id = choice.first;
+            CastController controller(
+                settings, mp4_source(std::make_shared<SourceProbe>(), tracks),
+                stored_credentials(failing_connector(TransportError::network)));
+            const auto result = controller.start();
+            check(result == choice.second,
+                  "source order=" + std::to_string(reversed) +
+                      " ID=" + (choice.first ? std::to_string(*choice.first) : "auto") +
+                      " result=" + std::to_string(static_cast<std::int32_t>(result)) +
+                      " expected=" + std::to_string(static_cast<std::int32_t>(choice.second)));
+            check(controller.snapshot().media_cleaned_up && probe->clears == 1,
+                  "production selection refusal clears the host cache once");
+        }
+    }
+}
+#endif
+
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        std::cerr << "usage: cast_controller_tests MRP_FIXTURE_DIRECTORY\n";
+    if (argc != 4) {
+        std::cerr << "usage: cast_controller_tests MRP_FIXTURES HLS_FIXTURES DECODER_FIXTURES\n";
         return 2;
     }
     const std::string mrp_fixtures = argv[1];
@@ -892,6 +1279,14 @@ int main(int argc, char** argv) {
     hls_delivery_tests();
     url_controls_delivery_tests();
     url_controls_terminal_tests();
+    conversion_start_failure_tests();
+    conversion_terminal_tests();
+    conversion_stop_first_tests();
+#ifdef SAP2_HAS_STEREO_AAC
+    real_conversion_tests(argv[2]);
+    real_selection_order_tests(argv[3]);
+    production_selection_tests();
+#endif
     if (failures != 0) {
         std::cerr << failures << " failure(s)\n";
         return 1;

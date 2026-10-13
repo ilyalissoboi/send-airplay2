@@ -1,5 +1,11 @@
 # Receiver validation record
 
+**D74 boundary (2026-10-13):** explicit stereo AAC delivery/API 4 has only
+offline/scripted loopback validation in this slice. Historical Apple TV/Mac
+results below cover their recorded delivery/builds and do not validate converted
+audio. Integrated AppContainer runtime, real-file performance and stereo-output
+receiver checks follow [the current gate](stereo-aac-playback.md).
+
 Status: DISCOVERY AND PAIRING OBSERVED; built-in fresh-socket and separate-process
 verification passed; pyatv 0.18.0 reference playback FAILED (known upstream
 tvOS 26 incompatibility); reference playback PASSED with an unmerged pyatv fix

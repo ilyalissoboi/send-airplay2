@@ -9,6 +9,8 @@
 #include "send_airplay2/playback.h"
 #include "send_airplay2/receivers.h"
 #include "cli_input.h"
+#include "api_host_cli.h"
+#include "host_fragment_store.h"
 
 #include <algorithm>
 #include <atomic>
@@ -58,6 +60,8 @@ const char* usage =
     "Usage: airplay2-api-host --address IP --profile NAME --file PATH [--port 7000]\n"
     "         [--content-type TYPE] [--start-timeout-ms N] [--media-connections N]\n"
     "         [--start-position SECONDS] [--remux]\n"
+    "         [--stereo-aac [--audio-track ID] --cache-directory PATH --cache-quota-bytes N]\n"
+    "       airplay2-api-host --probe-tracks --file PATH (metadata only, no receiver)\n"
     "         [--cancel-after-ms N | --cycles N [--hold-ms N]]\n"
     "--remux: SAP2_DELIVERY_HLS_REMUX (MP4/MOV or MKV as HLS; content type ignored).\n"
     "Interactive (default): status, pause, play, seek SECONDS, stop; Enter stops locally.\n"
@@ -85,6 +89,11 @@ struct HostArguments {
     bool pair = false;            // Pair a new profile instead of casting.
     bool discover = false;        // Scan for receivers instead of casting.
     bool remux = false;           // SAP2_DELIVERY_HLS_REMUX instead of progressive.
+    bool stereo_aac = false;
+    bool probe_tracks = false;
+    std::uint64_t audio_track = 0;
+    std::uint64_t cache_quota = 0;
+    std::string cache_directory;
     std::uint32_t discover_ms = SAP2_DEFAULT_DISCOVERY_MS;
     std::optional<std::string> expect_name; // Compared, never printed.
 };
@@ -94,6 +103,15 @@ std::uint32_t parse_unsigned(std::string_view value, const char* name) {
     const auto result = std::from_chars(value.data(), value.data() + value.size(), parsed);
     if (result.ec != std::errc{} || result.ptr != value.data() + value.size()) {
         throw std::invalid_argument(std::string(name) + " must be an unsigned integer");
+    }
+    return parsed;
+}
+
+std::uint64_t parse_positive64(std::string_view value) {
+    std::uint64_t parsed = 0;
+    const auto result = std::from_chars(value.data(), value.data() + value.size(), parsed);
+    if (result.ec != std::errc{} || result.ptr != value.data() + value.size() || !parsed) {
+        throw std::invalid_argument("track ID and cache quota must be positive integers");
     }
     return parsed;
 }
@@ -117,8 +135,21 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
     HostArguments arguments;
     bool discover_option_given = false; // --discover-ms or --expect-name.
     bool other_option_given = false;    // Any cast or pairing option, or --pair.
+    bool probe_incompatible_option = false;
     for (int index = 1; index < argc; ++index) {
         const std::string_view option = argv[index];
+        probe_incompatible_option =
+            probe_incompatible_option || (option != "--probe-tracks" && option != "--file");
+        if (option == "--stereo-aac") {
+            arguments.stereo_aac = true;
+            other_option_given = true;
+            continue;
+        }
+        if (option == "--probe-tracks") {
+            arguments.probe_tracks = true;
+            other_option_given = true;
+            continue;
+        }
         if (option == "--pair") {
             arguments.pair = true;
             other_option_given = true;
@@ -152,6 +183,12 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
             arguments.profile = std::string(value);
         } else if (option == "--file") {
             arguments.file = std::string(value);
+        } else if (option == "--audio-track") {
+            arguments.audio_track = parse_positive64(value);
+        } else if (option == "--cache-quota-bytes") {
+            arguments.cache_quota = parse_positive64(value);
+        } else if (option == "--cache-directory") {
+            arguments.cache_directory = std::string(value);
         } else if (option == "--content-type") {
             arguments.content_type = std::string(value);
         } else if (option == "--start-timeout-ms") {
@@ -184,11 +221,33 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
         throw std::invalid_argument("--discover-ms and --expect-name require --discover");
     }
     if (arguments.pair) {
+        if (arguments.stereo_aac || arguments.probe_tracks || arguments.audio_track ||
+            arguments.cache_quota || !arguments.cache_directory.empty()) {
+            throw std::invalid_argument("conversion and probe options are not pairing options");
+        }
         if (arguments.address.empty() || arguments.profile.empty() || !arguments.file.empty() ||
             arguments.cancel_after_ms || arguments.cycles || arguments.remux) {
             throw std::invalid_argument("--pair requires --address and --profile only");
         }
         return arguments;
+    }
+    if (arguments.probe_tracks) {
+        if (probe_incompatible_option || arguments.file.empty() || arguments.stereo_aac ||
+            arguments.remux || !arguments.address.empty() || !arguments.profile.empty() ||
+            arguments.cancel_after_ms || arguments.cycles || arguments.audio_track ||
+            arguments.cache_quota || !arguments.cache_directory.empty()) {
+            throw std::invalid_argument("--probe-tracks requires --file only");
+        }
+        return arguments;
+    }
+    if (arguments.stereo_aac &&
+        (arguments.remux || arguments.cache_directory.empty() || !arguments.cache_quota)) {
+        throw std::invalid_argument(
+            "--stereo-aac requires cache directory and quota, and is exclusive with remux");
+    }
+    if (!arguments.stereo_aac &&
+        (arguments.audio_track || arguments.cache_quota || !arguments.cache_directory.empty())) {
+        throw std::invalid_argument("track and cache options require --stereo-aac");
     }
     if (arguments.address.empty() || arguments.profile.empty() || arguments.file.empty()) {
         throw std::invalid_argument("requires --address, --profile and --file");
@@ -341,6 +400,8 @@ const char* end_name(std::uint32_t reason) {
         return "ownership_lost";
     case SAP2_END_CONNECTION_LOST:
         return "connection_lost";
+    case SAP2_END_MEDIA_FAILURE:
+        return "media_failure";
     default:
         return "unknown";
     }
@@ -437,11 +498,16 @@ std::string describe(const sap2_cast_status& status) {
     line << " failure=" << failure_channel_name(status.failure_channel) << '/'
          << failure_reason_name(status.failure_reason)
          << " cleaned=" << (status.cleaned_up ? "yes" : "no");
+    line << " media_failure=" << status.media_failure
+         << " media_cleaned=" << status.media_cleaned_up
+         << " selected_audio_id=" << status.selected_audio_id
+         << " authoring_flags=" << status.authoring_flags;
     return line.str();
 }
 
 bool failed(const sap2_cast_status& status) {
     return status.failure_channel != SAP2_FAILURE_CHANNEL_NONE ||
+           status.media_failure != SAP2_MEDIA_FAILURE_NONE ||
            status.end_reason == SAP2_END_CONNECTION_LOST;
 }
 
@@ -498,6 +564,8 @@ private:
 
 /// Owns one handle; destroys it on every path so the source is always released.
 struct CastHandle {
+    // Destroy the native handle before the host cache owner.
+    std::unique_ptr<send_airplay2::detail::HostFragmentFiles> fragments;
     sap2_cast* cast = nullptr;
     CastHandle() = default;
     ~CastHandle() {
@@ -525,7 +593,17 @@ sap2_cast_options options_for(const HostArguments& arguments) {
 
 /// Returns SAP2_OK with `handle.cast` set, or the create result.
 std::int32_t create(const HostArguments& arguments, HostFile& file, CastHandle& handle) {
-    const auto options = options_for(arguments);
+    auto options = options_for(arguments);
+    sap2_aac_fragment_store fragment_table{};
+    if (arguments.stereo_aac) {
+        handle.fragments =
+            std::make_unique<send_airplay2::detail::HostFragmentFiles>(arguments.cache_directory);
+        fragment_table = handle.fragments->table();
+        options.delivery = SAP2_DELIVERY_STEREO_AAC_HLS;
+        options.audio_track_id = arguments.audio_track;
+        options.cache_quota_bytes = arguments.cache_quota;
+        options.fragment_store = &fragment_table;
+    }
     const auto source = file.source();
     const auto result = sap2_cast_create(&options, &source, &handle.cast);
     if (result != SAP2_OK) {
@@ -948,7 +1026,7 @@ int run_discover(const HostArguments& arguments) {
 }
 } // namespace
 
-int main(int argc, char** argv) {
+int send_airplay2::detail::run_api_host(int argc, const char* const* argv) {
     HostArguments arguments;
     std::unique_ptr<HostFile> file;
     try {
@@ -974,6 +1052,28 @@ int main(int argc, char** argv) {
         }
         if (arguments.pair) {
             return run_pair(arguments);
+        }
+        if (arguments.probe_tracks) {
+            const auto source = file->source();
+            sap2_track_list* tracks = nullptr;
+            const auto result =
+                sap2_media_probe(&source, SAP2_MAX_START_TIMEOUT_MS, nullptr, nullptr, &tracks);
+            std::unique_ptr<sap2_track_list, decltype(&sap2_track_list_free)> owner(
+                tracks, sap2_track_list_free);
+            std::cout << "Probe: " << sap2_result_name(result)
+                      << " container=" << sap2_track_list_container(tracks) << '\n';
+            for (std::size_t index = 0; index < sap2_track_list_count(tracks); ++index) {
+                sap2_media_track track{};
+                track.struct_size = sizeof(track);
+                if (sap2_track_list_get(tracks, index, &track) == SAP2_OK) {
+                    // Source text is untrusted: print IDs/flags only, no terminal controls.
+                    std::cout << "Track: id=" << track.id << " kind=" << track.kind
+                              << " enabled=" << track.enabled << " default=" << track.default_track
+                              << " encoded=" << track.encoded
+                              << " standard_timeline=" << track.standard_timeline << '\n';
+                }
+            }
+            return result == SAP2_OK ? exit_success : exit_failure;
         }
         if (arguments.cancel_after_ms) {
             return run_cancel(arguments, *file);

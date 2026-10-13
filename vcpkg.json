@@ -4,6 +4,12 @@
   "builtin-baseline": "434307da09bc05b2c86996dccc8b2351fc0d5d37",
   "dependencies": ["openssl", "botan", "boost-beast", "boost-asio"],
   "features": {
+    "stereo-aac": {
+      "description": "Explicit video delivery with selected audio downmixed to stereo AAC",
+      "dependencies": [
+        { "name": "ffmpeg", "default-features": false, "features": ["avcodec", "avformat", "swresample"] }
+      ]
+    },
     "audio-codec-spike": {
       "description": "Optional in-process stereo AAC development probe; no casting integration",
       "dependencies": [

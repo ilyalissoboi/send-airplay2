@@ -5,6 +5,13 @@ incorporating external code or adding dependencies.
 
 ## Stereo AAC readiness (D72)
 
+D74's explicitly enabled playback integration reuses the same pinned FFmpeg
+9.0.2 LGPL profile (avformat/avcodec/avutil/swresample, network/GPL/nonfree disabled).
+The optional runtime, API/cache adapters and host implementations are original
+Apache-2.0 code. Default builds retain no codec dependency. No new implementation
+or dependency is copied/adopted, and no package publication is included; optional
+redistribution must retain the existing codec notices/profile and runtime DLLs.
+
 D73's authoring calculator, estimate provenance and long-segment policy are
 original Apache-2.0 code. Rate formulas are written from RFC 8216 sections 4.1
 and 4.3.4.2 and Apple's published authoring requirements, not copied from an

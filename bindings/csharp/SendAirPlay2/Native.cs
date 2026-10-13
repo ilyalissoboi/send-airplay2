@@ -17,7 +17,7 @@ namespace SendAirPlay2
         internal const string Library = "send_airplay2";
 
         /// <summary>The header version this binding was written against.</summary>
-        internal const uint ApiVersion = 3;
+        internal const uint ApiVersion = 4;
 
         /// <summary>SAP2_CREDENTIAL_RECORD_MAX: upper bound of an encoded record.</summary>
         internal const int CredentialRecordMax = 203;
@@ -37,6 +37,41 @@ namespace SendAirPlay2
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate void ReleaseCallback(IntPtr context);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        internal delegate int SealCallback(IntPtr context, ulong index, IntPtr bytes,
+                                            UIntPtr length, IntPtr control);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        internal delegate UIntPtr FragmentReadCallback(IntPtr context, ulong index,
+            ulong offset, IntPtr buffer, UIntPtr capacity, IntPtr control);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        internal delegate int CancelCallback(IntPtr context);
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct FragmentStore
+        {
+            internal uint StructSize;
+            internal IntPtr Context;
+            internal IntPtr Seal;
+            internal IntPtr ReadAt;
+            internal IntPtr Clear;
+            internal IntPtr Release;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct MediaTrack
+        {
+            internal uint StructSize;
+            internal uint Kind;
+            internal ulong Id;
+            internal uint Enabled;
+            internal uint DefaultTrack;
+            internal uint Encoded;
+            internal uint StandardTimeline;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)] internal byte[] Codec;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)] internal byte[] Language;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)] internal byte[] Name;
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate int StoreLoadCallback(IntPtr context, IntPtr profile, IntPtr buffer,
@@ -87,6 +122,10 @@ namespace SendAirPlay2
             internal IntPtr CredentialStore; // Version 2.
             internal uint Reserved;          // Version 3: version 2 tail padding on x86.
             internal uint Delivery;          // Version 3: SAP2_DELIVERY_*.
+            internal uint ReservedV4;
+            internal ulong AudioTrackId;
+            internal ulong CacheQuotaBytes;
+            internal IntPtr FragmentStore;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -109,6 +148,11 @@ namespace SendAirPlay2
             internal double PositionSeconds;
             internal double DurationSeconds;
             internal double PlaybackRate;
+            internal uint MediaFailure;
+            internal uint MediaCleanedUp;
+            internal uint AuthoringFlags;
+            internal uint ReservedV4;
+            internal ulong SelectedAudioId;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -141,6 +185,20 @@ namespace SendAirPlay2
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint sap2_playback_api_version();
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int sap2_stereo_aac_available();
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int sap2_media_probe(ref MediaSource source, uint timeoutMs,
+            IntPtr context, CancelCallback shouldCancel, out IntPtr tracks);
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern UIntPtr sap2_track_list_count(IntPtr tracks);
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern uint sap2_track_list_container(IntPtr tracks);
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int sap2_track_list_get(IntPtr tracks, UIntPtr index, ref MediaTrack track);
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void sap2_track_list_free(IntPtr tracks);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr sap2_result_name(int result);

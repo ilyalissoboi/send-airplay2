@@ -1,4 +1,10 @@
-# Public playback interface (version 1)
+# Public playback interface
+
+**D74/API 4:** explicit optional stereo AAC delivery, borrowed source-track probe,
+host fragment storage and conversion supervision are described in
+[stereo-aac-playback.md](stereo-aac-playback.md). Old option/status layouts remain
+supported. This integration has offline evidence only; historical receiver
+observations below do not validate converted audio.
 
 Status: **implemented, experimental; manual plan passed on one receiver/host (D48).**
 Snapshot 2026-10-07 (Asia/Tokyo), decision D46. The header is

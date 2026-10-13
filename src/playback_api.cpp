@@ -7,6 +7,7 @@
 #include "cast_controller.h"
 #include "credential_store.h"
 #include "host_credentials.h"
+#include "media_track_inventory.h"
 
 #include <chrono>
 #include <algorithm>
@@ -24,6 +25,14 @@
 /// Borrowed view of one media read's stop conditions.
 struct sap2_read_control {
     const send_airplay2::MediaReadContext* context;
+    const std::atomic_bool* cast_stopped = nullptr;
+    void* cancel_context = nullptr;
+    int (*should_cancel)(void*) = nullptr;
+    std::atomic_bool* probe_cancelled = nullptr;
+};
+
+struct sap2_track_list {
+    send_airplay2::detail::MediaTrackInventory inventory;
 };
 
 struct sap2_cast {
@@ -65,6 +74,23 @@ static_assert(static_cast<std::int32_t>(CastResult::pin_timeout) == SAP2_ERROR_P
 static_assert(static_cast<std::int32_t>(CastResult::media_unsupported) ==
               SAP2_ERROR_MEDIA_UNSUPPORTED);
 static_assert(static_cast<std::int32_t>(CastResult::media_malformed) == SAP2_ERROR_MEDIA_MALFORMED);
+static_assert(static_cast<std::int32_t>(CastResult::audio_selection_required) ==
+              SAP2_ERROR_AUDIO_SELECTION_REQUIRED);
+static_assert(static_cast<std::int32_t>(CastResult::audio_track_invalid) ==
+              SAP2_ERROR_AUDIO_TRACK_INVALID);
+static_assert(static_cast<std::int32_t>(CastResult::media_codec) == SAP2_ERROR_MEDIA_CODEC);
+static_assert(static_cast<std::int32_t>(CastResult::media_cache) == SAP2_ERROR_MEDIA_CACHE);
+static_assert(static_cast<std::int32_t>(CastResult::media_source) == SAP2_ERROR_MEDIA_SOURCE);
+static_assert(static_cast<std::int32_t>(CastResult::media_limit) == SAP2_ERROR_MEDIA_LIMIT);
+static_assert(static_cast<std::int32_t>(CastResult::media_generation_timeout) ==
+              SAP2_ERROR_MEDIA_GENERATION_TIMEOUT);
+static_assert(static_cast<std::uint32_t>(StereoAacHlsFailure::generation_timeout) ==
+              SAP2_MEDIA_FAILURE_TIMEOUT);
+static_assert(static_cast<std::uint32_t>(StereoAacHlsFailure::cache_error) ==
+              SAP2_MEDIA_FAILURE_CACHE);
+static_assert(authoring_audio_estimated == SAP2_AUTHORING_AUDIO_ESTIMATED);
+static_assert(authoring_copied_sizes_estimated == SAP2_AUTHORING_COPIED_SIZES_ESTIMATED);
+static_assert(authoring_subtitle_sizes_unmeasured == SAP2_AUTHORING_SUBTITLE_SIZES_UNMEASURED);
 
 // Version 1 sap2_cast_options ended before credential_store (API version 2).
 constexpr std::size_t cast_options_v1_size = offsetof(sap2_cast_options, credential_store);
@@ -92,6 +118,26 @@ static_assert(offsetof(sap2_cast_options, delivery) >= sizeof(CastOptionsV2),
               "delivery overlaps a version 2 struct");
 constexpr std::size_t cast_options_v3_size =
     offsetof(sap2_cast_options, delivery) + sizeof(sap2_cast_options::delivery);
+struct CastOptionsV3 {
+    std::uint32_t struct_size;
+    const char* receiver_address;
+    std::uint16_t receiver_port;
+    const char* profile;
+    const char* content_type;
+    std::uint32_t start_timeout_ms;
+    std::uint32_t media_connections;
+    double start_position_seconds;
+    const sap2_credential_store* credential_store;
+    std::uint32_t reserved;
+    std::uint32_t delivery;
+};
+static_assert(offsetof(CastOptionsV3, delivery) == offsetof(sap2_cast_options, delivery),
+              "version 3 prefix of sap2_cast_options");
+static_assert(offsetof(sap2_cast_options, audio_track_id) >= sizeof(CastOptionsV3),
+              "audio ID overlaps a version 3 struct");
+constexpr std::size_t cast_options_v4_size =
+    offsetof(sap2_cast_options, fragment_store) + sizeof(sap2_cast_options::fragment_store);
+constexpr std::size_t cast_status_v3_size = offsetof(sap2_cast_status, media_failure);
 
 // Longest numeric IPv6 text form (INET6_ADDRSTRLEN without the terminator).
 constexpr std::size_t max_address_length = 45;
@@ -159,6 +205,60 @@ MediaSource media_source_for(const std::shared_ptr<HostSource>& host) {
     return source;
 }
 
+/** Cache callbacks retain this disarmed owner until successful create. Cleanup
+ * drains reads first in the controller, and release follows all callback copies.
+ */
+class HostFragmentStore {
+public:
+    explicit HostFragmentStore(const sap2_aac_fragment_store& store) noexcept : store_(store) {}
+    ~HostFragmentStore() {
+        if (armed_) {
+            clear();
+            if (store_.release) {
+                store_.release(store_.context);
+            }
+        }
+    }
+    HostFragmentStore(const HostFragmentStore&) = delete;
+    HostFragmentStore& operator=(const HostFragmentStore&) = delete;
+    HostFragmentStore(HostFragmentStore&&) = delete;
+    HostFragmentStore& operator=(HostFragmentStore&&) = delete;
+    void arm() noexcept {
+        armed_ = true;
+    }
+    void clear() noexcept {
+        if (armed_ && !cleared_.exchange(true)) {
+            store_.clear(store_.context);
+        }
+    }
+    void seal(std::size_t index, const Bytes& bytes, const AacCacheContext& context) const {
+        const sap2_read_control control{&context.request, &context.cast_stopped};
+        if (store_.seal(store_.context, index, bytes.data(), bytes.size(), &control) != SAP2_OK) {
+            throw std::runtime_error("fragment storage failed");
+        }
+    }
+    std::size_t read(std::size_t index, std::uint64_t offset, std::uint8_t* buffer,
+                     std::size_t capacity, const AacCacheContext& context) const noexcept {
+        const sap2_read_control control{&context.request, &context.cast_stopped};
+        return store_.read_at(store_.context, index, offset, buffer, capacity, &control);
+    }
+
+private:
+    sap2_aac_fragment_store store_;
+    bool armed_ = false;
+    std::atomic_bool cleared_{false};
+};
+AacFragmentStore fragment_store_for(const std::shared_ptr<HostFragmentStore>& host) {
+    return {[host](std::size_t index, const Bytes& bytes, const AacCacheContext& context) {
+                host->seal(index, bytes, context);
+            },
+            [host](std::size_t index, std::uint64_t offset, std::uint8_t* buffer,
+                   std::size_t capacity, const AacCacheContext& context) {
+                return host->read(index, offset, buffer, capacity, context);
+            },
+            [host] { host->clear(); }};
+}
+
 /// Returns ok and fills `settings`, or the argument error. May throw bad_alloc.
 /// The host store a cast options struct carries: null for a version 1 struct or
 /// a null field. Sets `valid` to false for a malformed table.
@@ -209,9 +309,29 @@ CastResult settings_from(const sap2_cast_options& options, CastSettings& setting
     if (options.struct_size >= cast_options_v3_size) {
         if (options.delivery == SAP2_DELIVERY_HLS_REMUX) {
             settings.delivery = CastDelivery::hls_remux;
+        } else if (options.delivery == SAP2_DELIVERY_STEREO_AAC_HLS) {
+            if (options.struct_size < cast_options_v4_size || !options.fragment_store ||
+                options.fragment_store->struct_size < sizeof(sap2_aac_fragment_store) ||
+                !options.fragment_store->seal || !options.fragment_store->read_at ||
+                !options.fragment_store->clear || options.cache_quota_bytes == 0) {
+                return CastResult::invalid_argument;
+            }
+            if (!stereo_aac_available()) {
+                return CastResult::unsupported;
+            }
+            settings.delivery = CastDelivery::stereo_aac_hls;
+            if (options.audio_track_id) {
+                settings.audio_track_id = options.audio_track_id;
+            }
+            settings.cache_quota_bytes = options.cache_quota_bytes;
         } else if (options.delivery != SAP2_DELIVERY_PROGRESSIVE) {
             return CastResult::invalid_argument;
         }
+    }
+    if (options.struct_size >= cast_options_v4_size &&
+        settings.delivery != CastDelivery::stereo_aac_hls &&
+        (options.audio_track_id || options.cache_quota_bytes || options.fragment_store)) {
+        return CastResult::invalid_argument;
     }
     return CastResult::ok;
 }
@@ -334,6 +454,10 @@ void write_status(const CastSnapshot& snapshot, sap2_cast_status& status) noexce
     status.rejected_status = snapshot.rejected_status;
     status.playback_state = state_code(snapshot.session.playback_state);
     status.end_reason = end_code(snapshot.session.end_reason);
+    if (snapshot.media_failure_first &&
+        (status.end_reason == SAP2_END_NONE || status.end_reason == SAP2_END_SENDER_STOP)) {
+        status.end_reason = SAP2_END_MEDIA_FAILURE;
+    }
     status.failure_channel = failure_channel_code(snapshot.session.failure_channel);
     status.failure_reason = failure_reason_code(snapshot.session.failure_reason);
     status.owned = snapshot.playback.owned ? 1 : 0;
@@ -346,10 +470,17 @@ void write_status(const CastSnapshot& snapshot, sap2_cast_status& status) noexce
     scalar(snapshot.playback.position_seconds, status.has_position, status.position_seconds);
     scalar(snapshot.playback.duration_seconds, status.has_duration, status.duration_seconds);
     scalar(snapshot.playback.playback_rate, status.has_playback_rate, status.playback_rate);
+    if (status.struct_size >= sizeof(sap2_cast_status)) {
+        status.media_failure = static_cast<std::uint32_t>(snapshot.media_failure);
+        status.media_cleaned_up = snapshot.media_cleaned_up ? 1 : 0;
+        status.authoring_flags = snapshot.authoring_flags;
+        status.reserved_v4 = 0;
+        status.selected_audio_id = snapshot.selected_audio_id;
+    }
 }
 
 bool valid_status(const sap2_cast_status* status) noexcept {
-    return status && status->struct_size >= sizeof(sap2_cast_status);
+    return status && status->struct_size >= cast_status_v3_size;
 }
 
 /// Map the in-flight exception with the shared categories, so a platform
@@ -364,6 +495,9 @@ extern "C" {
 
 uint32_t sap2_playback_api_version(void) {
     return SAP2_PLAYBACK_API_VERSION;
+}
+int sap2_stereo_aac_available(void) {
+    return stereo_aac_available() ? 1 : 0;
 }
 
 const char* sap2_result_name(int32_t result) {
@@ -412,13 +546,134 @@ const char* sap2_result_name(int32_t result) {
         return "media_malformed";
     case SAP2_ERROR_PIN_TIMEOUT:
         return "pin_timeout";
+    case SAP2_ERROR_AUDIO_SELECTION_REQUIRED:
+        return "audio_selection_required";
+    case SAP2_ERROR_AUDIO_TRACK_INVALID:
+        return "audio_track_invalid";
+    case SAP2_ERROR_MEDIA_CODEC:
+        return "media_codec";
+    case SAP2_ERROR_MEDIA_CACHE:
+        return "media_cache";
+    case SAP2_ERROR_MEDIA_SOURCE:
+        return "media_source";
+    case SAP2_ERROR_MEDIA_LIMIT:
+        return "media_limit";
+    case SAP2_ERROR_MEDIA_GENERATION_TIMEOUT:
+        return "media_generation_timeout";
     default:
         return "unknown";
     }
 }
 
 int sap2_read_should_stop(const sap2_read_control* control) {
-    return !control || !control->context || control->context->should_stop() ? 1 : 0;
+    if (!control || !control->context || control->context->should_stop() ||
+        (control->cast_stopped && control->cast_stopped->load())) {
+        return 1;
+    }
+    if (control->should_cancel && control->should_cancel(control->cancel_context)) {
+        if (control->probe_cancelled) {
+            control->probe_cancelled->store(true);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+int32_t sap2_media_probe(const sap2_media_source* source, uint32_t timeout_ms, void* context,
+                         int (*should_cancel)(void*), sap2_track_list** tracks) {
+    if (!tracks) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    *tracks = nullptr;
+    if (!source || source->struct_size < sizeof(sap2_media_source) || !source->read_at ||
+        !timeout_ms || timeout_ms > SAP2_MAX_START_TIMEOUT_MS) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    std::atomic_bool cancelled{false};
+    const MediaReadContext request{&cancelled, &cancelled,
+                                   std::chrono::steady_clock::now() +
+                                       std::chrono::milliseconds(timeout_ms)};
+    const auto poll = [&] {
+        if (should_cancel && should_cancel(context)) {
+            cancelled = true;
+        }
+        return request.should_stop();
+    };
+    try {
+        if (poll()) {
+            return cancelled ? SAP2_ERROR_CANCELLED : SAP2_ERROR_MEDIA_GENERATION_TIMEOUT;
+        }
+        MediaSource borrowed;
+        borrowed.size = [source] { return source->size; };
+        borrowed.read_at = [&](std::uint64_t offset, std::uint8_t* buffer, std::size_t capacity,
+                               const MediaReadContext& read_context) {
+            if (poll()) {
+                return std::size_t{0};
+            }
+            const sap2_read_control control{&read_context, nullptr, context, should_cancel,
+                                            &cancelled};
+            const auto count = source->read_at(source->context, offset, buffer, capacity, &control);
+            if (poll()) {
+                return std::size_t{0};
+            }
+            return count;
+        };
+        auto list = std::make_unique<sap2_track_list>();
+        list->inventory = probe_media_tracks(borrowed, request);
+        if (poll()) {
+            return cancelled ? SAP2_ERROR_CANCELLED : SAP2_ERROR_MEDIA_GENERATION_TIMEOUT;
+        }
+        *tracks = list.release();
+        return SAP2_OK;
+    } catch (const RemuxException& error) {
+        if (poll()) {
+            return cancelled ? SAP2_ERROR_CANCELLED : SAP2_ERROR_MEDIA_GENERATION_TIMEOUT;
+        }
+        return error.reason() == RemuxFailure::too_large   ? SAP2_ERROR_MEDIA_LIMIT
+               : error.reason() == RemuxFailure::malformed ? SAP2_ERROR_MEDIA_MALFORMED
+                                                           : SAP2_ERROR_MEDIA_UNSUPPORTED;
+    } catch (const std::bad_alloc&) {
+        return SAP2_ERROR_OUT_OF_MEMORY;
+    } catch (...) {
+        poll();
+        return cancelled               ? SAP2_ERROR_CANCELLED
+               : request.should_stop() ? SAP2_ERROR_MEDIA_GENERATION_TIMEOUT
+                                       : SAP2_ERROR_MEDIA_SOURCE;
+    }
+}
+size_t sap2_track_list_count(const sap2_track_list* tracks) {
+    return tracks ? tracks->inventory.tracks.size() : 0;
+}
+uint32_t sap2_track_list_container(const sap2_track_list* tracks) {
+    return !tracks                                               ? 0
+           : tracks->inventory.container == SourceContainer::mp4 ? SAP2_CONTAINER_MP4
+                                                                 : SAP2_CONTAINER_MATROSKA;
+}
+int32_t sap2_track_list_get(const sap2_track_list* tracks, size_t index, sap2_media_track* track) {
+    if (!tracks || !track || track->struct_size < sizeof(sap2_media_track) ||
+        index >= tracks->inventory.tracks.size()) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    const auto& source = tracks->inventory.tracks[index];
+    track->kind = source.kind == SourceTrackKind::audio   ? SAP2_TRACK_AUDIO
+                  : source.kind == SourceTrackKind::video ? SAP2_TRACK_VIDEO
+                                                          : SAP2_TRACK_OTHER;
+    track->id = source.id;
+    track->enabled = source.enabled;
+    track->default_track = source.default_track;
+    track->encoded = source.encoded;
+    track->standard_timeline = source.standard_timeline;
+    const auto copy = [](const std::string& value, char* output, std::size_t capacity) {
+        std::memset(output, 0, capacity);
+        std::memcpy(output, value.data(), std::min(value.size(), capacity - 1));
+    };
+    copy(source.codec, track->codec, sizeof(track->codec));
+    copy(source.language, track->language, sizeof(track->language));
+    copy(source.name, track->name, sizeof(track->name));
+    return SAP2_OK;
+}
+void sap2_track_list_free(sap2_track_list* tracks) {
+    delete tracks;
 }
 
 void sap2_cast_options_init_sized(sap2_cast_options* options, size_t struct_size) {
@@ -469,9 +724,17 @@ int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_media_sour
             };
         }
         auto host = std::make_shared<HostSource>(*source);
+        std::shared_ptr<HostFragmentStore> fragments;
+        if (settings.delivery == CastDelivery::stereo_aac_hls) {
+            fragments = std::make_shared<HostFragmentStore>(*options->fragment_store);
+            settings.fragment_store = fragment_store_for(fragments);
+        }
         auto handle = std::make_unique<sap2_cast>(std::move(settings), media_source_for(host),
                                                   std::move(dependencies));
         host->arm(); // Ownership transfers only now that nothing else can fail.
+        if (fragments) {
+            fragments->arm();
+        }
         *cast = handle.release();
         return SAP2_OK;
     } catch (...) {
