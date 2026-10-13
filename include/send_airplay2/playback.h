@@ -359,7 +359,11 @@ SAP2_API int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_m
  * read_at on this thread; SAP2_ERROR_MEDIA_UNSUPPORTED or _MALFORMED if it
  * cannot be remuxed), start the media server, authenticate both receiver
  * sessions and start playback. The remux reads precede start_timeout_ms and
- * can be cancelled by sap2_cast_stop() like the rest of the start. Blocks until playback is
+ * can be cancelled by sap2_cast_stop() like the rest of the start. Stereo AAC
+ * delivery probes/selects and prepares under a separate 120-second deadline,
+ * before the receiver timeout, invoking source/cache callbacks on this caller.
+ * Selection/codec/source/cache/limit failures retain fixed categories and never
+ * retry a different audio track. Blocks until playback is
  * confirmed (one continuous second of forward playing within start_timeout_ms), failure, or
  * cancellation by sap2_cast_stop() from another thread. If the receiver
  * reports itself asleep, start first wakes it and waits up to 10 s for it to
@@ -387,13 +391,14 @@ SAP2_API int32_t sap2_cast_wait_for_change(sap2_cast* cast, uint32_t previous_st
 SAP2_API int32_t sap2_cast_command(sap2_cast* cast, uint32_t command, double position_seconds);
 
 /** Local teardown: cancel a pending start or command, stop the session in its
- * fixed order, then stop the media server and join all its read callbacks.
+ * fixed order, then stop the media server and join all its read callbacks,
+ * then stop/join conversion and clear the per-cast cache if present.
  * Idempotent and thread-safe with other calls on the same handle; the first end
  * reason is kept (SAP2_END_SENDER_STOP if none). Must not be called from
- * read_at. After it returns no read_at runs. Returns SAP2_OK. */
+ * read_at/seal/clear. After it returns no read_at or seal runs. Returns SAP2_OK. */
 SAP2_API int32_t sap2_cast_stop(sap2_cast* cast);
 
-/** Stop if needed, release the media source and free the handle. NULL is a
+/** Stop if needed, release the media source/cache contexts and free the handle. NULL is a
  * no-op. Every other call on this handle must have returned, and none may follow. */
 SAP2_API void sap2_cast_destroy(sap2_cast* cast);
 

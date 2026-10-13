@@ -66,7 +66,9 @@ deadline, starts HTTP, and authenticates playback with the existing receiver
 timeout/wake behavior. Stop cancels preparation and waits for it. A supervisor
 starts before HTTP can request conversion and observes terminal conversion
 failure during start and active playback. It cancels startup or stops playback,
-drains HTTP, stops/joins conversion, then clears storage. Natural receiver end
+drains HTTP, stops/joins conversion, then clears storage. A confirmed session
+interrupted just before publication follows the same synchronous cleanup: failed
+Start returns only after cleanup and records StartFailed. Natural receiver end
 also drains stereo delivery automatically. Legacy delivery keeps its existing
 listener lifetime until host Stop/destroy.
 

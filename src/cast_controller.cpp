@@ -368,6 +368,9 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
         dependencies_.adjust_session(options);
     }
     session = UrlPlaybackSession::start(*credentials, std::move(options), &cancel_requested_);
+    if (dependencies_.after_session_start) {
+        dependencies_.after_session_start();
+    }
 }
 
 CastResult CastController::start() noexcept {
@@ -392,26 +395,34 @@ CastResult CastController::start() noexcept {
                  : cancel_requested_ ? CastResult::cancelled
                                      : cast_start_result(std::current_exception(), rejected_status);
     }
-    if (!session) {
-        monitor_cancelled_ = true;
-        state_changed_.notify_all();
-        join_media_monitor();
-        // UrlPlaybackSession::start has already joined its own cleanup.
-        drain_media(nullptr, server.get());
-    }
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
-        if (session) {
-            // A stop() that arrived after the session started still tears it
-            // down; report the start as cancelled so the caller does not race it.
-            if (cancel_requested_) {
-                result = media_failure_first_ ? conversion_result(media_failure_.load())
-                                              : CastResult::cancelled;
-            }
-            phase_ = CastPhase::active;
-        } else {
-            phase_ = CastPhase::start_failed;
+        // Linearize publication against Stop and fatal conversion, including a
+        // failure the polling monitor has not observed yet. Keep starting until
+        // failed-start cleanup completes, so Stop cannot return ahead of it.
+        observe_media_failure_locked(session.get());
+        if (cancel_requested_) {
+            result = media_failure_first_ ? conversion_result(media_failure_.load())
+                                          : CastResult::cancelled;
         }
+        if (session && result == CastResult::ok) {
+            phase_ = CastPhase::active;
+            start_result_ = result;
+            server_ = std::move(server);
+            session_ = std::move(session);
+            state_changed_.notify_all();
+            return result;
+        }
+    }
+    monitor_cancelled_ = true;
+    state_changed_.notify_all();
+    join_media_monitor();
+    // Also drain a confirmed but interrupted local session. A failure return
+    // guarantees every session/server/conversion worker and cache callback ended.
+    drain_media(session.get(), server.get());
+    {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        phase_ = CastPhase::start_failed;
         start_result_ = result;
         rejected_status_ = rejected_status;
         server_ = std::move(server);
@@ -566,25 +577,27 @@ void CastController::monitor_media() noexcept {
             phase = phase_;
             session = session_.get();
             server = server_.get();
-        }
-        const auto failure = prepared_media_->failure();
-        if (failure != StereoAacHlsFailure::none &&
-            media_failure_.load() == StereoAacHlsFailure::none) {
-            const bool session_ended = session && session->terminal();
-            {
-                std::lock_guard<std::mutex> lock(state_mutex_);
-                media_failure_first_ = !sender_stop_requested_ && !session_ended;
-                media_failure_ = failure;
-            }
-            cancel_requested_ = true;
-            state_changed_.notify_all();
+            observe_media_failure_locked(session);
         }
         if (phase == CastPhase::active && session &&
-            (failure != StereoAacHlsFailure::none || session->terminal())) {
+            (media_failure_.load() != StereoAacHlsFailure::none || session->terminal())) {
             drain_media(session, server);
             state_changed_.notify_all();
             return;
         }
     }
+}
+void CastController::observe_media_failure_locked(const UrlPlaybackSession* session) noexcept {
+    if (!prepared_media_ || media_failure_.load() != StereoAacHlsFailure::none) {
+        return;
+    }
+    const auto failure = prepared_media_->failure();
+    if (failure == StereoAacHlsFailure::none) {
+        return;
+    }
+    media_failure_first_ = !sender_stop_requested_ && !(session && session->terminal());
+    media_failure_ = failure;
+    cancel_requested_ = true;
+    state_changed_.notify_all();
 }
 } // namespace send_airplay2::detail

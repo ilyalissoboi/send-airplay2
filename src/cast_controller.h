@@ -91,6 +91,9 @@ struct CastDependencies {
     /// for scripted fakes (shorter intervals, no MRP data stream). Production
     /// and the C interface leave it empty.
     std::function<void(UrlPlaybackOptions&)> adjust_session;
+    /// Synchronous test hook after confirmed session start, before publication.
+    /// Production leaves empty; the hook must not reenter this controller.
+    std::function<void()> after_session_start;
     /// Optional private seam; production uses prepare_stereo_media().
     std::function<std::unique_ptr<PreparedStereoMedia>(MediaSource, AacFragmentStore, std::uint64_t,
                                                        const MediaReadContext&,
@@ -164,6 +167,8 @@ private:
     void monitor_media() noexcept;
     void join_media_monitor() noexcept;
     void drain_media(UrlPlaybackSession* session, MediaServer* server) noexcept;
+    /// Called with state_mutex_ held; observes the first media cause without I/O/allocation.
+    void observe_media_failure_locked(const UrlPlaybackSession* session) noexcept;
 
     const CastSettings settings_;
     const CastDependencies dependencies_;

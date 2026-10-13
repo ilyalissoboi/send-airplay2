@@ -129,7 +129,8 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   audio-codec-spike:
-    # Optional development DLL only. Does not change the shipping library/package.
+    # Optional probe and explicitly enabled core integration checks. Baseline
+    # package artifacts remain codec-free; these jobs do not publish a package.
     strategy:
       fail-fast: false
       matrix:

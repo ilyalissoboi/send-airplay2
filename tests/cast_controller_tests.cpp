@@ -1045,6 +1045,27 @@ void conversion_stop_first_tests() {
               probe->clears == 1,
           "late cache failure keeps the earlier user cancellation and cleanup once");
 }
+void conversion_late_start_failure_tests() {
+    group = "conversion failure after confirmed start";
+    auto probe = std::make_shared<ConversionProbe>();
+    FakeReceiver receiver({});
+    auto dependencies = fake_receiver_dependencies(receiver);
+    scripted_conversion(dependencies, probe);
+    dependencies.after_session_start = [probe] {
+        probe->failure = StereoAacHlsFailure::cache_error;
+    };
+    CastController controller(conversion_settings(probe),
+                              mp4_source(std::make_shared<SourceProbe>()), dependencies);
+    check(controller.start() == CastResult::media_cache,
+          "late conversion failure returns its fixed result");
+    const auto snapshot = controller.snapshot();
+    check(snapshot.phase == CastPhase::start_failed && snapshot.media_cleaned_up &&
+              snapshot.session.cleaned_up && probe->stops == 1 && probe->clears == 1 &&
+              receiver.control_close_order() == url_then_remote,
+          "failure return already drained confirmed session, HTTP, conversion and cache");
+    controller.stop();
+    check(probe->clears == 1, "Stop after a late failed start does not repeat cleanup");
+}
 
 // Real compressed fixtures exercise the controller's production factory, HTTP
 // delivery and terminal worker signal. The receiver remains scripted/loopback.
@@ -1282,6 +1303,7 @@ int main(int argc, char** argv) {
     conversion_start_failure_tests();
     conversion_terminal_tests();
     conversion_stop_first_tests();
+    conversion_late_start_failure_tests();
 #ifdef SAP2_HAS_STEREO_AAC
     real_conversion_tests(argv[2]);
     real_selection_order_tests(argv[3]);

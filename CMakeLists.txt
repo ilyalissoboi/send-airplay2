@@ -127,8 +127,8 @@ endif()
 # programs and tests could not run outside a package (docs/uwp-native-build.md).
 if(WINDOWS_STORE)
   # vcpkg copies dependency DLLs only next to programs. Stage OpenSSL's
-  # libcrypto, the library's only dependency DLL (Botan is static), beside it
-  # so one directory holds everything a package needs.
+  # libcrypto beside the baseline core (Botan is static), plus the pinned codec
+  # DLLs when stereo AAC is enabled, so each output holds its runtime dependencies.
   if(BUILD_SHARED_LIBS AND DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
     file(GLOB sap2_store_release_dlls "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/libcrypto-*.dll")
     file(GLOB sap2_store_debug_dlls "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/libcrypto-*.dll")

@@ -42,6 +42,11 @@ baseline static/shared 36/36 and 37/37 with final changed-controller/host/bindin
 rechecks, enabled shared 37/37, and integrated x64 UWP compilation plus inspection
 of all six native/codec DLLs. Formatting and diff checks pass. Actual PR-head CI
 remains the merge gate; no packaged run, receiver result or publication is added.
+PR #55's P2 review follow-up drains a confirmed-but-interrupted local session
+synchronously before returning a failed start, and records START_FAILED only
+after session/HTTP/conversion/cache cleanup. A deterministic publication-boundary
+regression passes baseline static/shared, enabled controller/C API/binding checks
+and the integrated x64 UWP build/import check. Inspect the final review-fix head's CI.
 
 **D71 stereo AAC HLS increment merged (2026-10-13).**
 [PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51) merged as `e09c57f`,
