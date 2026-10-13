@@ -53,7 +53,8 @@ were present. Its implementation head `3cd620e` passed codec 4/4, static/shared
 recorded tolerance; three estimate limitations remain explicit failed audits.
 No whole-VOD accuracy guarantee, hardware result or publication is added.
 
-**D74 active: explicit stereo AAC playback integration.** The user's latest
+**D74 implemented; [PR #55](https://github.com/ilyalissoboi/send-airplay2/pull/55) open:**
+implementation head `4f5f369` contains the locally tested integration. The user's latest
 Proceed authorizes fresh branch `codex/stereo-aac-playback` from merged PR #54
 (`6923332`). Read [the integration contract](stereo-aac-playback.md). API 4 adds
 explicit delivery, borrowed source-track probe/selection, host-owned fragment
