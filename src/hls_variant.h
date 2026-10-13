@@ -36,6 +36,11 @@ struct VariantStream {
     std::uint64_t frame_rate_milli = 0; ///< Frames per 1000 s; 0 omits FRAME-RATE.
     std::string codecs;
 };
+/// Private separate stereo audio rendition; source language is retained.
+struct AudioRendition {
+    std::string uri;
+    std::string language;
+};
 
 /** The multivariant playlist (RFC 8216bis 4.4.6; Apple HLS 4.5-4.7, 5.11, 9.1,
  * 9.2, 9.11-9.15): EXT-X-VERSION 7, EXT-X-INDEPENDENT-SEGMENTS, one
@@ -45,6 +50,7 @@ struct VariantStream {
  * BANDWIDTH, AVERAGE-BANDWIDTH, CODECS, RESOLUTION, FRAME-RATE and
  * SUBTITLES="subs". Lines end in LF. */
 [[nodiscard]] std::string multivariant_playlist(const VariantStream& variant,
-                                                const std::vector<SubtitleRendition>& subtitles);
+                                                const std::vector<SubtitleRendition>& subtitles,
+                                                const AudioRendition* audio = nullptr);
 } // namespace send_airplay2::detail
 #endif

@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#49 are merged. `main` contains
+Checkpoint: 2026-10-13 (Asia/Tokyo). PRs #12-#50 are merged. `main` contains
 the experimental C API version 3, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,15 +23,24 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Active D70:** the user's subsequent Proceed authorizes the optional private
-[selected-stream decoder and compressed seek windows](audio-decoder-source.md).
-Branch `codex/audio-decoder-seeking` starts at merged PR #49 checkpoint `a7905db`;
-inspect its open PR and actual head before editing. Desktop codec/decoder tests
-pass, including identity mapping, edited clocks, resampling phase and lifecycle
-failures. The x64 UWP adapter compiles; no new packaged adapter runtime or receiver
-observation is included. Local baseline CTest passes static 35/35 and shared 36/36;
-inspect current-head CI as its separate gate. Production stereo AAC HLS generation/cache and public/packaged/receiver work
-remain next; speaker/surround output stays deferred.
+**Active D71:** the latest Proceed authorizes the optional private
+[stereo AAC HLS builder/cache](stereo-aac-hls.md). Branch `codex/stereo-aac-hls`
+starts from merged PR #50 `65bb8a7`; inspect its open PR and actual head before
+editing. Multi-segment compressed audio joins, copied video, subtitles, edits,
+short-source silence and bounded cache lifecycle pass offline tests. Baseline
+static/shared passes 35/35 and 36/36; optional codec/decoder/HLS passes 3/3;
+x64 UWP compilation passes. Actual-head CI remains separate. Complete documented
+authoring/performance edges and explicit playback/C ABI/binding/CLI/cache-host
+integration next, then packaged/receiver gates. No publication, new packaged
+runtime or receiver observation is added. Speaker/surround output stays deferred.
+
+**Completed D70:** private [selected decoder/seek windows](audio-decoder-source.md)
+merged in PR #50 as `65bb8a7`, with all 16 checks passed at final head `8b1adf2`
+in run `38280966375`. The optional include review is fixed/resolved. Its branch
+started at PR #49 checkpoint `a7905db`. Desktop actual compressed decoding and
+x64 UWP compilation/import inspection passed; packaged adapter runtime and
+receiver evidence were not added. Preserve those limits. D71 is the next increment;
+do not repeat the completed decoder merge gate.
 
 **Completed D69:** the subsequent Proceed authorized the native source increment.
 Its [inventory/selection/index/seek-metadata foundation](audio-source-inventory.md)
@@ -40,8 +49,8 @@ in run `38268265899`; both metadata review findings are fixed and resolved.
 It originally branched from main `cb9d641` and integrated PR #47's merged
 checkpoint `031acae`, resolving documentation conflicts without native changes
 from tested review head `fc63a327`. Start any next implementation slice on a fresh
-branch from current `origin/main` with its own PR. D70 above continues selected
-decoder streams and compressed seeking/timestamps; stereo HLS resources remain next;
+branch from current `origin/main` with its own PR. D70 above completed selected
+decoder streams and compressed seeking/timestamps; D71 now supplies private stereo HLS resources;
 no new ABI/delivery value, package publication or receiver test is included.
 
 **Completed D68:** the user's Proceed authorized the stereo-AAC codec/UWP
@@ -379,12 +388,13 @@ with the companion fork checkpoint merged in PR #12. The subsequently authorized
 D68 codec/packaging spike is implemented and merged in native PR #46 as
 `cb9d641`, with all 16 final-head checks passing. D69 merged the first native
 source increment described above. D70's selected-stream/seek-window adapter is
-implemented in its recorded offline scope, followed by separate stereo AAC fMP4/HLS
-resources and bounded lazy generation/cache.
+merged in PR #50. D71 implements separate stereo AAC fMP4/HLS resources and
+bounded lazy generation/cache in its recorded private offline scope.
 Public API/binding/CLI and receiver/Screenbox gates follow the plan. The spike's
 single-stream/short-input probe is not a production movie source adapter.
 Speaker audio and surround-preserving output remain deferred for unavailable
-test hardware. Production decoded AAC/HLS generation remains unfinished.
+test hardware. Explicit playback/public/storage contracts, authoring/performance
+edges, packaged runtime and stereo-conversion receiver validation remain unfinished.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
@@ -546,8 +556,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68's subsequent Proceed authorizes the codec/packaging implementation
-> gate. Read its spike/evidence and D67's stereo AAC plan; speaker audio and
+> D68-D70 are merged. D71's latest Proceed authorizes the private stereo AAC
+> HLS/cache increment; read its contracts and inspect the actual PR head. Read
+> the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same
 > implementation authorization again. Inspect `origin/main` and open
 > PRs before writing, without repeating completed checks. Preserve receiver-specific

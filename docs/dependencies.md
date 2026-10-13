@@ -3,6 +3,22 @@
 The project remains Apache-2.0. Record revisions and licensing here before
 incorporating external code or adding dependencies.
 
+## Stereo AAC rendition (D71)
+
+The user's 2026-10-13 Proceed authorizes stereo downmix/AAC encoding, separate
+HLS audio resources and bounded generation/cache after merged PR #50. This reuses
+the same pinned FFmpeg 9.0.2 LGPL profile and original D68 downmix policy; no new
+third-party implementation, encoder dependency or executable is adopted. Native
+fMP4/playlist/cache code remains original Apache-2.0. The codec backend stays
+optional and separate from published playback packages until the public/packaged gate.
+
+Before implementation, Apple's [HLS authoring specification](https://developer.apple.com/streaming/hls-authoring-specification-for-apple-devices.html)
+and the pinned AAC encoder/public codec timestamp contracts were inspected on
+2026-10-13: continuous fragment decode times, separate audio declaration, matching
+VOD time ranges and correct priming/padding are validation requirements, not
+interoperability claims. Existing original channel tones are extended for bounded
+encoder-epoch tests; generation arguments and media hashes remain recorded.
+
 ## Native decoder adapter (D70)
 
 The user's 2026-10-13 Proceed authorizes selected-stream decoding and compressed

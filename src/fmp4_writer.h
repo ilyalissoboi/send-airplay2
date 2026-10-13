@@ -30,7 +30,8 @@ struct SegmentLayout {
  * list with the final media edit's duration set to zero ("to the end", as
  * 14496-12 allows for fragmented files), so the presentation timeline
  * matches the source. All durations are zero; segments carry the samples. */
-[[nodiscard]] Bytes write_init_segment(const Mp4Movie& movie);
+/// preserve_edit_duration keeps the finite AAC VOD trim; legacy default is unchanged.
+[[nodiscard]] Bytes write_init_segment(const Mp4Movie& movie, bool preserve_edit_duration = false);
 
 /** Size of the moof box of `segment`, computed from its sample counts only. */
 [[nodiscard]] std::uint64_t moof_size(const Mp4Movie& movie, const SegmentLayout& segment);

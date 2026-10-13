@@ -33,7 +33,9 @@ multiroom audio and transcoding.
 An optional [offline stereo-AAC codec/packaging spike](docs/stereo-aac-codec-spike.md)
 now exercises audio decoding/downmixing in a separate development DLL and
 AppContainer host. It does not add transcoding to casting or change the
-published package. Production HLS conversion remains under development.
+published package. An optional private [stereo AAC HLS builder/cache](docs/stereo-aac-hls.md)
+now passes compressed-movie offline tests; public playback integration, packaged
+runtime and receiver validation remain under development.
 
 ## Build
 

@@ -2,6 +2,7 @@
 #ifndef SEND_AIRPLAY2_HLS_REMUX_H
 #define SEND_AIRPLAY2_HLS_REMUX_H
 #include "fmp4_writer.h"
+#include "hls_variant.h"
 #include "mp4_demux.h"
 #include "send_airplay2/media_server.h"
 #include <atomic>
@@ -64,6 +65,14 @@ struct RemuxedHls {
     std::size_t segment_count = 0;
     std::size_t text_track_count = 0;
     std::uint32_t target_duration_seconds = 0;
+    /// Private composition metadata; bit rates can be estimates for indexed MKV.
+    VariantStream variant;
+    std::vector<SubtitleRendition> subtitles;
+    std::vector<std::uint64_t> durations_us;
+    /// Absolute video boundary times at 48 kHz, rounded once from source clocks.
+    /// Unlike summing rounded EXTINF values, these do not accumulate drift.
+    std::vector<std::uint64_t> video_boundaries_48khz;
+    bool zero_origin_video = false;
 };
 
 /** Build an fMP4 VOD HLS presentation (D60) over a progressive MP4/MOV or a
@@ -88,8 +97,14 @@ struct RemuxedHls {
  *         plan_segments() refuse, or a segment larger than 2 GiB (too_large).
  * @throws std::runtime_error when the source fails a read; std::invalid_argument
  *         for a source without callbacks. Messages contain no paths or URLs.
+ * video_only is the private composition path: index video/text without selecting
+ * or muxing source audio. startup_context, when given, is borrowed synchronously
+ * and supplies one absolute deadline with valid stop/cancellation pointers;
+ * otherwise the legacy internal per-read context applies. Neither is retained.
  */
 [[nodiscard]] RemuxedHls remux_to_hls(MediaSource input,
-                                      const std::atomic_bool* cancelled = nullptr);
+                                      const std::atomic_bool* cancelled = nullptr,
+                                      bool video_only = false,
+                                      const MediaReadContext* startup_context = nullptr);
 } // namespace send_airplay2::detail
 #endif

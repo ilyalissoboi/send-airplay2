@@ -105,7 +105,11 @@ substream fixtures, long/real-movie performance and additional codec/layout
 profiles remain unvalidated. Speaker transport and discrete surround output
 remain deferred for unavailable test hardware.
 
-Next: production stereo downmix/AAC encoding from these windows, encoder epochs
-and priming/padding, separate audio fMP4/HLS resources and bounded generation/cache,
-then public ABI/bindings/CLI and packaged/receiver gates. Existing casting defaults
-and subtitle/video paths remain unchanged.
+PR #50 merged as `65bb8a7`, with all 16 checks passed at `8b1adf2` in run
+`38280966375`. D71 now connects these windows to the optional private
+[stereo AAC HLS builder/cache](stereo-aac-hls.md). It opts into fixed-frame
+Matroska timestamp snapping, seeded at zero and bounded by the clock quantum,
+to stabilize seek phase; default decoder timing stays unchanged. A far-late EOF
+window can use an established format without requiring another decoded frame.
+Explicit playback/public/storage contracts, authoring/performance edges,
+packaged runtime and receiver/Screenbox validation remain next.

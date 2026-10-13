@@ -53,8 +53,9 @@ indexing from audio remuxability and preserves original audio identities/clocks
 before decoder filtering. D70's subsequent authorized private
 [decoder adapter](audio-decoder-source.md) matches those identities to actual
 streams and tests compressed-input seek windows on edited timestamps, including
-resampler phase and format changes. Generated stereo HLS audio and its public,
-packaged and receiver gates remain next.
+resampler phase and format changes; PR #50 merged as `65bb8a7` with 16 passing
+checks at `8b1adf2`. D71 now implements private stereo HLS audio/cache in its
+offline scope; explicit public, packaged and receiver gates remain next.
 
 ## Scope and architecture
 
@@ -81,7 +82,7 @@ Components and current state:
 | Platform adapters | Networking, credentials, file access, host lifecycle | Windows Credential Manager, macOS Keychain, Linux Secret Service and host stores implemented; UWP native builds, PasswordVault and brokered StorageFile reads tested on the recorded Windows/Apple TV combination; other sender platforms remain unvalidated |
 | HLS remux | MP4/MKV to fMP4 VOD with WebVTT renditions | H.264/HEVC, AAC/AC-3/E-AC-3, MKV and MP4 text subtitles, indexed MKV startup implemented; HDR signaling and growing presentations remain work |
 | Audio transport | Separate RAOP/AirPlay audio path for audio-only speakers | D67 deferred: suitable test hardware unavailable |
-| Audio conversion | Surround source audio to stereo AAC alongside copied video | D68 codec spike and D69 source foundations merged; D70 selected-stream/seek-window adapter implemented in offline scope; production stereo AAC HLS remains work |
+| Audio conversion | Surround source audio to stereo AAC alongside copied video | D68 codec spike and D69 source foundations merged; D70 selected-stream/seek-window adapter implemented in offline scope; D71 private stereo AAC HLS/cache implemented in offline scope; public/packaged/receiver gates remain |
 
 An AirPlay 2-capable receiver accepting an older protocol path is not proof of
 an AirPlay 2 session implementation. Record the negotiated path in test results.
@@ -272,3 +273,13 @@ in-tree bounded protobuf codec regardless of that minimum experiment's result.
 Each implementation slice follows AGENTS.md: readable C++17, secret/resource RAII,
 format checks, static/shared CMake/CTest and CI at the actual PR head. No automatic
 re-pairing or credential deletion. Capture only sanitized receiver results.
+
+## D71 private stereo AAC HLS composition
+
+The latest Proceed connects D70 PCM windows through the fixed downmix/native AAC
+encoder to separate HLS audio resources and a bounded host-backed lazy cache.
+See [timing, storage, cancellation and evidence limits](stereo-aac-hls.md).
+Video/subtitle payloads stay copied; the shipping remux defaults remain. Matroska
+joins use an opt-in validated fixed-frame clock. Authoring/performance edges,
+explicit public delivery/storage contracts, packaged runtime and receiver proof
+remain separate gates; no audio-only speaker or discrete-surround work resumes.

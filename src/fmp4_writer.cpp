@@ -74,7 +74,7 @@ void track_header(BoxWriter& out, const Mp4Track& track, std::uint32_t track_id)
     out.close(tkhd);
 }
 
-void edit_list(BoxWriter& out, const Mp4Track& track) {
+void edit_list(BoxWriter& out, const Mp4Track& track, bool preserve_duration) {
     if (track.edits.empty()) {
         return;
     }
@@ -91,7 +91,8 @@ void edit_list(BoxWriter& out, const Mp4Track& track) {
         const auto& edit = track.edits[index];
         // In a fragmented file the last media edit lasts to the end of the
         // segments that follow; zero says so without knowing their total.
-        const bool last_media_edit = index + 1 == track.edits.size() && edit.media_time != -1;
+        const bool last_media_edit =
+            !preserve_duration && index + 1 == track.edits.size() && edit.media_time != -1;
         const auto duration = last_media_edit ? 0 : edit.segment_duration;
         if (wide) {
             out.u64(duration);
@@ -198,7 +199,7 @@ void check_layout(const Mp4Movie& movie, const SegmentLayout& segment) {
 }
 } // namespace
 
-Bytes write_init_segment(const Mp4Movie& movie) {
+Bytes write_init_segment(const Mp4Movie& movie, bool preserve_edit_duration) {
     BoxWriter out;
     const auto ftyp = out.open("ftyp");
     out.bytes(reinterpret_cast<const std::uint8_t*>("iso5"), 4); // default-base-is-moof.
@@ -211,7 +212,7 @@ Bytes write_init_segment(const Mp4Movie& movie) {
         const auto& track = movie.tracks[index];
         const auto trak = out.open("trak");
         track_header(out, track, static_cast<std::uint32_t>(index + 1));
-        edit_list(out, track);
+        edit_list(out, track, preserve_edit_duration);
         media(out, track);
         out.close(trak);
     }
