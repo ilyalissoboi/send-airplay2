@@ -26,8 +26,8 @@ guide; the master handoff and dated artifacts preserve the longer history.
 **Active D71:** the latest Proceed authorizes the optional private
 [stereo AAC HLS builder/cache](stereo-aac-hls.md). Branch `codex/stereo-aac-hls`
 starts from merged PR #50 `65bb8a7`; continue [PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51)
-and inspect its actual head before
-editing. Multi-segment compressed audio joins, copied video, subtitles, edits,
+and inspect its actual head before editing. Multi-segment compressed audio joins,
+copied video, subtitles, edits,
 short-source silence and bounded cache lifecycle pass offline tests. Baseline
 static/shared passes 35/35 and 36/36; optional codec/decoder/HLS passes 3/3;
 x64 UWP compilation passes. Actual-head CI remains separate. Complete documented

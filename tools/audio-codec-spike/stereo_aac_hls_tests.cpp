@@ -518,6 +518,24 @@ void quota_admission(const std::filesystem::path& path) {
         expect(error.reason() == AudioDecodeFailure::too_large, "quota admission category");
     }
 }
+void established_eof_format(const std::filesystem::path& path) {
+    Source source(path);
+    Context context;
+    auto unestablished = AudioDecoderSource::open(source.callbacks(), context.value, 42);
+    try {
+        (void)unestablished->read_window(12 * 48000, 1024, context.value);
+        throw std::logic_error("empty first window fabricated a decoded format");
+    } catch (const AudioDecodeException& error) {
+        expect(error.reason() == AudioDecodeFailure::malformed,
+               "empty first decode window has no validated format");
+    }
+    auto established = AudioDecoderSource::open(source.callbacks(), context.value, 42);
+    const auto initial = established->read_window(0, 1024, context.value);
+    const auto after = established->read_window(12 * 48000, 1024, context.value);
+    expect(after.eof && after.samples.empty() && after.channels == initial.channels &&
+               after.channel_mask == initial.channel_mask,
+           "far-late EOF retains an actual decoded format");
+}
 void waiter_cancellation(const std::filesystem::path& path) {
     Source source(path);
     Store store;
@@ -618,6 +636,7 @@ int main(int argc, char** argv) {
             movie_join(fixtures / name);
         }
         quota_admission(fixtures / "dts.mp4");
+        established_eof_format(fixtures / "aac-short.mp4");
         waiter_cancellation(fixtures / "dts.mp4");
         cast_stop(fixtures / "dts.mp4");
         atomic_seal_failure(fixtures / "dts.mp4");
