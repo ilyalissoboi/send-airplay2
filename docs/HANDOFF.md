@@ -10,7 +10,8 @@ checkpoint, review disposition, validation commands and ordered development queu
 ## 0. Resume here
 
 **D71 stereo AAC HLS increment (2026-10-13), authorized by the user's Proceed.**
-Branch `codex/stereo-aac-hls` starts from merged PR #50 (`65bb8a7`). The optional
+[PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51), branch
+`codex/stereo-aac-hls`, starts from merged PR #50 (`65bb8a7`). The optional
 private [stereo AAC HLS builder](stereo-aac-hls.md) connects selected PCM to the
 fixed downmix, AAC encoding, separate audio resources and bounded host-backed
 lazy cache. Copied video and subtitles retain their original payloads/associations.

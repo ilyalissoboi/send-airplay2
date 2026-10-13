@@ -299,6 +299,7 @@ struct InputAudioFormat {
     int sample_format = -1;
     int channels = 0;
     std::uint64_t channel_mask = 0;
+    bool established = false; ///< True only after an actual decoded frame passes validation.
 };
 /// Opt-in fixed-frame sample grid for HLS joins. Seed at presentation start;
 /// rounded Matroska timestamps alone cannot define a stable seek epoch phase.
@@ -423,8 +424,9 @@ public:
         output_.timestamp_precision_samples = static_cast<std::uint32_t>(quantum);
         // A previously established format also describes an empty post-EOF
         // window, even when a far-late seek returns no additional frames.
-        if (input_format.sample_format >= 0 && input_format.channels > 0 &&
-            input_format.channels <= 8 && input_format.channel_mask != 0) {
+        if (input_format.established && input_format.sample_format >= 0 &&
+            input_format.channels > 0 && input_format.channels <= 8 &&
+            input_format.channel_mask != 0) {
             output_.channels = static_cast<std::uint32_t>(input_format.channels);
             output_.channel_mask = input_format.channel_mask;
         }
@@ -501,7 +503,8 @@ private:
                      expected_format_.channel_mask == input_mask_),
                 AudioDecodeFailure::unsupported,
                 "selected audio format changed across seek epochs");
-        expected_format_ = {input_rate_, input_format_, frame.ch_layout.nb_channels, input_mask_};
+        expected_format_ = {input_rate_, input_format_, frame.ch_layout.nb_channels, input_mask_,
+                            true};
         output_.channels = static_cast<std::uint32_t>(frame.ch_layout.nb_channels);
         output_.channel_mask = input_mask_;
         output_.samples.assign(static_cast<std::size_t>(count_) * output_.channels, 0.0F);
