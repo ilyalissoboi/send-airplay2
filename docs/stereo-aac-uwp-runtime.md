@@ -88,15 +88,21 @@ and outcomes separately from desktop CTest and compile-only UWP inspection.
 
 ## Current evidence and next work
 
-[PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) is a draft.
+[PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) is open for review.
 The [dated artifact](validation/stereo-aac-uwp-runtime-windows-2026-10-13.json)
 records a PASS bundled run at implementation `9371502`, package 0.1.0.2, on
 Windows 11 x64 build 26200. All six actually loaded module hashes match the
 registered layout. Its three borrowed probes, 16 preparation/resource scenarios
 and nine public lifecycle cases pass. Child removal and sibling preservation
 were asserted; no receiver was contacted. Package 0.1.0.3 at `5a4e5e3` fixes
-bare picker activation and is waiting for manual selection; its six loaded DLL
-hashes match its own layout. This pending run is not attributed a PASS.
+bare picker activation. Its complete run passed on 2026-10-14 JST at
+`2026-10-13T15:11:08.8621218Z`: three borrowed probes, 17 resource/preparation
+cases (including the hash-verified picker-granted owned DTS MP4 outside the
+package), and nine public lifecycle cases. The user confirmed fixture selection;
+the fixed log records PASS and all six actually loaded DLL hashes match this
+run's registered layout. This completes the x64 AppContainer source/cache gate
+for these fixtures/providers. Package 0.1.0.2's earlier PASS stays separately
+attributed; the initial harness corrections are retained in the artifact.
 
 Baseline Windows Release static/shared CTest passes 36/36 and 37/37; enabled
 shared passes 38/38. Named private-hook cases retain independent literal fragment

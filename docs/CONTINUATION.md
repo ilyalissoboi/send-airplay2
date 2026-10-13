@@ -62,16 +62,20 @@ are implemented in the recorded offline scope. Default builds remain codec-free.
 No package is published; Screenbox stays on `0.3.0-ci.207`. Read
 [the contract](stereo-aac-playback.md); do not resume the closed D74 branch.
 
-**D75 active: integrated AppContainer runtime/storage validation.**
+**D75 implemented: integrated AppContainer runtime/storage validation (gate passed 2026-10-14).**
 The user's Proceed authorizes fresh branch `codex/stereo-aac-uwp-runtime` from
 merged PR #55. [The offline runtime gate](stereo-aac-uwp-runtime.md) uses a
 separate Native AOT/MSIX identity, the enabled production core and a private
 OFF-by-default validation export, brokered StorageFile callbacks and app-owned
 TemporaryFolder storage. It does not access credentials or a receiver. Packaged
 results and attribution are in [the artifact](validation/stereo-aac-uwp-runtime-windows-2026-10-13.json).
-Draft [PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) has a PASS
+Open [PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) has a PASS
 bundled 0.1.0.2 run at `9371502`, with matching loaded hashes for all six DLLs.
-The corrected 0.1.0.3 picker run at `5a4e5e3` is pending manual selection.
+The corrected 0.1.0.3 run at `5a4e5e3` also passes: three borrowed probes,
+17 resource/preparation cases (including the hash-verified outside-package
+picker grant), and nine public lifecycle cases. The user confirmed fixture
+selection; all six loaded hashes match this run's registered layout. No receiver
+was contacted. This completes the recorded x64 AppContainer storage gate.
 Baseline static/shared 36/36 and 37/37, enabled shared 38/38, six-DLL UWP imports
 and existing-host compilation pass. Inspect actual final-head CI before merging;
 real-file performance and receiver checks remain next. Speaker audio and discrete surround remain

@@ -13,7 +13,7 @@ changing runtime behavior.
 **D74 merged (PR #55, `774198d`):** [explicit stereo AAC playback integration](stereo-aac-playback.md)
 extends the core to API 4 with original track probe/selection,
 host fragment storage, binding/CLI options and terminal conversion supervision.
-Its backend defaults OFF. **D75 active:** [AppContainer runtime/storage gate](stereo-aac-uwp-runtime.md). D73's authoring PR #54 is merged; preserve its known
+Its backend defaults OFF. **D75 implemented (x64 gate passed 2026-10-14):** [AppContainer runtime/storage gate](stereo-aac-uwp-runtime.md). D73's authoring PR #54 is merged; preserve its known
 estimate limitations. Packaged integrated runtime, real-file performance and
 receiver evidence remain later gates. This branch adds no package or Screenbox pin.
 

@@ -3,7 +3,9 @@
 **D75 offline gate (2026-10-13):** the separate integrated x64 AppContainer
 harness passed its bundled fixture/cache/lifecycle checks at `9371502`, private
 package 0.1.0.2; all six loaded native module hashes match the registered layout.
-The external picker grant check is still pending at the corrected 0.1.0.3 build.
+The complete 0.1.0.3 run at `5a4e5e3` passes on 2026-10-14 JST, including the
+hash-verified outside-package picker-granted owned DTS MP4 and cleanup. The user
+confirmed selection; all six loaded hashes match this run's registered layout.
 See [scope/evidence](stereo-aac-uwp-runtime.md). No receiver was contacted;
 local resource exhaustion/Stop does not establish receiver natural EOF. Historical
 Apple TV/Mac results remain attributed to their recorded delivery/builds.
