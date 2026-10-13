@@ -1,0 +1,174 @@
+{
+  "scope": "D73 native offline authoring audit; no receiver or new packaged runtime",
+  "date": "2026-10-13 Asia/Tokyo",
+  "host": "Windows x64 MSVC Release; optional pinned FFmpeg 9.0.2 LGPL profile",
+  "base_commit": "25b84a10ed3264bdf9f828885b86349f4eb981f6",
+  "tested_source_sha256": {
+    "src/hls_authoring.cpp": "6447d9416484f76ac6ed3aeb8002817449510cc3715ae1036f0c1327f300157e",
+    "src/hls_authoring.h": "adf760cb766c4bf4c0bf5838f14e2f5adf9def0dec5b1a398bddb30f16463394",
+    "src/hls_remux.cpp": "7066e5ba2eb68b6fd04493f0be1bfe441c4d4b7bb61d68a443395b52f346e805",
+    "src/hls_remux.h": "1bca642173d491232943c04e4965a5b22f0389535288d6c0eba1e653f1c82212",
+    "src/stereo_aac_hls.cpp": "9a3b6192cc3d477f71993aaeb49e340155091cfc8ace0a90f2aa6c65809c948f",
+    "src/stereo_aac_hls.h": "366b33abde67350ab380bda79efd0996d382123ef06ed5109d4c6e45c3e97976",
+    "tools/audio-codec-spike/stereo_aac_hls_tests.cpp": "7d0df875a015d848402d65a36a36b9d2cd7c7817bf859057f4a3d013f7b44bfd",
+    "tools/audio-codec-spike/stereo_aac_readiness_tests.cpp": "7f1d1ad345d4e2f2dac57393c39e3fdbd6358b1e9d838f24ca2886d49c61372f"
+  },
+  "fixture_hashes": [
+    {
+      "file": "aac-edits.mp4",
+      "bytes": 172282,
+      "sha256": "9992a43918da90756d13526b84c111e735f159c26fc01b3d20b58e95deae86de"
+    },
+    {
+      "file": "aac-long-gop.mp4",
+      "bytes": 931583,
+      "sha256": "1e17988abc0041f5eaa776ef199f16c2ce512fb815f180b1bd1f1841365bb5bb"
+    },
+    {
+      "file": "aac-rounding.mp4",
+      "bytes": 932142,
+      "sha256": "6272088513323013a3548529b7ce6c2d257377aa4ecab6af6674f81d12f1e168"
+    },
+    {
+      "file": "aac-short.mp4",
+      "bytes": 172270,
+      "sha256": "1419f746cb3114c628158b7c78fe1cc69d68992e9d035c9c2c4bb76125ee39e8"
+    },
+    {
+      "file": "aac-too-long-gop.mp4",
+      "bytes": 932507,
+      "sha256": "71f8e6cac6e7b0f50644a7c0b65ffc21d964124a18b6910efb1679f489e0e16c"
+    },
+    {
+      "file": "aac.mp4",
+      "bytes": 931858,
+      "sha256": "15679bbaad0fd0b85acb91280d85d95d000f1fa8cc8c03277902b17208b94316"
+    },
+    {
+      "file": "ac3.mp4",
+      "bytes": 927907,
+      "sha256": "1fe0b45c390a1179b246c0c47138cccde5d005f916fc0d62417840b662c8b0d7"
+    },
+    {
+      "file": "dts-bframes.mp4",
+      "bytes": 2917770,
+      "sha256": "dc16ad877ec7d7c38617cf7f6db1e7da9e6e2afb6a210d8c74db6bfb2171cbe5"
+    },
+    {
+      "file": "dts-subtitles.mp4",
+      "bytes": 2918214,
+      "sha256": "39dc7d55c0685b1c729b29361b73df45fb384f65c32ea47d2edab10f7765a272"
+    },
+    {
+      "file": "dts.mkv",
+      "bytes": 2985468,
+      "sha256": "7e314c1fd9bb10cd120105e758048437d01145d44acb777178e3bcb8eeb54f88"
+    },
+    {
+      "file": "dts.mp4",
+      "bytes": 2917604,
+      "sha256": "9648d1f5bbff8027a72b4e250303fa4591aefc79e917db142801d48b3e5f26ba"
+    },
+    {
+      "file": "eac3.mp4",
+      "bytes": 927909,
+      "sha256": "07bffe00aeaefb10b71b5cfad6f2dbe62ed1964ba92689f7bc07fcdfa78c7974"
+    }
+  ],
+  "audits": [
+    {
+      "file": "aac.mp4",
+      "declared_peak_bps": 196659,
+      "measured_peak_bps": 197008,
+      "declared_average_bps": 196154,
+      "measured_average_bps": 196248,
+      "within_vod_tolerance": true
+    },
+    {
+      "file": "ac3.mp4",
+      "declared_peak_bps": 197164,
+      "measured_peak_bps": 197164,
+      "declared_average_bps": 196659,
+      "measured_average_bps": 196325,
+      "within_vod_tolerance": true
+    },
+    {
+      "file": "eac3.mp4",
+      "declared_peak_bps": 197126,
+      "measured_peak_bps": 197126,
+      "declared_average_bps": 196621,
+      "measured_average_bps": 196340,
+      "within_vod_tolerance": true
+    },
+    {
+      "file": "dts.mp4",
+      "declared_peak_bps": 196072,
+      "measured_peak_bps": 196775,
+      "declared_average_bps": 195567,
+      "measured_average_bps": 195957,
+      "within_vod_tolerance": true
+    },
+    {
+      "file": "dts.mkv",
+      "declared_peak_bps": 1622915,
+      "measured_peak_bps": 196775,
+      "declared_average_bps": 1621266,
+      "measured_average_bps": 195957,
+      "within_vod_tolerance": false
+    },
+    {
+      "file": "aac-short.mp4",
+      "declared_peak_bps": 101876,
+      "measured_peak_bps": 101902,
+      "declared_average_bps": 101371,
+      "measured_average_bps": 40931,
+      "within_vod_tolerance": false
+    },
+    {
+      "file": "aac-edits.mp4",
+      "declared_peak_bps": 90425,
+      "measured_peak_bps": 90386,
+      "declared_average_bps": 89920,
+      "measured_average_bps": 36747,
+      "within_vod_tolerance": false
+    },
+    {
+      "file": "dts-subtitles.mp4",
+      "declared_peak_bps": 196204,
+      "measured_peak_bps": 196907,
+      "declared_average_bps": 195665,
+      "measured_average_bps": 196055,
+      "within_vod_tolerance": true
+    },
+    {
+      "file": "dts-bframes.mp4",
+      "declared_peak_bps": 196107,
+      "measured_peak_bps": 196810,
+      "declared_average_bps": 195535,
+      "measured_average_bps": 195925,
+      "within_vod_tolerance": true
+    }
+  ],
+  "synthetic_hour_observation": {
+    "startup_ms": 316,
+    "metadata_bytes": 24891046,
+    "maximum_cold_read_bytes": 1626020,
+    "maximum_generation_ms": 310,
+    "largest_offset": 4931071779
+  },
+  "checks": {
+    "desktop_codec_ctest": "4/4; final HLS audit assertions rerun separately",
+    "static_ctest": "35/35",
+    "shared_ctest": "36/36",
+    "runner_contracts": "10/10",
+    "uwp": "x64 private adapter compilation and five existing codec DLL imports; not packaged builder runtime"
+  },
+  "limits": [
+    "First-period estimate is not whole-VOD accuracy or a bitrate upper bound",
+    "MKV cue spans include original source audio/overhead; indexed subtitles are unmeasured",
+    "Early-ending and edited audio demonstrate nonrepresentative startup estimates",
+    "Copied video spans capped at 20 seconds, not nominal six-second authoring proof",
+    "Isolated calibration preserves serving decoder history; general repeated-window decoder issue not fixed",
+    "Synthetic callback measurements are not real-file/host or receiver evidence"
+  ]
+}

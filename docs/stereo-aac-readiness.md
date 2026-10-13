@@ -108,7 +108,8 @@ profile/cache; it adds no FFmpeg rebuild or extra codec matrix job.
 
 No receiver, UI confirmation or package publication is performed in D72.
 
-Implementation checkpoint: [PR #53](https://github.com/ilyalissoboi/send-airplay2/pull/53)
-is open. All 16 checks passed at implementation head `93ae7d8` in run
-`38335644638`, with no review threads present. This documentation follow-up
-changes no native behavior; inspect the final PR-head checks before merging.
+Merge checkpoint: PR #53 merged as `25b84a1`; all 16 checks passed at final
+head `6bf1bd2` in run `38336511817`. The subsequent [D73 authoring increment](stereo-aac-authoring.md)
+adds a 20-second copied-video cap and measured first-period estimates/audits.
+D72's 22 ms/1 MiB startup policy above is historical: D73's isolated calibration
+adds one bounded decode/encode and admits up to 4 MiB startup payload I/O.

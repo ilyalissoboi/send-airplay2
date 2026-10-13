@@ -69,6 +69,11 @@ struct RemuxedHls {
     VariantStream variant;
     std::vector<SubtitleRendition> subtitles;
     std::vector<std::uint64_t> durations_us;
+    /// Private authoring inputs: complete generated fMP4/WebVTT sizes for MP4;
+    /// indexed MKV video uses cue-cluster byte estimates and has no text sizes yet.
+    std::vector<std::uint64_t> video_segment_bytes;
+    std::vector<std::vector<std::uint64_t>> subtitle_segment_bytes;
+    bool segment_sizes_estimated = false;
     /// Absolute video boundary times at 48 kHz, rounded once from source clocks.
     /// Unlike summing rounded EXTINF values, these do not accumulate drift.
     std::vector<std::uint64_t> video_boundaries_48khz;

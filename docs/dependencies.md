@@ -5,6 +5,12 @@ incorporating external code or adding dependencies.
 
 ## Stereo AAC readiness (D72)
 
+D73's authoring calculator, estimate provenance and long-segment policy are
+original Apache-2.0 code. Rate formulas are written from RFC 8216 sections 4.1
+and 4.3.4.2 and Apple's published authoring requirements, not copied from an
+implementation. Existing owned fixtures and the pinned optional LGPL codec
+profile are reused; no dependency or third-party implementation is added.
+
 The user's 2026-10-13 Proceed continues the merged D71 private builder with
 bounded long-GOP audio planning, terminal failure reporting and offline scaling
 checks before public integration. All additions are original Apache-2.0 code,

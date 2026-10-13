@@ -225,6 +225,7 @@ struct StereoAacHls::Impl {
     AacFragmentStore store;
     Mp4Movie movie;
     Bytes config;
+    StereoAacHlsAuthoring authoring;
     std::vector<std::uint64_t> boundaries;
     std::uint32_t channels = 0;
     std::uint64_t channel_mask = 0;
@@ -454,6 +455,9 @@ std::size_t StereoAacHls::audio_segment_count() const noexcept {
 StereoAacHlsFailure StereoAacHls::failure() const noexcept {
     return impl_->failure.load(std::memory_order_acquire);
 }
+const StereoAacHlsAuthoring& StereoAacHls::authoring() const noexcept {
+    return impl_->authoring;
+}
 void StereoAacHls::stop() noexcept {
     impl_->stop();
     presentation_.resources.clear();
@@ -483,6 +487,7 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     auto presentation = remux_to_hls(source, context.request_cancelled, true, &context);
     require(presentation.zero_origin_video, AudioDecodeFailure::unsupported,
             "AAC HLS video timeline requires a zero origin and no trim");
+    validate_stereo_video_spans(presentation.durations_us);
     impl->boundaries = plan_stereo_aac_boundaries(presentation.video_boundaries_48khz);
     const auto audio_count = impl->boundaries.size() - 1;
     auto target = presentation.target_duration_seconds;
@@ -511,6 +516,35 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     impl->movie = audio_movie(encoded.audio_specific_config, language, duration);
     impl->config = encoded.audio_specific_config;
     impl->entries.resize(audio_count);
+    // A bounded period encoded with exactly the serving settings replaces the
+    // arbitrary nominal-rate allowances. It is discarded, not sealed or kept
+    // as a second in-memory fragment cache. The full VOD remains lazy.
+    {
+        // Calibration owns a separate decoder: demux/codec seek history must
+        // not perturb the serving decoder's established startup state.
+        auto serving_decoder = std::move(impl->decoder);
+        impl->decoder = AudioDecoderSource::open(source, context, selected.id, true);
+        const auto reference = impl->generate(0, context);
+        impl->authoring.representative_audio_bytes = reference.size();
+        impl->authoring.representative_audio_duration_us =
+            (impl->boundaries[1] * microseconds_per_second + sample_rate / 2) / sample_rate;
+        impl->authoring.representative_audio_rates = hls_bit_rates(
+            {impl->authoring.representative_audio_duration_us}, {reference.size()}, target);
+        impl->decoder = std::move(serving_decoder);
+    }
+    impl->authoring.copied_rates =
+        hls_bit_rates(presentation.durations_us, presentation.video_segment_bytes, target);
+    HlsBitRates subtitle_rates;
+    for (const auto& sizes : presentation.subtitle_segment_bytes) {
+        const auto rates = hls_bit_rates(presentation.durations_us, sizes, target);
+        // At most one subtitle rendition can play at a time.
+        subtitle_rates.peak = std::max(subtitle_rates.peak, rates.peak);
+        subtitle_rates.average = std::max(subtitle_rates.average, rates.average);
+    }
+    impl->authoring.copied_rates = add_hls_bit_rates(impl->authoring.copied_rates, subtitle_rates);
+    impl->authoring.copied_sizes_estimated = presentation.segment_sizes_estimated;
+    impl->authoring.subtitle_sizes_unmeasured =
+        presentation.segment_sizes_estimated && presentation.text_track_count != 0;
     presentation.resources.erase(
         std::remove_if(presentation.resources.begin(), presentation.resources.end(),
                        [](const auto& resource) { return resource.name == "main.m3u8"; }),
@@ -541,8 +575,10 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     playlist += "#EXT-X-ENDLIST\n";
     presentation.resources.push_back(text_resource("audio.m3u8", playlist));
     presentation.variant.codecs += ",mp4a.40.2";
-    presentation.variant.peak_bits_per_second += estimated_bytes_per_second * 8;
-    presentation.variant.average_bits_per_second += stereo_aac_bit_rate;
+    const auto declared_rates =
+        add_hls_bit_rates(impl->authoring.copied_rates, impl->authoring.representative_audio_rates);
+    presentation.variant.peak_bits_per_second = declared_rates.peak;
+    presentation.variant.average_bits_per_second = declared_rates.average;
     const AudioRendition audio{"audio.m3u8", language};
     presentation.resources.push_back(text_resource(
         "main.m3u8", multivariant_playlist(presentation.variant, presentation.subtitles, &audio)));

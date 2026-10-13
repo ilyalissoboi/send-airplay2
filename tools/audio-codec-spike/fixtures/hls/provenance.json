@@ -227,6 +227,31 @@
       "-b:a",
       "1411200",
       "main.mka"
+    ],
+    [
+      "-f",
+      "lavfi",
+      "-i",
+      "color=black:s=16x16:r=2:d=33",
+      "-i",
+      "main.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "libx264",
+      "-bf",
+      "0",
+      "-g",
+      "66",
+      "-sc_threshold",
+      "0",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "448k",
+      "too-long-gop.mp4"
     ]
   ],
   "identities": {
@@ -267,6 +292,11 @@
       "file": "aac-short.mp4",
       "bytes": 172270,
       "sha256": "1419f746cb3114c628158b7c78fe1cc69d68992e9d035c9c2c4bb76125ee39e8"
+    },
+    {
+      "file": "aac-too-long-gop.mp4",
+      "bytes": 932507,
+      "sha256": "71f8e6cac6e7b0f50644a7c0b65ffc21d964124a18b6910efb1679f489e0e16c"
     },
     {
       "file": "aac.mp4",
@@ -310,5 +340,13 @@
       1
     ],
     "contains_p_frames": true
+  },
+  "rejected_video": {
+    "frames": 66,
+    "seconds": 33,
+    "audio_seconds": 16.5,
+    "sync_samples_one_based": [
+      1
+    ]
   }
 }

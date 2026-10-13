@@ -23,6 +23,7 @@ add_library(sap2_audio_decoder STATIC
   "${sap2_decoder_root}/src/audio_decoder_source.cpp"
   "${sap2_decoder_root}/src/stereo_aac_encoder.cpp"
   "${sap2_decoder_root}/src/stereo_aac_hls.cpp"
+  "${sap2_decoder_root}/src/hls_authoring.cpp"
   "${sap2_decoder_root}/src/hls_remux.cpp"
   "${sap2_decoder_root}/src/hls_variant.cpp"
   "${sap2_decoder_root}/src/fmp4_writer.cpp"

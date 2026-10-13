@@ -511,6 +511,8 @@ RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
     }
     if (video_only) {
         result.variant = variant_stream(metadata, durations, estimates, {}, frame_rate_milli);
+        result.video_segment_bytes = estimates;
+        result.segment_sizes_estimated = true;
     }
     result.resources.push_back(
         {playlist_name, playlist_type, text(media_playlist_text(durations)), {}});
@@ -765,6 +767,7 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled, bo
     result.text_track_count = movie.text_tracks.size();
     if (video_only) {
         result.durations_us = durations_of(movie, segments);
+        result.video_segment_bytes = sizes;
         result.subtitles = subtitle_renditions(movie);
         const auto& video_metadata = movie.tracks.at(0);
         for (const auto& segment : segments) {
@@ -822,6 +825,9 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled, bo
     result.playlist_name = multivariant_name;
     result.variant =
         variant_stream(movie, durations, sizes, webvtt_sizes, video_frame_rate_milli(video));
+    if (video_only) {
+        result.subtitle_segment_bytes = webvtt_sizes;
+    }
     result.resources.push_back(
         {multivariant_name,
          playlist_type,

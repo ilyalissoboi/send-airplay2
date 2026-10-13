@@ -75,6 +75,11 @@ def generate(directory):
                    "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-bf", "0", "-g", "66",
                    "-sc_threshold", "0", "-c:a", "aac", "-b:a", "448k", str(long_gop))
         (directory / "aac-long-gop.mp4").write_bytes(source.rewrite_movie(long_gop.read_bytes(), [11, 42]))
+        refused_gop = temp / "too-long-gop.mp4"
+        source.run("-f", "lavfi", "-i", "color=black:s=16x16:r=2:d=33", "-i", str(wav),
+                   "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-bf", "0", "-g", "66",
+                   "-sc_threshold", "0", "-c:a", "aac", "-b:a", "448k", str(refused_gop))
+        (directory / "aac-too-long-gop.mp4").write_bytes(source.rewrite_movie(refused_gop.read_bytes(), [11, 42]))
         video = temp / "video.mp4"
         source.run("-f", "lavfi", "-i", "color=black:s=16x16:r=2:d=16.5", "-c:v", "libx264",
                    "-bf", "0", "-g", "1", "-an", str(video))
@@ -126,6 +131,8 @@ def generate(directory):
         "rounding_video": {"timescale": 48000, "segment_samples": [311232, 311520, 169248],
                            "sync_samples_one_based": [1, 14, 27]},
         "long_gop_video": {"frames": 33, "sync_samples_one_based": [1], "contains_p_frames": True},
+        "rejected_video": {"frames": 66, "seconds": 33, "audio_seconds": 16.5,
+                           "sync_samples_one_based": [1]},
         "fixtures": records}, indent=2) + "\n", encoding="utf-8")
 
 

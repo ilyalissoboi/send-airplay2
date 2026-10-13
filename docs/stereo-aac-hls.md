@@ -37,8 +37,9 @@ audio segment can round up after grid snapping; its finalized durations raise
 the common target of audio, video and subtitle playlists together. A bounded
 encoder epoch uses 48 AAC frames of preroll and lookahead (1.024 seconds each),
 retaining only canonical packets. Late and backward requests do not convert the
-whole movie first. Startup decodes/encodes only one tiny window to establish the
-format/configuration, and seals no fragments.
+whole movie first. Startup establishes format/configuration in a tiny serving window. D73 additionally
+measures one bounded first audio period with an isolated decoder, discards its bytes
+and seals no fragments. It does not perturb serving-decoder history.
 
 Stored audio DTS is audible packet PTS + 1024. The first fragment includes the
 encoder priming packet; the init edit removes priming once. The last sample's
@@ -95,14 +96,16 @@ and either no composition delay or a single unit-rate reorder edit cancelling th
 initial composition delay and covering the complete decode span. Each audio
 segment must be nonempty and at most seven seconds. D72 splits longer GOP spans
 into extra audio segments while copying the video segment unchanged; it does not
-shorten the video GOP or establish its receiver/authoring suitability. Movie duration is at most seven days.
+shorten the video GOP or establish its receiver/authoring suitability. D73 refuses any copied-video span over twenty seconds, including the final span.
+Movie duration is at most seven days.
 Protected media, format changes, discontinuities, unsupported layouts/profiles
 and D70's other source limits remain refusals. DTS-HD/dependent E-AC-3 are unproven.
 
-Master bandwidth values include estimated AAC allowances, and indexed MKV video
-already uses cluster-span estimates. They are not measured VOD averages/peaks.
-Measured bandwidth/authoring validation, broader timelines and real-file/host
-performance remain explicit gates before public integration. D72 adds bounded
+D73 replaces arbitrary AAC allowances with measured first-period rates and uses
+contiguous-window calculations for copied MP4/video/subtitles. Indexed MKV uses
+cluster-span estimates. Whole-VOD accuracy remains unproven and fails selected
+audits; see [policy, passed and failed cases](stereo-aac-authoring.md).
+Broader timelines and real-file/host performance remain gates before public integration. D72 adds bounded
 long-GOP audio policy and synthetic one-hour cold-seek evidence, not those proofs.
 
 ## Offline validation and its limits

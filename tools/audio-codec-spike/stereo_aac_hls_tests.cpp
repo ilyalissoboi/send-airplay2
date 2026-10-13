@@ -236,6 +236,67 @@ void audible_joins(Source& source, const std::filesystem::path& path,
         }
     }
 }
+void audit_authoring(const StereoAacHls& hls, const Store& store, const std::filesystem::path& path,
+                     const MediaReadContext& context) {
+    const auto& presentation = hls.presentation();
+    std::vector<std::uint64_t> video_sizes;
+    for (std::size_t index = 0; index < presentation.segment_count; ++index) {
+        video_sizes.push_back(
+            read(resource(hls, "s" + std::to_string(index) + ".m4s"), context).size());
+    }
+    auto copied =
+        hls_bit_rates(presentation.durations_us, video_sizes, presentation.target_duration_seconds);
+    HlsBitRates largest_subtitle;
+    for (std::size_t track = 0; track < presentation.text_track_count; ++track) {
+        std::vector<std::uint64_t> sizes;
+        for (std::size_t index = 0; index < presentation.segment_count; ++index) {
+            sizes.push_back(read(resource(hls, "t" + std::to_string(track) + "s" +
+                                                   std::to_string(index) + ".vtt"),
+                                 context)
+                                .size());
+        }
+        const auto rates =
+            hls_bit_rates(presentation.durations_us, sizes, presentation.target_duration_seconds);
+        largest_subtitle.peak = std::max(largest_subtitle.peak, rates.peak);
+        largest_subtitle.average = std::max(largest_subtitle.average, rates.average);
+    }
+    copied = add_hls_bit_rates(copied, largest_subtitle);
+    const std::vector<std::uint64_t> audio_sizes{
+        store.sealed.at(0).size(), store.sealed.at(1).size(), store.sealed.at(2).size()};
+    const auto measured =
+        add_hls_bit_rates(copied, hls_bit_rates({5994667, 5994667, 4510667}, audio_sizes,
+                                                presentation.target_duration_seconds));
+    const auto& provenance = hls.authoring();
+    expect(provenance.representative_audio_bytes > 0 &&
+               provenance.representative_audio_bytes <= 1024 * 1024 &&
+               provenance.representative_audio_duration_us == 5994667,
+           path.filename().string() + " first-window estimate measures bounded fMP4 output");
+    const bool indexed = path.extension() == ".mkv";
+    expect(provenance.copied_sizes_estimated == indexed && !provenance.subtitle_sizes_unmeasured,
+           path.filename().string() + " explicit copied-size provenance");
+    if (!indexed) {
+        expect(copied.peak == provenance.copied_rates.peak &&
+                   copied.average == provenance.copied_rates.average,
+               path.filename().string() + " exact copied video plus max subtitle rate");
+    }
+    const auto& declared = presentation.variant;
+    const auto peak_ratio = static_cast<double>(measured.peak) / declared.peak_bits_per_second;
+    const auto average_ratio =
+        static_cast<double>(measured.average) / declared.average_bits_per_second;
+    const bool within_vod_tolerance =
+        peak_ratio >= 0.9 && peak_ratio <= 1.1 && average_ratio >= 0.9 && average_ratio <= 1.1;
+    std::cout << "authoring " << path.filename().string()
+              << " declared_peak=" << declared.peak_bits_per_second
+              << " measured_peak=" << measured.peak
+              << " declared_average=" << declared.average_bits_per_second
+              << " measured_average=" << measured.average
+              << " within_vod_tolerance=" << within_vod_tolerance << '\n';
+    const bool early_ending =
+        path.filename() == "aac-short.mp4" || path.filename() == "aac-edits.mp4";
+    expect(within_vod_tolerance == (!indexed && !early_ending),
+           path.filename().string() + " VOD accuracy disposition peak_ratio=" +
+               std::to_string(peak_ratio) + " average_ratio=" + std::to_string(average_ratio));
+}
 void movie_join(const std::filesystem::path& path) {
     Source source(path);
     Store store;
@@ -268,6 +329,7 @@ void movie_join(const std::filesystem::path& path) {
         combined.insert(combined.end(), fragment.begin(), fragment.end());
     }
     expect(store.seals == 3, "one immutable generation per segment");
+    audit_authoring(*hls, store, path, context.value);
     const auto decoded = MovieDecoder(combined).decode();
     expect(decoded.size() == 792000 * 2,
            "audible VOD sample count: got " + std::to_string(decoded.size() / 2));

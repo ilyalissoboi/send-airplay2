@@ -2,6 +2,7 @@
 #ifndef SEND_AIRPLAY2_STEREO_AAC_HLS_H
 #define SEND_AIRPLAY2_STEREO_AAC_HLS_H
 #include "hls_remux.h"
+#include "hls_authoring.h"
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -22,6 +23,15 @@ enum class StereoAacHlsFailure {
     resource_limit,
     cache_error,
     generation_timeout
+};
+/// Immutable startup provenance; measured bytes do not imply whole-VOD accuracy.
+struct StereoAacHlsAuthoring {
+    HlsBitRates copied_rates;
+    HlsBitRates representative_audio_rates;
+    std::uint64_t representative_audio_bytes = 0;
+    std::uint64_t representative_audio_duration_us = 0;
+    bool copied_sizes_estimated = false;
+    bool subtitle_sizes_unmeasured = false;
 };
 /** Plan sample-clock audio cuts from absolute video boundaries at 48 kHz.
  * Preserve usable snapped video cuts; split long gaps on the absolute six-second
@@ -84,6 +94,8 @@ public:
     [[nodiscard]] std::size_t audio_segment_count() const noexcept;
     /// Thread-safe while this owner is alive; first failure persists after Stop.
     [[nodiscard]] StereoAacHlsFailure failure() const noexcept;
+    /// No I/O or generation; startup estimates/provenance persist after Stop.
+    [[nodiscard]] const StereoAacHlsAuthoring& authoring() const noexcept;
     void stop() noexcept;
 
 private:
