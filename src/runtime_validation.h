@@ -8,9 +8,9 @@
  * Runs the production preparation/cache callback bridge without network or credentials.
  * Takes source/store ownership after argument validation, drains resources, clears and
  * releases both before returning. Callbacks must not throw or reenter. Mode 1 cancels
- * one request then retries; modes 2/3 expect host-injected cache/source failure;
- * mode 4 expects invalid selection; mode 5 expects read-budget refusal with 97-byte source reads.
- * This does not test CastController or receiver EOF.
+ * one request then retries; mode 2 expects host-injected cache failure; mode 3 injects a source
+ * refusal after preparation; mode 4 expects invalid selection; mode 5 expects read-budget refusal
+ * with 97-byte source reads. This does not test CastController or receiver EOF.
  */
 struct sap2_runtime_report {
     uint32_t struct_size;

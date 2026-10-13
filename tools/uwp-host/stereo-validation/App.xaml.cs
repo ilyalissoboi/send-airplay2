@@ -20,10 +20,12 @@ public sealed partial class App : Application
 {
     private bool running;
     public App() => InitializeComponent();
-    protected override void OnLaunched(LaunchActivatedEventArgs args) => Run(args.Arguments == "pick");
+    protected override void OnLaunched(LaunchActivatedEventArgs args) => Run(RequestsPicker(args.Arguments));
     protected override void OnActivated(IActivatedEventArgs args) => Run(
         args.Kind == ActivationKind.CommandLineLaunch && args is ICommandLineActivatedEventArgs command
-        && command.Operation.Arguments.Trim().EndsWith(" pick", StringComparison.Ordinal));
+        && RequestsPicker(command.Operation.Arguments));
+    private static bool RequestsPicker(string arguments) => arguments.Trim() == "pick"
+        || arguments.Trim().EndsWith(" pick", StringComparison.Ordinal);
     private async void Run(bool pick)
     {
         if (running) { return; }
