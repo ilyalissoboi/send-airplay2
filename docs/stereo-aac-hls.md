@@ -74,8 +74,9 @@ segment overhead, and checks actual sealed fragment bytes before every seal.
 There is no eviction or regeneration after success. Generation/seal failure poisons
 unsealed entries; no tentative size is published and future jobs cannot continue
 with an invalid decoder. Admission is an estimate, not a guarantee that actual
-encoding will fit the quota. A storage failure terminates this private presentation;
-the future playback controller must propagate it and tear down the cast.
+encoding will fit the quota. Generation/seal failures stop future unsealed jobs;
+a storage-read failure fails its request. The future playback controller must
+propagate these failures as terminal and tear down the cast.
 
 `stop` is idempotent: cancel/join the worker, wait for active cache callbacks,
 release the decoder, clear storage once, release callback objects and resources.
@@ -127,6 +128,10 @@ with RMS below 0.001; the first frame can differ. This is not a proof of
 artifact-free receiver seeking. Final
 AAC codec output contains padding; tests trim only according to independently
 demuxed packet/frame presentation duration, not a guessed test-file length.
+The composed master and audio playlist omit INDEPENDENT-SEGMENTS; only the
+copied-video playlist keeps it. A master tag would extend the independence claim
+to audio under [RFC 8216 section 4.3.5.1](https://www.rfc-editor.org/rfc/rfc8216.html#section-4.3.5.1),
+which the cold synthesis result does not establish.
 
 Quota admission, startup cleanup after size/probe/selection/cancellation failure,
 cooperative cancel during decoder reads, waiter cancellation

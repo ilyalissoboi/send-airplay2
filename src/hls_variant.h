@@ -48,7 +48,9 @@ struct AudioRendition {
  * NAME, DEFAULT, AUTOSELECT=YES, FORCED, and the accessibility
  * CHARACTERISTICS for hearing-impaired tracks), and one EXT-X-STREAM-INF with
  * BANDWIDTH, AVERAGE-BANDWIDTH, CODECS, RESOLUTION, FRAME-RATE and
- * SUBTITLES="subs". Lines end in LF. */
+ * SUBTITLES="subs". Lines end in LF.
+ * With separate audio, the master omits INDEPENDENT-SEGMENTS: cold AAC overlap
+ * requires history. The video media playlist retains its own independence tag. */
 [[nodiscard]] std::string multivariant_playlist(const VariantStream& variant,
                                                 const std::vector<SubtitleRendition>& subtitles,
                                                 const AudioRendition* audio = nullptr);
