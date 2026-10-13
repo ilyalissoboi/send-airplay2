@@ -107,3 +107,8 @@ profile/cache; it adds no FFmpeg rebuild or extra codec matrix job.
    firmware, host and binary evidence. Ask before publishing or merging.
 
 No receiver, UI confirmation or package publication is performed in D72.
+
+Implementation checkpoint: [PR #53](https://github.com/ilyalissoboi/send-airplay2/pull/53)
+is open. All 16 checks passed at implementation head `93ae7d8` in run
+`38335644638`, with no review threads present. This documentation follow-up
+changes no native behavior; inspect the final PR-head checks before merging.

@@ -9,6 +9,19 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D72 readiness implemented; PR #53 open (2026-10-13).**
+[PR #53](https://github.com/ilyalissoboi/send-airplay2/pull/53) implements private
+long-GOP audio splitting, terminal source/cache failure reporting and synthetic
+one-hour / >4-GiB cold-seek scaling. All 16 checks passed at implementation head
+`93ae7d8` in run `38335644638`; no review threads were present at that head.
+Local codec CTest passes 4/4, static/shared baseline 35/35 and 36/36, runner 10/10,
+and x64 UWP compilation/import checks pass. The following documentation checkpoint
+changes no native code; inspect the actual final PR head/checks before merging.
+Read [contracts and remaining gates](stereo-aac-readiness.md). Authoring metadata,
+real-file/host performance, public/storage integration, packaged runtime and
+receiver proof remain next. No receiver/package evidence is added. Continue its
+branch if review changes are needed; ask before merging or publishing.
+
 **D71 stereo AAC HLS increment merged (2026-10-13).**
 [PR #51](https://github.com/ilyalissoboi/send-airplay2/pull/51) merged as `e09c57f`,
 with all 16 checks passed at final head `475ae61` in run `38330651001` and both
@@ -132,7 +145,7 @@ and Release-only UWP inspections pass. Final automatic PR CI passed at `579bb44`
 with cold codec jobs at 5m01s desktop/3m59s UWP. Preserve the earlier packaged
 artifact's source/profile attribution. This changes build configuration only.
 
-**Active D72 native readiness increment:** the subsequent Proceed authorizes
+**D72 native readiness implementation:** the subsequent Proceed authorizes
 long-GOP audio splitting, terminal cache/conversion failure reporting and
 synthetic one-hour / >4-GiB cold-seek scaling checks on fresh branch
 `codex/aac-hls-readiness` from merged PR #52. Read [contracts and limits](stereo-aac-readiness.md).

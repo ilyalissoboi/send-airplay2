@@ -36,7 +36,20 @@ merged as `c092c9b` at final head `6716f1a`; all 16 checks passed in run
 `38331920914`. It contains the master/audio independence correction missed by
 PR #51's merge; copied video retains its declaration. The merge gate is complete.
 
-**Active D72 readiness:** branch `codex/aac-hls-readiness` starts from `c092c9b`.
+**D72 readiness implemented; PR #53 open (2026-10-13).**
+[PR #53](https://github.com/ilyalissoboi/send-airplay2/pull/53) implements private
+long-GOP audio splitting, terminal source/cache failure reporting and synthetic
+one-hour / >4-GiB cold-seek scaling. All 16 checks passed at implementation head
+`93ae7d8` in run `38335644638`; no review threads were present at that head.
+Local codec CTest passes 4/4, static/shared baseline 35/35 and 36/36, runner 10/10,
+and x64 UWP compilation/import checks pass. The following documentation checkpoint
+changes no native code; inspect the actual final PR head/checks before merging.
+Read [contracts and remaining gates](stereo-aac-readiness.md). Authoring metadata,
+real-file/host performance, public/storage integration, packaged runtime and
+receiver proof remain next. No receiver/package evidence is added. Continue its
+branch if review changes are needed; ask before merging or publishing.
+
+**D72 readiness branch:** branch `codex/aac-hls-readiness` starts from `c092c9b`.
 The latest Proceed authorizes the [native readiness increment](stereo-aac-readiness.md):
 bounded audio segments for long copied-video GOPs, first terminal cache/conversion
 failure reporting and synthetic hour-long / >4-GiB seek scaling. Inspect its own
