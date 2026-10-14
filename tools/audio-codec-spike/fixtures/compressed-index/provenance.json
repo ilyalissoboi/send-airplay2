@@ -172,6 +172,22 @@
       "audible_frames_48khz": 1440144
     },
     {
+      "file": "vorbis-no-delay-fine.mkv",
+      "bytes": 19725,
+      "sha256": "053759e3a117963fec4a47145e63ba3ac799c6dc03304b2fc6b55a23ea2c85a4",
+      "audible_frames": 97024,
+      "initial_silence_frames": 1024,
+      "codec_delay_absent": true
+    },
+    {
+      "file": "vorbis-no-delay.mkv",
+      "bytes": 19727,
+      "sha256": "6e6fe11edc75444c9e9750759c0c7a682ef6cce22ea49eac78350fa8793dfa40",
+      "audible_frames": 97024,
+      "initial_silence_frames": 1024,
+      "codec_delay_absent": true
+    },
+    {
       "file": "vorbis-trim.mkv",
       "bytes": 19755,
       "sha256": "d40fedac5c188bbecf94acdccb21e5e2c48e19cef8493c46626850a6da2e207a",

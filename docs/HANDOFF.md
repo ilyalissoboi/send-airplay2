@@ -15,7 +15,8 @@ The user's Proceed starts `codex/matroska-compressed-index` from merged PR #60
 Read [the compressed clock/restart contract and limits](matroska-compressed-index.md).
 Canonical FLAC/Opus/Vorbis/TrueHD now share native selected packet coordinates,
 parser-derived sample counts and signed per-block trim. TrueHD seeks restart at
-major sync units; Vorbis first trim must match intrinsic overlap priming.
+major sync units; Vorbis first delay/skip cannot exceed intrinsic overlap priming.
+Smaller/absent CodecDelay preserves initial presentation silence.
 Thirty-second phase/AAC and independent short audible trim controls pass offline;
 one-hour synthetic FLAC seeks above 4 GiB have bounded nearby reads.
 The original absolute precision is reported separately from exact decoded-frame

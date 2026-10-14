@@ -216,8 +216,25 @@ void vorbis_overlap_refusal(const std::filesystem::path& directory) {
     } catch (const AudioDecodeException& error) {
         expect(error.reason() == AudioDecodeFailure::unsupported &&
                    std::string(error.what()) ==
-                       "indexed Vorbis first trim must match decoder overlap priming",
+                       "indexed Vorbis first trim exceeds decoder overlap priming",
                std::string("Vorbis extra first trim refusal: ") + error.what());
+    }
+}
+void vorbis_without_delay(const std::filesystem::path& directory) {
+    const auto expected = reference(directory / "vorbis-no-delay-fine.mkv", 97024);
+    expect(std::all_of(expected.begin(), expected.begin() + 2048,
+                       [](float sample) { return sample == 0; }),
+           "Vorbis missing CodecDelay retains literal 1024-frame initial silence");
+    Context context;
+    Source source(directory / "vorbis-no-delay.mkv");
+    auto decoder = AudioDecoderSource::open(source.callbacks(), context.value, 42, true);
+    for (const auto start : {96880U, 0U, 48013U, 96880U}) {
+        const auto window = decoder->read_window(start, 4096, context.value);
+        if (start == 96880) {
+            expect(window.eof && window.samples.size() == 288,
+                   "Vorbis missing delay literal 144-frame EOF tail");
+        }
+        compare(expected, window, "Vorbis missing delay, start=" + std::to_string(start));
     }
 }
 void exact_continuity_refusal(const std::filesystem::path& directory) {
@@ -261,6 +278,7 @@ int main(int argc, char** argv) {
         independent_trim(directory, "truehd", 95980);
         sparse_flac(directory / "flac-cycle.mkv");
         vorbis_overlap_refusal(directory);
+        vorbis_without_delay(directory);
         exact_continuity_refusal(directory);
         return 0;
     } catch (const std::exception& error) {

@@ -863,11 +863,12 @@ struct AudioDecoderSource::Impl {
             const auto discard = padding > 0 ? static_cast<std::uint32_t>(padding) : 0U;
             if (compressed && codec->codec_id == AV_CODEC_ID_VORBIS && indexed_packets.empty()) {
                 // The native Vorbis decoder discards its entire first overlap
-                // frame intrinsically. Admit only matching container priming;
-                // an extra first-block skip cannot be applied by this backend.
-                require(delay == frames && skip == frames && discard == 0,
+                // frame intrinsically. Smaller/absent container delay leaves
+                // the corresponding initial silence. A skip beyond that frame
+                // cannot be applied by this backend without being lost.
+                require(delay <= frames && skip <= frames && discard == 0,
                         AudioDecodeFailure::unsupported,
-                        "indexed Vorbis first trim must match decoder overlap priming");
+                        "indexed Vorbis first trim exceeds decoder overlap priming");
             }
             require(packed_pcm ? skip + discard < frames : skip + discard <= frames,
                     AudioDecodeFailure::unsupported,

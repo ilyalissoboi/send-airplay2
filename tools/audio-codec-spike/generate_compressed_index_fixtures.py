@@ -88,6 +88,15 @@ def generate(directory):
                 pts, payload, discard, key = shifted[-1]
                 shifted[-1] = (pts, payload, discard + tail, key)
                 video = ([(index * 500, picture) for index in range(5)], private_video)
+                if name == "vorbis":
+                    no_delay = [(pts + delay, payload, discard, key)
+                                for pts, payload, discard, key in packets]
+                    fine_no_delay = expanded.movie(identifier, no_delay, private, video,
+                                                   presentation_duration_ns=2500000000)
+                    save("vorbis-no-delay-fine.mkv", fine_no_delay, audible_frames=97024,
+                         initial_silence_frames=1024, codec_delay_absent=True)
+                    save("vorbis-no-delay.mkv", clocks.coarse(fine_no_delay), audible_frames=97024,
+                         initial_silence_frames=1024, codec_delay_absent=True)
                 if name == "flac":
                     middle = list(packets)
                     pts, payload, discard, key = middle[1]

@@ -51,9 +51,11 @@ audible tail. Coded-unit duration need not equal the final decoded sample count.
 PCM still refuses complete-packet trimming; compressed packets admit equality.
 
 Vorbis is a narrower first-trim subset: the native decoder intrinsically removes
-its first complete overlap frame, overwriting a different skip value. Admit only
-matching CodecDelay/first skip and no first discard. An extra first-block skip is
-explicitly refused instead of being silently lost. This is not a generic backend
+its first complete overlap frame, overwriting a different skip value. Admit
+CodecDelay/first skip within that intrinsic frame and no first discard. Smaller
+or absent delay retains the corresponding initial presentation silence. A skip
+beyond the intrinsic frame is explicitly refused instead of being silently lost.
+This is not a generic backend
 trim fix. Other intermediate trim gaps, lacing, encoded/nonstandard tracks and
 format changes remain subject to refusal.
 
@@ -78,7 +80,7 @@ before general automatic delivery.** Do not simply raise the limits.
 ## Owned offline evidence
 
 [The generator](../tools/audio-codec-spike/generate_compressed_index_fixtures.py)
-creates [18 owned/provenanced controls](../tools/audio-codec-spike/fixtures/compressed-index/provenance.json)
+creates [20 owned/provenanced controls](../tools/audio-codec-spike/fixtures/compressed-index/provenance.json)
 from synthesized tones and D77's original black all-IDR video. FFmpeg CLI is a
 development-only encoder/decoder; its version, commands, inputs and hashes are
 recorded. No downloaded sample or tool is shipped.
@@ -98,6 +100,9 @@ padding, then independently insert leading silence and remove samples. Thus a
 same-Matroska-demux skip overwrite cannot reproduce itself on both sides.
 Literal audible ends are FLAC 95736, Opus 95960, Vorbis 95984 and TrueHD 95980.
 Vorbis covers matching overlap priming; a separate extra-skip mutation is refused.
+Two missing-CodecDelay controls preserve literal 1024-sample initial silence and
+the 97024-sample end against ordinary fine-clock demuxing. This retains valid
+zero-delay admission rather than requiring metadata equal to codec priming.
 Malformed duration/restart headers, retained cancellation and source-failure
 poisoning checks remain separate from positive evidence.
 

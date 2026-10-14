@@ -68,8 +68,9 @@ struct DecodedAudioWindow {
  * with <=262144 packets. It reads headers (complete bounded Opus packets) at
  * open, then nearby packets by binary search and fresh decoder state. Compressed
  * packets are <=1 MiB. TrueHD requires one access unit per block and an initial
- * major sync; seeks start at the preceding major sync. Vorbis container first
- * skip must match the decoder's intrinsic complete overlap-frame priming.
+ * major sync; seeks start at the preceding major sync. Vorbis first delay/skip
+ * cannot exceed intrinsic overlap-frame priming; smaller/absent delay leaves
+ * corresponding initial presentation silence.
  * Raw packet clocks apply CodecDelay once and decoder-owned skip/discard once;
  * the source window budget includes both header and payload reads. The source
  * clock must be no coarser than one second before exact-clock substitution.
