@@ -63,16 +63,19 @@ struct DecodedAudioWindow {
  * Known native layouts and the documented AAC/Dolby/DTS-core/FLAC/Opus/Vorbis/
  * PCM/TrueHD source matrix only. Layout/rate/format changes,
  * discontinuities, protected/unknown inputs and complex edits are refused.
- * canonical_matroska_clock indexes validated unlaced PCM using exact packed
- * sample counts and signed per-block trim, with <=262144 packets. It reads
- * headers at open, then nearby packets by binary search and fresh decoder state.
+ * canonical_matroska_clock indexes validated unlaced PCM/FLAC/Opus/Vorbis/TrueHD
+ * using exact packed counts or bounded pinned-parser duration/restart analysis,
+ * with <=262144 packets. It reads headers (complete bounded Opus packets) at
+ * open, then nearby packets by binary search and fresh decoder state. Compressed
+ * packets are <=1 MiB. TrueHD requires one access unit per block and an initial
+ * major sync; seeks start at the preceding major sync. Vorbis container first
+ * skip must match the decoder's intrinsic complete overlap-frame priming.
  * Raw packet clocks apply CodecDelay once and decoder-owned skip/discard once;
- * the source window budget includes both header and payload reads. For other
- * expanded codecs it uses sample-accurate timestamps directly, including
- * variable/trimmed frames. Expanded codecs under coarser clocks rebuild from
- * the start, counting decoded samples under a ten-second presentation bound.
+ * the source window budget includes both header and payload reads. The source
+ * clock must be no coarser than one second before exact-clock substitution.
  * The initial absolute origin remains container-limited; epoch phase does not
- * change with frame size or seek order. Long-file indexing remains required.
+ * change with frame size or seek order. Packet-count bounds still exclude many
+ * highly packetized full-length movies; a compact-index scaling gate remains.
  * Legacy AAC/Dolby/DTS coarser clocks require a fixed-frame grid for HLS:
  * first read must start at zero; frames must remain constant and exceed twice
  * the clock quantum. Rounded timestamps may snap only within one tick of that grid.
@@ -102,7 +105,7 @@ public:
      * FFmpeg MOV edits and non-indexed Matroska CodecDelay are already in frame timestamps:
      * never apply the raw-container planners' corrections a second time.
      * Packet skip/discard side data remains intact for decoder consumption.
-     * Indexed PCM constructs its packet clock/trim from native container fields,
+     * Indexed audio constructs its packet clock/trim from native container fields,
      * avoiding generic demuxer overwrite of first-block skip with CodecDelay.
      * MOV Opus frame duration bounds the audible packet tail before resampling.
      * This does not encode AAC or establish independent HLS segment priming.

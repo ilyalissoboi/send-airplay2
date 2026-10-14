@@ -288,7 +288,7 @@ void coarse_clock_gate(const std::filesystem::path& directory) {
                full.timestamp_precision_samples == 48,
            "coarse FLAC sequential decode with explicit clock precision");
     auto canonical = AudioDecoderSource::open(input.callbacks(), context, 42, true);
-    expect(canonical->requires_start_rebuild(), "coarse HLS selects bounded reconstruction");
+    expect(!canonical->requires_start_rebuild(), "coarse HLS selects exact FLAC packet index");
     compare(full, read(*canonical, input, 270000, 4096), "coarse FLAC canonical cold seek");
 }
 void matroska_output_frequency(const std::filesystem::path& directory) {

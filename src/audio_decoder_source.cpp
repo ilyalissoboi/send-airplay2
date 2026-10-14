@@ -86,7 +86,13 @@ using Io = std::unique_ptr<AVIOContext, IoDeleter>;
 void validate_backend() {
     const std::string_view configuration(avcodec_configuration());
     const std::string_view license(avcodec_license());
-    require(license == "LGPL version 2.1 or later" && license == avformat_license() &&
+    // Header-prefix parser analysis relies on the pinned implementation. Reject
+    // runtime component drift before using that version-specific contract.
+    require(avcodec_version() == LIBAVCODEC_VERSION_INT &&
+                avformat_version() == LIBAVFORMAT_VERSION_INT &&
+                avutil_version() == LIBAVUTIL_VERSION_INT &&
+                swresample_version() == LIBSWRESAMPLE_VERSION_INT &&
+                license == "LGPL version 2.1 or later" && license == avformat_license() &&
                 license == avutil_license() && license == swresample_license() &&
                 configuration == avformat_configuration() &&
                 configuration == avutil_configuration() &&
@@ -549,19 +555,107 @@ struct AudioCadence {
     bool enabled = false;
     bool reopen_at_start = false;
     bool rebuild_from_start = false;
+    bool indexed_clock = false;
     int frame_samples = 0;
     std::int64_t origin_input_sample = 0;
     std::uint32_t absolute_precision_samples = 0;
 };
-/// Validated packed PCM coordinates; positions use source samples before packet
+/// Validated audio coordinates; positions use source samples before packet
 /// skip/discard. Decoder-owned trimming advances PTS/shortens frames exactly once.
-struct IndexedPcmPacket {
+struct IndexedAudioPacket {
     std::uint64_t offset = 0;
     std::uint32_t size = 0;
     std::int64_t position = 0;
     std::uint32_t samples = 0;
     std::uint32_t skip = 0;
     std::uint32_t discard = 0;
+    std::size_t restart = 0; ///< Nearest preceding independently restartable packet.
+};
+
+struct ParserDeleter {
+    void operator()(AVCodecParserContext* value) const noexcept {
+        av_parser_close(value);
+    }
+};
+using Parser = std::unique_ptr<AVCodecParserContext, ParserDeleter>;
+struct PacketAnalysis {
+    std::uint32_t samples;
+    bool restartable;
+};
+
+/** Bounded duration/restart analysis using the already pinned codec parsers.
+ * Complete Matroska packets are required. FLAC/Vorbis/TrueHD analysis reads a
+ * padded 64-byte prefix; Opus framing analysis needs the bounded complete packet.
+ * This validates headers, not every compressed payload's integrity. Window
+ * decoding remains responsible for malformed payload and format-change refusal.
+ */
+class CompressedPacketParser {
+public:
+    explicit CompressedPacketParser(const AVCodecParameters& parameters)
+        : parser_(av_parser_init(parameters.codec_id)), codec_(avcodec_alloc_context3(nullptr)),
+          expected_rate_(parameters.sample_rate) {
+        require(parser_ && codec_, AudioDecodeFailure::unsupported,
+                "indexed audio parser unavailable");
+        require(parameters.ch_layout.order == AV_CHANNEL_ORDER_NATIVE,
+                AudioDecodeFailure::unsupported, "indexed compressed layout is unsupported");
+        expected_mask_ = parameters.ch_layout.u.mask;
+        checked(avcodec_parameters_to_context(codec_.get(), &parameters));
+        parser_->flags |= PARSER_FLAG_COMPLETE_FRAMES;
+    }
+    CompressedPacketParser(const CompressedPacketParser&) = delete;
+    CompressedPacketParser& operator=(const CompressedPacketParser&) = delete;
+    CompressedPacketParser(CompressedPacketParser&&) = delete;
+    CompressedPacketParser& operator=(CompressedPacketParser&&) = delete;
+
+    PacketAnalysis analyse(Reader& reader, const MkvAudioPacket& packet) {
+        constexpr std::uint32_t maximum_compressed_packet_bytes = 1U << 20;
+        constexpr std::uint32_t header_prefix_bytes = 64;
+        require(packet.size > 0 && packet.size <= maximum_compressed_packet_bytes,
+                AudioDecodeFailure::unsupported, "indexed compressed packet exceeds bounds");
+        const auto length = codec_->codec_id == AV_CODEC_ID_OPUS
+                                ? packet.size
+                                : std::min(packet.size, header_prefix_bytes);
+        std::vector<std::uint8_t> bytes(length + AV_INPUT_BUFFER_PADDING_SIZE, 0);
+        reader.read_exact(packet.offset, bytes.data(), length);
+        if (codec_->codec_id == AV_CODEC_ID_TRUEHD) {
+            require(length >= 8, AudioDecodeFailure::unsupported,
+                    "indexed TrueHD access-unit header is truncated");
+            constexpr std::uint32_t access_unit_length_mask = 0x0fff;
+            constexpr std::uint32_t bytes_per_word = 2;
+            // The big-endian header word's low 12 bits count two-byte words;
+            // its high nibble belongs to parity, not the access-unit length.
+            const auto header_word = (static_cast<std::uint32_t>(bytes[0]) << 8) | bytes[1];
+            const auto declared_unit_bytes =
+                (header_word & access_unit_length_mask) * bytes_per_word;
+            require(declared_unit_bytes == packet.size, AudioDecodeFailure::unsupported,
+                    "indexed TrueHD block must contain one access unit");
+        }
+        // TrueHD non-major units inherit the last major sync's duration. Other
+        // parsers must establish each packet's duration without stale fallback.
+        if (codec_->codec_id != AV_CODEC_ID_TRUEHD) {
+            parser_->duration = 0;
+        }
+        std::uint8_t* output = nullptr;
+        int output_length = 0;
+        const auto consumed = av_parser_parse2(parser_.get(), codec_.get(), &output, &output_length,
+                                               bytes.data(), static_cast<int>(length),
+                                               AV_NOPTS_VALUE, AV_NOPTS_VALUE, packet.offset);
+        require(consumed == static_cast<int>(length) && output_length == consumed && output &&
+                    parser_->duration > 0 && parser_->duration <= maximum_frame_samples,
+                AudioDecodeFailure::unsupported, "indexed compressed packet header is unsupported");
+        require(codec_->sample_rate == expected_rate_ &&
+                    codec_->ch_layout.order == AV_CHANNEL_ORDER_NATIVE &&
+                    codec_->ch_layout.u.mask == expected_mask_,
+                AudioDecodeFailure::unsupported, "indexed compressed packet format changed");
+        return {static_cast<std::uint32_t>(parser_->duration),
+                codec_->codec_id != AV_CODEC_ID_TRUEHD || parser_->key_frame == 1};
+    }
+
+private:
+    Parser parser_;
+    Codec codec_;
+    int expected_rate_;
+    std::uint64_t expected_mask_ = 0;
 };
 } // namespace
 
@@ -576,8 +670,8 @@ struct AudioDecoderSource::Impl {
     bool usable = true;
     InputAudioFormat input_format;
     AudioCadence cadence;
-    std::vector<IndexedPcmPacket> pcm_packets;
-    std::size_t pcm_begin = 0;
+    std::vector<IndexedAudioPacket> indexed_packets;
+    std::size_t indexed_begin = 0;
 
     Impl(const MediaSource& source, std::uint64_t size) : reader{source, size} {}
     void open_format() {
@@ -681,9 +775,13 @@ struct AudioDecoderSource::Impl {
                 static_cast<int>(index) == stream_index ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
         }
     }
-    void index_pcm() {
+    void index_matroska_audio() {
+        const bool packed_pcm = selected.codec.compare(0, 6, "A_PCM/") == 0;
+        const bool compressed =
+            codec->codec_id == AV_CODEC_ID_FLAC || codec->codec_id == AV_CODEC_ID_OPUS ||
+            codec->codec_id == AV_CODEC_ID_VORBIS || codec->codec_id == AV_CODEC_ID_TRUEHD;
         if (!cadence.enabled || container != SourceContainer::matroska ||
-            selected.codec.compare(0, 6, "A_PCM/") != 0) {
+            (!packed_pcm && !compressed)) {
             return;
         }
         auto* stream = format->streams[stream_index];
@@ -691,7 +789,7 @@ struct AudioDecoderSource::Impl {
                     selected.audio_channels >= 1 && selected.audio_channels <= 8 &&
                     codec->ch_layout.order == AV_CHANNEL_ORDER_NATIVE &&
                     av_channel_layout_check(&codec->ch_layout),
-                AudioDecodeFailure::unsupported, "indexed PCM layout or rate is unsupported");
+                AudioDecodeFailure::unsupported, "indexed audio layout or rate is unsupported");
         const AVRational input_clock{1, codec->sample_rate};
         const auto absolute_precision =
             av_rescale_q_rnd(1, stream->time_base, output_clock, AV_ROUND_UP);
@@ -699,56 +797,83 @@ struct AudioDecoderSource::Impl {
         // before replacing the stream clock or narrowing the reported precision.
         constexpr auto maximum_absolute_precision_samples = output_rate;
         require(absolute_precision > 0 && absolute_precision <= maximum_absolute_precision_samples,
-                AudioDecodeFailure::unsupported, "indexed PCM timestamp clock is unsupported");
+                AudioDecodeFailure::unsupported, "indexed audio timestamp clock is unsupported");
         const auto precision = av_rescale_q_rnd(1, stream->time_base, input_clock, AV_ROUND_UP);
         const auto delay = av_rescale_q(static_cast<std::int64_t>(selected.codec_delay_ns),
                                         nanosecond_clock, input_clock);
         require(delay >= 0 && delay <= maximum_frame_samples, AudioDecodeFailure::unsupported,
-                "indexed PCM CodecDelay exceeds trim budget");
+                "indexed audio CodecDelay exceeds trim budget");
         const auto bytes_per_frame = selected.audio_channels * (selected.audio_bit_depth / 8);
-        require(bytes_per_frame > 0 && selected.audio_bit_depth % 8 == 0,
-                AudioDecodeFailure::unsupported, "indexed PCM packing is unsupported");
+        require(!packed_pcm || (bytes_per_frame > 0 && selected.audio_bit_depth % 8 == 0),
+                AudioDecodeFailure::unsupported, "indexed audio packing is unsupported");
+        auto parser =
+            compressed ? std::make_unique<CompressedPacketParser>(*stream->codecpar) : nullptr;
         const auto packets = read_mkv_audio_packets(
             [this](std::uint64_t offset, std::uint8_t* output, std::size_t length) {
                 reader.read_exact(offset, output, length);
             },
             reader.size, selected.id);
-        require(!packets.empty(), AudioDecodeFailure::malformed, "selected PCM has no packets");
-        pcm_packets.reserve(packets.size());
+        require(!packets.empty(), AudioDecodeFailure::malformed, "selected audio has no packets");
+        indexed_packets.reserve(packets.size());
         std::int64_t position = 0;
+        std::size_t restart = 0;
         const auto presentation_limit = av_rescale_q(
             static_cast<std::int64_t>(maximum_presentation_samples), output_clock, input_clock);
         for (const auto& packet : packets) {
             require(packet.stored_timestamp_ns <=
                         static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()),
-                    AudioDecodeFailure::unsupported, "indexed PCM timestamp exceeds bounds");
+                    AudioDecodeFailure::unsupported, "indexed audio timestamp exceeds bounds");
             const auto timestamp =
                 av_rescale_q(static_cast<std::int64_t>(packet.stored_timestamp_ns),
                              nanosecond_clock, input_clock) -
                 delay;
-            if (pcm_packets.empty()) {
+            if (indexed_packets.empty()) {
                 position = timestamp;
             }
             require(position >= -maximum_frame_samples && position <= presentation_limit &&
                         timestamp >= position - precision - 1 &&
                         timestamp <= position + precision + 1,
                     AudioDecodeFailure::unsupported,
-                    "indexed PCM packet clock is discontinuous or out of bounds");
-            require(packet.size > 0 && packet.size % bytes_per_frame == 0 &&
-                        packet.size / bytes_per_frame <= maximum_frame_samples,
-                    AudioDecodeFailure::unsupported, "indexed PCM packet packing exceeds bounds");
-            const auto frames = static_cast<std::uint32_t>(packet.size / bytes_per_frame);
+                    "indexed audio packet clock is discontinuous or out of bounds");
+            std::uint32_t frames = 0;
+            if (packed_pcm) {
+                require(packet.size > 0 && packet.size % bytes_per_frame == 0 &&
+                            packet.size / bytes_per_frame <= maximum_frame_samples,
+                        AudioDecodeFailure::unsupported,
+                        "indexed audio packet packing exceeds bounds");
+                frames = static_cast<std::uint32_t>(packet.size / bytes_per_frame);
+                restart = indexed_packets.size();
+            } else {
+                const auto analysis = parser->analyse(reader, packet);
+                frames = analysis.samples;
+                require(!indexed_packets.empty() || analysis.restartable,
+                        AudioDecodeFailure::unsupported,
+                        "indexed audio has no initial restart point");
+                if (analysis.restartable) {
+                    restart = indexed_packets.size();
+                }
+            }
             const auto padding =
                 av_rescale_q(packet.discard_padding_ns, nanosecond_clock, input_clock);
             require(padding >= -maximum_frame_samples && padding <= maximum_frame_samples,
-                    AudioDecodeFailure::unsupported, "indexed PCM packet trim exceeds bounds");
-            const auto skip = padding < 0           ? static_cast<std::uint32_t>(-padding)
-                              : pcm_packets.empty() ? static_cast<std::uint32_t>(delay)
-                                                    : 0U;
+                    AudioDecodeFailure::unsupported, "indexed audio packet trim exceeds bounds");
+            const auto skip = padding < 0               ? static_cast<std::uint32_t>(-padding)
+                              : indexed_packets.empty() ? static_cast<std::uint32_t>(delay)
+                                                        : 0U;
             const auto discard = padding > 0 ? static_cast<std::uint32_t>(padding) : 0U;
-            require(skip + discard < frames, AudioDecodeFailure::unsupported,
-                    "indexed PCM packet trim removes complete packet");
-            pcm_packets.push_back({packet.offset, packet.size, position, frames, skip, discard});
+            if (compressed && codec->codec_id == AV_CODEC_ID_VORBIS && indexed_packets.empty()) {
+                // The native Vorbis decoder discards its entire first overlap
+                // frame intrinsically. Admit only matching container priming;
+                // an extra first-block skip cannot be applied by this backend.
+                require(delay == frames && skip == frames && discard == 0,
+                        AudioDecodeFailure::unsupported,
+                        "indexed Vorbis first trim must match decoder overlap priming");
+            }
+            require(packed_pcm ? skip + discard < frames : skip + discard <= frames,
+                    AudioDecodeFailure::unsupported,
+                    "indexed audio packet trim is outside admitted frame");
+            indexed_packets.push_back(
+                {packet.offset, packet.size, position, frames, skip, discard, restart});
             position += frames;
         }
         cadence.absolute_precision_samples = static_cast<std::uint32_t>(absolute_precision);
@@ -756,22 +881,25 @@ struct AudioDecoderSource::Impl {
         // Keep the original absolute clock precision separately for reporting.
         stream->time_base = codec->pkt_timebase = input_clock;
         cadence.rebuild_from_start = false;
+        cadence.indexed_clock = true;
     }
     void seek(std::uint64_t begin) {
         const auto metadata_preroll = av_rescale_q(
             static_cast<std::int64_t>(selected.seek_preroll_ns), nanosecond_clock, output_clock);
         const auto preroll = std::max<std::int64_t>(output_rate, metadata_preroll);
-        if (!pcm_packets.empty()) {
+        if (!indexed_packets.empty()) {
             const auto target = av_rescale_q(static_cast<std::int64_t>(begin) - preroll,
                                              output_clock, AVRational{1, codec->sample_rate});
             const auto after =
-                std::upper_bound(pcm_packets.begin(), pcm_packets.end(), target,
-                                 [](std::int64_t sample, const IndexedPcmPacket& packet) {
+                std::upper_bound(indexed_packets.begin(), indexed_packets.end(), target,
+                                 [](std::int64_t sample, const IndexedAudioPacket& packet) {
                                      return sample < packet.position;
                                  });
-            pcm_begin = after == pcm_packets.begin()
-                            ? 0
-                            : static_cast<std::size_t>(after - pcm_packets.begin() - 1);
+            const auto candidate =
+                after == indexed_packets.begin()
+                    ? 0
+                    : static_cast<std::size_t>(after - indexed_packets.begin() - 1);
+            indexed_begin = indexed_packets[candidate].restart;
             avcodec_flush_buffers(codec.get());
             return;
         }
@@ -821,6 +949,11 @@ public:
                 "audio timestamp clock is unsupported");
         output_.timestamp_precision_samples =
             std::max(static_cast<std::uint32_t>(quantum), cadence.absolute_precision_samples);
+        // Report the original absolute uncertainty, but validate decoder-frame
+        // continuity against the exact indexed clock. Container rounding must
+        // not conceal a payload/trim gap in reconstructed sample positions.
+        continuity_precision_samples_ = cadence.indexed_clock ? static_cast<std::uint32_t>(quantum)
+                                                              : output_.timestamp_precision_samples;
         // A previously established format also describes an empty post-EOF
         // window, even when a far-late seek returns no additional frames.
         if (input_format.established && input_format.sample_format >= 0 &&
@@ -855,7 +988,7 @@ public:
         }
         finish_window();
     }
-    void run_indexed(const std::vector<IndexedPcmPacket>& packets, std::size_t begin) {
+    void run_indexed(const std::vector<IndexedAudioPacket>& packets, std::size_t begin) {
         for (auto index = begin; !complete_; ++index) {
             reader_.check();
             if (index == packets.size()) {
@@ -867,7 +1000,8 @@ public:
             }
             const auto& indexed = packets[index];
             require(indexed.size <= static_cast<std::uint32_t>(std::numeric_limits<int>::max()),
-                    AudioDecodeFailure::too_large, "indexed PCM packet allocation exceeds bounds");
+                    AudioDecodeFailure::too_large,
+                    "indexed audio packet allocation exceeds bounds");
             checked(av_new_packet(packet_.get(), static_cast<int>(indexed.size)));
             reader_.read_exact(indexed.offset, packet_->data, indexed.size);
             packet_->pts = packet_->dts = indexed.position;
@@ -878,7 +1012,7 @@ public:
                 auto* trim = av_packet_new_side_data(packet_.get(), AV_PKT_DATA_SKIP_SAMPLES,
                                                      skip_side_data_bytes);
                 require(trim != nullptr, AudioDecodeFailure::codec_error,
-                        "indexed PCM trim allocation failed");
+                        "indexed audio trim allocation failed");
                 for (unsigned byte = 0; byte < 4; ++byte) {
                     trim[byte] = static_cast<std::uint8_t>(indexed.skip >> (8 * byte));
                     trim[4 + byte] = static_cast<std::uint8_t>(indexed.discard >> (8 * byte));
@@ -939,6 +1073,7 @@ private:
     std::int64_t covered_ = 0;
     bool complete_ = false;
     bool respect_opus_packet_duration_ = false;
+    std::uint32_t continuity_precision_samples_ = 0;
     std::optional<std::int64_t> rebuild_origin_input_sample_;
 
     void finish_window() {
@@ -1093,7 +1228,7 @@ private:
                 AudioDecodeFailure::unsupported, "audio format changed during decoding");
         const auto expected = origin_ + av_rescale_q(static_cast<std::int64_t>(input_samples_),
                                                      AVRational{1, input_rate_}, output_clock);
-        const auto tolerance = static_cast<std::int64_t>(output_.timestamp_precision_samples) + 1;
+        const auto tolerance = static_cast<std::int64_t>(continuity_precision_samples_) + 1;
         require(timestamp >= expected - tolerance && timestamp <= expected + tolerance,
                 AudioDecodeFailure::unsupported, "audio presentation timeline is discontinuous");
         auto samples = frame.nb_samples;
@@ -1207,7 +1342,7 @@ AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& cont
     Operation operation(impl->reader, context);
     impl->open_format();
     impl->open_codec();
-    impl->index_pcm();
+    impl->index_matroska_audio();
     impl->reader.check();
     return std::unique_ptr<AudioDecoderSource>(new AudioDecoderSource(std::move(impl)));
 }
@@ -1230,8 +1365,8 @@ DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, s
                               impl_->reader, impl_->input_format, impl_->cadence, window, count,
                               impl_->container == SourceContainer::mp4 &&
                                   impl_->codec->codec_id == AV_CODEC_ID_OPUS);
-        if (!impl_->pcm_packets.empty()) {
-            decoder.run_indexed(impl_->pcm_packets, impl_->pcm_begin);
+        if (!impl_->indexed_packets.empty()) {
+            decoder.run_indexed(impl_->indexed_packets, impl_->indexed_begin);
         } else {
             decoder.run(*impl_->format);
         }

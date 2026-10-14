@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "hls_test_support.h"
-#include "virtual_pcm_source.h"
+#include "virtual_audio_source.h"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -97,7 +97,7 @@ std::vector<Bytes> audio(const std::filesystem::path& path) {
     return fragments;
 }
 void sparse_hour(const std::filesystem::path& fixture) {
-    VirtualPcmSource source(fixture);
+    VirtualAudioSource source(fixture);
     Context context;
     auto decoder = AudioDecoderSource::open(source.callbacks(), context.value, 42, true);
     expect(source.size_calls == 1 && source.requested < 64ULL * 1024 * 1024 &&
@@ -184,7 +184,7 @@ void clock_admission(const std::filesystem::path& directory) {
             exceeds_backend_scale ? AudioDecodeFailure::malformed : AudioDecodeFailure::unsupported;
         const auto* expected_message = exceeds_backend_scale
                                            ? "audio container open failed"
-                                           : "indexed PCM timestamp clock is unsupported";
+                                           : "indexed audio timestamp clock is unsupported";
         // The pinned backend already refuses scales above UINT_MAX nanoseconds
         // during format open, before indexed precision is available.
         expect(probe_media_tracks(source.callbacks(), context.value).tracks.size() == 2,

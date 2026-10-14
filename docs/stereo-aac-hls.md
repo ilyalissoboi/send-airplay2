@@ -1,5 +1,11 @@
 # Private stereo AAC HLS composition (D71)
 
+**D80 extension:** [compressed packet indexing](matroska-compressed-index.md) adds
+codec-aware durations/restarts and independent trim controls within the retained
+packet/I/O bounds. Compact high-packet-count movie scaling remains a gate before
+general automatic delivery. No new receiver or packaged-runtime proof is added.
+
+
 **D79 extension:** [selected PCM indexing](matroska-pcm-index.md) adds long-file PCM
 seeks and independent trim controls. Compressed long-file timing remains next.
 

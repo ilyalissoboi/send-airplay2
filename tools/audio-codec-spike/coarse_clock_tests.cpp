@@ -43,8 +43,7 @@ void windows(const std::filesystem::path& directory, const std::string& name,
            name + ": independent original audible length");
     sap2_test::Source coarse(directory / name);
     auto decoder = AudioDecoderSource::open(coarse.callbacks(), context.value, 42, true);
-    expect(decoder->requires_start_rebuild() == (name.find("pcm-") != 0),
-           name + ": indexed PCM or bounded compressed reconstruction selected");
+    expect(!decoder->requires_start_rebuild(), name + ": exact packet index selected");
     // First request is cold and late. The next pair meets at a deliberately
     // non-frame-aligned boundary, then requests reverse order and the EOF tail.
     for (const auto start : {270000U, 90001U, 94097U, 160003U, 48001U, 270000U}) {
@@ -102,28 +101,23 @@ std::vector<Bytes> audio_resources(const std::filesystem::path& path,
     return {init, first, late};
 }
 
-void decoder_horizon(const std::filesystem::path& directory) {
+void decoder_bounds(const std::filesystem::path& directory) {
     sap2_test::Context context;
     sap2_test::Source source(directory / "flac.mkv");
     auto decoder = AudioDecoderSource::open(source.callbacks(), context.value, 42, true);
-    const auto boundary = decoder->read_window(479999, 1, context.value);
+    const auto boundary = decoder->read_window(480000, 1, context.value);
     expect(boundary.eof && boundary.channels == 2 && boundary.samples.empty(),
-           "literal ten-second boundary permits a post-EOF window");
+           "indexed compressed seek passes old ten-second horizon with post-EOF output");
     const auto calls = source.calls.load();
     try {
-        (void)decoder->read_window(480000, 1, context.value);
-        throw std::runtime_error("reconstruction horizon accepted");
+        (void)decoder->read_window(0, 480001, context.value);
+        throw std::runtime_error("oversized indexed window accepted");
     } catch (const AudioDecodeException& error) {
         expect(error.reason() == AudioDecodeFailure::unsupported && source.calls == calls,
-               "literal ten-second horizon refuses before I/O");
+               "literal ten-second window plus one refuses before I/O");
     }
-    try {
-        (void)decoder->read_window(0, 1, context.value);
-        throw std::runtime_error("failed reconstruction decoder reused");
-    } catch (const AudioDecodeException& error) {
-        expect(error.reason() == AudioDecodeFailure::unsupported && source.calls == calls,
-               "failed decoder remains unusable");
-    }
+    expect(decoder->read_window(0, 1, context.value).samples.size() == 2,
+           "pre-operation request refusal does not corrupt indexed owner");
 }
 void presentation_horizon(const std::filesystem::path& directory) {
     expect(audio_resources(directory / "over-limit-video.mkv", 576000) ==
@@ -140,11 +134,11 @@ void discontinuity(const std::filesystem::path& directory) {
     } catch (const AudioDecodeException& error) {
         expect(error.reason() == AudioDecodeFailure::unsupported &&
                    std::string(error.what()) ==
-                       "indexed PCM packet clock is discontinuous or out of bounds",
+                       "indexed audio packet clock is discontinuous or out of bounds",
                "coarse reconstruction checks observed timestamps instead of concealing gaps");
     }
 }
-void rebuild_cancellation(const std::filesystem::path& directory) {
+void indexed_cancellation(const std::filesystem::path& directory) {
     sap2_test::Context context;
     sap2_test::Source source(directory / "flac.mkv");
     std::size_t window_reads = 0;
@@ -162,10 +156,18 @@ void rebuild_cancellation(const std::filesystem::path& directory) {
     cancel_reads = true;
     try {
         (void)cancelled->read_window(270000, 4096, context.value);
-        throw std::runtime_error("cancelled start reconstruction completed");
+        throw std::runtime_error("cancelled indexed window completed");
     } catch (const AudioDecodeException& error) {
         expect(error.reason() == AudioDecodeFailure::stopped && window_reads == 20,
-               "mid-rebuild cancellation observes callback boundary");
+               "indexed cancellation observes callback boundary");
+    }
+    const auto calls = source.calls.load();
+    try {
+        (void)cancelled->read_window(0, 1, context.value);
+        throw std::runtime_error("failed indexed decoder reused");
+    } catch (const AudioDecodeException& error) {
+        expect(error.reason() == AudioDecodeFailure::unsupported && source.calls == calls,
+               "failed indexed decoder remains unusable without callbacks");
     }
 }
 } // namespace
@@ -185,10 +187,10 @@ int main(int argc, char** argv) {
                    std::string(name) + ": byte-identical AAC joins against sample-clock control");
             std::cout << name << ": cold/reused windows, phase and AAC joins passed\n";
         }
-        decoder_horizon(directory);
+        decoder_bounds(directory);
         presentation_horizon(directory);
         discontinuity(directory);
-        rebuild_cancellation(directory);
+        indexed_cancellation(directory);
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "coarse-clock failure: " << error.what() << '\n';

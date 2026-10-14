@@ -1,0 +1,377 @@
+{
+  "license": "Apache-2.0; synthesized tones and owned D77 video",
+  "generator": "generate_compressed_index_fixtures.py",
+  "inputs": [
+    {
+      "channels": 2,
+      "rate": 44100,
+      "frames": 1323132,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "f55a27a4b7a2627aece83671966ade4859a542cfef17597ba48a148dd7bcc613"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 96000,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "33ea93d5f685a18eabc56c677e9c3844f172354a9f7b6e0d5e2dc7fa736a9ff8"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 1440144,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "1e38badba74024a982dca9d9a132b19ee1e46127ccb5c5dd4ba468cf55308176"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 96000,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "33ea93d5f685a18eabc56c677e9c3844f172354a9f7b6e0d5e2dc7fa736a9ff8"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 1440144,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "1e38badba74024a982dca9d9a132b19ee1e46127ccb5c5dd4ba468cf55308176"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 96000,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "33ea93d5f685a18eabc56c677e9c3844f172354a9f7b6e0d5e2dc7fa736a9ff8"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 1440144,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "1e38badba74024a982dca9d9a132b19ee1e46127ccb5c5dd4ba468cf55308176"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 96000,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "33ea93d5f685a18eabc56c677e9c3844f172354a9f7b6e0d5e2dc7fa736a9ff8"
+    },
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 48000,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "a87a6acd326bd42557405417b806838105ac1dbb6a72915b51aa19b05ee32363"
+    }
+  ],
+  "fixtures": [
+    {
+      "file": "flac-fine.mkv",
+      "bytes": 2300450,
+      "sha256": "39bab4b9826a0883779723d4a2e5e1ccf59f07ee65682bdf5230c955ee40e554",
+      "audible_frames_48khz": 1440144
+    },
+    {
+      "file": "flac.mkv",
+      "bytes": 2300452,
+      "sha256": "62251727a25a125bc54c30a166f23e08e6f1f90984f3a0944c2a09ea7028b2fb",
+      "audible_frames_48khz": 1440144
+    },
+    {
+      "file": "flac-middle-discard.mkv",
+      "bytes": 56216,
+      "sha256": "290c567b39e97917b222f3925efcc65e2d118342d04e8332a47e63dd8db4e03f",
+      "internal_discard_source_samples": 16,
+      "intentionally_discontinuous": true
+    },
+    {
+      "file": "flac-trim.mkv",
+      "bytes": 56243,
+      "sha256": "e650f2957fc6689af240e149210f34d251d8d13b904f6057ffde28da65710609",
+      "audible_frames": 95736,
+      "codec_delay": 132,
+      "first_skip": 192,
+      "extra_final_discard": 132
+    },
+    {
+      "file": "flac-audible.mkv",
+      "bytes": 772418,
+      "sha256": "9bbfdf9c36b7c49f118478bff2485e3361d48c103655affee89e5cb21a10c623",
+      "audible_frames": 95736,
+      "prepared_audible_control": true,
+      "decoded_source_sha256": "9e2dfbe584fa84272648a6a01d25828579af7ceef1c3b213b3a687d9a1973659"
+    },
+    {
+      "file": "opus-fine.mkv",
+      "bytes": 473537,
+      "sha256": "d03640344ab8cad10d5649867fa644454e4b3edc60bf435d62e173638947129a",
+      "audible_frames_48khz": 1440144
+    },
+    {
+      "file": "opus.mkv",
+      "bytes": 473539,
+      "sha256": "a00379e3377eb863f318cc1c4941f451dae0e14654a14228eee6c06d0b8903f7",
+      "audible_frames_48khz": 1440144
+    },
+    {
+      "file": "opus-trim.mkv",
+      "bytes": 32427,
+      "sha256": "357967ce6fafc7872ac89188565df98c9e375da714ba7dca34384cf53a229088",
+      "audible_frames": 95960,
+      "codec_delay": 120,
+      "first_skip": 216,
+      "extra_final_discard": 40
+    },
+    {
+      "file": "opus-audible.mkv",
+      "bytes": 774210,
+      "sha256": "916135c6efd189255ccc5d7b152e541c46eb782d2e9d9def9f183667d6157470",
+      "audible_frames": 95960,
+      "prepared_audible_control": true,
+      "decoded_source_sha256": "2f8fe1478619c281a24bc5cf352ad375a670a554a279f2fdfeac202d6470f9c2"
+    },
+    {
+      "file": "vorbis-fine.mkv",
+      "bytes": 233762,
+      "sha256": "07c661e042df7d1064c83f679eabd9f1099c2c5a84700ea0ecc26ae3c480bfe8",
+      "audible_frames_48khz": 1440144
+    },
+    {
+      "file": "vorbis.mkv",
+      "bytes": 233764,
+      "sha256": "926471ceb714a79e8c794d65122d36778060d2bc2a0dfb3c64b623b163a40af6",
+      "audible_frames_48khz": 1440144
+    },
+    {
+      "file": "vorbis-trim.mkv",
+      "bytes": 19755,
+      "sha256": "d40fedac5c188bbecf94acdccb21e5e2c48e19cef8493c46626850a6da2e207a",
+      "audible_frames": 95984,
+      "codec_delay": 1024,
+      "first_skip": 1024,
+      "extra_final_discard": 16
+    },
+    {
+      "file": "vorbis-audible.mkv",
+      "bytes": 774402,
+      "sha256": "78a7ada99cf423e30ad08ed0f939ffd6cfc79dfb0555063182841c6a36afae65",
+      "audible_frames": 95984,
+      "prepared_audible_control": true,
+      "decoded_source_sha256": "839835dede1db03d65b9c323f8b9aa6af574c7f418a491d81f23a5ff6c6d62ae"
+    },
+    {
+      "file": "truehd-fine.mkv",
+      "bytes": 2333506,
+      "sha256": "e9dd34e756f5c383bcbf6e51b64f98955719124a831c436717e54d4a2ac28ea7",
+      "audible_frames_48khz": 1440144
+    },
+    {
+      "file": "truehd.mkv",
+      "bytes": 2333508,
+      "sha256": "c6e55c19155c6bce2ab097446db603577a06f065100dc5ceda9e531373abb8be",
+      "audible_frames_48khz": 1440144
+    },
+    {
+      "file": "truehd-trim.mkv",
+      "bytes": 154360,
+      "sha256": "4e2e34b9d705ae3e7655edaa5a1b7a82df021be7f7872a31f3af5e8885c9ac38",
+      "audible_frames": 95980,
+      "codec_delay": 10,
+      "first_skip": 20,
+      "extra_final_discard": 10
+    },
+    {
+      "file": "truehd-audible.mkv",
+      "bytes": 774370,
+      "sha256": "407aea60bc24ed4984331c6581160dd75c1a8bf08030fae9061721cdc98038ee",
+      "audible_frames": 95980,
+      "prepared_audible_control": true,
+      "decoded_source_sha256": "9e2dfbe584fa84272648a6a01d25828579af7ceef1c3b213b3a687d9a1973659"
+    },
+    {
+      "file": "flac-cycle.mkv",
+      "bytes": 25784,
+      "sha256": "755946dd4f352e0c76b4da8d19a58f971941607d7db479dfbc1204839677f0b6",
+      "source_frames": 48000,
+      "independent_one_second_cycle": true
+    }
+  ],
+  "development_tool": "ffmpeg version 9.0.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+  "encoder_commands": [
+    [
+      "-i",
+      "flaclong.wav",
+      "-c:a",
+      "flac",
+      "-frame_size",
+      "1537",
+      "-strict",
+      "-2",
+      "-f",
+      "flac",
+      "flaclong.encoded"
+    ],
+    [
+      "-i",
+      "flactrim.wav",
+      "-c:a",
+      "flac",
+      "-strict",
+      "-2",
+      "-f",
+      "flac",
+      "flactrim.encoded"
+    ],
+    [
+      "-c:a",
+      "flac",
+      "-i",
+      "flactrim.encoded",
+      "-f",
+      "f32le",
+      "-c:a",
+      "pcm_f32le",
+      "flac.f32le"
+    ],
+    [
+      "-i",
+      "opuslong.wav",
+      "-c:a",
+      "opus",
+      "-strict",
+      "-2",
+      "-f",
+      "opus",
+      "opuslong.encoded"
+    ],
+    [
+      "-i",
+      "opustrim.wav",
+      "-c:a",
+      "opus",
+      "-strict",
+      "-2",
+      "-f",
+      "opus",
+      "opustrim.encoded"
+    ],
+    [
+      "-c:a",
+      "opus",
+      "-i",
+      "opustrim.encoded",
+      "-f",
+      "f32le",
+      "-c:a",
+      "pcm_f32le",
+      "opus.f32le"
+    ],
+    [
+      "-i",
+      "vorbislong.wav",
+      "-c:a",
+      "vorbis",
+      "-strict",
+      "-2",
+      "-f",
+      "ogg",
+      "vorbislong.encoded"
+    ],
+    [
+      "-i",
+      "vorbistrim.wav",
+      "-c:a",
+      "vorbis",
+      "-strict",
+      "-2",
+      "-f",
+      "ogg",
+      "vorbistrim.encoded"
+    ],
+    [
+      "-c:a",
+      "vorbis",
+      "-i",
+      "vorbistrim.encoded",
+      "-f",
+      "f32le",
+      "-c:a",
+      "pcm_f32le",
+      "vorbis.f32le"
+    ],
+    [
+      "-i",
+      "truehdlong.wav",
+      "-c:a",
+      "truehd",
+      "-strict",
+      "-2",
+      "-f",
+      "truehd",
+      "truehdlong.encoded"
+    ],
+    [
+      "-i",
+      "truehdtrim.wav",
+      "-c:a",
+      "truehd",
+      "-strict",
+      "-2",
+      "-f",
+      "truehd",
+      "truehdtrim.encoded"
+    ],
+    [
+      "-c:a",
+      "truehd",
+      "-i",
+      "truehdtrim.encoded",
+      "-f",
+      "f32le",
+      "-c:a",
+      "pcm_f32le",
+      "truehd.f32le"
+    ],
+    [
+      "-i",
+      "flac-cycle.wav",
+      "-c:a",
+      "flac",
+      "-frame_size",
+      "48000",
+      "-f",
+      "flac",
+      "flac-cycle.encoded"
+    ]
+  ],
+  "video_source_sha256": "933aa6ffaaa39bb6fcfdb886eb90010a23d29d3b4b29dfcd886eb653cf7b61e3"
+}
