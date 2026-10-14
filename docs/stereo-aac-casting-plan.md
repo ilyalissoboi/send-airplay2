@@ -4,6 +4,14 @@ Planning decision D67: 2026-10-12. Baseline: native merged main `aa0f25e`
 (PR #43), Screenbox merged main `f596fd5e` (PR #11). This document specifies
 the next implementation slice; it does not implement or validate it.
 
+**Subsequent scope expansion (D76, 2026-10-14):** the user selected automatic
+policy plus FLAC, Opus, Vorbis, PCM and TrueHD. Read [the expanded plan](automatic-audio-transcoding-plan.md)
+for the current input targets and ordered implementation queue. It supersedes
+the initial additional-codec exclusions for future work; it does not change
+current decoder coverage or add automatic delivery. D74's explicit stereo
+playback and D75's offline AppContainer gate are merged; real-file and converted
+receiver gates remain required. Speaker and converted-surround output stay deferred.
+
 Planning complete: native PR #44 merged as `12c24a7`, with all 14 checks passed
 at final head `bc4b381` and the source-track-selection review resolved.
 Screenbox checkpoint PR #12 merged as `ce782356` (docs-only; no CI checks

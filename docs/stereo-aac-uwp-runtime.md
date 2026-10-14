@@ -88,7 +88,9 @@ and outcomes separately from desktop CTest and compile-only UWP inspection.
 
 ## Current evidence and next work
 
-[PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) is open for review.
+[PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) merged as `02d8be6`.
+Final head `8f03874` passed all 16 checks in run `38490056580`; the runtime-gate
+documentation review thread is resolved. Do not resume its closed branch.
 The [dated artifact](validation/stereo-aac-uwp-runtime-windows-2026-10-13.json)
 records a PASS bundled run at implementation `9371502`, package 0.1.0.2, on
 Windows 11 x64 build 26200. All six actually loaded module hashes match the
@@ -110,7 +112,12 @@ counts and failure codes. The existing UWP host compiles, all six UWP native DLL
 pass import inspection, and the default shared DLL has no validation export.
 Formatting/diff checks pass. Implementation head `5a4e5e3` passed all 16 checks
 in run `38415880324`; code/evidence head `8fb2bcc` also passed all 16 checks in
-run `38421602489`. Actual final PR-head CI remains the merge gate.
+run `38421602489`. The actual final-head merge gate is complete.
+
+The user's subsequent D76 expansion selects automatic policy plus FLAC, Opus,
+Vorbis, PCM and TrueHD; [its plan](automatic-audio-transcoding-plan.md) starts
+with private decoder/profile/timeline foundations. These new inputs need their
+own packaged runtime gate; the D75 passes above cover only the recorded fixtures.
 
 Real-file startup/read-volume/cache/seek measurements follow, then manually observed stereo
 video/audio, controls, Stop and natural EOF on available Apple TV/Mac receivers.
