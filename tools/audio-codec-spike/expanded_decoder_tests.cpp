@@ -294,6 +294,36 @@ void coarse_clock_gate(const std::filesystem::path& directory) {
         expect(error.reason() == AudioDecodeFailure::unsupported, "coarse HLS clock category");
     }
 }
+void matroska_output_frequency(const std::filesystem::path& directory) {
+    OwnedInput input(directory / "aac-output-rate.mkv");
+    const auto context = input.context();
+    const auto inventory = probe_media_tracks(input.callbacks(), context);
+    const auto& track = inventory.tracks.at(1);
+    expect(track.audio_sample_rate == 24000 && track.audio_output_sample_rate == 48000,
+           "Matroska coded and output sampling frequencies are distinct");
+    auto decoder = AudioDecoderSource::open(input.callbacks(), context, 42);
+    const auto window = read(*decoder, input, 48000, 4096);
+    expect(window.channels == 2 && window.samples.size() == 8192,
+           "AAC explicit output-frequency metadata permits decoder output");
+    known_channel_frequencies(read(*decoder, input, 0, full_window_frames),
+                              "AAC output-frequency metadata");
+    OwnedInput invalid(directory / "aac-output-rate.mkv");
+    constexpr std::uint8_t output_frequency_header[] = {0x78, 0xb5, 0x88};
+    const auto field =
+        std::search(invalid.bytes.begin(), invalid.bytes.end(), std::begin(output_frequency_header),
+                    std::end(output_frequency_header));
+    expect(field != invalid.bytes.end() && invalid.bytes.end() - field >= 11,
+           "output-frequency fixture element location");
+    // The literal header identifies the eight-byte big-endian floating value.
+    std::fill_n(field + 3, 8, std::uint8_t{0});
+    const auto invalid_context = invalid.context();
+    try {
+        (void)probe_media_tracks(invalid.callbacks(), invalid_context);
+        throw std::runtime_error("zero OutputSamplingFrequency accepted");
+    } catch (const RemuxException& error) {
+        expect(error.reason() == RemuxFailure::malformed, "output-frequency range category");
+    }
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
@@ -304,6 +334,7 @@ int main(int argc, char** argv) {
         malformed_configuration(argv[1]);
         packet_trim_budget(argv[1]);
         coarse_clock_gate(argv[1]);
+        matroska_output_frequency(argv[1]);
         std::cout << "expanded decoder checks passed\n";
         return 0;
     } catch (const std::exception& error) {

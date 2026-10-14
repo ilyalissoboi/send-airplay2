@@ -28,8 +28,13 @@ New mappings are:
 | MKV | `A_FLAC`, `A_OPUS`, `A_VORBIS`, `A_TRUEHD` | STREAMINFO, Opus identification/mapping, bounded three-header Xiph lacing, or empty TrueHD private data respectively |
 | MKV | `A_PCM/INT/LIT`, `A_PCM/INT/BIG`, `A_PCM/FLOAT/IEEE` | Declared bit depth selects exact packing: signed 16/24/32-bit or little-endian float 32/64-bit |
 
-Matroska inventory now retains declared audio rate/channels/bit depth. Rate and
-channel metadata must agree with the selected decoder stream. PCM channel count
+Matroska inventory now retains coded/output audio rates, channels and bit depth.
+The effective output rate and channel metadata must agree with the selected
+decoder stream. `OutputSamplingFrequency` is distinct from the coded rate and
+defaults to `SamplingFrequency` when omitted
+([RFC 9559 section 5.1.4.1.29.2](https://www.rfc-editor.org/rfc/rfc9559.html#section-5.1.4.1.29.2)).
+This preserves the AAC/SBR output-rate contract; an explicitly nonpositive
+output frequency is malformed. PCM channel count
 does not establish a surround layout: only unspecified mono/stereo get their
 ordinary speaker identities; unspecified multichannel layouts remain refused.
 MOV version-two `lpcm`, unsigned/companded/packed disc PCM, MP4 Vorbis/TrueHD,
@@ -67,7 +72,7 @@ records every hash, input tone/channel/sample count, command and development
 FFmpeg version/configuration. CLI libopus/libvorbis encode the owned 5.1 fixtures
 only; they are not adopted or distributed runtime dependencies.
 
-There are 33 owned fixtures. Twenty-eight positive format/container variants
+There are 34 owned fixtures. Twenty-eight positive format/container variants
 cover stereo and FLAC/Opus/Vorbis/TrueHD 5.1 inputs. Decoder checks retain the
 literal 288144-sample audible length at 48 kHz, independent lossless tone/channel
 samples and spectral channel identities for lossy inputs, repeated forward/backward
@@ -75,6 +80,10 @@ windows, cold 144-sample tails and EOF reuse.
 Other cases cover positive Opus final-block padding, negative PCM/Opus leading
 padding with delay applied once, unsupported PCM depth, malformed configuration,
 65537-sample trim refusal and the coarse-clock preparation gate.
+The review regression uses owned AAC core data with explicit synthetic HE/SBR
+signaling and distinct 24/48-kHz container rates. It checks inventory, output
+decoding/channel tones and an invalid zero output-frequency value; it adds no
+full HE-AAC profile or receiver validation claim.
 
 Seventeen representative private HLS cases request the last AAC window cold,
 then the first, decode the combined fMP4 with the independent MOV/AAC oracle,

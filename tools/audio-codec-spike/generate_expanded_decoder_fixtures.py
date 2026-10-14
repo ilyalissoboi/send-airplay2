@@ -55,7 +55,8 @@ def signed_element(tag, value):
 
 
 def movie(codec, packets, private, video, delay_samples=0, bit_depth=None,
-          padding_override=None, declared_depth=None, timestamp_scale_ns=1, channels=2):
+          padding_override=None, declared_depth=None, timestamp_scale_ns=1, channels=2,
+          coded_rate=RATE, output_rate=None):
     """One cluster per packet; cues address original audio TrackNumber 42."""
     header = b"".join([base.uint("4286", 1), base.uint("42f7", 1), base.uint("42f2", 4),
                        base.uint("42f3", 8), base.element("4282", b"matroska"),
@@ -74,7 +75,9 @@ def movie(codec, packets, private, video, delay_samples=0, bit_depth=None,
     entry += base.uint("b9", 1) + base.uint("88", 1) + base.element("86", codec.encode())
     if private:
         entry += base.element("63a2", private)
-    audio = base.element("b5", struct.pack(">d", RATE)) + base.uint("9f", channels)
+    audio = base.element("b5", struct.pack(">d", coded_rate)) + base.uint("9f", channels)
+    if output_rate is not None:
+        audio += base.element("78b5", struct.pack(">d", output_rate))
     if bit_depth:
         audio += base.uint("6264", declared_depth or bit_depth)
     entry += base.element("e1", audio)
@@ -132,6 +135,20 @@ def generate(directory):
         base.run("-f", "lavfi", "-i", "color=black:s=16x16:r=2:d=6.003",
                  "-c:v", "libx264", "-bf", "0", "-g", "1", "-an", str(video))
         video_data = base.encoded_track(video)
+        core = temp / "aac-core.wav"
+        inputs.append(base.wave(core, 2, frames=144072, rate=24000))
+        core_aac = temp / "aac-core.m4a"
+        base.run("-i", str(core), "-c:a", "aac", str(core_aac))
+        packets, _ = encoded(core_aac)
+        # Explicit HE-AAC ASC: AOT 5, core index 6 (24 kHz), stereo, output
+        # index 3 (48 kHz), core AOT 2, GASpecific flags zero. Payloads remain
+        # owned AAC core data, without downloaded or third-party sample media.
+        he_private = bytes.fromhex("2b118800")
+        write_fixture(directory / "aac-output-rate.mkv", movie(
+            "A_AAC", packets, he_private, video_data, -packets[0][0],
+            coded_rate=24000, output_rate=48000))
+        records.append({"file": "aac-output-rate.mkv", "coded_rate": 24000,
+                        "output_rate": 48000, "synthetic_he_aac_signaling": True})
         for name, codec, container, identifier in [
                 ("flac", "flac", "flac", "A_FLAC"),
                 ("opus", "opus", "opus", "A_OPUS"),

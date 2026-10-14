@@ -21,6 +21,13 @@
     ],
     [
       "-i",
+      "aac-core.wav",
+      "-c:a",
+      "aac",
+      "aac-core.m4a"
+    ],
+    [
+      "-i",
       "tones.wav",
       "-c:a",
       "flac",
@@ -304,6 +311,16 @@
       "sha256": "1eb0c60a9a2a41099df2c32328eff5c9b7fc894f81ad10c2b956f484e855b616"
     },
     {
+      "channels": 2,
+      "rate": 24000,
+      "frames": 144072,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "c466b0c440a30ee1208ecf4ead4c68200f50253ffaa81437af23194b84c40b66"
+    },
+    {
       "channels": 6,
       "rate": 48000,
       "frames": 288144,
@@ -328,6 +345,14 @@
   },
   "timestamp_scale_ns": 1,
   "fixtures": [
+    {
+      "file": "aac-output-rate.mkv",
+      "coded_rate": 24000,
+      "output_rate": 48000,
+      "synthetic_he_aac_signaling": true,
+      "bytes": 101261,
+      "sha256": "bd868a398c73dca5ba0c2c733423d16c2c531b29650c1bef5ad58088ddb3672a"
+    },
     {
       "file": "flac.mkv",
       "audible_frames": 288144,

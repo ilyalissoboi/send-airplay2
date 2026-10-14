@@ -22,6 +22,9 @@ no new ABI, automatic policy, package or receiver result is added.
 Expanded Matroska HLS requires sample-accurate timestamps; coarse variable-frame
 seek/phase reconstruction is the next increment, before selected remux/policy.
 D75 performance/converted-receiver and expanded packaged-runtime gates remain.
+PR #58 review correction retains Matroska OutputSamplingFrequency and compares
+the effective output rate, preserving distinct AAC/SBR coded/output rates.
+Owned metadata/decode and invalid-rate regression checks accompany the fix.
 
 **D76 scope expansion (2026-10-14): automatic audio plus five input families.**
 The user requested automatic handling of unsupported audio and selected FLAC,

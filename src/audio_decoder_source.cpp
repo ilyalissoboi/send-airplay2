@@ -605,8 +605,13 @@ struct AudioDecoderSource::Impl {
         }
         checked(avcodec_open2(codec.get(), decoder, nullptr));
         if (container == SourceContainer::matroska) {
-            require(std::isfinite(selected.audio_sample_rate) &&
-                        selected.audio_sample_rate == parameters->sample_rate &&
+            // SamplingFrequency can describe AAC's coded rate; SBR output is
+            // separately declared and defaults to that rate only when omitted.
+            const auto declared_output_rate = selected.audio_output_sample_rate != 0
+                                                  ? selected.audio_output_sample_rate
+                                                  : selected.audio_sample_rate;
+            require(std::isfinite(declared_output_rate) &&
+                        declared_output_rate == parameters->sample_rate &&
                         selected.audio_channels ==
                             static_cast<std::uint64_t>(parameters->ch_layout.nb_channels),
                     AudioDecodeFailure::unsupported,
