@@ -3,6 +3,16 @@
 The project remains Apache-2.0. Record revisions and licensing here before
 incorporating external code or adding dependencies.
 
+## Automatic audio expansion research (D76)
+
+[The expanded plan](automatic-audio-transcoding-plan.md) references Apple's HLS
+authoring requirements, Matroska's codec mappings and the pinned FFmpeg 9.0.2
+codec registry. No third-party code, codec profile change or dependency is adopted
+by this documentation slice. Native decoder registration is research evidence;
+verify exact configuration dependencies/licenses, minimal build flags and fixture
+generators/hashes before implementing the new families. Preserve the core's
+Apache-2.0 license and the adopted LGPL profile's redistribution notices.
+
 ## Integrated runtime validation (D75)
 
 The offline AppContainer harness, TemporaryFolder adapter and optional private

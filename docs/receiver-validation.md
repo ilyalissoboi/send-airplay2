@@ -1,5 +1,11 @@
 # Receiver validation record
 
+**D76 planning boundary (2026-10-14):** [automatic audio policy and expanded inputs](automatic-audio-transcoding-plan.md)
+are proposed for supported video files. No new decoder or receiver observation
+is added. FLAC's inclusion in Apple's HLS specification is not this library's
+passthrough/receiver proof. D75 is merged in PR #56; its offline passes remain
+separate from real-file performance and converted-audio receiver checks.
+
 **D75 offline gate (2026-10-13):** the separate integrated x64 AppContainer
 harness passed its bundled fixture/cache/lifecycle checks at `9371502`, private
 package 0.1.0.2; all six loaded native module hashes match the registered layout.

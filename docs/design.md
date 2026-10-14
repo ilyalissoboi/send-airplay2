@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-13 (Asia/Tokyo), after PRs #1-#55 merged.
+Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#56 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -13,9 +13,17 @@ changing runtime behavior.
 **D74 merged (PR #55, `774198d`):** [explicit stereo AAC playback integration](stereo-aac-playback.md)
 extends the core to API 4 with original track probe/selection,
 host fragment storage, binding/CLI options and terminal conversion supervision.
-Its backend defaults OFF. **D75 implemented (x64 gate passed 2026-10-14):** [AppContainer runtime/storage gate](stereo-aac-uwp-runtime.md). D73's authoring PR #54 is merged; preserve its known
+Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-10-14):** [AppContainer runtime/storage gate](stereo-aac-uwp-runtime.md). D73's authoring PR #54 is merged; preserve its known
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
+
+**D76 user scope:** automatic audio policy plus FLAC, Opus, Vorbis, PCM and
+TrueHD, detailed in [the expanded plan](automatic-audio-transcoding-plan.md).
+Proposed opt-in delivery resolves the original selected track, copies eligible
+AAC/AC-3/E-AC-3 or converts validated inputs to stereo AAC. Eligibility belongs
+to an explicit delivery profile, not discovery-derived receiver codec guesses.
+The decoder/timeline foundation is next; no automatic mode or new decoder is
+implemented by this plan. Audio-only/surround-output hardware deferrals persist.
 
 Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
 desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop
@@ -195,6 +203,11 @@ builds. A desktop C# console success is insufficient: validate native loading,
 brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
+
+Current queue: [D76's expanded decoder/profile/timeline foundation](automatic-audio-transcoding-plan.md#ordered-implementation-and-acceptance-gates),
+selected remux/policy, then versioned public integration. Repeat packaged runtime
+checks for the expanded matrix; real-file performance and converted-receiver
+gates remain required for the existing stereo path and its expansion.
 
 The published, hash-verified `0.3.0-ci.207` package passed final Screenbox checks
 by user report with running DLLs verified. Final evidence in native PR #41 and

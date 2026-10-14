@@ -9,6 +9,23 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D76 scope expansion (2026-10-14): automatic audio plus five input families.**
+The user requested automatic handling of unsupported audio and selected FLAC,
+Opus, Vorbis, PCM and TrueHD in addition to the existing decoder coverage.
+Read [the policy, finite input matrix and ordered plan](automatic-audio-transcoding-plan.md).
+This documentation slice proposes opt-in selected-track copy/conversion under
+an explicit delivery profile; FLAC is not universally unsupported by Apple TV.
+Next implementation: expanded minimal codec profile, owned fixtures and private
+decoder/timeline support, then selection-aware remux/policy and public integration.
+D75's real-file/performance and converted-receiver gates remain required.
+No runtime support is added here. Speaker audio and discrete converted surround
+remain hardware-deferred; Screenbox stays on `0.3.0-ci.207`.
+
+PR #57 review follow-up: DiscardPadding is block-level signed trimming, not
+`SourceTrack` inventory metadata. The plan now specifies packet skip/discard
+propagation and independent tail-window/rebuild/final-AAC-trim gates. This
+corrects the implementation proposal only; no new codec behavior is tested.
+
 **D72 readiness merged (2026-10-13).**
 [PR #53](https://github.com/ilyalissoboi/send-airplay2/pull/53) merged as `25b84a1`.
 Its tested final head `6bf1bd2` is included in main; all 16 checks passed in
@@ -35,15 +52,16 @@ are implemented in the recorded offline scope. Default builds remain codec-free.
 No package is published; Screenbox stays on `0.3.0-ci.207`. Read
 [the contract](stereo-aac-playback.md); do not resume the closed D74 branch.
 
-**D75 implemented: integrated AppContainer runtime/storage validation (gate passed 2026-10-14).**
-The user's Proceed authorizes fresh branch `codex/stereo-aac-uwp-runtime` from
-merged PR #55. [The offline runtime gate](stereo-aac-uwp-runtime.md) uses a
+**D75 merged: integrated AppContainer runtime/storage validation (2026-10-14).**
+[PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) merged as `02d8be6`.
+Final head `8f03874` passed all 16 checks in run `38490056580`; the runtime-gate
+documentation review thread is resolved. Do not resume its closed branch.
+[The offline runtime gate](stereo-aac-uwp-runtime.md) uses a
 separate Native AOT/MSIX identity, the enabled production core and a private
 OFF-by-default validation export, brokered StorageFile callbacks and app-owned
 TemporaryFolder storage. It does not access credentials or a receiver. Packaged
 results and attribution are in [the artifact](validation/stereo-aac-uwp-runtime-windows-2026-10-13.json).
-Open [PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) has a PASS
-bundled 0.1.0.2 run at `9371502`, with matching loaded hashes for all six DLLs.
+The PASS bundled 0.1.0.2 run at `9371502` has matching loaded hashes for all six DLLs.
 The corrected 0.1.0.3 run at `5a4e5e3` also passes: three borrowed probes,
 17 resource/preparation cases (including the hash-verified outside-package
 picker grant), and nine public lifecycle cases. The user confirmed fixture
@@ -52,8 +70,9 @@ was contacted. This completes the recorded x64 AppContainer storage gate.
 Baseline static/shared 36/36 and 37/37, enabled shared 38/38, six-DLL UWP imports
 and existing-host compilation pass. Implementation head `5a4e5e3` passed all
 16 CI checks in run `38415880324`; code/evidence head `8fb2bcc` also passed
-all 16 checks in run `38421602489`. Inspect actual final-head CI before merging;
-real-file performance and receiver checks remain next. Speaker audio and discrete surround remain
+all 16 checks in run `38421602489`. Its final-head merge gate is complete;
+real-file performance and receiver checks remain required alongside D76.
+Speaker audio and discrete surround remain
 hardware-deferred. Ask before merging or publishing; visual checks use written
 manual instructions, without Computer Use.
 

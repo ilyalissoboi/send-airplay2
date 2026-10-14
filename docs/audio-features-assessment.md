@@ -5,6 +5,14 @@ Assessment: 2026-10-12, against native main `8a40ec3` and Screenbox main
 not a new receiver test. The initial assessment did not select implementation;
 the user's subsequent planning decision is recorded below.
 
+**Subsequent scope expansion (D76, 2026-10-14):** the user selected automatic
+policy plus FLAC, Opus, Vorbis, PCM and TrueHD. Read [the expanded plan](automatic-audio-transcoding-plan.md)
+for the current input targets and ordered implementation queue. It supersedes
+the initial additional-codec exclusions for future work; it does not change
+current decoder coverage or add automatic delivery. D74's explicit stereo
+playback and D75's offline AppContainer gate are merged; real-file and converted
+receiver gates remain required. Speaker and converted-surround output stay deferred.
+
 ## Current disposition (D68 merge checkpoint, 2026-10-12)
 
 The research checkpoint is merged in native PR #43

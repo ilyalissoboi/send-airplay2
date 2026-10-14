@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#55 are merged. `main` contains
+Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#56 are merged. `main` contains
 the experimental C API version 4, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,18 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D76 scope expansion:** the user chose automatic policy plus FLAC, Opus,
+Vorbis, PCM and TrueHD. Read [the expanded implementation plan](automatic-audio-transcoding-plan.md)
+before writing. Next: minimal backend/profile and owned decoder/timeline fixtures,
+then selected copy/remux, deterministic policy and versioned public integration.
+This slice is documentation only. D75's outstanding performance/converted-receiver
+gates remain required; speakers and discrete converted surround stay deferred.
+
+PR #57 review follow-up corrects DiscardPadding ownership: retain per-block
+signed trimming via packet skip/discard data (or a native packet index), not
+track inventory. Require cold/repeated tail-window and final AAC trim checks;
+the documentation correction adds no runtime evidence.
 
 **D71 merged:** the private
 [stereo AAC HLS builder/cache](stereo-aac-hls.md) merged in PR #51 as `e09c57f`,
@@ -62,15 +74,16 @@ are implemented in the recorded offline scope. Default builds remain codec-free.
 No package is published; Screenbox stays on `0.3.0-ci.207`. Read
 [the contract](stereo-aac-playback.md); do not resume the closed D74 branch.
 
-**D75 implemented: integrated AppContainer runtime/storage validation (gate passed 2026-10-14).**
-The user's Proceed authorizes fresh branch `codex/stereo-aac-uwp-runtime` from
-merged PR #55. [The offline runtime gate](stereo-aac-uwp-runtime.md) uses a
+**D75 merged: integrated AppContainer runtime/storage validation (2026-10-14).**
+[PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) merged as `02d8be6`.
+Final head `8f03874` passed all 16 checks in run `38490056580`; the runtime-gate
+documentation review thread is resolved. Do not resume its closed branch.
+[The offline runtime gate](stereo-aac-uwp-runtime.md) uses a
 separate Native AOT/MSIX identity, the enabled production core and a private
 OFF-by-default validation export, brokered StorageFile callbacks and app-owned
 TemporaryFolder storage. It does not access credentials or a receiver. Packaged
 results and attribution are in [the artifact](validation/stereo-aac-uwp-runtime-windows-2026-10-13.json).
-Open [PR #56](https://github.com/ilyalissoboi/send-airplay2/pull/56) has a PASS
-bundled 0.1.0.2 run at `9371502`, with matching loaded hashes for all six DLLs.
+The PASS bundled 0.1.0.2 run at `9371502` has matching loaded hashes for all six DLLs.
 The corrected 0.1.0.3 run at `5a4e5e3` also passes: three borrowed probes,
 17 resource/preparation cases (including the hash-verified outside-package
 picker grant), and nine public lifecycle cases. The user confirmed fixture
@@ -79,8 +92,9 @@ was contacted. This completes the recorded x64 AppContainer storage gate.
 Baseline static/shared 36/36 and 37/37, enabled shared 38/38, six-DLL UWP imports
 and existing-host compilation pass. Implementation head `5a4e5e3` passed all
 16 CI checks in run `38415880324`; code/evidence head `8fb2bcc` also passed
-all 16 checks in run `38421602489`. Inspect actual final-head CI before merging;
-real-file performance and receiver checks remain next. Speaker audio and discrete surround remain
+all 16 checks in run `38421602489`. Its final-head merge gate is complete;
+real-file performance and receiver checks remain required alongside D76.
+Speaker audio and discrete surround remain
 hardware-deferred. Ask before merging or publishing; visual checks use written
 manual instructions, without Computer Use.
 
@@ -89,7 +103,7 @@ merged in PR #50 as `65bb8a7`, with all 16 checks passed at final head `8b1adf2`
 in run `38280966375`. The optional include review is fixed/resolved. Its branch
 started at PR #49 checkpoint `a7905db`. Desktop actual compressed decoding and
 x64 UWP compilation/import inspection passed; packaged adapter runtime and
-receiver evidence were not added. Preserve those limits. D71-D74 are merged and D75 is active;
+receiver evidence were not added. Preserve those limits. D71-D75 are merged;
 do not repeat the completed decoder merge gate.
 
 **Completed D69:** the subsequent Proceed authorized the native source increment.
@@ -444,8 +458,12 @@ Public API/binding/CLI and receiver/Screenbox gates follow the plan. The spike's
 single-stream/short-input probe is not a production movie source adapter.
 Speaker audio and surround-preserving output remain deferred for unavailable
 test hardware. D72 now checks private long-GOP splitting, terminal failure
-reporting and synthetic cold-seek scaling. D73 authoring is merged with explicit estimate limitations. D74 playback/public/storage integration is merged; D75 validates AppContainer runtime/storage; real-file performance, packaged runtime and
-stereo-conversion receiver validation follow its implementation gate.
+reporting and synthetic cold-seek scaling. D73 authoring is merged with explicit
+estimate limitations. D74 playback/public/storage and D75's x64 AppContainer
+runtime/storage gate are merged. D76's expanded decoder/timeline foundation is
+the next implementation increment; selected remux/policy and public integration
+follow. Real-file performance and converted-receiver validation remain required;
+repeat packaged runtime checks for the expanded codec matrix.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
@@ -607,8 +625,11 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68-D74 and PR #55 are merged. D75's latest Proceed authorizes AppContainer
-> runtime/storage validation; read stereo-aac-uwp-runtime.md and inspect its actual PR head before writing. Read
+> D68-D75 and PR #56 are merged. The user selected D76's automatic audio policy
+> plus FLAC, Opus, Vorbis, PCM and TrueHD. Read automatic-audio-transcoding-plan.md;
+> begin with its private decoder/profile/timeline foundation, then selected remux
+> and policy/public integration. D75 performance and converted-receiver gates
+> remain required. Read
 > the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same
 > implementation authorization again. Inspect `origin/main` and open
