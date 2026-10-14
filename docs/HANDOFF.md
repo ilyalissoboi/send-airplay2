@@ -21,6 +21,11 @@ D75's real-file/performance and converted-receiver gates remain required.
 No runtime support is added here. Speaker audio and discrete converted surround
 remain hardware-deferred; Screenbox stays on `0.3.0-ci.207`.
 
+PR #57 review follow-up: DiscardPadding is block-level signed trimming, not
+`SourceTrack` inventory metadata. The plan now specifies packet skip/discard
+propagation and independent tail-window/rebuild/final-AAC-trim gates. This
+corrects the implementation proposal only; no new codec behavior is tested.
+
 **D72 readiness merged (2026-10-13).**
 [PR #53](https://github.com/ilyalissoboi/send-airplay2/pull/53) merged as `25b84a1`.
 Its tested final head `6bf1bd2` is included in main; all 16 checks passed in

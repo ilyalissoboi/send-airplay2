@@ -126,8 +126,20 @@ stream, preserving D70's protection against metadata impersonation.
   reconstruction for those streams with phase-stable resampling, codec delay,
   leading discard and final padding applied once. Preserve current fixed-frame
   behavior and literal joins/trim expectations for existing codecs.
-  Carry bounded Matroska DiscardPadding through inventory/backend matching where
-  needed; do not rely on CodecDelay alone to describe both ends of a stream.
+  Matroska `DiscardPadding` is a signed nanosecond value on each `BlockGroup`,
+  not track metadata: positive values trim the block's end, negative values its
+  beginning ([RFC 9559 section 5.1.3.5.7](https://www.rfc-editor.org/rfc/rfc9559.html#section-5.1.3.5.7)).
+  Keep delay/preroll in `SourceTrack`; its bounded pre-cluster inventory probe
+  cannot supply block trimming. For the decoder route, preserve
+  the pinned [Matroska demuxer's packet skip/discard side data](https://raw.githubusercontent.com/FFmpeg/FFmpeg/n9.0.2/libavformat/matroskadec.c)
+  (`AV_PKT_DATA_SKIP_SAMPLES`) when sending each selected packet to FFmpeg.
+  Verify [decoder consumption](https://raw.githubusercontent.com/FFmpeg/FFmpeg/n9.0.2/libavcodec/decode.c)
+  before resampling; never reapply trimming already performed by the decoder.
+  If native packet indexing is needed instead, retain bounded signed padding
+  with its block/packet identity and convert nanoseconds to source samples with
+  checked arithmetic. Neither route may replace per-block values with one
+  track-wide tail trim or reuse consumed trim state across seek-window rebuilds.
+  Apply each packet's trim once in every independently decoded window.
 - **Selected copy route:** `remux_to_hls` currently accepts no original audio ID.
   Add a selection-aware composition path; reusing legacy filtered selection
   could copy AAC commentary instead of selected main DTS. Preserve legacy
@@ -160,6 +172,12 @@ stream, preserving D70's protection against metadata impersonation.
    selection, independent sample/channel expectations, cold/middle/end and
    backward/forward seeks, contiguous joins, delay/trim and EOF. Record unsupported
    variants explicitly rather than accepting arbitrary FFmpeg inputs.
+   Include MKV Opus with positive final-block DiscardPadding and a distinct
+   negative leading-padding case. Assert independent audible sample counts and
+   tail samples for sequential decode, a cold tail window and repeated
+   forward/backward window rebuilds, then check generated AAC final trim after
+   decoder/resampler/encoder drain. Cover absent padding and malformed/over-limit
+   values; neither missing nor double trimming may pass on duration alone.
 2. **Policy and selected remux:** add deterministic copy/convert resolution and
    selection-aware remux. Cover main DTS plus earlier AAC commentary, compatible
    selected AAC/AC-3/E-AC-3 (payload equality/no decoder-cache calls), each new

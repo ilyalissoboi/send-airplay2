@@ -30,6 +30,11 @@ then selected copy/remux, deterministic policy and versioned public integration.
 This slice is documentation only. D75's outstanding performance/converted-receiver
 gates remain required; speakers and discrete converted surround stay deferred.
 
+PR #57 review follow-up corrects DiscardPadding ownership: retain per-block
+signed trimming via packet skip/discard data (or a native packet index), not
+track inventory. Require cold/repeated tail-window and final AAC trim checks;
+the documentation correction adds no runtime evidence.
+
 **D71 merged:** the private
 [stereo AAC HLS builder/cache](stereo-aac-hls.md) merged in PR #51 as `e09c57f`,
 with all 16 checks passed at final head `475ae61` in run `38330651001`; both
