@@ -6,6 +6,7 @@
 #include "mp4_fixture.h"
 #include "media_track_inventory.h"
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -744,6 +745,49 @@ void source_probe_io_tests() {
     check(size_calls == before_deadline_size_calls, "expired probe stops before size");
 }
 
+void selected_copy_edit_tests() {
+    group = "selected MP4 audio copy edits";
+    // Sixteen 50-tick samples at 100 Hz span eight seconds. Starting at
+    // tick 100 leaves exactly seven seconds, or 4200 movie ticks at 600 Hz.
+    // Tick 101 leaves 6.99 seconds: exactly 4194 movie ticks.
+    struct EditCase {
+        std::uint32_t media_start, duration;
+        bool unsupported;
+    };
+    const std::array<EditCase, 8> cases{{{100, 2400, true},
+                                         {100, 4199, true},
+                                         {100, 4200, false},
+                                         {100, 4201, false},
+                                         {100, 0, false},
+                                         {101, 4193, true},
+                                         {101, 4194, false},
+                                         {101, 4195, false}}};
+    for (const bool empty_edit : {false, true}) {
+        for (const auto& test : cases) {
+            auto spec = audio_spec();
+            const auto entries = empty_edit
+                                     ? words({2, 600, 0xffffffff, 0x00010000, test.duration,
+                                              test.media_start, 0x00010000})
+                                     : words({1, test.duration, test.media_start, 0x00010000});
+            spec.edts = box("edts", full_box("elst", 0, 0, entries));
+            const auto file = mp4_file({video_spec(), spec});
+            const auto scenario = std::string(empty_edit ? "with empty edit" : "media edit only") +
+                                  ", media start=" + std::to_string(test.media_start) +
+                                  ", duration=" + std::to_string(test.duration);
+            if (test.unsupported) {
+                expect_failure(RemuxFailure::unsupported, scenario, [&] {
+                    (void)read_mp4_selected_audio(memory_reader(file), file.size(), 2);
+                });
+            } else {
+                const auto movie = read_mp4_selected_audio(memory_reader(file), file.size(), 2);
+                check(movie.tracks.at(1).samples.size() == 16 &&
+                          movie.tracks.at(1).edits.back().media_time == test.media_start,
+                      scenario + ": complete remaining span and leading edit retained");
+            }
+        }
+    }
+}
+
 void source_audio_timeline_tests() {
     group = "MP4 source audio edit/seek timeline";
     auto spec = audio_spec(audio_entry("dtsc", {}));
@@ -805,6 +849,7 @@ int main() {
         source_inventory_bounds_tests();
         source_probe_io_tests();
         source_audio_timeline_tests();
+        selected_copy_edit_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';

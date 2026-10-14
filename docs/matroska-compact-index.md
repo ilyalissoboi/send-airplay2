@@ -4,7 +4,10 @@ The user's Proceed on 2026-10-14 authorizes this slice from merged
 [PR #61](https://github.com/ilyalissoboi/send-airplay2/pull/61), `00c845d`.
 Its final head `27cbb1e` passed all 16 checks in
 [run 38555473407](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38555473407).
-The active branch is `codex/matroska-compact-index`; inspect its actual PR head.
+PR #62 merged as `c69543a` after all 16 checks passed at `cc3bb2c` in
+[run 38560520412](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38560520412).
+Do not resume its closed branch. [D82](automatic-audio-policy.md) adds private
+selected-copy policy and conversion routing; public integration follows.
 This extends [D80](matroska-compressed-index.md) without a public ABI, delivery
 policy, package, dependency or Screenbox change.
 

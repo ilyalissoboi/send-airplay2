@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#61 merged.
+Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#62 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,7 +17,14 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D81 compact indexing:** [streamed packets and sparse restart anchors](matroska-compact-index.md)
+**D82 private policy:** [original-ID selected copy/conversion preparation](automatic-audio-policy.md)
+adds a finite Apple HLS v1 copy table and bounded existing stereo conversion.
+Copy/video-only work without the backend/cache; preservation refuses conversion.
+No configuration/source/cache/network failure triggers a different track or route.
+Public API/binding/CLI integration/reporting remains next, with later packaged,
+real-file/brokered performance and receiver gates. No package or Screenbox change.
+
+**D81 merged (PR #62, `c69543a`):** [streamed packets and sparse restart anchors](matroska-compact-index.md)
 replace full canonical audio packet tables. Recorded one-hour TrueHD/two-hour Opus
 controls exceed the old packet cap with bounded retained memory; source reads,
 callbacks, deadlines and decode budgets remain. This is synthetic offline evidence.

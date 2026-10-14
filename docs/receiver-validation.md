@@ -1,5 +1,10 @@
 # Receiver validation record
 
+**D82 boundary (2026-10-14):** [private copy/conversion policy controls](automatic-audio-policy.md)
+are offline and include owned payload, tone, lifecycle and refusal checks. No
+receiver or expanded packaged-runtime observation is added; the named copy table
+is not negotiated receiver support or universal Apple HLS compatibility.
+
 **D81 boundary (2026-10-14):** [compact indexing controls](matroska-compact-index.md)
 cover synthetic high-count TrueHD/Opus and retained offline timing/trim/AAC cases.
 They add no receiver, real-film or expanded packaged-runtime observation.

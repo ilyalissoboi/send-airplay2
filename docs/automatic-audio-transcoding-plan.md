@@ -1,5 +1,11 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
+**D82 implementation:** [private selected copy/conversion policy](automatic-audio-policy.md)
+implements ordered step 2 in its finite offline subset. The metadata plan and
+prepared owner preserve original identity, backend/cache independence for copy,
+preservation choice and non-fallback failure handling. API/binding/CLI reporting
+and opt-in delivery remain step 3; this does not enable automatic mode in API 4.
+
 **D81 extension:** [compact restart anchors](matroska-compact-index.md) stream
 canonical selected audio without full packet tables, lifting the old decoder
 packet-count cap under unchanged read/work bounds. Selected copy/remux policy

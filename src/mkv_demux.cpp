@@ -422,6 +422,7 @@ struct SelectedTrack {
     std::vector<Frame> frames;
     std::optional<std::uint64_t> last_block_duration; // Ticks; from BlockDuration.
     std::vector<std::uint64_t> durations; // Text tracks only: BlockDuration per frame, 0 if none.
+    bool strict_copy = false;             ///< Retain block trim for selected copy admission.
     bool packet_coordinates = false; ///< Strict selected-packet index, distinct from legacy remux.
 };
 
@@ -435,7 +436,8 @@ bool text_codec(const std::string& codec_id) {
  * every enabled text subtitle track. Text subtitles are optional extras:
  * tracks that cannot be served (bitmap formats, ContentEncodings) are left
  * out, not refused. */
-std::vector<TrackInfo> select_tracks(const std::vector<TrackInfo>& infos, bool video_only = false) {
+std::vector<TrackInfo> select_tracks(const std::vector<TrackInfo>& infos, bool video_only = false,
+                                     std::optional<std::uint64_t> selected_audio = {}) {
     const TrackInfo* video = nullptr;
     const TrackInfo* audio = nullptr;
     bool saw_video = false;
@@ -449,7 +451,8 @@ std::vector<TrackInfo> select_tracks(const std::vector<TrackInfo>& infos, bool v
             if (!video && remuxable_video(info)) {
                 video = &info;
             }
-        } else if (info.type == track_type_audio && !video_only) {
+        } else if (info.type == track_type_audio && !video_only &&
+                   (!selected_audio || info.number == *selected_audio)) {
             saw_audio = true;
             if (remuxable_audio(info) &&
                 (!audio || (info.default_track && !audio->default_track))) {
@@ -461,13 +464,16 @@ std::vector<TrackInfo> select_tracks(const std::vector<TrackInfo>& infos, bool v
         unsupported(saw_video ? "video codec is not remuxable (H.264 or HEVC only)"
                               : "no video track");
     }
-    if (saw_audio && !audio) {
+    if ((saw_audio || selected_audio) && !audio) {
         unsupported("audio codec is not remuxable (AAC, AC-3 or E-AC-3 only)");
     }
-    if (video_only && !video->standard_timeline) {
+    if ((video_only || selected_audio) && !video->standard_timeline) {
         unsupported("non-default video TrackTimestampScale or TrackOffset");
     }
     for (const auto* info : {video, audio}) {
+        if (info && selected_audio && !info->standard_timeline) {
+            unsupported("selected copy requires a standard track timeline");
+        }
         if (info && info->encoded) {
             unsupported("compressed or encrypted track (ContentEncodings)");
         }
@@ -517,7 +523,7 @@ void read_block(WindowReader& reader, std::uint64_t begin, std::uint64_t end,
     }
     const bool keyframe = simple ? (flags & simple_block_keyframe) != 0 : !referenced;
     const auto lacing = static_cast<std::uint8_t>(flags & block_lacing_mask);
-    if (track->packet_coordinates && lacing != 0) {
+    if ((track->packet_coordinates || track->strict_copy) && lacing != 0) {
         unsupported("selected audio packet index does not support lacing");
     }
 
@@ -685,7 +691,7 @@ std::uint64_t read_cluster(WindowReader& reader, const Element& cluster,
             if (block) {
                 const auto indexed =
                     std::find_if(tracks.begin(), tracks.end(), [](const SelectedTrack* track) {
-                        return track->packet_coordinates;
+                        return track->packet_coordinates || track->strict_copy;
                     });
                 const auto previous_size = indexed == tracks.end() ? 0 : (*indexed)->frames.size();
                 read_block(reader, block->data, block->end(), timestamp, false, referenced, tracks,
@@ -868,6 +874,11 @@ Mp4Track audio_track(const SelectedTrack& selected, std::uint64_t timestamp_scal
         frame_samples = frame.samples;
         track.codec = frame.enhanced ? "ec-3" : "ac-3";
         track.sample_entry = frame.enhanced ? eac3_sample_entry(frame) : ac3_sample_entry(frame);
+    }
+    if (selected.strict_copy &&
+        std::any_of(selected.frames.begin(), selected.frames.end(),
+                    [](const Frame& frame) { return frame.discard_padding_ns != 0; })) {
+        unsupported("selected copy cannot represent per-block DiscardPadding");
     }
     if (sample_rate == 0) {
         malformed("audio track without a sample rate");
@@ -1565,8 +1576,10 @@ bool starts_like_matroska(const std::uint8_t* data, std::size_t size) {
 }
 
 namespace {
-Mp4Movie read_mkv_tracks(const RandomReader& read, std::uint64_t file_size, bool video_only) {
-    WindowReader reader(read, file_size);
+Mp4Movie read_mkv_tracks(const RandomReader& read, std::uint64_t file_size, bool video_only,
+                         std::optional<std::uint64_t> selected_audio = {}) {
+    WindowReader reader(read, file_size,
+                        selected_audio ? selected_audio_header_window_bytes : window_bytes);
     const auto ebml = read_element(reader, 0, file_size);
     if (ebml.id != id_ebml) {
         malformed("no EBML header");
@@ -1589,12 +1602,16 @@ Mp4Movie read_mkv_tracks(const RandomReader& read, std::uint64_t file_size, bool
     std::uint64_t timestamp_scale = default_timestamp_scale;
     std::vector<TrackInfo> infos;
     bool have_tracks = false;
+    bool have_clusters = false;
     std::vector<SelectedTrack> selected;
     std::vector<SelectedTrack*> pointers;
     auto position = segment.data;
     while (position < segment.end()) {
         const auto element = read_element(reader, position, segment.end());
         if (element.id == id_info) {
+            if (selected_audio && have_clusters) {
+                unsupported("selected copy metadata changes");
+            }
             const auto data = load(reader, element);
             for (const auto& field : children(data, 0, data.size())) {
                 if (field.id == id_timestamp_scale) {
@@ -1605,6 +1622,9 @@ Mp4Movie read_mkv_tracks(const RandomReader& read, std::uint64_t file_size, bool
                 unsupported("TimestampScale that does not divide one second");
             }
         } else if (element.id == id_tracks) {
+            if (selected_audio && have_tracks) {
+                unsupported("selected copy metadata changes");
+            }
             const auto data = load(reader, element);
             for (const auto& entry : children(data, 0, data.size())) {
                 if (entry.id == id_track_entry) {
@@ -1613,13 +1633,15 @@ Mp4Movie read_mkv_tracks(const RandomReader& read, std::uint64_t file_size, bool
             }
             have_tracks = true;
             // Choose the tracks before any cluster, so blocks of others are skipped.
-            for (auto& info : select_tracks(infos, video_only)) {
-                selected.push_back({std::move(info), {}, std::nullopt, {}});
+            for (auto& info : select_tracks(infos, video_only, selected_audio)) {
+                const bool strict_copy = selected_audio && info.type == track_type_audio;
+                selected.push_back({std::move(info), {}, std::nullopt, {}, strict_copy});
             }
             for (auto& track : selected) {
                 pointers.push_back(&track);
             }
         } else if (element.id == id_cluster) {
+            have_clusters = true;
             if (!have_tracks) {
                 malformed("cluster before the Tracks element");
             }
@@ -1655,6 +1677,16 @@ Mp4Movie read_mkv_video_source(const RandomReader& read, std::uint64_t file_size
     return read_mkv_tracks(read, file_size, true);
 }
 
+Mp4Movie read_mkv_selected_audio(const RandomReader& read, std::uint64_t file_size,
+                                 std::uint64_t original_track_number) {
+    const auto inventory = probe_mkv_tracks(read, file_size);
+    if (select_source_audio(inventory, original_track_number).status !=
+        AudioSelectionStatus::selected) {
+        throw std::invalid_argument("invalid source audio track identity");
+    }
+    return read_mkv_tracks(read, file_size, false, original_track_number);
+}
+
 struct MkvAudioScanner::Impl {
     RandomReader read;
     WindowReader reader;
@@ -1686,7 +1718,7 @@ struct MkvAudioScanner::Impl {
         if (found->encoded || !found->standard_timeline) {
             unsupported("selected audio packet index requires an unencoded standard timeline");
         }
-        selected = {*found, {}, std::nullopt, {}, true};
+        selected = {*found, {}, std::nullopt, {}, false, true};
         tracks.push_back(&selected);
     }
 };

@@ -1,5 +1,14 @@
 # Dependencies and reference provenance
 
+**D82 provenance (2026-10-14):** selected-copy policy, descriptor bounds and the
+restricted Dolby BSI presence guard are original Apache-2.0 code, extending the
+existing ISO BMFF/ETSI TS 102 366 native readers. The pinned FFmpeg 9.0.2
+`libavcodec/ac3_parser.c` was inspected only as a field-layout cross-check; no
+implementation is copied or dependency/profile added. Twenty owned table/video/
+subtitle fixtures use the development-only native AAC/AC-3/E-AC-3 encoders, with
+source/command/input/output hashes in `fixtures/audio-policy/provenance.json`.
+No downloaded media/executable or external codec implementation is adopted.
+
 **D81 reuse (2026-10-14):** streaming native EBML scans and sparse anchors are
 original Apache-2.0 code. Codec reconstruction reuses the pinned FFmpeg parser
 API already adopted in D80; no dependency/profile/source copy is added. The new
