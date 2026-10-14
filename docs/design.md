@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#58 merged.
+Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#59 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,7 +17,11 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D78 timing increment:** [bounded coarse-clock reconstruction](coarse-matroska-audio.md)
+**D79 indexing increment:** [selected PCM packets and exact long-file seeking](matroska-pcm-index.md)
+remove the PCM movie horizon within the indexed subset. Compressed duration/anchor
+reconstruction and trim controls remain next, before automatic policy.
+
+**D78 merged (PR #59, `9763189`):** [bounded coarse-clock reconstruction](coarse-matroska-audio.md)
 counts decoded samples from fresh start-window owners for short variable-frame
 Matroska presentations. The explicit ten-second horizon stays until bounded
 long-file indexing/phase/scaling gates pass. Automatic policy and release follow.
@@ -215,7 +219,7 @@ brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
 
-Current queue: [D78's remaining long-file Matroska indexing gate](coarse-matroska-audio.md),
+Current queue: [D79's remaining compressed Matroska indexing gate](matroska-pcm-index.md),
 selected remux/policy, then versioned public integration. Repeat packaged runtime
 checks for the expanded matrix; real-file performance and converted-receiver
 gates remain required for the existing stereo path and its expansion.

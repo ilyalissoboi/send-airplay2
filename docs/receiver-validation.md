@@ -1,5 +1,9 @@
 # Receiver validation record
 
+**D79 boundary (2026-10-14):** [selected PCM index/seek checks](matroska-pcm-index.md)
+include synthetic one-hour / >4-GiB offsets and independent trim/AAC controls.
+They add no receiver or expanded packaged-runtime observation.
+
 **D78 boundary (2026-10-14):** [bounded coarse Matroska timing checks](coarse-matroska-audio.md)
 are offline and limited to short presentations. No receiver or packaged runtime
 result is added; long-file indexing and existing converted-receiver gates remain.

@@ -63,7 +63,12 @@ struct DecodedAudioWindow {
  * Known native layouts and the documented AAC/Dolby/DTS-core/FLAC/Opus/Vorbis/
  * PCM/TrueHD source matrix only. Layout/rate/format changes,
  * discontinuities, protected/unknown inputs and complex edits are refused.
- * canonical_matroska_clock uses sample-accurate timestamps directly, including
+ * canonical_matroska_clock indexes validated unlaced PCM using exact packed
+ * sample counts and signed per-block trim, with <=262144 packets. It reads
+ * headers at open, then nearby packets by binary search and fresh decoder state.
+ * Raw packet clocks apply CodecDelay once and decoder-owned skip/discard once;
+ * the source window budget includes both header and payload reads. For other
+ * expanded codecs it uses sample-accurate timestamps directly, including
  * variable/trimmed frames. Expanded codecs under coarser clocks rebuild from
  * the start, counting decoded samples under a ten-second presentation bound.
  * The initial absolute origin remains container-limited; epoch phase does not
@@ -94,10 +99,12 @@ public:
     /** Seek with at least one second of decoder/resampler preroll, flush both,
      * discard decoded history and return up to count presentation samples.
      * Initial edit silence is zero-filled; samples after actual EOF are omitted.
-     * FFmpeg MOV edits and Matroska CodecDelay are already in frame timestamps:
+     * FFmpeg MOV edits and non-indexed Matroska CodecDelay are already in frame timestamps:
      * never apply the raw-container planners' corrections a second time.
-     * Packet skip/discard side data remains intact for decoder consumption. MOV
-     * Opus frame duration bounds the audible packet tail before resampling.
+     * Packet skip/discard side data remains intact for decoder consumption.
+     * Indexed PCM constructs its packet clock/trim from native container fields,
+     * avoiding generic demuxer overwrite of first-block skip with CodecDelay.
+     * MOV Opus frame duration bounds the audible packet tail before resampling.
      * This does not encode AAC or establish independent HLS segment priming.
      */
     [[nodiscard]] DecodedAudioWindow read_window(std::uint64_t first_sample, std::uint32_t count,

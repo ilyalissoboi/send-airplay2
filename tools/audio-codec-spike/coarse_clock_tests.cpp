@@ -43,7 +43,8 @@ void windows(const std::filesystem::path& directory, const std::string& name,
            name + ": independent original audible length");
     sap2_test::Source coarse(directory / name);
     auto decoder = AudioDecoderSource::open(coarse.callbacks(), context.value, 42, true);
-    expect(decoder->requires_start_rebuild(), name + ": bounded reconstruction selected");
+    expect(decoder->requires_start_rebuild() == (name.find("pcm-") != 0),
+           name + ": indexed PCM or bounded compressed reconstruction selected");
     // First request is cold and late. The next pair meets at a deliberately
     // non-frame-aligned boundary, then requests reverse order and the EOF tail.
     for (const auto start : {270000U, 90001U, 94097U, 160003U, 48001U, 270000U}) {
@@ -75,7 +76,8 @@ void windows(const std::filesystem::path& directory, const std::string& name,
     }
 }
 
-std::vector<Bytes> audio_resources(const std::filesystem::path& path) {
+std::vector<Bytes> audio_resources(const std::filesystem::path& path,
+                                   std::uint32_t presentation_frames = 312000) {
     sap2_test::Context context;
     sap2_test::Source source(path);
     sap2_test::Store store;
@@ -90,7 +92,8 @@ std::vector<Bytes> audio_resources(const std::filesystem::path& path) {
     combined.insert(combined.end(), first.begin(), first.end());
     combined.insert(combined.end(), late.begin(), late.end());
     const auto decoded = sap2_test::MovieDecoder(combined).decode();
-    expect(decoded.size() == 312000 * 2, path.filename().string() + ": literal AAC final trim");
+    expect(decoded.size() == presentation_frames * 2,
+           path.filename().string() + ": literal AAC final trim");
     expect(sap2_test::read(sap2_test::resource(*hls, "a1.m4s"), context.value) == late &&
                store.seals == 2 && hls->failure() == StereoAacHlsFailure::none,
            path.filename().string() + ": sealed cache/status");
@@ -101,7 +104,7 @@ std::vector<Bytes> audio_resources(const std::filesystem::path& path) {
 
 void decoder_horizon(const std::filesystem::path& directory) {
     sap2_test::Context context;
-    sap2_test::Source source(directory / "pcm-s16le.mkv");
+    sap2_test::Source source(directory / "flac.mkv");
     auto decoder = AudioDecoderSource::open(source.callbacks(), context.value, 42, true);
     const auto boundary = decoder->read_window(479999, 1, context.value);
     expect(boundary.eof && boundary.channels == 2 && boundary.samples.empty(),
@@ -123,46 +126,27 @@ void decoder_horizon(const std::filesystem::path& directory) {
     }
 }
 void presentation_horizon(const std::filesystem::path& directory) {
-    sap2_test::Context context;
-    sap2_test::Source long_video(directory / "over-limit-video.mkv");
-    sap2_test::Store store;
-    try {
-        (void)StereoAacHls::open(long_video.callbacks(), store.callbacks(), 2 * 1024 * 1024,
-                                 context.value, 42);
-        throw std::runtime_error("long coarse HLS registered");
-    } catch (const AudioDecodeException& error) {
-        expect(error.reason() == AudioDecodeFailure::unsupported &&
-                   std::string(error.what()) ==
-                       "coarse Matroska HLS exceeds bounded start reconstruction" &&
-                   store.seals == 0 && store.clears == 1,
-               "long coarse presentation fails before sealing/registration and cleans store");
-    }
-    // The bound belongs only to the coarse reconstruction path. The same video
-    // and selected audio under a sample clock still prepare successfully.
-    sap2_test::Source long_fine(directory / "long-video-fine.mkv");
-    sap2_test::Store fine_store;
-    auto fine_hls = StereoAacHls::open(long_fine.callbacks(), fine_store.callbacks(),
-                                       2 * 1024 * 1024, context.value, 42);
-    expect(fine_hls->audio_segment_count() == 2, "sample-clock long control remains accepted");
-    fine_hls->stop();
+    expect(audio_resources(directory / "over-limit-video.mkv", 576000) ==
+               audio_resources(directory / "long-video-fine.mkv", 576000),
+           "indexed coarse PCM exceeds old horizon with identical AAC final trim");
 }
 void discontinuity(const std::filesystem::path& directory) {
     sap2_test::Context context;
     sap2_test::Source discontinuous(directory / "discontinuous.mkv");
-    auto gapped = AudioDecoderSource::open(discontinuous.callbacks(), context.value, 42, true);
     try {
+        auto gapped = AudioDecoderSource::open(discontinuous.callbacks(), context.value, 42, true);
         (void)gapped->read_window(270000, 4096, context.value);
         throw std::runtime_error("discontinuous reconstruction accepted");
     } catch (const AudioDecodeException& error) {
         expect(error.reason() == AudioDecodeFailure::unsupported &&
                    std::string(error.what()) ==
-                       "Matroska timestamp disagrees with rebuilt sample clock",
+                       "indexed PCM packet clock is discontinuous or out of bounds",
                "coarse reconstruction checks observed timestamps instead of concealing gaps");
     }
 }
 void rebuild_cancellation(const std::filesystem::path& directory) {
     sap2_test::Context context;
-    sap2_test::Source source(directory / "pcm-s16le.mkv");
+    sap2_test::Source source(directory / "flac.mkv");
     std::size_t window_reads = 0;
     bool cancel_reads = false;
     auto callbacks = source.callbacks();

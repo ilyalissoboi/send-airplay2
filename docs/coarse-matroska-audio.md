@@ -5,8 +5,10 @@ merged decoder PR #58 (`820e89c`). Its final head `129ae6e` passed all 16 checks
 in [run 38504706633](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38504706633);
 the OutputSamplingFrequency review thread is resolved. This increment is private,
 optional and offline. Automatic policy, public reporting and release remain later.
-Active [PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) owns this
-increment; inspect CI/review at its actual head.
+[PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) merged as `9763189`;
+all 16 checks passed at `2bc7a5c` in run `38510002555`. Do not resume its closed branch.
+[D79 indexed PCM](matroska-pcm-index.md) extends this checkpoint for long PCM
+presentations. Its separate subset/bounds do not lift the compressed-family horizon.
 
 ## Behavior and finite scope
 
@@ -31,7 +33,7 @@ The pinned demuxer and flush behavior were inspected in FFmpeg 9.0.2
 [matroskadec.c](https://github.com/FFmpeg/FFmpeg/blob/n9.0.2/libavformat/matroskadec.c)
 and [seek.c](https://github.com/FFmpeg/FFmpeg/blob/n9.0.2/libavformat/seek.c).
 
-**Ten-second presentation horizon:** a coarse reconstruction window must end at
+**Ten-second presentation horizon at D78 (retained for coarse compressed families):** a coarse reconstruction window must end at
 or before 480000 output samples. The HLS owner rejects longer video presentations
 before its initial decode, worker, resource registration or fragment sealing,
 and clears the owned store on failure. The boundary refusal performs no window

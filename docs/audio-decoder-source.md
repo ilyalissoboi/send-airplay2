@@ -1,5 +1,8 @@
 # Selected audio decoder and seek windows (D70)
 
+**D79 extension:** [selected PCM indexing](matroska-pcm-index.md) adds long-file PCM
+seeks and independent trim controls. Compressed long-file timing remains next.
+
 **D77 extension:** [expanded codec/configuration and timing gates](audio-decoder-expansion.md)
 add the documented new family subset. The D70 evidence below remains historical;
 [D78's bounded coarse-clock reconstruction](coarse-matroska-audio.md) additionally

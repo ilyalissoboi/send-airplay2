@@ -1,5 +1,8 @@
 # Private stereo AAC HLS composition (D71)
 
+**D79 extension:** [selected PCM indexing](matroska-pcm-index.md) adds long-file PCM
+seeks and independent trim controls. Compressed long-file timing remains next.
+
 **Current timing extension:** [D78 bounded Matroska reconstruction](coarse-matroska-audio.md)
 adds expanded variable-frame codecs under coarse clocks for presentations up to
 ten seconds. Long-file indexing remains required. The D71 fixed-grid evidence

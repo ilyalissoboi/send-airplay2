@@ -1,5 +1,8 @@
 # Expanded private audio decoder foundation (D77)
 
+**D79 extension:** [selected PCM indexing](matroska-pcm-index.md) adds long-file PCM
+seeks and independent trim controls. Compressed long-file timing remains next.
+
 Authorized by the user's Proceed on 2026-10-14 (Asia/Tokyo), from merged
 PR #57 / main `faee858`. The [D76 plan](automatic-audio-transcoding-plan.md)
 defines the broader automatic-delivery work; this increment implements its

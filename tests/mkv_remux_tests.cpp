@@ -1276,6 +1276,95 @@ void source_video_index_tests() {
           "probe retains index locators and original unsupported source identity");
 }
 
+void selected_packet_coordinates() {
+    group = "selected original audio packet coordinates";
+    auto audio = aac_spec(42);
+    audio.codec = "A_FUTURE_CODEC";
+    audio.codec_private.clear();
+    auto other = aac_spec(7);
+    const auto first = frame_bytes(0xd1, 1000);
+    const auto last = frame_bytes(0xd2, 1000);
+    const auto packet_group = [&](const Bytes& padding, std::uint8_t number = 42) {
+        return element(block_group_id,
+                       join({element(0xa1, block(number, 2, keyframe_flag, Lacing::none, {first})),
+                             element(0x75a2, padding)}));
+    };
+    const auto clusters = element(
+        cluster_id,
+        join({uint_element(0xe7, 123),
+              packet_group({0xff, 0xff, 0xff, 0xff, 0xff, 0xe1, 0x7b, 0x80}),
+              packet_group({}, 7), // Unselected malformed padding is not interpreted.
+              element(block_group_id,
+                      join({element(0xa1, block(42, 23, keyframe_flag, Lacing::none, {last})),
+                            element(0x75a2, {0x2d, 0xc6, 0xc0})}))}));
+    const auto file = mkv_file({video_spec(), other, audio}, clusters);
+    const auto packets = read_mkv_audio_packets(memory_reader(file), file.size(), 42);
+    check(packets.size() == 2, "unsupported-codec identity retained without filtered fallback");
+    if (packets.size() == 2) {
+        const auto first_offset =
+            std::search(file.begin(), file.end(), first.begin(), first.end()) - file.begin();
+        const auto last_offset =
+            std::search(file.begin(), file.end(), last.begin(), last.end()) - file.begin();
+        check(packets[0].offset == static_cast<std::uint64_t>(first_offset) &&
+                  packets[1].offset == static_cast<std::uint64_t>(last_offset) &&
+                  packets[0].size == 1000 && packets[1].size == 1000,
+              "packet offsets locate independent literal payloads");
+        check(packets[0].stored_timestamp_ns == 125000000 &&
+                  packets[1].stored_timestamp_ns == 146000000 &&
+                  packets[0].discard_padding_ns == -2000000 &&
+                  packets[1].discard_padding_ns == 3000000,
+              "literal block clocks and signed per-block nanosecond padding");
+    }
+    expect_failure(RemuxFailure::unsupported, "absent ID never falls back",
+                   [&] { (void)read_mkv_audio_packets(memory_reader(file), file.size(), 99); });
+    const auto duplicate = mkv_file({audio, audio}, clusters);
+    expect_failure(RemuxFailure::unsupported, "duplicate original ID refused", [&] {
+        (void)read_mkv_audio_packets(memory_reader(duplicate), duplicate.size(), 42);
+    });
+    audio.enabled = false;
+    const auto disabled = mkv_file({audio}, clusters);
+    expect_failure(RemuxFailure::unsupported, "disabled original ID refused", [&] {
+        (void)read_mkv_audio_packets(memory_reader(disabled), disabled.size(), 42);
+    });
+    audio.enabled = true;
+    for (const auto& padding : std::vector<Bytes>{{}, Bytes(9, 0)}) {
+        const auto malformed = mkv_file(
+            {audio}, element(cluster_id, join({uint_element(0xe7, 0), packet_group(padding)})));
+        expect_failure(
+            RemuxFailure::malformed, "invalid padding size=" + std::to_string(padding.size()),
+            [&] { (void)read_mkv_audio_packets(memory_reader(malformed), malformed.size(), 42); });
+    }
+    const auto minimum = mkv_file(
+        {audio}, element(cluster_id,
+                         join({uint_element(0xe7, 0), packet_group({0x80, 0, 0, 0, 0, 0, 0, 0})})));
+    check(read_mkv_audio_packets(memory_reader(minimum), minimum.size(), 42)
+                  .front()
+                  .discard_padding_ns == std::numeric_limits<std::int64_t>::min(),
+          "literal signed minimum preserved for caller trim bounds");
+    const auto laced = mkv_file(
+        {audio},
+        element(cluster_id, join({uint_element(0xe7, 0),
+                                  element(simple_block_id, block(42, 0, keyframe_flag,
+                                                                 Lacing::fixed, {first, last}))})));
+    expect_failure(RemuxFailure::unsupported, "selected lacing remains explicit refusal",
+                   [&] { (void)read_mkv_audio_packets(memory_reader(laced), laced.size(), 42); });
+}
+void packet_coordinate_limit() {
+    group = "selected audio packet index bound";
+    auto audio = aac_spec(42);
+    Bytes blocks = uint_element(0xe7, 0);
+    const auto packet =
+        element(simple_block_id, block(42, 0, keyframe_flag, Lacing::none, {{1, 2, 3, 4}}));
+    // Independent engineering limit and first refused count, not implementation constants.
+    for (std::size_t index = 0; index < 262145; ++index) {
+        blocks.insert(blocks.end(), packet.begin(), packet.end());
+    }
+    const auto oversized = mkv_file({audio}, element(cluster_id, blocks));
+    expect_failure(RemuxFailure::too_large, "262145 packets refused", [&] {
+        (void)read_mkv_audio_packets(memory_reader(oversized), oversized.size(), 42);
+    });
+}
+
 int main() {
     try {
         sample_entry_tests();
@@ -1291,6 +1380,8 @@ int main() {
         source_seek_time_tests();
         source_timestamp_scale_tests();
         source_video_index_tests();
+        selected_packet_coordinates();
+        packet_coordinate_limit();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';
