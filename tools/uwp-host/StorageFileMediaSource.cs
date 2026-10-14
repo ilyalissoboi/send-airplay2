@@ -17,17 +17,25 @@ namespace SendAirPlay2.UwpHost
         private readonly object gate = new object();
         private readonly IRandomAccessStreamWithContentType stream;
         private readonly Stream reader;
+        private readonly int readLimit;
+        internal long ReadCalls { get; private set; }
+        internal long ReadBytes { get; private set; }
+        internal int ReleaseCount { get; private set; }
 
-        private StorageFileMediaSource(IRandomAccessStreamWithContentType stream)
+        private StorageFileMediaSource(IRandomAccessStreamWithContentType stream, int readLimit)
         {
             this.stream = stream;
+            this.readLimit = readLimit;
             reader = stream.AsStreamForRead(0); // No extra buffering: offsets jump.
             Size = checked((long)stream.Size);
         }
 
-        internal static async Task<StorageFileMediaSource> OpenAsync(StorageFile file)
+        internal static async Task<StorageFileMediaSource> OpenAsync(StorageFile file, int readLimit = MaxReadSize)
         {
-            return new StorageFileMediaSource(await file.OpenReadAsync());
+            if (readLimit < 1 || readLimit > MaxReadSize) { throw new ArgumentOutOfRangeException(nameof(readLimit)); }
+            var stream = await file.OpenReadAsync();
+            try { return new StorageFileMediaSource(stream, readLimit); }
+            catch { stream.Dispose(); throw; }
         }
 
         public override long Size { get; }
@@ -40,8 +48,12 @@ namespace SendAirPlay2.UwpHost
             }
             lock (gate)
             {
+                if (control.ShouldStop) { return 0; }
                 reader.Position = offset;
-                return reader.Read(buffer, 0, count);
+                var read = reader.Read(buffer, 0, Math.Min(count, readLimit));
+                ++ReadCalls;
+                ReadBytes += read;
+                return control.ShouldStop ? 0 : read;
             }
         }
 
@@ -49,6 +61,7 @@ namespace SendAirPlay2.UwpHost
         {
             lock (gate)
             {
+                ++ReleaseCount;
                 reader.Dispose();
                 stream.Dispose();
             }

@@ -3,3 +3,5 @@ using System.Runtime.CompilerServices;
 
 // The test runner checks struct layouts against the native initializers.
 [assembly: InternalsVisibleTo("SendAirPlay2.Tests")]
+// The offline AppContainer harness verifies the same callback tables and owners.
+[assembly: InternalsVisibleTo("StereoRuntimeValidation")]

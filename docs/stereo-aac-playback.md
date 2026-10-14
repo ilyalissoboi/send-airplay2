@@ -56,8 +56,10 @@ an existing root explicitly chosen by the host, reserve a random child for this
 cast, publish temporary files by rename, and delete only known files and the empty
 child. They never recursively delete the root. Filesystem clear is best effort;
 the native cleanup flag means callbacks drained and clear returned, not proof
-that an OS denied deletion succeeded. AppContainer storage permission and brokered
-source access remain a packaged runtime gate; the desktop adapters do not establish it.
+that an OS denied deletion succeeded. D75's separate app-owned TemporaryFolder
+adapter and brokered StorageFile source now pass their [recorded x64 AppContainer
+gate](stereo-aac-uwp-runtime.md), including an outside-package picker grant. This
+does not extend permission evidence to the desktop adapters or other providers.
 
 ## Supervision and ABI
 
@@ -130,11 +132,12 @@ final changed-controller/host/binding rechecks; enabled shared 37/37; integrated
 x64 UWP core compilation and six-DLL AppContainer/app-CRT/import inspection.
 The selected compressed AAC-commentary/DTS MP4 passes explicit ID 42 startup
 in both physical audio-track orders, and automatic selection refuses both.
-Formatting/diff checks pass. Actual PR-head CI remains a merge gate.
-After this PR's merge gate,
-the next slice should validate a host-authorized AppContainer source/cache adapter
-with the integrated DLL, record hashes/notices and bounded real-file performance.
-Then validate stereo output/controls/seeks/EOF on available Apple TV/Mac receivers
+Formatting/diff checks pass. PR #55 merged as `774198d` at final head `74e9ea9`;
+all 16 CI checks passed in run `38407164325`, attempt 2, and its review is resolved.
+D75 passed [the integrated x64 AppContainer source/cache gate](stereo-aac-uwp-runtime.md)
+with the recorded development DLL/host, hashes and notices. The next slice should
+measure bounded real-file startup, read volume, cache use and cold/cached seeks.
+Then validate packaged stereo output/controls/seeks/EOF on available Apple TV/Mac receivers
 before an approved package and Screenbox integration. Other audio speakers and
 surround-preserving output stay deferred. Visual changes require written manual
 user confirmation, without Computer Use.

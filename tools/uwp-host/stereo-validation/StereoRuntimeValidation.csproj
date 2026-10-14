@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.18362.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion>10.0.18362.0</TargetPlatformMinVersion>
+    <UseUwp>true</UseUwp>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <PublishAot>true</PublishAot>
+    <SelfContained>true</SelfContained>
+    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SendAirPlay2.UwpHost</RootNamespace>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
+    <GenerateTestArtifacts>false</GenerateTestArtifacts>
+    <Sap2NativeDir Condition="'$(Sap2NativeDir)' == ''">$(MSBuildThisFileDirectory)..\..\..\build-stereo-uwp-correct\Release</Sap2NativeDir>
+    <Sap2FfmpegShare Condition="'$(Sap2FfmpegShare)' == ''">$(MSBuildThisFileDirectory)..\..\..\build-codec-release-uwp\vcpkg_installed\x64-uwp-codec-release\share\ffmpeg</Sap2FfmpegShare>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Keep the binding's marshalling-enabled assembly separate from the AOT shell. -->
+    <ProjectReference Include="..\..\..\bindings\csharp\SendAirPlay2\SendAirPlay2.csproj" />
+    <Compile Include="..\StorageFileMediaSource.cs;..\TemporaryAacFragmentStore.cs" Link="Adapters\%(Filename)%(Extension)" />
+    <Content Include="..\..\..\LICENSE;..\..\..\docs\dependencies.md;..\..\..\vcpkg-overlays\ports\ffmpeg\*.patch;..\..\..\vcpkg-overlays\ports\ffmpeg\portfile.cmake;..\..\..\vcpkg-overlays\ports\ffmpeg\vcpkg.json">
+      <Link>Provenance\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <AppxManifest Include="Package.appxmanifest" />
+    <None Remove="Package.appxmanifest" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.1" />
+    <Content Include="$(Sap2NativeDir)\send_airplay2.dll;$(Sap2NativeDir)\libcrypto-*.dll;$(Sap2NativeDir)\av*.dll;$(Sap2NativeDir)\swresample*.dll">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\audio-codec-spike\fixtures\hls\dts.mp4;..\..\audio-codec-spike\fixtures\hls\dts.mkv;..\..\audio-codec-spike\fixtures\hls\aac.mp4">
+      <Link>Fixtures\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Assets\*.png">
+      <Link>Assets\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(Sap2FfmpegShare)\copyright">
+      <Link>LICENSE-FFmpeg.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\vcpkg-overlays\LICENSE-vcpkg.txt">
+      <Link>LICENSE-vcpkg.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(Sap2CoreShare)\openssl\copyright"><Link>LICENSE-OpenSSL.txt</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="$(Sap2CoreShare)\botan\copyright"><Link>LICENSE-Botan.txt</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="$(Sap2CoreShare)\boost-asio\copyright"><Link>LICENSE-Boost.txt</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+  </ItemGroup>
+  <Target Name="CheckRuntimeInputs" BeforeTargets="Build">
+    <Error Condition="!Exists('$(Sap2NativeDir)\send_airplay2.dll') Or !Exists('$(Sap2FfmpegShare)\copyright') Or !Exists('$(Sap2CoreShare)\openssl\copyright')" Text="Select the validation-enabled UWP core and its exact codec/core notice directories." />
+  </Target>
+</Project>

@@ -190,7 +190,7 @@ jobs:
         run: |
           $stereoArguments = @(
             '-S', '.', '-B', 'build-stereo', '-A', 'x64',
-            '-DBUILD_SHARED_LIBS=ON', '-DBUILD_TESTING=ON', '-DSAP2_STEREO_AAC=ON',
+            '-DBUILD_SHARED_LIBS=ON', '-DBUILD_TESTING=ON', '-DSAP2_STEREO_AAC=ON', '-DSAP2_RUNTIME_VALIDATION=ON',
             '-DVCPKG_MANIFEST_FEATURES=stereo-aac',
             '-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake',
             '-DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}',
