@@ -1,5 +1,12 @@
 # Dependencies and reference provenance
 
+**D81 reuse (2026-10-14):** streaming native EBML scans and sparse anchors are
+original Apache-2.0 code. Codec reconstruction reuses the pinned FFmpeg parser
+API already adopted in D80; no dependency/profile/source copy is added. The new
+Opus silence fixture uses the development-only FFmpeg 9.0.2 native encoder, with
+command/input/output provenance in its fixture manifest. Nothing is downloaded
+or shipped by the fixture generator.
+
 The project remains Apache-2.0. Record revisions and licensing here before
 incorporating external code or adding dependencies.
 

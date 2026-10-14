@@ -1315,6 +1315,50 @@ void selected_packet_coordinates() {
                   packets[1].discard_padding_ns == 3000000,
               "literal block clocks and signed per-block nanosecond padding");
     }
+    MkvAudioScanner scanner(memory_reader(file), file.size(), 42);
+    MkvAudioPacket streamed;
+    MkvAudioCursor first_cursor, last_cursor;
+    check(scanner.next(streamed, first_cursor) && streamed.stored_timestamp_ns == 125000000 &&
+              streamed.discard_padding_ns == -2000000,
+          "streamed first block retains literal time and negative trim");
+    check(scanner.next(streamed, last_cursor) && streamed.stored_timestamp_ns == 146000000 &&
+              streamed.discard_padding_ns == 3000000,
+          "streamed second block skips unselected malformed padding");
+    MkvAudioCursor unused;
+    check(!scanner.next(streamed, unused) && !scanner.next(streamed, unused),
+          "streaming EOF is stable");
+    for (const auto& cursor : {last_cursor, first_cursor, last_cursor}) {
+        scanner.resume(cursor);
+        check(scanner.next(streamed, unused) &&
+                  streamed.stored_timestamp_ns == (cursor.block_offset == first_cursor.block_offset
+                                                       ? 125000000ULL
+                                                       : 146000000ULL),
+              "same-cluster backward/forward resume retains timestamp");
+    }
+    const auto unknown_cluster = unknown_size_element(
+        cluster_id, join({uint_element(0xe7, 123),
+                          packet_group({0xff, 0xff, 0xff, 0xff, 0xff, 0xe1, 0x7b, 0x80})}));
+    const auto following_cluster = element(
+        cluster_id,
+        join({uint_element(0xe7, 200),
+              element(simple_block_id, block(42, 3, keyframe_flag, Lacing::none, {last}))}));
+    const auto unknown_file = mkv_file({audio}, join({unknown_cluster, following_cluster}));
+    MkvAudioScanner unknown_scanner(memory_reader(unknown_file), unknown_file.size(), 42);
+    MkvAudioCursor unknown_cursor;
+    check(unknown_scanner.next(streamed, unknown_cursor) &&
+              streamed.stored_timestamp_ns == 125000000,
+          "streaming packet inside unknown-size Cluster");
+    check(unknown_scanner.next(streamed, unused) && streamed.stored_timestamp_ns == 203000000,
+          "streaming crosses unknown-size Cluster level-one boundary");
+    check(!unknown_scanner.next(streamed, unused), "mixed unknown/sized Cluster EOF");
+    unknown_scanner.resume(unknown_cursor);
+    check(unknown_scanner.next(streamed, unused) && streamed.stored_timestamp_ns == 125000000 &&
+              streamed.discard_padding_ns == -2000000,
+          "unknown-size Cluster resume retains signed trim");
+    auto invalid_cursor = first_cursor;
+    invalid_cursor.block_offset = file.size();
+    expect_failure(RemuxFailure::malformed, "resume outside containing cluster refused",
+                   [&] { scanner.resume(invalid_cursor); });
     expect_failure(RemuxFailure::unsupported, "absent ID never falls back",
                    [&] { (void)read_mkv_audio_packets(memory_reader(file), file.size(), 99); });
     const auto duplicate = mkv_file({audio, audio}, clusters);
@@ -1363,6 +1407,14 @@ void packet_coordinate_limit() {
     expect_failure(RemuxFailure::too_large, "262145 packets refused", [&] {
         (void)read_mkv_audio_packets(memory_reader(oversized), oversized.size(), 42);
     });
+    MkvAudioScanner scanner(memory_reader(oversized), oversized.size(), 42);
+    MkvAudioPacket streamed;
+    MkvAudioCursor cursor;
+    std::size_t count = 0;
+    while (scanner.next(streamed, cursor)) {
+        ++count;
+    }
+    check(count == 262145, "constant-memory scan crosses retained-table cap");
 }
 
 int main() {

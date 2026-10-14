@@ -45,10 +45,12 @@ Its [private decoder foundation](docs/audio-decoder-expansion.md) now supports
 the recorded FLAC, Opus, Vorbis, PCM and TrueHD subset with offline checks.
 Automatic policy is pending. [Bounded Matroska clock reconstruction](docs/coarse-matroska-audio.md)
 covers ordinary millisecond clocks for short presentations. [Selected PCM indexing](docs/matroska-pcm-index.md)
-now supports longer PCM presentations within its packet limits.
+supports longer PCM presentations within its resource limits.
 [Compressed duration/restart indexing](docs/matroska-compressed-index.md) extends
-that subset to FLAC/Opus/Vorbis/TrueHD. Compact high-packet-count movie scaling
-remains a prerequisite for general automatic delivery.
+that subset to FLAC/Opus/Vorbis/TrueHD. [Compact restart anchors](docs/matroska-compact-index.md)
+remove the canonical decoder's full packet table, with synthetic high-count
+TrueHD/Opus scaling checks under unchanged I/O and decode budgets.
+Selected copy/remux eligibility, automatic policy and public reporting remain pending.
 
 ## Build
 

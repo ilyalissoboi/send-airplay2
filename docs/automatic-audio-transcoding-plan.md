@@ -1,5 +1,10 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
+**D81 extension:** [compact restart anchors](matroska-compact-index.md) stream
+canonical selected audio without full packet tables, lifting the old decoder
+packet-count cap under unchanged read/work bounds. Selected copy/remux policy
+and public reporting remain next; synthetic scaling is not real-film proof.
+
 **D80 extension:** [compressed packet indexing](matroska-compressed-index.md) adds
 codec-aware durations/restarts and independent trim controls within the retained
 packet/I/O bounds. Compact high-packet-count movie scaling remains a gate before

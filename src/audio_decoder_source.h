@@ -2,6 +2,7 @@
 #ifndef SEND_AIRPLAY2_AUDIO_DECODER_SOURCE_H
 #define SEND_AIRPLAY2_AUDIO_DECODER_SOURCE_H
 #include "send_airplay2/media_server.h"
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -65,8 +66,10 @@ struct DecodedAudioWindow {
  * discontinuities, protected/unknown inputs and complex edits are refused.
  * canonical_matroska_clock indexes validated unlaced PCM/FLAC/Opus/Vorbis/TrueHD
  * using exact packed counts or bounded pinned-parser duration/restart analysis,
- * with <=262144 packets. It reads headers (complete bounded Opus packets) at
- * open, then nearby packets by binary search and fresh decoder state. Compressed
+ * with <=65536 sparse restart anchors (at least one source second apart).
+ * Open scans headers (complete bounded Opus packets) without a full packet table;
+ * windows binary-search anchors and reconstruct nearby exact clocks with fresh
+ * parser/decoder state. Two bounded header pages share the I/O budgets. Compressed
  * packets are <=1 MiB. TrueHD requires one access unit per block and an initial
  * major sync; seeks start at the preceding major sync. Vorbis first delay/skip
  * cannot exceed intrinsic overlap-frame priming; smaller/absent delay leaves
@@ -75,8 +78,9 @@ struct DecodedAudioWindow {
  * the source window budget includes both header and payload reads. The source
  * clock must be no coarser than one second before exact-clock substitution.
  * The initial absolute origin remains container-limited; epoch phase does not
- * change with frame size or seek order. Packet-count bounds still exclude many
- * highly packetized full-length movies; a compact-index scaling gate remains.
+ * change with frame size or seek order. Sparse coordinates remove the decoder's
+ * old 262144-packet cap, not its byte/callback/deadline/input bounds. Long restart
+ * gaps or large source scans can still fail those unchanged resource budgets.
  * Legacy AAC/Dolby/DTS coarser clocks require a fixed-frame grid for HLS:
  * first read must start at zero; frames must remain constant and exceed twice
  * the clock quantum. Rounded timestamps may snap only within one tick of that grid.
@@ -85,6 +89,13 @@ struct DecodedAudioWindow {
  */
 class AudioDecoderSource {
 public:
+    struct IndexStatistics {
+        std::uint64_t packets;
+        std::size_t anchors;
+        std::size_t retained_bytes;
+    };
+    /// Offline scaling diagnostics; excludes backend owners and fixed read pages.
+    [[nodiscard]] IndexStatistics index_statistics() const noexcept;
     static constexpr std::uint32_t output_rate = 48000;
     static constexpr std::uint64_t maximum_start_rebuild_samples = 10ULL * output_rate;
     /// True when canonical decoding must rebuild from the beginning. The HLS
