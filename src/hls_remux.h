@@ -114,5 +114,14 @@ void raise_composition_target_duration(RemuxedHls& presentation, std::uint32_t m
                                       const std::atomic_bool* cancelled = nullptr,
                                       bool video_only = false,
                                       const MediaReadContext* startup_context = nullptr);
+/** Selection-aware copy under the Apple HLS v1 executable configuration table.
+ * Preserves original audio identity; full native audio/video scan (no Cues fast
+ * path in this initial slice), with existing frame/metadata limits plus 256 MiB
+ * requested bytes and 1048576 callback operations during startup. One borrowed
+ * absolute context applies. Configuration/packet failures never retry conversion.
+ */
+[[nodiscard]] RemuxedHls remux_selected_audio_to_hls(MediaSource input, std::uint64_t selected_id,
+                                                     const MediaReadContext& context,
+                                                     std::uint32_t& output_channels);
 } // namespace send_airplay2::detail
 #endif

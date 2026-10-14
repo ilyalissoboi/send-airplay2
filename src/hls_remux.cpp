@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "hls_remux.h"
+#include "audio_delivery_policy.h"
 #include "hls_variant.h"
 #include "mkv_demux.h"
 #include <algorithm>
@@ -308,12 +309,25 @@ MediaSource segment_source(std::shared_ptr<const Presentation> presentation, std
             }};
 }
 
+struct SourceReadBudget {
+    static constexpr std::uint64_t maximum_bytes = 256ULL << 20;
+    static constexpr std::size_t maximum_calls = 1048576;
+    std::uint64_t requested_bytes = 0;
+    std::size_t calls = 0;
+    void charge(std::size_t bytes) {
+        if (++calls > maximum_calls || bytes > maximum_bytes - requested_bytes) {
+            throw RemuxException(RemuxFailure::too_large, "selected copy read budget exceeded");
+        }
+        requested_bytes += bytes;
+    }
+};
 /// Reads through MediaSource::read_at until `length` bytes arrive, under a
 /// fixed deadline, for the demuxer's moov and box headers.
 RandomReader source_reader(const MediaSource& input, const std::atomic_bool* cancelled,
-                           const MediaReadContext* startup_context) {
-    return [&input, cancelled, startup_context](std::uint64_t offset, std::uint8_t* output,
-                                                std::size_t length) {
+                           const MediaReadContext* startup_context,
+                           SourceReadBudget* budget = nullptr) {
+    return [&input, cancelled, startup_context, budget](std::uint64_t offset, std::uint8_t* output,
+                                                        std::size_t length) {
         const std::atomic_bool not_stopped{false};
         const std::atomic_bool not_cancelled{false};
         const MediaReadContext context =
@@ -327,7 +341,13 @@ RandomReader source_reader(const MediaSource& input, const std::atomic_bool* can
                 throw std::runtime_error("remux startup cancelled or expired");
             }
             const auto wanted = std::min(length, max_read);
+            if (budget) {
+                budget->charge(wanted);
+            }
             const auto count = input.read_at(offset, output, wanted, context);
+            if (budget && context.should_stop()) {
+                throw std::runtime_error("selected copy startup cancelled or expired");
+            }
             if (count == 0 || count > wanted) {
                 throw std::runtime_error("media source read failed while remuxing");
             }
@@ -698,21 +718,25 @@ std::string subtitle_playlist(const Mp4Movie& movie, const std::vector<SegmentLa
     return subtitle_playlist_text(durations_of(movie, segments), track);
 }
 
-RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled, bool video_only,
-                        const MediaReadContext* startup_context) {
+static RemuxedHls remux_to_hls_impl(MediaSource input, const std::atomic_bool* cancelled,
+                                    bool video_only, const MediaReadContext* startup_context,
+                                    std::optional<std::uint64_t> selected_id = {},
+                                    std::uint32_t* output_channels = nullptr) {
     if (!input.size || !input.read_at) {
         throw std::invalid_argument("remux requires a media source");
     }
     auto presentation = std::make_shared<Presentation>();
     presentation->input = std::move(input);
     const auto file_size = presentation->input.size();
-    const auto reader = source_reader(presentation->input, cancelled, startup_context);
+    SourceReadBudget budget;
+    const auto reader = source_reader(presentation->input, cancelled, startup_context,
+                                      selected_id ? &budget : nullptr);
     std::array<std::uint8_t, 4> magic{};
     if (file_size >= magic.size()) {
         reader(0, magic.data(), magic.size());
     }
     const bool matroska = starts_like_matroska(magic.data(), magic.size());
-    if (matroska) {
+    if (matroska && !selected_id) {
         if (auto index = video_only ? MkvIndex::open_video_source(reader, file_size)
                                     : MkvIndex::open(reader, file_size)) {
             const auto rate = index->frame_rate_milli();
@@ -720,11 +744,17 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled, bo
                                  video_only);
         }
     }
-    presentation->movie =
-        matroska
-            ? (video_only ? read_mkv_video_source(reader, file_size) : read_mkv(reader, file_size))
-            : (video_only ? read_mp4_video_source(reader, file_size) : read_mp4(reader, file_size));
-    if (video_only) {
+    if (selected_id) {
+        presentation->movie = matroska ? read_mkv_selected_audio(reader, file_size, *selected_id)
+                                       : read_mp4_selected_audio(reader, file_size, *selected_id);
+        *output_channels = validate_profile_copy_audio(presentation->movie.tracks.at(1), reader);
+    } else {
+        presentation->movie = matroska ? (video_only ? read_mkv_video_source(reader, file_size)
+                                                     : read_mkv(reader, file_size))
+                                       : (video_only ? read_mp4_video_source(reader, file_size)
+                                                     : read_mp4(reader, file_size));
+    }
+    if (video_only || selected_id) {
         const auto& video = presentation->movie.tracks.front();
         (void)ticks_to_audio_samples(track_end_time(video), video.timescale);
     }
@@ -846,5 +876,18 @@ RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled, bo
         }
     }
     return result;
+}
+RemuxedHls remux_to_hls(MediaSource input, const std::atomic_bool* cancelled, bool video_only,
+                        const MediaReadContext* startup_context) {
+    return remux_to_hls_impl(std::move(input), cancelled, video_only, startup_context);
+}
+RemuxedHls remux_selected_audio_to_hls(MediaSource input, std::uint64_t selected_id,
+                                       const MediaReadContext& context,
+                                       std::uint32_t& output_channels) {
+    if (!context.server_stopped || !context.request_cancelled) {
+        throw std::invalid_argument("selected copy requires a valid read context");
+    }
+    return remux_to_hls_impl(std::move(input), context.request_cancelled, false, &context,
+                             selected_id, &output_channels);
 }
 } // namespace send_airplay2::detail

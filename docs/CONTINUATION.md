@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#61 are merged. `main` contains
+Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#62 are merged. `main` contains
 the experimental C API version 4, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,7 +23,30 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D82 private automatic audio policy (2026-10-14).**
+The user's Proceed starts `codex/automatic-audio-policy` from merged
+[PR #62](https://github.com/ilyalissoboi/send-airplay2/pull/62), `c69543a`.
+All 16 checks passed at final head `cc3bb2c` in run `38560520412`.
+Read [the selected-copy table, conversion routing and ownership contract](automatic-audio-policy.md).
+A private named-profile plan selects the original audio identity before filtering.
+Prepared automatic media copies eligible AAC-LC/AC-3/E-AC-3 without backend/cache,
+converts selected DTS-core/FLAC/Opus/Vorbis/PCM/TrueHD through the existing bounded
+stereo owner, or copies video-only when no audio is enabled. Invalid/ambiguous
+selection and source/configuration/cache/timeout/cancellation failures never
+choose another track or retry conversion. Preservation can refuse stereo loss.
+The first copy table is finite; unvalidated AAC/Dolby configurations are refused,
+not guessed compatible or converted merely because a generic decoder exists.
+Selected copy currently uses a bounded full native scan, without Cues acceleration;
+per-block MKV padding/lacing is refused. This is private offline implementation.
+API 4, bindings/CLI, delivery defaults, package and Screenbox pin are unchanged.
+Next: versioned public integration/reporting, then expanded packaged runtime,
+real-file/brokered performance and converted-receiver gates. Speakers and discrete
+converted surround remain hardware-deferred. Inspect actual slice head/CI.
+
 **D81 compact restart anchors (2026-10-14).**
+[PR #62](https://github.com/ilyalissoboi/send-airplay2/pull/62) merged as `c69543a`;
+all 16 checks passed at `cc3bb2c` in run `38560520412`. Do not resume its closed branch.
+D82 above supersedes its historical next-policy queue.
 The user's Proceed starts `codex/matroska-compact-index` from merged
 [PR #61](https://github.com/ilyalissoboi/send-airplay2/pull/61), `00c845d`.
 Its final head `27cbb1e` passed all 16 checks in run `38555473407`.
@@ -564,8 +587,8 @@ estimate limitations. D74 playback/public/storage and D75's x64 AppContainer
 runtime/storage gate are merged. D77 implements the expanded private decoder
 subset; D79 supplies bounded long-file PCM indexing and D80 adds compressed
 duration/restart coordinates. D81 replaces full packet tables with sparse restart
-anchors and validates the recorded high-count synthetic subset. Selected-track
-remux/copy eligibility and automatic policy, then public integration, are next. Real-file performance and converted-receiver validation remain required;
+anchors and validates the recorded high-count synthetic subset. D82 adds private selected-copy eligibility and automatic routing; versioned
+public reporting/integration is next, before remaining runtime/performance/receiver gates. Real-file performance and converted-receiver validation remain required;
 repeat packaged runtime checks for the expanded codec matrix.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
@@ -728,10 +751,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68-D80 and PR #61 are merged. The user's Proceed authorizes D81's compact
-> restart anchors. Read matroska-compact-index.md and inspect the actual open
-> slice head. Selected-track remux/policy and public integration follow its
-> bounded offline scaling gate; do not claim unrestricted source-scan performance. D75 performance and converted-receiver gates
+> D68-D81 and PR #62 are merged. The user's Proceed authorizes D82's private
+> automatic audio policy and selected copy. Read automatic-audio-policy.md and
+> inspect the actual slice head. Versioned public reporting/integration follows;
+> preserve bounded scan/refusal and private/offline evidence limits. D75 performance and converted-receiver gates
 > remain required. Read
 > the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

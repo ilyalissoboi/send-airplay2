@@ -40,6 +40,10 @@ namespace send_airplay2::detail {
  * track metadata or 4,000,000 frames per track.
  */
 [[nodiscard]] Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size);
+/// Selected original enabled audio, never a filtered/default replacement.
+/// This bounded full scan retains signed block padding and refuses selected lacing.
+[[nodiscard]] Mp4Movie read_mkv_selected_audio(const RandomReader& read, std::uint64_t file_size,
+                                               std::uint64_t original_track_number);
 /// Metadata-only inventory through the first Cluster; retains disabled/unsupported
 /// identities and nanosecond CodecDelay/SeekPreRoll without scanning audio frames.
 [[nodiscard]] MediaTrackInventory probe_mkv_tracks(const RandomReader& read,

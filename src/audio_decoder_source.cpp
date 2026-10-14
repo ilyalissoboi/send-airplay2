@@ -357,7 +357,7 @@ Bytes audio_box_payload(const Bytes& entry, std::size_t children_begin, const ch
     fail(AudioDecodeFailure::malformed, "required audio configuration box is absent");
 }
 /// Version-zero AudioSampleEntry children start after its 36-byte fixed header.
-Bytes mp4_audio_private_box(const Bytes& entry, const char* type) {
+Bytes decoder_mp4_audio_private_box(const Bytes& entry, const char* type) {
     constexpr std::size_t audio_header_bytes = 36;
     require(entry.size() >= audio_header_bytes, AudioDecodeFailure::malformed,
             "audio sample entry is truncated");
@@ -474,7 +474,7 @@ AVCodecID source_codec(const SourceTrack& track, SourceContainer container) {
             return AV_CODEC_ID_DTS;
         }
         if (name == "fLaC") {
-            const auto data = mp4_audio_private_box(track.configuration, "dfLa");
+            const auto data = decoder_mp4_audio_private_box(track.configuration, "dfLa");
             require(data.size() >= 4 && data[0] == 0, AudioDecodeFailure::malformed,
                     "FLAC specific box version is malformed");
             Bytes private_data{'f', 'L', 'a', 'C'};
@@ -483,7 +483,7 @@ AVCodecID source_codec(const SourceTrack& track, SourceContainer container) {
             return AV_CODEC_ID_FLAC;
         }
         if (name == "Opus") {
-            const auto data = mp4_audio_private_box(track.configuration, "dOps");
+            const auto data = decoder_mp4_audio_private_box(track.configuration, "dOps");
             require(data.size() >= 11 && data[0] == 0, AudioDecodeFailure::malformed,
                     "Opus specific box is malformed");
             require(data[1] >= 1 && data[1] <= 8 &&

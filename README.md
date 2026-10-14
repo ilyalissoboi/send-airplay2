@@ -50,7 +50,9 @@ supports longer PCM presentations within its resource limits.
 that subset to FLAC/Opus/Vorbis/TrueHD. [Compact restart anchors](docs/matroska-compact-index.md)
 remove the canonical decoder's full packet table, with synthetic high-count
 TrueHD/Opus scaling checks under unchanged I/O and decode budgets.
-Selected copy/remux eligibility, automatic policy and public reporting remain pending.
+[Private selected copy/conversion preparation](docs/automatic-audio-policy.md)
+now resolves the finite profile's copy table or bounded stereo route. Automatic
+mode and decision reporting are not yet exposed through the public API/binding/CLI.
 
 ## Build
 

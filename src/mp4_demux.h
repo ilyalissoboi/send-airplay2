@@ -127,6 +127,17 @@ struct Mp4Movie {
 /// Refuses encrypted entries; absent/disabled/non-audio identity is invalid_argument.
 [[nodiscard]] Mp4Track read_mp4_source_audio(const RandomReader& read, std::uint64_t file_size,
                                              std::uint64_t track_id);
+/// Strict AAC DecoderSpecificInfo, bounded by its enclosing descriptors.
+/// Non-MPEG-4-Audio entries return empty; malformed/missing AAC config throws.
+[[nodiscard]] std::optional<Bytes> mp4_audio_specific_config(const Bytes& sample_entry);
+/// ISO/QuickTime AudioSampleEntry version, with container bounds checked.
+[[nodiscard]] std::uint16_t mp4_audio_entry_version(const Bytes& sample_entry);
+/// One requested codec-private child, with duplicate/malformed box refusal.
+[[nodiscard]] Bytes mp4_audio_private_box(const Bytes& sample_entry, const std::string& child);
+/// Selected original audio, without legacy filtered-track fallback. Invalid IDs
+/// throw invalid_argument; non-remuxable selected entries throw RemuxException.
+[[nodiscard]] Mp4Movie read_mp4_selected_audio(const RandomReader& read, std::uint64_t file_size,
+                                               std::uint64_t track_id);
 /// Index supported video/text independently of audio codec support/selection.
 [[nodiscard]] Mp4Movie read_mp4_video_source(const RandomReader& read, std::uint64_t file_size);
 } // namespace send_airplay2::detail

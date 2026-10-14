@@ -9,7 +9,30 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D82 private automatic audio policy (2026-10-14).**
+The user's Proceed starts `codex/automatic-audio-policy` from merged
+[PR #62](https://github.com/ilyalissoboi/send-airplay2/pull/62), `c69543a`.
+All 16 checks passed at final head `cc3bb2c` in run `38560520412`.
+Read [the selected-copy table, conversion routing and ownership contract](automatic-audio-policy.md).
+A private named-profile plan selects the original audio identity before filtering.
+Prepared automatic media copies eligible AAC-LC/AC-3/E-AC-3 without backend/cache,
+converts selected DTS-core/FLAC/Opus/Vorbis/PCM/TrueHD through the existing bounded
+stereo owner, or copies video-only when no audio is enabled. Invalid/ambiguous
+selection and source/configuration/cache/timeout/cancellation failures never
+choose another track or retry conversion. Preservation can refuse stereo loss.
+The first copy table is finite; unvalidated AAC/Dolby configurations are refused,
+not guessed compatible or converted merely because a generic decoder exists.
+Selected copy currently uses a bounded full native scan, without Cues acceleration;
+per-block MKV padding/lacing is refused. This is private offline implementation.
+API 4, bindings/CLI, delivery defaults, package and Screenbox pin are unchanged.
+Next: versioned public integration/reporting, then expanded packaged runtime,
+real-file/brokered performance and converted-receiver gates. Speakers and discrete
+converted surround remain hardware-deferred. Inspect actual slice head/CI.
+
 **D81 compact restart anchors (2026-10-14).**
+[PR #62](https://github.com/ilyalissoboi/send-airplay2/pull/62) merged as `c69543a`;
+all 16 checks passed at `cc3bb2c` in run `38560520412`. Do not resume its closed branch.
+D82 above supersedes its historical next-policy queue.
 The user's Proceed starts `codex/matroska-compact-index` from merged
 [PR #61](https://github.com/ilyalissoboi/send-airplay2/pull/61), `00c845d`.
 Its final head `27cbb1e` passed all 16 checks in run `38555473407`.

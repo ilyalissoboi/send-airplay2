@@ -89,6 +89,18 @@ public:
         need(count);
         position_ += count;
     }
+    Cursor subcursor(std::size_t size) {
+        need(size);
+        Cursor result(data_ + position_, size);
+        position_ += size;
+        return result;
+    }
+    Bytes bytes(std::size_t size) {
+        need(size);
+        Bytes result(data_ + position_, data_ + position_ + size);
+        position_ += size;
+        return result;
+    }
     /// Version byte of a full box; the 24 flag bits are skipped.
     std::uint8_t full_box_version() {
         const auto version = u8();
@@ -677,6 +689,93 @@ std::optional<std::uint8_t> mp4_audio_object_type(const Bytes& sample_entry) {
                                                   : std::nullopt;
 }
 
+std::uint16_t mp4_audio_entry_version(const Bytes& sample_entry) {
+    const auto entries = children(sample_entry.data(), sample_entry.size());
+    if (entries.size() != 1) {
+        malformed("audio description must contain one entry");
+    }
+    auto fields = entries.front().payload();
+    constexpr std::size_t sample_entry_prefix_bytes = 8;
+    fields.skip(sample_entry_prefix_bytes);
+    return fields.u16();
+}
+Bytes mp4_audio_private_box(const Bytes& sample_entry, const std::string& child) {
+    const auto entries = children(sample_entry.data(), sample_entry.size());
+    if (entries.size() != 1 || child.size() != 4) {
+        malformed("invalid audio description or child identity");
+    }
+    auto boxes = audio_entry_children(entries.front());
+    if (const auto* wave = find(boxes, fourcc("wave"))) {
+        const auto nested = children(*wave);
+        boxes.insert(boxes.end(), nested.begin(), nested.end());
+    }
+    const Box* found = nullptr;
+    for (const auto& box : boxes) {
+        if (fourcc_text(box.type) == child) {
+            if (found) {
+                malformed("duplicate audio configuration box");
+            }
+            found = &box;
+        }
+    }
+    if (!found) {
+        malformed("missing audio configuration box");
+    }
+    return Bytes(found->begin + found->header, found->begin + found->size);
+}
+std::optional<Bytes> mp4_audio_specific_config(const Bytes& sample_entry) {
+    constexpr std::uint8_t es_descriptor_tag = 3;
+    constexpr std::uint8_t decoder_config_tag = 4;
+    constexpr std::uint8_t decoder_specific_info_tag = 5;
+    constexpr std::uint8_t mpeg4_audio_stream_flags = 0x15;
+    constexpr std::uint8_t stream_dependence_flag = 0x80;
+    constexpr std::uint8_t url_flag = 0x40;
+    constexpr std::uint8_t ocr_stream_flag = 0x20;
+    if (mp4_audio_object_type(sample_entry) != aac_object_type) {
+        return {};
+    }
+    const auto data = mp4_audio_private_box(sample_entry, "esds");
+    Cursor root(data.data(), data.size());
+    if (root.full_box_version() != 0 || root.u8() != es_descriptor_tag) {
+        malformed("invalid AAC ES descriptor");
+    }
+    auto es = root.subcursor(descriptor_length(root));
+    es.skip(2);
+    const auto flags = es.u8();
+    if (flags & stream_dependence_flag) {
+        es.skip(2);
+    }
+    if (flags & url_flag) {
+        es.skip(es.u8());
+    }
+    if (flags & ocr_stream_flag) {
+        es.skip(2);
+    }
+    if (es.u8() != decoder_config_tag) {
+        malformed("missing AAC decoder descriptor");
+    }
+    auto decoder = es.subcursor(descriptor_length(es));
+    if (decoder.u8() != aac_object_type || decoder.u8() != mpeg4_audio_stream_flags) {
+        malformed("invalid MPEG-4 audio decoder descriptor");
+    }
+    decoder.skip(11); // bufferSizeDB 3, maxBitrate 4, avgBitrate 4.
+    std::optional<Bytes> config;
+    while (decoder.remaining()) {
+        const auto tag = decoder.u8();
+        auto field = decoder.subcursor(descriptor_length(decoder));
+        if (tag == decoder_specific_info_tag) {
+            if (config) {
+                malformed("duplicate AAC DecoderSpecificInfo");
+            }
+            config = field.bytes(field.remaining());
+        }
+    }
+    if (!config || config->empty()) {
+        malformed("missing AAC DecoderSpecificInfo");
+    }
+    return config;
+}
+
 namespace {
 // --- Text subtitle tracks (D60) ---------------------------------------------
 
@@ -932,6 +1031,23 @@ Mp4Movie read_mp4(const RandomReader& read, std::uint64_t file_size) {
 }
 Mp4Movie read_mp4_video_source(const RandomReader& read, std::uint64_t file_size) {
     return read_mp4_tracks(read, file_size, true);
+}
+
+Mp4Movie read_mp4_selected_audio(const RandomReader& read, std::uint64_t file_size,
+                                 std::uint64_t track_id) {
+    auto movie = read_mp4_video_source(read, file_size);
+    auto audio = read_mp4_source_audio(read, file_size, track_id);
+    if (!remuxable_audio_codec(audio.codec) ||
+        (audio.codec == "mp4a" && mp4_audio_object_type(audio.sample_entry) != aac_object_type)) {
+        unsupported("selected original audio codec is not remuxable");
+    }
+    try {
+        (void)plan_mp4_audio_seek(audio, movie.timescale, 0, 0);
+    } catch (const std::invalid_argument&) {
+        unsupported("selected audio edit list is outside the copy timeline");
+    }
+    movie.tracks.push_back(std::move(audio));
+    return movie;
 }
 
 MediaTrackInventory probe_mp4_tracks(const RandomReader& read, std::uint64_t file_size) {

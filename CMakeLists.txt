@@ -46,14 +46,14 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SAP2_SECRET_SERVICE)
   endif()
 endif()
 # HLS remux (D60): MP4 sample tables to fMP4 segments, no media copied.
-set(sap2_remux_sources src/mp4_demux.cpp src/mkv_demux.cpp src/media_track_inventory.cpp src/sample_entries.cpp src/text_tracks.cpp src/fmp4_writer.cpp src/hls_variant.cpp src/hls_remux.cpp)
+set(sap2_remux_sources src/audio_delivery_policy.cpp src/mp4_demux.cpp src/mkv_demux.cpp src/media_track_inventory.cpp src/sample_entries.cpp src/text_tracks.cpp src/fmp4_writer.cpp src/hls_variant.cpp src/hls_remux.cpp)
 set(sap2_mrp_sources src/protobuf_wire.cpp src/mrp_messages.cpp src/mrp_channel.cpp src/mrp_session.cpp)
 set(sap2_session_sources src/binary_plist.cpp src/session_messages.cpp src/url_playback_session.cpp src/url_playback_tracker.cpp ${sap2_mrp_sources})
 set(sap2_auth_sources src/auth_workflow.cpp ${sap2_credential_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
 # The playback C interface loads credentials by profile inside the library; no
 # secret or C++ type crosses its exported boundary (docs/public-api.md).
 # Host credential stores and pairing (D49) reuse the CLI's auth workflow.
-set(sap2_playback_api_sources src/cast_controller.cpp src/prepared_stereo_media.cpp src/playback_api.cpp src/host_credentials.cpp src/auth_workflow.cpp ${sap2_credential_sources})
+set(sap2_playback_api_sources src/cast_controller.cpp src/prepared_stereo_media.cpp src/prepared_automatic_media.cpp src/playback_api.cpp src/host_credentials.cpp src/auth_workflow.cpp ${sap2_credential_sources})
 # The C discovery interface (D54) wraps discover() for non-C++ hosts.
 set(sap2_receivers_api_sources src/discovery_api.cpp src/receiver_list.cpp)
 add_library(send_airplay2 src/http_range.cpp src/media_server.cpp src/discovery.cpp src/discovery_core.cpp src/discovery_transport.cpp ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources} ${sap2_receiver_sources} ${sap2_session_sources} ${sap2_playback_api_sources} ${sap2_remux_sources} ${sap2_receivers_api_sources})
@@ -216,6 +216,18 @@ if(BUILD_TESTING)
   sap2_warnings(hls_directory_tests)
   add_test(NAME hls_directory_tests COMMAND hls_directory_tests)
   set_tests_properties(hls_directory_tests PROPERTIES TIMEOUT 60)
+  add_executable(automatic_audio_tests tests/automatic_audio_tests.cpp src/prepared_automatic_media.cpp
+    src/prepared_stereo_media.cpp ${sap2_remux_sources})
+  target_include_directories(automatic_audio_tests PRIVATE src)
+  target_link_libraries(automatic_audio_tests PRIVATE send_airplay2)
+  target_compile_features(automatic_audio_tests PRIVATE cxx_std_17)
+  sap2_stereo_backend(automatic_audio_tests)
+  sap2_warnings(automatic_audio_tests)
+  add_test(NAME automatic_audio_tests COMMAND automatic_audio_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/audio-policy
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/decoder
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/expanded-decoder)
+  set_tests_properties(automatic_audio_tests PROPERTIES TIMEOUT 120)
   add_executable(remux_tests tests/remux_tests.cpp ${sap2_remux_sources})
   target_include_directories(remux_tests PRIVATE src)
   target_link_libraries(remux_tests PRIVATE send_airplay2)
