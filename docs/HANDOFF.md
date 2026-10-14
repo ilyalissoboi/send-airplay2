@@ -9,7 +9,30 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D81 compact restart anchors (2026-10-14).**
+The user's Proceed starts `codex/matroska-compact-index` from merged
+[PR #61](https://github.com/ilyalissoboi/send-airplay2/pull/61), `00c845d`.
+Its final head `27cbb1e` passed all 16 checks in run `38555473407`.
+Read [the sparse scan/index contract](matroska-compact-index.md).
+Canonical PCM/FLAC/Opus/Vorbis/TrueHD now scan selected native packets without
+retaining a complete packet table. At most 65536 source-second restart anchors
+support binary lookup and nearby clock/trim reconstruction. Vorbis restores its
+previous overlap mode; TrueHD anchors begin at major sync. The legacy vector
+helper retains its 262144-packet bound; the canonical decoder no longer uses it.
+Synthetic one-hour TrueHD (4.32 million packets) and two-hour Opus (360000)
+check cold/reused >4-GiB seeks, literal EOF, compact memory and cancellation.
+All existing timing/trim/AAC controls remain. I/O/callback/deadline/window/input
+bounds are unchanged: a large source scan or restart gap can still be refused.
+This is bounded offline scaling, not unrestricted full-film or receiver proof.
+Next: selected-track remux/copy eligibility and automatic delivery policy under
+an explicit profile, followed by versioned public reporting. Real-file/brokered
+performance, expanded packaged runtime and converted-receiver gates remain.
+No package or Screenbox pin change; speakers/discrete surround stay deferred.
+
 **D80 compressed packet indexing (2026-10-14).**
+[PR #61](https://github.com/ilyalissoboi/send-airplay2/pull/61) merged as `00c845d`;
+all 16 checks passed at `27cbb1e` in run `38555473407`. Do not resume its closed branch.
+D81 above supersedes the historical packet-table scaling queue below.
 The user's Proceed starts `codex/matroska-compressed-index` from merged PR #60
 (`531ff58`, final head `a2b3953`, all 16 checks passed in run `38532987731`).
 Read [the compressed clock/restart contract and limits](matroska-compressed-index.md).

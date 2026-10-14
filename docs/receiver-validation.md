@@ -1,5 +1,9 @@
 # Receiver validation record
 
+**D81 boundary (2026-10-14):** [compact indexing controls](matroska-compact-index.md)
+cover synthetic high-count TrueHD/Opus and retained offline timing/trim/AAC cases.
+They add no receiver, real-film or expanded packaged-runtime observation.
+
 **D80 boundary (2026-10-14):** [compressed index/duration/restart checks](matroska-compressed-index.md)
 cover owned 30-second movies, short independently prepared audible controls and
 synthetic one-hour FLAC. They add no receiver or expanded packaged-runtime result;

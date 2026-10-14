@@ -15,6 +15,7 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <cerrno>
 #include <cmath>
@@ -23,6 +24,7 @@ extern "C" {
 #include <cstdio>
 #include <cstring>
 #include <exception>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -112,6 +114,15 @@ struct Reader {
     std::size_t calls = 0;
     const MediaReadContext* context = nullptr;
     std::exception_ptr error;
+    static constexpr std::size_t header_cache_bytes = 1024;
+    static constexpr std::size_t large_packet_header_page_bytes = 256;
+    struct HeaderPage {
+        std::array<std::uint8_t, header_cache_bytes> bytes{};
+        std::uint64_t offset = 0;
+        std::size_t length = 0;
+    };
+    std::array<HeaderPage, 2> header_pages{};
+    std::size_t header_read_ahead = large_packet_header_page_bytes;
 
     void check() const {
         if (error) {
@@ -139,6 +150,37 @@ struct Reader {
             require(actual > 0 && actual <= capacity, AudioDecodeFailure::source_error,
                     "indexed audio source returned an invalid read length");
             done += actual;
+        }
+    }
+    /// Shared small read-ahead for container and codec headers. Co-located tiny
+    /// units consume one host read rather than a callback per parser invocation.
+    /// Every refill is charged to the unchanged operation budgets; cache hits
+    /// still check cancellation. Larger complete packets use direct reads.
+    void read_header(std::uint64_t offset, std::uint8_t* output, std::size_t length) {
+        check();
+        require(offset <= size && length <= size - offset, AudioDecodeFailure::malformed,
+                "indexed audio header exceeds source");
+        if (length > header_read_ahead) {
+            read_exact(offset, output, length);
+            return;
+        }
+        while (length != 0) {
+            check();
+            const auto page_number = offset / header_read_ahead;
+            const auto page_offset = page_number * header_read_ahead;
+            auto& page = header_pages[page_number % header_pages.size()];
+            if (page.length == 0 || page.offset != page_offset) {
+                page.offset = page_offset;
+                page.length = static_cast<std::size_t>(
+                    std::min<std::uint64_t>(header_read_ahead, size - page_offset));
+                read_exact(page.offset, page.bytes.data(), page.length);
+            }
+            const auto within = static_cast<std::size_t>(offset - page_offset);
+            const auto count = std::min(length, page.length - within);
+            std::memcpy(output, page.bytes.data() + within, count);
+            offset += count;
+            output += count;
+            length -= count;
         }
     }
     static int read(void* opaque, std::uint8_t* output, int capacity) noexcept {
@@ -207,6 +249,9 @@ struct Operation {
         reader.error = {};
         reader.calls = 0;
         reader.requested_bytes = 0;
+        for (auto& page : reader.header_pages) {
+            page.length = 0;
+        }
     }
     ~Operation() {
         reader.context = nullptr;
@@ -569,7 +614,20 @@ struct IndexedAudioPacket {
     std::uint32_t samples = 0;
     std::uint32_t skip = 0;
     std::uint32_t discard = 0;
-    std::size_t restart = 0; ///< Nearest preceding independently restartable packet.
+};
+
+/// One independently restartable sparse coordinate, never a full packet table.
+/// Vorbis duration parsing needs only the previous packet's overlap mode.
+struct AudioRestartAnchor {
+    MkvAudioCursor cursor;
+    std::int64_t position = 0;
+    std::uint64_t ordinal = 0;
+    MkvAudioPacket previous;
+};
+constexpr std::size_t maximum_audio_anchors = 65536;
+struct IndexedPacketAnalysis {
+    IndexedAudioPacket packet;
+    bool restartable;
 };
 
 struct ParserDeleter {
@@ -616,7 +674,7 @@ public:
                                 ? packet.size
                                 : std::min(packet.size, header_prefix_bytes);
         std::vector<std::uint8_t> bytes(length + AV_INPUT_BUFFER_PADDING_SIZE, 0);
-        reader.read_exact(packet.offset, bytes.data(), length);
+        reader.read_header(packet.offset, bytes.data(), length);
         if (codec_->codec_id == AV_CODEC_ID_TRUEHD) {
             require(length >= 8, AudioDecodeFailure::unsupported,
                     "indexed TrueHD access-unit header is truncated");
@@ -670,8 +728,14 @@ struct AudioDecoderSource::Impl {
     bool usable = true;
     InputAudioFormat input_format;
     AudioCadence cadence;
-    std::vector<IndexedAudioPacket> indexed_packets;
-    std::size_t indexed_begin = 0;
+    std::vector<AudioRestartAnchor> audio_anchors;
+    std::size_t anchor_begin = 0;
+    std::uint64_t indexed_packet_count = 0;
+    std::int64_t indexed_end_position = 0;
+    std::int64_t index_delay = 0;
+    std::int64_t index_precision = 0;
+    std::int64_t index_presentation_limit = 0;
+    std::uint32_t index_bytes_per_frame = 0;
 
     Impl(const MediaSource& source, std::uint64_t size) : reader{source, size} {}
     void open_format() {
@@ -808,75 +872,43 @@ struct AudioDecoderSource::Impl {
                 AudioDecodeFailure::unsupported, "indexed audio packing is unsupported");
         auto parser =
             compressed ? std::make_unique<CompressedPacketParser>(*stream->codecpar) : nullptr;
-        const auto packets = read_mkv_audio_packets(
-            [this](std::uint64_t offset, std::uint8_t* output, std::size_t length) {
-                reader.read_exact(offset, output, length);
-            },
-            reader.size, selected.id);
-        require(!packets.empty(), AudioDecodeFailure::malformed, "selected audio has no packets");
-        indexed_packets.reserve(packets.size());
-        std::int64_t position = 0;
-        std::size_t restart = 0;
-        const auto presentation_limit = av_rescale_q(
+        const bool small_packet_codec = codec->codec_id == AV_CODEC_ID_TRUEHD ||
+                                        codec->codec_id == AV_CODEC_ID_OPUS ||
+                                        codec->codec_id == AV_CODEC_ID_VORBIS;
+        reader.header_read_ahead = small_packet_codec ? Reader::header_cache_bytes
+                                                      : Reader::large_packet_header_page_bytes;
+        index_delay = delay;
+        index_precision = precision;
+        index_bytes_per_frame = static_cast<std::uint32_t>(bytes_per_frame);
+        index_presentation_limit = av_rescale_q(
             static_cast<std::int64_t>(maximum_presentation_samples), output_clock, input_clock);
-        for (const auto& packet : packets) {
-            require(packet.stored_timestamp_ns <=
-                        static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()),
-                    AudioDecodeFailure::unsupported, "indexed audio timestamp exceeds bounds");
-            const auto timestamp =
-                av_rescale_q(static_cast<std::int64_t>(packet.stored_timestamp_ns),
-                             nanosecond_clock, input_clock) -
-                delay;
-            if (indexed_packets.empty()) {
-                position = timestamp;
-            }
-            require(position >= -maximum_frame_samples && position <= presentation_limit &&
-                        timestamp >= position - precision - 1 &&
-                        timestamp <= position + precision + 1,
-                    AudioDecodeFailure::unsupported,
-                    "indexed audio packet clock is discontinuous or out of bounds");
-            std::uint32_t frames = 0;
-            if (packed_pcm) {
-                require(packet.size > 0 && packet.size % bytes_per_frame == 0 &&
-                            packet.size / bytes_per_frame <= maximum_frame_samples,
-                        AudioDecodeFailure::unsupported,
-                        "indexed audio packet packing exceeds bounds");
-                frames = static_cast<std::uint32_t>(packet.size / bytes_per_frame);
-                restart = indexed_packets.size();
-            } else {
-                const auto analysis = parser->analyse(reader, packet);
-                frames = analysis.samples;
-                require(!indexed_packets.empty() || analysis.restartable,
-                        AudioDecodeFailure::unsupported,
-                        "indexed audio has no initial restart point");
-                if (analysis.restartable) {
-                    restart = indexed_packets.size();
+        MkvAudioScanner scanner(header_reader(), reader.size, selected.id);
+        MkvAudioPacket packet, previous;
+        MkvAudioCursor cursor;
+        std::int64_t position = 0;
+        while (scanner.next(packet, cursor)) {
+            const bool first = indexed_packet_count == 0;
+            const auto analysis = analyse_indexed_packet(packet, position, first, parser.get());
+            if (first || (analysis.restartable &&
+                          position - audio_anchors.back().position >= codec->sample_rate)) {
+                require(audio_anchors.size() < maximum_audio_anchors, AudioDecodeFailure::too_large,
+                        "indexed audio restart anchor budget exceeded");
+                if (audio_anchors.size() == audio_anchors.capacity()) {
+                    constexpr std::size_t initial_anchor_capacity = 64;
+                    const auto capacity =
+                        std::max(initial_anchor_capacity,
+                                 std::min(maximum_audio_anchors, audio_anchors.capacity() * 2));
+                    audio_anchors.reserve(capacity);
                 }
+                audio_anchors.push_back({cursor, position, indexed_packet_count, previous});
             }
-            const auto padding =
-                av_rescale_q(packet.discard_padding_ns, nanosecond_clock, input_clock);
-            require(padding >= -maximum_frame_samples && padding <= maximum_frame_samples,
-                    AudioDecodeFailure::unsupported, "indexed audio packet trim exceeds bounds");
-            const auto skip = padding < 0               ? static_cast<std::uint32_t>(-padding)
-                              : indexed_packets.empty() ? static_cast<std::uint32_t>(delay)
-                                                        : 0U;
-            const auto discard = padding > 0 ? static_cast<std::uint32_t>(padding) : 0U;
-            if (compressed && codec->codec_id == AV_CODEC_ID_VORBIS && indexed_packets.empty()) {
-                // The native Vorbis decoder discards its entire first overlap
-                // frame intrinsically. Smaller/absent container delay leaves
-                // the corresponding initial silence. A skip beyond that frame
-                // cannot be applied by this backend without being lost.
-                require(delay <= frames && skip <= frames && discard == 0,
-                        AudioDecodeFailure::unsupported,
-                        "indexed Vorbis first trim exceeds decoder overlap priming");
-            }
-            require(packed_pcm ? skip + discard < frames : skip + discard <= frames,
-                    AudioDecodeFailure::unsupported,
-                    "indexed audio packet trim is outside admitted frame");
-            indexed_packets.push_back(
-                {packet.offset, packet.size, position, frames, skip, discard, restart});
-            position += frames;
+            position += analysis.packet.samples;
+            previous = packet;
+            ++indexed_packet_count;
         }
+        require(indexed_packet_count != 0, AudioDecodeFailure::malformed,
+                "selected audio has no packets");
+        indexed_end_position = position;
         cadence.absolute_precision_samples = static_cast<std::uint32_t>(absolute_precision);
         // Packet positions are exact relative to the bounded initial origin.
         // Keep the original absolute clock precision separately for reporting.
@@ -884,23 +916,77 @@ struct AudioDecoderSource::Impl {
         cadence.rebuild_from_start = false;
         cadence.indexed_clock = true;
     }
+    RandomReader header_reader() {
+        return [this](std::uint64_t offset, std::uint8_t* output, std::size_t length) {
+            reader.read_header(offset, output, length);
+        };
+    }
+    /// Shared admission/reconstruction checks. position advances only in the
+    /// caller, after this complete packet and its signed trim have been checked.
+    IndexedPacketAnalysis analyse_indexed_packet(const MkvAudioPacket& packet,
+                                                 std::int64_t& position, bool first,
+                                                 CompressedPacketParser* parser) {
+        const AVRational input_clock{1, codec->sample_rate};
+        require(packet.stored_timestamp_ns <=
+                    static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()),
+                AudioDecodeFailure::unsupported, "indexed audio timestamp exceeds bounds");
+        const auto timestamp = av_rescale_q(static_cast<std::int64_t>(packet.stored_timestamp_ns),
+                                            nanosecond_clock, input_clock) -
+                               index_delay;
+        if (first) {
+            position = timestamp;
+        }
+        require(position >= -maximum_frame_samples && position <= index_presentation_limit &&
+                    timestamp >= position - index_precision - 1 &&
+                    timestamp <= position + index_precision + 1,
+                AudioDecodeFailure::unsupported,
+                "indexed audio packet clock is discontinuous or out of bounds");
+        PacketAnalysis analysis{};
+        if (!parser) {
+            require(packet.size > 0 && packet.size % index_bytes_per_frame == 0 &&
+                        packet.size / index_bytes_per_frame <= maximum_frame_samples,
+                    AudioDecodeFailure::unsupported, "indexed audio packet packing exceeds bounds");
+            analysis = {packet.size / index_bytes_per_frame, true};
+        } else {
+            analysis = parser->analyse(reader, packet);
+            require(!first || analysis.restartable, AudioDecodeFailure::unsupported,
+                    "indexed audio has no initial restart point");
+        }
+        const auto padding = av_rescale_q(packet.discard_padding_ns, nanosecond_clock, input_clock);
+        require(padding >= -maximum_frame_samples && padding <= maximum_frame_samples,
+                AudioDecodeFailure::unsupported, "indexed audio packet trim exceeds bounds");
+        const auto skip = padding < 0 ? static_cast<std::uint32_t>(-padding)
+                          : first     ? static_cast<std::uint32_t>(index_delay)
+                                      : 0U;
+        const auto discard = padding > 0 ? static_cast<std::uint32_t>(padding) : 0U;
+        if (parser && codec->codec_id == AV_CODEC_ID_VORBIS && first) {
+            // The decoder removes its first overlap frame intrinsically and
+            // would overwrite a larger skip. Smaller delay preserves silence.
+            require(index_delay <= analysis.samples && skip <= analysis.samples && discard == 0,
+                    AudioDecodeFailure::unsupported,
+                    "indexed Vorbis first trim exceeds decoder overlap priming");
+        }
+        require(parser ? skip + discard <= analysis.samples : skip + discard < analysis.samples,
+                AudioDecodeFailure::unsupported,
+                "indexed audio packet trim is outside admitted frame");
+        return {{packet.offset, packet.size, position, analysis.samples, skip, discard},
+                analysis.restartable};
+    }
     void seek(std::uint64_t begin) {
         const auto metadata_preroll = av_rescale_q(
             static_cast<std::int64_t>(selected.seek_preroll_ns), nanosecond_clock, output_clock);
         const auto preroll = std::max<std::int64_t>(output_rate, metadata_preroll);
-        if (!indexed_packets.empty()) {
+        if (!audio_anchors.empty()) {
             const auto target = av_rescale_q(static_cast<std::int64_t>(begin) - preroll,
                                              output_clock, AVRational{1, codec->sample_rate});
             const auto after =
-                std::upper_bound(indexed_packets.begin(), indexed_packets.end(), target,
-                                 [](std::int64_t sample, const IndexedAudioPacket& packet) {
-                                     return sample < packet.position;
+                std::upper_bound(audio_anchors.begin(), audio_anchors.end(), target,
+                                 [](std::int64_t sample, const AudioRestartAnchor& anchor) {
+                                     return sample < anchor.position;
                                  });
-            const auto candidate =
-                after == indexed_packets.begin()
-                    ? 0
-                    : static_cast<std::size_t>(after - indexed_packets.begin() - 1);
-            indexed_begin = indexed_packets[candidate].restart;
+            anchor_begin = after == audio_anchors.begin()
+                               ? 0
+                               : static_cast<std::size_t>(after - audio_anchors.begin() - 1);
             avcodec_flush_buffers(codec.get());
             return;
         }
@@ -989,17 +1075,18 @@ public:
         }
         finish_window();
     }
-    void run_indexed(const std::vector<IndexedAudioPacket>& packets, std::size_t begin) {
-        for (auto index = begin; !complete_; ++index) {
+    void run_indexed(const std::function<std::optional<IndexedAudioPacket>()>& next) {
+        while (!complete_) {
             reader_.check();
-            if (index == packets.size()) {
+            const auto packet = next();
+            if (!packet) {
                 checked(avcodec_send_packet(&codec_, nullptr));
                 drain();
                 flush_resampler();
                 output_.eof = true;
                 break;
             }
-            const auto& indexed = packets[index];
+            const auto& indexed = *packet;
             require(indexed.size <= static_cast<std::uint32_t>(std::numeric_limits<int>::max()),
                     AudioDecodeFailure::too_large,
                     "indexed audio packet allocation exceeds bounds");
@@ -1348,6 +1435,11 @@ AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& cont
     return std::unique_ptr<AudioDecoderSource>(new AudioDecoderSource(std::move(impl)));
 }
 
+AudioDecoderSource::IndexStatistics AudioDecoderSource::index_statistics() const noexcept {
+    return {impl_->indexed_packet_count, impl_->audio_anchors.size(),
+            impl_->audio_anchors.capacity() * sizeof(AudioRestartAnchor)};
+}
+
 DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, std::uint32_t count,
                                                    const MediaReadContext& context) {
     require(impl_->usable && count > 0 && count <= maximum_window_samples &&
@@ -1366,8 +1458,38 @@ DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, s
                               impl_->reader, impl_->input_format, impl_->cadence, window, count,
                               impl_->container == SourceContainer::mp4 &&
                                   impl_->codec->codec_id == AV_CODEC_ID_OPUS);
-        if (!impl_->indexed_packets.empty()) {
-            decoder.run_indexed(impl_->indexed_packets, impl_->indexed_begin);
+        if (!impl_->audio_anchors.empty()) {
+            MkvAudioScanner scanner(impl_->header_reader(), impl_->reader.size, impl_->selected.id);
+            const auto& anchor = impl_->audio_anchors[impl_->anchor_begin];
+            scanner.resume(anchor.cursor);
+            auto* parameters = impl_->format->streams[impl_->stream_index]->codecpar;
+            const bool packed_pcm = impl_->selected.codec.compare(0, 6, "A_PCM/") == 0;
+            auto parser =
+                packed_pcm ? nullptr : std::make_unique<CompressedPacketParser>(*parameters);
+            if (parser && impl_->codec->codec_id == AV_CODEC_ID_VORBIS && anchor.ordinal != 0) {
+                // Seed only the parser's prior overlap mode, so the anchor's
+                // duration matches open even across a block-size transition.
+                (void)parser->analyse(impl_->reader, anchor.previous);
+            }
+            auto position = anchor.position;
+            auto ordinal = anchor.ordinal;
+            decoder.run_indexed([&]() -> std::optional<IndexedAudioPacket> {
+                MkvAudioPacket packet;
+                MkvAudioCursor cursor;
+                if (!scanner.next(packet, cursor)) {
+                    require(ordinal == impl_->indexed_packet_count &&
+                                position == impl_->indexed_end_position,
+                            AudioDecodeFailure::malformed, "indexed audio source end changed");
+                    return {};
+                }
+                require(ordinal < impl_->indexed_packet_count, AudioDecodeFailure::malformed,
+                        "indexed audio source packet count changed");
+                auto analysed =
+                    impl_->analyse_indexed_packet(packet, position, ordinal == 0, parser.get());
+                position += analysed.packet.samples;
+                ++ordinal;
+                return analysed.packet;
+            });
         } else {
             decoder.run(*impl_->format);
         }

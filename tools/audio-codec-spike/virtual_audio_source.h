@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace sap2_test {
-/** One hour of repeated original 1-second PCM or FLAC and black all-IDR video.
+/** Repeated original 1-second PCM/FLAC/TrueHD/Opus and black all-IDR video.
  * A sparse EBML Void places every cluster beyond 4 GiB. Only headers and one
  * owned payload cycle are allocated. This is synthetic callback/index scaling,
  * not a real-film, packaged-host or receiver result. Callbacks borrow this owner.
@@ -25,13 +25,15 @@ public:
     std::atomic<std::size_t> size_calls{0};
     std::atomic_bool fail_payload{false};
 
-    explicit VirtualAudioSource(const std::filesystem::path& path) {
+    explicit VirtualAudioSource(const std::filesystem::path& path, std::uint32_t seconds = 3600)
+        : seconds_(seconds) {
         Source fixture(path);
         Context context;
         const auto inventory = probe_media_tracks(fixture.callbacks(), context.value);
         const auto selection = select_source_audio(inventory, 42);
         const auto& selected = inventory.tracks[selection.track_index];
         const bool flac = selected.codec == "A_FLAC";
+        packet_cycle_ = selected.codec == "A_TRUEHD" || selected.codec == "A_OPUS";
         const RandomReader read = [&](std::uint64_t offset, std::uint8_t* output,
                                       std::size_t length) {
             expect(offset <= fixture.bytes->size() && length <= fixture.bytes->size() - offset,
@@ -44,6 +46,17 @@ public:
         read(frame.offset, picture.data(), picture.size());
         constexpr std::size_t payload_cycle_bytes = 48000 * 2 * 2;
         for (const auto& packet : read_mkv_audio_packets(read, fixture.bytes->size(), 42)) {
+            if (packet_cycle_) {
+                if (packet.stored_timestamp_ns >= 1'000'000'000) {
+                    break;
+                }
+                Bytes bytes(packet.size);
+                read(packet.offset, bytes.data(), bytes.size());
+                const auto ticks =
+                    static_cast<std::uint16_t>((packet.stored_timestamp_ns + 500000) / 1000000);
+                append(payload_, element(0xa3, block(42, ticks, bytes)));
+                continue;
+            }
             if (flac) {
                 expect(payload_.empty(),
                        "virtual FLAC has one independently authored one-second block");
@@ -60,7 +73,7 @@ public:
                 break;
             }
         }
-        expect(flac || payload_.size() == payload_cycle_bytes,
+        expect(packet_cycle_ || flac || payload_.size() == payload_cycle_bytes,
                "virtual PCM one-second original cycle");
         build_clusters(picture);
         build_prefix(inventory.tracks.front().configuration, selected);
@@ -85,55 +98,22 @@ public:
                     if (context.should_stop() || offset >= size_) {
                         return std::size_t{0};
                     }
-                    const auto limit = std::min<std::size_t>(capacity, 997);
-                    if (offset < prefix_.size()) {
-                        const auto count = std::min<std::size_t>(limit, prefix_.size() - offset);
-                        std::memcpy(output, prefix_.data() + offset, count);
-                        return count;
+                    if (!packet_cycle_) {
+                        return read_piece(offset, output, std::min<std::size_t>(capacity, 997));
                     }
-                    if (offset < first_cluster_offset) {
-                        const auto after =
-                            std::upper_bound(padding_.begin(), padding_.end(), offset,
-                                             [](std::uint64_t value, const Cluster& padding) {
-                                                 return value < padding.offset;
-                                             });
-                        const auto& padding = *(after - 1);
-                        const auto relative = offset - padding.offset;
-                        if (relative < padding.header.size()) {
-                            const auto count = static_cast<std::size_t>(
-                                std::min<std::uint64_t>(limit, padding.header.size() - relative));
-                            std::memcpy(output, padding.header.data() + relative, count);
-                            return count;
+                    // High-count controls deliver complete requested pages,
+                    // including synthetic boundaries, so AVIO's requested-byte
+                    // budget measures scanning rather than artificial short reads.
+                    std::size_t done = 0;
+                    while (done < capacity && offset + done < size_ && !context.should_stop()) {
+                        const auto count =
+                            read_piece(offset + done, output + done, capacity - done);
+                        if (count == 0) {
+                            break;
                         }
-                        const auto padding_end =
-                            after == padding_.end() ? first_cluster_offset : after->offset;
-                        const auto count = static_cast<std::size_t>(
-                            std::min<std::uint64_t>(limit, padding_end - offset));
-                        std::memset(output, 0, count);
-                        return count;
+                        done += count;
                     }
-                    const auto after =
-                        std::upper_bound(clusters_.begin(), clusters_.end(), offset,
-                                         [](std::uint64_t value, const Cluster& cluster) {
-                                             return value < cluster.offset;
-                                         });
-                    const auto& cluster = *(after - 1);
-                    const auto relative = offset - cluster.offset;
-                    if (relative < cluster.header.size()) {
-                        const auto count = static_cast<std::size_t>(
-                            std::min<std::uint64_t>(limit, cluster.header.size() - relative));
-                        std::memcpy(output, cluster.header.data() + relative, count);
-                        return count;
-                    }
-                    if (fail_payload) {
-                        return std::size_t{0};
-                    }
-                    const auto within = relative - cluster.header.size();
-                    const auto count = static_cast<std::size_t>(
-                        std::min<std::uint64_t>(limit, payload_.size() - within));
-                    std::memcpy(output, payload_.data() + within, count);
-                    payload_read += count;
-                    return count;
+                    return done;
                 }};
     }
     void reset_reads() {
@@ -151,15 +131,65 @@ private:
     std::vector<Cluster> clusters_;
     std::vector<Cluster> padding_;
     std::uint64_t size_ = 0;
+    std::uint32_t seconds_;
+    bool packet_cycle_ = false;
+    std::size_t read_piece(std::uint64_t offset, std::uint8_t* output, std::size_t capacity) {
+        const auto limit = capacity;
+        if (offset < prefix_.size()) {
+            const auto count = std::min<std::size_t>(limit, prefix_.size() - offset);
+            std::memcpy(output, prefix_.data() + offset, count);
+            return count;
+        }
+        if (offset < first_cluster_offset) {
+            const auto after = std::upper_bound(
+                padding_.begin(), padding_.end(), offset,
+                [](std::uint64_t value, const Cluster& padding) { return value < padding.offset; });
+            const auto& padding = *(after - 1);
+            const auto relative = offset - padding.offset;
+            if (relative < padding.header.size()) {
+                const auto count = static_cast<std::size_t>(
+                    std::min<std::uint64_t>(limit, padding.header.size() - relative));
+                std::memcpy(output, padding.header.data() + relative, count);
+                return count;
+            }
+            const auto padding_end = after == padding_.end() ? first_cluster_offset : after->offset;
+            const auto count =
+                static_cast<std::size_t>(std::min<std::uint64_t>(limit, padding_end - offset));
+            std::memset(output, 0, count);
+            return count;
+        }
+        const auto after = std::upper_bound(
+            clusters_.begin(), clusters_.end(), offset,
+            [](std::uint64_t value, const Cluster& cluster) { return value < cluster.offset; });
+        const auto& cluster = *(after - 1);
+        const auto relative = offset - cluster.offset;
+        if (relative < cluster.header.size()) {
+            const auto count = static_cast<std::size_t>(
+                std::min<std::uint64_t>(limit, cluster.header.size() - relative));
+            std::memcpy(output, cluster.header.data() + relative, count);
+            return count;
+        }
+        if (fail_payload) {
+            return std::size_t{0};
+        }
+        const auto within = relative - cluster.header.size();
+        const auto count =
+            static_cast<std::size_t>(std::min<std::uint64_t>(limit, payload_.size() - within));
+        std::memcpy(output, payload_.data() + within, count);
+        payload_read += count;
+        return count;
+    }
     void build_clusters(const Bytes& picture) {
         auto position = first_cluster_offset;
-        for (std::uint32_t second = 0; second < 3600; ++second) {
+        for (std::uint32_t second = 0; second < seconds_; ++second) {
             auto contents = integer(0xe7, second * 1000);
             append(contents, element(0xa3, block(11, 0, picture)));
             append(contents, element(0xa3, block(11, 500, picture)));
-            auto audio_header = header(0xa3, payload_.size() + 4);
-            append(audio_header, {0xaa, 0, 0, 0x80});
-            append(contents, audio_header);
+            if (!packet_cycle_) {
+                auto audio_header = header(0xa3, payload_.size() + 4);
+                append(audio_header, {0xaa, 0, 0, 0x80});
+                append(contents, audio_header);
+            }
             auto cluster = header(0x1f43b675, contents.size() + payload_.size());
             append(cluster, contents);
             clusters_.push_back({position, std::move(cluster)});
@@ -174,7 +204,7 @@ private:
         append(prefix_, {0x18, 0x53, 0x80, 0x67, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
         const auto segment_data = prefix_.size();
         auto info = integer(0x2ad7b1, 1000000);
-        append(info, element(0x4489, floating(3600000.0)));
+        append(info, element(0x4489, floating(seconds_ * 1000.0)));
         append(prefix_, element(0x1549a966, info));
         auto video_entry = integer(0xd7, 11);
         append(video_entry, integer(0x83, 1));
@@ -192,9 +222,12 @@ private:
         if (!audio_track.configuration.empty()) {
             append(audio_entry, element(0x63a2, audio_track.configuration));
         }
+        if (audio_track.codec_delay_ns != 0) {
+            append(audio_entry, integer(0x56aa, audio_track.codec_delay_ns));
+        }
         auto audio = element(0xb5, floating(48000.0));
         append(audio, integer(0x9f, 2));
-        if (audio_track.codec != "A_FLAC") {
+        if (audio_track.codec.compare(0, 6, "A_PCM/") == 0) {
             append(audio, integer(0x6264, 16));
         }
         append(audio_entry, element(0xe1, audio));

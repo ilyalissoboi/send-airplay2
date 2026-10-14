@@ -62,6 +62,38 @@ struct MkvAudioPacket {
 [[nodiscard]] std::vector<MkvAudioPacket>
 read_mkv_audio_packets(const RandomReader& read, std::uint64_t file_size,
                        std::uint64_t original_track_number);
+/// Resume coordinate for an immutable, selected unlaced audio stream. Offsets
+/// identify the containing Cluster and its next block; timestamp is in ticks.
+struct MkvAudioCursor {
+    std::uint64_t cluster_offset = 0;
+    std::uint64_t block_offset = 0;
+    std::int64_t cluster_timestamp = 0;
+};
+/** Constant-memory selected audio scan using the same identity/encoding/lacing
+ * validation as read_mkv_audio_packets. Reads only headers, retaining one packet.
+ * The read callback and immutable source must outlive the scanner. Serialized
+ * calls only; read exceptions and RemuxException propagate. The caller bounds
+ * total work, bytes, cancellation and deadlines. No callbacks after return.
+ * Cursors are borrowed coordinates from this same immutable source/selection;
+ * resume() must receive one previously returned by next().
+ */
+class MkvAudioScanner {
+public:
+    MkvAudioScanner(RandomReader read, std::uint64_t file_size,
+                    std::uint64_t original_track_number);
+    ~MkvAudioScanner();
+    MkvAudioScanner(const MkvAudioScanner&) = delete;
+    MkvAudioScanner& operator=(const MkvAudioScanner&) = delete;
+    MkvAudioScanner(MkvAudioScanner&&) = delete;
+    MkvAudioScanner& operator=(MkvAudioScanner&&) = delete;
+    /// False at EOF; cursor identifies the returned packet's containing block.
+    bool next(MkvAudioPacket& packet, MkvAudioCursor& cursor);
+    void resume(const MkvAudioCursor& cursor);
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+};
 /// Index supported video/text independently of audio codec support/selection.
 [[nodiscard]] Mp4Movie read_mkv_video_source(const RandomReader& read, std::uint64_t file_size);
 

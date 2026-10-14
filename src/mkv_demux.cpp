@@ -81,6 +81,7 @@ constexpr std::uint64_t nanoseconds_per_second = 1'000'000'000;
 constexpr std::uint64_t max_metadata_bytes = 16ULL << 20;
 constexpr std::size_t max_frames_per_track = 4'000'000;
 constexpr std::size_t max_audio_index_packets = 262144;
+constexpr std::size_t selected_audio_header_window_bytes = 256;
 constexpr std::size_t window_bytes = 16 * 1024;
 constexpr std::uint32_t movie_timescale = 1000; // No edit lists use it.
 constexpr std::uint8_t simple_block_keyframe = 0x80;
@@ -626,9 +627,14 @@ std::int64_t packet_discard_padding(WindowReader& reader, const Element& field) 
 /// unknown-size one.
 std::uint64_t read_cluster(WindowReader& reader, const Element& cluster,
                            std::vector<SelectedTrack*>& tracks,
-                           std::int64_t* cluster_timestamp = nullptr) {
-    std::int64_t timestamp = 0;
-    auto position = cluster.data;
+                           std::int64_t* cluster_timestamp = nullptr,
+                           MkvAudioCursor* scan = nullptr,
+                           MkvAudioCursor* packet_cursor = nullptr) {
+    // Streaming callers provide both cursors and exactly one selected audio
+    // track. Its vector is cleared between calls; padding is parsed before
+    // returning the one packet, so a BlockGroup cannot lose trim on resume.
+    std::int64_t timestamp = scan ? scan->cluster_timestamp : 0;
+    auto position = scan && scan->block_offset ? scan->block_offset : cluster.data;
     while (position < cluster.end()) {
         const auto child = read_element(reader, position, cluster.end());
         if (cluster.unknown_size && level1(child.id)) {
@@ -692,6 +698,14 @@ std::uint64_t read_cluster(WindowReader& reader, const Element& cluster,
                     (*indexed)->frames.back().discard_padding_ns =
                         packet_discard_padding(reader, *padding);
                 }
+            }
+        }
+        if (scan) {
+            scan->block_offset = child.end();
+            scan->cluster_timestamp = timestamp;
+            if (!tracks.front()->frames.empty()) {
+                *packet_cursor = {scan->cluster_offset, position, timestamp};
+                return child.end();
             }
         }
         position = child.end();
@@ -1641,57 +1655,108 @@ Mp4Movie read_mkv_video_source(const RandomReader& read, std::uint64_t file_size
     return read_mkv_tracks(read, file_size, true);
 }
 
+struct MkvAudioScanner::Impl {
+    RandomReader read;
+    WindowReader reader;
+    MkvLayout layout;
+    SelectedTrack selected;
+    std::vector<SelectedTrack*> tracks;
+    std::optional<Element> cluster;
+    MkvAudioCursor scan;
+    std::uint64_t position;
+    Impl(RandomReader callback, std::uint64_t file_size, std::uint64_t identity)
+        : read(std::move(callback)), reader(read, file_size, selected_audio_header_window_bytes),
+          layout(read_layout(reader, file_size, TrackReadMode::inventory)),
+          position(layout.first_cluster) {
+        if (identity == 0) {
+            unsupported("selected original audio identity is zero");
+        }
+        const auto matches =
+            std::count_if(layout.source_tracks.begin(), layout.source_tracks.end(),
+                          [identity](const TrackInfo& track) { return track.number == identity; });
+        const auto found =
+            std::find_if(layout.source_tracks.begin(), layout.source_tracks.end(),
+                         [identity](const TrackInfo& track) { return track.number == identity; });
+        if (matches != 1) {
+            unsupported("selected original audio identity is unavailable or ambiguous");
+        }
+        if (found->type != track_type_audio || !found->enabled) {
+            unsupported("selected original audio track is unavailable");
+        }
+        if (found->encoded || !found->standard_timeline) {
+            unsupported("selected audio packet index requires an unencoded standard timeline");
+        }
+        selected = {*found, {}, std::nullopt, {}, true};
+        tracks.push_back(&selected);
+    }
+};
+MkvAudioScanner::MkvAudioScanner(RandomReader read, std::uint64_t file_size,
+                                 std::uint64_t original_track_number)
+    : impl_(std::make_unique<Impl>(std::move(read), file_size, original_track_number)) {}
+MkvAudioScanner::~MkvAudioScanner() = default;
+void MkvAudioScanner::resume(const MkvAudioCursor& cursor) {
+    auto& state = *impl_;
+    const auto cluster =
+        read_element(state.reader, cursor.cluster_offset, state.layout.segment.end());
+    if (cluster.id != id_cluster || cursor.block_offset < cluster.data ||
+        cursor.block_offset >= cluster.end() || cursor.cluster_timestamp < 0) {
+        malformed("invalid selected audio resume coordinate");
+    }
+    state.cluster = cluster;
+    state.scan = cursor;
+    state.position = cursor.cluster_offset;
+    state.selected.frames.clear();
+}
+bool MkvAudioScanner::next(MkvAudioPacket& packet, MkvAudioCursor& cursor) {
+    auto& state = *impl_;
+    while (state.position < state.layout.segment.end()) {
+        if (!state.cluster) {
+            const auto element =
+                read_element(state.reader, state.position, state.layout.segment.end());
+            if (element.id != id_cluster) {
+                if (element.id == id_tracks || element.id == id_info) {
+                    unsupported("selected audio metadata changes after the first cluster");
+                }
+                if (element.unknown_size) {
+                    malformed("unknown-size element outside selected packet clusters");
+                }
+                state.position = element.end();
+                continue;
+            }
+            state.cluster = element;
+            state.scan = {state.position, element.data, 0};
+        }
+        state.selected.frames.clear();
+        const auto next =
+            read_cluster(state.reader, *state.cluster, state.tracks, nullptr, &state.scan, &cursor);
+        if (!state.selected.frames.empty()) {
+            const auto& frame = state.selected.frames.front();
+            const auto ticks = static_cast<std::uint64_t>(frame.timestamp);
+            if (ticks > std::numeric_limits<std::uint64_t>::max() / state.layout.timestamp_scale) {
+                unsupported("selected audio timestamp overflows nanoseconds");
+            }
+            packet = {frame.offset, frame.size, ticks * state.layout.timestamp_scale,
+                      frame.discard_padding_ns};
+            return true;
+        }
+        state.position = next;
+        state.cluster.reset();
+    }
+    return false;
+}
 std::vector<MkvAudioPacket> read_mkv_audio_packets(const RandomReader& read,
                                                    std::uint64_t file_size,
                                                    std::uint64_t original_track_number) {
-    if (original_track_number == 0) {
-        unsupported("selected original audio identity is zero");
-    }
-    constexpr std::size_t audio_header_window_bytes = 256;
-    WindowReader reader(read, file_size, audio_header_window_bytes);
-    const auto layout = read_layout(reader, file_size, TrackReadMode::inventory);
-    const auto found = std::find_if(layout.source_tracks.begin(), layout.source_tracks.end(),
-                                    [original_track_number](const TrackInfo& track) {
-                                        return track.number == original_track_number;
-                                    });
-    const auto matches = std::count_if(layout.source_tracks.begin(), layout.source_tracks.end(),
-                                       [original_track_number](const TrackInfo& track) {
-                                           return track.number == original_track_number;
-                                       });
-    if (matches != 1) {
-        unsupported("selected original audio identity is unavailable or ambiguous");
-    }
-    if (found == layout.source_tracks.end() || found->type != track_type_audio || !found->enabled) {
-        unsupported("selected original audio track is unavailable");
-    }
-    if (found->encoded || !found->standard_timeline) {
-        unsupported("selected audio packet index requires an unencoded standard timeline");
-    }
-    SelectedTrack selected{*found, {}, std::nullopt, {}, true};
-    std::vector<SelectedTrack*> tracks{&selected};
-    for (auto position = layout.first_cluster; position < layout.segment.end();) {
-        const auto element = read_element(reader, position, layout.segment.end());
-        if (element.id == id_cluster) {
-            position = read_cluster(reader, element, tracks);
-        } else {
-            if (element.id == id_tracks || element.id == id_info) {
-                unsupported("selected audio metadata changes after the first cluster");
-            }
-            if (element.unknown_size) {
-                malformed("unknown-size element outside selected packet clusters");
-            }
-            position = element.end();
-        }
-    }
+    MkvAudioScanner scanner(read, file_size, original_track_number);
     std::vector<MkvAudioPacket> result;
-    result.reserve(selected.frames.size());
-    for (const auto& frame : selected.frames) {
-        const auto ticks = static_cast<std::uint64_t>(frame.timestamp);
-        if (ticks > std::numeric_limits<std::uint64_t>::max() / layout.timestamp_scale) {
-            unsupported("selected audio timestamp overflows nanoseconds");
+    MkvAudioPacket packet;
+    MkvAudioCursor cursor;
+    while (scanner.next(packet, cursor)) {
+        if (result.size() == max_audio_index_packets) {
+            throw RemuxException(RemuxFailure::too_large,
+                                 "MKV: selected audio packet index limit exceeded");
         }
-        result.push_back(
-            {frame.offset, frame.size, ticks * layout.timestamp_scale, frame.discard_padding_ns});
+        result.push_back(packet);
     }
     return result;
 }

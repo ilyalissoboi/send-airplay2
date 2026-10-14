@@ -1,5 +1,10 @@
 # Selected Matroska PCM packet index (D79)
 
+**D81 extension:** [compact restart anchors](matroska-compact-index.md) stream
+canonical selected audio without full packet tables, lifting the old decoder
+packet-count cap under unchanged read/work bounds. Selected copy/remux policy
+and public reporting remain next; synthetic scaling is not real-film proof.
+
 The user's Proceed on 2026-10-14 authorizes the first long-file indexing increment
 from merged PR #59 (`9763189`). Its final head `2bc7a5c` passed all 16 checks in
 [run 38510002555](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38510002555).

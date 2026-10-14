@@ -1,0 +1,32 @@
+{
+  "license": "Apache-2.0; synthesized silence and owned D80 video",
+  "generator": "generate_compact_index_fixtures.py",
+  "input_wav_sha256": "ede1f6dd33abfce7bb3a45ba79b0ab5f8baae692709dd32214a41da9af55ab13",
+  "video_source_sha256": "e9dd34e756f5c383bcbf6e51b64f98955719124a831c436717e54d4a2ac28ea7",
+  "development_tool": "ffmpeg version 9.0.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+  "encoder_commands": [
+    [
+      "-i",
+      "silence.wav",
+      "-c:a",
+      "opus",
+      "-strict",
+      "-2",
+      "-opus_delay",
+      "20",
+      "-f",
+      "opus",
+      "silence.opus"
+    ]
+  ],
+  "fixtures": [
+    {
+      "file": "opus-silence.mkv",
+      "bytes": 3880,
+      "sha256": "9eec6f66f8aaeea98b40562c136c6b0b3a82b45d9083ec80c96059c4661e0106",
+      "coded_frames": 48000,
+      "codec_delay_samples": 120,
+      "packets": 50
+    }
+  ]
+}

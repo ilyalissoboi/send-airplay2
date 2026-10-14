@@ -1,10 +1,16 @@
 # Selected Matroska compressed-audio index (D80)
 
+**D81 extension:** [compact restart anchors](matroska-compact-index.md) supersede
+D80's full decoder packet table and its packet-count cap. The legacy vector helper
+retains that cap. D80 below is the dated foundation and evidence, not the current
+retained-memory contract. PR #61 merged as `00c845d` after all 16 final-head checks
+passed at `27cbb1e` in run `38555473407`.
+
 The user's Proceed on 2026-10-14 authorizes the next indexing increment from
 merged [PR #60](https://github.com/ilyalissoboi/send-airplay2/pull/60), `531ff58`.
 Its final head `a2b3953` passed all 16 checks in
 [run 38532987731](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38532987731).
-The active branch is `codex/matroska-compressed-index`; inspect its actual PR head.
+The implementation branch `codex/matroska-compressed-index` is merged; do not resume it.
 This adds codec-aware durations and restart coordinates to D79's native selected
 packet path. It adds no automatic policy, ABI, package or Screenbox change.
 

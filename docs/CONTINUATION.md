@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#60 are merged. `main` contains
+Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#61 are merged. `main` contains
 the experimental C API version 4, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,7 +23,30 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D81 compact restart anchors (2026-10-14).**
+The user's Proceed starts `codex/matroska-compact-index` from merged
+[PR #61](https://github.com/ilyalissoboi/send-airplay2/pull/61), `00c845d`.
+Its final head `27cbb1e` passed all 16 checks in run `38555473407`.
+Read [the sparse scan/index contract](matroska-compact-index.md).
+Canonical PCM/FLAC/Opus/Vorbis/TrueHD now scan selected native packets without
+retaining a complete packet table. At most 65536 source-second restart anchors
+support binary lookup and nearby clock/trim reconstruction. Vorbis restores its
+previous overlap mode; TrueHD anchors begin at major sync. The legacy vector
+helper retains its 262144-packet bound; the canonical decoder no longer uses it.
+Synthetic one-hour TrueHD (4.32 million packets) and two-hour Opus (360000)
+check cold/reused >4-GiB seeks, literal EOF, compact memory and cancellation.
+All existing timing/trim/AAC controls remain. I/O/callback/deadline/window/input
+bounds are unchanged: a large source scan or restart gap can still be refused.
+This is bounded offline scaling, not unrestricted full-film or receiver proof.
+Next: selected-track remux/copy eligibility and automatic delivery policy under
+an explicit profile, followed by versioned public reporting. Real-file/brokered
+performance, expanded packaged runtime and converted-receiver gates remain.
+No package or Screenbox pin change; speakers/discrete surround stay deferred.
+
 **D80 compressed packet indexing (2026-10-14).**
+[PR #61](https://github.com/ilyalissoboi/send-airplay2/pull/61) merged as `00c845d`;
+all 16 checks passed at `27cbb1e` in run `38555473407`. Do not resume its closed branch.
+D81 above supersedes the historical packet-table scaling queue below.
 The user's Proceed starts `codex/matroska-compressed-index` from merged PR #60
 (`531ff58`, final head `a2b3953`, all 16 checks passed in run `38532987731`).
 Read [the compressed clock/restart contract and limits](matroska-compressed-index.md).
@@ -540,9 +563,9 @@ reporting and synthetic cold-seek scaling. D73 authoring is merged with explicit
 estimate limitations. D74 playback/public/storage and D75's x64 AppContainer
 runtime/storage gate are merged. D77 implements the expanded private decoder
 subset; D79 supplies bounded long-file PCM indexing and D80 adds compressed
-duration/restart coordinates. Compact high-packet-count movie scaling is next,
-before general selected remux/policy
-and public integration. Real-file performance and converted-receiver validation remain required;
+duration/restart coordinates. D81 replaces full packet tables with sparse restart
+anchors and validates the recorded high-count synthetic subset. Selected-track
+remux/copy eligibility and automatic policy, then public integration, are next. Real-file performance and converted-receiver validation remain required;
 repeat packaged runtime checks for the expanded codec matrix.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
@@ -705,10 +728,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68-D79 and PR #60 are merged. The user's Proceed authorizes D80's compressed
-> packet/index increment. Read matroska-compressed-index.md and inspect
-> the actual open slice head. Compact high-packet-count anchors remain a gate before
-> selected remux/policy and public integration. D75 performance and converted-receiver gates
+> D68-D80 and PR #61 are merged. The user's Proceed authorizes D81's compact
+> restart anchors. Read matroska-compact-index.md and inspect the actual open
+> slice head. Selected-track remux/policy and public integration follow its
+> bounded offline scaling gate; do not claim unrestricted source-scan performance. D75 performance and converted-receiver gates
 > remain required. Read
 > the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

@@ -53,6 +53,14 @@ if(WINDOWS_STORE)
   add_custom_command(TARGET sap2_codec_probe POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${sap2_codec_runtime_dlls} "$<TARGET_FILE_DIR:sap2_codec_probe>" COMMAND_EXPAND_LISTS)
 elseif(BUILD_TESTING)
+  add_executable(sap2_compact_index_tests compact_index_tests.cpp)
+  target_link_libraries(sap2_compact_index_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
+  target_include_directories(sap2_compact_index_tests SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})
+  sap2_codec_warnings(sap2_compact_index_tests)
+  add_test(NAME matroska_compact_index COMMAND sap2_compact_index_tests
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/compressed-index"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/compact-index")
+  set_tests_properties(matroska_compact_index PROPERTIES TIMEOUT 120)
   add_executable(sap2_compressed_index_tests compressed_index_tests.cpp)
   target_link_libraries(sap2_compressed_index_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
   target_include_directories(sap2_compressed_index_tests SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})
