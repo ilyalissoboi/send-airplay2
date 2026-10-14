@@ -111,8 +111,8 @@ Recorded final x64 direct metrics: TrueHD open requested **252582724 bytes**, wi
 **294912 retained coordinate bytes** and 3600 anchors; late windows requested
 267892 bytes, early/middle 145476/146500. Opus open requested **14812385 bytes**,
 with **589824 retained bytes** and 7200 anchors; each measured window requested
-11319 bytes. Observed synthetic open CPU/wall time was about 1.1 s / 0.09 s in
-this run, not a real-host/movie performance guarantee.
+11319 bytes. Observed synthetic open wall times were about 1.1 s (TrueHD) and 0.09 s
+(Opus) in this run, not a real-host/movie performance guarantee.
 
 Standalone and integrated x64 UWP compilation pass; five probe/codec DLLs and six
 integrated DLLs pass AppContainer/app-CRT/import inspection. Seven touched C++
