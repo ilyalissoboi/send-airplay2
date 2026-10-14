@@ -4,7 +4,10 @@ The user's Proceed on 2026-10-14 authorizes this slice from merged
 [PR #62](https://github.com/ilyalissoboi/send-airplay2/pull/62), `c69543a`.
 All 16 checks passed at `cc3bb2c` in
 [run 38560520412](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38560520412).
-The active branch is `codex/automatic-audio-policy`; inspect its actual PR head.
+PR #63 merged as `6788583`; all 16 checks passed at final head `4f2494b` in
+[run 38584885677](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38584885677).
+[D83 public integration](automatic-audio-public.md) now exposes this foundation;
+the private-slice API boundary and next-step statements below are historical.
 This implements the private policy/selected-remux step of
 [the user-approved plan](automatic-audio-transcoding-plan.md).
 It does not expose automatic delivery in API 4, its bindings or CLI.

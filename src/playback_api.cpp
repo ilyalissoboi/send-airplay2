@@ -16,15 +16,18 @@
 
 #include <chrono>
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <exception>
 #include <memory>
 #include <string_view>
 #include <new>
 #include <optional>
 #include <string>
+#include <stdexcept>
 #include <utility>
 
 /// Borrowed view of one media read's stop conditions.
@@ -143,6 +146,13 @@ static_assert(offsetof(sap2_cast_options, audio_track_id) >= sizeof(CastOptionsV
 constexpr std::size_t cast_options_v4_size =
     offsetof(sap2_cast_options, fragment_store) + sizeof(sap2_cast_options::fragment_store);
 constexpr std::size_t cast_status_v3_size = offsetof(sap2_cast_status, media_failure);
+constexpr std::size_t cast_status_v4_size = offsetof(sap2_cast_status, audio_decision);
+// Round the final v4 field to its ABI alignment, including x86 tail padding.
+constexpr std::size_t cast_options_v4_full_size =
+    (cast_options_v4_size + alignof(sap2_cast_options) - 1) / alignof(sap2_cast_options) *
+    alignof(sap2_cast_options);
+static_assert(offsetof(sap2_cast_options, audio_profile) >= cast_options_v4_full_size,
+              "audio profile overlaps v4 tail padding");
 
 // Longest numeric IPv6 text form (INET6_ADDRSTRLEN without the terminator).
 constexpr std::size_t max_address_length = 45;
@@ -212,13 +222,23 @@ MediaSource media_source_for(const std::shared_ptr<HostSource>& host) {
 
 /** Cache callbacks retain this disarmed owner until successful create. Cleanup
  * drains reads first in the controller, and release follows all callback copies.
+ * Automatic stores clear only through their accepted conversion owner; forced
+ * stereo also clears on release. Offline checks suppress context release and
+ * borrow the optional cancellation callback/atomic until all workers drain.
  */
 class HostFragmentStore {
 public:
-    explicit HostFragmentStore(const sap2_aac_fragment_store& store) noexcept : store_(store) {}
+    explicit HostFragmentStore(const sap2_aac_fragment_store& store, bool clear_on_release = true,
+                               void* cancel_context = nullptr,
+                               int (*should_cancel)(void*) = nullptr,
+                               std::atomic_bool* cancelled = nullptr) noexcept
+        : store_(store), clear_on_release_(clear_on_release), cancel_context_(cancel_context),
+          should_cancel_(should_cancel), cancelled_(cancelled) {}
     ~HostFragmentStore() {
         if (armed_) {
-            clear();
+            if (clear_on_release_) {
+                clear();
+            }
             if (store_.release) {
                 store_.release(store_.context);
             }
@@ -237,20 +257,26 @@ public:
         }
     }
     void seal(std::size_t index, const Bytes& bytes, const AacCacheContext& context) const {
-        const sap2_read_control control{&context.request, &context.cast_stopped};
+        const sap2_read_control control{&context.request, &context.cast_stopped, cancel_context_,
+                                        should_cancel_, cancelled_};
         if (store_.seal(store_.context, index, bytes.data(), bytes.size(), &control) != SAP2_OK) {
             throw std::runtime_error("fragment storage failed");
         }
     }
     std::size_t read(std::size_t index, std::uint64_t offset, std::uint8_t* buffer,
                      std::size_t capacity, const AacCacheContext& context) const noexcept {
-        const sap2_read_control control{&context.request, &context.cast_stopped};
+        const sap2_read_control control{&context.request, &context.cast_stopped, cancel_context_,
+                                        should_cancel_, cancelled_};
         return store_.read_at(store_.context, index, offset, buffer, capacity, &control);
     }
 
 private:
     sap2_aac_fragment_store store_;
     bool armed_ = false;
+    const bool clear_on_release_;
+    void* const cancel_context_;
+    int (*const should_cancel_)(void*);
+    std::atomic_bool* const cancelled_;
     std::atomic_bool cleared_{false};
 };
 AacFragmentStore fragment_store_for(const std::shared_ptr<HostFragmentStore>& host) {
@@ -329,16 +355,95 @@ CastResult settings_from(const sap2_cast_options& options, CastSettings& setting
                 settings.audio_track_id = options.audio_track_id;
             }
             settings.cache_quota_bytes = options.cache_quota_bytes;
+        } else if (options.delivery == SAP2_DELIVERY_AUTOMATIC_AUDIO_HLS) {
+            if (options.struct_size < sizeof(sap2_cast_options) ||
+                options.audio_profile != SAP2_AUDIO_PROFILE_APPLE_HLS_V1 ||
+                options.conversion_permission > SAP2_AUDIO_PRESERVE_ORIGINAL) {
+                return CastResult::invalid_argument;
+            }
+            if (options.fragment_store &&
+                (options.fragment_store->struct_size < sizeof(sap2_aac_fragment_store) ||
+                 !options.fragment_store->seal || !options.fragment_store->read_at ||
+                 !options.fragment_store->clear)) {
+                return CastResult::invalid_argument;
+            }
+            settings.delivery = CastDelivery::automatic_audio_hls;
+            settings.audio_track_id = options.audio_track_id
+                                          ? std::optional<std::uint64_t>(options.audio_track_id)
+                                          : std::nullopt;
+            settings.cache_quota_bytes = options.cache_quota_bytes;
+            settings.conversion_permission =
+                options.conversion_permission == SAP2_AUDIO_ALLOW_STEREO
+                    ? AudioConversionPermission::allow_stereo
+                    : AudioConversionPermission::preserve_original;
         } else if (options.delivery != SAP2_DELIVERY_PROGRESSIVE) {
             return CastResult::invalid_argument;
         }
     }
     if (options.struct_size >= cast_options_v4_size &&
         settings.delivery != CastDelivery::stereo_aac_hls &&
+        settings.delivery != CastDelivery::automatic_audio_hls &&
         (options.audio_track_id || options.cache_quota_bytes || options.fragment_store)) {
         return CastResult::invalid_argument;
     }
     return CastResult::ok;
+}
+
+std::uint32_t audio_family_code(SourceAudioFamily family) noexcept {
+    switch (family) {
+    case SourceAudioFamily::none:
+        return SAP2_AUDIO_FAMILY_NONE;
+    case SourceAudioFamily::aac:
+        return SAP2_AUDIO_FAMILY_AAC;
+    case SourceAudioFamily::ac3:
+        return SAP2_AUDIO_FAMILY_AC3;
+    case SourceAudioFamily::eac3:
+        return SAP2_AUDIO_FAMILY_EAC3;
+    case SourceAudioFamily::dts:
+        return SAP2_AUDIO_FAMILY_DTS;
+    case SourceAudioFamily::flac:
+        return SAP2_AUDIO_FAMILY_FLAC;
+    case SourceAudioFamily::opus:
+        return SAP2_AUDIO_FAMILY_OPUS;
+    case SourceAudioFamily::vorbis:
+        return SAP2_AUDIO_FAMILY_VORBIS;
+    case SourceAudioFamily::pcm:
+        return SAP2_AUDIO_FAMILY_PCM;
+    case SourceAudioFamily::truehd:
+        return SAP2_AUDIO_FAMILY_TRUEHD;
+    }
+    return SAP2_AUDIO_FAMILY_NONE;
+}
+void write_audio_decision(const AudioDeliveryPlan& plan, sap2_audio_decision& decision) noexcept {
+    decision = {};
+    decision.struct_size = sizeof(decision);
+    decision.profile = SAP2_AUDIO_PROFILE_APPLE_HLS_V1;
+    decision.selected_audio_id = plan.source_id;
+    decision.source_family = audio_family_code(plan.source_family);
+    decision.output_family = audio_family_code(plan.output_family);
+    decision.output_channels = plan.output_channels;
+    switch (plan.action) {
+    case AudioDeliveryAction::video_only:
+        decision.action = SAP2_AUDIO_ACTION_VIDEO_ONLY;
+        break;
+    case AudioDeliveryAction::copy:
+        decision.action = SAP2_AUDIO_ACTION_COPY;
+        break;
+    case AudioDeliveryAction::stereo_aac:
+        decision.action = SAP2_AUDIO_ACTION_STEREO_AAC;
+        break;
+    }
+    switch (plan.reason) {
+    case AudioDeliveryReason::no_enabled_audio:
+        decision.reason = SAP2_AUDIO_REASON_NO_ENABLED_AUDIO;
+        break;
+    case AudioDeliveryReason::profile_copy:
+        decision.reason = SAP2_AUDIO_REASON_PROFILE_COPY;
+        break;
+    case AudioDeliveryReason::profile_requires_stereo:
+        decision.reason = SAP2_AUDIO_REASON_PROFILE_REQUIRES_STEREO;
+        break;
+    }
 }
 
 std::uint32_t phase_code(CastPhase phase) noexcept {
@@ -475,12 +580,18 @@ void write_status(const CastSnapshot& snapshot, sap2_cast_status& status) noexce
     scalar(snapshot.playback.position_seconds, status.has_position, status.position_seconds);
     scalar(snapshot.playback.duration_seconds, status.has_duration, status.duration_seconds);
     scalar(snapshot.playback.playback_rate, status.has_playback_rate, status.playback_rate);
-    if (status.struct_size >= sizeof(sap2_cast_status)) {
+    if (status.struct_size >= cast_status_v4_size) {
         status.media_failure = static_cast<std::uint32_t>(snapshot.media_failure);
         status.media_cleaned_up = snapshot.media_cleaned_up ? 1 : 0;
         status.authoring_flags = snapshot.authoring_flags;
         status.reserved_v4 = 0;
         status.selected_audio_id = snapshot.selected_audio_id;
+    }
+    if (status.struct_size >= sizeof(sap2_cast_status)) {
+        status.audio_decision = {};
+        if (snapshot.audio_decision) {
+            write_audio_decision(*snapshot.audio_decision, status.audio_decision);
+        }
     }
 }
 
@@ -681,6 +792,93 @@ void sap2_track_list_free(sap2_track_list* tracks) {
     delete tracks;
 }
 
+void sap2_audio_options_init(sap2_audio_options* options, size_t struct_size) {
+    if (!options || struct_size < sizeof(sap2_audio_options)) {
+        return;
+    }
+    *options = {};
+    options->struct_size = sizeof(*options);
+    options->profile = SAP2_AUDIO_PROFILE_APPLE_HLS_V1;
+    options->timeout_ms = SAP2_MAX_START_TIMEOUT_MS;
+}
+int32_t sap2_media_check_audio(const sap2_media_source* source, const sap2_audio_options* options,
+                               void* context, int (*should_cancel)(void*),
+                               sap2_audio_decision* decision) {
+    if (!decision || decision->struct_size < sizeof(sap2_audio_decision)) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    const auto output_size = decision->struct_size;
+    *decision = {};
+    decision->struct_size = output_size;
+    if (!source || source->struct_size < sizeof(sap2_media_source) || !source->read_at ||
+        !options || options->struct_size < sizeof(sap2_audio_options) ||
+        options->profile != SAP2_AUDIO_PROFILE_APPLE_HLS_V1 ||
+        options->conversion_permission > SAP2_AUDIO_PRESERVE_ORIGINAL || !options->timeout_ms ||
+        options->timeout_ms > SAP2_MAX_START_TIMEOUT_MS) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    const auto* offered_store = options->fragment_store;
+    if (offered_store &&
+        (offered_store->struct_size < sizeof(sap2_aac_fragment_store) || !offered_store->seal ||
+         !offered_store->read_at || !offered_store->clear)) {
+        return SAP2_ERROR_INVALID_ARGUMENT;
+    }
+    std::atomic_bool cancelled{false};
+    const MediaReadContext request{&cancelled, &cancelled,
+                                   std::chrono::steady_clock::now() +
+                                       std::chrono::milliseconds(options->timeout_ms)};
+    const auto poll = [&] {
+        if (should_cancel && should_cancel(context)) {
+            cancelled = true;
+        }
+        return request.should_stop();
+    };
+    try {
+        if (poll()) {
+            return cancelled ? SAP2_ERROR_CANCELLED : SAP2_ERROR_MEDIA_GENERATION_TIMEOUT;
+        }
+        MediaSource borrowed;
+        borrowed.size = [source] { return source->size; };
+        borrowed.read_at = [&](std::uint64_t offset, std::uint8_t* buffer, std::size_t capacity,
+                               const MediaReadContext& read_context) {
+            if (poll()) {
+                return std::size_t{0};
+            }
+            const sap2_read_control control{&read_context, nullptr, context, should_cancel,
+                                            &cancelled};
+            const auto count = source->read_at(source->context, offset, buffer, capacity, &control);
+            return poll() ? std::size_t{0} : count;
+        };
+        AacFragmentStore store;
+        if (offered_store) {
+            auto table = *offered_store;
+            table.release = nullptr; // Offline check borrows the host context.
+            auto host = std::make_shared<HostFragmentStore>(table, false, context, should_cancel,
+                                                            &cancelled);
+            host->arm();
+            store = fragment_store_for(host);
+        }
+        auto prepared = PreparedAutomaticMedia::open(
+            std::move(borrowed), std::move(store), options->cache_quota_bytes, request,
+            AudioDeliveryProfile::apple_hls_v1,
+            options->conversion_permission == SAP2_AUDIO_ALLOW_STEREO
+                ? AudioConversionPermission::allow_stereo
+                : AudioConversionPermission::preserve_original,
+            options->audio_track_id ? std::optional<std::uint64_t>(options->audio_track_id)
+                                    : std::nullopt);
+        if (poll()) {
+            return cancelled ? SAP2_ERROR_CANCELLED : SAP2_ERROR_MEDIA_GENERATION_TIMEOUT;
+        }
+        write_audio_decision(prepared->decision(), *decision);
+        return SAP2_OK;
+    } catch (...) {
+        poll();
+        return cancelled               ? SAP2_ERROR_CANCELLED
+               : request.should_stop() ? SAP2_ERROR_MEDIA_GENERATION_TIMEOUT
+                                       : contained_failure();
+    }
+}
+
 void sap2_cast_options_init_sized(sap2_cast_options* options, size_t struct_size) {
     if (!options || struct_size < cast_options_v1_size) {
         return;
@@ -692,6 +890,9 @@ void sap2_cast_options_init_sized(sap2_cast_options* options, size_t struct_size
     options->receiver_port = SAP2_DEFAULT_RECEIVER_PORT;
     options->start_timeout_ms = SAP2_DEFAULT_START_TIMEOUT_MS;
     options->media_connections = SAP2_DEFAULT_MEDIA_CONNECTIONS;
+    if (known >= sizeof(sap2_cast_options)) {
+        options->audio_profile = SAP2_AUDIO_PROFILE_APPLE_HLS_V1;
+    }
 }
 
 void sap2_cast_options_init(sap2_cast_options* options) {
@@ -730,8 +931,10 @@ int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_media_sour
         }
         auto host = std::make_shared<HostSource>(*source);
         std::shared_ptr<HostFragmentStore> fragments;
-        if (settings.delivery == CastDelivery::stereo_aac_hls) {
-            fragments = std::make_shared<HostFragmentStore>(*options->fragment_store);
+        if (settings.delivery == CastDelivery::stereo_aac_hls ||
+            (settings.delivery == CastDelivery::automatic_audio_hls && options->fragment_store)) {
+            fragments = std::make_shared<HostFragmentStore>(
+                *options->fragment_store, settings.delivery == CastDelivery::stereo_aac_hls);
             settings.fragment_store = fragment_store_for(fragments);
         }
         auto handle = std::make_unique<sap2_cast>(std::move(settings), media_source_for(host),

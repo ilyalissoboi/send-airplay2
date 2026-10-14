@@ -268,6 +268,15 @@ if(BUILD_TESTING)
   sap2_warnings(media_probe_api_tests)
   add_test(NAME media_probe_api_tests COMMAND media_probe_api_tests)
   set_tests_properties(media_probe_api_tests PROPERTIES TIMEOUT 30)
+  add_executable(automatic_audio_api_tests tests/automatic_audio_api_tests.cpp)
+  target_link_libraries(automatic_audio_api_tests PRIVATE send_airplay2)
+  target_compile_features(automatic_audio_api_tests PRIVATE cxx_std_17)
+  sap2_warnings(automatic_audio_api_tests)
+  add_test(NAME automatic_audio_api_tests COMMAND automatic_audio_api_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/audio-policy
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/decoder
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/expanded-decoder)
+  set_tests_properties(automatic_audio_api_tests PROPERTIES TIMEOUT 120)
   add_executable(c_credentials_smoke tests/c_credentials_smoke.c)
   target_link_libraries(c_credentials_smoke PRIVATE send_airplay2)
   set_target_properties(c_credentials_smoke PROPERTIES LINKER_LANGUAGE CXX)
@@ -305,7 +314,7 @@ if(BUILD_TESTING)
       add_test(NAME csharp_binding_tests COMMAND ${SAP2_DOTNET} run
         --project ${CMAKE_CURRENT_SOURCE_DIR}/bindings/csharp/SendAirPlay2.Tests/SendAirPlay2.Tests.csproj
         -c Release --artifacts-path ${CMAKE_CURRENT_BINARY_DIR}/dotnet
-        -- $<TARGET_FILE:send_airplay2>)
+        -- $<TARGET_FILE:send_airplay2> ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures)
       set_tests_properties(csharp_binding_tests PROPERTIES TIMEOUT 600
         ENVIRONMENT "DOTNET_CLI_TELEMETRY_OPTOUT=1;DOTNET_NOLOGO=1;DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1")
     else()
@@ -313,7 +322,7 @@ if(BUILD_TESTING)
     endif()
   endif()
   # Host stores and pairing are compiled directly so tests can script sessions.
-  add_executable(host_credential_tests tests/host_credential_tests.cpp src/host_credentials.cpp src/auth_workflow.cpp src/cast_controller.cpp src/prepared_stereo_media.cpp ${sap2_remux_sources} ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
+  add_executable(host_credential_tests tests/host_credential_tests.cpp src/host_credentials.cpp src/auth_workflow.cpp src/cast_controller.cpp src/prepared_stereo_media.cpp src/prepared_automatic_media.cpp ${sap2_remux_sources} ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
   sap2_stereo_backend(host_credential_tests)
   target_include_directories(host_credential_tests PRIVATE src)
   target_link_libraries(host_credential_tests PRIVATE send_airplay2 OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS} ${sap2_credential_libraries})
@@ -325,7 +334,7 @@ if(BUILD_TESTING)
   add_test(NAME host_credential_tests COMMAND host_credential_tests)
   set_tests_properties(host_credential_tests PROPERTIES TIMEOUT 60)
   # The controller is compiled directly so tests can inject credentials and connectors.
-  add_executable(cast_controller_tests tests/cast_controller_tests.cpp src/cast_controller.cpp src/prepared_stereo_media.cpp src/file_media_source.cpp ${sap2_remux_sources} ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
+  add_executable(cast_controller_tests tests/cast_controller_tests.cpp src/cast_controller.cpp src/prepared_stereo_media.cpp src/prepared_automatic_media.cpp src/file_media_source.cpp ${sap2_remux_sources} ${sap2_credential_sources} ${sap2_session_sources} ${sap2_receiver_sources} ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources})
   sap2_stereo_backend(cast_controller_tests)
   target_include_directories(cast_controller_tests PRIVATE src)
   target_link_libraries(cast_controller_tests PRIVATE send_airplay2 Boost::beast Boost::asio OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS} ${sap2_credential_libraries})
@@ -335,7 +344,7 @@ if(BUILD_TESTING)
   endif()
   target_compile_features(cast_controller_tests PRIVATE cxx_std_17)
   sap2_warnings(cast_controller_tests)
-  add_test(NAME cast_controller_tests COMMAND cast_controller_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/mrp ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/hls ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/decoder)
+  add_test(NAME cast_controller_tests COMMAND cast_controller_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/mrp ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/hls ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/decoder ${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/audio-policy)
   set_tests_properties(cast_controller_tests PROPERTIES TIMEOUT 60)
   # Exercise the same core without exporting internal C++ symbols from the DLL.
   add_executable(discovery_tests tests/discovery_tests.cpp src/discovery_core.cpp)

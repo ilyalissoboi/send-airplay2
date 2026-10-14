@@ -42,7 +42,7 @@ extern "C" {
  *    structs of earlier versions (shorter struct_size) are still accepted.
  * 4: optional stereo AAC delivery, track probe, host fragment storage and
  *    conversion failure/status extensions. */
-#define SAP2_PLAYBACK_API_VERSION 4u
+#define SAP2_PLAYBACK_API_VERSION 5u
 
 /* Results. Fixed-width values for foreign-function bindings. */
 #define SAP2_OK 0
@@ -158,6 +158,29 @@ extern "C" {
  * stereo AAC-LC. Requires a host-owned per-cast fragment store and quota.
  * Selection uses original source IDs before codec filtering; no fallback. */
 #define SAP2_DELIVERY_STEREO_AAC_HLS 2u
+/* Version 5: selected copy or bounded stereo conversion under an explicit profile. */
+#define SAP2_DELIVERY_AUTOMATIC_AUDIO_HLS 3u
+#define SAP2_AUDIO_PROFILE_APPLE_HLS_V1 1u
+#define SAP2_AUDIO_ALLOW_STEREO 0u
+#define SAP2_AUDIO_PRESERVE_ORIGINAL 1u
+#define SAP2_AUDIO_ACTION_NONE 0u
+#define SAP2_AUDIO_ACTION_VIDEO_ONLY 1u
+#define SAP2_AUDIO_ACTION_COPY 2u
+#define SAP2_AUDIO_ACTION_STEREO_AAC 3u
+#define SAP2_AUDIO_REASON_NONE 0u
+#define SAP2_AUDIO_REASON_NO_ENABLED_AUDIO 1u
+#define SAP2_AUDIO_REASON_PROFILE_COPY 2u
+#define SAP2_AUDIO_REASON_PROFILE_REQUIRES_STEREO 3u
+#define SAP2_AUDIO_FAMILY_NONE 0u
+#define SAP2_AUDIO_FAMILY_AAC 1u
+#define SAP2_AUDIO_FAMILY_AC3 2u
+#define SAP2_AUDIO_FAMILY_EAC3 3u
+#define SAP2_AUDIO_FAMILY_DTS 4u
+#define SAP2_AUDIO_FAMILY_FLAC 5u
+#define SAP2_AUDIO_FAMILY_OPUS 6u
+#define SAP2_AUDIO_FAMILY_VORBIS 7u
+#define SAP2_AUDIO_FAMILY_PCM 8u
+#define SAP2_AUDIO_FAMILY_TRUEHD 9u
 
 /* Option bounds. */
 #define SAP2_DEFAULT_RECEIVER_PORT 7000u
@@ -215,10 +238,14 @@ typedef struct sap2_media_source {
  * read_at supports concurrent positional short reads (at most 64 KiB); zero
  * before the fragment's end or a count above capacity is a terminal cache error.
  * Poll control during slow seal/read work. Retain neither buffers nor control.
- * clear is called exactly once after conversion workers and HTTP reads drain,
- * including failed start and destroy without start; remove only this cast's data.
+ * Forced stereo calls clear exactly once after workers/HTTP reads drain,
+ * including failed start and destroy without start. Automatic delivery calls
+ * clear only when conversion accepted this store, including its startup failure;
+ * copy/video-only/pre-routing refusal never call seal/read/clear.
+ * Remove only this cast's data.
  * Ownership transfers only on successful create. release, if provided, runs once
- * at destroy after clear and all callbacks. No callback runs on failed create.
+ * at destroy after all callbacks (after clear for accepted conversion, without
+ * clear for an unused automatic store). No callback runs on failed create.
  */
 typedef struct sap2_aac_fragment_store {
     uint32_t struct_size;
@@ -266,6 +293,52 @@ SAP2_API int32_t sap2_track_list_get(const sap2_track_list* tracks, size_t index
                                      sap2_media_track* track);
 SAP2_API void sap2_track_list_free(sap2_track_list* tracks);
 
+/** Successful preparation decision, not receiver interoperability or proof of
+ * every compressed payload. No source/receiver labels or secrets are returned.
+ * A zero struct_size in cast status means no automatic presentation prepared.
+ */
+typedef struct sap2_audio_decision {
+    uint32_t struct_size;
+    uint32_t profile;         /* SAP2_AUDIO_PROFILE_* */
+    uint32_t action;          /* SAP2_AUDIO_ACTION_* */
+    uint32_t reason;          /* SAP2_AUDIO_REASON_* */
+    uint32_t source_family;   /* SAP2_AUDIO_FAMILY_* */
+    uint32_t output_family;   /* SAP2_AUDIO_FAMILY_* */
+    uint32_t output_channels; /* 0 for video-only, 2 for converted audio. */
+    uint32_t reserved;
+    uint64_t selected_audio_id;
+} sap2_audio_decision;
+
+typedef struct sap2_audio_options {
+    uint32_t struct_size;
+    uint32_t profile;
+    uint32_t conversion_permission;
+    uint32_t reserved;
+    uint64_t audio_track_id; /* 0 auto, otherwise original enabled audio ID. */
+    uint64_t cache_quota_bytes;
+    const sap2_aac_fragment_store* fragment_store;
+    uint32_t timeout_ms; /* 1..120000, shared by all preparation work. */
+    uint32_t reserved_tail;
+} sap2_audio_options;
+/** Defaults to Apple HLS v1, stereo permission, auto selection and 120 s.
+ * Writes only the known size; smaller-than-known/NULL inputs are unchanged. */
+SAP2_API void sap2_audio_options_init(sap2_audio_options* options, size_t struct_size);
+/** Offline automatic preparation check: no credentials, receiver or listener.
+ * Borrows immutable source/cache callbacks until return, never calls release.
+ * Discards the temporary presentation after recording its decision. Conversion
+ * requires an enabled backend, complete store and quota, and clears only that
+ * accepted per-check store after draining workers (also on startup failure).
+ * Copy/video-only never call seal/read/clear and need no backend/store/quota.
+ * The output is zeroed on failure except its caller-supplied struct_size; it is
+ * written only when the whole known decision fits. Cancellation reaches slow
+ * callbacks through their borrowed controls; should_cancel must be thread-safe
+ * and nonthrowing. Later casting prepares again; this check is not a reusable
+ * presentation, full-file decode or receiver-support negotiation.
+ */
+SAP2_API int32_t sap2_media_check_audio(const sap2_media_source* source,
+                                        const sap2_audio_options* options, void* context,
+                                        int (*should_cancel)(void*), sap2_audio_decision* decision);
+
 typedef struct sap2_cast_options {
     uint32_t struct_size;
     /* Numeric IPv4 or global/ULA IPv6 receiver address, no DNS or scope ID. */
@@ -296,8 +369,13 @@ typedef struct sap2_cast_options {
     /* Version 4: keep ID beyond the full v3 size, including x86 tail padding. */
     uint32_t reserved_v4;
     uint64_t audio_track_id;    /* 0 auto; otherwise an original enabled audio ID. */
-    uint64_t cache_quota_bytes; /* Explicit finite quota, required for stereo delivery. */
+    uint64_t cache_quota_bytes; /* Required only when audio is converted. */
     const sap2_aac_fragment_store* fragment_store;
+    /* Version 5. Padding guard keeps profile beyond the entire v4 x86 struct. */
+    uint32_t reserved_v5;
+    uint32_t audio_profile;         /* Default SAP2_AUDIO_PROFILE_APPLE_HLS_V1. */
+    uint32_t conversion_permission; /* Default SAP2_AUDIO_ALLOW_STEREO. */
+    uint32_t reserved_v5_tail;
 } sap2_cast_options;
 
 /** Fill defaults for a struct of `struct_size` bytes, the caller's sizeof.
@@ -343,6 +421,9 @@ typedef struct sap2_cast_status {
     uint32_t authoring_flags;  /* SAP2_AUTHORING_* estimates; not an accuracy gate. */
     uint32_t reserved_v4;
     uint64_t selected_audio_id; /* Original ID; 0 for no prepared audio. */
+    /* Version 5, written only if the complete extension fits. Retained after
+     * Stop/failure once automatic preparation succeeds, before network start. */
+    sap2_audio_decision audio_decision;
 } sap2_cast_status;
 
 typedef struct sap2_cast sap2_cast;
@@ -363,7 +444,11 @@ SAP2_API int32_t sap2_cast_create(const sap2_cast_options* options, const sap2_m
  * delivery probes/selects and prepares under a separate 120-second deadline,
  * before the receiver timeout, invoking source/cache callbacks on this caller.
  * Selection/codec/source/cache/limit failures retain fixed categories and never
- * retry a different audio track. Blocks until playback is
+ * retry a different audio track. Automatic audio uses the same preparation
+ * deadline, validates the named copy/conversion profile and publishes its
+ * decision before starting the media listener or receiver sessions. Only its
+ * conversion route requires backend/storage and can lose surround/lossless audio.
+ * Blocks until playback is
  * confirmed (one continuous second of forward playing within start_timeout_ms), failure, or
  * cancellation by sap2_cast_stop() from another thread. If the receiver
  * reports itself asleep, start first wakes it and waits up to 10 s for it to

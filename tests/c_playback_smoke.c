@@ -95,7 +95,7 @@ static int create_result(const sap2_cast_options* options) {
 
 static void version_and_names(void) {
     check(sap2_playback_api_version() == SAP2_PLAYBACK_API_VERSION, "runtime version");
-    check(SAP2_PLAYBACK_API_VERSION == 4, "stereo delivery is version 4");
+    check(SAP2_PLAYBACK_API_VERSION == 5, "automatic delivery is version 5");
     check(strcmp(sap2_result_name(SAP2_ERROR_MEDIA_UNSUPPORTED), "media_unsupported") == 0 &&
               strcmp(sap2_result_name(SAP2_ERROR_MEDIA_MALFORMED), "media_malformed") == 0,
           "remux result names");
@@ -165,6 +165,20 @@ static void option_defaults(void) {
                         sizeof(options) - sizeof(struct options_v3)),
           "version 4 fields lie beyond v3 including x86 padding; sized init preserves canary");
     sap2_cast_options_init(NULL);
+    memset(&options, 0xA5, sizeof(options));
+    {
+        const size_t v4_size = sizeof(void*) == 8 ? 104 : 80;
+        sap2_cast_options_init_sized(&options, v4_size);
+        check(offsetof(sap2_cast_options, audio_profile) >= v4_size &&
+                  untouched((const unsigned char*)&options + v4_size, sizeof(options) - v4_size),
+              "v4 literal size and tail padding do not expose or overwrite v5 fields");
+        options.receiver_address = "127.0.0.1";
+        options.profile = "automatic-smoke-unused";
+        check(create_result(&options) == SAP2_OK, "v4 options remain accepted by API 5");
+        options.delivery = SAP2_DELIVERY_AUTOMATIC_AUDIO_HLS;
+        check(create_result(&options) == SAP2_ERROR_INVALID_ARGUMENT,
+              "automatic delivery requires complete v5 options");
+    }
     sap2_cast_options_init_sized(NULL, sizeof(options));
 }
 
@@ -267,6 +281,12 @@ static void unstarted_lifecycle(void) {
     status.struct_size = offsetof(sap2_cast_status, media_failure) - 1;
     check(sap2_cast_get_status(cast, &status) == SAP2_ERROR_INVALID_ARGUMENT,
           "truncated status struct");
+    memset(&status, 0xA5, sizeof(status));
+    status.struct_size = 104; /* Literal API 4 status size. */
+    check(sap2_cast_get_status(cast, &status) == SAP2_OK && status.media_failure == 0 &&
+              status.selected_audio_id == 0 &&
+              untouched((const unsigned char*)&status + 104, sizeof(status) - 104),
+          "v4 status fields still written while v5 decision canary is preserved");
     status.struct_size = sizeof(status);
     check(sap2_cast_wait_for_change(cast, 99, 0, &status) == SAP2_ERROR_INVALID_ARGUMENT,
           "unknown previous state");

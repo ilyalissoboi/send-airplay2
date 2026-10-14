@@ -6,8 +6,8 @@ namespace send_airplay2::detail {
  * paired receiver through a URL playback session, until a line or end-of-file
  * arrives on standard input. Then stop the session and the media server and
  * print a sanitized summary. Never prints the private media URL, receiver
- * identifiers or credential data. Development command; controls (pause, seek)
- * are not implemented yet.
+ * identifiers or credential data. Automatic/forced-stereo delivery and offline
+ * audio checks use the public API host; legacy casting keeps its existing path.
  * Returns 0 after a clean stop, 2 for invalid arguments and 1 for failure.
  */
 int run_cast_cli(int argc, const char* const* argv);

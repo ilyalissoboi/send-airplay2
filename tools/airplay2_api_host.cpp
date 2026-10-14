@@ -61,8 +61,14 @@ const char* usage =
     "         [--content-type TYPE] [--start-timeout-ms N] [--media-connections N]\n"
     "         [--start-position SECONDS] [--remux]\n"
     "         [--stereo-aac [--audio-track ID] --cache-directory PATH --cache-quota-bytes N]\n"
-    "       airplay2-api-host --probe-tracks --file PATH (metadata only, no receiver)\n"
+    "         [--automatic-audio [--preserve-audio] [--audio-track ID]]\n"
+    "         [--cache-directory PATH --cache-quota-bytes N]\n"
     "         [--cancel-after-ms N | --cycles N [--hold-ms N]]\n"
+    "       airplay2-api-host --probe-tracks --file PATH (metadata only, no receiver)\n"
+    "       airplay2-api-host --check-audio --file PATH [--audio-track ID]\n"
+    "         [--preserve-audio] [--cache-directory PATH --cache-quota-bytes N]\n"
+    "--automatic-audio: copy eligible selected audio or convert to stereo AAC.\n"
+    "--check-audio: prepare/report/discard offline; conversion needs a cache.\n"
     "--remux: SAP2_DELIVERY_HLS_REMUX (MP4/MOV or MKV as HLS; content type ignored).\n"
     "Interactive (default): status, pause, play, seek SECONDS, stop; Enter stops locally.\n"
     "--cancel-after-ms: call sap2_cast_stop() N ms into a blocking start.\n"
@@ -91,6 +97,9 @@ struct HostArguments {
     bool remux = false;           // SAP2_DELIVERY_HLS_REMUX instead of progressive.
     bool stereo_aac = false;
     bool probe_tracks = false;
+    bool automatic_audio = false;
+    bool check_audio = false;
+    bool preserve_audio = false;
     std::uint64_t audio_track = 0;
     std::uint64_t cache_quota = 0;
     std::string cache_directory;
@@ -136,10 +145,24 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
     bool discover_option_given = false; // --discover-ms or --expect-name.
     bool other_option_given = false;    // Any cast or pairing option, or --pair.
     bool probe_incompatible_option = false;
+    bool check_incompatible_option = false;
     for (int index = 1; index < argc; ++index) {
         const std::string_view option = argv[index];
         probe_incompatible_option =
             probe_incompatible_option || (option != "--probe-tracks" && option != "--file");
+        check_incompatible_option =
+            check_incompatible_option ||
+            (option != "--check-audio" && option != "--file" && option != "--audio-track" &&
+             option != "--preserve-audio" && option != "--cache-directory" &&
+             option != "--cache-quota-bytes" && option != "--start-timeout-ms");
+        if (option == "--automatic-audio" || option == "--check-audio" ||
+            option == "--preserve-audio") {
+            arguments.automatic_audio = arguments.automatic_audio || option == "--automatic-audio";
+            arguments.check_audio = arguments.check_audio || option == "--check-audio";
+            arguments.preserve_audio = arguments.preserve_audio || option == "--preserve-audio";
+            other_option_given = true;
+            continue;
+        }
         if (option == "--stereo-aac") {
             arguments.stereo_aac = true;
             other_option_given = true;
@@ -221,7 +244,8 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
         throw std::invalid_argument("--discover-ms and --expect-name require --discover");
     }
     if (arguments.pair) {
-        if (arguments.stereo_aac || arguments.probe_tracks || arguments.audio_track ||
+        if (arguments.stereo_aac || arguments.probe_tracks || arguments.automatic_audio ||
+            arguments.check_audio || arguments.preserve_audio || arguments.audio_track ||
             arguments.cache_quota || !arguments.cache_directory.empty()) {
             throw std::invalid_argument("conversion and probe options are not pairing options");
         }
@@ -241,13 +265,32 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
         return arguments;
     }
     if (arguments.stereo_aac &&
-        (arguments.remux || arguments.cache_directory.empty() || !arguments.cache_quota)) {
+        (arguments.remux || arguments.automatic_audio || arguments.check_audio ||
+         arguments.cache_directory.empty() || !arguments.cache_quota)) {
         throw std::invalid_argument(
             "--stereo-aac requires cache directory and quota, and is exclusive with remux");
     }
-    if (!arguments.stereo_aac &&
+    if ((arguments.automatic_audio || arguments.check_audio) && arguments.remux) {
+        throw std::invalid_argument("automatic audio is exclusive with remux");
+    }
+    if (arguments.preserve_audio && !arguments.automatic_audio && !arguments.check_audio) {
+        throw std::invalid_argument("--preserve-audio requires automatic audio");
+    }
+    if ((arguments.automatic_audio || arguments.check_audio) &&
+        (arguments.cache_directory.empty() != (arguments.cache_quota == 0))) {
+        throw std::invalid_argument("cache directory and quota must be provided together");
+    }
+    if (arguments.check_audio) {
+        if (check_incompatible_option || arguments.file.empty()) {
+            throw std::invalid_argument(
+                "--check-audio accepts file, audio selection/preservation and cache options only");
+        }
+        return arguments;
+    }
+    if (!arguments.stereo_aac && !arguments.automatic_audio &&
         (arguments.audio_track || arguments.cache_quota || !arguments.cache_directory.empty())) {
-        throw std::invalid_argument("track and cache options require --stereo-aac");
+        throw std::invalid_argument(
+            "track and cache options require --stereo-aac or --automatic-audio");
     }
     if (arguments.address.empty() || arguments.profile.empty() || arguments.file.empty()) {
         throw std::invalid_argument("requires --address, --profile and --file");
@@ -490,6 +533,13 @@ void append_scalar(std::ostringstream& line, const char* key, std::uint32_t has,
 
 std::string describe(const sap2_cast_status& status) {
     std::ostringstream line;
+    if (status.audio_decision.struct_size) {
+        line << "audio_action=" << status.audio_decision.action
+             << " audio_reason=" << status.audio_decision.reason
+             << " source_family=" << status.audio_decision.source_family
+             << " output_family=" << status.audio_decision.output_family
+             << " channels=" << status.audio_decision.output_channels << ' ';
+    }
     line << "phase=" << phase_name(status.phase) << " state=" << state_name(status.playback_state)
          << " end=" << end_name(status.end_reason) << " owned=" << (status.owned ? "yes" : "no");
     append_scalar(line, "position", status.has_position, status.position_seconds);
@@ -595,14 +645,19 @@ sap2_cast_options options_for(const HostArguments& arguments) {
 std::int32_t create(const HostArguments& arguments, HostFile& file, CastHandle& handle) {
     auto options = options_for(arguments);
     sap2_aac_fragment_store fragment_table{};
-    if (arguments.stereo_aac) {
-        handle.fragments =
-            std::make_unique<send_airplay2::detail::HostFragmentFiles>(arguments.cache_directory);
-        fragment_table = handle.fragments->table();
-        options.delivery = SAP2_DELIVERY_STEREO_AAC_HLS;
+    if (arguments.stereo_aac || arguments.automatic_audio) {
+        options.delivery = arguments.automatic_audio ? SAP2_DELIVERY_AUTOMATIC_AUDIO_HLS
+                                                     : SAP2_DELIVERY_STEREO_AAC_HLS;
+        options.conversion_permission =
+            arguments.preserve_audio ? SAP2_AUDIO_PRESERVE_ORIGINAL : SAP2_AUDIO_ALLOW_STEREO;
+        if (!arguments.cache_directory.empty()) {
+            handle.fragments = std::make_unique<send_airplay2::detail::HostFragmentFiles>(
+                arguments.cache_directory);
+            fragment_table = handle.fragments->table();
+            options.fragment_store = &fragment_table;
+        }
         options.audio_track_id = arguments.audio_track;
         options.cache_quota_bytes = arguments.cache_quota;
-        options.fragment_store = &fragment_table;
     }
     const auto source = file.source();
     const auto result = sap2_cast_create(&options, &source, &handle.cast);
@@ -1052,6 +1107,40 @@ int send_airplay2::detail::run_api_host(int argc, const char* const* argv) {
         }
         if (arguments.pair) {
             return run_pair(arguments);
+        }
+        if (arguments.check_audio) {
+            auto source = file->source();
+            sap2_audio_options options{};
+            sap2_audio_options_init(&options, sizeof(options));
+            options.audio_track_id = arguments.audio_track;
+            options.conversion_permission =
+                arguments.preserve_audio ? SAP2_AUDIO_PRESERVE_ORIGINAL : SAP2_AUDIO_ALLOW_STEREO;
+            options.timeout_ms = arguments.start_timeout_ms;
+            options.cache_quota_bytes = arguments.cache_quota;
+            std::unique_ptr<send_airplay2::detail::HostFragmentFiles> fragments;
+            sap2_aac_fragment_store table{};
+            if (!arguments.cache_directory.empty()) {
+                fragments = std::make_unique<send_airplay2::detail::HostFragmentFiles>(
+                    arguments.cache_directory);
+                table = fragments->table();
+                options.fragment_store = &table;
+            }
+            sap2_audio_decision decision{};
+            decision.struct_size = sizeof(decision);
+            const auto result =
+                sap2_media_check_audio(&source, &options, nullptr, nullptr, &decision);
+            std::cout << "Audio check: " << sap2_result_name(result);
+            if (result == SAP2_OK) {
+                std::cout << " selected_audio_id=" << decision.selected_audio_id
+                          << " action=" << decision.action << " reason=" << decision.reason
+                          << " source_family=" << decision.source_family
+                          << " output_family=" << decision.output_family
+                          << " channels=" << decision.output_channels;
+            }
+            std::cout << '\n';
+            return result == SAP2_OK                       ? exit_success
+                   : result == SAP2_ERROR_INVALID_ARGUMENT ? exit_arguments
+                                                           : exit_failure;
         }
         if (arguments.probe_tracks) {
             const auto source = file->source();

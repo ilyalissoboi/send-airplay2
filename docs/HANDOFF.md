@@ -1,6 +1,6 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-14 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-15 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
@@ -9,6 +9,30 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D83 public automatic audio integration (2026-10-15).**
+The user's Proceed starts `codex/automatic-audio-public` from merged
+[PR #63](https://github.com/ilyalissoboi/send-airplay2/pull/63), `6788583`.
+All 16 checks passed at final head `4f2494b` in run `38584885677`.
+Read [the API 5 / offline-check / binding / CLI contract](automatic-audio-public.md).
+Automatic delivery is opt-in under D82's finite profile. Successful preparation
+reports original ID, source/output families, action, channels and fixed reason;
+preservation refuses required conversion. Copy/video-only need no backend/cache.
+Only accepted conversion clears storage; unused automatic stores release their
+contexts without Clear. Offline checking borrows source/cache without credentials
+or receiver access, then discards the presentation; casting prepares again.
+Old v1-v4 prefixes/defaults remain valid. Package/Screenbox pin and dependency
+profile are unchanged. Next: expanded packaged-runtime/module/storage checks,
+real-file/brokered performance, then copied/converted receiver gates. Speaker
+audio and discrete converted surround stay hardware-deferred. Inspect actual-head CI.
+
+D83 offline validation: static **38/38** (45.84 s), shared **39/39** (49.35 s),
+enabled shared **40/40** (66.05 s). Final output-canary, managed unused-storage
+and preparation-cancellation checks pass in their affected default/enabled
+builds. x64 UWP core compilation, six-DLL import/AppContainer checks and the
+offline UWP harness/binding build pass; the harness was not run or installed.
+Eleven touched native C/C++ files pass formatting; whitespace, 135 owned fixture
+hashes and 530 relative documentation targets pass. Inspect new PR-head CI.
+
 **D82 private automatic audio policy (2026-10-14).**
 [PR #63](https://github.com/ilyalissoboi/send-airplay2/pull/63) review follow-up:
 selected MP4 audio copy now refuses finite media edits ending before the remaining
@@ -16,7 +40,8 @@ sample span, rather than exposing source-trimmed audio when init duration become
 zero. Exact rational boundaries, optional empty edits and both elst versions have
 offline regressions. Full local static/shared/enabled shared suites pass
 37/37, 38/38 and 39/39; standalone codec policy and final fractional-boundary
-checks pass. Inspect the new actual-head CI; no receiver evidence is added.
+checks pass. PR #63 merged as `6788583`; all 16 final-head CI checks passed.
+No receiver evidence is added. D83 above supersedes this slice's historical next queue.
 The user's Proceed starts `codex/automatic-audio-policy` from merged
 [PR #62](https://github.com/ilyalissoboi/send-airplay2/pull/62), `c69543a`.
 All 16 checks passed at final head `cc3bb2c` in run `38560520412`.
