@@ -110,6 +110,36 @@ void known_lossless_samples(const DecodedAudioWindow& value, const std::string& 
         }
     }
 }
+/// Independent tone frequencies identify channel ordering even for lossy inputs.
+void known_channel_frequencies(const DecodedAudioWindow& value, const std::string& scenario) {
+    constexpr unsigned surround_frequencies[] = {310, 470, 630, 80, 790, 950};
+    constexpr unsigned stereo_frequencies[] = {173, 227};
+    constexpr std::size_t tone_start = 48000;
+    constexpr std::size_t tone_frames = 4096;
+    const auto* frequencies = value.channels == 6 ? surround_frequencies : stereo_frequencies;
+    for (std::size_t channel = 0; channel < value.channels; ++channel) {
+        double expected_power = 0;
+        double largest_other_power = 0;
+        for (std::size_t tone = 0; tone < value.channels; ++tone) {
+            double sine = 0, cosine = 0;
+            for (std::size_t frame = 0; frame < tone_frames; ++frame) {
+                const auto angle = 2 * pi * frequencies[tone] * frame / 48000;
+                const auto sample = value.samples[(tone_start + frame) * value.channels + channel];
+                sine += sample * std::sin(angle);
+                cosine += sample * std::cos(angle);
+            }
+            const auto power = sine * sine + cosine * cosine;
+            if (tone == channel) {
+                expected_power = power;
+            } else {
+                largest_other_power = std::max(largest_other_power, power);
+            }
+        }
+        expect(expected_power > 100 && expected_power > 10 * largest_other_power,
+               scenario +
+                   ": independent tone/channel ordering, channel=" + std::to_string(channel));
+    }
+}
 void selected_windows(const std::filesystem::path& directory) {
     for (const auto* name :
          {"flac.mkv",      "flac.mp4",      "opus.mkv",      "opus.mp4",      "vorbis.mkv",
@@ -135,6 +165,7 @@ void selected_windows(const std::filesystem::path& directory) {
             energy += sample * sample;
         }
         expect(energy / reference.samples.size() > 0.001, scenario + ": missing owned tone signal");
+        known_channel_frequencies(reference, scenario);
         if (scenario.find("pcm-") == 0 || scenario.find("flac") == 0 ||
             scenario.find("truehd") == 0) {
             known_lossless_samples(reference, scenario);

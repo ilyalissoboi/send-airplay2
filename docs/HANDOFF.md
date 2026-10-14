@@ -13,6 +13,8 @@ checkpoint, review disposition, validation commands and ordered development queu
 The user's Proceed starts `codex/audio-decoder-expansion` from merged PR #57
 (`faee858`, final head `d4f4a62`, all 16 checks passed; padding review resolved).
 Read [the expanded input matrix and offline gates](audio-decoder-expansion.md).
+Active [PR #58](https://github.com/ilyalissoboi/send-airplay2/pull/58) owns this
+increment; inspect its actual head and review/CI before continuing.
 The minimal native FFmpeg profile and original-ID decoder now cover FLAC,
 Opus, Vorbis, PCM and TrueHD in the documented container/configuration subset.
 Owned stereo/5.1 fixtures cover seeks, literal EOF trimming and generated AAC;

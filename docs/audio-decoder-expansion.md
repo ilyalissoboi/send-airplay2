@@ -5,6 +5,8 @@ PR #57 / main `faee858`. The [D76 plan](automatic-audio-transcoding-plan.md)
 defines the broader automatic-delivery work; this increment implements its
 decoder/profile foundation in the explicit stereo backend. It adds no automatic
 policy, new ABI, package publication or receiver observation.
+Review [PR #58](https://github.com/ilyalissoboi/send-airplay2/pull/58) at its actual
+head; do not treat the local gates below as its CI result.
 
 ## Input configuration and identity
 
@@ -68,7 +70,8 @@ only; they are not adopted or distributed runtime dependencies.
 There are 33 owned fixtures. Twenty-eight positive format/container variants
 cover stereo and FLAC/Opus/Vorbis/TrueHD 5.1 inputs. Decoder checks retain the
 literal 288144-sample audible length at 48 kHz, independent lossless tone/channel
-samples, repeated forward/backward windows, cold 144-sample tails and EOF reuse.
+samples and spectral channel identities for lossy inputs, repeated forward/backward
+windows, cold 144-sample tails and EOF reuse.
 Other cases cover positive Opus final-block padding, negative PCM/Opus leading
 padding with delay applied once, unsupported PCM depth, malformed configuration,
 65537-sample trim refusal and the coarse-clock preparation gate.
