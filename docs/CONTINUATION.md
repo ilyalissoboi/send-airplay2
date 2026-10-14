@@ -35,8 +35,10 @@ controls and one-hour synthetic seeks above 4 GiB pass offline tests. The combin
 trim fixture exposed generic demux skip overwrite; indexed PCM avoids it, while
 compressed-family/noncanonical trim proof remains a separate gate.
 The index is limited to 262144 selected unlaced packets, with the existing I/O,
-window, input, deadline and cancellation bounds. Inspect the actual active branch
-PR head/CI; do not generalize synthetic results to real files, UWP runtime or receivers.
+window, input, deadline and cancellation bounds. [PR #60](https://github.com/ilyalissoboi/send-airplay2/pull/60)
+also preserves the one-second original clock admission bound before narrowing
+precision; owned boundary/refusal controls cover the review correction.
+Inspect its actual head/CI; do not generalize synthetic results to real files, UWP runtime or receivers.
 Next: compressed exact durations/anchors and large-seek/trim gates for FLAC, Opus,
 Vorbis and TrueHD. Their coarse clocks remain under the ten-second movie horizon.
 Then selected remux/policy and versioned public reporting, expanded packaged

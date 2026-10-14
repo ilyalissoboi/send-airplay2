@@ -60,6 +60,24 @@
       "leading_silence_source_samples": 60,
       "physical_frames": 1322868,
       "audible_frames_48khz": 1439857
+    },
+    {
+      "file": "clock-one-second.mkv",
+      "bytes": 4968,
+      "sha256": "0f73839536b1f5f68e16a1d02fe504a6972ec8d6d21e701d323202d80922f0de",
+      "timestamp_scale_ns": 1000000000
+    },
+    {
+      "file": "clock-over-one-second.mkv",
+      "bytes": 4968,
+      "sha256": "79fbe5340c50141b1fbf2e9c25951bf488cb60bdabcd8054a8818a592562a5b0",
+      "timestamp_scale_ns": 1000000001
+    },
+    {
+      "file": "clock-over-uint32.mkv",
+      "bytes": 4970,
+      "sha256": "0aa80844b110196663e1d83c423966f237c16d81506bf5dadb18ba6dc3352489",
+      "timestamp_scale_ns": 100000000000000
     }
   ]
 }

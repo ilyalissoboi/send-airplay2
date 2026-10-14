@@ -693,6 +693,13 @@ struct AudioDecoderSource::Impl {
                     av_channel_layout_check(&codec->ch_layout),
                 AudioDecodeFailure::unsupported, "indexed PCM layout or rate is unsupported");
         const AVRational input_clock{1, codec->sample_rate};
+        const auto absolute_precision =
+            av_rescale_q_rnd(1, stream->time_base, output_clock, AV_ROUND_UP);
+        // Preserve the window decoder's one-second source-clock admission bound
+        // before replacing the stream clock or narrowing the reported precision.
+        constexpr auto maximum_absolute_precision_samples = output_rate;
+        require(absolute_precision > 0 && absolute_precision <= maximum_absolute_precision_samples,
+                AudioDecodeFailure::unsupported, "indexed PCM timestamp clock is unsupported");
         const auto precision = av_rescale_q_rnd(1, stream->time_base, input_clock, AV_ROUND_UP);
         const auto delay = av_rescale_q(static_cast<std::int64_t>(selected.codec_delay_ns),
                                         nanosecond_clock, input_clock);
@@ -744,8 +751,7 @@ struct AudioDecoderSource::Impl {
             pcm_packets.push_back({packet.offset, packet.size, position, frames, skip, discard});
             position += frames;
         }
-        cadence.absolute_precision_samples = static_cast<std::uint32_t>(
-            av_rescale_q_rnd(1, stream->time_base, output_clock, AV_ROUND_UP));
+        cadence.absolute_precision_samples = static_cast<std::uint32_t>(absolute_precision);
         // Packet positions are exact relative to the bounded initial origin.
         // Keep the original absolute clock precision separately for reporting.
         stream->time_base = codec->pkt_timebase = input_clock;

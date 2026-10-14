@@ -170,6 +170,36 @@ void primed_windows(const std::filesystem::path& directory) {
     compare(reference, exact->read_window(0, 4096, context.value),
             "sample-clock indexed PCM preserves raw first-block trim with delay");
 }
+void clock_admission(const std::filesystem::path& directory) {
+    Context context;
+    Source boundary(directory / "clock-one-second.mkv");
+    auto decoder = AudioDecoderSource::open(boundary.callbacks(), context.value, 42, true);
+    const auto window = decoder->read_window(0, 128, context.value);
+    expect(window.samples.size() == 256 && window.timestamp_precision_samples == 48000,
+           "literal one-second clock preserves 48000-sample absolute precision");
+    for (const auto* name : {"clock-over-one-second.mkv", "clock-over-uint32.mkv"}) {
+        Source source(directory / name);
+        const bool exceeds_backend_scale = std::string(name) == "clock-over-uint32.mkv";
+        const auto expected_reason =
+            exceeds_backend_scale ? AudioDecodeFailure::malformed : AudioDecodeFailure::unsupported;
+        const auto* expected_message = exceeds_backend_scale
+                                           ? "audio container open failed"
+                                           : "indexed PCM timestamp clock is unsupported";
+        // The pinned backend already refuses scales above UINT_MAX nanoseconds
+        // during format open, before indexed precision is available.
+        expect(probe_media_tracks(source.callbacks(), context.value).tracks.size() == 2,
+               std::string(name) + ": native inventory accepts clock control");
+        try {
+            (void)AudioDecoderSource::open(source.callbacks(), context.value, 42, true);
+            throw std::runtime_error(std::string(name) + ": unsupported clock accepted");
+        } catch (const AudioDecodeException& error) {
+            expect(error.reason() == expected_reason &&
+                       std::string(error.what()) == expected_message,
+                   std::string(name) +
+                       ": reject original precision before narrowing/indexing: " + error.what());
+        }
+    }
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
@@ -177,6 +207,7 @@ int main(int argc, char** argv) {
         const std::filesystem::path directory(argv[1]);
         long_windows(directory);
         primed_windows(directory);
+        clock_admission(directory);
         expect(audio(directory / "variable-44100.mkv") ==
                    audio(directory / "variable-44100-fine.mkv"),
                "long byte-identical AAC joins against fine-clock controls");

@@ -77,6 +77,18 @@ def generate(directory):
         records.append({"file": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(),
                         "prepared_audible_control": True, "leading_silence_source_samples": 60,
                         "physical_frames": prepared_frames, "audible_frames_48khz": 1439857})
+        # Admission boundary and narrowing regression. All packets start at zero;
+        # refusal must come from the original clock, before exact indexing.
+        for name, scale in [("clock-one-second.mkv", 1000000000),
+                            ("clock-over-one-second.mkv", 1000000001),
+                            ("clock-over-uint32.mkv", 100000000000000)]:
+            data = expanded.movie("A_PCM/INT/LIT", [(0, pcm[:997 * 4], 0, True)], b"",
+                                  ([(0, block[4:])], private), bit_depth=16, coded_rate=rate,
+                                  timestamp_scale_ns=scale)
+            expanded.write_fixture(directory / name, data)
+            records.append({"file": name, "bytes": len(data),
+                            "sha256": hashlib.sha256(data).hexdigest(),
+                            "timestamp_scale_ns": scale})
     provenance = {"license": "Apache-2.0; original synthesized tones and D77 video payload",
                   "generator": Path(__file__).name, "input": input_record,
                   "video_source_sha256": hashlib.sha256(original.read_bytes()).hexdigest(),

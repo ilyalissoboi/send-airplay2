@@ -37,6 +37,13 @@ position from the stored clock, subtract CodecDelay once and accumulate actual
 packet sample counts. Observed timestamps must agree within the original tick
 plus one source sample. The initial absolute origin remains container-limited;
 the output still reports that original precision, including 48 samples for 1 ms.
+Admission retains the existing one-second absolute clock limit before replacing
+the stream time base or narrowing precision. Three additional owned clock controls
+check the literal 48000-sample boundary and refusal one nanosecond beyond it.
+A third inventory-accepted tick would exceed `UINT32_MAX` output samples; the
+pinned backend already refuses its scale above `UINT_MAX` nanoseconds during
+format open, before the index guard. This is a backend admission result, not
+direct runtime coverage of the narrowing guard at that unreachable scale.
 
 Windows find the packet at/before target minus preroll by binary search, flush the
 decoder, read nearby selected payloads and supply source-sample packet PTS/duration.
