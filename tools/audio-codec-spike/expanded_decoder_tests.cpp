@@ -287,12 +287,9 @@ void coarse_clock_gate(const std::filesystem::path& directory) {
     expect(full.eof && full.samples.size() == audible_frames * 2 &&
                full.timestamp_precision_samples == 48,
            "coarse FLAC sequential decode with explicit clock precision");
-    try {
-        (void)AudioDecoderSource::open(input.callbacks(), context, 42, true);
-        throw std::runtime_error("unvalidated coarse variable-frame HLS accepted");
-    } catch (const AudioDecodeException& error) {
-        expect(error.reason() == AudioDecodeFailure::unsupported, "coarse HLS clock category");
-    }
+    auto canonical = AudioDecoderSource::open(input.callbacks(), context, 42, true);
+    expect(canonical->requires_start_rebuild(), "coarse HLS selects bounded reconstruction");
+    compare(full, read(*canonical, input, 270000, 4096), "coarse FLAC canonical cold seek");
 }
 void matroska_output_frequency(const std::filesystem::path& directory) {
     OwnedInput input(directory / "aac-output-rate.mkv");

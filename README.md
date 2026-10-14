@@ -43,8 +43,9 @@ The [automatic audio expansion plan](docs/automatic-audio-transcoding-plan.md)
 proposes copying eligible audio or converting validated inputs to stereo AAC.
 Its [private decoder foundation](docs/audio-decoder-expansion.md) now supports
 the recorded FLAC, Opus, Vorbis, PCM and TrueHD subset with offline checks.
-Automatic policy is pending; expanded Matroska HLS needs sample-accurate clocks,
-with ordinary millisecond-clock timing still requiring further work.
+Automatic policy is pending. [Bounded Matroska clock reconstruction](docs/coarse-matroska-audio.md)
+now covers ordinary millisecond clocks for presentations up to ten seconds;
+long-file variable-frame indexing remains a prerequisite for broader support.
 
 ## Build
 

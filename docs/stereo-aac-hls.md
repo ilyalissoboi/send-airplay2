@@ -1,5 +1,10 @@
 # Private stereo AAC HLS composition (D71)
 
+**Current timing extension:** [D78 bounded Matroska reconstruction](coarse-matroska-audio.md)
+adds expanded variable-frame codecs under coarse clocks for presentations up to
+ten seconds. Long-file indexing remains required. The D71 fixed-grid evidence
+below describes the legacy codec path; no new receiver claim is added.
+
 The user's 2026-10-13 Proceed authorizes this increment after decoder PR #50
 merged as `65bb8a7`. It implements an optional private native builder, not a
 new public delivery mode, Screenbox feature or published package. Audio-only

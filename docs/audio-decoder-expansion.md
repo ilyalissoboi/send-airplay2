@@ -5,8 +5,10 @@ PR #57 / main `faee858`. The [D76 plan](automatic-audio-transcoding-plan.md)
 defines the broader automatic-delivery work; this increment implements its
 decoder/profile foundation in the explicit stereo backend. It adds no automatic
 policy, new ABI, package publication or receiver observation.
-Review [PR #58](https://github.com/ilyalissoboi/send-airplay2/pull/58) at its actual
-head; do not treat the local gates below as its CI result.
+[PR #58](https://github.com/ilyalissoboi/send-airplay2/pull/58) merged as `820e89c`;
+all 16 checks passed at final head `129ae6e` in run `38504706633`, and the review
+thread is resolved. [D78's bounded coarse-clock path](coarse-matroska-audio.md)
+extends this checkpoint for short presentations; long-file indexing remains next.
 
 ## Input configuration and identity
 
@@ -56,10 +58,10 @@ preventing encoded tail samples from leaking beyond the original audio end.
 
 The canonical HLS clock now uses sample-accurate timestamps directly, allowing
 variable block lengths and trimmed first/final frames. Existing AAC/Dolby/DTS
-coarse fixed-frame behavior is retained. **Expanded Matroska HLS currently requires
-a clock quantum of at most one source sample.** Coarser clocks are refused during
-preparation, before registration/lazy conversion; exact variable-frame seek phase
-under ordinary millisecond clocks is the next timing increment. Default standalone
+coarse fixed-frame behavior is retained. **At the D77 merge, expanded Matroska HLS
+required a clock quantum of at most one source sample.** D78 adds bounded
+start reconstruction for coarse clocks under a ten-second presentation horizon;
+see its separate evidence and remaining long-file gate. Default standalone
 decoding retains its reported container-clock precision; that is not a gap-free
 HLS join claim.
 
@@ -110,8 +112,8 @@ not an expanded AppContainer packaged runtime or receiver compatibility claim.
 
 ## Remaining work
 
-First complete coarse Matroska variable-frame seek/phase reconstruction and its
-join tests; preserve the current explicit refusal until that gate passes.
+Complete bounded long-file Matroska variable-frame indexing and seek/phase tests;
+retain D78's short-presentation horizon until that scaling gate passes.
 Then implement selected-audio remux and deterministic copy/convert policy,
 followed by versioned public reporting. Additional layouts/rates, real-file
 performance, expanded packaged-runtime checks and recorded converted-receiver

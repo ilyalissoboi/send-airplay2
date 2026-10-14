@@ -64,7 +64,11 @@ struct DecodedAudioWindow {
  * PCM/TrueHD source matrix only. Layout/rate/format changes,
  * discontinuities, protected/unknown inputs and complex edits are refused.
  * canonical_matroska_clock uses sample-accurate timestamps directly, including
- * variable/trimmed frames. Coarser clocks require a fixed-frame grid for HLS:
+ * variable/trimmed frames. Expanded codecs under coarser clocks rebuild from
+ * the start, counting decoded samples under a ten-second presentation bound.
+ * The initial absolute origin remains container-limited; epoch phase does not
+ * change with frame size or seek order. Long-file indexing remains required.
+ * Legacy AAC/Dolby/DTS coarser clocks require a fixed-frame grid for HLS:
  * first read must start at zero; frames must remain constant and exceed twice
  * the clock quantum. Rounded timestamps may snap only within one tick of that grid.
  * This stabilizes relative seek phase; initial absolute clock precision remains
@@ -73,6 +77,10 @@ struct DecodedAudioWindow {
 class AudioDecoderSource {
 public:
     static constexpr std::uint32_t output_rate = 48000;
+    static constexpr std::uint64_t maximum_start_rebuild_samples = 10ULL * output_rate;
+    /// True when canonical decoding must rebuild from the beginning. The HLS
+    /// owner must refuse longer presentations before registering resources.
+    [[nodiscard]] bool requires_start_rebuild() const noexcept;
     [[nodiscard]] static std::unique_ptr<AudioDecoderSource>
     open(const MediaSource& source, const MediaReadContext& context,
          std::optional<std::uint64_t> explicit_track_id = {},
