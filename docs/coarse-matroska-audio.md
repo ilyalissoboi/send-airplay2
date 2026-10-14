@@ -1,5 +1,11 @@
 # Bounded Matroska audio clock reconstruction (D78)
 
+**D80 extension:** [compressed packet indexing](matroska-compressed-index.md) adds
+codec-aware durations/restarts and independent trim controls within the retained
+packet/I/O bounds. Compact high-packet-count movie scaling remains a gate before
+general automatic delivery. No new receiver or packaged-runtime proof is added.
+
+
 The user's Proceed on 2026-10-14 authorizes the next timing increment from
 merged decoder PR #58 (`820e89c`). Its final head `129ae6e` passed all 16 checks
 in [run 38504706633](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38504706633);

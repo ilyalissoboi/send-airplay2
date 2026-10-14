@@ -5,6 +5,15 @@ incorporating external code or adding dependencies.
 
 ## Automatic audio expansion research (D76)
 
+**D80 reuse (2026-10-14):** compressed indexing calls the already adopted
+FFmpeg 9.0.2 public parser API. Inspection of pinned `flac_parser.c`,
+`opus/parser.c`, `vorbis_parser.c` and `mlp_parser.c` establishes the bounded
+prefix/complete-packet and major-sync duration behavior recorded in
+[the index contract](matroska-compressed-index.md). Runtime component versions
+must match the build headers before relying on prefix analysis. No implementation
+is copied, profile flag changed or dependency added; the existing LGPL notices
+and original Apache-2.0 adapter/fixture provenance remain applicable.
+
 **D77 adoption record (2026-10-14):** the authorized private decoder increment
 extends the existing pinned FFmpeg 9.0.2 overlay with native FLAC, Opus, Vorbis,
 TrueHD and signed 16/24/32-bit / float 32/64-bit PCM decoders (little/big endian).

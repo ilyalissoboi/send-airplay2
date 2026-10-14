@@ -9,6 +9,25 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D80 compressed packet indexing (2026-10-14).**
+The user's Proceed starts `codex/matroska-compressed-index` from merged PR #60
+(`531ff58`, final head `a2b3953`, all 16 checks passed in run `38532987731`).
+Read [the compressed clock/restart contract and limits](matroska-compressed-index.md).
+Canonical FLAC/Opus/Vorbis/TrueHD now share native selected packet coordinates,
+parser-derived sample counts and signed per-block trim. TrueHD seeks restart at
+major sync units; Vorbis first delay/skip cannot exceed intrinsic overlap priming.
+Smaller/absent CodecDelay preserves initial presentation silence.
+Thirty-second phase/AAC and independent short audible trim controls pass offline;
+one-hour synthetic FLAC seeks above 4 GiB have bounded nearby reads.
+The original absolute precision is reported separately from exact decoded-frame
+continuity; an interior-discard gap must fail, not hide within container tolerance.
+The 262144-packet/I/O/window/deadline bounds remain, so many full TrueHD/Opus/Vorbis
+movies still exceed this subset. Next: compact streaming anchors/high-packet-count
+scaling, before general selected copy/automatic policy and public reporting.
+Inspect the actual open slice head/CI. Real-file/brokered-host performance,
+expanded packaged runtime and converted-receiver gates remain. No package or
+Screenbox pin change; speaker audio and discrete surround remain hardware-deferred.
+
 **D79 selected PCM indexing (2026-10-14).**
 The user's Proceed starts `codex/matroska-audio-index` from merged PR #59
 (`9763189`, final head `2bc7a5c`, all 16 checks passed in run `38510002555`).
@@ -24,7 +43,9 @@ The index is limited to 262144 selected unlaced packets, with the existing I/O,
 window, input, deadline and cancellation bounds. [PR #60](https://github.com/ilyalissoboi/send-airplay2/pull/60)
 also preserves the one-second original clock admission bound before narrowing
 precision; owned boundary/refusal controls cover the review correction.
-Inspect its actual head/CI; do not generalize synthetic results to real files, UWP runtime or receivers.
+[PR #60](https://github.com/ilyalissoboi/send-airplay2/pull/60) merged as `531ff58`;
+all 16 checks passed at `a2b3953` in run `38532987731`. Do not resume its closed branch.
+Do not generalize synthetic results to real files, UWP runtime or receivers.
 Next: compressed exact durations/anchors and large-seek/trim gates for FLAC, Opus,
 Vorbis and TrueHD. Their coarse clocks remain under the ten-second movie horizon.
 Then selected remux/policy and versioned public reporting, expanded packaged

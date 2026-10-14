@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#59 merged.
+Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#60 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,9 +17,15 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D79 indexing increment:** [selected PCM packets and exact long-file seeking](matroska-pcm-index.md)
-remove the PCM movie horizon within the indexed subset. Compressed duration/anchor
-reconstruction and trim controls remain next, before automatic policy.
+**D80 indexing increment:** [compressed durations and restart coordinates](matroska-compressed-index.md)
+extend the native path to FLAC/Opus/Vorbis/TrueHD. The ten-second movie horizon is
+removed within the bounded subset; compact high-packet-count scaling remains
+before general automatic delivery. Original absolute precision and decoded-frame
+continuity have distinct tolerances. No public API, package or receiver result.
+
+**D79 merged (PR #60, `531ff58`):** [selected PCM packets and exact long-file seeking](matroska-pcm-index.md)
+remove the PCM movie horizon within the indexed subset. D80 extends this to
+compressed durations/restarts; compact movie scaling remains before automatic policy.
 
 **D78 merged (PR #59, `9763189`):** [bounded coarse-clock reconstruction](coarse-matroska-audio.md)
 counts decoded samples from fresh start-window owners for short variable-frame

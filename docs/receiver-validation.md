@@ -1,5 +1,10 @@
 # Receiver validation record
 
+**D80 boundary (2026-10-14):** [compressed index/duration/restart checks](matroska-compressed-index.md)
+cover owned 30-second movies, short independently prepared audible controls and
+synthetic one-hour FLAC. They add no receiver or expanded packaged-runtime result;
+high-packet-count/full-film and real-file performance remain separate gates.
+
 **D79 boundary (2026-10-14):** [selected PCM index/seek checks](matroska-pcm-index.md)
 include synthetic one-hour / >4-GiB offsets and independent trim/AAC controls.
 They add no receiver or expanded packaged-runtime observation.

@@ -6,7 +6,10 @@ from merged PR #59 (`9763189`). Its final head `2bc7a5c` passed all 16 checks in
 This slice establishes native selected-packet coordinates and exact PCM seeking.
 Compressed duration/anchor reconstruction follows separately; automatic delivery,
 public reporting, expanded packaged runtime and converted-receiver gates remain.
-The active branch is `codex/matroska-audio-index`; inspect its actual open PR head.
+[PR #60](https://github.com/ilyalissoboi/send-airplay2/pull/60) merged as `531ff58`;
+all 16 checks passed at final head `a2b3953` in run `38532987731`, with the precision
+review resolved. Do not resume its closed branch. [D80](matroska-compressed-index.md)
+extends this foundation to compressed durations/restarts under the retained bounds.
 
 ## Native coordinates and bounded construction
 
@@ -82,7 +85,7 @@ as the ceiling of `(1323132 - 132 - 132) * 48000 / 44100`. Cold/repeated tails a
 144 samples. Raw fine-clock and coarse indexed inputs must match that prepared
 control at the beginning, middle, EOF and generated AAC joins.
 
-[The virtual source](../tools/audio-codec-spike/virtual_pcm_source.h) synthesizes
+[The virtual source](../tools/audio-codec-spike/virtual_audio_source.h) synthesizes
 one hour of original one-second PCM/video cycles with all clusters above 4 GiB.
 Only headers and one payload cycle are allocated. Opening must request <64 MiB
 and read <4 MiB actual PCM. Cold/backward/forward windows request <32 MiB and

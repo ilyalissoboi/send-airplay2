@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#59 are merged. `main` contains
+Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#60 are merged. `main` contains
 the experimental C API version 4, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,6 +23,25 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D80 compressed packet indexing (2026-10-14).**
+The user's Proceed starts `codex/matroska-compressed-index` from merged PR #60
+(`531ff58`, final head `a2b3953`, all 16 checks passed in run `38532987731`).
+Read [the compressed clock/restart contract and limits](matroska-compressed-index.md).
+Canonical FLAC/Opus/Vorbis/TrueHD now share native selected packet coordinates,
+parser-derived sample counts and signed per-block trim. TrueHD seeks restart at
+major sync units; Vorbis first delay/skip cannot exceed intrinsic overlap priming.
+Smaller/absent CodecDelay preserves initial presentation silence.
+Thirty-second phase/AAC and independent short audible trim controls pass offline;
+one-hour synthetic FLAC seeks above 4 GiB have bounded nearby reads.
+The original absolute precision is reported separately from exact decoded-frame
+continuity; an interior-discard gap must fail, not hide within container tolerance.
+The 262144-packet/I/O/window/deadline bounds remain, so many full TrueHD/Opus/Vorbis
+movies still exceed this subset. Next: compact streaming anchors/high-packet-count
+scaling, before general selected copy/automatic policy and public reporting.
+Inspect the actual open slice head/CI. Real-file/brokered-host performance,
+expanded packaged runtime and converted-receiver gates remain. No package or
+Screenbox pin change; speaker audio and discrete surround remain hardware-deferred.
+
 **D79 selected PCM indexing (2026-10-14).**
 The user's Proceed starts `codex/matroska-audio-index` from merged PR #59
 (`9763189`, final head `2bc7a5c`, all 16 checks passed in run `38510002555`).
@@ -38,7 +57,9 @@ The index is limited to 262144 selected unlaced packets, with the existing I/O,
 window, input, deadline and cancellation bounds. [PR #60](https://github.com/ilyalissoboi/send-airplay2/pull/60)
 also preserves the one-second original clock admission bound before narrowing
 precision; owned boundary/refusal controls cover the review correction.
-Inspect its actual head/CI; do not generalize synthetic results to real files, UWP runtime or receivers.
+[PR #60](https://github.com/ilyalissoboi/send-airplay2/pull/60) merged as `531ff58`;
+all 16 checks passed at `a2b3953` in run `38532987731`. Do not resume its closed branch.
+Do not generalize synthetic results to real files, UWP runtime or receivers.
 Next: compressed exact durations/anchors and large-seek/trim gates for FLAC, Opus,
 Vorbis and TrueHD. Their coarse clocks remain under the ten-second movie horizon.
 Then selected remux/policy and versioned public reporting, expanded packaged
@@ -518,8 +539,9 @@ test hardware. D72 now checks private long-GOP splitting, terminal failure
 reporting and synthetic cold-seek scaling. D73 authoring is merged with explicit
 estimate limitations. D74 playback/public/storage and D75's x64 AppContainer
 runtime/storage gate are merged. D77 implements the expanded private decoder
-subset; D79 supplies bounded long-file PCM indexing. Compressed duration/anchor
-reconstruction is next, before selected remux/policy
+subset; D79 supplies bounded long-file PCM indexing and D80 adds compressed
+duration/restart coordinates. Compact high-packet-count movie scaling is next,
+before general selected remux/policy
 and public integration. Real-file performance and converted-receiver validation remain required;
 repeat packaged runtime checks for the expanded codec matrix.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
@@ -683,9 +705,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68-D78 and PR #59 are merged. The user's Proceed authorizes D79's selected
-> PCM packet/index increment. Read matroska-pcm-index.md and inspect
-> the actual open slice head. Compressed duration/anchor reconstruction is next, before
+> D68-D79 and PR #60 are merged. The user's Proceed authorizes D80's compressed
+> packet/index increment. Read matroska-compressed-index.md and inspect
+> the actual open slice head. Compact high-packet-count anchors remain a gate before
 > selected remux/policy and public integration. D75 performance and converted-receiver gates
 > remain required. Read
 > the spike/evidence and D67's stereo AAC plan; speaker audio and

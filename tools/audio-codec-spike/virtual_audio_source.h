@@ -12,12 +12,12 @@
 #include <vector>
 
 namespace sap2_test {
-/** One hour of repeated original 1-second PCM and black all-IDR video.
+/** One hour of repeated original 1-second PCM or FLAC and black all-IDR video.
  * A sparse EBML Void places every cluster beyond 4 GiB. Only headers and one
  * owned payload cycle are allocated. This is synthetic callback/index scaling,
  * not a real-film, packaged-host or receiver result. Callbacks borrow this owner.
  */
-class VirtualPcmSource {
+class VirtualAudioSource {
 public:
     static constexpr std::uint64_t first_cluster_offset = 0x1'0000'1000;
     static constexpr std::uint64_t duration_samples = 172800000;
@@ -25,40 +25,51 @@ public:
     std::atomic<std::size_t> size_calls{0};
     std::atomic_bool fail_payload{false};
 
-    explicit VirtualPcmSource(const std::filesystem::path& path) {
+    explicit VirtualAudioSource(const std::filesystem::path& path) {
         Source fixture(path);
         Context context;
         const auto inventory = probe_media_tracks(fixture.callbacks(), context.value);
+        const auto selection = select_source_audio(inventory, 42);
+        const auto& selected = inventory.tracks[selection.track_index];
+        const bool flac = selected.codec == "A_FLAC";
         const RandomReader read = [&](std::uint64_t offset, std::uint8_t* output,
                                       std::size_t length) {
             expect(offset <= fixture.bytes->size() && length <= fixture.bytes->size() - offset,
-                   "virtual PCM original payload bounds");
+                   "virtual audio original payload bounds");
             std::memcpy(output, fixture.bytes->data() + offset, length);
         };
         const auto video = read_mkv_video_source(read, fixture.bytes->size()).tracks.front();
         const auto& frame = video.samples.front();
         Bytes picture(frame.size);
         read(frame.offset, picture.data(), picture.size());
-        constexpr std::size_t pcm_cycle_bytes = 48000 * 2 * 2;
+        constexpr std::size_t payload_cycle_bytes = 48000 * 2 * 2;
         for (const auto& packet : read_mkv_audio_packets(read, fixture.bytes->size(), 42)) {
-            const auto remaining = pcm_cycle_bytes - pcm_.size();
+            if (flac) {
+                expect(payload_.empty(),
+                       "virtual FLAC has one independently authored one-second block");
+                payload_.resize(packet.size);
+                read(packet.offset, payload_.data(), payload_.size());
+                break;
+            }
+            const auto remaining = payload_cycle_bytes - payload_.size();
             const auto length = std::min<std::size_t>(remaining, packet.size);
-            const auto previous = pcm_.size();
-            pcm_.resize(previous + length);
-            read(packet.offset, pcm_.data() + previous, length);
-            if (pcm_.size() == pcm_cycle_bytes) {
+            const auto previous = payload_.size();
+            payload_.resize(previous + length);
+            read(packet.offset, payload_.data() + previous, length);
+            if (payload_.size() == payload_cycle_bytes) {
                 break;
             }
         }
-        expect(pcm_.size() == pcm_cycle_bytes, "virtual PCM one-second original cycle");
+        expect(flac || payload_.size() == payload_cycle_bytes,
+               "virtual PCM one-second original cycle");
         build_clusters(picture);
-        build_prefix(inventory.tracks.front().configuration);
+        build_prefix(inventory.tracks.front().configuration, selected);
     }
 
-    VirtualPcmSource(const VirtualPcmSource&) = delete;
-    VirtualPcmSource& operator=(const VirtualPcmSource&) = delete;
-    VirtualPcmSource(VirtualPcmSource&&) = delete;
-    VirtualPcmSource& operator=(VirtualPcmSource&&) = delete;
+    VirtualAudioSource(const VirtualAudioSource&) = delete;
+    VirtualAudioSource& operator=(const VirtualAudioSource&) = delete;
+    VirtualAudioSource(VirtualAudioSource&&) = delete;
+    VirtualAudioSource& operator=(VirtualAudioSource&&) = delete;
     MediaSource callbacks() {
         return {[this] {
                     ++size_calls;
@@ -119,8 +130,8 @@ public:
                     }
                     const auto within = relative - cluster.header.size();
                     const auto count = static_cast<std::size_t>(
-                        std::min<std::uint64_t>(limit, pcm_.size() - within));
-                    std::memcpy(output, pcm_.data() + within, count);
+                        std::min<std::uint64_t>(limit, payload_.size() - within));
+                    std::memcpy(output, payload_.data() + within, count);
                     payload_read += count;
                     return count;
                 }};
@@ -136,7 +147,7 @@ private:
         std::uint64_t offset;
         Bytes header;
     };
-    Bytes prefix_, pcm_;
+    Bytes prefix_, payload_;
     std::vector<Cluster> clusters_;
     std::vector<Cluster> padding_;
     std::uint64_t size_ = 0;
@@ -146,17 +157,17 @@ private:
             auto contents = integer(0xe7, second * 1000);
             append(contents, element(0xa3, block(11, 0, picture)));
             append(contents, element(0xa3, block(11, 500, picture)));
-            auto audio_header = header(0xa3, pcm_.size() + 4);
+            auto audio_header = header(0xa3, payload_.size() + 4);
             append(audio_header, {0xaa, 0, 0, 0x80});
             append(contents, audio_header);
-            auto cluster = header(0x1f43b675, contents.size() + pcm_.size());
+            auto cluster = header(0x1f43b675, contents.size() + payload_.size());
             append(cluster, contents);
             clusters_.push_back({position, std::move(cluster)});
-            position += clusters_.back().header.size() + pcm_.size();
+            position += clusters_.back().header.size() + payload_.size();
         }
         size_ = position;
     }
-    void build_prefix(const Bytes& configuration) {
+    void build_prefix(const Bytes& configuration, const SourceTrack& audio_track) {
         const auto ebml =
             element(0x1a45dfa3, element(0x4282, {'m', 'a', 't', 'r', 'o', 's', 'k', 'a'}));
         prefix_ = ebml;
@@ -177,10 +188,15 @@ private:
         auto audio_entry = integer(0xd7, 42);
         append(audio_entry, integer(0x83, 2));
         append(audio_entry,
-               element(0x86, {'A', '_', 'P', 'C', 'M', '/', 'I', 'N', 'T', '/', 'L', 'I', 'T'}));
+               element(0x86, Bytes(audio_track.codec.begin(), audio_track.codec.end())));
+        if (!audio_track.configuration.empty()) {
+            append(audio_entry, element(0x63a2, audio_track.configuration));
+        }
         auto audio = element(0xb5, floating(48000.0));
         append(audio, integer(0x9f, 2));
-        append(audio, integer(0x6264, 16));
+        if (audio_track.codec != "A_FLAC") {
+            append(audio, integer(0x6264, 16));
+        }
         append(audio_entry, element(0xe1, audio));
         auto tracks = element(0xae, video_entry);
         append(tracks, element(0xae, audio_entry));
@@ -196,7 +212,7 @@ private:
         append(prefix_, element(0x1c53bb6b, cues));
         constexpr std::size_t void_header_bytes = 9;
         expect(prefix_.size() + void_header_bytes < first_cluster_offset,
-               "virtual PCM Void bounds");
+               "virtual audio Void bounds");
         auto padding_position = static_cast<std::uint64_t>(prefix_.size());
         while (padding_position < first_cluster_offset) {
             // FFmpeg's EBML skip helper currently takes a signed-int length.
@@ -204,7 +220,7 @@ private:
             // backend subset while all packet offsets remain above 4 GiB.
             const auto total =
                 std::min<std::uint64_t>(1ULL << 30, first_cluster_offset - padding_position);
-            expect(total >= void_header_bytes, "virtual PCM remaining Void size");
+            expect(total >= void_header_bytes, "virtual audio remaining Void size");
             padding_.push_back({padding_position, header(0xec, total - void_header_bytes)});
             padding_position += total;
         }
