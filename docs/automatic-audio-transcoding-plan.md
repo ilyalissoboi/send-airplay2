@@ -4,7 +4,8 @@ Decision: 2026-10-14 (Asia/Tokyo). Baseline: merged PR #56, `02d8be6`.
 Planning PR #57 merged as `faee858` at final head `d4f4a62`, with all 16 checks
 passed and its block-padding review resolved. The subsequent authorized
 [D77 decoder/profile foundation](audio-decoder-expansion.md) implements the recorded
-private subset; coarse Matroska timing remains next. Automatic delivery and
+private subset; [D78 bounded coarse-clock reconstruction](coarse-matroska-audio.md)
+covers short presentations. Long-file Matroska indexing remains next. Automatic delivery and
 versioned policy reporting are not implemented.
 
 ## User requirement and current evidence

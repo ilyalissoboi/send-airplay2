@@ -56,14 +56,14 @@ def signed_element(tag, value):
 
 def movie(codec, packets, private, video, delay_samples=0, bit_depth=None,
           padding_override=None, declared_depth=None, timestamp_scale_ns=1, channels=2,
-          coded_rate=RATE, output_rate=None):
+          coded_rate=RATE, output_rate=None, presentation_duration_ns=6500000000):
     """One cluster per packet; cues address original audio TrackNumber 42."""
     header = b"".join([base.uint("4286", 1), base.uint("42f7", 1), base.uint("42f2", 4),
                        base.uint("42f3", 8), base.element("4282", b"matroska"),
                        base.uint("4287", 4), base.uint("4285", 2)])
     # Nanosecond TimestampScale avoids millisecond rounding hiding trim errors.
     info = base.uint("2ad7b1", timestamp_scale_ns) + base.element(
-        "4489", struct.pack(">d", 6500000000.0 / timestamp_scale_ns))
+        "4489", struct.pack(">d", presentation_duration_ns / timestamp_scale_ns))
     info += base.element("4d80", b"sap2-owned-expanded") + base.element("5741", b"sap2-owned-expanded")
     video_packets, video_private = video
     entry = base.uint("d7", 11) + base.uint("73c5", 1011) + base.uint("83", 1)

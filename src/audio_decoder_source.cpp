@@ -522,10 +522,12 @@ struct InputAudioFormat {
     std::uint64_t channel_mask = 0;
     bool established = false; ///< True only after an actual decoded frame passes validation.
 };
-/// Opt-in fixed-frame sample grid for HLS joins. Seed at presentation start;
-/// rounded Matroska timestamps alone cannot define a stable seek epoch phase.
+/// Opt-in HLS clock: absolute timestamps, legacy fixed-frame grid, or bounded
+/// start reconstruction. Rounded timestamps alone cannot define seek phase.
 struct AudioCadence {
     bool enabled = false;
+    bool reopen_at_start = false;
+    bool rebuild_from_start = false;
     int frame_samples = 0;
     std::int64_t origin_input_sample = 0;
 };
@@ -617,21 +619,26 @@ struct AudioDecoderSource::Impl {
                     AudioDecodeFailure::unsupported,
                     "selected Matroska audio metadata disagrees with decoder");
         }
-        input_format.rate = parameters->sample_rate;
-        input_format.sample_format = parameters->format;
-        input_format.channels = parameters->ch_layout.nb_channels;
-        if (parameters->ch_layout.order == AV_CHANNEL_ORDER_NATIVE) {
-            input_format.channel_mask = parameters->ch_layout.u.mask;
+        // Reopening must preserve the format established by decoded frames;
+        // configure() validates the new epoch against it before conversion.
+        if (!input_format.established) {
+            input_format.rate = parameters->sample_rate;
+            input_format.sample_format = parameters->format;
+            input_format.channels = parameters->ch_layout.nb_channels;
+            if (parameters->ch_layout.order == AV_CHANNEL_ORDER_NATIVE) {
+                input_format.channel_mask = parameters->ch_layout.u.mask;
+            }
         }
         const bool legacy_cadence =
             parameters->codec_id == AV_CODEC_ID_AAC || parameters->codec_id == AV_CODEC_ID_AC3 ||
             parameters->codec_id == AV_CODEC_ID_EAC3 || parameters->codec_id == AV_CODEC_ID_DTS;
         if (cadence.enabled && !legacy_cadence) {
-            require(parameters->sample_rate > 0 &&
-                        av_rescale_q_rnd(1, format->streams[stream_index]->time_base,
-                                         AVRational{1, parameters->sample_rate}, AV_ROUND_UP) <= 1,
-                    AudioDecodeFailure::unsupported,
-                    "expanded Matroska HLS requires sample-accurate timestamps");
+            cadence.reopen_at_start = true;
+            require(parameters->sample_rate > 0, AudioDecodeFailure::unsupported,
+                    "selected audio has no sample rate");
+            cadence.rebuild_from_start =
+                av_rescale_q_rnd(1, format->streams[stream_index]->time_base,
+                                 AVRational{1, parameters->sample_rate}, AV_ROUND_UP) > 1;
         }
     }
     void discard_other_streams() {
@@ -641,10 +648,24 @@ struct AudioDecoderSource::Impl {
         }
     }
     void seek(std::uint64_t begin) {
-        const auto* stream = format->streams[stream_index];
         const auto metadata_preroll = av_rescale_q(
             static_cast<std::int64_t>(selected.seek_preroll_ns), nanosecond_clock, output_clock);
         const auto preroll = std::max<std::int64_t>(output_rate, metadata_preroll);
+        if (cadence.rebuild_from_start ||
+            (cadence.reopen_at_start && begin <= static_cast<std::uint64_t>(preroll))) {
+            // A timestamp-zero seek can land after a negative CodecDelay packet;
+            // the demuxer also clears consumed initial skip state on seeks.
+            // Reopen callback-backed owners in dependency order so every epoch
+            // sees the same first packet and fresh demuxer-owned trimming.
+            codec.reset();
+            format.reset();
+            io.reset();
+            reader.position = 0;
+            open_format();
+            open_codec();
+            return;
+        }
+        const auto* stream = format->streams[stream_index];
         const auto raw_target = static_cast<std::int64_t>(begin) - preroll;
         // MOV's negative AAC packet carries the overlap/priming history at start.
         const auto target =
@@ -761,6 +782,7 @@ private:
     std::int64_t covered_ = 0;
     bool complete_ = false;
     bool respect_opus_packet_duration_ = false;
+    std::optional<std::int64_t> rebuild_origin_input_sample_;
 
     void configure(const AVFrame& frame, std::int64_t timestamp, std::int64_t input_position) {
         require(frame.ch_layout.order == AV_CHANNEL_ORDER_NATIVE &&
@@ -835,6 +857,27 @@ private:
         // including trimmed first/final frames and variable codec block sizes.
         if (quantum <= 1) {
             return position;
+        }
+        if (cadence_.rebuild_from_start) {
+            const AVRational input_clock{1, frame.sample_rate};
+            const auto latest = av_rescale_q(
+                static_cast<std::int64_t>(maximum_presentation_samples), output_clock, input_clock);
+            const auto earliest = -av_rescale_q(static_cast<std::int64_t>(maximum_input_samples),
+                                                output_clock, input_clock);
+            require(position >= earliest && position <= latest, AudioDecodeFailure::unsupported,
+                    "Matroska sample clock exceeds presentation bounds");
+            // Every epoch starts at the same first audible frame. Count actual
+            // decoded samples, including variable blocks and decoder-owned trim;
+            // rounded timestamps validate continuity but cannot move that phase.
+            if (!rebuild_origin_input_sample_) {
+                rebuild_origin_input_sample_ = position;
+            }
+            const auto expected =
+                *rebuild_origin_input_sample_ + static_cast<std::int64_t>(input_samples_);
+            require(position >= expected - quantum - 1 && position <= expected + quantum + 1,
+                    AudioDecodeFailure::unsupported,
+                    "Matroska timestamp disagrees with rebuilt sample clock");
+            return expected;
         }
         if (!cadence_.frame_samples) {
             require(output_.first_sample == 0 && frame.nb_samples > 2 * (quantum + 1),
@@ -959,6 +1002,9 @@ private:
 
 AudioDecoderSource::AudioDecoderSource(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 AudioDecoderSource::~AudioDecoderSource() = default;
+bool AudioDecoderSource::requires_start_rebuild() const noexcept {
+    return impl_->cadence.rebuild_from_start;
+}
 void validate_audio_codec_backend() {
     validate_backend();
 }
@@ -1005,6 +1051,9 @@ DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, s
                 first_sample <= maximum_presentation_samples - count,
             AudioDecodeFailure::unsupported, "invalid audio window request or failed decoder");
     try {
+        require(!requires_start_rebuild() || first_sample + count <= maximum_start_rebuild_samples,
+                AudioDecodeFailure::unsupported,
+                "coarse Matroska window exceeds bounded start reconstruction");
         Operation operation(impl_->reader, context);
         impl_->seek(first_sample);
         DecodedAudioWindow window;

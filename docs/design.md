@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#57 merged.
+Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#58 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,10 +17,15 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D77 implementation:** [the private decoder/profile foundation](audio-decoder-expansion.md)
+**D78 timing increment:** [bounded coarse-clock reconstruction](coarse-matroska-audio.md)
+counts decoded samples from fresh start-window owners for short variable-frame
+Matroska presentations. The explicit ten-second horizon stays until bounded
+long-file indexing/phase/scaling gates pass. Automatic policy and release follow.
+
+**D77 merged (PR #58, `820e89c`):** [the private decoder/profile foundation](audio-decoder-expansion.md)
 adds the documented FLAC/Opus/Vorbis/PCM/TrueHD matrix with owned offline
-seeking/trim/AAC checks. Coarse Matroska variable-frame HLS remains refused;
-its phase reconstruction is next. Automatic policy/public reporting, expanded
+seeking/trim/AAC checks. D78 extends coarse Matroska timing in its short-file scope;
+long-file indexing is next. Automatic policy/public reporting, expanded
 packaged/runtime and receiver gates remain required.
 
 **D76 user scope (merged PR #57):** automatic audio policy plus FLAC, Opus, Vorbis, PCM and
@@ -210,7 +215,7 @@ brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
 
-Current queue: [D77's remaining coarse Matroska timing gate](audio-decoder-expansion.md#remaining-work),
+Current queue: [D78's remaining long-file Matroska indexing gate](coarse-matroska-audio.md),
 selected remux/policy, then versioned public integration. Repeat packaged runtime
 checks for the expanded matrix; real-file performance and converted-receiver
 gates remain required for the existing stereo path and its expansion.

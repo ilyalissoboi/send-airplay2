@@ -9,18 +9,39 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D78 bounded coarse-clock timing (2026-10-14).**
+The user's Proceed starts `codex/matroska-audio-clock` from merged PR #58
+(`820e89c`, final head `129ae6e`, all 16 checks passed in run `38504706633`;
+output-rate review resolved). Read [the bounded timing gate](coarse-matroska-audio.md).
+Active [PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) owns this
+increment; inspect its actual head/review/CI before continuing.
+Expanded canonical Matroska windows count actual decoded samples from freshly
+reopened start owners, preserving priming and per-packet trimming on repeats.
+Fourteen owned cases compare cold/reused PCM and byte-identical AAC segments
+against sample-clock controls, including variable 44.1-kHz packets and 5.1 inputs.
+The coarse path is limited to ten-second presentations; larger HLS presentations
+fail before initial decode/registration/sealing and clean the owned store.
+This is a short-file correctness increment, not completion of the long-file gate.
+Next: bounded exact packet/sample indexing and long-file cold-seek phase/scaling
+tests, before selected remux/policy and versioned public reporting. Do not raise
+the horizon as a substitute for indexing or drop the existing resource bounds.
+Local gates: codec 7/7, static/shared 36/36 and 37/37, enabled shared 38/38,
+standalone/integrated x64 UWP compilation and codec import inspection.
+Inspect the actual slice PR head/CI before merging. No package, Screenbox pin,
+expanded packaged runtime or receiver observation is added.
+
 **D77 private decoder foundation (2026-10-14).**
 The user's Proceed starts `codex/audio-decoder-expansion` from merged PR #57
 (`faee858`, final head `d4f4a62`, all 16 checks passed; padding review resolved).
 Read [the expanded input matrix and offline gates](audio-decoder-expansion.md).
-Active [PR #58](https://github.com/ilyalissoboi/send-airplay2/pull/58) owns this
-increment; inspect its actual head and review/CI before continuing.
+[PR #58](https://github.com/ilyalissoboi/send-airplay2/pull/58) merged as `820e89c`;
+all 16 checks passed at `129ae6e` in run `38504706633`. Do not resume its closed branch.
 The minimal native FFmpeg profile and original-ID decoder now cover FLAC,
 Opus, Vorbis, PCM and TrueHD in the documented container/configuration subset.
 Owned stereo/5.1 fixtures cover seeks, literal EOF trimming and generated AAC;
 no new ABI, automatic policy, package or receiver result is added.
-Expanded Matroska HLS requires sample-accurate timestamps; coarse variable-frame
-seek/phase reconstruction is the next increment, before selected remux/policy.
+At this merge, expanded Matroska HLS required sample-accurate timestamps.
+D78 above adds short-file coarse reconstruction; long-file indexing is next.
 D75 performance/converted-receiver and expanded packaged-runtime gates remain.
 PR #58 review correction retains Matroska OutputSamplingFrequency and compares
 the effective output rate, preserving distinct AAC/SBR coded/output rates.

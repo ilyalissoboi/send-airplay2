@@ -1,5 +1,9 @@
 # Receiver validation record
 
+**D78 boundary (2026-10-14):** [bounded coarse Matroska timing checks](coarse-matroska-audio.md)
+are offline and limited to short presentations. No receiver or packaged runtime
+result is added; long-file indexing and existing converted-receiver gates remain.
+
 **D77 boundary (2026-10-14):** [expanded private decoder/rendition checks](audio-decoder-expansion.md)
 cover original stereo/5.1 fixtures offline. They add no receiver or packaged
 runtime observation. Preserve historical build/firmware attribution; speakers

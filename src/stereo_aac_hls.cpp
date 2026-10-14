@@ -501,6 +501,10 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     // All renditions share the larger target, including video and subtitles.
     raise_composition_target_duration(presentation, target);
     const auto duration = impl->boundaries.back();
+    require(!impl->decoder->requires_start_rebuild() ||
+                duration <= AudioDecoderSource::maximum_start_rebuild_samples,
+            AudioDecodeFailure::unsupported,
+            "coarse Matroska HLS exceeds bounded start reconstruction");
     require(duration > 0 && duration <= maximum_movie_samples, AudioDecodeFailure::too_large,
             "AAC HLS duration bound");
     const auto estimate =

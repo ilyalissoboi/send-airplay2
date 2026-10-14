@@ -2,8 +2,9 @@
 
 **D77 extension:** [expanded codec/configuration and timing gates](audio-decoder-expansion.md)
 add the documented new family subset. The D70 evidence below remains historical;
-expanded Matroska HLS requires sample-accurate clocks, and no new receiver proof
-is implied by the private decoder tests.
+[D78's bounded coarse-clock reconstruction](coarse-matroska-audio.md) additionally
+covers short presentations. Long-file variable-frame indexing remains required;
+no new receiver proof is implied by private decoder tests.
 
 2026-10-13. The user's **Proceed** authorizes this native increment after
 [D69's merged source foundations](audio-source-inventory.md). It implements a

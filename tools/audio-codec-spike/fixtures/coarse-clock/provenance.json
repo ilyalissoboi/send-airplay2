@@ -1,0 +1,136 @@
+{
+  "license": "Apache-2.0; original D77 payloads and synthesized PCM",
+  "generator": "generate_coarse_clock_fixtures.py",
+  "timestamp_scale_ns": 1000000,
+  "rounding": "nearest integer tick, ties upward",
+  "original_provenance": "../expanded-decoder/provenance.json",
+  "fixtures": [
+    {
+      "file": "flac.mkv",
+      "original_sha256": "04818805c9c51bb35ccc2e971d226e51b84b3bbb0cb3c3bf6c1343e691ba7e83",
+      "sha256": "b6b484d87087106ec832d1ecfb815dc961391195845eaa9bdf4c660696908bd4",
+      "bytes": 159337
+    },
+    {
+      "file": "opus.mkv",
+      "original_sha256": "e282ff7fcbcc7d5598ac929d1d7d6c4f3c2114c06498ecaf5261f913424a75ba",
+      "sha256": "b66beeef23024ff351f6363ca4db9978dd4d7f757de63c04869b6b220e6e60f5",
+      "bytes": 88206
+    },
+    {
+      "file": "vorbis.mkv",
+      "original_sha256": "3c0925f2cf330fe4301dae82d9114eba1525279f6f046efe1d8388728730a942",
+      "sha256": "505807f59999a9823fa4447699d44759c088abed9cecfa24dc8ba1b5b055f0c5",
+      "bytes": 43557
+    },
+    {
+      "file": "truehd.mkv",
+      "original_sha256": "35ce053cf279e94c1e55a482038d939dc7b8c6824b71a1b3579f682120c567f0",
+      "sha256": "cff47492828f3278c84e95ca7b184e579c77fc0e9f16d4e56827481111bf14cc",
+      "bytes": 456358
+    },
+    {
+      "file": "pcm-s16le.mkv",
+      "original_sha256": "933aa6ffaaa39bb6fcfdb886eb90010a23d29d3b4b29dfcd886eb653cf7b61e3",
+      "sha256": "2f2ebca871e15f43cefec80c5377925aa6a772f1f366c55071f82f7762004638",
+      "bytes": 1162972
+    },
+    {
+      "file": "pcm-s24be.mkv",
+      "original_sha256": "658d4ee5bd144499312ff80d58757d777737a09cadcab3f5653fec6b06d1a7f9",
+      "sha256": "d2fc68c5b3c77fb9ca2fb844b3f26d8c9757d50c6483b95873bd8077bb4f2a5c",
+      "bytes": 1739260
+    },
+    {
+      "file": "pcm-f64le.mkv",
+      "original_sha256": "09a9bc438e518bc95618ca11246d7ac4697158e8038fe9e8466a83bfa178728e",
+      "sha256": "f598547c4a0f0df75255e0ab5c0e608ca16e0f88d1e632f993146604083b8933",
+      "bytes": 4621078
+    },
+    {
+      "file": "opus-leading-discard.mkv",
+      "original_sha256": "5a0087b6ca1fdec7138ace79c295297224cca6ee6c3643f86c0bba5f34b05984",
+      "sha256": "a2afa6cf7147a47331e75acd578984e449e3b9dec9bf8082c69f19f187a8e6c3",
+      "bytes": 88220
+    },
+    {
+      "file": "pcm-leading-discard.mkv",
+      "original_sha256": "4d76c7c6d414554e7bf00d3e5e895425ede2f8eec3031ff228dfd5b941c594bf",
+      "sha256": "f01450c5148f6abf32ca3091d059f4caf07fec899ff02b96603534dc9601aaf5",
+      "bytes": 1162986
+    },
+    {
+      "file": "flac-51.mkv",
+      "original_sha256": "c471e753ad7dd7859d4c0e0d3b16fe917fd10ac69953a1bc21d1b2eafa322b06",
+      "sha256": "236e43e09bcd62f51dc349f1730fda2359b1e96e1cfb4004de60238a089f361e",
+      "bytes": 474078
+    },
+    {
+      "file": "opus-51.mkv",
+      "original_sha256": "f6d24acabf060d14bb00f9739ecb3da14c7be64d759869e51c9d8136d0e06edd",
+      "sha256": "ecf72f3afe2acc595db3d41b27a48b79a157156db0e884a59251e143d56ef8e9",
+      "bytes": 334462
+    },
+    {
+      "file": "vorbis-51.mkv",
+      "original_sha256": "747087c5539e426a684c1da774f456f71bc44c896d9b05abed461635ae13529a",
+      "sha256": "1fce1a0a0b96618120f4642ea67adcb649c84febd3a44cd8e3bfa42c01e155d0",
+      "bytes": 93258
+    },
+    {
+      "file": "truehd-51.mkv",
+      "original_sha256": "fe85eb06bca1209de0031c21236f292dffb92c548e00be42abf1218d723c967d",
+      "sha256": "d10a9ec1c7da9c1112805a4a7dcef6c73fdb422dab47faa547b659ccf41e73f1",
+      "bytes": 964306
+    },
+    {
+      "file": "pcm-variable-44100-fine.mkv",
+      "sha256": "661bb341d104c5699b6a612b7f3b28b4ba47730045842d38d70ba77dbedada5c",
+      "bytes": 1069925,
+      "input": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 264732,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "08f00ed2ec5062a90b4e805e3aabe50aaa49e289a5585d32220abe07bd96873b"
+      }
+    },
+    {
+      "file": "pcm-variable-44100.mkv",
+      "sha256": "453bf5cb084331d41f9149d4ed961c6e114f7c8558445cd8ef9925e27d3020df",
+      "bytes": 1069927,
+      "input": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 264732,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "08f00ed2ec5062a90b4e805e3aabe50aaa49e289a5585d32220abe07bd96873b"
+      }
+    },
+    {
+      "file": "long-video-fine.mkv",
+      "sha256": "fb3fa0f9f389455f1021c06a8fba916fe4b2dde5d10deda4f36f270ad6b7ba0e",
+      "bytes": 1071240,
+      "video_frames": 24
+    },
+    {
+      "file": "over-limit-video.mkv",
+      "sha256": "45b3e4d2a40439bf13a18b35c79eb34cae340ada3533bb50df6c00a7bf0fa01a",
+      "bytes": 1071242,
+      "video_frames": 24,
+      "hls_unsupported": true
+    },
+    {
+      "file": "discontinuous.mkv",
+      "sha256": "2d67c25d7cfa0096c9860f626caf5484dc9cb6b601b03be591677bc530339b85",
+      "bytes": 1069930,
+      "gap_samples_48khz": 4800
+    }
+  ]
+}
