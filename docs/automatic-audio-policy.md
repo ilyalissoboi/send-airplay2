@@ -75,7 +75,13 @@ Other valid Dolby forms remain unsupported in this slice.
 ## Selected native remux and conversion boundaries
 
 MP4 selected copy indexes video/text independently, then the requested original
-audio ID, validating the simple audio edit/index contract. Matroska selects only
+audio ID, validating the simple audio edit/index contract. Finite MP4 audio media
+edits must cover the entire remaining sample span after the media start; shorter
+edits are refused as unsupported, because the shared copy planner includes all
+packets and the init writer changes the final media duration to zero. The duration
+comparison is exact across the movie/audio timescales, including fractional
+boundaries and an optional leading empty edit. Zero-duration media edits retain
+the existing copy-to-end behavior. Matroska selects only
 the requested original TrackNumber before codec filtering, retains signed block
 padding and rejects selected lacing/nonzero DiscardPadding instead of dropping it.
 Selected encoded/nonstandard tracks and metadata changes are refused. Earlier
@@ -120,10 +126,19 @@ commentary after conversion; every new input family exercises generated AAC,
 literal 6.5-second video end, cached fragment reuse and one-time owned cleanup.
 Refusals cover ambiguity, invalid identity, preservation, protection, copied format
 change, source failure, missing backend/storage, malformed parent descriptor,
-unvalidated E-AC-3 BSI, cancellation/timeout and lazy cache-seal failure without
+unvalidated E-AC-3 BSI, finite MP4 audio trims in both elst versions,
+cancellation/timeout and lazy cache-seal failure without
 fallback. Unknown earlier audio does not change selected-copy payloads.
 
-Local Windows x64 Release gates pass: full codec **11/11** (59.25 s), static
+PR #63's finite-edit review fix passes full local static **37/37** (45.40 s),
+shared **38/38** (51.36 s), enabled shared **39/39** (63.95 s) and standalone
+codec policy **1/1** (3.85 s). Final fractional-boundary tests then pass in all
+three native builds. Finite trims refuse preparation before resource return,
+without conversion/store ownership; full-span and copy-to-end controls still pass.
+Four review-touched C++ files pass formatting and whitespace checks. New-head CI
+must be inspected separately; these checks add no receiver evidence.
+
+Initial local Windows x64 Release gates pass: full codec **11/11** (59.25 s), static
 **37/37** (45.27 s), shared **38/38** (50.23 s) and enabled shared **39/39**
 (61.94 s). After adding final fixed-duration and effective-output-rate metadata
 controls, focused policy checks pass in standalone codec and default/enabled

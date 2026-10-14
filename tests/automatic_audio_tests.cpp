@@ -298,6 +298,36 @@ void selection_and_resource_refusals(const std::filesystem::path& decoder,
             [&] { (void)prepare(source, store, context, 42); });
 #endif
 }
+void finite_copy_edit_refusals(const std::filesystem::path& policy) {
+    Context context;
+    Store store;
+    for (const bool wide_edit : {false, true}) {
+        Source source(policy / (wide_edit ? "aac-subtitles.mp4" : "aac-48000-2.mp4"));
+        // Independent owned elst bytes: one media edit beginning at AAC tick
+        // 1024, covering three seconds (3000 at 1 kHz, 2304000000 at 768 MHz).
+        const Bytes signature =
+            wide_edit
+                ? Bytes{'e', 'l', 's',  't',  1,    0, 0, 0, 0, 0, 0, 1, 0, 0,
+                        0,   0,   0x89, 0x54, 0x40, 0, 0, 0, 0, 0, 0, 0, 4, 0}
+                : Bytes{'e', 'l', 's', 't', 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0x0b, 0xb8, 0, 0, 4, 0};
+        const auto position = std::search(source.bytes.begin(), source.bytes.end(),
+                                          signature.begin(), signature.end());
+        expect(position != source.bytes.end(), "owned selected AAC elst signature");
+        constexpr std::size_t duration_offset = 12; // Type, FullBox, entry count.
+        const std::size_t duration_bytes = wide_edit ? 8 : 4;
+        std::uint64_t duration = wide_edit ? 768'000'000 : 1000; // One second.
+        for (std::size_t index = duration_bytes; index > 0; --index) {
+            *(position + duration_offset + index - 1) = static_cast<std::uint8_t>(duration);
+            duration >>= 8;
+        }
+        refusal(MediaPreparationFailure::unsupported,
+                std::string("finite selected AAC trim, elst version=") + (wide_edit ? "1" : "0"),
+                [&] { (void)prepare(source, store, context, 42); });
+    }
+    expect(store.seals == 0 && store.reads == 0 && store.clears == 0,
+           "finite copy edits never take conversion store ownership or retry conversion");
+}
+
 void copy_table_refusals(const std::filesystem::path& policy) {
     Context context;
     Store store;
@@ -457,6 +487,7 @@ int main(int argc, char** argv) {
         copied_movie(decoder / "ac3-commentary-first.mkv", 6, true);
         selection_and_resource_refusals(decoder, policy);
         copy_table_refusals(policy);
+        finite_copy_edit_refusals(policy);
 #ifdef SAP2_HAS_STEREO_AAC
         converted_movie(decoder / "dts-commentary-first.mp4", true);
         converted_movie(decoder / "dts-commentary-first.mkv", true);

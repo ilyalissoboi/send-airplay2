@@ -136,6 +136,8 @@ struct Mp4Movie {
 [[nodiscard]] Bytes mp4_audio_private_box(const Bytes& sample_entry, const std::string& child);
 /// Selected original audio, without legacy filtered-track fallback. Invalid IDs
 /// throw invalid_argument; non-remuxable selected entries throw RemuxException.
+/// Finite media edits that trim the remaining audio span are unsupported; copied
+/// packet ranges and init metadata currently preserve only leading edits.
 [[nodiscard]] Mp4Movie read_mp4_selected_audio(const RandomReader& read, std::uint64_t file_size,
                                                std::uint64_t track_id);
 /// Index supported video/text independently of audio codec support/selection.

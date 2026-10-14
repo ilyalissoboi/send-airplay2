@@ -1046,6 +1046,31 @@ Mp4Movie read_mp4_selected_audio(const RandomReader& read, std::uint64_t file_si
     } catch (const std::invalid_argument&) {
         unsupported("selected audio edit list is outside the copy timeline");
     }
+    if (!audio.edits.empty() && audio.edits.back().segment_duration != 0) {
+        const auto& edit = audio.edits.back();
+        const auto& last = audio.samples.back();
+        // The seek validation above checks this sum and the nonnegative media time.
+        const auto media_end = last.decode_time + last.duration;
+        const auto media_start = static_cast<std::uint64_t>(edit.media_time);
+        if (media_start >= media_end) {
+            unsupported("selected audio media edit starts beyond its samples");
+        }
+        const auto remaining_ticks = media_end - media_start;
+        const auto edit_seconds = edit.segment_duration / movie.timescale;
+        const auto remaining_seconds = remaining_ticks / audio.timescale;
+        // Compare rational durations exactly without multiplying full 64-bit
+        // timestamps. Each remainder is below its 32-bit timescale.
+        const bool trims_tail = edit_seconds < remaining_seconds ||
+                                (edit_seconds == remaining_seconds &&
+                                 (edit.segment_duration % movie.timescale) * audio.timescale <
+                                     (remaining_ticks % audio.timescale) * movie.timescale);
+        if (trims_tail) {
+            // The copy planner includes all packets and the init writer changes
+            // the last media duration to zero. Accept only edits covering the
+            // remaining track until copied ranges can preserve a finite trim.
+            unsupported("selected audio finite media edit trims copied samples");
+        }
+    }
     movie.tracks.push_back(std::move(audio));
     return movie;
 }

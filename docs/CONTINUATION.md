@@ -24,6 +24,13 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 guide; the master handoff and dated artifacts preserve the longer history.
 
 **D82 private automatic audio policy (2026-10-14).**
+[PR #63](https://github.com/ilyalissoboi/send-airplay2/pull/63) review follow-up:
+selected MP4 audio copy now refuses finite media edits ending before the remaining
+sample span, rather than exposing source-trimmed audio when init duration becomes
+zero. Exact rational boundaries, optional empty edits and both elst versions have
+offline regressions. Full local static/shared/enabled shared suites pass
+37/37, 38/38 and 39/39; standalone codec policy and final fractional-boundary
+checks pass. Inspect the new actual-head CI; no receiver evidence is added.
 The user's Proceed starts `codex/automatic-audio-policy` from merged
 [PR #62](https://github.com/ilyalissoboi/send-airplay2/pull/62), `c69543a`.
 All 16 checks passed at final head `cc3bb2c` in run `38560520412`.
