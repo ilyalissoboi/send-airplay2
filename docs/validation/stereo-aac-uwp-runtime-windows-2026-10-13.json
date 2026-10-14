@@ -833,7 +833,10 @@
   "ci": {
     "implementation_head": "5a4e5e3715c807e2d1781f4ba7fc603a82d4b8d1",
     "run": "38415880324",
-    "result": "PASS all 16 implementation-head checks; inspect final PR head separately"
+    "result": "PASS all 16 implementation-head checks; inspect final PR head separately",
+    "code_evidence_head": "8fb2bcca140b744069d2fcfc82ba89eb7ad3e26b",
+    "code_evidence_run": "38421602489",
+    "code_evidence_result": "PASS all 16 checks; final overview-only updates must be checked on their actual PR head"
   },
   "historical_harness_corrections": [
     {

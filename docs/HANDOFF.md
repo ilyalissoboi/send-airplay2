@@ -51,7 +51,8 @@ selection; all six loaded hashes match this run's registered layout. No receiver
 was contacted. This completes the recorded x64 AppContainer storage gate.
 Baseline static/shared 36/36 and 37/37, enabled shared 38/38, six-DLL UWP imports
 and existing-host compilation pass. Implementation head `5a4e5e3` passed all
-16 CI checks in run `38415880324`. Inspect actual final-head CI before merging;
+16 CI checks in run `38415880324`; code/evidence head `8fb2bcc` also passed
+all 16 checks in run `38421602489`. Inspect actual final-head CI before merging;
 real-file performance and receiver checks remain next. Speaker audio and discrete surround remain
 hardware-deferred. Ask before merging or publishing; visual checks use written
 manual instructions, without Computer Use.

@@ -14,8 +14,8 @@ changing runtime behavior.
 extends the core to API 4 with original track probe/selection,
 host fragment storage, binding/CLI options and terminal conversion supervision.
 Its backend defaults OFF. **D75 implemented (x64 gate passed 2026-10-14):** [AppContainer runtime/storage gate](stereo-aac-uwp-runtime.md). D73's authoring PR #54 is merged; preserve its known
-estimate limitations. Packaged integrated runtime, real-file performance and
-receiver evidence remain later gates. This branch adds no package or Screenbox pin.
+estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
+real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
 Recorded receiver checks cover one Apple TV 4K / tvOS 26.6 from Windows
 desktop and packaged hosts, and one MacBook Pro on macOS 26.7.1 from desktop

@@ -109,9 +109,9 @@ shared passes 38/38. Named private-hook cases retain independent literal fragmen
 counts and failure codes. The existing UWP host compiles, all six UWP native DLLs
 pass import inspection, and the default shared DLL has no validation export.
 Formatting/diff checks pass. Implementation head `5a4e5e3` passed all 16 checks
-in run `38415880324`; actual final PR-head CI remains the merge gate.
+in run `38415880324`; code/evidence head `8fb2bcc` also passed all 16 checks in
+run `38421602489`. Actual final PR-head CI remains the merge gate.
 
-Real-file
-startup/read-volume/cache/seek measurements follow, then manually observed stereo
+Real-file startup/read-volume/cache/seek measurements follow, then manually observed stereo
 video/audio, controls, Stop and natural EOF on available Apple TV/Mac receivers.
 Approved package publication and Screenbox integration follow those gates.

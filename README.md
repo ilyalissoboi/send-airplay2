@@ -36,7 +36,8 @@ AppContainer host. It does not add transcoding to casting or change the
 published package. The optional [stereo AAC playback integration](docs/stereo-aac-playback.md)
 adds explicit video delivery with a selected source audio track downmixed to
 stereo AAC, host-owned cache callbacks and API version 4. It defaults OFF and
-has offline validation only; packaged runtime and receiver validation remain gates.
+has offline validation plus [recorded x64 AppContainer source/cache checks](docs/stereo-aac-uwp-runtime.md).
+Real-file performance and receiver playback validation remain gates.
 
 ## Build
 
