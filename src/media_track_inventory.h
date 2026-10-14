@@ -31,6 +31,10 @@ struct SourceTrack {
     std::uint64_t codec_delay_ns = 0;
     std::uint64_t seek_preroll_ns = 0;
     std::uint64_t default_duration_ns = 0;
+    double audio_sample_rate = 0; ///< Matroska Audio metadata; not inferred from a codec name.
+    double audio_output_sample_rate = 0; ///< Matroska output rate; zero means SamplingFrequency.
+    std::uint64_t audio_channels = 0;    ///< Original declared channel count, not a layout.
+    std::uint64_t audio_bit_depth = 0;   ///< Required to identify Matroska PCM packing.
 };
 
 inline constexpr std::size_t max_source_tracks = 128;

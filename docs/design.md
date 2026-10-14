@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#56 merged.
+Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#57 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,7 +17,13 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D76 user scope:** automatic audio policy plus FLAC, Opus, Vorbis, PCM and
+**D77 implementation:** [the private decoder/profile foundation](audio-decoder-expansion.md)
+adds the documented FLAC/Opus/Vorbis/PCM/TrueHD matrix with owned offline
+seeking/trim/AAC checks. Coarse Matroska variable-frame HLS remains refused;
+its phase reconstruction is next. Automatic policy/public reporting, expanded
+packaged/runtime and receiver gates remain required.
+
+**D76 user scope (merged PR #57):** automatic audio policy plus FLAC, Opus, Vorbis, PCM and
 TrueHD, detailed in [the expanded plan](automatic-audio-transcoding-plan.md).
 Proposed opt-in delivery resolves the original selected track, copies eligible
 AAC/AC-3/E-AC-3 or converts validated inputs to stereo AAC. Eligibility belongs
@@ -204,7 +210,7 @@ brokered file access and inbound network serving in a packaged UWP host early.
 
 ## Ordered next changes and acceptance gates
 
-Current queue: [D76's expanded decoder/profile/timeline foundation](automatic-audio-transcoding-plan.md#ordered-implementation-and-acceptance-gates),
+Current queue: [D77's remaining coarse Matroska timing gate](audio-decoder-expansion.md#remaining-work),
 selected remux/policy, then versioned public integration. Repeat packaged runtime
 checks for the expanded matrix; real-file performance and converted-receiver
 gates remain required for the existing stereo path and its expansion.

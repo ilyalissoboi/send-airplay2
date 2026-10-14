@@ -1,7 +1,11 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
 Decision: 2026-10-14 (Asia/Tokyo). Baseline: merged PR #56, `02d8be6`.
-This is a scope and implementation plan, not an implemented delivery mode.
+Planning PR #57 merged as `faee858` at final head `d4f4a62`, with all 16 checks
+passed and its block-padding review resolved. The subsequent authorized
+[D77 decoder/profile foundation](audio-decoder-expansion.md) implements the recorded
+private subset; coarse Matroska timing remains next. Automatic delivery and
+versioned policy reporting are not implemented.
 
 ## User requirement and current evidence
 
@@ -11,7 +15,7 @@ expansion. These are audio tracks in otherwise supported, finite video files.
 Audio-only files/speakers, discrete converted 5.1/7.1 output and Atmos output
 remain hardware-deferred under [D67](audio-features-assessment.md).
 
-API 4 currently offers explicit stereo AAC delivery. Its selected decoder accepts
+At the D76 planning baseline, API 4 offers explicit stereo AAC delivery. Its selected decoder accepts
 AAC, AC-3, E-AC-3 and DTS-core in the recorded MP4/MKV matrix; it converts the
 selected track even if that track could have been copied. Legacy HLS remux copies
 eligible audio without decoding. Neither path implements this automatic policy.

@@ -1,5 +1,10 @@
 # Selected audio decoder and seek windows (D70)
 
+**D77 extension:** [expanded codec/configuration and timing gates](audio-decoder-expansion.md)
+add the documented new family subset. The D70 evidence below remains historical;
+expanded Matroska HLS requires sample-accurate clocks, and no new receiver proof
+is implied by the private decoder tests.
+
 2026-10-13. The user's **Proceed** authorizes this native increment after
 [D69's merged source foundations](audio-source-inventory.md). It implements a
 private optional decoder adapter in `src/audio_decoder_source.*`, built as

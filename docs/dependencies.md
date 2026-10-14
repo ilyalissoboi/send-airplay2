@@ -5,6 +5,21 @@ incorporating external code or adding dependencies.
 
 ## Automatic audio expansion research (D76)
 
+**D77 adoption record (2026-10-14):** the authorized private decoder increment
+extends the existing pinned FFmpeg 9.0.2 overlay with native FLAC, Opus, Vorbis,
+TrueHD and signed 16/24/32-bit / float 32/64-bit PCM decoders (little/big endian).
+The source archive/hash and vcpkg revision below remain fixed. Before changing
+the profile, the pinned `flacdec.c`, `opus/dec.c`, `vorbisdec.c`, `mlpdec.c` and
+PCM decoder sources and configuration dependencies were inspected; their notices
+are LGPL-2.1-or-later. No external codec library or copied implementation is
+adopted. Add only their native parsers (`flac`, `opus`, `vorbis`, `mlp`) alongside
+the existing parsers. Retain network/GPL/nonfree/version3/program/accelerator
+disabling, dynamic four-library linkage and the native AAC encoder. Build/runtime
+verification and fixture evidence must be recorded before claiming support.
+The generator uses the locally installed FFmpeg CLI only to encode original
+synthetic input; record its version/configuration, commands and output hashes.
+The executable is not incorporated or distributed. The core remains Apache-2.0.
+
 [The expanded plan](automatic-audio-transcoding-plan.md) references Apple's HLS
 authoring requirements, Matroska's codec mappings and the pinned FFmpeg 9.0.2
 codec registry. No third-party code, codec profile change or dependency is adopted

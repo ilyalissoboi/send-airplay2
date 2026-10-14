@@ -39,10 +39,12 @@ stereo AAC, host-owned cache callbacks and API version 4. It defaults OFF and
 has offline validation plus [recorded x64 AppContainer source/cache checks](docs/stereo-aac-uwp-runtime.md).
 Real-file performance and receiver playback validation remain gates.
 
-The planned [automatic audio expansion](docs/automatic-audio-transcoding-plan.md)
-adds a policy to copy eligible audio or convert validated inputs, including
-FLAC, Opus, Vorbis, PCM and TrueHD, to stereo AAC. This is an implementation
-plan; these additional inputs and automatic delivery are not implemented yet.
+The [automatic audio expansion plan](docs/automatic-audio-transcoding-plan.md)
+proposes copying eligible audio or converting validated inputs to stereo AAC.
+Its [private decoder foundation](docs/audio-decoder-expansion.md) now supports
+the recorded FLAC, Opus, Vorbis, PCM and TrueHD subset with offline checks.
+Automatic policy is pending; expanded Matroska HLS needs sample-accurate clocks,
+with ordinary millisecond-clock timing still requiring further work.
 
 ## Build
 

@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#56 are merged. `main` contains
+Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#57 are merged. `main` contains
 the experimental C API version 4, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,11 +23,28 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D76 scope expansion:** the user chose automatic policy plus FLAC, Opus,
+**D77 private decoder foundation (2026-10-14).**
+The user's Proceed starts `codex/audio-decoder-expansion` from merged PR #57
+(`faee858`, final head `d4f4a62`, all 16 checks passed; padding review resolved).
+Read [the expanded input matrix and offline gates](audio-decoder-expansion.md).
+Active [PR #58](https://github.com/ilyalissoboi/send-airplay2/pull/58) owns this
+increment; inspect its actual head and review/CI before continuing.
+The minimal native FFmpeg profile and original-ID decoder now cover FLAC,
+Opus, Vorbis, PCM and TrueHD in the documented container/configuration subset.
+Owned stereo/5.1 fixtures cover seeks, literal EOF trimming and generated AAC;
+no new ABI, automatic policy, package or receiver result is added.
+Expanded Matroska HLS requires sample-accurate timestamps; coarse variable-frame
+seek/phase reconstruction is the next increment, before selected remux/policy.
+D75 performance/converted-receiver and expanded packaged-runtime gates remain.
+PR #58 review correction retains Matroska OutputSamplingFrequency and compares
+the effective output rate, preserving distinct AAC/SBR coded/output rates.
+Owned metadata/decode and invalid-rate regression checks accompany the fix.
+
+**D76 scope expansion (merged PR #57):** the user chose automatic policy plus FLAC, Opus,
 Vorbis, PCM and TrueHD. Read [the expanded implementation plan](automatic-audio-transcoding-plan.md)
-before writing. Next: minimal backend/profile and owned decoder/timeline fixtures,
-then selected copy/remux, deterministic policy and versioned public integration.
-This slice is documentation only. D75's outstanding performance/converted-receiver
+before writing. D77 above implements the private foundation subset; complete its
+coarse-clock timing gate before selected remux/policy and public integration.
+The D76 planning slice added no runtime behavior. D75's outstanding performance/converted-receiver
 gates remain required; speakers and discrete converted surround stay deferred.
 
 PR #57 review follow-up corrects DiscardPadding ownership: retain per-block
@@ -460,9 +477,9 @@ Speaker audio and surround-preserving output remain deferred for unavailable
 test hardware. D72 now checks private long-GOP splitting, terminal failure
 reporting and synthetic cold-seek scaling. D73 authoring is merged with explicit
 estimate limitations. D74 playback/public/storage and D75's x64 AppContainer
-runtime/storage gate are merged. D76's expanded decoder/timeline foundation is
-the next implementation increment; selected remux/policy and public integration
-follow. Real-file performance and converted-receiver validation remain required;
+runtime/storage gate are merged. D77 implements the expanded private decoder
+subset; coarse Matroska variable-frame timing is next, before selected remux/policy
+and public integration. Real-file performance and converted-receiver validation remain required;
 repeat packaged runtime checks for the expanded codec matrix.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
@@ -625,10 +642,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68-D75 and PR #56 are merged. The user selected D76's automatic audio policy
-> plus FLAC, Opus, Vorbis, PCM and TrueHD. Read automatic-audio-transcoding-plan.md;
-> begin with its private decoder/profile/timeline foundation, then selected remux
-> and policy/public integration. D75 performance and converted-receiver gates
+> D68-D76 and PR #57 are merged. The user's Proceed authorizes D77's private
+> expanded decoder/profile foundation. Read audio-decoder-expansion.md and inspect
+> the actual open slice head. Coarse Matroska variable-frame timing is next, before
+> selected remux/policy and public integration. D75 performance and converted-receiver gates
 > remain required. Read
 > the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

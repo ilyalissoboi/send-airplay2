@@ -9,6 +9,23 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D77 private decoder foundation (2026-10-14).**
+The user's Proceed starts `codex/audio-decoder-expansion` from merged PR #57
+(`faee858`, final head `d4f4a62`, all 16 checks passed; padding review resolved).
+Read [the expanded input matrix and offline gates](audio-decoder-expansion.md).
+Active [PR #58](https://github.com/ilyalissoboi/send-airplay2/pull/58) owns this
+increment; inspect its actual head and review/CI before continuing.
+The minimal native FFmpeg profile and original-ID decoder now cover FLAC,
+Opus, Vorbis, PCM and TrueHD in the documented container/configuration subset.
+Owned stereo/5.1 fixtures cover seeks, literal EOF trimming and generated AAC;
+no new ABI, automatic policy, package or receiver result is added.
+Expanded Matroska HLS requires sample-accurate timestamps; coarse variable-frame
+seek/phase reconstruction is the next increment, before selected remux/policy.
+D75 performance/converted-receiver and expanded packaged-runtime gates remain.
+PR #58 review correction retains Matroska OutputSamplingFrequency and compares
+the effective output rate, preserving distinct AAC/SBR coded/output rates.
+Owned metadata/decode and invalid-rate regression checks accompany the fix.
+
 **D76 scope expansion (2026-10-14): automatic audio plus five input families.**
 The user requested automatic handling of unsupported audio and selected FLAC,
 Opus, Vorbis, PCM and TrueHD in addition to the existing decoder coverage.

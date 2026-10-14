@@ -190,6 +190,184 @@ struct Operation {
     Operation& operator=(Operation&&) = delete;
 };
 
+/// Bounded basic header validation complements FFmpeg's codec-specific parsing.
+/// Matching a fourcc/CodecID alone must not bless unrelated private data.
+void validate_flac_private(const Bytes& data) {
+    constexpr std::size_t metadata_header_bytes = 8;
+    constexpr std::size_t streaminfo_bytes = 34;
+    require(data.size() >= metadata_header_bytes + streaminfo_bytes &&
+                std::memcmp(data.data(), "fLaC", 4) == 0 && (data[4] & 0x7f) == 0 && data[5] == 0 &&
+                data[6] == 0 && data[7] == streaminfo_bytes,
+            AudioDecodeFailure::malformed, "FLAC STREAMINFO header is malformed");
+}
+void validate_opus_private(const Bytes& data) {
+    constexpr std::size_t identification_bytes = 19;
+    require(data.size() >= identification_bytes && std::memcmp(data.data(), "OpusHead", 8) == 0,
+            AudioDecodeFailure::malformed, "Opus identification header is malformed");
+    require(data[8] == 1 && data[9] >= 1 && data[9] <= 8, AudioDecodeFailure::unsupported,
+            "Opus version or channels are unsupported");
+    const auto mapping = data[18];
+    if (mapping == 0) {
+        require(data[9] <= 2 && data.size() == identification_bytes, AudioDecodeFailure::malformed,
+                "Opus family-zero mapping is malformed");
+    } else {
+        require(mapping == 1, AudioDecodeFailure::unsupported,
+                "Opus channel mapping family is unsupported");
+        require(data.size() == identification_bytes + 2 + data[9], AudioDecodeFailure::malformed,
+                "Opus channel map is truncated");
+    }
+}
+void validate_vorbis_private(const Bytes& data) {
+    constexpr std::size_t header_signature_bytes = 7;
+    require(!data.empty() && data[0] == 2, AudioDecodeFailure::malformed,
+            "Vorbis private header count is malformed");
+    std::size_t offset = 1;
+    std::size_t lengths[3]{};
+    for (std::size_t header = 0; header < 2; ++header) {
+        std::uint8_t part = 0;
+        do {
+            require(offset < data.size(), AudioDecodeFailure::malformed,
+                    "Vorbis header lacing is truncated");
+            part = data[offset++];
+            require(part <= data.size() - lengths[header], AudioDecodeFailure::malformed,
+                    "Vorbis header length exceeds private data");
+            lengths[header] += part;
+        } while (part == 255);
+    }
+    require(lengths[0] <= data.size() - offset && lengths[1] <= data.size() - offset - lengths[0],
+            AudioDecodeFailure::malformed, "Vorbis headers exceed private data");
+    lengths[2] = data.size() - offset - lengths[0] - lengths[1];
+    for (std::size_t header = 0; header < 3; ++header) {
+        require(lengths[header] >= header_signature_bytes && data[offset] == 1 + 2 * header &&
+                    std::memcmp(data.data() + offset + 1, "vorbis", 6) == 0,
+                AudioDecodeFailure::malformed, "Vorbis header signature is malformed");
+        offset += lengths[header];
+    }
+}
+// AudioSampleEntry offsets include the size/type header. All words are big
+// endian; the version-one extension follows the 36-byte version-zero layout.
+constexpr std::size_t audio_entry_version_offset = 16;
+constexpr std::size_t audio_entry_channels_offset = 24;
+constexpr std::size_t audio_entry_depth_offset = 26;
+constexpr std::size_t audio_entry_rate_offset = 32;
+std::uint16_t configuration_be16(const Bytes& data, std::size_t offset) {
+    constexpr std::size_t field_bytes = 2;
+    require(offset <= data.size() && data.size() - offset >= field_bytes,
+            AudioDecodeFailure::malformed, "audio configuration word is truncated");
+    return static_cast<std::uint16_t>((static_cast<unsigned>(data[offset]) << 8) |
+                                      data[offset + 1]);
+}
+std::uint32_t configuration_be32(const Bytes& data, std::size_t offset) {
+    constexpr std::size_t field_bytes = 4;
+    require(offset <= data.size() && data.size() - offset >= field_bytes,
+            AudioDecodeFailure::malformed, "audio configuration field is truncated");
+    std::uint32_t value = 0;
+    for (std::size_t byte = 0; byte < field_bytes; ++byte) {
+        value = (value << 8) | data[offset + byte];
+    }
+    return value;
+}
+Bytes audio_box_payload(const Bytes& entry, std::size_t children_begin, const char* type) {
+    constexpr std::size_t box_header_bytes = 8;
+    require(children_begin <= entry.size(), AudioDecodeFailure::malformed,
+            "audio configuration child range is truncated");
+    for (auto offset = children_begin; offset < entry.size();) {
+        require(entry.size() - offset >= box_header_bytes, AudioDecodeFailure::malformed,
+                "audio configuration box header is truncated");
+        const auto size = configuration_be32(entry, offset);
+        require(size >= box_header_bytes && size <= entry.size() - offset,
+                AudioDecodeFailure::malformed, "audio configuration box is out of bounds");
+        if (std::memcmp(entry.data() + offset + 4, type, 4) == 0) {
+            return Bytes(entry.begin() + offset + box_header_bytes, entry.begin() + offset + size);
+        }
+        offset += size;
+    }
+    fail(AudioDecodeFailure::malformed, "required audio configuration box is absent");
+}
+/// Version-zero AudioSampleEntry children start after its 36-byte fixed header.
+Bytes mp4_audio_private_box(const Bytes& entry, const char* type) {
+    constexpr std::size_t audio_header_bytes = 36;
+    require(entry.size() >= audio_header_bytes, AudioDecodeFailure::malformed,
+            "audio sample entry is truncated");
+    require(configuration_be16(entry, audio_entry_version_offset) == 0,
+            AudioDecodeFailure::unsupported, "audio sample entry version is unsupported");
+    return audio_box_payload(entry, audio_header_bytes, type);
+}
+AVCodecID mov_pcm_codec(const SourceTrack& track) {
+    const auto& data = track.configuration;
+    constexpr std::size_t version_zero_bytes = 36;
+    constexpr std::size_t version_one_bytes = 52;
+    require(data.size() >= version_zero_bytes, AudioDecodeFailure::malformed,
+            "MOV PCM sample entry is truncated");
+    const auto channels = configuration_be16(data, audio_entry_channels_offset);
+    const auto rate = configuration_be32(data, audio_entry_rate_offset);
+    require(channels >= 1 && channels <= 8 && (rate & 0xffff) == 0 && (rate >> 16) >= 8000 &&
+                (rate >> 16) <= 192000,
+            AudioDecodeFailure::unsupported, "MOV PCM rate or channels are unsupported");
+    const auto& name = track.codec;
+    if (name == "sowt" || name == "twos") {
+        require(configuration_be16(data, audio_entry_version_offset) == 0 &&
+                    configuration_be16(data, audio_entry_depth_offset) == 16,
+                AudioDecodeFailure::unsupported, "MOV 16-bit PCM version or depth is unsupported");
+        return name == "sowt" ? AV_CODEC_ID_PCM_S16LE : AV_CODEC_ID_PCM_S16BE;
+    }
+    require(data.size() >= version_one_bytes &&
+                configuration_be16(data, audio_entry_version_offset) == 1,
+            AudioDecodeFailure::unsupported, "MOV PCM packing version is unsupported");
+    constexpr std::size_t samples_per_packet_offset = version_zero_bytes;
+    constexpr std::size_t bytes_per_packet_offset = samples_per_packet_offset + 4;
+    constexpr std::size_t bytes_per_frame_offset = bytes_per_packet_offset + 4;
+    constexpr std::size_t legacy_sample_word_offset = bytes_per_frame_offset + 4;
+    constexpr std::uint32_t legacy_sample_word_bytes = 2;
+    const auto bytes_per_sample = name == "in24" ? 3U : name == "fl64" ? 8U : 4U;
+    // These version-one forms retain the legacy 16-bit sample-size word; the
+    // actual packed width is specified by the codec and packet/frame byte counts.
+    require(configuration_be32(data, samples_per_packet_offset) == 1 &&
+                configuration_be32(data, bytes_per_packet_offset) == bytes_per_sample &&
+                configuration_be32(data, bytes_per_frame_offset) == channels * bytes_per_sample &&
+                configuration_be32(data, legacy_sample_word_offset) == legacy_sample_word_bytes,
+            AudioDecodeFailure::unsupported, "MOV PCM packet packing is unsupported");
+    const auto wave = audio_box_payload(data, version_one_bytes, "wave");
+    const auto original_format = audio_box_payload(wave, 0, "frma");
+    require(original_format.size() == 4 && std::memcmp(original_format.data(), name.data(), 4) == 0,
+            AudioDecodeFailure::malformed, "MOV PCM original format disagrees with sample entry");
+    const auto endian = audio_box_payload(wave, 0, "enda");
+    require(endian.size() == 2 && endian[0] == 0 && endian[1] <= 1, AudioDecodeFailure::unsupported,
+            "MOV PCM endian flag is unsupported");
+    const bool little = endian[1] == 1;
+    if (name == "in24") {
+        return little ? AV_CODEC_ID_PCM_S24LE : AV_CODEC_ID_PCM_S24BE;
+    }
+    if (name == "in32") {
+        return little ? AV_CODEC_ID_PCM_S32LE : AV_CODEC_ID_PCM_S32BE;
+    }
+    if (name == "fl32") {
+        return little ? AV_CODEC_ID_PCM_F32LE : AV_CODEC_ID_PCM_F32BE;
+    }
+    return little ? AV_CODEC_ID_PCM_F64LE : AV_CODEC_ID_PCM_F64BE;
+}
+AVCodecID matroska_pcm_codec(const SourceTrack& track) {
+    const bool little = track.codec == "A_PCM/INT/LIT";
+    if (track.codec == "A_PCM/FLOAT/IEEE") {
+        if (track.audio_bit_depth == 32) {
+            return AV_CODEC_ID_PCM_F32LE;
+        }
+        if (track.audio_bit_depth == 64) {
+            return AV_CODEC_ID_PCM_F64LE;
+        }
+    } else {
+        if (track.audio_bit_depth == 16) {
+            return little ? AV_CODEC_ID_PCM_S16LE : AV_CODEC_ID_PCM_S16BE;
+        }
+        if (track.audio_bit_depth == 24) {
+            return little ? AV_CODEC_ID_PCM_S24LE : AV_CODEC_ID_PCM_S24BE;
+        }
+        if (track.audio_bit_depth == 32) {
+            return little ? AV_CODEC_ID_PCM_S32LE : AV_CODEC_ID_PCM_S32BE;
+        }
+    }
+    fail(AudioDecodeFailure::unsupported, "Matroska PCM bit depth is unsupported");
+}
 AVCodecID source_codec(const SourceTrack& track, SourceContainer container) {
     const auto& name = track.codec;
     if (container == SourceContainer::mp4) {
@@ -223,6 +401,29 @@ AVCodecID source_codec(const SourceTrack& track, SourceContainer container) {
         if (name == "dtsc") {
             return AV_CODEC_ID_DTS;
         }
+        if (name == "fLaC") {
+            const auto data = mp4_audio_private_box(track.configuration, "dfLa");
+            require(data.size() >= 4 && data[0] == 0, AudioDecodeFailure::malformed,
+                    "FLAC specific box version is malformed");
+            Bytes private_data{'f', 'L', 'a', 'C'};
+            private_data.insert(private_data.end(), data.begin() + 4, data.end());
+            validate_flac_private(private_data);
+            return AV_CODEC_ID_FLAC;
+        }
+        if (name == "Opus") {
+            const auto data = mp4_audio_private_box(track.configuration, "dOps");
+            require(data.size() >= 11 && data[0] == 0, AudioDecodeFailure::malformed,
+                    "Opus specific box is malformed");
+            require(data[1] >= 1 && data[1] <= 8 &&
+                        ((data[10] == 0 && data[1] <= 2 && data.size() == 11) ||
+                         (data[10] == 1 && data.size() == 13 + data[1])),
+                    AudioDecodeFailure::unsupported, "Opus specific channel map is unsupported");
+            return AV_CODEC_ID_OPUS;
+        }
+        if (name == "sowt" || name == "twos" || name == "in24" || name == "in32" ||
+            name == "fl32" || name == "fl64") {
+            return mov_pcm_codec(track);
+        }
     } else {
         if (name == "A_AAC") {
             return AV_CODEC_ID_AAC;
@@ -235,6 +436,26 @@ AVCodecID source_codec(const SourceTrack& track, SourceContainer container) {
         }
         if (name == "A_DTS") {
             return AV_CODEC_ID_DTS;
+        }
+        if (name == "A_FLAC") {
+            validate_flac_private(track.configuration);
+            return AV_CODEC_ID_FLAC;
+        }
+        if (name == "A_OPUS") {
+            validate_opus_private(track.configuration);
+            return AV_CODEC_ID_OPUS;
+        }
+        if (name == "A_VORBIS") {
+            validate_vorbis_private(track.configuration);
+            return AV_CODEC_ID_VORBIS;
+        }
+        if (name == "A_TRUEHD") {
+            require(track.configuration.empty(), AudioDecodeFailure::unsupported,
+                    "TrueHD private configuration is unsupported");
+            return AV_CODEC_ID_TRUEHD;
+        }
+        if (name == "A_PCM/INT/LIT" || name == "A_PCM/INT/BIG" || name == "A_PCM/FLOAT/IEEE") {
+            return matroska_pcm_codec(track);
         }
     }
     fail(AudioDecodeFailure::unsupported, "selected audio codec is unsupported");
@@ -365,6 +586,15 @@ struct AudioDecoderSource::Impl {
         require(codec != nullptr, AudioDecodeFailure::codec_error,
                 "audio decoder allocation failed");
         checked(avcodec_parameters_to_context(codec.get(), parameters));
+        if (container == SourceContainer::matroska && selected.codec.compare(0, 6, "A_PCM/") == 0 &&
+            codec->ch_layout.order == AV_CHANNEL_ORDER_UNSPEC &&
+            codec->ch_layout.nb_channels >= 1 && codec->ch_layout.nb_channels <= 2) {
+            // Matroska PCM has no channel-mask element. Only mono/stereo have
+            // unambiguous ordinary speaker identities here; never guess surround.
+            const auto channels = codec->ch_layout.nb_channels;
+            av_channel_layout_uninit(&codec->ch_layout);
+            av_channel_layout_default(&codec->ch_layout, channels);
+        }
         // MOV/MKV already publish edited/delay-adjusted PTS and packet skip data.
         // Decoder preinit must not independently skip codecpar padding again.
         codec->initial_padding = 0;
@@ -374,11 +604,34 @@ struct AudioDecoderSource::Impl {
             checked(av_opt_set_double(codec->priv_data, "drc_scale", 0.0, 0));
         }
         checked(avcodec_open2(codec.get(), decoder, nullptr));
+        if (container == SourceContainer::matroska) {
+            // SamplingFrequency can describe AAC's coded rate; SBR output is
+            // separately declared and defaults to that rate only when omitted.
+            const auto declared_output_rate = selected.audio_output_sample_rate != 0
+                                                  ? selected.audio_output_sample_rate
+                                                  : selected.audio_sample_rate;
+            require(std::isfinite(declared_output_rate) &&
+                        declared_output_rate == parameters->sample_rate &&
+                        selected.audio_channels ==
+                            static_cast<std::uint64_t>(parameters->ch_layout.nb_channels),
+                    AudioDecodeFailure::unsupported,
+                    "selected Matroska audio metadata disagrees with decoder");
+        }
         input_format.rate = parameters->sample_rate;
         input_format.sample_format = parameters->format;
         input_format.channels = parameters->ch_layout.nb_channels;
         if (parameters->ch_layout.order == AV_CHANNEL_ORDER_NATIVE) {
             input_format.channel_mask = parameters->ch_layout.u.mask;
+        }
+        const bool legacy_cadence =
+            parameters->codec_id == AV_CODEC_ID_AAC || parameters->codec_id == AV_CODEC_ID_AC3 ||
+            parameters->codec_id == AV_CODEC_ID_EAC3 || parameters->codec_id == AV_CODEC_ID_DTS;
+        if (cadence.enabled && !legacy_cadence) {
+            require(parameters->sample_rate > 0 &&
+                        av_rescale_q_rnd(1, format->streams[stream_index]->time_base,
+                                         AVRational{1, parameters->sample_rate}, AV_ROUND_UP) <= 1,
+                    AudioDecodeFailure::unsupported,
+                    "expanded Matroska HLS requires sample-accurate timestamps");
         }
     }
     void discard_other_streams() {
@@ -412,10 +665,10 @@ class WindowDecoder {
 public:
     WindowDecoder(AVCodecContext& codec, AVStream& stream, Reader& reader,
                   InputAudioFormat& input_format, AudioCadence& cadence, DecodedAudioWindow& output,
-                  std::uint32_t count)
+                  std::uint32_t count, bool respect_opus_packet_duration)
         : codec_(codec), stream_(stream), reader_(reader), expected_format_(input_format),
           cadence_(cadence), output_(output), count_(count), frame_(av_frame_alloc()),
-          packet_(av_packet_alloc()) {
+          packet_(av_packet_alloc()), respect_opus_packet_duration_(respect_opus_packet_duration) {
         require(frame_ && packet_, AudioDecodeFailure::codec_error,
                 "audio window allocation failed");
         const auto quantum = av_rescale_q_rnd(1, stream.time_base, output_clock, AV_ROUND_UP);
@@ -448,6 +701,7 @@ public:
             require(++packets <= maximum_read_calls, AudioDecodeFailure::too_large,
                     "audio packet budget exceeded");
             if (packet_->stream_index == stream_.index) {
+                validate_packet_trim(*packet_);
                 checked(avcodec_send_packet(&codec_, packet_.get()));
                 drain();
             }
@@ -466,6 +720,28 @@ public:
     WindowDecoder& operator=(WindowDecoder&&) = delete;
 
 private:
+    /// FFmpeg owns nanosecond-to-sample conversion; bound its packet-level result
+    /// before decoder consumption. Do not manually apply that trim a second time.
+    static void validate_packet_trim(const AVPacket& packet) {
+        constexpr std::size_t trim_side_data_bytes = 10;
+        std::size_t size = 0;
+        const auto* data = av_packet_get_side_data(&packet, AV_PKT_DATA_SKIP_SAMPLES, &size);
+        if (!data) {
+            return;
+        }
+        require(size == trim_side_data_bytes, AudioDecodeFailure::malformed,
+                "audio packet trim side data is malformed");
+        const auto little_endian_count = [](const std::uint8_t* bytes) {
+            std::uint32_t value = 0;
+            for (unsigned byte = 0; byte < 4; ++byte) {
+                value |= static_cast<std::uint32_t>(bytes[byte]) << (8 * byte);
+            }
+            return value;
+        };
+        require(little_endian_count(data) <= maximum_frame_samples &&
+                    little_endian_count(data + 4) <= maximum_frame_samples,
+                AudioDecodeFailure::unsupported, "audio packet trim exceeds frame budget");
+    }
     AVCodecContext& codec_;
     AVStream& stream_;
     Reader& reader_;
@@ -484,6 +760,7 @@ private:
     std::int64_t next_output_ = 0;
     std::int64_t covered_ = 0;
     bool complete_ = false;
+    bool respect_opus_packet_duration_ = false;
 
     void configure(const AVFrame& frame, std::int64_t timestamp, std::int64_t input_position) {
         require(frame.ch_layout.order == AV_CHANNEL_ORDER_NATIVE &&
@@ -554,6 +831,11 @@ private:
         }
         const auto quantum =
             av_rescale_q_rnd(1, stream_.time_base, AVRational{1, frame.sample_rate}, AV_ROUND_UP);
+        // A sample-accurate clock supplies the absolute resampler phase directly,
+        // including trimmed first/final frames and variable codec block sizes.
+        if (quantum <= 1) {
+            return position;
+        }
         if (!cadence_.frame_samples) {
             require(output_.first_sample == 0 && frame.nb_samples > 2 * (quantum + 1),
                     AudioDecodeFailure::unsupported,
@@ -605,11 +887,22 @@ private:
         const auto tolerance = static_cast<std::int64_t>(output_.timestamp_precision_samples) + 1;
         require(timestamp >= expected - tolerance && timestamp <= expected + tolerance,
                 AudioDecodeFailure::unsupported, "audio presentation timeline is discontinuous");
-        input_samples_ += static_cast<std::uint64_t>(frame.nb_samples);
+        auto samples = frame.nb_samples;
+        if (respect_opus_packet_duration_) {
+            // MOV's final Opus sample may cover less than a complete codec frame.
+            // The decoder retains that duration but still emits the whole frame;
+            // trim before resampling rather than exposing encoder tail padding.
+            const auto duration_samples =
+                av_rescale_q(frame.duration, stream_.time_base, AVRational{1, input_rate_});
+            require(duration_samples > 0 && duration_samples <= samples,
+                    AudioDecodeFailure::unsupported, "Opus packet duration is unsupported");
+            samples = static_cast<int>(duration_samples);
+        }
+        input_samples_ += static_cast<std::uint64_t>(samples);
         require(av_rescale_q(static_cast<std::int64_t>(input_samples_), AVRational{1, input_rate_},
                              output_clock) <= static_cast<std::int64_t>(maximum_input_samples),
                 AudioDecodeFailure::too_large, "audio window preroll budget exceeded");
-        convert(frame.extended_data, frame.nb_samples);
+        convert(frame.extended_data, samples);
     }
     void convert(std::uint8_t* const* input, int samples) {
         const auto capacity = swr_get_out_samples(resampler_.get(), samples);
@@ -718,7 +1011,9 @@ DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, s
         window.source_track_id = impl_->selected.id;
         window.first_sample = first_sample;
         WindowDecoder decoder(*impl_->codec, *impl_->format->streams[impl_->stream_index],
-                              impl_->reader, impl_->input_format, impl_->cadence, window, count);
+                              impl_->reader, impl_->input_format, impl_->cadence, window, count,
+                              impl_->container == SourceContainer::mp4 &&
+                                  impl_->codec->codec_id == AV_CODEC_ID_OPUS);
         decoder.run(*impl_->format);
         impl_->reader.check();
         return window;

@@ -54,7 +54,9 @@ constexpr std::uint32_t id_display_height = 0x54BA;
 constexpr std::uint32_t id_display_unit = 0x54B2;
 constexpr std::uint32_t id_audio = 0xE1;
 constexpr std::uint32_t id_sampling_frequency = 0xB5;
+constexpr std::uint32_t id_output_sampling_frequency = 0x78B5;
 constexpr std::uint32_t id_channels = 0x9F;
+constexpr std::uint32_t id_bit_depth = 0x6264;
 constexpr std::uint32_t id_cluster = 0x1F43B675;
 constexpr std::uint32_t id_cluster_timestamp = 0xE7;
 constexpr std::uint32_t id_simple_block = 0xA3;
@@ -281,7 +283,9 @@ struct TrackInfo {
     std::uint64_t display_height = 0;
     std::uint64_t display_unit = 0; // 0 means pixels.
     double sampling_frequency = 8000.0;
+    double output_sampling_frequency = 0;
     std::uint64_t channels = 1;
+    std::uint64_t bit_depth = 0;
 };
 
 TrackInfo read_track_entry(const Bytes& data, const Element& entry) {
@@ -366,8 +370,15 @@ TrackInfo read_track_entry(const Bytes& data, const Element& entry) {
             for (const auto& audio : children(data, field.data, field.end())) {
                 if (audio.id == id_sampling_frequency) {
                     track.sampling_frequency = float_value(data, audio);
+                } else if (audio.id == id_output_sampling_frequency) {
+                    track.output_sampling_frequency = float_value(data, audio);
+                    if (track.output_sampling_frequency <= 0) {
+                        malformed("OutputSamplingFrequency must be positive");
+                    }
                 } else if (audio.id == id_channels) {
                     track.channels = unsigned_value(data, audio);
+                } else if (audio.id == id_bit_depth) {
+                    track.bit_depth = unsigned_value(data, audio);
                 }
             }
             break;
@@ -1607,6 +1618,10 @@ MediaTrackInventory probe_mkv_tracks(const RandomReader& read, std::uint64_t fil
         track.codec_delay_ns = info.codec_delay_ns;
         track.seek_preroll_ns = info.seek_preroll_ns;
         track.default_duration_ns = info.default_duration_ns;
+        track.audio_sample_rate = info.sampling_frequency;
+        track.audio_output_sample_rate = info.output_sampling_frequency;
+        track.audio_channels = info.channels;
+        track.audio_bit_depth = info.bit_depth;
         inventory.tracks.push_back(std::move(track));
     }
     validate_source_tracks(inventory);

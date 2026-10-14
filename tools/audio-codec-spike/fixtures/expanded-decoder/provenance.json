@@ -1,0 +1,586 @@
+{
+  "license": "Apache-2.0; original synthesized inputs and resulting test media",
+  "generator": "generate_expanded_decoder_fixtures.py",
+  "tool_version": "ffmpeg version 9.0.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+  "tool_configuration": "configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-cairo --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libsvtjpegxs --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper",
+  "tool_distribution": "development only; executable not redistributed",
+  "encoder_commands": [
+    [
+      "-f",
+      "lavfi",
+      "-i",
+      "color=black:s=16x16:r=2:d=6.003",
+      "-c:v",
+      "libx264",
+      "-bf",
+      "0",
+      "-g",
+      "1",
+      "-an",
+      "video.mp4"
+    ],
+    [
+      "-i",
+      "aac-core.wav",
+      "-c:a",
+      "aac",
+      "aac-core.m4a"
+    ],
+    [
+      "-i",
+      "tones.wav",
+      "-c:a",
+      "flac",
+      "-strict",
+      "-2",
+      "-f",
+      "flac",
+      "flac.encoded"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "flac",
+      "-strict",
+      "-2",
+      "flac.mp4"
+    ],
+    [
+      "-i",
+      "tones.wav",
+      "-c:a",
+      "opus",
+      "-strict",
+      "-2",
+      "-f",
+      "opus",
+      "opus.encoded"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "opus",
+      "-strict",
+      "-2",
+      "opus.mp4"
+    ],
+    [
+      "-i",
+      "tones.wav",
+      "-c:a",
+      "vorbis",
+      "-strict",
+      "-2",
+      "-f",
+      "ogg",
+      "vorbis.encoded"
+    ],
+    [
+      "-i",
+      "tones.wav",
+      "-c:a",
+      "truehd",
+      "-strict",
+      "-2",
+      "-f",
+      "truehd",
+      "truehd.encoded"
+    ],
+    [
+      "-i",
+      "surround.wav",
+      "-c:a",
+      "flac",
+      "-strict",
+      "-2",
+      "-f",
+      "flac",
+      "flac-51.encoded"
+    ],
+    [
+      "-i",
+      "surround.wav",
+      "-c:a",
+      "libopus",
+      "-strict",
+      "-2",
+      "-f",
+      "opus",
+      "opus-51.encoded"
+    ],
+    [
+      "-i",
+      "surround.wav",
+      "-c:a",
+      "libvorbis",
+      "-strict",
+      "-2",
+      "-f",
+      "ogg",
+      "vorbis-51.encoded"
+    ],
+    [
+      "-i",
+      "surround.wav",
+      "-c:a",
+      "truehd",
+      "-strict",
+      "-2",
+      "-f",
+      "truehd",
+      "truehd-51.encoded"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_s16le",
+      "pcm-s16le.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_s16be",
+      "pcm-s16be.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_s24le",
+      "pcm-s24le.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_s24be",
+      "pcm-s24be.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_s32le",
+      "pcm-s32le.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_s32be",
+      "pcm-s32be.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_f32le",
+      "pcm-f32le.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_f32be",
+      "pcm-f32be.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_f64le",
+      "pcm-f64le.mov"
+    ],
+    [
+      "-i",
+      "video.mp4",
+      "-i",
+      "tones.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "pcm_f64be",
+      "pcm-f64be.mov"
+    ]
+  ],
+  "inputs": [
+    {
+      "channels": 2,
+      "rate": 48000,
+      "frames": 288144,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "1eb0c60a9a2a41099df2c32328eff5c9b7fc894f81ad10c2b956f484e855b616"
+    },
+    {
+      "channels": 2,
+      "rate": 24000,
+      "frames": 144072,
+      "frequencies_hz": [
+        173,
+        227
+      ],
+      "sha256": "c466b0c440a30ee1208ecf4ead4c68200f50253ffaa81437af23194b84c40b66"
+    },
+    {
+      "channels": 6,
+      "rate": 48000,
+      "frames": 288144,
+      "frequencies_hz": [
+        310,
+        470,
+        630,
+        80,
+        790,
+        950
+      ],
+      "sha256": "91ca51840e3bb42370717cf572cc298bf1a2fdcc713c8f0002711861c839c8b4"
+    }
+  ],
+  "rate": 48000,
+  "original_frames": 288144,
+  "video_frames": 13,
+  "video_duration_samples_48khz": 312000,
+  "identities": {
+    "video": 11,
+    "main": 42
+  },
+  "timestamp_scale_ns": 1,
+  "fixtures": [
+    {
+      "file": "aac-output-rate.mkv",
+      "coded_rate": 24000,
+      "output_rate": 48000,
+      "synthetic_he_aac_signaling": true,
+      "bytes": 101261,
+      "sha256": "bd868a398c73dca5ba0c2c733423d16c2c531b29650c1bef5ad58088ddb3672a"
+    },
+    {
+      "file": "flac.mkv",
+      "audible_frames": 288144,
+      "bytes": 159335,
+      "sha256": "04818805c9c51bb35ccc2e971d226e51b84b3bbb0cb3c3bf6c1343e691ba7e83"
+    },
+    {
+      "file": "flac-coarse-clock.mkv",
+      "timestamp_scale_ns": 1000000,
+      "audible_frames": 288144,
+      "hls_unsupported": true,
+      "bytes": 159147,
+      "sha256": "7bdd83f208f81f39cd9ff7008f50c208e7292da1c220d4a94706512079f2d527"
+    },
+    {
+      "file": "flac.mp4",
+      "audible_frames": 288144,
+      "bytes": 156972,
+      "sha256": "d23c2a51d902ef7a3313c40eedd1cdadfe74cb09c86009ce4a5fa9812c603d17"
+    },
+    {
+      "file": "opus.mkv",
+      "audible_frames": 288144,
+      "bytes": 88204,
+      "sha256": "e282ff7fcbcc7d5598ac929d1d7d6c4f3c2114c06498ecaf5261f913424a75ba"
+    },
+    {
+      "file": "opus-leading-discard.mkv",
+      "leading_discard": 96,
+      "block_skip_samples": 216,
+      "codec_delay_samples": 120,
+      "bytes": 88218,
+      "sha256": "5a0087b6ca1fdec7138ace79c295297224cca6ee6c3643f86c0bba5f34b05984"
+    },
+    {
+      "file": "opus.mp4",
+      "audible_frames": 288144,
+      "bytes": 74930,
+      "sha256": "b9dd8bf6231aa2a30d6d0a19926e5667cde54713c20bf1cce9a7b8453aa9175c"
+    },
+    {
+      "file": "vorbis.mkv",
+      "audible_frames": 288144,
+      "bytes": 43555,
+      "sha256": "3c0925f2cf330fe4301dae82d9114eba1525279f6f046efe1d8388728730a942"
+    },
+    {
+      "file": "truehd.mkv",
+      "audible_frames": 288144,
+      "bytes": 456356,
+      "sha256": "35ce053cf279e94c1e55a482038d939dc7b8c6824b71a1b3579f682120c567f0"
+    },
+    {
+      "file": "flac-51.mkv",
+      "audible_frames": 288144,
+      "channels": 6,
+      "development_encoder": "flac",
+      "bytes": 474076,
+      "sha256": "c471e753ad7dd7859d4c0e0d3b16fe917fd10ac69953a1bc21d1b2eafa322b06"
+    },
+    {
+      "file": "opus-51.mkv",
+      "audible_frames": 288144,
+      "channels": 6,
+      "development_encoder": "libopus",
+      "bytes": 334460,
+      "sha256": "f6d24acabf060d14bb00f9739ecb3da14c7be64d759869e51c9d8136d0e06edd"
+    },
+    {
+      "file": "vorbis-51.mkv",
+      "audible_frames": 288144,
+      "channels": 6,
+      "development_encoder": "libvorbis",
+      "bytes": 93256,
+      "sha256": "747087c5539e426a684c1da774f456f71bc44c896d9b05abed461635ae13529a"
+    },
+    {
+      "file": "truehd-51.mkv",
+      "audible_frames": 288144,
+      "channels": 6,
+      "development_encoder": "truehd",
+      "bytes": 964304,
+      "sha256": "fe85eb06bca1209de0031c21236f292dffb92c548e00be42abf1218d723c967d"
+    },
+    {
+      "file": "pcm-s16le.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 1154891,
+      "sha256": "06df0b97294e1236c7f5d490403ceaa01f9da793f20a79099948ba9e350754cc"
+    },
+    {
+      "file": "pcm-s16be.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 1154891,
+      "sha256": "acbe960ff1225e1e330471e96a6b828cf07caeaf962b55e28ffea101a6b01ff1"
+    },
+    {
+      "file": "pcm-s24le.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 1731233,
+      "sha256": "3823110e56108cff984cb51b3a4efbfb9ed4f99e4d087ad1868dd72442765b8f"
+    },
+    {
+      "file": "pcm-s24be.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 1731233,
+      "sha256": "008c778adee5955ef9b9831bb18d9cce042dd538aeddd0a1a04d4f8518fc3458"
+    },
+    {
+      "file": "pcm-s32le.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 2307521,
+      "sha256": "defb3618bb7b919491f928328bbef7a6d6b8b364c5679743615e04c18394e45c"
+    },
+    {
+      "file": "pcm-s32be.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 2307521,
+      "sha256": "e763dd4ea6dc15274c303bf352d61c07f7401f16d281d7be0beaf1e1390ca303"
+    },
+    {
+      "file": "pcm-f32le.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 2307521,
+      "sha256": "6a4aa12a479c49a2da40a322c6fc4a8ac50e26daf6baf6fc6501b2dfc3469f44"
+    },
+    {
+      "file": "pcm-f32be.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 2307521,
+      "sha256": "0d5a9df49cd2439f1bc54688ff5a528807a305cdc4e4dead73f20b3cbfdb2e40"
+    },
+    {
+      "file": "pcm-f64le.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 4612673,
+      "sha256": "f083906a792f703167122b3ec79e9931f36896a2952d273c496980751d89c863"
+    },
+    {
+      "file": "pcm-f64be.mov",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 4612673,
+      "sha256": "5cb6c5cb913f4e65de29a9fc5c5782236527ef2335534b64bcebb8b2a655a30a"
+    },
+    {
+      "file": "pcm-s16le.mkv",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 1162970,
+      "sha256": "933aa6ffaaa39bb6fcfdb886eb90010a23d29d3b4b29dfcd886eb653cf7b61e3"
+    },
+    {
+      "file": "pcm-leading-discard.mkv",
+      "leading_discard": 96,
+      "bytes": 1162984,
+      "sha256": "4d76c7c6d414554e7bf00d3e5e895425ede2f8eec3031ff228dfd5b941c594bf"
+    },
+    {
+      "file": "pcm-over-limit-discard.mkv",
+      "unsupported": true,
+      "block_skip_samples": 65537,
+      "bytes": 1162984,
+      "sha256": "edfad2f8e90192c15961e51ab896301cc6c1c5ba7ce7f84fbdd4c7aaa18eb857"
+    },
+    {
+      "file": "pcm-unsupported-depth.mkv",
+      "unsupported": true,
+      "bytes": 1162970,
+      "sha256": "ad0f652b66eaf13219a07d985e90ec5e121b6dfa4073b07493a4084d4639cfff"
+    },
+    {
+      "file": "pcm-s24le.mkv",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 1739258,
+      "sha256": "cc120027075ef0896fe10cfb260f11f110f7795eb9c7cda813cbf30612a413ef"
+    },
+    {
+      "file": "pcm-s32le.mkv",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 2315547,
+      "sha256": "87e668d4583529598a8e2ee13df90115b1f59c320a4e4abde12ee5e61185e50c"
+    },
+    {
+      "file": "pcm-s16be.mkv",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 1162970,
+      "sha256": "449301db159ec8926d1cb79bb45a9947308f0cb3bdd9ee6d7e5f3462bb4f12d7"
+    },
+    {
+      "file": "pcm-s24be.mkv",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 1739258,
+      "sha256": "658d4ee5bd144499312ff80d58757d777737a09cadcab3f5653fec6b06d1a7f9"
+    },
+    {
+      "file": "pcm-s32be.mkv",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 2315547,
+      "sha256": "b01b9a4796a9c54b7fa3159bca25f7751cb75c6c0358512d5a6170e9e50f60e3"
+    },
+    {
+      "file": "pcm-f32le.mkv",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 2315550,
+      "sha256": "6c88e54ab3bef52178338a1b58463e7d6c6ed578545c41602a40291463e1aacc"
+    },
+    {
+      "file": "pcm-f64le.mkv",
+      "audible_frames": 288144,
+      "lossless": true,
+      "bytes": 4621076,
+      "sha256": "09a9bc438e518bc95618ca11246d7ac4697158e8038fe9e8466a83bfa178728e"
+    }
+  ]
+}

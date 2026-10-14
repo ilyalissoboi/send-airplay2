@@ -60,11 +60,13 @@ struct DecodedAudioWindow {
  * per window, channels 1..8. Resampling phase periods above 8192 input samples
  * are refused. Both cancellation pointers in MediaReadContext must be valid.
  * A failed window invalidates the object; discard it and any tentative output.
- * Known native layouts and AAC/AC-3/E-AC-3/DTS-core only. Layout/rate/format changes,
+ * Known native layouts and the documented AAC/Dolby/DTS-core/FLAC/Opus/Vorbis/
+ * PCM/TrueHD source matrix only. Layout/rate/format changes,
  * discontinuities, protected/unknown inputs and complex edits are refused.
- * canonical_matroska_clock opts into a fixed-frame grid for HLS: first read must
- * start at zero, frame sizes must remain constant and exceed twice the clock
- * quantum. Rounded timestamps may snap only within one tick of that grid.
+ * canonical_matroska_clock uses sample-accurate timestamps directly, including
+ * variable/trimmed frames. Coarser clocks require a fixed-frame grid for HLS:
+ * first read must start at zero; frames must remain constant and exceed twice
+ * the clock quantum. Rounded timestamps may snap only within one tick of that grid.
  * This stabilizes relative seek phase; initial absolute clock precision remains
  * container-limited. Default decoding retains its original clock policy.
  */
@@ -86,6 +88,8 @@ public:
      * Initial edit silence is zero-filled; samples after actual EOF are omitted.
      * FFmpeg MOV edits and Matroska CodecDelay are already in frame timestamps:
      * never apply the raw-container planners' corrections a second time.
+     * Packet skip/discard side data remains intact for decoder consumption. MOV
+     * Opus frame duration bounds the audible packet tail before resampling.
      * This does not encode AAC or establish independent HLS segment priming.
      */
     [[nodiscard]] DecodedAudioWindow read_window(std::uint64_t first_sample, std::uint32_t count,
