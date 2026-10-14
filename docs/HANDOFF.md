@@ -13,6 +13,8 @@ checkpoint, review disposition, validation commands and ordered development queu
 The user's Proceed starts `codex/matroska-audio-clock` from merged PR #58
 (`820e89c`, final head `129ae6e`, all 16 checks passed in run `38504706633`;
 output-rate review resolved). Read [the bounded timing gate](coarse-matroska-audio.md).
+Active [PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) owns this
+increment; inspect its actual head/review/CI before continuing.
 Expanded canonical Matroska windows count actual decoded samples from freshly
 reopened start owners, preserving priming and per-packet trimming on repeats.
 Fourteen owned cases compare cold/reused PCM and byte-identical AAC segments

@@ -5,6 +5,8 @@ merged decoder PR #58 (`820e89c`). Its final head `129ae6e` passed all 16 checks
 in [run 38504706633](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38504706633);
 the OutputSamplingFrequency review thread is resolved. This increment is private,
 optional and offline. Automatic policy, public reporting and release remain later.
+Active [PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) owns this
+increment; inspect CI/review at its actual head.
 
 ## Behavior and finite scope
 
