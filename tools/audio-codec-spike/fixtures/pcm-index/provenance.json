@@ -1,0 +1,65 @@
+{
+  "license": "Apache-2.0; original synthesized tones and D77 video payload",
+  "generator": "generate_pcm_index_fixtures.py",
+  "input": {
+    "channels": 2,
+    "rate": 44100,
+    "frames": 1323132,
+    "frequencies_hz": [
+      173,
+      227
+    ],
+    "sha256": "f55a27a4b7a2627aece83671966ade4859a542cfef17597ba48a148dd7bcc613"
+  },
+  "video_source_sha256": "933aa6ffaaa39bb6fcfdb886eb90010a23d29d3b4b29dfcd886eb653cf7b61e3",
+  "source_frames": 1323132,
+  "source_rate": 44100,
+  "audible_frames_48khz": 1440144,
+  "video_frames": 61,
+  "video_frames_48khz": 1464000,
+  "packet_frames": [
+    997,
+    1537,
+    2111,
+    641
+  ],
+  "fixtures": [
+    {
+      "file": "variable-44100-fine.mkv",
+      "bytes": 5380906,
+      "sha256": "cf2343dd9911e6a519a17766ffc577f0b39384f83c6f8510cd8bcf74472d2ee2"
+    },
+    {
+      "file": "variable-44100.mkv",
+      "bytes": 5380908,
+      "sha256": "455af4434b7d86b2ca45f8e3e426982d56d59bc34bdd420e4dc6d5701761b942"
+    },
+    {
+      "file": "trimmed-44100-raw-fine.mkv",
+      "bytes": 5380947,
+      "sha256": "51caa5d8ed9e7bbf8b92f3d4b0c28b7ab861f81f418f7ff3621bf7faee11592e",
+      "codec_delay_source_samples": 132,
+      "block_skip_source_samples": 192,
+      "final_discard_source_samples": 132,
+      "audible_frames_48khz": 1439857
+    },
+    {
+      "file": "trimmed-44100.mkv",
+      "bytes": 5380949,
+      "sha256": "b896c48cea46c1c7d14fe2ee8dbc5f88119a1606430547ebcebd470f97e1b623",
+      "codec_delay_source_samples": 132,
+      "block_skip_source_samples": 192,
+      "final_discard_source_samples": 132,
+      "audible_frames_48khz": 1439857
+    },
+    {
+      "file": "trimmed-44100-fine.mkv",
+      "bytes": 5379850,
+      "sha256": "826395b0402841c2f7648e8214fabcfe047db4772eb46a5bfcee8db21b816b7a",
+      "prepared_audible_control": true,
+      "leading_silence_source_samples": 60,
+      "physical_frames": 1322868,
+      "audible_frames_48khz": 1439857
+    }
+  ]
+}

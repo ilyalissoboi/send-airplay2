@@ -9,12 +9,31 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D79 selected PCM indexing (2026-10-14).**
+The user's Proceed starts `codex/matroska-audio-index` from merged PR #59
+(`9763189`, final head `2bc7a5c`, all 16 checks passed in run `38510002555`).
+Read [the packet/index contract and evidence](matroska-pcm-index.md).
+Canonical Matroska PCM now uses bounded native original-ID packet coordinates,
+exact packed-sample counts, source-sample PTS and per-block trim. Cold seeks use
+binary lookup and nearby preroll; PCM no longer has D78's ten-second movie horizon.
+Thirty-second variable 44.1-kHz controls, independent delay/leading/final-trim
+controls and one-hour synthetic seeks above 4 GiB pass offline tests. The combined
+trim fixture exposed generic demux skip overwrite; indexed PCM avoids it, while
+compressed-family/noncanonical trim proof remains a separate gate.
+The index is limited to 262144 selected unlaced packets, with the existing I/O,
+window, input, deadline and cancellation bounds. Inspect the actual active branch
+PR head/CI; do not generalize synthetic results to real files, UWP runtime or receivers.
+Next: compressed exact durations/anchors and large-seek/trim gates for FLAC, Opus,
+Vorbis and TrueHD. Their coarse clocks remain under the ten-second movie horizon.
+Then selected remux/policy and versioned public reporting, expanded packaged
+runtime/performance and converted-receiver gates. No package or Screenbox change.
+
 **D78 bounded coarse-clock timing (2026-10-14).**
 The user's Proceed starts `codex/matroska-audio-clock` from merged PR #58
 (`820e89c`, final head `129ae6e`, all 16 checks passed in run `38504706633`;
 output-rate review resolved). Read [the bounded timing gate](coarse-matroska-audio.md).
-Active [PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) owns this
-increment; inspect its actual head/review/CI before continuing.
+[PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) merged as `9763189`;
+all 16 checks passed at `2bc7a5c` in run `38510002555`. Do not resume its closed branch.
 Expanded canonical Matroska windows count actual decoded samples from freshly
 reopened start owners, preserving priming and per-packet trimming on repeats.
 Fourteen owned cases compare cold/reused PCM and byte-identical AAC segments

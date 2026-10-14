@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#58 are merged. `main` contains
+Checkpoint: 2026-10-14 (Asia/Tokyo). PRs #12-#59 are merged. `main` contains
 the experimental C API version 4, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,12 +23,31 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D79 selected PCM indexing (2026-10-14).**
+The user's Proceed starts `codex/matroska-audio-index` from merged PR #59
+(`9763189`, final head `2bc7a5c`, all 16 checks passed in run `38510002555`).
+Read [the packet/index contract and evidence](matroska-pcm-index.md).
+Canonical Matroska PCM now uses bounded native original-ID packet coordinates,
+exact packed-sample counts, source-sample PTS and per-block trim. Cold seeks use
+binary lookup and nearby preroll; PCM no longer has D78's ten-second movie horizon.
+Thirty-second variable 44.1-kHz controls, independent delay/leading/final-trim
+controls and one-hour synthetic seeks above 4 GiB pass offline tests. The combined
+trim fixture exposed generic demux skip overwrite; indexed PCM avoids it, while
+compressed-family/noncanonical trim proof remains a separate gate.
+The index is limited to 262144 selected unlaced packets, with the existing I/O,
+window, input, deadline and cancellation bounds. Inspect the actual active branch
+PR head/CI; do not generalize synthetic results to real files, UWP runtime or receivers.
+Next: compressed exact durations/anchors and large-seek/trim gates for FLAC, Opus,
+Vorbis and TrueHD. Their coarse clocks remain under the ten-second movie horizon.
+Then selected remux/policy and versioned public reporting, expanded packaged
+runtime/performance and converted-receiver gates. No package or Screenbox change.
+
 **D78 bounded coarse-clock timing (2026-10-14).**
 The user's Proceed starts `codex/matroska-audio-clock` from merged PR #58
 (`820e89c`, final head `129ae6e`, all 16 checks passed in run `38504706633`;
 output-rate review resolved). Read [the bounded timing gate](coarse-matroska-audio.md).
-Active [PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) owns this
-increment; inspect its actual head/review/CI before continuing.
+[PR #59](https://github.com/ilyalissoboi/send-airplay2/pull/59) merged as `9763189`;
+all 16 checks passed at `2bc7a5c` in run `38510002555`. Do not resume its closed branch.
 Expanded canonical Matroska windows rebuild from fresh start owners and count
 actual decoded samples, including trim, under a ten-second presentation horizon.
 Fourteen owned cases compare cold/reused windows and identical generated AAC
@@ -497,8 +516,8 @@ test hardware. D72 now checks private long-GOP splitting, terminal failure
 reporting and synthetic cold-seek scaling. D73 authoring is merged with explicit
 estimate limitations. D74 playback/public/storage and D75's x64 AppContainer
 runtime/storage gate are merged. D77 implements the expanded private decoder
-subset; D78 covers bounded short-file coarse timing. Long-file exact indexing is
-next, before selected remux/policy
+subset; D79 supplies bounded long-file PCM indexing. Compressed duration/anchor
+reconstruction is next, before selected remux/policy
 and public integration. Real-file performance and converted-receiver validation remain required;
 repeat packaged runtime checks for the expanded codec matrix.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
@@ -662,9 +681,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68-D77 and PR #58 are merged. The user's Proceed authorizes D78's bounded
-> coarse Matroska timing increment. Read coarse-matroska-audio.md and inspect
-> the actual open slice head. Long-file variable-frame indexing is next, before
+> D68-D78 and PR #59 are merged. The user's Proceed authorizes D79's selected
+> PCM packet/index increment. Read matroska-pcm-index.md and inspect
+> the actual open slice head. Compressed duration/anchor reconstruction is next, before
 > selected remux/policy and public integration. D75 performance and converted-receiver gates
 > remain required. Read
 > the spike/evidence and D67's stereo AAC plan; speaker audio and

@@ -64,6 +64,7 @@ constexpr std::uint32_t id_block_group = 0xA0;
 constexpr std::uint32_t id_block = 0xA1;
 constexpr std::uint32_t id_block_duration = 0x9B;
 constexpr std::uint32_t id_reference_block = 0xFB;
+constexpr std::uint32_t id_discard_padding = 0x75A2;
 constexpr std::uint32_t id_cues = 0x1C53BB6B;
 constexpr std::uint32_t id_chapters = 0x1043A770;
 constexpr std::uint32_t id_tags = 0x1254C367;
@@ -79,6 +80,7 @@ constexpr std::uint64_t default_timestamp_scale = 1'000'000; // Nanoseconds per 
 constexpr std::uint64_t nanoseconds_per_second = 1'000'000'000;
 constexpr std::uint64_t max_metadata_bytes = 16ULL << 20;
 constexpr std::size_t max_frames_per_track = 4'000'000;
+constexpr std::size_t max_audio_index_packets = 262144;
 constexpr std::size_t window_bytes = 16 * 1024;
 constexpr std::uint32_t movie_timescale = 1000; // No edit lists use it.
 constexpr std::uint8_t simple_block_keyframe = 0x80;
@@ -99,8 +101,9 @@ constexpr std::size_t dolby_header_bytes = 16; // Covers both sync frame headers
 /// the small reads of a cluster scan reach the source in 16 KiB requests.
 class WindowReader {
 public:
-    WindowReader(const RandomReader& read, std::uint64_t file_size)
-        : read_(read), file_size_(file_size) {}
+    WindowReader(const RandomReader& read, std::uint64_t file_size,
+                 std::size_t read_window_bytes = window_bytes)
+        : read_(read), file_size_(file_size), read_window_bytes_(read_window_bytes) {}
     std::uint8_t byte(std::uint64_t position) {
         if (position >= file_size_) {
             malformed("element past the end of the file");
@@ -108,7 +111,7 @@ public:
         if (position < start_ || position >= start_ + window_.size()) {
             start_ = position;
             window_.resize(static_cast<std::size_t>(
-                std::min<std::uint64_t>(window_bytes, file_size_ - position)));
+                std::min<std::uint64_t>(read_window_bytes_, file_size_ - position)));
             read_(start_, window_.data(), window_.size());
         }
         return window_[static_cast<std::size_t>(position - start_)];
@@ -126,6 +129,7 @@ public:
 private:
     const RandomReader& read_;
     std::uint64_t file_size_;
+    std::size_t read_window_bytes_;
     std::uint64_t start_ = 0;
     Bytes window_;
 };
@@ -409,6 +413,7 @@ struct Frame {
     std::int64_t timestamp = 0;
     bool first_in_block = true;
     bool keyframe = false;
+    std::int64_t discard_padding_ns = 0;
 };
 
 struct SelectedTrack {
@@ -416,6 +421,7 @@ struct SelectedTrack {
     std::vector<Frame> frames;
     std::optional<std::uint64_t> last_block_duration; // Ticks; from BlockDuration.
     std::vector<std::uint64_t> durations; // Text tracks only: BlockDuration per frame, 0 if none.
+    bool packet_coordinates = false; ///< Strict selected-packet index, distinct from legacy remux.
 };
 
 bool text_codec(const std::string& codec_id) {
@@ -501,12 +507,18 @@ void read_block(WindowReader& reader, std::uint64_t begin, std::uint64_t end,
         static_cast<std::int16_t>((reader.byte(position) << 8) | reader.byte(position + 1));
     const auto flags = reader.byte(position + 2);
     position += 3;
+    if (relative > 0 && cluster_timestamp > std::numeric_limits<std::int64_t>::max() - relative) {
+        malformed("block timestamp overflow");
+    }
     const auto timestamp = cluster_timestamp + relative;
     if (timestamp < 0) {
         unsupported("negative block timestamps");
     }
     const bool keyframe = simple ? (flags & simple_block_keyframe) != 0 : !referenced;
     const auto lacing = static_cast<std::uint8_t>(flags & block_lacing_mask);
+    if (track->packet_coordinates && lacing != 0) {
+        unsupported("selected audio packet index does not support lacing");
+    }
 
     std::vector<std::uint64_t> sizes;
     if (lacing == 0) {
@@ -566,7 +578,13 @@ void read_block(WindowReader& reader, std::uint64_t begin, std::uint64_t end,
         if (sizes[index] > std::numeric_limits<std::uint32_t>::max()) {
             throw RemuxException(RemuxFailure::too_large, "MKV: frame larger than 4 GiB");
         }
-        if (track->frames.size() == max_frames_per_track) {
+        const auto frame_limit =
+            track->packet_coordinates ? max_audio_index_packets : max_frames_per_track;
+        if (track->frames.size() == frame_limit) {
+            if (track->packet_coordinates) {
+                throw RemuxException(RemuxFailure::too_large,
+                                     "MKV: selected audio packet index limit exceeded");
+            }
             throw RemuxException(RemuxFailure::too_large, "MKV: more than 4000000 frames");
         }
         Frame frame;
@@ -587,6 +605,20 @@ void read_block(WindowReader& reader, std::uint64_t begin, std::uint64_t end,
 bool level1(std::uint32_t id) {
     return id == id_cluster || id == id_cues || id == id_tags || id == id_chapters ||
            id == id_attachments || id == id_seek_head || id == id_info || id == id_tracks;
+}
+
+/// Signed big-endian EBML integer, converted without relying on the host's
+/// signed representation. Padding is still nanoseconds at this native boundary.
+std::int64_t packet_discard_padding(WindowReader& reader, const Element& field) {
+    if (field.size == 0 || field.size > 8) {
+        malformed("invalid selected packet DiscardPadding size");
+    }
+    const bool negative = (reader.byte(field.data) & 0x80) != 0;
+    std::uint64_t encoded = negative ? ~0ULL : 0;
+    for (std::uint64_t index = 0; index < field.size; ++index) {
+        encoded = (encoded << 8) | reader.byte(field.data + index);
+    }
+    return negative ? -static_cast<std::int64_t>(~encoded) - 1 : static_cast<std::int64_t>(encoded);
 }
 
 /// Reads one cluster's blocks. Returns where the next top-level element
@@ -623,6 +655,8 @@ std::uint64_t read_cluster(WindowReader& reader, const Element& cluster,
         } else if (child.id == id_block_group) {
             std::optional<Element> block;
             std::optional<std::uint64_t> duration;
+            std::optional<Element> padding;
+            bool repeated_padding = false;
             bool referenced = false;
             for (auto inner = child.data; inner < child.end();) {
                 const auto field = read_element(reader, inner, child.end());
@@ -636,12 +670,28 @@ std::uint64_t read_cluster(WindowReader& reader, const Element& cluster,
                         value = (value << 8) | reader.byte(field.data + index);
                     }
                     duration = value;
+                } else if (field.id == id_discard_padding) {
+                    repeated_padding = repeated_padding || padding.has_value();
+                    padding = field;
                 }
                 inner = field.end();
             }
             if (block) {
+                const auto indexed =
+                    std::find_if(tracks.begin(), tracks.end(), [](const SelectedTrack* track) {
+                        return track->packet_coordinates;
+                    });
+                const auto previous_size = indexed == tracks.end() ? 0 : (*indexed)->frames.size();
                 read_block(reader, block->data, block->end(), timestamp, false, referenced, tracks,
                            duration);
+                if (indexed != tracks.end() && (*indexed)->frames.size() > previous_size &&
+                    padding) {
+                    if (repeated_padding) {
+                        malformed("duplicate selected packet DiscardPadding");
+                    }
+                    (*indexed)->frames.back().discard_padding_ns =
+                        packet_discard_padding(reader, *padding);
+                }
             }
         }
         position = child.end();
@@ -1589,6 +1639,61 @@ Mp4Movie read_mkv(const RandomReader& read, std::uint64_t file_size) {
 }
 Mp4Movie read_mkv_video_source(const RandomReader& read, std::uint64_t file_size) {
     return read_mkv_tracks(read, file_size, true);
+}
+
+std::vector<MkvAudioPacket> read_mkv_audio_packets(const RandomReader& read,
+                                                   std::uint64_t file_size,
+                                                   std::uint64_t original_track_number) {
+    if (original_track_number == 0) {
+        unsupported("selected original audio identity is zero");
+    }
+    constexpr std::size_t audio_header_window_bytes = 256;
+    WindowReader reader(read, file_size, audio_header_window_bytes);
+    const auto layout = read_layout(reader, file_size, TrackReadMode::inventory);
+    const auto found = std::find_if(layout.source_tracks.begin(), layout.source_tracks.end(),
+                                    [original_track_number](const TrackInfo& track) {
+                                        return track.number == original_track_number;
+                                    });
+    const auto matches = std::count_if(layout.source_tracks.begin(), layout.source_tracks.end(),
+                                       [original_track_number](const TrackInfo& track) {
+                                           return track.number == original_track_number;
+                                       });
+    if (matches != 1) {
+        unsupported("selected original audio identity is unavailable or ambiguous");
+    }
+    if (found == layout.source_tracks.end() || found->type != track_type_audio || !found->enabled) {
+        unsupported("selected original audio track is unavailable");
+    }
+    if (found->encoded || !found->standard_timeline) {
+        unsupported("selected audio packet index requires an unencoded standard timeline");
+    }
+    SelectedTrack selected{*found, {}, std::nullopt, {}, true};
+    std::vector<SelectedTrack*> tracks{&selected};
+    for (auto position = layout.first_cluster; position < layout.segment.end();) {
+        const auto element = read_element(reader, position, layout.segment.end());
+        if (element.id == id_cluster) {
+            position = read_cluster(reader, element, tracks);
+        } else {
+            if (element.id == id_tracks || element.id == id_info) {
+                unsupported("selected audio metadata changes after the first cluster");
+            }
+            if (element.unknown_size) {
+                malformed("unknown-size element outside selected packet clusters");
+            }
+            position = element.end();
+        }
+    }
+    std::vector<MkvAudioPacket> result;
+    result.reserve(selected.frames.size());
+    for (const auto& frame : selected.frames) {
+        const auto ticks = static_cast<std::uint64_t>(frame.timestamp);
+        if (ticks > std::numeric_limits<std::uint64_t>::max() / layout.timestamp_scale) {
+            unsupported("selected audio timestamp overflows nanoseconds");
+        }
+        result.push_back(
+            {frame.offset, frame.size, ticks * layout.timestamp_scale, frame.discard_padding_ns});
+    }
+    return result;
 }
 
 MediaTrackInventory probe_mkv_tracks(const RandomReader& read, std::uint64_t file_size) {

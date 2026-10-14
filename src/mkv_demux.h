@@ -44,6 +44,24 @@ namespace send_airplay2::detail {
 /// identities and nanosecond CodecDelay/SeekPreRoll without scanning audio frames.
 [[nodiscard]] MediaTrackInventory probe_mkv_tracks(const RandomReader& read,
                                                    std::uint64_t file_size);
+/// Unfiltered selected audio packet coordinates. stored_timestamp_ns precedes
+/// CodecDelay; signed DiscardPadding belongs to this block, not the track.
+struct MkvAudioPacket {
+    std::uint64_t offset = 0;
+    std::uint32_t size = 0;
+    std::uint64_t stored_timestamp_ns = 0;
+    std::int64_t discard_padding_ns = 0;
+};
+/** Scan selected original TrackNumber block headers, skipping payloads and other
+ * tracks. Retains at most 262144 packets; uses 256-byte header read windows.
+ * No codec eligibility filtering or default-track fallback. Refuses lacing in
+ * the selected track until per-lace padding/timestamp association is validated.
+ * The caller owns read/deadline/cancellation budgets and codec duration checks.
+ * @throws RemuxException; read exceptions propagate; no callbacks after return.
+ */
+[[nodiscard]] std::vector<MkvAudioPacket>
+read_mkv_audio_packets(const RandomReader& read, std::uint64_t file_size,
+                       std::uint64_t original_track_number);
 /// Index supported video/text independently of audio codec support/selection.
 [[nodiscard]] Mp4Movie read_mkv_video_source(const RandomReader& read, std::uint64_t file_size);
 

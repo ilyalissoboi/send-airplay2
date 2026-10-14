@@ -1,5 +1,8 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
+**D79 extension:** [selected PCM indexing](matroska-pcm-index.md) adds long-file PCM
+seeks and independent trim controls. Compressed long-file timing remains next.
+
 Decision: 2026-10-14 (Asia/Tokyo). Baseline: merged PR #56, `02d8be6`.
 Planning PR #57 merged as `faee858` at final head `d4f4a62`, with all 16 checks
 passed and its block-padding review resolved. The subsequent authorized
