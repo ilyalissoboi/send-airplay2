@@ -1,5 +1,10 @@
 # Receiver validation record
 
+**D77 boundary (2026-10-14):** [expanded private decoder/rendition checks](audio-decoder-expansion.md)
+cover original stereo/5.1 fixtures offline. They add no receiver or packaged
+runtime observation. Preserve historical build/firmware attribution; speakers
+and discrete converted surround output remain hardware-deferred.
+
 **D76 planning boundary (2026-10-14):** [automatic audio policy and expanded inputs](automatic-audio-transcoding-plan.md)
 are proposed for supported video files. No new decoder or receiver observation
 is added. FLAC's inclusion in Apple's HLS specification is not this library's
