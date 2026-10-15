@@ -41,6 +41,20 @@ if ($StereoAac) {
         if (-not (Test-Path -LiteralPath $codecPath)) { Fail "Missing $codecName" }
         else { $checkedDlls += $codecPath }
     }
+    $codec = Join-Path $Directory 'avcodec-63.dll'
+    if (Test-Path -LiteralPath $codec) {
+        # Inspect the embedded build configuration as well as PE/import flags:
+        # an older compatible-ABI DLL can pass those while omitting new decoders.
+        $binaryText = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $codec)))
+        $decoderOption = [regex]::Match($binaryText, "--enable-decoder=(?:'([^']+)'|([^\s\x00]+))")
+        $decoderList = if ($decoderOption.Groups[1].Success) { $decoderOption.Groups[1].Value } else { $decoderOption.Groups[2].Value }
+        $decoders = $decoderList.Split(',')
+        foreach ($required in @('aac','ac3','eac3','dca','flac','opus','vorbis','truehd',
+            'pcm_s16le','pcm_s16be','pcm_s24le','pcm_s24be','pcm_s32le','pcm_s32be',
+            'pcm_f32le','pcm_f32be','pcm_f64le','pcm_f64be')) {
+            if ($required -notin $decoders) { Fail "Staged codec profile omits $required" }
+        }
+    }
 }
 foreach ($dll in $checkedDlls) {
     $name = Split-Path $dll -Leaf

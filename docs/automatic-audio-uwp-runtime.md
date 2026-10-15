@@ -10,7 +10,7 @@ discrete converted surround, publication and Screenbox pin changes remain deferr
 ## Implementation and scope
 
 The existing offline x64 Native AOT UWP harness advances to private package
-0.1.0.4. It retains D75's forced-stereo checks and adds a shared
+0.1.0.5 (superseding the initial 0.1.0.4 staging-failure run). It retains D75's forced-stereo checks and adds a shared
 [owned fixture catalog](../tools/uwp-host/stereo-validation/automatic-cases.tsv)
 covering automatic DTS, FLAC, Opus, Vorbis, packed PCM and TrueHD conversion,
 AAC/Dolby copy and video-only. The catalog gives literal action, family, channels
@@ -72,8 +72,19 @@ playback/EOF or authoring-estimate accuracy; D73's limitations remain separate.
 
 ## Reproduction and evidence
 
+The initial 0.1.0.4 run verified its AppContainer token and all six loaded hashes,
+but refused the first FLAC input. Inspection showed the core linked the expanded
+FFmpeg prefix while UWP staging copied old codec DLLs from the separate core
+dependency prefix. The runtime-selection fix resolves each DLL beside the exact
+selected import library, including debug/release-only mappings, and refreshes
+staging on normal builds without requiring a core relink. A CMake regression
+test includes a decoy old prefix and explicit missing-library refusal. Static
+UWP inspection now checks the declared decoder configuration as well as PE/import
+flags; it rejects that initial old-profile package. This changes staging, not
+the adopted codec profile or unsupported-format policy.
+
 Use [D75's build/notice/import procedure](stereo-aac-uwp-runtime.md#reproduction)
-with this branch, then build/publish the private 0.1.0.4 package. Extract into a
+with this branch, then build/publish the private 0.1.0.5 package. Extract into a
 new workspace layout and update its registration in place. Do not uninstall
 Screenbox/normal UWP hosts or remove profiles. Run `sap2-stereo-runtime.exe` for
 bundled checks, `sap2-stereo-runtime.exe pick-expanded` for the owned folder grant,
