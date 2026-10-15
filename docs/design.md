@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#67 merged.
+Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#68 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,7 +17,13 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D87 (PR #68):** [bounded DTS seek coordinates](matroska-dts-bounded-seek.md)
+**D88 in progress:** [automatic audio receiver gate](automatic-audio-receiver-gate.md)
+adds original visible/audible controls and script-only automatic/stereo delivery
+to the private UWP test host. Native Mac AAC copy and DTS 5.1-to-stereo-AAC pass
+by user observation; remaining host/receiver observations and lifecycle cases
+are pending. Core policy, defaults and publication/Screenbox boundaries remain.
+
+**D87 merged (PR #68, `f6c85ef`):** [bounded DTS seek coordinates](matroska-dts-bounded-seek.md)
 use the nearer already parsed audio/video index with a maximum-lace backoff,
 retaining selected audio and all existing budgets. Owned virtual read-amplification,
 fixed-offset PCM/EOF and refusal controls pass. Package 0.1.0.8 at `731db15` passes

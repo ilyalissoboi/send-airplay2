@@ -1,5 +1,14 @@
 # Receiver validation record
 
+**D88 in progress (2026-10-15):** [automatic audio receiver gate](automatic-audio-receiver-gate.md).
+The user confirms unchanged macOS 26.7.1 / tvOS 26.6. Native Mac AAC copy and
+DTS 5.1-to-stereo-AAC pass manual A/V synchronization, channel-pattern, start,
+controls and natural-end checks with original 120-second flash/beep media.
+Corrected telemetry verifies loaded hashes and cleanup. Other observations and
+lifecycle checks remain pending; [sanitized evidence](validation/automatic-audio-receiver-windows-2026-10-15.json)
+retains the initial Mac consent rejection and native Apple TV AAC disconnect
+separately from retries. No private film, speakers or discrete surround is tested.
+
 **D87 offline gate (2026-10-15):** [bounded DTS seeks](matroska-dts-bounded-seek.md)
 pass owned PCM/EOF, maximum-lace and refusal controls. Private package 0.1.0.8 at
 `731db15` passes bundled/folder-granted 137-case/61-fixture matrices with actual

@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#67 are merged. `main` contains
+Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#68 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,22 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D88 automatic audio receiver gate (2026-10-15, in progress).**
+Branch `codex/automatic-audio-receiver-gate` starts at merged PR #68, `f6c85ef`.
+The user resumed after network adjustments and confirms macOS 26.7.1 and tvOS
+26.6 unchanged. Mac native AAC copy and DTS conversion pass by observation;
+corrected telemetry verifies loaded modules and final cleanup. Native Apple TV
+AAC retry/DTS and packaged Mac AAC/DTS reach natural end; their observer reports
+are pending. Packaged 0.1.28.0 verifies its token/six loaded hashes and cache
+cleanup. Continue its nine-codec Apple TV matrix, manual observations and
+Stop/cancellation checks; preserve the first native AAC disconnect and packaged
+Mac consent rejection as separate failed attempts. Read
+[the gate scope and checkpoint](automatic-audio-receiver-gate.md). Original
+flash/beep fixtures and diagnostic driver are ignored under `build-review`.
+Generator, UWP script/cache/optional packaging and documentation are uncommitted.
+No PR yet. Keep per-case results explicit; speakers and discrete converted
+surround remain hardware-deferred. No Computer Use for visual confirmation.
 
 **D87 bounded DTS seeks (2026-10-15, PR #68).**
 PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in

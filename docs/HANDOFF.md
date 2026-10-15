@@ -9,6 +9,31 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D88 automatic audio receiver gate (2026-10-15, in progress).**
+**Resumed at the user's request** after target-device network adjustments.
+Native Mac AAC copy and DTS-to-stereo-AAC passed by user observation, including
+synchronization, channel pattern, start position, controls and natural end.
+A corrected AAC repeat and DTS run verify loaded hashes, controls, natural EOF,
+cleanup and one source release. UWP Mac AAC/DTS reached natural end with cache
+cleanup and AppContainer/six hashes verified; observer report remains pending.
+Native Apple TV AAC retry and DTS reached natural end; initial AAC disconnected
+during seek and is retained separately. Apple TV observation, its packaged
+nine-codec matrix and Stop/cancellation checks remain pending.
+Original controls are generated under ignored `build-review/d88-receiver-controls`;
+AAC copy uses MP4 (supported priming/origin), PCM conversion uses stereo, other
+converted controls use 5.1. Offline preparation passes after those fixture fixes.
+Native hosts are built; UWP 0.1.28.0 is installed as an in-place update with the
+existing optional codec runtime. Script/cache/packaging changes are uncommitted.
+Mac discovery now finds `Mac14,10`. The user confirms macOS 26.7.1 and tvOS 26.6
+are unchanged.
+PR #68 merged as `f6c85ef`; all 16 checks passed at `9cad595` in run `38689760888`.
+The user's Proceed starts fresh `codex/automatic-audio-receiver-gate`.
+Read [the observer/host scope and original fixture provenance](automatic-audio-receiver-gate.md).
+Both recorded receivers are available by user report. Continue original
+flash/beep controls, native C API
+and script-only packaged automatic audio. Preserve defaults, private source
+identity/content, consent and publication/Screenbox boundaries. Matrix incomplete.
+
 **D87 bounded DTS seeks (2026-10-15, PR #68).**
 PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in
 run `38677650564`. The user's Resume work continues on fresh

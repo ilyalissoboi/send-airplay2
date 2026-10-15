@@ -31,6 +31,7 @@ namespace SendAirPlay2.UwpHost
         private readonly object castGate = new object();
         private StorageFile? mediaFile;
         private Cast? cast;
+        private TemporaryAacFragmentStore? castCache; // Guarded with the cast slot.
         private bool castStarting; // Guarded by castGate: a start is in progress.
         private CancellationTokenSource? watcher;
 
@@ -77,7 +78,18 @@ namespace SendAirPlay2.UwpHost
                    status.EndReason + " owned=" + (status.Owned ? "yes" : "no") + " position=" +
                    (status.PositionSeconds.HasValue ? status.PositionSeconds.Value.ToString("F1") : "unknown") +
                    " failure=" + status.FailureChannel + "/" + status.FailureReason +
-                   " cleaned=" + (status.CleanedUp ? "yes" : "no");
+                   " cleaned=" + (status.CleanedUp ? "yes" : "no") +
+                   (status.AudioDecision is { } audio ? " audio_action=" + audio.Action +
+                    " source_family=" + audio.SourceFamily + " output_family=" + audio.OutputFamily +
+                    " selected_audio_id=" + audio.SelectedAudioId + " channels=" + audio.OutputChannels : string.Empty);
+        }
+
+        private void LogCache(TemporaryAacFragmentStore? cache)
+        {
+            if (cache == null) { return; }
+            Log("Cache: seals=" + cache.SealCount + " reads=" + cache.ReadCount +
+                " sealed_bytes=" + cache.SealedBytes + " clear=" + cache.ClearCount +
+                " release=" + cache.ReleaseCount + " removed=" + (cache.DirectoryRemoved ? "yes" : "no"));
         }
 
         private static string Failure(Exception error)
@@ -296,7 +308,7 @@ namespace SendAirPlay2.UwpHost
         /// Call on the UI thread: the address comes from the form.
         /// </summary>
         private Task<bool> StartCast(string profile, ICredentialStore? store, string storeName, StorageFile file,
-                                     CastDelivery delivery, double startSeconds)
+                                     CastDelivery delivery, double startSeconds, bool preserveAudio = false)
         {
             // Reserve the single cast slot before any asynchronous work, so two quick
             // clicks cannot both start a cast (one of which Stop could never reach).
@@ -315,22 +327,33 @@ namespace SendAirPlay2.UwpHost
             return Task.Run(async () =>
             {
                 Cast? created = null;
+                TemporaryAacFragmentStore? cache = null;
+                var handedToBinding = false;
                 var started = false;
                 var clock = Stopwatch.StartNew();
                 try
                 {
-                    var source = await StorageFileMediaSource.OpenAsync(file);
-                    created = Cast.Create(new CastOptions
+                    var converts = delivery == CastDelivery.AutomaticAudioHls || delivery == CastDelivery.StereoAacHls;
+                    if (converts) { cache = await TemporaryAacFragmentStore.CreateAsync(); }
+                    var options = new CastOptions
                     {
                         ReceiverAddress = address,
                         Profile = profile,
                         CredentialStore = store,
                         Delivery = delivery,
                         StartPositionSeconds = startSeconds,
-                    }, source);
+                        CacheQuotaBytes = converts ? 512ul * 1024 * 1024 : 0,
+                        FragmentStore = cache,
+                        ConversionPermission = preserveAudio ? AudioConversionPermission.PreserveOriginal : AudioConversionPermission.AllowStereo,
+                    };
+                    if (converts) { options.StartTimeout = TimeSpan.FromSeconds(60); }
+                    var source = await StorageFileMediaSource.OpenAsync(file);
+                    handedToBinding = true; // Create consumes source/store even on failure.
+                    created = Cast.Create(options, source);
                     lock (castGate)
                     {
                         cast = created; // Visible to Stop and the controls while starting.
+                        castCache = cache;
                     }
                     created.Start();
                     started = true;
@@ -339,8 +362,11 @@ namespace SendAirPlay2.UwpHost
                 {
                     // Clean up before logging: a failed start has already torn down, and
                     // logging (file and dispatcher work) must not keep the slot occupied.
-                    var status = created?.GetStatus();
+                    CastStatus? status = null;
+                    try { status = created?.GetStatus(); } catch (ObjectDisposedException) { }
+                    if (!handedToBinding) { cache?.AbandonBeforeTransfer(); }
                     ReleaseSlot(created);
+                    if (handedToBinding) { LogCache(cache); }
                     Log((created == null ? "Cast create: " : "Cast start: ") + Failure(error) + " after " +
                         clock.ElapsedMilliseconds + " ms" +
                         (status.HasValue ? " " + Describe(status.Value) : string.Empty));
@@ -376,6 +402,7 @@ namespace SendAirPlay2.UwpHost
                 if (failed != null && cast == failed)
                 {
                     cast = null;
+                    castCache = null;
                 }
             }
             failed?.Dispose();
@@ -420,6 +447,7 @@ namespace SendAirPlay2.UwpHost
         /// </summary>
         private void ReleaseEnded(Cast ended)
         {
+            TemporaryAacFragmentStore? cache;
             lock (castGate)
             {
                 if (cast != ended)
@@ -427,9 +455,12 @@ namespace SendAirPlay2.UwpHost
                     return;
                 }
                 cast = null;
+                cache = castCache;
+                castCache = null;
             }
             ended.Stop();
             ended.Dispose();
+            LogCache(cache);
             Log("Ended cast released; media source released");
         }
 
@@ -482,10 +513,13 @@ namespace SendAirPlay2.UwpHost
         private Task<bool> StopCast()
         {
             Cast? active;
+            TemporaryAacFragmentStore? cache;
             lock (castGate)
             {
                 active = cast;
                 cast = null;
+                cache = castCache;
+                castCache = null;
             }
             if (active == null)
             {
@@ -498,6 +532,7 @@ namespace SendAirPlay2.UwpHost
                 active.Stop();
                 Log("Stopped: " + Describe(active.GetStatus()));
                 active.Dispose();
+                LogCache(cache);
                 Log("Cast disposed; media source released");
                 return true;
             });

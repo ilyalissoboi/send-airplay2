@@ -35,6 +35,7 @@
     <Sap2NativeSuffix Condition="'$(Platform)' == 'x86'">-x86</Sap2NativeSuffix>
     <Sap2NativeSuffix Condition="'$(Platform)' == 'ARM64'">-arm64</Sap2NativeSuffix>
     <Sap2NativeDir Condition="'$(Sap2NativeDir)' == ''">$(MSBuildThisFileDirectory)..\..\build-uwp$(Sap2NativeSuffix)\Release</Sap2NativeDir>
+    <Sap2StereoAac Condition="'$(Sap2StereoAac)' == ''">false</Sap2StereoAac>
   </PropertyGroup>
 
   <ItemGroup>
@@ -64,12 +65,21 @@
       <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="$(Sap2NativeDir)\av*.dll;$(Sap2NativeDir)\swresample*.dll" Condition="'$(Sap2StereoAac)' == 'true'">
+      <Link>%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(Sap2FfmpegShare)\copyright" Condition="'$(Sap2StereoAac)' == 'true'">
+      <Link>LICENSE-FFmpeg.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\*.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <Target Name="Sap2CheckNativeDir" BeforeTargets="Build">
+    <Error Condition="'$(Sap2StereoAac)' == 'true' And (!Exists('$(Sap2NativeDir)\avcodec-63.dll') Or !Exists('$(Sap2FfmpegShare)\copyright'))" Text="Choose the validated UWP codec runtime and its matching FFmpeg notice directory." />
     <Error Condition="!Exists('$(Sap2NativeDir)\send_airplay2.dll')"
            Text="send_airplay2.dll not found in $(Sap2NativeDir). Build the UWP native library first (docs/uwp-native-build.md) or set Sap2NativeDir." />
   </Target>
