@@ -137,3 +137,8 @@ module-hash checks, real-file/brokered performance, and copied/converted receive
 playback remain the next gates. Audio-only speaker transport and discrete converted
 surround remain hardware-deferred. Publication and Screenbox integration follow
 separate approval; visual confirmation uses written manual instructions.
+
+**Subsequent D84 result:** [expanded AppContainer validation](automatic-audio-uwp-runtime.md)
+passes bundled and hash-verified folder-granted automatic matrices with actual
+module/token and storage checks. The authorized private video refuses at the
+zero-origin-video guard; conversion performance and receiver gates remain open.

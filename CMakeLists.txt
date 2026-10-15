@@ -140,8 +140,9 @@ if(WINDOWS_STORE)
     file(GLOB sap2_store_release_dlls "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/libcrypto-*.dll")
     file(GLOB sap2_store_debug_dlls "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/libcrypto-*.dll")
     if(SAP2_STEREO_AAC)
-      file(GLOB sap2_store_codec_release_dlls "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/av*.dll" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/swresample*.dll")
-      file(GLOB sap2_store_codec_debug_dlls "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/av*.dll" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/swresample*.dll")
+      include(cmake/ffmpeg_runtime.cmake)
+      sap2_ffmpeg_runtime_dlls(sap2_store_codec_release_dlls RELEASE)
+      sap2_ffmpeg_runtime_dlls(sap2_store_codec_debug_dlls DEBUG)
       list(APPEND sap2_store_release_dlls ${sap2_store_codec_release_dlls})
       list(APPEND sap2_store_debug_dlls ${sap2_store_codec_debug_dlls})
     endif()
@@ -150,6 +151,14 @@ if(WINDOWS_STORE)
         "$<IF:$<CONFIG:Debug>,${sap2_store_debug_dlls},${sap2_store_release_dlls}>"
         "$<TARGET_FILE_DIR:send_airplay2>"
       COMMAND_EXPAND_LISTS)
+    # A codec-prefix/profile change need not relink the core. Refresh staging
+    # on ordinary builds too, while retaining POST_BUILD for targeted core builds.
+    add_custom_target(send_airplay2_uwp_runtime ALL
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<IF:$<CONFIG:Debug>,${sap2_store_debug_dlls},${sap2_store_release_dlls}>"
+        "$<TARGET_FILE_DIR:send_airplay2>"
+      COMMAND_EXPAND_LISTS)
+    add_dependencies(send_airplay2_uwp_runtime send_airplay2)
   endif()
   message(STATUS "WindowsStore build: library only; tools and tests are skipped")
   return()
@@ -170,6 +179,11 @@ target_link_libraries(airplay2-api-host PRIVATE send_airplay2 Threads::Threads)
 sap2_warnings(airplay2-api-host)
 
 include(CTest)
+if(BUILD_TESTING)
+  add_test(NAME ffmpeg_runtime_resolution COMMAND ${CMAKE_COMMAND}
+    -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/ffmpeg-runtime-fixture
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ffmpeg_runtime.cmake)
+endif()
 if(BUILD_TESTING)
   add_executable(plaintext_cleanup_tests tests/plaintext_cleanup_tests.cpp src/mrp_messages.cpp src/protobuf_wire.cpp src/control_crypto.cpp src/control_records.cpp src/identity_crypto.cpp src/event_channel.cpp src/receiver_http.cpp src/receiver_stream.cpp src/native_socket.cpp)
   target_include_directories(plaintext_cleanup_tests PRIVATE src)
@@ -195,7 +209,9 @@ if(BUILD_TESTING)
     target_link_libraries(runtime_validation_tests PRIVATE send_airplay2)
     sap2_warnings(runtime_validation_tests)
     add_test(NAME runtime_validation_tests COMMAND runtime_validation_tests
-      "${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/hls")
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/hls"
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures"
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/uwp-host/stereo-validation/automatic-cases.tsv")
     set_tests_properties(runtime_validation_tests PROPERTIES TIMEOUT 120)
   endif()
   add_executable(file_source_tests tests/file_source_tests.cpp src/file_media_source.cpp)

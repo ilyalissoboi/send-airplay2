@@ -20,73 +20,86 @@ public sealed partial class App : Application
 {
     private bool running;
     public App() => InitializeComponent();
-    protected override void OnLaunched(LaunchActivatedEventArgs args) => Run(RequestsPicker(args.Arguments));
+    protected override void OnLaunched(LaunchActivatedEventArgs args) => Run(args.Arguments);
     protected override void OnActivated(IActivatedEventArgs args) => Run(
         args.Kind == ActivationKind.CommandLineLaunch && args is ICommandLineActivatedEventArgs command
-        && RequestsPicker(command.Operation.Arguments));
+        ? command.Operation.Arguments : string.Empty);
     private static bool RequestsPicker(string arguments) => arguments.Trim() == "pick"
         || arguments.Trim().EndsWith(" pick", StringComparison.Ordinal);
-    private async void Run(bool pick)
+    private static bool Requested(string arguments, string mode) => arguments.Trim() == mode
+        || arguments.Trim().EndsWith(" " + mode, StringComparison.Ordinal);
+    private async void Run(string arguments)
     {
         if (running) { return; }
         running = true;
         Window.Current.Content = new Page();
         Window.Current.Activate();
         var lines = new List<string>();
+        var benchmarkPassed = true;
         try
         {
             Require(SendAirPlay2Library.ApiVersion == SendAirPlay2Library.BindingApiVersion && SendAirPlay2Library.StereoAacAvailable,
                 "integrated backend");
             lines.Add("api=" + SendAirPlay2Library.ApiVersion + " stereo_aac=1");
-            StorageFile? picked = null;
-            if (pick)
+            lines.Add("run_id=" + Guid.NewGuid().ToString("N") + " utc=" + DateTimeOffset.UtcNow.ToString("O"));
+            await SaveProgress(lines);
+            if (Requested(arguments, "benchmark"))
             {
-                var picker = new FileOpenPicker();
-                picker.FileTypeFilter.Add(".mp4");
-                picked = await picker.PickSingleFileAsync();
-                Require(picked != null, "picker cancelled");
-                // Only the recorded owned DTS fixture belongs to this offline test contract.
-                using var stream = (await picked!.OpenReadAsync()).AsStreamForRead(0);
-                var expected = await Package.Current.InstalledLocation.GetFileAsync("Fixtures\\dts.mp4");
-                using var expectedStream = (await expected.OpenReadAsync()).AsStreamForRead(0);
-                Require(SHA256.HashData(stream).SequenceEqual(SHA256.HashData(expectedStream)),
-                    "picker fixture hash mismatch");
+                benchmarkPassed = await Benchmark(lines);
             }
-            var sibling = await ApplicationData.Current.TemporaryFolder.CreateFileAsync(
-                "sentinel-" + Guid.NewGuid().ToString("N"), CreationCollisionOption.FailIfExists);
-            await FileIO.WriteTextAsync(sibling, "sibling survives cache clear");
-            try
+            else
             {
-                foreach (var fixture in new[] { "dts.mp4", "dts.mkv", "aac.mp4" })
+                StorageFile? picked = null;
+                if (RequestsPicker(arguments))
                 {
-                    var file = await Package.Current.InstalledLocation.GetFileAsync("Fixtures\\" + fixture);
-                    var probe = await StorageFileMediaSource.OpenAsync(file, 1021);
-                    try
-                    {
-                        var tracks = await Task.Run(() => MediaTracks.Probe(probe, TimeSpan.FromSeconds(30)));
-                        Require(tracks.Any(track => track.Id == 42 && track.Kind == MediaTrackKind.Audio),
-                            "original audio identity");
-                        Require(!probe.IsReleased, "probe borrows source");
-                    }
-                    finally { probe.ReleaseUnowned(); }
-                    Require(probe.ReleaseCount == 1, "probe release once");
-                    lines.Add("probe " + fixture + " id=42 borrowed=1 release=1");
-                    foreach (var mode in fixture == "dts.mp4" ? new uint[] { 0, 1, 2, 3, 4, 5 } : new uint[] { 0, 1, 2, 3, 4 })
-                    {
-                        lines.Add("begin " + fixture + " mode=" + mode);
-                        lines.Add(await Validate(file, fixture, mode));
-                        Require(await FileIO.ReadTextAsync(sibling) == "sibling survives cache clear",
-                            "sibling preservation");
-                    }
-                    foreach (var lifecycle in new[] { 0, 1, 2 })
-                    { lines.Add(await PublicLifetime(file, fixture, lifecycle)); }
+                    var picker = new FileOpenPicker();
+                    picker.FileTypeFilter.Add(".mp4");
+                    picked = await picker.PickSingleFileAsync();
+                    Require(picked != null, "picker cancelled");
+                    // Only the recorded owned DTS fixture belongs to this offline test contract.
+                    using var stream = (await picked!.OpenReadAsync()).AsStreamForRead(0);
+                    var expected = await Package.Current.InstalledLocation.GetFileAsync("Fixtures\\dts.mp4");
+                    using var expectedStream = (await expected.OpenReadAsync()).AsStreamForRead(0);
+                    Require(SHA256.HashData(stream).SequenceEqual(SHA256.HashData(expectedStream)),
+                        "picker fixture hash mismatch");
                 }
-            }
-            finally { await sibling.DeleteAsync(StorageDeleteOption.PermanentDelete); }
-            if (picked != null)
-            {
-                lines.Add("picked_fixture_hash_verified=1");
-                lines.Add(await Validate(picked, "picker-granted-dts", 0));
+                var sibling = await ApplicationData.Current.TemporaryFolder.CreateFileAsync(
+                    "sentinel-" + Guid.NewGuid().ToString("N"), CreationCollisionOption.FailIfExists);
+                await FileIO.WriteTextAsync(sibling, "sibling survives cache clear");
+                try
+                {
+                    foreach (var fixture in new[] { "dts.mp4", "dts.mkv", "aac.mp4" })
+                    {
+                        var file = await Package.Current.InstalledLocation.GetFileAsync("Fixtures\\" + fixture);
+                        var probe = await StorageFileMediaSource.OpenAsync(file, 1021);
+                        try
+                        {
+                            var tracks = await Task.Run(() => MediaTracks.Probe(probe, TimeSpan.FromSeconds(30)));
+                            Require(tracks.Any(track => track.Id == 42 && track.Kind == MediaTrackKind.Audio),
+                                "original audio identity");
+                            Require(!probe.IsReleased, "probe borrows source");
+                        }
+                        finally { probe.ReleaseUnowned(); }
+                        Require(probe.ReleaseCount == 1, "probe release once");
+                        lines.Add("probe " + fixture + " id=42 borrowed=1 release=1");
+                        foreach (var mode in fixture == "dts.mp4" ? new uint[] { 0, 1, 2, 3, 4, 5 } : new uint[] { 0, 1, 2, 3, 4 })
+                        {
+                            lines.Add("begin " + fixture + " mode=" + mode);
+                            lines.Add(await Validate(file, fixture, mode));
+                            Require(await FileIO.ReadTextAsync(sibling) == "sibling survives cache clear",
+                                "sibling preservation");
+                        }
+                        foreach (var lifecycle in new[] { 0, 1, 2 })
+                        { lines.Add(await PublicLifetime(file, fixture, lifecycle)); }
+                    }
+                }
+                finally { await sibling.DeleteAsync(StorageDeleteOption.PermanentDelete); }
+                if (picked != null)
+                {
+                    lines.Add("picked_fixture_hash_verified=1");
+                    lines.Add(await Validate(picked, "picker-granted-dts", 0));
+                }
+                await AutomaticMatrix(lines, Requested(arguments, "pick-expanded"));
             }
             foreach (var name in new[] { "send_airplay2.dll", "libcrypto-3-x64.dll", "avcodec-63.dll",
                 "avformat-63.dll", "avutil-61.dll", "swresample-7.dll" })
@@ -95,7 +108,7 @@ public sealed partial class App : Application
                 using var stream = (await file.OpenReadAsync()).AsStreamForRead(0);
                 lines.Add(name + " sha256=" + Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant());
             }
-            lines.Add("PASS");
+            lines.Add(benchmarkPassed ? "PASS" : "MEASURED_REFUSAL");
         }
         catch (Exception error)
         {
@@ -105,6 +118,9 @@ public sealed partial class App : Application
             if (error is NativeValidationFailure native)
             { lines.Add("native_result=" + native.Result + " failure=" + native.Report.Failure
                 + " segments=" + native.Report.AudioSegments + " bytes=" + native.Report.ResourceBytes); }
+            if (error is AutomaticValidationFailure automatic)
+            { lines.Add("native_result=" + automatic.Result + " preparation=" + automatic.Report.PreparationResult
+                + " failure=" + automatic.Report.Media.Failure); }
         }
         var log = await ApplicationData.Current.LocalFolder.CreateFileAsync(
             "stereo-runtime.txt", CreationCollisionOption.ReplaceExisting);
@@ -112,6 +128,14 @@ public sealed partial class App : Application
         await Task.Delay(30000); // Allows external verification of the actually loaded module hashes.
         Exit();
     }
+    private static async Task SaveProgress(List<string> lines)
+    {
+        var log = await ApplicationData.Current.LocalFolder.CreateFileAsync(
+            "stereo-runtime.txt", CreationCollisionOption.ReplaceExisting);
+        await FileIO.WriteLinesAsync(log, lines);
+    }
+    private static async Task Record(List<string> lines, string line)
+    { lines.Add(line); await SaveProgress(lines); }
     private static async Task<string> Validate(StorageFile file, string label, uint mode)
     {
         var source = await StorageFileMediaSource.OpenAsync(file, mode == 5 ? 97 : 1021);
