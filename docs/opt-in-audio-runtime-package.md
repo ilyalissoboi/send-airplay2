@@ -53,7 +53,20 @@ sanitized committed evidence keeps hashes/categories rather than those paths.
 This preserves the adopted source/notice requirements; it does not claim a new
 license audit, bit-for-bit rebuild or Store certification.
 
-## Validation
+## Local validation (2026-10-16)
+
+Clean implementation commit `50c2a66` produces both identities with clean
+`BUILD-INFO.txt` attribution. Their native sources match merged `64ed4db`.
+Thirteen profile/refusal controls pass, as do package restore/build, all six
+copied native hashes, unsupported RID and mixed-profile refusals. The default
+artifact contains no codec/source/profile payload. The existing binding CTest
+passes 1/1 (3.62 s) with the optional runtime on PATH. PowerShell syntax, whitespace
+and documentation-link checks pass. [Sanitized evidence](validation/opt-in-audio-runtime-package-windows-2026-10-16.json)
+records versions/hashes without compiler paths. No consumer executable was run
+and no package was installed or published. These artifacts do not replace D88's
+recorded actual AppContainer/receiver evidence.
+
+## Ongoing CI and validation contract
 
 The profile checks cover the complete runtime, each missing codec DLL, missing
 notice, source/prefix/overlay mismatch, GPL-enabled configuration, accidental

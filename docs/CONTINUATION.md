@@ -25,14 +25,18 @@ guide; the master handoff and dated artifacts preserve the longer history.
 
 **D89 opt-in runtime packaging (2026-10-16, in progress).**
 PR #69 merged as `64ed4db`; all 16 final-head checks passed at `e6a9970`.
-The user's Proceed starts `codex/opt-in-audio-runtime-package` from origin/main.
+The user's Proceed starts `codex/opt-in-audio-runtime-package` from origin/main;
+implementation and clean local artifacts are in [PR #70](https://github.com/ilyalissoboi/send-airplay2/pull/70).
 The separate `SendAirPlay2.StereoAac` package adds the validated x64 UWP codec
 runtime plus exact source/patch/configuration/notices; the existing package stays
 codec-free. Source/prefix/overlay/profile and private-export guards plus local
 restore/build/hash/refusal checks pass. Distribution core builds with private
-validation OFF. No release, Screenbox pin/app, native audio policy or new receiver
-claim is included. Read [the contract](opt-in-audio-runtime-package.md). Finish
-clean-head artifact evidence and actual PR-head CI; speakers/discrete surround
+validation OFF. Clean source `50c2a66` passes thirteen profile controls plus the
+API-5 consumer build/copy/RID/mixed-profile checks, with both package hashes in
+[the sanitized record](validation/opt-in-audio-runtime-package-windows-2026-10-16.json).
+No release, Screenbox pin/app, native audio policy or new receiver
+claim is included. Read [the contract](opt-in-audio-runtime-package.md). Inspect
+actual PR-head CI; speakers/discrete surround
 remain hardware-deferred.
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**

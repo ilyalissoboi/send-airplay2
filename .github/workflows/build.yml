@@ -224,6 +224,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $source = 'build-tools/vcpkg/downloads/ffmpeg-ffmpeg-n9.0.2.tar.gz'
           if (!(Test-Path -LiteralPath $source)) {
+            New-Item -ItemType Directory -Force (Split-Path -Parent $source) | Out-Null
             Invoke-WebRequest 'https://github.com/ffmpeg/ffmpeg/archive/refs/tags/n9.0.2.tar.gz' -OutFile $source -MaximumRetryCount 3 -RetryIntervalSec 2
           }
           ./scripts/pack_nuget.ps1 -StereoAac -Native 'x64=build-stereo/Release' -FfmpegSourceArchive $source -VersionSuffix 'ci.${{ github.run_number }}' -OutputDirectory build-ci-audio-package
