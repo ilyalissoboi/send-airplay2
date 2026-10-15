@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "decision": "D86",
+  "date": "2026-10-15",
+  "baseline": {
+    "merged_pr": 66,
+    "merge_commit": "1fe9f61e49b670be075d179938a0873b0e5486e3",
+    "final_head": "cbe74406d77aedf662ed1f422589c2beb1848967",
+    "successful_ci_checks": 16,
+    "ci_run": 38669659266
+  },
+  "scope": "Offline canonical Matroska DTS lace clock, owned PCM/AAC equivalence and discontinuity controls, AppContainer runtime and bounded brokered measurement; no receiver.",
+  "host": {
+    "os": "Windows 11",
+    "version": "10.0.26200",
+    "architecture": "x64"
+  },
+  "source_commit": "db35a6f5f0720316615e25531c16f825394da974",
+  "native_changes": false,
+  "package_version": "0.1.0.7",
+  "package_sha256": "c043f59719edae2542452464e58f7397af7d7d8919290aceaaef337da036be96",
+  "profile": {
+    "api_version": 5,
+    "configuration": "Release",
+    "system": "WindowsStore 10.0",
+    "SAP2_STEREO_AAC": true,
+    "SAP2_RUNTIME_VALIDATION": true,
+    "BUILD_SHARED_LIBS": true,
+    "framework": "net10.0-windows10.0.26100.0 UWP Native AOT",
+    "core_dependency_triplet": "x64-uwp",
+    "codec_triplet": "x64-uwp-codec-release",
+    "quota_bytes": 536870912,
+    "fixture_source_read_limit": 1021,
+    "cache_read_limit": 997,
+    "benchmark_source_read_limit": 32749
+  },
+  "cause": {
+    "owned_reproduction": "Eight 512-sample DTS frames in a laced block, 48 kHz, 1-ms container clock and declared 10666667-ns frame duration.",
+    "before_correction": {
+      "result": "EXPECTED_REGRESSION_FAILURE",
+      "baseline": "1fe9f61",
+      "guard": "Matroska timestamp is off the canonical frame grid",
+      "owned_log_sha256": "2b2b771594a71fc2dbc0df4e60f6ef4a5d4ccfc0daf24b3fed01fd46c5f38e4e"
+    },
+    "mechanism": "Integer block duration followed by integer subdivision produces twice-rounded continuation PTS. Count decoded samples within a known block; retain unchanged checks at every new block.",
+    "private_source_diagnostic": "Read-only metadata/timing inspection identified lacing; the same guard was reproduced with owned packets. Uninstrumented preparation accepts after correction.",
+    "references": [
+      "https://www.rfc-editor.org/rfc/rfc9559.html#section-10.3.5",
+      "https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/matroskadec.c"
+    ],
+    "external_implementation_code_incorporated": false
+  },
+  "owned_lace_fixtures": [
+    {
+      "file": "dts-fixed.mkv",
+      "bytes": 2921054,
+      "sha256": "361a6eb8c6bf25c1ef359710cb8b823e4fb5641d76aae275641fcc77ea7ff40f",
+      "lace": "fixed",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 1547,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 0
+    },
+    {
+      "file": "dts-xiph.mkv",
+      "bytes": 2931878,
+      "sha256": "ab2992adc45c541c35aeaadfe54bc4a3a4d6e275f69e1043258ca54364a52b70",
+      "lace": "xiph",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 1547,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 0
+    },
+    {
+      "file": "dts-ebml.mkv",
+      "bytes": 2922601,
+      "sha256": "d3abd11d36ae5a1c7eceb4c30bc38e3b41770bac12bf74e05aceeaddca56a720",
+      "lace": "ebml",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 1547,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 0
+    },
+    {
+      "file": "dts-fixed-256.mkv",
+      "bytes": 2917704,
+      "sha256": "9d94367f1f12249677a96f1b8c4914e79bfe0cd2a598e802e306f6341a474167",
+      "lace": "fixed",
+      "maximum_frames_per_block": 256,
+      "audio_frames": 1547,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 0
+    },
+    {
+      "file": "dts-gap.mkv",
+      "bytes": 365173,
+      "sha256": "c3f9d0bf803f1453cf30e8b295b5c41c0bacd9121f4ba1ac8a960307fd1cd5cd",
+      "lace": "fixed",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 192,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 5
+    },
+    {
+      "file": "dts-gap-frame.mkv",
+      "bytes": 365173,
+      "sha256": "3db216fdea21472d351c9376c1ba64df1b474355a1566840f26a16bdc2ffc200",
+      "lace": "fixed",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 192,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 32
+    }
+  ],
+  "catalog_sha256": "78db5f8f620fae0c0ae1dc4b0f0fa6ccdc12d214d9d8061e133a91b7e856a224",
+  "native_controls": {
+    "lace_types": [
+      "fixed",
+      "xiph",
+      "ebml"
+    ],
+    "literal_maximum_frames_per_block": 256,
+    "cold_tail_backward_forward_pcm_mse_limit": 1e-10,
+    "correlation_shift_allowed": false,
+    "reported_absolute_precision_samples": 48,
+    "literal_dts_eof_samples": 792064,
+    "literal_aac_video_span_samples": 792000,
+    "aac_fragments_equal_unlaced_control": true,
+    "inter_block_gap_ms_refused": [
+      5,
+      32
+    ],
+    "frame_grid_and_continuity_tolerances_unchanged": true,
+    "unknown_block_positions_keep_strict_generic_clock": true,
+    "native_selected_copy_index_lacing_refusals_unchanged": true,
+    "default_decoder_and_other_codec_clocks_unchanged": true
+  },
+  "bundled": {
+    "run_id": "6d544db104914c4b90ea337cd2372293",
+    "utc": "2026-10-15T03:13:04.8729579+00:00",
+    "result": "PASS",
+    "log_sha256": "207307930ec45aa9feb1fa31163631b4fe92d4832f344a9eed60dac85dac823e",
+    "process_and_loaded_modules": {
+      "private_bytes": 133496832,
+      "peak_working_set_bytes": 119459840,
+      "version": "0.1.0.7",
+      "app_container": true,
+      "modules": [
+        {
+          "matches_layout": true,
+          "name": "send_airplay2.DLL",
+          "matches_native_build": true,
+          "sha256": "4cee15549ef1fca2c6e1542a6626084e0ce689b71ec7ec7004a2c3c91d0f1f49"
+        },
+        {
+          "matches_layout": true,
+          "name": "avformat-63.dll",
+          "matches_native_build": true,
+          "sha256": "9ec7c055114218f6ccb68e1bc0a0bbe77d17076ffd04ef552264f7e07c425408"
+        },
+        {
+          "matches_layout": true,
+          "name": "avcodec-63.dll",
+          "matches_native_build": true,
+          "sha256": "d9d892cbbff17a129d6c088e102dca375db25ebdba10a9b6c7fa76eb08b75313"
+        },
+        {
+          "matches_layout": true,
+          "name": "avutil-61.dll",
+          "matches_native_build": true,
+          "sha256": "bd1327659cd5d28e5d5d7dc7a380c74e279d26d7153dddfa47dd1339e4f03127"
+        },
+        {
+          "matches_layout": true,
+          "name": "swresample-7.dll",
+          "matches_native_build": true,
+          "sha256": "6b1fbca0846c8aaf4e3072e79b4222fd01281bfa0e5db9b78b15abe6fde2520c"
+        },
+        {
+          "matches_layout": true,
+          "name": "libcrypto-3-x64.dll",
+          "matches_native_build": true,
+          "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc"
+        }
+      ],
+      "cpu_ms": 57593.75,
+      "captured_utc": "2026-10-15T03:14:26.7256296+00:00",
+      "executable_matches_registration": true
+    },
+    "automatic_fixtures": 61,
+    "automatic_cases": 137,
+    "cases_by_mode": {
+      "0": 61,
+      "1": 12,
+      "2": 8,
+      "3": 12,
+      "4": 12,
+      "6": 12,
+      "7": 12,
+      "8": 8
+    },
+    "forced_native_cases": 16,
+    "legacy_public_lifetimes": 9,
+    "public_offline_checks": 12,
+    "public_automatic_lifetimes": 36,
+    "outside_profile_aac_refusals": 1,
+    "dts_inter_block_gap_refusals": 2,
+    "picker_granted_and_all_owned_hashes_verified": false,
+    "expected_failures_and_literal_decisions_verified": true,
+    "all_contexts_released_once_and_children_removed": true,
+    "sibling_preserved": true
+  },
+  "outside_package_owned": {
+    "result": "PENDING_MANUAL_FOLDER_GRANT"
+  },
+  "limitations": [
+    "No receiver playback, audible observer confirmation, A/V synchronization or receiver EOF observation.",
+    "Cold means fresh prepared owner/window/cache; OS page cache is not flushed.",
+    "Source-read/callback/deadline, timeline/window, codec and cache bounds remain unchanged.",
+    "Private input filename/path/hash/content are excluded; it was not copied or rewritten.",
+    "Backend defaults OFF; no publication or Screenbox pin change; speakers/discrete surround stay hardware-deferred."
+  ],
+  "native_suites": {
+    "static": {
+      "passed": 39,
+      "total": 39,
+      "elapsed_seconds": 71.61
+    },
+    "shared": {
+      "passed": 40,
+      "total": 40,
+      "elapsed_seconds": 90.28
+    },
+    "enabled": {
+      "passed": 41,
+      "total": 41,
+      "elapsed_seconds": 266.23
+    },
+    "codec": {
+      "passed": 13,
+      "total": 13,
+      "elapsed_seconds": 133.01
+    }
+  }
+}

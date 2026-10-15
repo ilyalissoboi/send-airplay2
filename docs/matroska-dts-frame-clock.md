@@ -57,9 +57,24 @@ unchanged reported absolute precision, literal 792064-sample DTS EOF including
 packet control, exact 792000-sample video-span trim, lazy cache generation and
 one-time cleanup. Both inter-block gaps remain unsupported with complete cleanup.
 
+## Validation checkpoint
+
 The owned controls pass and a bounded read-only diagnostic now accepts private
-video preparation. Full local suites, private package 0.1.0.7, loaded-module
-evidence and brokered first/middle/last measurements are in progress; no packaged
-or performance result is claimed yet. Private input identity/content must remain
-outside committed evidence. No receiver, publication or Screenbox pin change;
-audio-only speakers and discrete converted surround remain hardware-deferred.
+video preparation. Local Windows Release suites pass: static **39/39** (71.61 s),
+shared **40/40** (90.28 s), enabled shared **41/41** (266.23 s), and standalone
+codec **13/13** (133.01 s). These concurrent suite timings are not media-performance
+calibration. The enabled private hook retains 16 legacy plus 140 automatic
+scenarios, including the three bounded measurement modes.
+
+Private package **0.1.0.7**, core/package source `db35a6f`, passes bundled
+**137 automatic cases across 61 fixtures**, retained legacy/public lifetimes and
+both gap-refusal controls. The actual AppContainer token and all six loaded
+module hashes match registration/native build. Six-DLL UWP import/profile checks,
+absence of private validation exports in the default shared build, formatting,
+whitespace and 145 owned fixture hashes pass.
+
+The folder-granted repeat is waiting for the manual Windows folder picker;
+brokered first/middle/last measurements follow it. These gates remain pending.
+Private input identity/content must remain outside committed evidence. No receiver,
+publication or Screenbox pin change; audio-only speakers and discrete converted
+surround remain hardware-deferred. Inspect actual PR-head CI before merging.

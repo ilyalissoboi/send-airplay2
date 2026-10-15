@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 namespace {
@@ -36,7 +37,10 @@ void decoder_windows(const std::filesystem::path& fixture, const std::filesystem
             squared += difference * difference;
         }
         const auto mse = squared / actual.samples.size();
-        expect(mse < 1e-10, scenario + ": fixed-offset PCM MSE=" + std::to_string(mse));
+        std::ostringstream detail;
+        detail << scenario << ": fixed-offset PCM at " << first << " MSE=" << std::scientific
+               << mse;
+        expect(mse < 1e-10, detail.str());
     }
 }
 
@@ -93,7 +97,8 @@ void discontinuity_refused(const std::filesystem::path& fixture) {
         refused = error.reason() == AudioDecodeFailure::unsupported;
     }
     expect(refused && store.seals == 0 && store.clears == 1,
-           "DTS lace discontinuity preparation refuses with complete cache cleanup");
+           fixture.filename().string() + ": discontinuity preparation refusal/cleanup seals=" +
+               std::to_string(store.seals) + " clears=" + std::to_string(store.clears));
 }
 } // namespace
 int main(int argc, char** argv) {

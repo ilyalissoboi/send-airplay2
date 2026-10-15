@@ -32,8 +32,12 @@ An owned eight-frame DTS lace reproduces D85's refusal. Canonical continuation
 frames now count decoded samples within their known native block; new blocks
 keep existing grid/continuity tolerances. Fixed/Xiph/EBML and 256-frame controls
 pass with exact PCM/AAC equivalence; 5-ms and frame-aligned gaps still refuse.
-A bounded private-video preparation diagnostic accepts. Packaged and performance
-gates remain pending; preserve private input identity/content and receiver limits.
+A bounded private-video preparation diagnostic accepts. Local static/shared/
+enabled/codec suites pass 39/39, 40/40, 41/41 and 13/13. Private package 0.1.0.7
+at `db35a6f` passes its 137-case/61-fixture bundled matrix and both gap refusals,
+with token/six loaded hashes verified. The folder-granted repeat awaits manual
+selection, then the private-video benchmark follows. Preserve private identity/
+content, receiver boundaries and OFF-by-default/publication limits.
 
 **D85 Matroska presentation origins (2026-10-15).**
 PR #66 merged as `1fe9f61`; all 16 final-head checks passed at `cbe7440`.
