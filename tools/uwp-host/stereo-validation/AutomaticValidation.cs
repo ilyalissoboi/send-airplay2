@@ -98,6 +98,23 @@ public sealed partial class App
             await Record(lines, "profile_refusal aac-output-rate.mkv result=20 clear=0 release=1 removed=1");
         }
         finally { refusedCache.ReleaseAfterNative(); refusedSource.ReleaseUnowned(); }
+        foreach (var name in new[] { "dts-gap.mkv", "dts-gap-frame.mkv" })
+        {
+            var file = await Package.Current.InstalledLocation.GetFileAsync("Fixtures\\dts-lacing\\" + name);
+            var source = await StorageFileMediaSource.OpenAsync(file, 1021);
+            TemporaryAacFragmentStore? cache = null;
+            try
+            {
+                cache = await TemporaryAacFragmentStore.CreateAsync();
+                var refused = false;
+                try { await Task.Run(() => AudioDelivery.Check(source, TimeSpan.FromSeconds(120), fragmentStore: cache, cacheQuotaBytes: 512ul * 1024 * 1024)); }
+                catch (SendAirPlay2Exception error) when (error.Result == ResultCode.MediaUnsupported) { refused = true; }
+                Require(refused && !source.IsReleased && cache.ClearCount == 1 && cache.ReleaseCount == 1 && cache.DirectoryRemoved,
+                    "DTS block gap refuses without fallback and cleans accepted storage");
+                await Record(lines, "timing_refusal " + name + " result=20 clear=1 release=1 removed=1");
+            }
+            finally { cache?.ReleaseAfterNative(); source.ReleaseUnowned(); }
+        }
     }
     private static async Task<string> ValidateAutomatic(StorageFile file, AutomaticCase item, uint mode, bool granted)
     {

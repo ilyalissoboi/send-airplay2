@@ -86,6 +86,10 @@ struct DecodedAudioWindow {
  * the clock quantum. Rounded timestamps may snap only within one tick of that grid.
  * This stabilizes relative seek phase; initial absolute clock precision remains
  * container-limited. Default decoding retains its original clock policy.
+ * Canonical DTS lace continuation frames count decoded samples within one
+ * known native block position (at most 256 frames). Each new block keeps the
+ * original timestamp/grid/continuity checks; unknown positions stay on the
+ * strict generic clock. This avoids double rounding of demuxer-derived lace PTS.
  */
 class AudioDecoderSource {
 public:

@@ -1,5 +1,12 @@
 # Private stereo AAC HLS composition (D71)
 
+**D86 extension:** [canonical DTS lace clocks](matroska-dts-frame-clock.md)
+count contiguous decoded samples within known blocks while preserving new-block
+grid/continuity checks. Owned PCM/AAC and bundled/folder-granted controls pass.
+The brokered first fragment now converts; the middle request reaches the unchanged
+256-MiB requested-byte ceiling. Bounded seek/read investigation and complete
+performance measurements remain before receivers. The D85 refusal below is historical.
+
 **D85 extension:** [shared Matroska presentation origins](matroska-presentation-origin.md)
 rebase nonzero Matroska video/text and offset decoded audio together. Owned
 indexed/full-scan, reordered-video, timing/seek/EOF and packaged checks pass.

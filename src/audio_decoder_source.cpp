@@ -1067,6 +1067,7 @@ public:
             require(++packets <= maximum_read_calls, AudioDecodeFailure::too_large,
                     "audio packet budget exceeded");
             if (packet_->stream_index == stream_.index) {
+                begin_dts_packet_clock(*packet_);
                 validate_packet_trim(*packet_);
                 checked(avcodec_send_packet(&codec_, packet_.get()));
                 drain();
@@ -1163,6 +1164,39 @@ private:
     bool respect_opus_packet_duration_ = false;
     std::uint32_t continuity_precision_samples_ = 0;
     std::optional<std::int64_t> rebuild_origin_input_sample_;
+    std::int64_t dts_block_file_offset_ = -1;
+    std::optional<std::int64_t> dts_block_origin_input_sample_;
+    std::uint64_t dts_block_samples_ = 0;
+    std::size_t dts_block_frames_ = 0;
+
+    /// The pinned Matroska demuxer gives every lace packet its containing
+    /// block's file position. A new position resets the sample clock; unknown
+    /// positions retain the strict generic timestamp path instead of guessing.
+    void begin_dts_packet_clock(const AVPacket& packet) {
+        const auto position =
+            cadence_.enabled && codec_.codec_id == AV_CODEC_ID_DTS ? packet.pos : -1;
+        if (position < 0 || position != dts_block_file_offset_) {
+            dts_block_file_offset_ = position;
+            dts_block_origin_input_sample_.reset();
+            dts_block_samples_ = 0;
+            dts_block_frames_ = 0;
+        }
+    }
+
+    void record_dts_block_frame(std::int64_t position, int samples) {
+        if (dts_block_file_offset_ < 0) {
+            return;
+        }
+        // RFC 9559's one-octet lace count admits at most 256 frames per block.
+        constexpr std::size_t maximum_lace_frames = 256;
+        require(dts_block_frames_ < maximum_lace_frames, AudioDecodeFailure::unsupported,
+                "DTS block exceeds bounded lace frame count");
+        if (!dts_block_origin_input_sample_) {
+            dts_block_origin_input_sample_ = position;
+        }
+        dts_block_samples_ += static_cast<std::uint64_t>(samples);
+        ++dts_block_frames_;
+    }
 
     void finish_window() {
         require(output_.channels != 0, AudioDecodeFailure::malformed,
@@ -1235,10 +1269,18 @@ private:
         convert(silence->extended_data, padding);
     }
     std::int64_t input_position(const AVFrame& frame) {
-        const auto position =
+        auto position =
             av_rescale_q(frame.pts, stream_.time_base, AVRational{1, frame.sample_rate});
         if (!cadence_.enabled) {
             return position;
+        }
+        if (dts_block_file_offset_ >= 0 && dts_block_origin_input_sample_) {
+            // RFC 9559 10.3.5: only the first lace frame has a stored PTS;
+            // following frames are contiguous. Counting decoded samples avoids
+            // the demuxer's second rounding of an integer block duration.
+            // Every new block still passes the unchanged grid/continuity checks.
+            position =
+                *dts_block_origin_input_sample_ + static_cast<std::int64_t>(dts_block_samples_);
         }
         const auto quantum =
             av_rescale_q_rnd(1, stream_.time_base, AVRational{1, frame.sample_rate}, AV_ROUND_UP);
@@ -1319,6 +1361,7 @@ private:
         const auto tolerance = static_cast<std::int64_t>(continuity_precision_samples_) + 1;
         require(timestamp >= expected - tolerance && timestamp <= expected + tolerance,
                 AudioDecodeFailure::unsupported, "audio presentation timeline is discontinuous");
+        record_dts_block_frame(position, frame.nb_samples);
         auto samples = frame.nb_samples;
         if (respect_opus_packet_duration_) {
             // MOV's final Opus sample may cover less than a complete codec frame.

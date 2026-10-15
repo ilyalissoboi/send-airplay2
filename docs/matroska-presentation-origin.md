@@ -1,5 +1,11 @@
 # Matroska origins in converted HLS (D85)
 
+**Subsequent D86 result:** [DTS lace clocks](matroska-dts-frame-clock.md) correct
+the frame-grid refusal recorded below with owned controls and unchanged bounds.
+The brokered first fragment now converts, but its middle request refuses at the
+resource limit after 256 MiB requested source bytes. Complete performance and
+receiver gates remain open; this preserves D85's historical evidence.
+
 The user's Proceed on 2026-10-15 (Asia/Tokyo) authorizes this slice from merged
 [PR #65](https://github.com/ilyalissoboi/send-airplay2/pull/65), `76abc3c`.
 All 16 final-head checks passed at `9290fb3` in run `38663140087`.
