@@ -1,5 +1,14 @@
 # Receiver validation record
 
+**D86 offline gate (2026-10-15):** [DTS lace sample clocks](matroska-dts-frame-clock.md)
+pass exact owned PCM/AAC and gap-refusal controls plus bundled/folder-granted
+137-case/61-fixture matrices in private package 0.1.0.7 at `db35a6f`. AppContainer
+tokens/six loaded hashes and cleanup are verified. The brokered video's first
+fragment completes in 207 ms with a 10-ms identical cached repeat; the middle
+request refuses after 256 MiB requested source bytes, so the last is not attempted.
+This is an overall MEASURED_REFUSAL, not full conversion-throughput validation.
+No receiver was contacted; playback, A/V sync and receiver EOF remain gates.
+
 **D85 offline gate (2026-10-15):** [Matroska common-origin composition](matroska-presentation-origin.md)
 passes native video/audio/subtitle, seek and EOF controls plus bundled/folder-granted
 126-case/57-fixture matrices in private package 0.1.0.6 at `b946bb7`, with actual

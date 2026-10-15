@@ -23,7 +23,7 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D86 Matroska DTS lace clock (2026-10-15, in progress).**
+**D86 Matroska DTS lace clock (2026-10-15, PR #67).**
 The user's Proceed starts `codex/matroska-dts-frame-clock` from merged
 [PR #66](https://github.com/ilyalissoboi/send-airplay2/pull/66), `1fe9f61`.
 All 16 final-head checks passed at `cbe7440` in run `38669659266`.
@@ -34,10 +34,18 @@ keep existing grid/continuity tolerances. Fixed/Xiph/EBML and 256-frame controls
 pass with exact PCM/AAC equivalence; 5-ms and frame-aligned gaps still refuse.
 A bounded private-video preparation diagnostic accepts. Local static/shared/
 enabled/codec suites pass 39/39, 40/40, 41/41 and 13/13. Private package 0.1.0.7
-at `db35a6f` passes its 137-case/61-fixture bundled matrix and both gap refusals,
-with token/six loaded hashes verified. The folder-granted repeat awaits manual
-selection, then the private-video benchmark follows. Preserve private identity/
-content, receiver boundaries and OFF-by-default/publication limits.
+at `db35a6f` passes bundled and hash-verified folder-granted 137-case/61-fixture
+matrices and both gap refusals, with token/six loaded hashes verified. The brokered
+video converts its first fragment in 207 ms with a 10-ms identical cached repeat.
+The middle request refuses at the resource limit after exactly 256 MiB requested
+source bytes; the last window is not attempted. Cleanup passes. Overall result:
+**MEASURED_REFUSAL**, not first/middle/last throughput. Next proposed slice:
+reproduce middle-seek read amplification with owned long-duration laced DTS
+controls and investigate bounded seek/restart I/O before repeating performance
+and receiver gates. Do not widen budgets or substitute routes/tracks. Preserve
+private identity/content, receiver boundaries and OFF-by-default/publication
+limits. Inspect [PR #67](https://github.com/ilyalissoboi/send-airplay2/pull/67)
+and actual-head CI before writing or merging.
 
 **D85 Matroska presentation origins (2026-10-15).**
 PR #66 merged as `1fe9f61`; all 16 final-head checks passed at `cbe7440`.
@@ -691,11 +699,14 @@ duration/restart coordinates. D81 replaces full packet tables with sparse restar
 anchors and validates the recorded high-count synthetic subset. D82 adds private
 selected-copy eligibility and automatic routing; D83 implements API 5 public
 reporting, offline checking and opt-in binding/CLI integration. D84 passes expanded
-packaged runtime/storage checks. D85 supports bounded nonzero Matroska origins
-with native and expanded packaged controls. The brokered private video now
-refuses at the existing DTS frame-grid guard. Reproduce that timing/decoder-phase
-mismatch with owned controls, preserving discontinuity refusal, then repeat
-real-file/brokered conversion performance before copied/converted receiver gates.
+packaged runtime/storage checks. D85 supports bounded nonzero Matroska origins.
+D86 corrects canonical DTS lace clocks with owned PCM/AAC and discontinuity
+controls plus bundled/folder-granted 137-case matrices in package 0.1.0.7.
+The brokered private video's first fragment and identical repeat complete, but
+its middle request refuses after 256 MiB requested source bytes. The last window
+is unmeasured. Reproduce that seek/read amplification with owned long-duration
+laced DTS controls, investigate bounded seek/restart I/O without widening limits,
+then repeat brokered conversion performance before copied/converted receiver gates.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
@@ -857,16 +868,17 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #65 are merged. D82/D83 implement finite automatic policy and API 5.
-> D84 passes expanded automatic runtime/storage checks. D85 supports shared
-> Matroska origins; private package 0.1.0.6 passes bundled/folder-granted 126-case
-> matrices at b946bb7. Inspect its actual open PR/head and CI before writing.
-> Read matroska-presentation-origin.md and its sanitized evidence. The authorized
-> private video passes its origin check, then refuses at the existing canonical
-> DTS frame-grid guard before fragment generation. First/middle/last conversion
-> throughput remains unmeasured. Next proposed slice: reproduce the audio
-> timestamp/decoder-phase mismatch with owned controls, distinguish valid coarse
-> timing from discontinuities, then repeat brokered performance before receivers.
+> PRs through #66 are merged. Inspect PR #67 and its actual head/CI before writing.
+> D82/D83 implement finite automatic policy and API 5; D85 supports shared
+> Matroska origins. D86 corrects DTS lace clocks with exact owned PCM/AAC controls.
+> Read matroska-dts-frame-clock.md and its sanitized evidence. Private package
+> 0.1.0.7 at db35a6f passes bundled/folder-granted 137-case/61-fixture matrices
+> with token/six loaded hashes verified. The authorized brokered video's first
+> fragment takes 207 ms cold / 10 ms cached; its middle request refuses after
+> 256 MiB requested bytes and the last is not attempted. Overall MEASURED_REFUSAL.
+> Next proposed slice: owned long-duration laced DTS reproduction and bounded
+> seek/restart I/O investigation without wider limits or track/route substitution,
+> then repeat brokered performance before receivers.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

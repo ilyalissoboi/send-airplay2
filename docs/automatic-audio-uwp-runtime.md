@@ -1,5 +1,13 @@
 # Automatic audio AppContainer and performance gate (D84)
 
+**Subsequent D86 result:** [DTS lace clock correction](matroska-dts-frame-clock.md)
+passes bundled/folder-granted 137-case/61-fixture matrices in private package
+0.1.0.7 with token/six loaded hashes verified. The brokered first fragment takes
+207 ms cold / 10 ms cached; the middle request refuses after 256 MiB requested
+source bytes and the last is not attempted. Cleanup passes. Overall result remains
+MEASURED_REFUSAL; bounded seek/read investigation precedes complete performance
+and receiver gates. The D85/D84 refusals below remain historical.
+
 **Subsequent D85 result:** [Matroska origin support](matroska-presentation-origin.md)
 passes native and expanded packaged controls. The private video passes its origin
 requirement, then refuses at the existing DTS frame-grid guard. The D84 refusal

@@ -9,7 +9,7 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D86 Matroska DTS lace clock (2026-10-15, in progress).**
+**D86 Matroska DTS lace clock (2026-10-15, PR #67).**
 The user's Proceed starts `codex/matroska-dts-frame-clock` from merged
 [PR #66](https://github.com/ilyalissoboi/send-airplay2/pull/66), `1fe9f61`.
 All 16 final-head checks passed at `cbe7440` in run `38669659266`.
@@ -20,10 +20,18 @@ keep existing grid/continuity tolerances. Fixed/Xiph/EBML and 256-frame controls
 pass with exact PCM/AAC equivalence; 5-ms and frame-aligned gaps still refuse.
 A bounded private-video preparation diagnostic accepts. Local static/shared/
 enabled/codec suites pass 39/39, 40/40, 41/41 and 13/13. Private package 0.1.0.7
-at `db35a6f` passes its 137-case/61-fixture bundled matrix and both gap refusals,
-with token/six loaded hashes verified. The folder-granted repeat awaits manual
-selection, then the private-video benchmark follows. Preserve private identity/
-content, receiver boundaries and OFF-by-default/publication limits.
+at `db35a6f` passes bundled and hash-verified folder-granted 137-case/61-fixture
+matrices and both gap refusals, with token/six loaded hashes verified. The brokered
+video converts its first fragment in 207 ms with a 10-ms identical cached repeat.
+The middle request refuses at the resource limit after exactly 256 MiB requested
+source bytes; the last window is not attempted. Cleanup passes. Overall result:
+**MEASURED_REFUSAL**, not first/middle/last throughput. Next proposed slice:
+reproduce middle-seek read amplification with owned long-duration laced DTS
+controls and investigate bounded seek/restart I/O before repeating performance
+and receiver gates. Do not widen budgets or substitute routes/tracks. Preserve
+private identity/content, receiver boundaries and OFF-by-default/publication
+limits. Inspect [PR #67](https://github.com/ilyalissoboi/send-airplay2/pull/67)
+and actual-head CI before writing or merging.
 
 **D85 Matroska presentation origins (2026-10-15).**
 PR #66 merged as `1fe9f61`; all 16 final-head checks passed at `cbe7440`.

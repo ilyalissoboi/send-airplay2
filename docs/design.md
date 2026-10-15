@@ -17,10 +17,15 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D86 in progress:** [DTS lace sample clocks](matroska-dts-frame-clock.md)
+**D86 (PR #67):** [DTS lace sample clocks](matroska-dts-frame-clock.md)
 reproduce the frame-grid refusal with owned laces and count decoded continuation
 samples within a known block. Existing tolerances remain at each new block;
-gap-refusal and exact PCM/AAC controls pass. Packaged/performance gates follow.
+gap-refusal and exact PCM/AAC controls pass. Bundled/folder-granted 137-case
+matrices pass in private package 0.1.0.7 with loaded hashes verified. The brokered
+video's first fragment takes 207 ms cold / 10 ms cached, but the middle request
+refuses after 256 MiB requested source bytes; the last is not attempted. Overall
+MEASURED_REFUSAL. Owned middle-seek/read amplification investigation is next,
+preserving limits before repeating performance and receiver gates.
 
 **D85 merged (PR #66, `1fe9f61`):** [Matroska presentation origins](matroska-presentation-origin.md)
 rebase private converted video/text and source audio windows together. Native

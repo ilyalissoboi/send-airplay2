@@ -1,5 +1,13 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
+**D86 clock/performance result:** [DTS lace clocks](matroska-dts-frame-clock.md)
+pass exact PCM/AAC and bundled/folder-granted 137-case controls. The brokered
+video's first fragment completes in 207 ms cold / 10 ms cached; its middle request
+refuses after 256 MiB requested source bytes. The last is not attempted. Step 4
+remains open: investigate bounded seek/read amplification with owned laced DTS
+controls before repeating performance. Step 5 receiver observations remain separate.
+This supersedes the historical D85/D84 next-step proposals below.
+
 **D85 origin result:** [shared Matroska presentation origins](matroska-presentation-origin.md)
 pass native and packaged timing/storage controls. The brokered private video
 passes its origin check, then refuses at the existing canonical DTS frame-grid

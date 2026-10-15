@@ -193,6 +193,7 @@
       "captured_utc": "2026-10-15T03:14:26.7256296+00:00",
       "executable_matches_registration": true
     },
+    "process_capture_scope": "Token/module verification during this run; capture can precede picker completion. CPU/memory values are snapshots, not matrix performance measurements.",
     "automatic_fixtures": 61,
     "automatic_cases": 137,
     "cases_by_mode": {
@@ -217,7 +218,80 @@
     "sibling_preserved": true
   },
   "outside_package_owned": {
-    "result": "PENDING_MANUAL_FOLDER_GRANT"
+    "run_id": "ae2d41eda218415d9c11a50665c2390e",
+    "utc": "2026-10-15T03:14:41.1258495+00:00",
+    "result": "PASS",
+    "log_sha256": "2333562650599e2f68246a97a96252622e99a54fdd282512badeed287cdb05f7",
+    "process_and_loaded_modules": {
+      "peak_working_set_bytes": 118263808,
+      "cpu_ms": 9656.25,
+      "executable_matches_registration": true,
+      "captured_utc": "2026-10-15T03:15:58.8222702+00:00",
+      "modules": [
+        {
+          "matches_native_build": true,
+          "name": "send_airplay2.DLL",
+          "sha256": "4cee15549ef1fca2c6e1542a6626084e0ce689b71ec7ec7004a2c3c91d0f1f49",
+          "matches_layout": true
+        },
+        {
+          "matches_native_build": true,
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+          "matches_layout": true
+        },
+        {
+          "matches_native_build": true,
+          "name": "avcodec-63.dll",
+          "sha256": "d9d892cbbff17a129d6c088e102dca375db25ebdba10a9b6c7fa76eb08b75313",
+          "matches_layout": true
+        },
+        {
+          "matches_native_build": true,
+          "name": "avformat-63.dll",
+          "sha256": "9ec7c055114218f6ccb68e1bc0a0bbe77d17076ffd04ef552264f7e07c425408",
+          "matches_layout": true
+        },
+        {
+          "matches_native_build": true,
+          "name": "swresample-7.dll",
+          "sha256": "6b1fbca0846c8aaf4e3072e79b4222fd01281bfa0e5db9b78b15abe6fde2520c",
+          "matches_layout": true
+        },
+        {
+          "matches_native_build": true,
+          "name": "avutil-61.dll",
+          "sha256": "bd1327659cd5d28e5d5d7dc7a380c74e279d26d7153dddfa47dd1339e4f03127",
+          "matches_layout": true
+        }
+      ],
+      "private_bytes": 134938624,
+      "app_container": true,
+      "version": "0.1.0.7"
+    },
+    "process_capture_scope": "Token/module verification during this run; capture can precede picker completion. CPU/memory values are snapshots, not matrix performance measurements.",
+    "automatic_fixtures": 61,
+    "automatic_cases": 137,
+    "cases_by_mode": {
+      "0": 61,
+      "1": 12,
+      "2": 8,
+      "3": 12,
+      "4": 12,
+      "6": 12,
+      "7": 12,
+      "8": 8
+    },
+    "forced_native_cases": 16,
+    "legacy_public_lifetimes": 9,
+    "public_offline_checks": 12,
+    "public_automatic_lifetimes": 36,
+    "outside_profile_aac_refusals": 1,
+    "dts_inter_block_gap_refusals": 2,
+    "picker_granted_and_all_owned_hashes_verified": true,
+    "expected_failures_and_literal_decisions_verified": true,
+    "all_contexts_released_once_and_children_removed": true,
+    "sibling_preserved": true
   },
   "limitations": [
     "No receiver playback, audible observer confirmation, A/V synchronization or receiver EOF observation.",
@@ -246,6 +320,119 @@
       "passed": 13,
       "total": 13,
       "elapsed_seconds": 133.01
+    }
+  },
+  "private_video": {
+    "run_id": "a6465cc6ace54244bd9b250f6a0ccc16",
+    "utc": "2026-10-15T03:37:49.3136325+00:00",
+    "result": "MEASURED_REFUSAL",
+    "log_sha256": "7cac86d2f91460f7e0efecf2e4994af6d9ee8c38baebda391f77fef32983c8b6",
+    "read_only_user_authorized": true,
+    "manual_picker_grant": true,
+    "measurements": [
+      {
+        "mode": 9,
+        "preparation": 0,
+        "failure": 0,
+        "action": 3,
+        "family": 4,
+        "input_bytes": 47009830504,
+        "segments": 1322,
+        "cold_ms": 207,
+        "warm_ms": 10,
+        "elapsed_ms": 457,
+        "prepare_ms": 235,
+        "request_ms": 218,
+        "prep_calls": 1542,
+        "prep_requested": 45395831,
+        "prep_actual": 45179352,
+        "request_calls": 1211,
+        "request_requested": 39682048,
+        "request_actual": 39659039,
+        "sealed_bytes": 104559,
+        "clear": 1,
+        "release": 1,
+        "removed": 1
+      },
+      {
+        "mode": 10,
+        "preparation": 0,
+        "failure": 5,
+        "action": 3,
+        "family": 4,
+        "input_bytes": 47009830504,
+        "segments": 1322,
+        "cold_ms": 0,
+        "warm_ms": 0,
+        "elapsed_ms": 1077,
+        "prepare_ms": 226,
+        "request_ms": 847,
+        "prep_calls": 1542,
+        "prep_requested": 45395831,
+        "prep_actual": 45179352,
+        "request_calls": 8192,
+        "request_requested": 268435456,
+        "request_actual": 268279808,
+        "sealed_bytes": 0,
+        "clear": 1,
+        "release": 1,
+        "removed": 1
+      }
+    ],
+    "process_and_loaded_modules": {
+      "captured_utc": "2026-10-15T03:38:22.4765371+00:00",
+      "executable_matches_registration": true,
+      "peak_working_set_bytes": 105312256,
+      "cpu_ms": 1406.25,
+      "private_bytes": 133144576,
+      "modules": [
+        {
+          "matches_layout": true,
+          "sha256": "4cee15549ef1fca2c6e1542a6626084e0ce689b71ec7ec7004a2c3c91d0f1f49",
+          "matches_native_build": true,
+          "name": "send_airplay2.DLL"
+        },
+        {
+          "matches_layout": true,
+          "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+          "matches_native_build": true,
+          "name": "libcrypto-3-x64.dll"
+        },
+        {
+          "matches_layout": true,
+          "sha256": "9ec7c055114218f6ccb68e1bc0a0bbe77d17076ffd04ef552264f7e07c425408",
+          "matches_native_build": true,
+          "name": "avformat-63.dll"
+        },
+        {
+          "matches_layout": true,
+          "sha256": "d9d892cbbff17a129d6c088e102dca375db25ebdba10a9b6c7fa76eb08b75313",
+          "matches_native_build": true,
+          "name": "avcodec-63.dll"
+        },
+        {
+          "matches_layout": true,
+          "sha256": "6b1fbca0846c8aaf4e3072e79b4222fd01281bfa0e5db9b78b15abe6fde2520c",
+          "matches_native_build": true,
+          "name": "swresample-7.dll"
+        },
+        {
+          "matches_layout": true,
+          "sha256": "bd1327659cd5d28e5d5d7dc7a380c74e279d26d7153dddfa47dd1339e4f03127",
+          "matches_native_build": true,
+          "name": "avutil-61.dll"
+        }
+      ],
+      "app_container": true,
+      "version": "0.1.0.7"
+    },
+    "process_measurement_scope": "Total process CPU/peak working set/private bytes at capture; includes app startup, runtime and picker overhead.",
+    "interpretation": {
+      "first_fragment_and_identical_cached_repeat_completed": true,
+      "middle_result": "Resource-limit refusal after exactly 256 MiB requested source bytes; consistent with the unchanged decoder read-byte ceiling. Exact seek/read amplification cause remains unproven.",
+      "last_window_attempted": false,
+      "first_middle_last_throughput_established": false,
+      "limits_or_track_or_route_changed": false
     }
   }
 }

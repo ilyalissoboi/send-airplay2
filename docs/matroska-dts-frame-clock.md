@@ -41,7 +41,7 @@ remain unchanged. The per-operation block clock is limited to 256 decoded frames
 matching the one-octet lace count. DTS-core profile/layout/cadence, discontinuity,
 trim, read/callback/deadline, decoder-window and cache bounds remain enforced.
 
-## Controls and pending gates
+## Controls
 
 [The generator](../tools/audio-codec-spike/generate_dts_lacing_fixtures.py) reuses
 existing Apache-2.0 owned compressed audio/video and independently authors fixed,
@@ -57,7 +57,7 @@ unchanged reported absolute precision, literal 792064-sample DTS EOF including
 packet control, exact 792000-sample video-span trim, lazy cache generation and
 one-time cleanup. Both inter-block gaps remain unsupported with complete cleanup.
 
-## Validation checkpoint
+## Validation results
 
 The owned controls pass and a bounded read-only diagnostic now accepts private
 video preparation. Local Windows Release suites pass: static **39/39** (71.61 s),
@@ -66,15 +66,46 @@ codec **13/13** (133.01 s). These concurrent suite timings are not media-perform
 calibration. The enabled private hook retains 16 legacy plus 140 automatic
 scenarios, including the three bounded measurement modes.
 
-Private package **0.1.0.7**, core/package source `db35a6f`, passes bundled
-**137 automatic cases across 61 fixtures**, retained legacy/public lifetimes and
-both gap-refusal controls. The actual AppContainer token and all six loaded
-module hashes match registration/native build. Six-DLL UWP import/profile checks,
+Private package **0.1.0.7**, core/package source `db35a6f`, passes bundled and
+hash-verified folder-granted **137 automatic cases across 61 fixtures** per run,
+retained legacy/public lifetimes and both gap-refusal controls. The actual
+AppContainer token and all six loaded module hashes match registration/native
+build for both runs and the benchmark. Six-DLL UWP import/profile checks,
 absence of private validation exports in the default shared build, formatting,
 whitespace and 145 owned fixture hashes pass.
 
-The folder-granted repeat is waiting for the manual Windows folder picker;
-brokered first/middle/last measurements follow it. These gates remain pending.
-Private input identity/content must remain outside committed evidence. No receiver,
-publication or Screenbox pin change; audio-only speakers and discrete converted
-surround remain hardware-deferred. Inspect actual PR-head CI before merging.
+The user granted the owned folder and the same authorized private video through
+Windows pickers. The brokered benchmark records **MEASURED_REFUSAL** overall:
+
+| Fresh owner / window | Preparation | Cold fragment | Cached repeat | Outcome |
+| --- | ---: | ---: | ---: | --- |
+| First | 235 ms | 207 ms | 10 ms | One 104559-byte AAC fragment sealed; byte-identical repeat |
+| Middle | 226 ms | Not completed | Not attempted | Resource-limit failure after 847 ms of request work |
+| Last | Not attempted | Not attempted | Not attempted | Sequence stops after the first deterministic refusal |
+
+The first request and repeat together make 1211 source calls requesting
+39,682,048 bytes (39,659,039 returned). The middle request makes 8192 calls
+requesting exactly **268,435,456 bytes (256 MiB)**, with 268,279,808 returned and
+no fragment sealed. This matches the decoder's unchanged requested-byte ceiling;
+the public hook reports the fixed resource-limit category, not internal exception
+text. The precise reason the middle seek needs this much I/O remains unproven.
+Each preparation makes 1542 calls requesting 45,395,831 bytes (45,179,352 returned).
+Both owners clear storage, release source/store once and remove their child.
+No read limit, deadline, track or route was changed to obtain a result.
+
+The benchmark process capture records 1406.25 ms total CPU, 105,312,256-byte peak
+working set and 133,144,576 private bytes. These include startup/picker/runtime
+overhead and are not phase-only memory or CPU measurements. Cold means a fresh
+owner/window/cache; the OS page cache was not flushed. These observations establish
+one first-fragment conversion, not first/middle/last throughput or whole-film playback.
+[Sanitized evidence](validation/matroska-dts-frame-clock-windows-2026-10-15.json)
+records run IDs, counters, cleanup and module hashes without private input identity.
+
+Next proposed slice: reproduce the middle-seek read amplification with owned
+long-duration, laced DTS controls and inspect demuxer seek/restart I/O. Preserve
+sample/trim/continuity guarantees and existing bounds; do not assume a larger
+budget is the solution. Repeat brokered first/middle/last measurements after a
+bounded correction, before copied/converted receiver gates. Private input identity/
+content remains outside committed evidence. No receiver, publication or Screenbox
+pin change; audio-only speakers and discrete converted surround remain
+hardware-deferred. Inspect actual PR-head CI before merging.
