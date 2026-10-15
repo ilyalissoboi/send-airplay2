@@ -9,37 +9,35 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D88 automatic audio receiver gate (2026-10-15, in progress).**
-**Resumed at the user's request** after target-device network adjustments.
-Native Mac AAC copy and DTS-to-stereo-AAC passed by user observation, including
-synchronization, channel pattern, start position, controls and natural end.
-A corrected AAC repeat and DTS run verify loaded hashes, controls, natural EOF,
-cleanup and one source release. UWP Mac AAC/DTS reached natural end with cache
-cleanup and AppContainer/six hashes verified; observer report remains pending.
-Native Apple TV AAC retry and DTS reached natural end; initial AAC disconnected
-during seek and is retained separately. Packaged Apple TV completed nine codec
-cases and explicit Stop in telemetry; manual observations remain pending.
-Native Mac cancellation returned cancelled in 5,058 ms with media cleanup;
-prompt observation is pending. UWP manual cancellation expired before Stop was
-recorded and only verifies rejection cleanup. Wait for the user's readiness
-before retrying that manual action. Then run native Mac explicit Stop and the
-remaining seven packaged Mac codecs plus Stop. No cast is active.
-Original controls are generated under ignored `build-review/d88-receiver-controls`;
-AAC copy uses MP4 (supported priming/origin), PCM conversion uses stereo, other
-converted controls use 5.1. Offline preparation passes after those fixture fixes.
-Native hosts are built; UWP 0.1.28.0 is installed as an in-place update with the
-existing optional codec runtime. Script/cache/packaging changes and original
-fixture provenance are in [draft PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69),
-initial head `76e7133`; CI is in progress, not a completed validation claim.
-Mac discovery now finds `Mac14,10`. The user confirms macOS 26.7.1 and tvOS 26.6
-are unchanged.
-PR #68 merged as `f6c85ef`; all 16 checks passed at `9cad595` in run `38689760888`.
-The user's Proceed starts fresh `codex/automatic-audio-receiver-gate`.
-Read [the observer/host scope and original fixture provenance](automatic-audio-receiver-gate.md).
-Both recorded receivers are available by user report. Continue original
-flash/beep controls, native C API
-and script-only packaged automatic audio. Preserve defaults, private source
-identity/content, consent and publication/Screenbox boundaries. Matrix incomplete.
+**D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
+Native Mac and Apple TV AAC-copy/DTS-to-stereo-AAC checks pass by user observation;
+native Mac explicit Stop and unanswered-consent cancellation also pass. Packaged
+UWP 0.1.28.0 completes all nine original AAC/AC-3/E-AC-3/DTS/FLAC/Opus/Vorbis/PCM/
+TrueHD cases on each receiver, plus converted DTS Stop on both and manual
+pending-consent cancellation on the Mac. The user confirms synchronized A/V,
+LEFT/RIGHT/BOTH, start near 45 seconds, pause/resume, both seeks, natural ends
+and prompt/video closure. macOS 26.7.1 and tvOS 26.6 are unchanged by user report.
+Native seven loaded hashes and UWP AppContainer/six hashes are verified. The
+18 packaged natural ends, two Stops and one cancelled start have expected
+selected-stream/policy fields and complete cache cleanup. All native successful,
+Stop and cancel runs report one source release and no failed reads.
+
+Read [scope, failed attempts and evidence](automatic-audio-receiver-gate.md).
+An initial native Apple TV AAC seek disconnected; its manual retry passed and
+its cause remains unestablished. Two packaged Mac attempts expired/rejected
+before playback, including an intended cancellation before manual Stop arrived;
+only the later cancelled retry verifies cancellation. Preserve those distinctions.
+Original 120-second controls, not the private performance film, were cast.
+Core is unchanged from merged PR #68 (`f6c85ef`); optional codec backend remains
+OFF by default. Private test-host scripts/storage/package changes are in
+[PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69); inspect actual-head
+CI before merging. No cast is active; no further receiver input is pending.
+
+Next: review/merge this evidence slice, then obtain the user's choice for an
+opt-in package/Screenbox integration slice. Publication/pin changes are separate;
+speakers and discrete converted surround remain hardware-deferred. The isolated
+Apple TV disconnect remains an explicit reliability follow-up. No Computer Use
+for visual confirmation.
 
 **D87 bounded DTS seeks (2026-10-15, PR #68).**
 PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in

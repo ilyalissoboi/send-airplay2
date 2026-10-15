@@ -1,38 +1,58 @@
 # Automatic audio receiver gate (D88)
 
-**Checkpoint: resumed by the user on 2026-10-15 after target-device network
-adjustments.** Mac discovery succeeds. The user confirms macOS 26.7.1 and
-tvOS 26.6 are unchanged. Native Mac AAC-copy and DTS-to-stereo-AAC checks passed
-by user observation: synchronized flashes/beeps, channel pattern, start near 45 seconds,
-pause/resume, forward/backward seeks and natural end. The driver exited 0 and
-reported copied AAC stereo. Its first capture omitted end/cleanup/control lines
-and loaded-module evidence; a corrected AAC repeat and the DTS run verify all
-seven loaded hashes, successful controls, `media_end`, cleanup and one source
-release with no failed reads. Packaged Mac AAC and DTS reached `MediaEnd` and
-released their cast slots with six loaded hashes and an AppContainer token
-verified; manual observation is pending. One earlier packaged consent attempt
-was receiver-rejected and cleaned up before playback. Native Apple TV DTS and
-an AAC repeat reached natural end; an initial AAC attempt disconnected during
-the forward seek and is retained as a failure. Apple TV manual observations
-remain pending. The packaged Apple TV nine-codec matrix
-completed all natural ends and explicit DTS Stop with successful telemetry.
-Native Mac cancellation returned `cancelled` after 5,058 ms with media cleanup
-and one source release. Its prompt observation is pending. A subsequent UWP
-manual-cancellation attempt was receiver-rejected after 15,553 ms before a Stop
-action was recorded; its empty conversion cache cleared/released once and was
-removed. That is rejection cleanup, not a cancellation pass. The user has been
-asked to signal readiness before that attempt is retried.
-Original controls and the local native driver are under ignored `build-review`;
-UWP script/cache/packaging changes are in [draft PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69).
-Do not change pairing or network settings as an incidental diagnostic action.
+**Recorded receiver gate completed on 2026-10-15.**
+[PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69) adds the original
+controls and private packaged-host harness. The branch starts at merged PR #68,
+`f6c85ef`; its 16 baseline checks passed at `9cad595` in run `38689760888`.
+Receiver results below belong to this Windows 11 x64 host, Mac14,10 on macOS
+26.7.1 and AppleTV14,1 on tvOS 26.6. The user confirms both OS versions unchanged.
 
-The user's Proceed starts `codex/automatic-audio-receiver-gate` from merged
-PR #68, `f6c85ef`. All 16 final-head checks passed at `9cad595` in run
-`38689760888`. D87's bounded brokered measurements are offline evidence.
-This gate adds manual receiver observations, beginning with native AAC copy
-and DTS-core 5.1 converted to stereo AAC on the Mac, then Apple TV and packaged
-UWP. The user reports both receivers available. Results apply only to the
-recorded receiver, firmware, host and media case; the matrix remains incomplete.
+| Host and receiver | Playback observed by user | Explicit Stop | Pending-consent cancellation | Runtime verification |
+| --- | --- | --- | --- | --- |
+| Native shared C API, Mac | AAC copy and DTS 5.1 to stereo AAC | Passed | Passed; prompt appeared and closed | Seven loaded DLL hashes match build |
+| Native shared C API, Apple TV | AAC copy on retry and DTS 5.1 to stereo AAC | Not repeated in this slice | Not repeated in this slice | Seven loaded DLL hashes match build |
+| Packaged UWP 0.1.28.0, Mac | All nine original format cases | Passed | Passed using manual host Stop; prompt closed and app responsive | AppContainer token and six loaded DLL hashes verified |
+| Packaged UWP 0.1.28.0, Apple TV | All nine original format cases | Passed | Not repeated in this slice | AppContainer token and six loaded DLL hashes verified |
+
+Every successful natural-end case includes start near 45 seconds, synchronized
+flashes/beeps, LEFT/RIGHT/BOTH direction, pause/resume, forward seek to 90 seconds,
+backward seek to 30 seconds and seek to 115 seconds followed by natural end.
+The user reports all requested checks worked as expected. These are manual
+observations, not instrumented synchronization or discrete-channel measurements.
+
+The packaged matrix copies AAC-LC, AC-3 and E-AC-3 stereo sources, and converts
+DTS-core, FLAC, Opus, Vorbis and TrueHD 5.1 plus PCM stereo to two-channel AAC.
+Both receivers complete all nine natural-end cases and a further converted DTS
+Stop: 18 natural ends and two Stops in total. Successive cases reuse the app's
+cast slot after natural cleanup; this is not a Screenbox queue test.
+
+Telemetry reports the expected source family, original selected audio ID 2,
+action/output family and two output channels for each packaged case. Accepted
+conversion stores clear and release once; unused copy stores release once without
+Clear. All owned cache children are removed. Native successful/Stop/cancel runs
+report no failed source reads, one source release and media cleanup. Core
+binaries are built from `f6c85ef` with no native source changes; package and
+actual loaded hashes are in the sanitized record.
+
+## Attempts and limits
+
+The first native Mac AAC observer run omitted final fields/module capture from
+its diagnostic whitelist; a corrected repeat supplies that telemetry. An initial
+native Apple TV AAC run disconnected at the forward seek with
+`url_events/disconnected`; cleanup succeeded and a manual repeat completed all
+controls and natural end. Its cause remains unestablished. This is a recorded
+successful retry, not an uninterrupted reliability claim or a new automatic retry.
+Early Apple TV position telemetry was transient; the user's requested-start
+observation is recorded separately from those samples.
+
+Two packaged Mac attempts were receiver-rejected before playback: the initial
+AAC attempt and a cancellation attempt whose manual Stop did not arrive before
+consent expired. Both cleaned up. After the user signalled readiness, the UWP
+retry returned `cancelled` after 2,759 ms; the unanswered prompt closed and the
+app remained responsive by user report. Cache counters are clear=1, release=1,
+removed=yes. Two identical log snapshots during cancellation describe the same
+counters, not additional cleanup callbacks. Native cancellation returned
+`cancelled` after 5,058 ms with the same prompt observation and media cleanup.
 
 The [original fixture generator](../tools/audio-codec-spike/generate_receiver_fixtures.py)
 authors a visible moving pattern, time labels, a white flash at each second and
@@ -45,7 +65,7 @@ commands are recorded in [fixture provenance](validation/automatic-audio-receive
 generated media stay in an ignored local folder. No private
 video content is used or copied into these controls.
 
-The network-enabled UWP development host needs script-only automatic/forced
+The network-enabled UWP development host now has script-only automatic/forced
 stereo options and its optional codec DLLs/notices; existing UI/default delivery
 and the published package/Screenbox pin remain unchanged. Use actual binary
 hashes/AppContainer tokens and retain fixed category/status logs without device
@@ -53,28 +73,28 @@ identifiers, addresses, credentials, paths or URLs. Receiver consent/PIN entry
 and observation remain manual. Do not use Computer Use for visual confirmation.
 Audio-only speakers and discrete converted surround remain hardware-deferred.
 
-[Sanitized in-progress evidence](validation/automatic-audio-receiver-windows-2026-10-15.json)
+[Sanitized receiver evidence](validation/automatic-audio-receiver-windows-2026-10-15.json)
 keeps failed attempts distinct from retries and observer reports distinct from
 status telemetry. The private film used in D87 performance checks is not cast.
 
-## Remaining manual work
+## Validation and next boundary
 
-No cast is active at this checkpoint. The development UWP host stays installed
-with its existing grants and pairing data. Its scripts and the native driver
-remain under ignored local output, with no private media content.
+The original nine fixtures were generated and prepared successfully, their hashes
+were checked, and the generator compiles as Python. Desktop/UWP enabled native
+builds and the Native AOT package build pass. Fixed-field per-case checks confirm
+18 packaged natural ends, two Stops, one cancelled start, two retained receiver
+rejections, expected decisions and complete cache cleanup. Relative documentation
+links and `git diff --check` pass. Actual PR-head CI is a separate merge check;
+inspect it rather than treating the baseline's 16 checks as this head's result.
 
-1. Collect the outstanding packaged Mac AAC/DTS, native Apple TV AAC retry/DTS,
-   packaged Apple TV nine-codec/Stop and native Mac cancellation observations.
-   Do not infer these from the successful status logs.
-2. Wait for the user's readiness, then retry `d88-mac-cancel` in the UWP host.
-   The user leaves Mac consent unanswered and presses the host's Stop button.
-   Confirm a cancelled start, cache cleanup and prompt closure; the earlier
-   timed-out attempt does not satisfy this gate.
-3. Run native Mac DTS with explicit Stop, then `d88-mac-matrix`: AC-3, E-AC-3,
-   FLAC, Opus, Vorbis, PCM and TrueHD, followed by explicit DTS Stop. Collect
-   manual synchronization/channel/start/control/end/Stop observations. AAC/DTS
-   natural-end checks already ran in this packaged process; successive cases
-   also exercise host slot reuse, not Screenbox queue advancement.
-4. Refresh sanitized evidence and the handoff, inspect actual PR-head CI and
-   finish the PR only after the remaining outcomes are explicit. No merge,
-   publication or Screenbox update is authorized by this gate.
+No cast is active. The development host remains installed with its existing
+pairings and manual fixture grants. The private film from D87 was not cast.
+These short original controls do not establish whole-film throughput, arbitrary
+media support, additional architectures/receivers or discrete converted surround.
+Audio-only speakers and surround-preserving output stay hardware-deferred.
+
+After review and final-head CI, the user may merge PR #69. A separately approved
+next slice can plan opt-in package/Screenbox integration of the validated backend,
+including runtime dependencies/notices and host fragment storage. Keep defaults,
+published package/Screenbox pin and native audio policy unchanged in this gate.
+The isolated Apple TV disconnect remains an explicit follow-up observation.

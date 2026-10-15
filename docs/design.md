@@ -17,11 +17,13 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D88 in progress:** [automatic audio receiver gate](automatic-audio-receiver-gate.md)
+**D88 recorded gate complete (PR #69):** [automatic audio receiver gate](automatic-audio-receiver-gate.md)
 adds original visible/audible controls and script-only automatic/stereo delivery
-to the private UWP test host. Native Mac AAC copy and DTS 5.1-to-stereo-AAC pass
-by user observation; remaining host/receiver observations and lifecycle cases
-are pending. Core policy, defaults and publication/Screenbox boundaries remain.
+to the private UWP test host. Native AAC copy/DTS conversion pass on the Mac and
+Apple TV; packaged nine-format matrices pass on both, with Stop/cancellation
+observations and runtime hashes/token/cleanup evidence as recorded. The initial
+Apple TV AAC disconnect and consent rejections remain distinct from retries.
+Core policy/defaults, publication and Screenbox boundaries remain unchanged.
 
 **D87 merged (PR #68, `f6c85ef`):** [bounded DTS seek coordinates](matroska-dts-bounded-seek.md)
 use the nearer already parsed audio/video index with a maximum-lace backoff,
