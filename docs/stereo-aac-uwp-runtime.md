@@ -119,6 +119,11 @@ Vorbis, PCM and TrueHD; [its plan](automatic-audio-transcoding-plan.md) starts
 with private decoder/profile/timeline foundations. These new inputs need their
 own packaged runtime gate; the D75 passes above cover only the recorded fixtures.
 
+[D84's expanded gate](automatic-audio-uwp-runtime.md) now records separate
+bundled/folder-granted automatic passes and a private-video zero-origin refusal.
+It preserves the historical D75 results above; real-file conversion performance
+remains open before receiver checks.
+
 Real-file startup/read-volume/cache/seek measurements follow, then manually observed stereo
 video/audio, controls, Stop and natural EOF on available Apple TV/Mac receivers.
 Approved package publication and Screenbox integration follow those gates.

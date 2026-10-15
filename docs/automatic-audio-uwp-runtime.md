@@ -10,7 +10,8 @@ discrete converted surround, publication and Screenbox pin changes remain deferr
 ## Implementation and scope
 
 The existing offline x64 Native AOT UWP harness advances to private package
-0.1.0.5 (superseding the initial 0.1.0.4 staging-failure run). It retains D75's forced-stereo checks and adds a shared
+0.1.0.5 (superseding the initial 0.1.0.4 staging-failure run). It retains D75's
+forced-stereo checks and adds a shared
 [owned fixture catalog](../tools/uwp-host/stereo-validation/automatic-cases.tsv)
 covering automatic DTS, FLAC, Opus, Vorbis, packed PCM and TrueHD conversion,
 AAC/Dolby copy and video-only. The catalog gives literal action, family, channels
@@ -96,7 +97,49 @@ AppContainer token and six loaded DLL hashes against the layout while the proces
 remains alive for 30 seconds after results. A benchmark refusal is labeled
 `MEASURED_REFUSAL`, distinct from PASS/FAIL. Only sanitized evidence is committed.
 
-Implementation/native controls are in progress. Packaged results, loaded-module
-hash evidence and real-file measurements have not yet been claimed for D84.
-Final static/shared/enabled CMake/CTest, formatting, imports and actual-head CI
-remain merge gates. D75's historical PASS remains limited to its recorded fixtures.
+## Recorded results and next gate
+
+The [sanitized record](validation/automatic-audio-uwp-runtime-windows-2026-10-15.json)
+captures package 0.1.0.5 at source `b0cd5ec`, with no native source changes after
+that commit. Both bundled and outside-package folder-granted runs **PASS** on
+Windows 11 x64 (10.0.26200). Each includes 16 original forced-stereo cases,
+115 automatic scenarios across 53 fixtures, 10 public offline checks, 30 automatic
+public lifecycle cases, nine original public lifetimes and the explicit AAC
+configuration refusal. Expected failures, literal decisions, source/store release,
+child removal and sibling preservation pass. The user selected a visible copy of
+the owned fixture folder after cancelling the initial repository-folder picker;
+each granted input hash matches its bundled counterpart. Both actual AppContainer
+tokens and all six loaded module hashes match the registered layout/native build.
+
+The authorized private-video benchmark records **MEASURED_REFUSAL**, not a
+performance PASS. Its first fresh owner returns media-unsupported (20) in 74 ms
+of preparation / 75 ms elapsed, with 300 source callbacks, 4,914,904 requested
+bytes and 4,721,852 returned bytes. No fragment is requested/sealed; storage
+clears/releases once and its child is removed. The process snapshot records
+453.125 ms total CPU, 92,561,408-byte peak working set and 130,932,736 private
+bytes; these include app/runtime startup and picker overhead, not conversion
+throughput. The input's identity and content are excluded from this record.
+
+A separate bounded read-only desktop diagnostic using the existing implementation
+reports `AudioDecodeFailure::unsupported` at the fixed guard
+`AAC HLS video timeline requires a zero origin and no trim` (288 reads,
+4,686,826 returned bytes). The Matroska video starts after zero. No middle/tail
+owner, alternate route, rewritten input or widened limit was used. This gives
+refusal/cleanup evidence; first/middle/last cold/warm performance remains open.
+
+Final local static **39/39** (53.00 s), shared **40/40** (53.12 s) and enabled
+shared **41/41** (94.02 s) pass. The enabled private hook retains 16 legacy plus
+118 automatic scenarios, including three bounded measurement modes. The new
+runtime-resolution regression passes in all three configurations. Six UWP DLL
+import/AppContainer/profile checks pass; default shared exports exclude both
+private hooks. Touched C++ formatting, whitespace and 135 owned fixture hashes
+pass. Inspect actual PR-head CI before merge.
+
+The next proposed implementation slice is support for a bounded nonzero Matroska
+video origin in converted HLS. Define a shared presentation origin for copied
+video, decoded audio and subtitles; preserve their relative timing, delay/trim,
+segment boundaries, seeks and final EOF. Start with owned offset fixtures and
+independent audible/sample expectations, retaining refusal for unsupported edits
+and discontinuities. Then repeat this private-file benchmark through the brokered
+source. Copied/converted receiver playback, A/V sync and natural EOF follow the
+performance gate. This result does not validate receivers or authoring estimates.

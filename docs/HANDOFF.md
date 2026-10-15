@@ -9,18 +9,29 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D84 expanded automatic AppContainer gate (2026-10-15, in progress).**
+**D84 expanded automatic AppContainer gate (2026-10-15).**
 The user's Proceed starts `codex/automatic-audio-uwp-runtime` from merged
 [PR #64](https://github.com/ilyalissoboi/send-airplay2/pull/64), `2bdd397`.
 All 16 checks passed at final head `4126ca9` in run `38593843522`.
 Read [the private package/catalog/performance contract](automatic-audio-uwp-runtime.md).
-The expanded hook reuses automatic production owners; owned-copy/conversion
-matrices, unused TemporaryFolder release, public binding lifetimes and bounded
-cold/warm measurements are being added. The user supplied a private video path
-and authorized read-only performance testing; keep it out of committed evidence.
-Package 0.1.0.4 and manual folder/file picker grants are planned, with no receiver,
-network, publication or Screenbox change. Packaged results remain unclaimed until
-actual source/module hashes and runtime/storage checks are verified.
+Private package 0.1.0.5 at `b0cd5ec` passes bundled and hash-verified folder-granted
+115-case/53-fixture automatic matrices, retained forced-stereo/public lifetimes,
+unused TemporaryFolder cleanup and expected refusals. Actual AppContainer tokens
+and six loaded hashes match each registered layout/native build. Initial 0.1.0.4
+exposed old codec DLLs staged from the separate core prefix; staging now follows
+selected import libraries, with regression/profile checks. Final local static,
+shared and enabled suites pass 39/39, 40/40 and 41/41. Inspect actual PR-head CI.
+
+The authorized brokered private-video check records **MEASURED_REFUSAL**:
+media-unsupported in 74 ms, 300 reads / 4,721,852 returned bytes, complete cleanup,
+no fragment generated. A bounded desktop diagnostic identifies the existing
+zero-origin-video guard: this Matroska video starts after zero. Keep the private
+input's path/name/hash/content out of committed evidence. No first/middle/tail
+conversion throughput is established. Next proposed slice: preserve common
+nonzero Matroska presentation origins with independent audio/video/subtitle,
+seek/trim/EOF controls, then repeat brokered performance before receiver gates.
+No receiver, network, publication or Screenbox change; speakers and discrete
+converted surround stay hardware-deferred.
 
 **D83 public automatic audio integration (2026-10-15).**
 PR #64 merged as `2bdd397`; all 16 final-head checks passed at `4126ca9`.

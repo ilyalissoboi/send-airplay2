@@ -55,7 +55,10 @@ now resolves the finite profile's copy table or bounded stereo route.
 [API 5 integration](docs/automatic-audio-public.md) exposes opt-in automatic
 delivery, offline preparation checks and decision reporting through C, C# and CLI.
 Copy needs no backend/cache; conversion retains the optional backend and host cache.
-Expanded packaged runtime, real-file performance and receiver checks remain gates.
+The [expanded x64 AppContainer gate](docs/automatic-audio-uwp-runtime.md) passes
+bundled and folder-granted automatic fixture checks. An authorized real-video
+benchmark refuses at the existing zero-origin-video requirement before conversion;
+real-file conversion performance and receiver checks remain gates.
 
 ## Build
 

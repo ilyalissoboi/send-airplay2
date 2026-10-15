@@ -1,5 +1,13 @@
 # Receiver validation record
 
+**D84 offline gate (2026-10-15):** [expanded automatic AppContainer checks](automatic-audio-uwp-runtime.md)
+pass bundled and hash-verified folder-granted 115-case/53-fixture matrices in
+private package 0.1.0.5 at `b0cd5ec`, with actual token and six loaded hashes
+verified. A private-video brokered benchmark refuses before fragment generation
+at the existing zero-origin-video guard. These are offline runtime/refusal and
+cleanup results; real-file conversion throughput and copied/converted receiver
+playback, A/V sync and EOF remain gates. No receiver was contacted.
+
 **D83 boundary (2026-10-15):** [API 5 automatic integration and offline checks](automatic-audio-public.md)
 add public/binding/CLI compatibility and owned/scripted lifecycle controls.
 No receiver or expanded AppContainer runtime observation is added; compilation/

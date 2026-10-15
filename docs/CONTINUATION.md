@@ -23,18 +23,29 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D84 expanded automatic AppContainer gate (2026-10-15, in progress).**
+**D84 expanded automatic AppContainer gate (2026-10-15).**
 The user's Proceed starts `codex/automatic-audio-uwp-runtime` from merged
 [PR #64](https://github.com/ilyalissoboi/send-airplay2/pull/64), `2bdd397`.
 All 16 checks passed at final head `4126ca9` in run `38593843522`.
 Read [the private package/catalog/performance contract](automatic-audio-uwp-runtime.md).
-The expanded hook reuses automatic production owners; owned-copy/conversion
-matrices, unused TemporaryFolder release, public binding lifetimes and bounded
-cold/warm measurements are being added. The user supplied a private video path
-and authorized read-only performance testing; keep it out of committed evidence.
-Package 0.1.0.4 and manual folder/file picker grants are planned, with no receiver,
-network, publication or Screenbox change. Packaged results remain unclaimed until
-actual source/module hashes and runtime/storage checks are verified.
+Private package 0.1.0.5 at `b0cd5ec` passes bundled and hash-verified folder-granted
+115-case/53-fixture automatic matrices, retained forced-stereo/public lifetimes,
+unused TemporaryFolder cleanup and expected refusals. Actual AppContainer tokens
+and six loaded hashes match each registered layout/native build. Initial 0.1.0.4
+exposed old codec DLLs staged from the separate core prefix; staging now follows
+selected import libraries, with regression/profile checks. Final local static,
+shared and enabled suites pass 39/39, 40/40 and 41/41. Inspect actual PR-head CI.
+
+The authorized brokered private-video check records **MEASURED_REFUSAL**:
+media-unsupported in 74 ms, 300 reads / 4,721,852 returned bytes, complete cleanup,
+no fragment generated. A bounded desktop diagnostic identifies the existing
+zero-origin-video guard: this Matroska video starts after zero. Keep the private
+input's path/name/hash/content out of committed evidence. No first/middle/tail
+conversion throughput is established. Next proposed slice: preserve common
+nonzero Matroska presentation origins with independent audio/video/subtitle,
+seek/trim/EOF controls, then repeat brokered performance before receiver gates.
+No receiver, network, publication or Screenbox change; speakers and discrete
+converted surround stay hardware-deferred.
 
 **D83 public automatic audio integration (2026-10-15).**
 PR #64 merged as `2bdd397`; all 16 final-head checks passed at `4126ca9`.
@@ -636,10 +647,11 @@ subset; D79 supplies bounded long-file PCM indexing and D80 adds compressed
 duration/restart coordinates. D81 replaces full packet tables with sparse restart
 anchors and validates the recorded high-count synthetic subset. D82 adds private
 selected-copy eligibility and automatic routing; D83 implements API 5 public
-reporting, offline checking and opt-in binding/CLI integration. Expanded packaged
-runtime/storage, real-file/brokered performance and converted-receiver gates
-remain required;
-repeat packaged runtime checks for the expanded codec matrix.
+reporting, offline checking and opt-in binding/CLI integration. D84 passes expanded
+packaged runtime/storage checks. The brokered private video refuses at the
+zero-origin-video guard; bounded nonzero Matroska presentation-origin support is
+the next proposed slice. Repeat real-file/brokered conversion performance after
+that work, then copied/converted receiver playback, A/V sync, controls and EOF.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
@@ -801,12 +813,16 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> D68-D81 and PR #62 are merged. The user's Proceed authorizes D82's private
-> automatic audio policy and selected copy. Read automatic-audio-policy.md and
-> inspect the actual slice head. Versioned public reporting/integration follows;
-> preserve bounded scan/refusal and private/offline evidence limits. D75 performance and converted-receiver gates
-> remain required. Read
-> the spike/evidence and D67's stereo AAC plan; speaker audio and
+> PRs through #64 are merged. D82/D83 implement finite automatic policy and API 5.
+> D84's private package 0.1.0.5 passes bundled/folder-granted expanded automatic
+> runtime/storage checks at b0cd5ec. Inspect its actual open PR/head and CI before
+> writing. Read automatic-audio-uwp-runtime.md and its sanitized evidence. The
+> authorized private video refuses at the zero-origin-video guard before fragment
+> generation; first/middle/last conversion throughput remains unmeasured. The next
+> proposed slice supports bounded nonzero Matroska presentation origins while
+> preserving relative video/audio/subtitle timing, then repeats brokered performance
+> before copied/converted receiver gates. Keep private input identity/content out
+> of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same
 > implementation authorization again. Inspect `origin/main` and open
 > PRs before writing, without repeating completed checks. Preserve receiver-specific

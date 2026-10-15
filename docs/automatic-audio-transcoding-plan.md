@@ -1,5 +1,12 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
+**D84 runtime result:** [expanded automatic AppContainer gate](automatic-audio-uwp-runtime.md)
+passes the owned bundled/folder-granted matrices. The authorized real video
+refuses at the existing zero-origin-video guard before generating fragments.
+Step 4's real-file conversion performance remains open; support for bounded
+nonzero Matroska presentation origins is the next proposed implementation slice.
+Receiver observations in step 5 remain separate.
+
 **D83 implementation:** [API 5, offline checking, binding and CLI integration](automatic-audio-public.md)
 implements ordered step 3. Automatic delivery is opt-in under D82's finite
 profile; old prefixes/defaults persist. Expanded packaged runtime, performance
