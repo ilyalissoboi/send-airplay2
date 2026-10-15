@@ -9,19 +9,27 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D87 bounded DTS seeks (2026-10-15, in progress).**
+**D87 bounded DTS seeks (2026-10-15, PR #68).**
 PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in
 run `38677650564`. The user's Resume work continues on fresh
-`codex/matroska-dts-bounded-seek`. Read [the seek contract and owned reproduction](matroska-dts-bounded-seek.md).
-The private middle refusal occurs during demuxer index extension, before audio
-decoding. Canonical DTS can use the nearer already parsed video cue as a seek
-coordinate while retaining selected audio, bounds and failure behavior. A new
-owned >1-GiB virtual mux reproduces the original guard; fixed-offset PCM/EOF and
-missing/late-cue/source-failure controls pass. Full suites, package and brokered
-measurements remain in progress. No receiver/publication/Screenbox change.
-Video coordinates back off by the literal maximum 256-frame lace span to retain
-overlapping audio blocks. The actual desktop middle window accepts within
-76,775,424 requested bytes; packaged first/middle/last performance is still open.
+`codex/matroska-dts-bounded-seek`. Read [the seek contract and evidence](matroska-dts-bounded-seek.md).
+The private middle refusal occurred during demuxer audio-index extension.
+Canonical DTS can use a nearer already parsed video coordinate, backed off by
+the maximum 256-frame lace span, retaining selected audio and all bounds.
+Owned >1-GiB virtual controls reproduce the original guard; fixed-offset PCM/EOF,
+missing/late cues, source failure and retained maximum-lace PCM/AAC checks pass.
+Static/shared/enabled/codec suites pass 39/39, 40/40, 41/41 and 14/14.
+Private package 0.1.0.8 at `731db15` passes bundled and hash-verified folder-granted
+137-case/61-fixture matrices, with actual token/six loaded hashes verified.
+The authorized brokered video passes three independent first/middle/last owners:
+138/314/64 ms cold, 7/13/<1 ms byte-identical cached repeats, complete cleanup.
+The middle request uses 76,775,424 requested source bytes under the unchanged
+256-MiB ceiling. These are bounded samples, not whole-film or receiver proof.
+Next: manual copied/converted receiver checks, keeping receiver/firmware and host
+results explicit. Preserve private identity/content, OFF-by-default backend and
+publication/Screenbox boundaries. Inspect [PR #68](https://github.com/ilyalissoboi/send-airplay2/pull/68)
+and actual-head CI before writing or merging. Speakers/discrete converted surround
+stay hardware-deferred.
 
 **D86 Matroska DTS lace clock (2026-10-15, PR #67).**
 The user's Proceed starts `codex/matroska-dts-frame-clock` from merged

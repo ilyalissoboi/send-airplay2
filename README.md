@@ -58,10 +58,12 @@ Copy needs no backend/cache; conversion retains the optional backend and host ca
 The [expanded x64 AppContainer gate](docs/automatic-audio-uwp-runtime.md) passes
 bundled and folder-granted automatic fixture checks. An authorized real-video
 benchmark now passes [Matroska origin handling](docs/matroska-presentation-origin.md)
-and [DTS lace clock handling](docs/matroska-dts-frame-clock.md). Its first fragment
-converts in 207 ms with a 10-ms cached repeat; the middle request refuses after
-256 MiB requested source bytes and the last is not attempted. Complete bounded
-real-file conversion performance and receiver checks remain gates.
+and [DTS lace clock handling](docs/matroska-dts-frame-clock.md).
+[Bounded DTS seek coordinates](docs/matroska-dts-bounded-seek.md) now let the same
+brokered input complete first/middle/last fragment samples in 138/314/64 ms,
+with identical cached repeats and unchanged read limits. This is one host/input's
+bounded performance evidence; sustained whole-film throughput and converted
+receiver playback remain separate gates.
 
 ## Build
 

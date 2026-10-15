@@ -23,19 +23,27 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D87 bounded DTS seeks (2026-10-15, in progress).**
+**D87 bounded DTS seeks (2026-10-15, PR #68).**
 PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in
 run `38677650564`. The user's Resume work continues on fresh
-`codex/matroska-dts-bounded-seek`. Read [the seek contract and owned reproduction](matroska-dts-bounded-seek.md).
-The private middle refusal occurs during demuxer index extension, before audio
-decoding. Canonical DTS can use the nearer already parsed video cue as a seek
-coordinate while retaining selected audio, bounds and failure behavior. A new
-owned >1-GiB virtual mux reproduces the original guard; fixed-offset PCM/EOF and
-missing/late-cue/source-failure controls pass. Full suites, package and brokered
-measurements remain in progress. No receiver/publication/Screenbox change.
-Video coordinates back off by the literal maximum 256-frame lace span to retain
-overlapping audio blocks. The actual desktop middle window accepts within
-76,775,424 requested bytes; packaged first/middle/last performance is still open.
+`codex/matroska-dts-bounded-seek`. Read [the seek contract and evidence](matroska-dts-bounded-seek.md).
+The private middle refusal occurred during demuxer audio-index extension.
+Canonical DTS can use a nearer already parsed video coordinate, backed off by
+the maximum 256-frame lace span, retaining selected audio and all bounds.
+Owned >1-GiB virtual controls reproduce the original guard; fixed-offset PCM/EOF,
+missing/late cues, source failure and retained maximum-lace PCM/AAC checks pass.
+Static/shared/enabled/codec suites pass 39/39, 40/40, 41/41 and 14/14.
+Private package 0.1.0.8 at `731db15` passes bundled and hash-verified folder-granted
+137-case/61-fixture matrices, with actual token/six loaded hashes verified.
+The authorized brokered video passes three independent first/middle/last owners:
+138/314/64 ms cold, 7/13/<1 ms byte-identical cached repeats, complete cleanup.
+The middle request uses 76,775,424 requested source bytes under the unchanged
+256-MiB ceiling. These are bounded samples, not whole-film or receiver proof.
+Next: manual copied/converted receiver checks, keeping receiver/firmware and host
+results explicit. Preserve private identity/content, OFF-by-default backend and
+publication/Screenbox boundaries. Inspect [PR #68](https://github.com/ilyalissoboi/send-airplay2/pull/68)
+and actual-head CI before writing or merging. Speakers/discrete converted surround
+stay hardware-deferred.
 
 **D86 Matroska DTS lace clock (2026-10-15, PR #67).**
 The user's Proceed starts `codex/matroska-dts-frame-clock` from merged
@@ -716,11 +724,16 @@ reporting, offline checking and opt-in binding/CLI integration. D84 passes expan
 packaged runtime/storage checks. D85 supports bounded nonzero Matroska origins.
 D86 corrects canonical DTS lace clocks with owned PCM/AAC and discontinuity
 controls plus bundled/folder-granted 137-case matrices in package 0.1.0.7.
-The brokered private video's first fragment and identical repeat complete, but
-its middle request refuses after 256 MiB requested source bytes. The last window
-is unmeasured. Reproduce that seek/read amplification with owned long-duration
-laced DTS controls, investigate bounded seek/restart I/O without widening limits,
-then repeat brokered conversion performance before copied/converted receiver gates.
+D87 corrects the subsequent demuxer index-extension scan using bounded existing
+video cue coordinates and maximum-lace backoff. Owned PCM/EOF/refusal controls,
+both 137-case matrices and three independent brokered first/middle/last fragment
+samples pass in package 0.1.0.8 at `731db15`, with token/loaded hashes verified.
+Cold timings are 138/314/64 ms with byte-identical cached repeats and cleanup;
+this is bounded one-input evidence, not sustained whole-film throughput. Next:
+manual copied/converted receiver playback, stereo output, A/V sync, controls,
+Stop/cancellation and natural EOF/queue observations on the available recorded
+receivers and native/packaged hosts. Preserve firmware/build attribution and
+OFF-by-default/publication/Screenbox boundaries.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
@@ -882,17 +895,19 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #66 are merged. Inspect PR #67 and its actual head/CI before writing.
+> PRs through #67 are merged. Inspect PR #68 and its actual head/CI before writing.
 > D82/D83 implement finite automatic policy and API 5; D85 supports shared
 > Matroska origins. D86 corrects DTS lace clocks with exact owned PCM/AAC controls.
-> Read matroska-dts-frame-clock.md and its sanitized evidence. Private package
-> 0.1.0.7 at db35a6f passes bundled/folder-granted 137-case/61-fixture matrices
-> with token/six loaded hashes verified. The authorized brokered video's first
-> fragment takes 207 ms cold / 10 ms cached; its middle request refuses after
-> 256 MiB requested bytes and the last is not attempted. Overall MEASURED_REFUSAL.
-> Next proposed slice: owned long-duration laced DTS reproduction and bounded
-> seek/restart I/O investigation without wider limits or track/route substitution,
-> then repeat brokered performance before receivers.
+> D87 corrects middle-seek index-extension I/O with maximum-lace backoff and
+> unchanged bounds. Read matroska-dts-bounded-seek.md and its sanitized evidence.
+> Private package 0.1.0.8 at 731db15 passes bundled/folder-granted 137-case/61-fixture
+> matrices with token/six loaded hashes verified. Three fresh brokered owners pass
+> first/middle/last samples in 138/314/64 ms cold with identical cached repeats and
+> cleanup. These are bounded one-input observations, not whole-film or receiver
+> proof. Next: manually observe copied/converted playback, stereo output, A/V sync,
+> controls, Stop/cancellation and natural EOF/queue behavior on the available
+> recorded receivers and native/packaged hosts. Keep backend defaults and package/
+> Screenbox publication boundaries unchanged until separately authorized.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

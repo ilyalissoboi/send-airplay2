@@ -1,5 +1,12 @@
 # Automatic audio AppContainer and performance gate (D84)
 
+**Subsequent D87 result:** [bounded DTS seeks](matroska-dts-bounded-seek.md)
+pass the same video's first/middle/last samples in package 0.1.0.8 (138/314/64 ms
+cold, identical repeats, unchanged limits and cleanup). Bundled/folder-granted
+137-case matrices and actual token/six loaded hashes pass. This supersedes the
+historical refusals below; whole-film throughput and receiver playback remain
+separate observations.
+
 **Subsequent D86 result:** [DTS lace clock correction](matroska-dts-frame-clock.md)
 passes bundled/folder-granted 137-case/61-fixture matrices in private package
 0.1.0.7 with token/six loaded hashes verified. The brokered first fragment takes

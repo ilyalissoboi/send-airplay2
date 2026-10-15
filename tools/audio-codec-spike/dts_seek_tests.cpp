@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "virtual_dts_seek_source.h"
 #include <chrono>
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>

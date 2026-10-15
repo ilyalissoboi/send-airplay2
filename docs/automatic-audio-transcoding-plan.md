@@ -1,5 +1,13 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
+**D87 bounded performance result:** [DTS seek coordinates](matroska-dts-bounded-seek.md)
+retain audio identity and limits while using existing container cues. Package
+0.1.0.8 passes both 137-case matrices and three fresh brokered first/middle/last
+samples (138/314/64 ms cold, identical cached repeats and cleanup). Step 4 now has
+this one-input bounded performance record; sustained whole-film throughput is
+unproven. Step 5's manual copied/converted receiver observations are next.
+The D86/D85/D84 refusals and next proposals below remain historical.
+
 **D86 clock/performance result:** [DTS lace clocks](matroska-dts-frame-clock.md)
 pass exact PCM/AAC and bundled/folder-granted 137-case controls. The brokered
 video's first fragment completes in 207 ms cold / 10 ms cached; its middle request

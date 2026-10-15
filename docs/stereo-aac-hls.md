@@ -1,5 +1,11 @@
 # Private stereo AAC HLS composition (D71)
 
+**D87 extension:** [bounded DTS seek coordinates](matroska-dts-bounded-seek.md)
+retain selected audio, lace/preroll coverage and existing limits. Owned controls,
+both 137-case AppContainer matrices and brokered first/middle/last samples pass.
+Manual copied/converted receiver checks follow; the historical refusals below
+do not describe this slice's final measured result.
+
 **D86 extension:** [canonical DTS lace clocks](matroska-dts-frame-clock.md)
 count contiguous decoded samples within known blocks while preserving new-block
 grid/continuity checks. Owned PCM/AAC and bundled/folder-granted controls pass.
