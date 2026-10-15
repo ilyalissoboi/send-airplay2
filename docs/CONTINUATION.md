@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#65 are merged. `main` contains
+Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#66 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,7 +23,21 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D86 Matroska DTS lace clock (2026-10-15, in progress).**
+The user's Proceed starts `codex/matroska-dts-frame-clock` from merged
+[PR #66](https://github.com/ilyalissoboi/send-airplay2/pull/66), `1fe9f61`.
+All 16 final-head checks passed at `cbe7440` in run `38669659266`.
+Read [the owned reproduction and clock contract](matroska-dts-frame-clock.md).
+An owned eight-frame DTS lace reproduces D85's refusal. Canonical continuation
+frames now count decoded samples within their known native block; new blocks
+keep existing grid/continuity tolerances. Fixed/Xiph/EBML and 256-frame controls
+pass with exact PCM/AAC equivalence; 5-ms and frame-aligned gaps still refuse.
+A bounded private-video preparation diagnostic accepts. Packaged and performance
+gates remain pending; preserve private input identity/content and receiver limits.
+
 **D85 Matroska presentation origins (2026-10-15).**
+PR #66 merged as `1fe9f61`; all 16 final-head checks passed at `cbe7440`.
+D86 above supersedes this slice's historical next queue.
 The user's Proceed starts `codex/matroska-presentation-origin` from merged
 [PR #65](https://github.com/ilyalissoboi/send-airplay2/pull/65), `76abc3c`.
 All 16 final-head checks passed at `9290fb3` in run `38663140087`.

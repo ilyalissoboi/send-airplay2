@@ -1,0 +1,80 @@
+{
+  "license": "Apache-2.0; existing original synthesized packets and new owned container metadata",
+  "generator": "generate_dts_lacing_fixtures.py",
+  "owned_packet_source": "hls/dts.mkv",
+  "owned_source_sha256": "7e314c1fd9bb10cd120105e758048437d01145d44acb777178e3bcb8eeb54f88",
+  "specification": "https://www.rfc-editor.org/rfc/rfc9559.html#section-10.3.5",
+  "tool_version": "ffprobe version 9.0.2-full_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers",
+  "tool_distribution": "development extraction only; executable not redistributed",
+  "video_origin_ms": 83,
+  "audio_default_duration_ns": 10666667,
+  "timestamp_scale_ns": 1000000,
+  "fixtures": [
+    {
+      "file": "dts-fixed.mkv",
+      "bytes": 2921054,
+      "sha256": "361a6eb8c6bf25c1ef359710cb8b823e4fb5641d76aae275641fcc77ea7ff40f",
+      "lace": "fixed",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 1547,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 0
+    },
+    {
+      "file": "dts-xiph.mkv",
+      "bytes": 2931878,
+      "sha256": "ab2992adc45c541c35aeaadfe54bc4a3a4d6e275f69e1043258ca54364a52b70",
+      "lace": "xiph",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 1547,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 0
+    },
+    {
+      "file": "dts-ebml.mkv",
+      "bytes": 2922601,
+      "sha256": "d3abd11d36ae5a1c7eceb4c30bc38e3b41770bac12bf74e05aceeaddca56a720",
+      "lace": "ebml",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 1547,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 0
+    },
+    {
+      "file": "dts-fixed-256.mkv",
+      "bytes": 2917704,
+      "sha256": "9d94367f1f12249677a96f1b8c4914e79bfe0cd2a598e802e306f6341a474167",
+      "lace": "fixed",
+      "maximum_frames_per_block": 256,
+      "audio_frames": 1547,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 0
+    },
+    {
+      "file": "dts-gap.mkv",
+      "bytes": 365173,
+      "sha256": "c3f9d0bf803f1453cf30e8b295b5c41c0bacd9121f4ba1ac8a960307fd1cd5cd",
+      "lace": "fixed",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 192,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 5
+    },
+    {
+      "file": "dts-gap-frame.mkv",
+      "bytes": 365173,
+      "sha256": "3db216fdea21472d351c9376c1ba64df1b474355a1566840f26a16bdc2ffc200",
+      "lace": "fixed",
+      "maximum_frames_per_block": 8,
+      "audio_frames": 192,
+      "decoded_samples_per_frame": 512,
+      "sample_rate": 48000,
+      "gap_ms_after_one_second": 32
+    }
+  ]
+}

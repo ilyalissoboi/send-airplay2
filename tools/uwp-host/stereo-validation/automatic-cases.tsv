@@ -6,6 +6,10 @@ origin	dts-early-indexed.mkv	3	4	2	3	1
 origin	dts-late-full.mkv	3	4	2	3	0
 origin	dts-reordered-indexed.mkv	3	4	2	3	0
 origin	flac-common-indexed.mkv	3	5	2	2	0
+dts-lacing	dts-fixed.mkv	3	4	2	3	1
+dts-lacing	dts-xiph.mkv	3	4	2	3	0
+dts-lacing	dts-ebml.mkv	3	4	2	3	0
+dts-lacing	dts-fixed-256.mkv	3	4	2	3	0
 expanded-decoder	flac.mkv	3	5	2	2	1
 expanded-decoder	flac.mp4	3	5	2	2	0
 expanded-decoder	flac-51.mkv	3	5	2	2	0

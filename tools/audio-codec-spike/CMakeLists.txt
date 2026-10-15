@@ -54,6 +54,13 @@ if(WINDOWS_STORE)
   add_custom_command(TARGET sap2_codec_probe POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${sap2_codec_runtime_dlls} "$<TARGET_FILE_DIR:sap2_codec_probe>" COMMAND_EXPAND_LISTS)
 elseif(BUILD_TESTING)
+  add_executable(sap2_dts_lacing_tests dts_lacing_tests.cpp)
+  target_link_libraries(sap2_dts_lacing_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
+  target_include_directories(sap2_dts_lacing_tests SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})
+  sap2_codec_warnings(sap2_dts_lacing_tests)
+  add_test(NAME matroska_dts_lacing COMMAND sap2_dts_lacing_tests
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/dts-lacing")
+  set_tests_properties(matroska_dts_lacing PROPERTIES TIMEOUT 120)
   add_executable(sap2_origin_hls_tests origin_hls_tests.cpp)
   target_link_libraries(sap2_origin_hls_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
   target_include_directories(sap2_origin_hls_tests SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})

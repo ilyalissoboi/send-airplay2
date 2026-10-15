@@ -41,6 +41,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="automatic-cases.tsv"><Link>Fixtures\automatic-cases.tsv</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="..\..\audio-codec-spike\fixtures\dts-lacing\*.mkv">
+      <Link>Fixtures\dts-lacing\%(Filename)%(Extension)</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\audio-codec-spike\fixtures\dts-lacing\provenance.json"><Link>Provenance\dts-lacing-provenance.json</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
     <Content Include="..\..\audio-codec-spike\fixtures\origin\*.mkv">
       <Link>Fixtures\origin\%(Filename)%(Extension)</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

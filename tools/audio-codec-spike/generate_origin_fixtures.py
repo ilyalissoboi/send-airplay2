@@ -25,7 +25,8 @@ def encoded(path, stream):
     return packets, private
 
 
-def movie(video, audio, codec, video_ms, audio_ms, indexed, delay_ms):
+def movie(video, audio, codec, video_ms, audio_ms, indexed, delay_ms, lacing=None, gap_ms=0,
+          lace_frames=8):
     element, uint = base.element, base.uint
     header = b''.join([uint('4286', 1), uint('42f7', 1), uint('42f2', 4), uint('42f3', 8),
                        element('4282', b'matroska'), uint('4287', 4), uint('4285', 2)])
@@ -51,27 +52,56 @@ def movie(video, audio, codec, video_ms, audio_ms, indexed, delay_ms):
             entry += element('e1', element('b5', struct.pack('>d', 48000.0)) + uint('9f', channels))
             if delay_ms:
                 entry += uint('56aa', delay_ms * 1000000)
+            if lacing:
+                entry += uint('23e383', 10666667)  # One 512-sample DTS frame at 48 kHz.
         entries.append(element('ae', entry))
         offset = video_ms if kind == 1 else audio_ms + delay_ms
-        packets.extend((pts + offset, number, data, None, dts + offset, sync)
-                       for pts, data, dts, sync in payloads)
+        if kind == 2 and lacing:
+            assert 2 <= lace_frames <= 256
+            for first in range(0, len(payloads), lace_frames):
+                group = payloads[first:first + lace_frames]
+                pts, _, dts, sync = group[0]
+                frames = [packet[1] for packet in group]
+                flags = 0
+                if len(group) == 1:
+                    data = frames[0]
+                else:
+                    flags = {'xiph': 2, 'fixed': 4, 'ebml': 6}[lacing]
+                    head = bytes([len(group) - 1])
+                    if lacing == 'fixed':
+                        assert len(set(map(len, frames))) == 1
+                    elif lacing == 'xiph':
+                        for frame in frames[:-1]:
+                            head += b'\xff' * (len(frame) // 255) + bytes([len(frame) % 255])
+                    else:
+                        head += base.vint(len(frames[0]))
+                        for previous, current in zip(frames[:-2], frames[1:-1]):
+                            delta = len(current) - len(previous)
+                            assert -63 <= delta <= 64
+                            head += base.vint(delta + 63)
+                    data = head + b''.join(frames)
+                gap = gap_ms if pts >= 1000 else 0
+                packets.append((pts + offset + gap, number, data, None, dts + offset + gap, sync, flags))
+        else:
+            packets.extend((pts + offset, number, data, None, dts + offset, sync, 0)
+                           for pts, data, dts, sync in payloads)
     # Cues independently cover before-origin, crossing-origin and crossing-cut cases.
-    packets += [(0, 51, b'Before video', 20, 0, True),
-                (video_ms - 20, 51, b'Crosses origin', 60, video_ms - 20, True),
-                (video_ms + 1000, 51, b'Original caption', 1000, video_ms + 1000, True),
-                (video_ms + 5900, 51, b'Crosses segment', 300, video_ms + 5900, True)]
+    packets += [(0, 51, b'Before video', 20, 0, True, 0),
+                (video_ms - 20, 51, b'Crosses origin', 60, video_ms - 20, True, 0),
+                (video_ms + 1000, 51, b'Original caption', 1000, video_ms + 1000, True, 0),
+                (video_ms + 5900, 51, b'Crosses segment', 300, video_ms + 5900, True, 0)]
     # Keep compressed video in decode order, including reordered B-frames.
     packets.sort(key=lambda packet: (packet[4], packet[1]))
     prefix = element('1549a966', info) + element('1654ae6b', b''.join(entries))
     clusters = []
-    for pts, number, data, duration, _, sync in packets:
-        block = base.vint(number) + b'\0\0' + (b'\x80' if duration is None and sync else b'\0') + data
+    for pts, number, data, duration, _, sync, flags in packets:
+        block = base.vint(number) + b'\0\0' + bytes([(0x80 if duration is None and sync else 0) | flags]) + data
         payload = element('a3', block) if duration is None else element(
             'a0', element('a1', block) + uint('9b', duration))
         clusters.append(element('1f43b675', uint('e7', pts) + payload))
     def cues(start):
         position, points = start, []
-        for (pts, number, _, _, _, sync), cluster in zip(packets, clusters):
+        for (pts, number, _, _, _, sync, _), cluster in zip(packets, clusters):
             if number == 11 and sync:
                 points.append(element('bb', uint('b3', pts, 8) + element(
                     'b7', uint('f7', 11) + uint('f1', position, 8))))
