@@ -1,8 +1,8 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#63 merged.
+Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#64 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
-URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
+URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
 MP4/MKV HLS remux with text subtitles and indexed MKV startup. The Screenbox
 fork has implemented its current design through PRs #1-#10, including the Mac
@@ -17,7 +17,11 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D83 public integration:** [API 5 / offline checks / binding / CLI](automatic-audio-public.md)
+**D84 in progress:** [expanded automatic AppContainer and bounded performance checks](automatic-audio-uwp-runtime.md)
+extend the separate offline package. Runtime/module/storage and authorized
+real-file evidence must be recorded before claiming these gates passed.
+
+**D83 merged (PR #64, `2bdd397`):** [API 5 / offline checks / binding / CLI](automatic-audio-public.md)
 exposes opt-in named-profile automatic audio with preservation choice and retained
 decision reporting, preserving old prefixes/defaults. Copy/video-only need no
 backend/cache; only accepted conversion clears storage. Offline checks borrow

@@ -195,7 +195,9 @@ if(BUILD_TESTING)
     target_link_libraries(runtime_validation_tests PRIVATE send_airplay2)
     sap2_warnings(runtime_validation_tests)
     add_test(NAME runtime_validation_tests COMMAND runtime_validation_tests
-      "${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/hls")
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures/hls"
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/audio-codec-spike/fixtures"
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/uwp-host/stereo-validation/automatic-cases.tsv")
     set_tests_properties(runtime_validation_tests PROPERTIES TIMEOUT 120)
   endif()
   add_executable(file_source_tests tests/file_source_tests.cpp src/file_media_source.cpp)

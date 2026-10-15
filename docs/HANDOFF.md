@@ -9,7 +9,22 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D84 expanded automatic AppContainer gate (2026-10-15, in progress).**
+The user's Proceed starts `codex/automatic-audio-uwp-runtime` from merged
+[PR #64](https://github.com/ilyalissoboi/send-airplay2/pull/64), `2bdd397`.
+All 16 checks passed at final head `4126ca9` in run `38593843522`.
+Read [the private package/catalog/performance contract](automatic-audio-uwp-runtime.md).
+The expanded hook reuses automatic production owners; owned-copy/conversion
+matrices, unused TemporaryFolder release, public binding lifetimes and bounded
+cold/warm measurements are being added. The user supplied a private video path
+and authorized read-only performance testing; keep it out of committed evidence.
+Package 0.1.0.4 and manual folder/file picker grants are planned, with no receiver,
+network, publication or Screenbox change. Packaged results remain unclaimed until
+actual source/module hashes and runtime/storage checks are verified.
+
 **D83 public automatic audio integration (2026-10-15).**
+PR #64 merged as `2bdd397`; all 16 final-head checks passed at `4126ca9`.
+D84 above supersedes this slice's historical next queue.
 The user's Proceed starts `codex/automatic-audio-public` from merged
 [PR #63](https://github.com/ilyalissoboi/send-airplay2/pull/63), `6788583`.
 All 16 checks passed at final head `4f2494b` in run `38584885677`.

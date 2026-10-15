@@ -13,6 +13,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include <vector>
 
 namespace {
@@ -144,12 +145,101 @@ void validate_scenario(const std::filesystem::path& path, const ValidationScenar
             " releases=" + std::to_string(cache.releases));
     }
 }
+void automatic_scenarios(const std::filesystem::path& fixtures,
+                         const std::filesystem::path& catalog) {
+    std::ifstream cases(catalog);
+    if (!cases) {
+        throw std::runtime_error("automatic catalog open");
+    }
+    std::string line;
+    unsigned count = 0;
+    while (std::getline(cases, line)) {
+        if (line.empty() || line.front() == '#') {
+            continue;
+        }
+        std::istringstream row(line);
+        std::string group, filename;
+        std::uint32_t action = 0, family = 0, channels = 0;
+        std::uint64_t segments = 0;
+        bool stress = false;
+        if (!(row >> group >> filename >> action >> family >> channels >> segments >> stress)) {
+            throw std::runtime_error("automatic catalog row");
+        }
+        const bool converted = action == SAP2_AUDIO_ACTION_STEREO_AAC;
+        std::vector<std::uint32_t> modes = !stress ? std::vector<std::uint32_t>{0}
+                                           : converted
+                                               ? std::vector<std::uint32_t>{0, 1, 2, 3, 4, 6, 7, 8}
+                                               : std::vector<std::uint32_t>{0, 1, 3, 4, 6, 7};
+        if (stress && family == SAP2_AUDIO_FAMILY_DTS) {
+            modes.insert(modes.end(), {9, 10, 11});
+        }
+        for (const auto mode : modes) {
+            Source source;
+            std::ifstream input(fixtures / group / filename, std::ios::binary);
+            if (!input) {
+                throw std::runtime_error("automatic fixture open " + filename);
+            }
+            source.bytes = Bytes(std::istreambuf_iterator<char>(input), {});
+            Cache cache;
+            cache.fail_read = mode == 2;
+            auto source_table = source.table();
+            auto cache_table = cache.table();
+            sap2_runtime_automatic_report report{};
+            report.media.struct_size = sizeof(report);
+            const auto selected = mode == 4                                ? 11U
+                                  : action == SAP2_AUDIO_ACTION_VIDEO_ONLY ? 0U
+                                                                           : 42U;
+            const auto result = sap2_runtime_validate_automatic(
+                &source_table, &cache_table, selected, mode == 8 ? 1ULL : 512ULL * 1024 * 1024,
+                mode, &report);
+            const auto expected_result = mode == 4                ? SAP2_ERROR_AUDIO_TRACK_INVALID
+                                         : mode == 6 && converted ? SAP2_ERROR_MEDIA_UNSUPPORTED
+                                         : mode == 7              ? SAP2_ERROR_CANCELLED
+                                         : mode == 8              ? SAP2_ERROR_MEDIA_LIMIT
+                                                                  : SAP2_OK;
+            const bool prepared = expected_result == SAP2_OK;
+            const auto expected_clears = converted && mode != 4 && mode != 6 && mode != 7 ? 1U : 0U;
+            const auto expected_failure = mode == 2                ? SAP2_MEDIA_FAILURE_CACHE
+                                          : mode == 3 && converted ? SAP2_MEDIA_FAILURE_SOURCE
+                                          : mode == 8              ? SAP2_MEDIA_FAILURE_LIMIT
+                                                                   : SAP2_MEDIA_FAILURE_NONE;
+            const auto scenario = filename + " mode=" + std::to_string(mode);
+            if (result != SAP2_OK || report.preparation_result != expected_result ||
+                source.released != 1 || cache.releases != 1 || cache.clears != expected_clears ||
+                report.media.failure != expected_failure ||
+                (prepared &&
+                 (report.decision.action != action || report.decision.source_family != family ||
+                  report.decision.output_channels != channels ||
+                  report.media.audio_segments != segments ||
+                  report.decision.selected_audio_id != (action == 1 ? 0U : 42U))) ||
+                (!prepared && report.decision.struct_size != 0) ||
+                (!converted && (cache.seals != 0 || !cache.sealed.empty())) ||
+                (mode >= 9 &&
+                 (report.media.resource_bytes == 0 || report.preparation_read_calls == 0 ||
+                  report.request_read_calls == 0 ||
+                  report.preparation_requested_bytes < report.preparation_actual_bytes ||
+                  report.request_requested_bytes < report.request_actual_bytes ||
+                  cache.seals != 1 || report.post_stop_refused != 1)) ||
+                (prepared && converted && mode <= 1 && report.post_stop_refused != 1)) {
+                throw std::runtime_error(
+                    scenario + " result=" + std::to_string(result) +
+                    " preparation=" + std::to_string(report.preparation_result) +
+                    " failure=" + std::to_string(report.media.failure) +
+                    " segments=" + std::to_string(report.media.audio_segments) +
+                    " clear=" + std::to_string(cache.clears));
+            }
+            ++count;
+        }
+    }
+    std::cout << count << " automatic runtime scenarios passed\n";
+}
 } // namespace
 int main(int argc, char** argv) {
-    if (argc != 2) {
+    if (argc != 4) {
         return 2;
     }
     static_assert(sizeof(sap2_runtime_report) == 48, "private report ABI");
+    static_assert(sizeof(sap2_runtime_automatic_report) == 160, "private automatic report ABI");
     for (const auto* name : {"dts.mp4", "dts.mkv", "aac.mp4"}) {
         const auto path = std::filesystem::path(argv[1]) / name;
         const auto check = [&](const ValidationScenario& scenario) {
@@ -176,4 +266,10 @@ int main(int argc, char** argv) {
         }
     }
     std::cout << "16 offline runtime scenarios passed\n";
+    try {
+        automatic_scenarios(argv[2], argv[3]);
+    } catch (const std::exception& error) {
+        std::cerr << error.what() << '\n';
+        return 1;
+    }
 }

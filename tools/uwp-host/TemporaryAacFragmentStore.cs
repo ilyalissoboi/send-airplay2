@@ -90,5 +90,18 @@ internal sealed class TemporaryAacFragmentStore : AacFragmentStore
             try { Directory.Delete(directory, false); } catch { }
         }
     }
-    protected override void OnReleased() { lock (gate) { ++ReleaseCount; } }
+    protected override void OnReleased()
+    {
+        lock (gate)
+        {
+            ++ReleaseCount;
+            // Automatic copy/refusal releases an unused context without Clear.
+            // Remove only our exclusively reserved, still-empty child; any
+            // unexpected file remains visible to the validation assertions.
+            if (!cleared && files.Count == 0)
+            {
+                try { Directory.Delete(directory, false); } catch { }
+            }
+        }
+    }
 }

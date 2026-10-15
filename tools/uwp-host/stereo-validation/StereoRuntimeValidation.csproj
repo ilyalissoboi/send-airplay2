@@ -40,6 +40,16 @@
       <Link>Fixtures\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="automatic-cases.tsv"><Link>Fixtures\automatic-cases.tsv</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="..\..\audio-codec-spike\fixtures\expanded-decoder\*.mkv;..\..\audio-codec-spike\fixtures\expanded-decoder\*.mp4;..\..\audio-codec-spike\fixtures\expanded-decoder\*.mov">
+      <Link>Fixtures\expanded-decoder\%(Filename)%(Extension)</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\audio-codec-spike\fixtures\audio-policy\*.mp4">
+      <Link>Fixtures\audio-policy\%(Filename)%(Extension)</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\audio-codec-spike\fixtures\hls\provenance.json"><Link>Provenance\hls-provenance.json</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="..\..\audio-codec-spike\fixtures\expanded-decoder\provenance.json"><Link>Provenance\expanded-decoder-provenance.json</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="..\..\audio-codec-spike\fixtures\audio-policy\provenance.json"><Link>Provenance\audio-policy-provenance.json</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
     <Content Include="..\Assets\*.png">
       <Link>Assets\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
