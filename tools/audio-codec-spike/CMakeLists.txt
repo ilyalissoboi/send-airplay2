@@ -54,6 +54,13 @@ if(WINDOWS_STORE)
   add_custom_command(TARGET sap2_codec_probe POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${sap2_codec_runtime_dlls} "$<TARGET_FILE_DIR:sap2_codec_probe>" COMMAND_EXPAND_LISTS)
 elseif(BUILD_TESTING)
+  add_executable(sap2_origin_hls_tests origin_hls_tests.cpp)
+  target_link_libraries(sap2_origin_hls_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
+  target_include_directories(sap2_origin_hls_tests SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})
+  sap2_codec_warnings(sap2_origin_hls_tests)
+  add_test(NAME matroska_presentation_origin COMMAND sap2_origin_hls_tests
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/origin")
+  set_tests_properties(matroska_presentation_origin PROPERTIES TIMEOUT 120)
   add_executable(sap2_automatic_audio_tests "${sap2_decoder_root}/tests/automatic_audio_tests.cpp"
     "${sap2_decoder_root}/src/prepared_automatic_media.cpp" "${sap2_decoder_root}/src/prepared_stereo_media.cpp")
   target_compile_definitions(sap2_automatic_audio_tests PRIVATE SAP2_HAS_STEREO_AAC=1)

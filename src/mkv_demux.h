@@ -152,6 +152,11 @@ public:
     /// Presentation start of a segment (its cue time) and its duration, in
     /// microseconds; the last segment ends with the last video frame.
     [[nodiscard]] std::uint64_t segment_start_us(std::size_t segment) const;
+    /// Exact cue time in metadata().tracks.front().timescale ticks, before
+    /// microsecond rounding. Used to rebase private composition without drift.
+    [[nodiscard]] std::uint64_t segment_start_ticks(std::size_t segment) const;
+    /// Exclusive end on the same exact native video clock.
+    [[nodiscard]] std::uint64_t segment_end_ticks(std::size_t segment) const;
     [[nodiscard]] std::uint64_t segment_duration_us(std::size_t segment) const;
     /// File bytes between this segment's cue cluster and the next one's: an
     /// estimate for advertised bandwidth before a segment is read.
@@ -167,7 +172,11 @@ public:
     };
     /** @throws RemuxException for blocks that contradict the index;
      *          std::out_of_range for a segment past segment_count(). */
-    [[nodiscard]] Segment read_segment(std::size_t segment, const RandomReader& read) const;
+    /// Private composition may retain text preceding the first video cue so
+    /// overlapping captions can be clipped at its rebased presentation origin.
+    /// Default reading retains the ordinary remux window contract.
+    [[nodiscard]] Segment read_segment(std::size_t segment, const RandomReader& read,
+                                       bool include_initial_text = false) const;
 
 private:
     static std::unique_ptr<MkvIndex> open_tracks(const RandomReader& read, std::uint64_t file_size,

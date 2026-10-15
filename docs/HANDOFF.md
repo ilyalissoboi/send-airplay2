@@ -9,7 +9,32 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D85 Matroska presentation origins (2026-10-15).**
+The user's Proceed starts `codex/matroska-presentation-origin` from merged
+[PR #65](https://github.com/ilyalissoboi/send-airplay2/pull/65), `76abc3c`.
+All 16 final-head checks passed at `9290fb3` in run `38663140087`.
+Read [the shared-origin contract](matroska-presentation-origin.md). The private
+composition rebases Matroska video/text to its first video timestamp and reads
+audio at that source offset, retaining relative timing and existing refusal
+bounds. Owned indexed/full-scan, reordered-video, earlier/later audio, subtitle,
+seek/EOF and common-offset byte-equivalence checks pass. Private package 0.1.0.6
+at `b946bb7` passes bundled and hash-verified folder-granted 126-case/57-fixture
+matrices, with actual token/six loaded hashes and cleanup verified. Local static,
+shared/enabled and codec suites pass 39/39, 40/40, 41/41 and 12/12. Inspect PR-head CI.
+
+The authorized brokered video passes its origin requirement but still refuses
+before fragment generation: media-unsupported in 29 ms, 332 reads / 5,553,062
+returned bytes, complete cleanup. A bounded diagnostic accepts the initial
+offset window, then hits the existing canonical-frame-grid guard. Do not infer
+source corruption or widen tolerances. Next proposed slice: reproduce the DTS
+timestamp/decoder-phase mismatch with owned controls, distinguish valid timing
+from discontinuities, then repeat brokered conversion performance before receivers.
+Keep private input identity/content out of committed evidence; no receiver,
+publication or Screenbox change. Speakers/discrete surround stay hardware-deferred.
+
 **D84 expanded automatic AppContainer gate (2026-10-15).**
+PR #65 merged as `76abc3c`; all 16 final-head checks passed at `9290fb3`.
+D85 above supersedes this slice's historical next queue.
 The user's Proceed starts `codex/automatic-audio-uwp-runtime` from merged
 [PR #64](https://github.com/ilyalissoboi/send-airplay2/pull/64), `2bdd397`.
 All 16 checks passed at final head `4126ca9` in run `38593843522`.

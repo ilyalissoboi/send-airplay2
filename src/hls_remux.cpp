@@ -62,6 +62,30 @@ std::uint64_t track_end_time(const Mp4Track& track) {
     return last.decode_time + last.duration;
 }
 
+/// Rebase only timestamps; packet offsets, durations, reorder offsets and the
+/// reorder edit retain their original meaning. Earlier decode samples cannot
+/// belong to this private composition's selected video span.
+void rebase_video(Mp4Track& video, std::uint64_t origin_ticks) {
+    for (auto& sample : video.samples) {
+        if (sample.decode_time < origin_ticks) {
+            throw RemuxException(RemuxFailure::unsupported, "video precedes composition origin");
+        }
+        sample.decode_time -= origin_ticks;
+    }
+}
+
+/// Cues ending before the selected video are discarded; an overlapping cue
+/// starts at presentation zero. Preserve text and all subsequent relative times.
+void rebase_cues(std::vector<TextCue>& cues, std::uint64_t origin_us) {
+    cues.erase(std::remove_if(cues.begin(), cues.end(),
+                              [origin_us](const auto& cue) { return cue.end_us <= origin_us; }),
+               cues.end());
+    for (auto& cue : cues) {
+        cue.start_us = cue.start_us > origin_us ? cue.start_us - origin_us : 0;
+        cue.end_us -= origin_us;
+    }
+}
+
 /// "6.000000": whole seconds and six decimals, independent of the C locale.
 std::string seconds_text(std::uint64_t microseconds) {
     auto fraction = std::to_string(microseconds % microseconds_per_second);
@@ -393,6 +417,8 @@ struct IndexedPresentation {
     MediaSource input;
     std::unique_ptr<MkvIndex> index;
     std::vector<std::uint64_t> durations_us;
+    std::uint64_t video_origin_ticks = 0;
+    std::uint64_t subtitle_origin_us = 0;
     std::mutex mutex; // Guards the caches; building runs outside it.
     std::vector<std::shared_ptr<const IndexedSegment>> segments;
     std::vector<std::vector<std::shared_ptr<const std::string>>> webvtt; // [track][segment].
@@ -405,7 +431,8 @@ struct IndexedPresentation {
                 return segments[index_of];
             }
         }
-        const auto read = index->read_segment(index_of, request_reader(input, context));
+        const auto read =
+            index->read_segment(index_of, request_reader(input, context), video_origin_ticks != 0);
         auto built = std::make_shared<IndexedSegment>();
         built->movie = index->metadata();
         built->movie.text_tracks.clear();
@@ -414,6 +441,7 @@ struct IndexedPresentation {
             built->movie.tracks[track].samples = read.samples[track];
             built->layout.ranges.push_back({0, read.samples[track].size()});
         }
+        rebase_video(built->movie.tracks.front(), video_origin_ticks);
         built->header_size =
             moof_size(built->movie, built->layout) + mdat_header_size(built->movie, built->layout);
         built->size = built->header_size + mdat_payload_size(built->movie, built->layout);
@@ -455,7 +483,10 @@ struct IndexedPresentation {
         const auto end = index_of + 1 < durations_us.size()
                              ? index->segment_start_us(index_of + 1)
                              : std::numeric_limits<std::uint64_t>::max();
-        auto text = std::make_shared<const std::string>(webvtt_segment(cues, start, end));
+        rebase_cues(cues.cues, subtitle_origin_us);
+        auto text = std::make_shared<const std::string>(webvtt_segment(
+            cues, start - subtitle_origin_us,
+            end == std::numeric_limits<std::uint64_t>::max() ? end : end - subtitle_origin_us));
         std::lock_guard<std::mutex> lock(mutex);
         if (!webvtt[track][index_of]) {
             webvtt[track][index_of] = std::move(text);
@@ -490,6 +521,10 @@ RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
     const auto& index_ref = *presentation->index;
     const auto& metadata = index_ref.metadata();
     const auto count = index_ref.segment_count();
+    if (video_only) {
+        presentation->video_origin_ticks = index_ref.segment_start_ticks(0);
+        presentation->subtitle_origin_us = index_ref.segment_start_us(0);
+    }
     for (std::size_t segment = 0; segment < count; ++segment) {
         presentation->durations_us.push_back(index_ref.segment_duration_us(segment));
     }
@@ -508,21 +543,19 @@ RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
     result.target_duration_seconds = target_from(durations);
     if (video_only) {
         result.durations_us = durations;
-        result.zero_origin_video = index_ref.segment_start_us(0) == 0;
+        const auto timescale = metadata.tracks.front().timescale;
+        result.audio_source_origin_48khz =
+            ticks_to_audio_samples(presentation->video_origin_ticks, timescale);
+        result.zero_origin_video = true;
         for (std::size_t segment = 0; segment < count; ++segment) {
             result.video_boundaries_48khz.push_back(ticks_to_audio_samples(
-                index_ref.segment_start_us(segment), microseconds_per_second));
+                index_ref.segment_start_ticks(segment) - presentation->video_origin_ticks,
+                timescale));
         }
-        const auto last_start = index_ref.segment_start_us(count - 1);
-        const auto last_duration = index_ref.segment_duration_us(count - 1);
-        constexpr std::uint64_t maximum_composition_us = 7ULL * 24 * 3600 * microseconds_per_second;
-        if (last_start > maximum_composition_us ||
-            last_duration > maximum_composition_us - last_start) {
-            throw RemuxException(RemuxFailure::too_large,
-                                 "HLS audio composition exceeds seven days");
-        }
+        const auto source_end_ticks = index_ref.segment_end_ticks(count - 1);
+        (void)ticks_to_audio_samples(source_end_ticks, timescale);
         result.video_boundaries_48khz.push_back(
-            ticks_to_audio_samples(last_start + last_duration, microseconds_per_second));
+            ticks_to_audio_samples(source_end_ticks - presentation->video_origin_ticks, timescale));
         result.subtitles = subtitle_renditions(metadata);
     }
     std::vector<std::uint64_t> estimates;
@@ -758,6 +791,18 @@ static RemuxedHls remux_to_hls_impl(MediaSource input, const std::atomic_bool* c
         const auto& video = presentation->movie.tracks.front();
         (void)ticks_to_audio_samples(track_end_time(video), video.timescale);
     }
+    std::uint64_t audio_source_origin_48khz = 0;
+    if (video_only && matroska) {
+        auto& movie = presentation->movie;
+        auto& video = movie.tracks.front();
+        const auto origin = video.samples.front().decode_time;
+        audio_source_origin_48khz = ticks_to_audio_samples(origin, video.timescale);
+        const auto origin_us = ticks_to_us(origin, video.timescale);
+        rebase_video(video, origin);
+        for (auto& track : movie.text_tracks) {
+            rebase_cues(track.cues, origin_us);
+        }
+    }
     presentation->segments = plan_segments(presentation->movie);
 
     RemuxedHls result;
@@ -796,6 +841,7 @@ static RemuxedHls remux_to_hls_impl(MediaSource input, const std::atomic_bool* c
     const auto& segments = presentation->segments;
     result.text_track_count = movie.text_tracks.size();
     if (video_only) {
+        result.audio_source_origin_48khz = audio_source_origin_48khz;
         result.durations_us = durations_of(movie, segments);
         result.video_segment_bytes = sizes;
         result.subtitles = subtitle_renditions(movie);

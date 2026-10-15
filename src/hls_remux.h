@@ -74,9 +74,13 @@ struct RemuxedHls {
     std::vector<std::uint64_t> video_segment_bytes;
     std::vector<std::vector<std::uint64_t>> subtitle_segment_bytes;
     bool segment_sizes_estimated = false;
-    /// Absolute video boundary times at 48 kHz, rounded once from source clocks.
+    /// Video boundary times on the composition's 48 kHz clock, rounded once.
     /// Unlike summing rounded EXTINF values, these do not accumulate drift.
     std::vector<std::uint64_t> video_boundaries_48khz;
+    /// Private Matroska composition rebases video/text to its first video cue.
+    /// Add this source-clock offset to decoder window requests, then rebase PCM
+    /// first_sample before encoding. Rounded once from native video ticks.
+    std::uint64_t audio_source_origin_48khz = 0;
     bool zero_origin_video = false;
 };
 /// Private composition only: raise the video/subtitle playlist target together.
@@ -106,7 +110,10 @@ void raise_composition_target_duration(RemuxedHls& presentation, std::uint32_t m
  * @throws std::runtime_error when the source fails a read; std::invalid_argument
  *         for a source without callbacks. Messages contain no paths or URLs.
  * video_only is the private composition path: index video/text without selecting
- * or muxing source audio. startup_context, when given, is borrowed synchronously
+ * or muxing source audio. Matroska video/text are rebased to the first video
+ * timestamp; audio_source_origin_48khz retains the source clock for composition.
+ * MP4 edit validation and ordinary/selected-copy remux clocks are unchanged.
+ * startup_context, when given, is borrowed synchronously
  * and supplies one absolute deadline with valid stop/cancellation pointers;
  * otherwise the legacy internal per-read context applies. Neither is retained.
  */

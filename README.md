@@ -57,7 +57,8 @@ delivery, offline preparation checks and decision reporting through C, C# and CL
 Copy needs no backend/cache; conversion retains the optional backend and host cache.
 The [expanded x64 AppContainer gate](docs/automatic-audio-uwp-runtime.md) passes
 bundled and folder-granted automatic fixture checks. An authorized real-video
-benchmark refuses at the existing zero-origin-video requirement before conversion;
+benchmark now passes [Matroska origin handling](docs/matroska-presentation-origin.md)
+but refuses at the existing DTS frame-grid guard before fragment generation;
 real-file conversion performance and receiver checks remain gates.
 
 ## Build

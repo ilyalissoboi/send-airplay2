@@ -1,5 +1,11 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
+**D85 origin result:** [shared Matroska presentation origins](matroska-presentation-origin.md)
+pass native and packaged timing/storage controls. The brokered private video
+passes its origin check, then refuses at the existing canonical DTS frame-grid
+guard. Owned timing/decoder-phase investigation is next; conversion performance
+in step 4 and receiver observations in step 5 remain open.
+
 **D84 runtime result:** [expanded automatic AppContainer gate](automatic-audio-uwp-runtime.md)
 passes the owned bundled/folder-granted matrices. The authorized real video
 refuses at the existing zero-origin-video guard before generating fragments.

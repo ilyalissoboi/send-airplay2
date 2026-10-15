@@ -1,5 +1,11 @@
 # Private stereo AAC HLS composition (D71)
 
+**D85 extension:** [shared Matroska presentation origins](matroska-presentation-origin.md)
+rebase nonzero Matroska video/text and offset decoded audio together. Owned
+indexed/full-scan, reordered-video, timing/seek/EOF and packaged checks pass.
+MP4 edit restrictions and other refusal bounds below remain. The private video's
+remaining DTS frame-grid refusal leaves real-file conversion performance open.
+
 **D80 extension:** [compressed packet indexing](matroska-compressed-index.md) adds
 codec-aware durations/restarts and independent trim controls within the retained
 packet/I/O bounds. Compact high-packet-count movie scaling remains a gate before

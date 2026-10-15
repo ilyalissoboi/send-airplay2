@@ -78,6 +78,10 @@ struct AacFragmentStore {
  * retain their source as in remux_to_hls, so the host must release those before releasing storage.
  * Callbacks must cooperate and must not reenter stop; C++ cannot interrupt them.
  * No caller may concurrently mutate presentation() or stop/destroy this object.
+ * Matroska composition uses the first video timestamp as a shared origin:
+ * video/text are rebased, source audio windows are offset then relabeled on
+ * that same presentation clock. Earlier audio is clipped; later audio keeps
+ * initial silence. Source origin plus movie span must fit the seven-day bound.
  */
 class StereoAacHls {
 public:

@@ -1,0 +1,53 @@
+{
+  "license": "Apache-2.0; existing original synthesized packets and new container metadata",
+  "generator": "generate_origin_fixtures.py",
+  "tool_version": "ffprobe version 9.0.2-full_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers",
+  "tool_distribution": "development extraction only; no executable redistributed",
+  "timestamp_scale_ns": 1000000,
+  "fixtures": [
+    {
+      "file": "dts-early-indexed.mkv",
+      "bytes": 2943833,
+      "sha256": "5d7c14e8dfa64996a5421d3e12288de5cd9a01ce4387c80c635043eb0e7ff7e8",
+      "owned_packet_source": "hls/dts.mkv",
+      "source_sha256": "7e314c1fd9bb10cd120105e758048437d01145d44acb777178e3bcb8eeb54f88",
+      "video_origin_ms": 83,
+      "audible_audio_origin_ms": 0,
+      "codec_delay_ms": 0,
+      "indexed": true
+    },
+    {
+      "file": "dts-late-full.mkv",
+      "bytes": 2942955,
+      "sha256": "92905822974fba0b89f864626d52a55ffac8f4008ffe4bbadbb5926160ed33f0",
+      "owned_packet_source": "hls/dts.mkv",
+      "source_sha256": "7e314c1fd9bb10cd120105e758048437d01145d44acb777178e3bcb8eeb54f88",
+      "video_origin_ms": 83,
+      "audible_audio_origin_ms": 203,
+      "codec_delay_ms": 0,
+      "indexed": false
+    },
+    {
+      "file": "dts-reordered-indexed.mkv",
+      "bytes": 2942960,
+      "sha256": "f7f37ce2d428fa41db9d0ebe10f55c2518b82bd203d647f544949625b3fb8c0f",
+      "owned_packet_source": "hls/dts-bframes.mp4",
+      "source_sha256": "dc16ad877ec7d7c38617cf7f6db1e7da9e6e2afb6a210d8c74db6bfb2171cbe5",
+      "video_origin_ms": 83,
+      "audible_audio_origin_ms": 0,
+      "codec_delay_ms": 0,
+      "indexed": true
+    },
+    {
+      "file": "flac-common-indexed.mkv",
+      "bytes": 157362,
+      "sha256": "f4d4ef7ff8e6d49d5700e94cd5278c178f495c160a4293ebe45147c5ecc10819",
+      "owned_packet_source": "expanded-decoder/flac.mkv",
+      "source_sha256": "04818805c9c51bb35ccc2e971d226e51b84b3bbb0cb3c3bf6c1343e691ba7e83",
+      "video_origin_ms": 123,
+      "audible_audio_origin_ms": 123,
+      "codec_delay_ms": 0,
+      "indexed": true
+    }
+  ]
+}
