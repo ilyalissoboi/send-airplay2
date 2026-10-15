@@ -87,7 +87,7 @@ The first request and repeat together make 1211 source calls requesting
 39,682,048 bytes (39,659,039 returned). The middle request makes 8192 calls
 requesting exactly **268,435,456 bytes (256 MiB)**, with 268,279,808 returned and
 no fragment sealed. This matches the decoder's unchanged requested-byte ceiling;
-the public hook reports the fixed resource-limit category, not internal exception
+the private validation hook reports the fixed resource-limit category, not internal exception
 text. The precise reason the middle seek needs this much I/O remains unproven.
 Each preparation makes 1542 calls requesting 45,395,831 bytes (45,179,352 returned).
 Both owners clear storage, release source/store once and remove their child.
