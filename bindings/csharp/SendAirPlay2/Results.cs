@@ -253,6 +253,7 @@ namespace SendAirPlay2
             MediaCleanedUp = status.MediaCleanedUp != 0;
             AuthoringFlags = (AuthoringFlags)status.AuthoringFlags;
             SelectedAudioId = status.SelectedAudioId;
+            AudioDecision = status.AudioDecision.StructSize == 0 ? null : new AudioDecision(status.AudioDecision);
         }
 
         /// <summary>Handle phase.</summary>
@@ -289,6 +290,9 @@ namespace SendAirPlay2
         public AuthoringFlags AuthoringFlags { get; }
         /// <summary>Original selected source audio ID, or zero if none was prepared.</summary>
         public ulong SelectedAudioId { get; }
+        /// <summary>Automatic preparation decision, retained after Stop. Null before
+        /// preparation or when another delivery mode is selected.</summary>
+        public AudioDecision? AudioDecision { get; }
     }
 
     /// <summary>Fixed conversion categories.</summary>

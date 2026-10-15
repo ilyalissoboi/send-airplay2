@@ -1,5 +1,10 @@
 # Automatic audio delivery and expanded decoder scope (D76)
 
+**D83 implementation:** [API 5, offline checking, binding and CLI integration](automatic-audio-public.md)
+implements ordered step 3. Automatic delivery is opt-in under D82's finite
+profile; old prefixes/defaults persist. Expanded packaged runtime, performance
+and receiver gates remain ordered steps 4-5.
+
 **D82 implementation:** [private selected copy/conversion policy](automatic-audio-policy.md)
 implements ordered step 2 in its finite offline subset. The metadata plan and
 prepared owner preserve original identity, backend/cache independence for copy,

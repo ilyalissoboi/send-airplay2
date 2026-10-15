@@ -330,6 +330,20 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
         }
         // Begin supervision before any HTTP fetch can start conversion.
         media_monitor_ = std::thread([this] { monitor_media(); });
+    } else if (settings_.delivery == CastDelivery::automatic_audio_hls) {
+        const MediaReadContext context{&cancel_requested_, &cancel_requested_,
+                                       std::chrono::steady_clock::now() +
+                                           media_preparation_timeout};
+        auto prepared = PreparedAutomaticMedia::open(
+            source_, settings_.fragment_store, settings_.cache_quota_bytes, context,
+            settings_.audio_profile, settings_.conversion_permission, settings_.audio_track_id);
+        {
+            std::lock_guard<std::mutex> lock(state_mutex_);
+            automatic_media_ = std::move(prepared);
+        }
+        // Observe natural session termination for copy too. Only conversion
+        // owns a worker/cache and can produce a media-generation failure.
+        media_monitor_ = std::thread([this] { monitor_media(); });
     }
 
     MediaServerOptions server_options;
@@ -339,9 +353,8 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
     server_options.request_timeout_ms = media_request_timeout_ms;
     server_options.content_type = settings_.content_type;
     try {
-        if (prepared_media_) {
-            server = MediaServer::start_resource_set(prepared_media_->presentation().resources,
-                                                     server_options);
+        if (const auto* prepared = prepared_presentation()) {
+            server = MediaServer::start_resource_set(prepared->resources, server_options);
         } else {
             server = remuxed ? MediaServer::start_resource_set(std::move(remuxed->resources),
                                                                server_options)
@@ -357,8 +370,8 @@ void CastController::run_start(std::unique_ptr<MediaServer>& server,
 
     UrlPlaybackOptions options;
     options.receiver = {settings_.receiver_address, settings_.receiver_port, 0};
-    options.media_url = prepared_media_
-                            ? server->resource_url(prepared_media_->presentation().playlist_name)
+    const auto* prepared = prepared_presentation();
+    options.media_url = prepared  ? server->resource_url(prepared->playlist_name)
                         : remuxed ? server->resource_url(remuxed->playlist_name)
                                   : server->url();
     options.start_position_seconds = settings_.start_position_seconds;
@@ -446,6 +459,11 @@ CastSnapshot CastController::snapshot() const {
         if (prepared_media_) {
             snapshot.selected_audio_id = prepared_media_->selected_audio_id();
             snapshot.authoring_flags = prepared_media_->authoring_flags();
+        }
+        if (automatic_media_) {
+            snapshot.audio_decision = automatic_media_->decision();
+            snapshot.selected_audio_id = snapshot.audio_decision->source_id;
+            snapshot.authoring_flags = automatic_media_->authoring_flags();
         }
         session = session_.get();
     }
@@ -554,7 +572,10 @@ void CastController::drain_media(UrlPlaybackSession* session, MediaServer* serve
     if (prepared_media_) {
         prepared_media_->stop();
     }
-    if (settings_.fragment_store.clear) {
+    if (automatic_media_) {
+        automatic_media_->stop();
+    }
+    if (settings_.delivery == CastDelivery::stereo_aac_hls && settings_.fragment_store.clear) {
         try {
             settings_.fragment_store.clear();
         } catch (...) {
@@ -588,10 +609,12 @@ void CastController::monitor_media() noexcept {
     }
 }
 void CastController::observe_media_failure_locked(const UrlPlaybackSession* session) noexcept {
-    if (!prepared_media_ || media_failure_.load() != StereoAacHlsFailure::none) {
+    if ((!prepared_media_ && !automatic_media_) ||
+        media_failure_.load() != StereoAacHlsFailure::none) {
         return;
     }
-    const auto failure = prepared_media_->failure();
+    const auto failure =
+        automatic_media_ ? automatic_media_->failure() : prepared_media_->failure();
     if (failure == StereoAacHlsFailure::none) {
         return;
     }
@@ -599,5 +622,10 @@ void CastController::observe_media_failure_locked(const UrlPlaybackSession* sess
     media_failure_ = failure;
     cancel_requested_ = true;
     state_changed_.notify_all();
+}
+const RemuxedHls* CastController::prepared_presentation() const noexcept {
+    return automatic_media_  ? &automatic_media_->presentation()
+           : prepared_media_ ? &prepared_media_->presentation()
+                             : nullptr;
 }
 } // namespace send_airplay2::detail

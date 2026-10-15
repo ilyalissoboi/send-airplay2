@@ -482,7 +482,9 @@ int cast(const CastArguments& arguments) {
 int run_cast_cli(int argc, const char* const* argv) {
     for (int index = 1; index < argc; ++index) {
         const std::string_view option = argv[index];
-        if (option == "--stereo-aac" || option == "--probe-tracks") {
+        if (option == "--stereo-aac" || option == "--probe-tracks" ||
+            option == "--automatic-audio" || option == "--check-audio" ||
+            option == "--preserve-audio") {
             return run_api_host(argc, argv);
         }
         // Do not interpret option values (including paths beginning with --)

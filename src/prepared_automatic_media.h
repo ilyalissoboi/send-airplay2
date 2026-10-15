@@ -9,7 +9,7 @@
 
 namespace send_airplay2::detail {
 enum class AudioConversionPermission { allow_stereo, preserve_original };
-/** Private prepared copy/conversion owner; no public delivery mode yet.
+/** Private owner underlying public automatic audio delivery and offline checks.
  * decision/failure/authoring_flags are thread-safe and perform no source/cache I/O.
  * Presentation resource access is serialized with Stop and media-server drain.
  * Stop follows media-server drain and is idempotent. Retained resource copies

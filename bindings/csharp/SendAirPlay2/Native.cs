@@ -6,7 +6,7 @@ using System.Text;
 namespace SendAirPlay2
 {
     /// <summary>
-    /// P/Invoke declarations mirroring include/send_airplay2/*.h (API version 2,
+    /// P/Invoke declarations mirroring include/send_airplay2/*.h (API version 5,
     /// plus receivers.h).
     /// Struct layouts follow the C declarations field for field with natural
     /// alignment; every callback uses the C calling convention.
@@ -17,7 +17,7 @@ namespace SendAirPlay2
         internal const string Library = "send_airplay2";
 
         /// <summary>The header version this binding was written against.</summary>
-        internal const uint ApiVersion = 4;
+        internal const uint ApiVersion = 5;
 
         /// <summary>SAP2_CREDENTIAL_RECORD_MAX: upper bound of an encoded record.</summary>
         internal const int CredentialRecordMax = 203;
@@ -126,6 +126,10 @@ namespace SendAirPlay2
             internal ulong AudioTrackId;
             internal ulong CacheQuotaBytes;
             internal IntPtr FragmentStore;
+            internal uint ReservedV5;
+            internal uint AudioProfile;
+            internal uint ConversionPermission;
+            internal uint ReservedV5Tail;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -153,7 +157,28 @@ namespace SendAirPlay2
             internal uint AuthoringFlags;
             internal uint ReservedV4;
             internal ulong SelectedAudioId;
+            internal AudioDecision AudioDecision;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct AudioDecision
+        {
+            internal uint StructSize, Profile, Action, Reason, SourceFamily, OutputFamily,
+                OutputChannels, Reserved;
+            internal ulong SelectedAudioId;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct AudioOptions
+        {
+            internal uint StructSize, Profile, ConversionPermission, Reserved;
+            internal ulong AudioTrackId, CacheQuotaBytes;
+            internal IntPtr FragmentStore;
+            internal uint TimeoutMs, ReservedTail;
+        }
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int sap2_media_check_audio(ref MediaSource source,
+            ref AudioOptions options, IntPtr context, CancelCallback shouldCancel,
+            ref AudioDecision decision);
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct PairOptions

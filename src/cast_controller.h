@@ -6,6 +6,7 @@
 #include "pair_verify.h"
 #include "url_playback_session.h"
 #include "prepared_stereo_media.h"
+#include "prepared_automatic_media.h"
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -56,9 +57,10 @@ enum class CastResult : std::int32_t {
 
 /// How the media reaches the receiver (SAP2_DELIVERY_*).
 enum class CastDelivery {
-    progressive,   ///< One representation of CastSettings::content_type.
-    hls_remux,     ///< HLS built from the source by remux_to_hls (D60).
-    stereo_aac_hls ///< Explicit selected-audio conversion; optional backend and host cache.
+    progressive,        ///< One representation of CastSettings::content_type.
+    hls_remux,          ///< HLS built from the source by remux_to_hls (D60).
+    stereo_aac_hls,     ///< Explicit selected-audio conversion; optional backend and host cache.
+    automatic_audio_hls ///< Named-profile selected copy or stereo conversion.
 };
 
 /// Handle lifecycle. `ended` is derived from the session's own end reason while
@@ -78,6 +80,8 @@ struct CastSettings {
     std::optional<std::uint64_t> audio_track_id;
     std::uint64_t cache_quota_bytes = 0;
     AacFragmentStore fragment_store;
+    AudioDeliveryProfile audio_profile = AudioDeliveryProfile::apple_hls_v1;
+    AudioConversionPermission conversion_permission = AudioConversionPermission::allow_stereo;
 };
 
 /// Returns null only when no credentials are stored under the profile.
@@ -114,6 +118,7 @@ struct CastSnapshot {
     bool media_cleaned_up = false;
     std::uint64_t selected_audio_id = 0;
     std::uint32_t authoring_flags = 0;
+    std::optional<AudioDeliveryPlan> audio_decision;
 };
 
 /**
@@ -169,6 +174,8 @@ private:
     void drain_media(UrlPlaybackSession* session, MediaServer* server) noexcept;
     /// Called with state_mutex_ held; observes the first media cause without I/O/allocation.
     void observe_media_failure_locked(const UrlPlaybackSession* session) noexcept;
+    /// Startup-only borrowed view; resource access must precede media drain.
+    [[nodiscard]] const RemuxedHls* prepared_presentation() const noexcept;
 
     const CastSettings settings_;
     const CastDependencies dependencies_;
@@ -177,6 +184,7 @@ private:
     // controller's own source copy releases the host context.
     const MediaSource source_;
     std::unique_ptr<PreparedStereoMedia> prepared_media_;
+    std::unique_ptr<PreparedAutomaticMedia> automatic_media_;
 
     std::atomic_bool cancel_requested_{false}; // Borrowed by UrlPlaybackSession::start.
     mutable std::mutex state_mutex_;           // Guards the fields below.

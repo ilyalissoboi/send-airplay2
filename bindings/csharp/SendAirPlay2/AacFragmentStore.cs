@@ -10,7 +10,8 @@ namespace SendAirPlay2
     /// <remarks>Implementations must atomically seal each complete fragment, support
     /// concurrent positional reads, and poll the borrowed control during slow work.
     /// Clear runs after workers drain and removes only this cast's data. A store must
-    /// be used by exactly one Cast.Create call. Callback exceptions are contained.
+    /// be used by exactly one Cast.Create or AudioDelivery.Check call. Automatic
+    /// delivery can release an unused store without Clear. Callback exceptions are contained.
     /// Create owns failure cleanup too; do not dispose a store while its cast lives.</remarks>
     public abstract class AacFragmentStore
     {
@@ -28,7 +29,7 @@ namespace SendAirPlay2
         protected AacFragmentStore()
         {
             seal = SealThunk; read = ReadThunk;
-            clear = _ => ClearOnce(); release = _ => ReleaseUnowned();
+            clear = _ => ClearOnce(); release = _ => ReleaseAfterNative();
         }
         /// <summary>Publish a complete immutable fragment or throw; never retain control.</summary>
         protected abstract void Seal(ulong index, byte[] bytes, ReadControl control);
@@ -36,7 +37,8 @@ namespace SendAirPlay2
         protected abstract int Read(ulong index, ulong offset, byte[] buffer, int count, ReadControl control);
         /// <summary>Remove only the objects created for this cast.</summary>
         protected abstract void Clear();
-        /// <summary>Release backing resources after Clear and all callbacks.</summary>
+        /// <summary>Release backing resources after callbacks. Clear precedes this
+        /// for accepted conversion; automatic copy can release an unused store.</summary>
         protected virtual void OnReleased() { }
 
         private int SealThunk(IntPtr context, ulong index, IntPtr bytes, UIntPtr length, IntPtr control)
@@ -72,9 +74,13 @@ namespace SendAirPlay2
         }
         internal void ReleaseUnowned()
         {
+            ClearOnce();
+            ReleaseAfterNative();
+        }
+        internal void ReleaseAfterNative()
+        {
             if (Interlocked.Exchange(ref released, 1) == 0)
             {
-                ClearOnce();
                 try { OnReleased(); } catch { }
             }
         }

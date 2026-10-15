@@ -1,5 +1,10 @@
 # Receiver validation record
 
+**D83 boundary (2026-10-15):** [API 5 automatic integration and offline checks](automatic-audio-public.md)
+add public/binding/CLI compatibility and owned/scripted lifecycle controls.
+No receiver or expanded AppContainer runtime observation is added; compilation/
+import and unit/CI results do not establish playback support for the profile.
+
 **D82 boundary (2026-10-14):** [private copy/conversion policy controls](automatic-audio-policy.md)
 are offline and include owned payload, tone, lifecycle and refusal checks. No
 receiver or expanded packaged-runtime observation is added; the named copy table

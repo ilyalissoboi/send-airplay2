@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-14 (Asia/Tokyo), after PRs #1-#62 merged.
+Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#63 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 4 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,11 +17,18 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D82 private policy:** [original-ID selected copy/conversion preparation](automatic-audio-policy.md)
+**D83 public integration:** [API 5 / offline checks / binding / CLI](automatic-audio-public.md)
+exposes opt-in named-profile automatic audio with preservation choice and retained
+decision reporting, preserving old prefixes/defaults. Copy/video-only need no
+backend/cache; only accepted conversion clears storage. Offline checks borrow
+source/cache and discard resources without credentials or receiver access.
+Expanded packaged-runtime, performance and receiver gates remain next.
+
+**D82 merged (PR #63, `6788583`):** [original-ID selected copy/conversion preparation](automatic-audio-policy.md)
 adds a finite Apple HLS v1 copy table and bounded existing stereo conversion.
 Copy/video-only work without the backend/cache; preservation refuses conversion.
 No configuration/source/cache/network failure triggers a different track or route.
-Public API/binding/CLI integration/reporting remains next, with later packaged,
+D83 above implements public integration/reporting; later packaged,
 real-file/brokered performance and receiver gates. No package or Screenbox change.
 
 **D81 merged (PR #62, `c69543a`):** [streamed packets and sparse restart anchors](matroska-compact-index.md)

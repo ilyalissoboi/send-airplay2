@@ -1,5 +1,10 @@
 # Public playback interface
 
+**D83/API 5:** [opt-in automatic audio delivery and offline preparation checks](automatic-audio-public.md)
+add a named copy/conversion profile, preservation choice and retained decision
+reporting. Sized v1-v4 prefixes/defaults remain valid. This is offline integration;
+receiver and expanded packaged-runtime validation remain later gates.
+
 **D74/API 4:** explicit optional stereo AAC delivery, borrowed source-track probe,
 host fragment storage and conversion supervision are described in
 [stereo-aac-playback.md](stereo-aac-playback.md). Old option/status layouts remain

@@ -35,9 +35,9 @@ public sealed partial class App : Application
         var lines = new List<string>();
         try
         {
-            Require(SendAirPlay2Library.ApiVersion == 4 && SendAirPlay2Library.StereoAacAvailable,
+            Require(SendAirPlay2Library.ApiVersion == SendAirPlay2Library.BindingApiVersion && SendAirPlay2Library.StereoAacAvailable,
                 "integrated backend");
-            lines.Add("api=4 stereo_aac=1");
+            lines.Add("api=" + SendAirPlay2Library.ApiVersion + " stereo_aac=1");
             StorageFile? picked = null;
             if (pick)
             {

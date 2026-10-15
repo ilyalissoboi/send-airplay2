@@ -43,7 +43,7 @@ The [automatic audio expansion plan](docs/automatic-audio-transcoding-plan.md)
 proposes copying eligible audio or converting validated inputs to stereo AAC.
 Its [private decoder foundation](docs/audio-decoder-expansion.md) now supports
 the recorded FLAC, Opus, Vorbis, PCM and TrueHD subset with offline checks.
-Automatic policy is pending. [Bounded Matroska clock reconstruction](docs/coarse-matroska-audio.md)
+The finite automatic policy is implemented. [Bounded Matroska clock reconstruction](docs/coarse-matroska-audio.md)
 covers ordinary millisecond clocks for short presentations. [Selected PCM indexing](docs/matroska-pcm-index.md)
 supports longer PCM presentations within its resource limits.
 [Compressed duration/restart indexing](docs/matroska-compressed-index.md) extends
@@ -51,8 +51,11 @@ that subset to FLAC/Opus/Vorbis/TrueHD. [Compact restart anchors](docs/matroska-
 remove the canonical decoder's full packet table, with synthetic high-count
 TrueHD/Opus scaling checks under unchanged I/O and decode budgets.
 [Private selected copy/conversion preparation](docs/automatic-audio-policy.md)
-now resolves the finite profile's copy table or bounded stereo route. Automatic
-mode and decision reporting are not yet exposed through the public API/binding/CLI.
+now resolves the finite profile's copy table or bounded stereo route.
+[API 5 integration](docs/automatic-audio-public.md) exposes opt-in automatic
+delivery, offline preparation checks and decision reporting through C, C# and CLI.
+Copy needs no backend/cache; conversion retains the optional backend and host cache.
+Expanded packaged runtime, real-file performance and receiver checks remain gates.
 
 ## Build
 

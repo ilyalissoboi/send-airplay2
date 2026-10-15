@@ -19,6 +19,8 @@ namespace SendAirPlay2
         HlsRemux = 1,
         /// <summary>Copy video and convert selected audio to stereo AAC using an opt-in native build.</summary>
         StereoAacHls = 2,
+        /// <summary>Copy eligible selected audio or convert it under an explicit delivery profile.</summary>
+        AutomaticAudioHls = 3,
     }
 
     /// <summary>Options for <see cref="Cast.Create"/> (sap2_cast_options).</summary>
@@ -55,10 +57,15 @@ namespace SendAirPlay2
         public CastDelivery Delivery { get; set; } = CastDelivery.Progressive;
         /// <summary>Original source track ID, or null for deterministic automatic selection.</summary>
         public ulong? AudioTrackId { get; set; }
-        /// <summary>Mandatory finite sealed-byte quota for stereo AAC delivery.</summary>
+        /// <summary>Mandatory finite sealed-byte quota when audio is converted.</summary>
         public ulong CacheQuotaBytes { get; set; }
-        /// <summary>Per-cast host storage. Ownership transfers to Create, including its failure cleanup.</summary>
+        /// <summary>Per-cast host storage. Create consumes its context; automatic
+        /// delivery clears it only if conversion accepts it, releasing unused storage without Clear.</summary>
         public AacFragmentStore? FragmentStore { get; set; }
+        /// <summary>Named profile for automatic audio delivery.</summary>
+        public AudioDeliveryProfile AudioProfile { get; set; } = AudioDeliveryProfile.AppleHlsV1;
+        /// <summary>Allow stereo conversion or refuse loss of the original audio.</summary>
+        public AudioConversionPermission ConversionPermission { get; set; }
     }
 
     /// <summary>Owns one native cast; releases it in the finalizer if not disposed.</summary>
@@ -161,6 +168,8 @@ namespace SendAirPlay2
                     nativeOptions.AudioTrackId = options.AudioTrackId ?? 0;
                     nativeOptions.CacheQuotaBytes = options.CacheQuotaBytes;
                     nativeOptions.FragmentStore = fragmentTable.Pointer;
+                    nativeOptions.AudioProfile = (uint)options.AudioProfile;
+                    nativeOptions.ConversionPermission = (uint)options.ConversionPermission;
                     var nativeSource = source.ToNative();
                     // Allocate roots before native ownership can transfer. A later
                     // allocation failure must not leave live native callbacks unrooted.
@@ -184,7 +193,11 @@ namespace SendAirPlay2
                 if (!transferred)
                 {
                     source.ReleaseUnowned();
-                    options.FragmentStore?.ReleaseUnowned();
+                    if (options.Delivery == CastDelivery.AutomaticAudioHls)
+                    {
+                        options.FragmentStore?.ReleaseAfterNative();
+                    }
+                    else { options.FragmentStore?.ReleaseUnowned(); }
                 }
             }
         }

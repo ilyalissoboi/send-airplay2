@@ -1,5 +1,12 @@
 # C# binding (D52)
 
+**D83 update:** the development binding requires API 5 and adds
+`CastDelivery.AutomaticAudioHls`, profile/preservation options,
+`CastStatus.AudioDecision` and `AudioDelivery.Check()` without receiver access.
+Read [the automatic integration contract](automatic-audio-public.md), including
+borrowed source and unused/accepted managed cache ownership. Published `ci.207`
+remains unchanged; the D74/API-4 note below is historical.
+
 **D74 update:** the development binding targets API 4 and adds
 `CastDelivery.StereoAacHls`, original audio track selection, `MediaTracks.Probe`,
 `AacFragmentStore`/`FileAacFragmentStore`, and conversion status. Read
@@ -18,7 +25,7 @@ yet; its native calls are the ones D48 and D51 tested from C.
 | Path | Purpose |
 | --- | --- |
 | `bindings/csharp/SendAirPlay2/` | `netstandard2.0` library, no package dependencies, so UWP (.NET Native) and modern .NET hosts can share it |
-| `bindings/csharp/SendAirPlay2.Tests/` | `net8.0` console test runner (`RollForward=Major`) against the real native library, whose path is its argument |
+| `bindings/csharp/SendAirPlay2.Tests/` | `net8.0` console test runner (`RollForward=Major`) with native-library path and owned-fixture root arguments |
 
 The library loads `send_airplay2` (`send_airplay2.dll`, `libsend_airplay2.so` or
 `.dylib`) by the platform's normal rules; a host can redirect that with

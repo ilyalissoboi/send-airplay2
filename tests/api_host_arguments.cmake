@@ -5,6 +5,7 @@
 # Discovery refusals open no socket either.
 # Nothing may print a private URL.
 set(media "${WORK_DIR}/api-host-media.bin")
+set(POLICY_FIXTURES "${CMAKE_CURRENT_LIST_DIR}/../tools/audio-codec-spike/fixtures/audio-policy")
 file(WRITE "${media}" "0123456789")
 
 function(run_host expected_status expected_text scenario)
@@ -18,6 +19,13 @@ function(run_host expected_status expected_text scenario)
 endfunction()
 
 run_host(0 "Usage: airplay2-api-host" "help" --help)
+run_host(2 "exclusive with remux" "automatic and legacy modes are exclusive" --automatic-audio --remux --address 127.0.0.1 --profile p --file "${media}")
+run_host(2 "requires automatic audio" "preservation requires an automatic mode" --preserve-audio --address 127.0.0.1 --profile p --file "${media}")
+run_host(2 "must be provided together" "automatic cache configuration is paired" --automatic-audio --cache-directory "${WORK_DIR}" --address 127.0.0.1 --profile p --file "${media}")
+run_host(2 "accepts file" "offline audio check rejects receiver options" --check-audio --address 127.0.0.1 --file "${media}")
+run_host(1 "Audio check: media_(unsupported|malformed)" "offline refusal without credentials or cache" --check-audio --file "${media}")
+run_host(0 "Audio check: ok selected_audio_id=42 action=2 reason=2 source_family=1 output_family=1 channels=2" "offline copy works without backend/cache" --check-audio --file "${POLICY_FIXTURES}/aac-48000-2.mp4" --preserve-audio)
+run_host(0 "Audio check: ok selected_audio_id=0 action=1" "offline video only" --check-audio --file "${POLICY_FIXTURES}/video-only.mp4")
 run_host(2 "requires cache directory and quota" "conversion requires explicit host cache" --stereo-aac --address 127.0.0.1 --profile p --file "${media}")
 run_host(2 "require --stereo-aac" "selection requires conversion" --audio-track 47 --address 127.0.0.1 --profile p --file "${media}")
 run_host(2 "exclusive with remux" "delivery modes are exclusive" --stereo-aac --remux --cache-directory "${WORK_DIR}" --cache-quota-bytes 1024 --address 127.0.0.1 --profile p --file "${media}")

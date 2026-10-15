@@ -246,6 +246,66 @@ internal static class Program
         File.Delete(sibling); Directory.Delete(root, false);
     }
 
+    private sealed class OwnedFixtureSource : MediaSource
+    {
+        private readonly byte[] bytes;
+        internal int Releases;
+        internal OwnedFixtureSource(string path) { bytes = File.ReadAllBytes(path); }
+        public override long Size => bytes.Length;
+        protected override int Read(long offset, byte[] buffer, int count, ReadControl control)
+        {
+            if (control.ShouldStop || offset >= bytes.Length) { return 0; }
+            count = Math.Min(count, bytes.Length - checked((int)offset));
+            Array.Copy(bytes, offset, buffer, 0, count);
+            return count;
+        }
+        protected override void OnReleased() => ++Releases;
+    }
+    private static void AutomaticAudioChecks(string fixtures)
+    {
+        group = "automatic audio public binding";
+        var unused = new CacheCounters();
+        bool rejectedNull = false;
+        try { AudioDelivery.Check(null!, TimeSpan.FromSeconds(30), fragmentStore: new CountingCache(unused)); }
+        catch (ArgumentNullException) { rejectedNull = true; }
+        Check(rejectedNull && unused.Releases == 1 && unused.Clears == 0,
+              "argument failure releases unused managed check storage without Clear");
+        var source = new OwnedFixtureSource(Path.Combine(fixtures, "audio-policy", "aac-48000-2.mp4"));
+        var counters = new CacheCounters();
+        var decision = AudioDelivery.Check(source, TimeSpan.FromSeconds(30), fragmentStore: new CountingCache(counters),
+            permission: AudioConversionPermission.PreserveOriginal);
+        Check(decision.Action == AudioDeliveryAction.Copy && decision.Reason == AudioDeliveryReason.ProfileCopy &&
+              decision.SelectedAudioId == 42 && decision.SourceFamily == AudioFamily.Aac &&
+              decision.OutputFamily == AudioFamily.Aac && decision.OutputChannels == 2,
+              "managed decision fields match native selected copy");
+        Check(source.Releases == 0 && counters.Clears == 0 && counters.Releases == 1,
+              "offline copy borrows source and releases unused managed store without Clear");
+        var options = LoopbackOptions(new MemoryStore());
+        options.Delivery = CastDelivery.AutomaticAudioHls;
+        counters = new CacheCounters();
+        options.FragmentStore = new CountingCache(counters);
+        using (var cast = Cast.Create(options, source))
+        {
+            Check(cast.GetStatus().AudioDecision == null, "no decision before preparation");
+            cast.Stop(); cast.Stop();
+        }
+        Check(source.Releases == 1 && counters.Clears == 0 && counters.Releases == 1,
+              "unstarted automatic handle releases source/store exactly once without cache cleanup");
+        var dts = new OwnedFixtureSource(Path.Combine(fixtures, "decoder", "dts-commentary-first.mp4"));
+        Check(ResultOf(() => AudioDelivery.Check(dts, TimeSpan.FromSeconds(30))) == ResultCode.AudioSelectionRequired,
+              "managed ambiguity precedes eligibility filtering");
+        Check(ResultOf(() => AudioDelivery.Check(dts, TimeSpan.FromSeconds(30), audioTrackId: 42)) ==
+              (SendAirPlay2Library.StereoAacAvailable ? ResultCode.MediaCache : ResultCode.Unsupported),
+              "managed conversion checks backend/storage after resolving original ID");
+        using (var cancel = new CancellationTokenSource())
+        {
+            cancel.Cancel();
+            Check(ResultOf(() => AudioDelivery.Check(dts, TimeSpan.FromSeconds(30), cancellationToken: cancel.Token)) == ResultCode.Cancelled,
+                  "offline managed check cancels before source work");
+        }
+        Check(dts.Releases == 0, "failed offline checks preserve source ownership");
+        dts.ReleaseUnowned();
+    }
     private static void VersionAndLayout()
     {
         group = "version and layout";
@@ -264,9 +324,11 @@ internal static class Program
         var castSize = Marshal.SizeOf<SendAirPlay2.Native.CastOptions>();
         SendAirPlay2.Native.sap2_cast_options_init_sized(ref cast, new UIntPtr((uint)castSize));
         Check(cast.StructSize == castSize, $"cast options size {castSize} matches the library");
-        Check(castSize == (IntPtr.Size == 8 ? 104 : 80) &&
-              Marshal.SizeOf<SendAirPlay2.Native.CastStatus>() == 104,
-              "literal v4 option/status sizes preserve both native ABIs");
+        Check(castSize == (IntPtr.Size == 8 ? 120 : 96) &&
+              Marshal.SizeOf<SendAirPlay2.Native.CastStatus>() == 144 &&
+              Marshal.SizeOf<SendAirPlay2.Native.AudioDecision>() == 40 &&
+              Marshal.SizeOf<SendAirPlay2.Native.AudioOptions>() == 48,
+              "literal v5 option/status/decision sizes preserve both native ABIs");
         Check(cast.ReceiverPort == 7000 && cast.StartTimeoutMs == 30000 &&
                   cast.MediaConnections == 16 && cast.CredentialStore == IntPtr.Zero &&
                   cast.Delivery == (uint)CastDelivery.Progressive,
@@ -517,9 +579,9 @@ internal static class Program
 
     private static int Main(string[] args)
     {
-        if (args.Length != 1 || !File.Exists(args[0]))
+        if (args.Length != 2 || !File.Exists(args[0]))
         {
-            Console.Error.WriteLine("usage: SendAirPlay2.Tests PATH_TO_NATIVE_LIBRARY");
+            Console.Error.WriteLine("usage: SendAirPlay2.Tests PATH_TO_NATIVE_LIBRARY FIXTURES_ROOT");
             return 2;
         }
         var libraryPath = Path.GetFullPath(args[0]);
@@ -528,6 +590,7 @@ internal static class Program
         try
         {
             VersionAndLayout();
+            AutomaticAudioChecks(args[1]);
             ConversionOwnershipAndProbe();
             FilesystemCacheCallbacks();
             SourceOwnership();
