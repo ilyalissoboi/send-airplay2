@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#64 are merged. `main` contains
+Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#65 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,7 +23,21 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D85 Matroska presentation origins (2026-10-15, in progress).**
+The user's Proceed starts `codex/matroska-presentation-origin` from merged
+[PR #65](https://github.com/ilyalissoboi/send-airplay2/pull/65), `76abc3c`.
+All 16 final-head checks passed at `9290fb3` in run `38663140087`.
+Read [the shared-origin contract](matroska-presentation-origin.md). The private
+composition rebases Matroska video/text to its first video timestamp and reads
+audio at that source offset, retaining relative timing and existing refusal
+bounds. Owned indexed/full-scan, reordered-video, earlier/later audio, subtitle,
+seek and EOF checks precede package 0.1.0.6 and the authorized read-only brokered
+benchmark. No receiver/performance result is claimed yet. Keep private input
+identity/content out of committed evidence; no publication or Screenbox change.
+
 **D84 expanded automatic AppContainer gate (2026-10-15).**
+PR #65 merged as `76abc3c`; all 16 final-head checks passed at `9290fb3`.
+D85 above supersedes this slice's historical next queue.
 The user's Proceed starts `codex/automatic-audio-uwp-runtime` from merged
 [PR #64](https://github.com/ilyalissoboi/send-airplay2/pull/64), `2bdd397`.
 All 16 checks passed at final head `4126ca9` in run `38593843522`.

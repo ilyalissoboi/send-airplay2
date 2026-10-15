@@ -1505,6 +1505,12 @@ std::size_t MkvIndex::segment_count() const {
 std::uint64_t MkvIndex::segment_start_us(std::size_t segment) const {
     return impl_->ticks_to_us(impl_->start_ticks(segment));
 }
+std::uint64_t MkvIndex::segment_start_ticks(std::size_t segment) const {
+    return static_cast<std::uint64_t>(impl_->start_ticks(segment));
+}
+std::uint64_t MkvIndex::segment_end_ticks(std::size_t segment) const {
+    return static_cast<std::uint64_t>(impl_->end_of(segment));
+}
 std::uint64_t MkvIndex::segment_duration_us(std::size_t segment) const {
     return impl_->ticks_to_us(impl_->end_of(segment)) -
            impl_->ticks_to_us(impl_->start_ticks(segment));
@@ -1520,7 +1526,8 @@ std::uint64_t MkvIndex::estimated_segment_bytes(std::size_t segment) const {
     return end > begin ? end - begin : 0;
 }
 
-MkvIndex::Segment MkvIndex::read_segment(std::size_t segment, const RandomReader& read) const {
+MkvIndex::Segment MkvIndex::read_segment(std::size_t segment, const RandomReader& read,
+                                         bool include_initial_text) const {
     const auto& impl = *impl_;
     if (segment >= impl.starts.size()) {
         throw std::out_of_range("segment index");
@@ -1548,7 +1555,8 @@ MkvIndex::Segment MkvIndex::read_segment(std::size_t segment, const RandomReader
     for (std::size_t index = next; index < tracks.size(); ++index) {
         // Keep the first frame past the window, when the scan reached it, so a
         // cue without a duration can end at its successor as in the full scan.
-        auto window = frames_in(tracks[index], start, end);
+        const auto text_start = include_initial_text && segment == 0 ? 0 : start;
+        auto window = frames_in(tracks[index], text_start, end);
         const SelectedTrack* source = &tracks[index];
         for (std::size_t frame = 0; frame < source->frames.size(); ++frame) {
             if (source->frames[frame].timestamp >= end) {

@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#64 merged.
+Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#65 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,7 +17,12 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D84:** [expanded automatic AppContainer and bounded performance checks](automatic-audio-uwp-runtime.md)
+**D85 in progress:** [Matroska presentation origins](matroska-presentation-origin.md)
+rebase private converted video/text and source audio windows together. Native
+timing/seek/EOF controls and a new private package precede repeating the brokered
+performance gate. No receiver or performance result is claimed yet.
+
+**D84 merged (PR #65, `76abc3c`):** [expanded automatic AppContainer and bounded performance checks](automatic-audio-uwp-runtime.md)
 pass the bundled and folder-granted 115-case/53-fixture matrices in private
 package 0.1.0.5 with token/module hashes and storage cleanup verified. Runtime
 DLL staging now follows the selected codec import libraries. The authorized

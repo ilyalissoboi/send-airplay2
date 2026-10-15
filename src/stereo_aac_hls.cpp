@@ -227,6 +227,7 @@ struct StereoAacHls::Impl {
     Bytes config;
     StereoAacHlsAuthoring authoring;
     std::vector<std::uint64_t> boundaries;
+    std::uint64_t source_origin_samples = 0;
     std::uint32_t channels = 0;
     std::uint64_t channel_mask = 0;
     std::uint64_t quota = 0;
@@ -351,7 +352,11 @@ struct StereoAacHls::Impl {
         const auto count = static_cast<std::uint32_t>(rounded_end + preroll_samples - epoch_begin);
         const auto source_count = static_cast<std::uint32_t>(
             std::min<std::uint64_t>(count, boundaries.back() - epoch_begin));
-        auto input = decoder->read_window(epoch_begin, source_count, context);
+        auto input =
+            decoder->read_window(source_origin_samples + epoch_begin, source_count, context);
+        // The decoder uses the original source clock; AAC epochs use the same
+        // zero-based presentation clock as the rebased copied video/subtitles.
+        input.first_sample = epoch_begin;
         if (!input.channels && input.eof) {
             input.channels = channels;
             input.channel_mask = channel_mask;
@@ -487,6 +492,7 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     auto presentation = remux_to_hls(source, context.request_cancelled, true, &context);
     require(presentation.zero_origin_video, AudioDecodeFailure::unsupported,
             "AAC HLS video timeline requires a zero origin and no trim");
+    impl->source_origin_samples = presentation.audio_source_origin_48khz;
     validate_stereo_video_spans(presentation.durations_us);
     impl->boundaries = plan_stereo_aac_boundaries(presentation.video_boundaries_48khz);
     const auto audio_count = impl->boundaries.size() - 1;
@@ -501,8 +507,12 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     // All renditions share the larger target, including video and subtitles.
     raise_composition_target_duration(presentation, target);
     const auto duration = impl->boundaries.back();
+    require(impl->source_origin_samples <= maximum_movie_samples &&
+                duration <= maximum_movie_samples - impl->source_origin_samples,
+            AudioDecodeFailure::too_large, "AAC HLS source timeline exceeds seven days");
     require(!impl->decoder->requires_start_rebuild() ||
-                duration <= AudioDecoderSource::maximum_start_rebuild_samples,
+                impl->source_origin_samples + duration <=
+                    AudioDecoderSource::maximum_start_rebuild_samples,
             AudioDecodeFailure::unsupported,
             "coarse Matroska HLS exceeds bounded start reconstruction");
     require(duration > 0 && duration <= maximum_movie_samples, AudioDecodeFailure::too_large,
@@ -528,6 +538,11 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
         // not perturb the serving decoder's established startup state.
         auto serving_decoder = std::move(impl->decoder);
         impl->decoder = AudioDecoderSource::open(source, context, selected.id, true);
+        if (impl->source_origin_samples != 0) {
+            // Legacy fixed-frame Matroska clocks establish cadence at source
+            // zero before any offset seek, independently for each decoder owner.
+            (void)impl->decoder->read_window(0, stereo_aac_frame_samples, context);
+        }
         const auto reference = impl->generate(0, context);
         impl->authoring.representative_audio_bytes = reference.size();
         impl->authoring.representative_audio_duration_us =
