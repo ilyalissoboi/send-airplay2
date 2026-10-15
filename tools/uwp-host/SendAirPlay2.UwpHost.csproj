@@ -52,6 +52,12 @@
     <ProjectReference Include="..\..\bindings\csharp\SendAirPlay2\SendAirPlay2.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(Sap2StereoAac)' == 'true'">
+    <!-- The validated FFmpeg 9 runtime: use the same required list for early
+         validation and package content so a missing DLL cannot be globbed away. -->
+    <Sap2CodecRuntime Include="$(Sap2NativeDir)\avcodec-63.dll;$(Sap2NativeDir)\avformat-63.dll;$(Sap2NativeDir)\avutil-61.dll;$(Sap2NativeDir)\swresample-7.dll" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- The native library and its OpenSSL DLL, placed in the package root;
          botan-3.dll exists only in desktop shared builds. -->
@@ -65,7 +71,7 @@
       <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(Sap2NativeDir)\av*.dll;$(Sap2NativeDir)\swresample*.dll" Condition="'$(Sap2StereoAac)' == 'true'">
+    <Content Include="@(Sap2CodecRuntime)" Condition="'$(Sap2StereoAac)' == 'true'">
       <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -78,8 +84,9 @@
     </Content>
   </ItemGroup>
 
-  <Target Name="Sap2CheckNativeDir" BeforeTargets="Build">
-    <Error Condition="'$(Sap2StereoAac)' == 'true' And (!Exists('$(Sap2NativeDir)\avcodec-63.dll') Or !Exists('$(Sap2FfmpegShare)\copyright'))" Text="Choose the validated UWP codec runtime and its matching FFmpeg notice directory." />
+  <Target Name="Sap2CheckNativeDir" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(Sap2StereoAac)' == 'true' And !Exists('%(Sap2CodecRuntime.Identity)')" Text="Required codec runtime DLL missing: %(Sap2CodecRuntime.Filename)%(Sap2CodecRuntime.Extension). Choose the validated UWP codec runtime directory." />
+    <Error Condition="'$(Sap2StereoAac)' == 'true' And !Exists('$(Sap2FfmpegShare)\copyright')" Text="Choose the matching FFmpeg notice directory; its copyright file is required." />
     <Error Condition="!Exists('$(Sap2NativeDir)\send_airplay2.dll')"
            Text="send_airplay2.dll not found in $(Sap2NativeDir). Build the UWP native library first (docs/uwp-native-build.md) or set Sap2NativeDir." />
   </Target>

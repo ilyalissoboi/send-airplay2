@@ -90,6 +90,10 @@ existing delivery behavior. Build with `/p:Sap2StereoAac=true`,
 `/p:Sap2NativeDir=<validated UWP codec runtime directory>` and
 `/p:Sap2FfmpegShare=<matching FFmpeg notice directory>` to include the existing
 optional codec DLLs and notice. This property defaults to false. Automatic/stereo
+packaging requires `avcodec-63.dll`, `avformat-63.dll`, `avutil-61.dll` and
+`swresample-7.dll`. One explicit item list drives validation before
+`PrepareForBuild` and package content; missing components or the notice fail
+early. Unrelated DLLs are not picked up by a codec wildcard. Automatic/stereo
 casts use a per-cast TemporaryFolder fragment store, a 512-MiB quota and a 60-second
 start timeout. Fixed-field decision and cache counters are logged after disposal;
 an automatic copy also releases its unused store and removes its empty child.

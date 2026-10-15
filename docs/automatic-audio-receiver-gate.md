@@ -87,6 +87,16 @@ rejections, expected decisions and complete cache cleanup. Relative documentatio
 links and `git diff --check` pass. Actual PR-head CI is a separate merge check;
 inspect it rather than treating the baseline's 16 checks as this head's result.
 
+PR review found that optional codec packaging checked only `avcodec`, allowing
+the other three required runtime DLLs to be omitted. Validation now runs before
+`PrepareForBuild` against the same explicit four-DLL item list used for content.
+All four individual missing-DLL builds, missing notice/core checks and the
+complete/default-off paths behave as expected (eight checks). A full enabled
+publish contains the four matching DLLs and notice, excludes unrelated codec
+components and preserves the receiver-tested package. This is an offline
+packaging check, with no runtime or receiver behavior change; see
+[review validation](validation/automatic-audio-runtime-packaging-review-windows-2026-10-15.json).
+
 No cast is active. The development host remains installed with its existing
 pairings and manual fixture grants. The private film from D87 was not cast.
 These short original controls do not establish whole-film throughput, arbitrary

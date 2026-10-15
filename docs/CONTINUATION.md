@@ -47,6 +47,12 @@ slice, then separately approve opt-in packaging/Screenbox integration. Keep
 backend defaults, publication/pin boundaries and deferred speaker/discrete
 surround scope. No Computer Use for visual confirmation.
 
+PR #69 review: validate all four FFmpeg runtime DLLs before `PrepareForBuild`
+and package that same explicit list. Eight missing/complete/default-off guard
+checks and an enabled publish pass; DLL/notice hashes match. Historical receiver
+evidence/package remain unchanged. See
+[offline packaging evidence](validation/automatic-audio-runtime-packaging-review-windows-2026-10-15.json).
+
 **D87 bounded DTS seeks (2026-10-15, PR #68).**
 PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in
 run `38677650564`. The user's Resume work continues on fresh

@@ -33,6 +33,12 @@ OFF by default. Private test-host scripts/storage/package changes are in
 [PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69); inspect actual-head
 CI before merging. No cast is active; no further receiver input is pending.
 
+PR #69 review follow-up: optional codec packaging now validates all four required
+DLLs before `PrepareForBuild`, using the same explicit list for package content.
+Eight guard checks and a full enabled publish pass; packaged DLL/notice hashes
+match and the historical receiver-tested package is preserved. No new receiver
+claim or runtime change. Read [the review evidence](validation/automatic-audio-runtime-packaging-review-windows-2026-10-15.json).
+
 Next: review/merge this evidence slice, then obtain the user's choice for an
 opt-in package/Screenbox integration slice. Publication/pin changes are separate;
 speakers and discrete converted surround remain hardware-deferred. The isolated
