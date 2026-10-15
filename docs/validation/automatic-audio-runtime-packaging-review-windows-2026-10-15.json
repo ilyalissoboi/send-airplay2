@@ -1,0 +1,98 @@
+{
+  "review_comment_id": 4283972489,
+  "cases": [
+    {
+      "case": "complete",
+      "exit_code": 0,
+      "expected_failure": false,
+      "diagnostic_names_missing_requirement": false
+    },
+    {
+      "case": "disabled",
+      "exit_code": 0,
+      "expected_failure": false,
+      "diagnostic_names_missing_requirement": false
+    },
+    {
+      "case": "missing-avcodec-63.dll",
+      "exit_code": 1,
+      "expected_failure": true,
+      "diagnostic_names_missing_requirement": true
+    },
+    {
+      "case": "missing-avformat-63.dll",
+      "exit_code": 1,
+      "expected_failure": true,
+      "diagnostic_names_missing_requirement": true
+    },
+    {
+      "case": "missing-avutil-61.dll",
+      "exit_code": 1,
+      "expected_failure": true,
+      "diagnostic_names_missing_requirement": true
+    },
+    {
+      "case": "missing-swresample-7.dll",
+      "exit_code": 1,
+      "expected_failure": true,
+      "diagnostic_names_missing_requirement": true
+    },
+    {
+      "case": "missing-notice",
+      "exit_code": 1,
+      "expected_failure": true,
+      "diagnostic_names_missing_requirement": true
+    },
+    {
+      "case": "missing-core",
+      "exit_code": 1,
+      "expected_failure": true,
+      "diagnostic_names_missing_requirement": true
+    }
+  ],
+  "all_pass": true,
+  "explicit_codec_item_list_excludes_unrelated_dll": true,
+  "sentinels_loaded_or_executed": false,
+  "schema_version": 1,
+  "decision": "D88 review follow-up",
+  "date": "2026-10-15",
+  "pr": 69,
+  "reviewed_head": "430249188d1e2f6f4adddbde798f1c7a8ffedfcb",
+  "guard_stage": "before PrepareForBuild",
+  "required_runtime_components": [
+    "avcodec-63.dll",
+    "avformat-63.dll",
+    "avutil-61.dll",
+    "swresample-7.dll"
+  ],
+  "complete_runtime_publish": "PASS",
+  "package_sha256": "1aefc94bc5b56f8c169128c14b964bce5c16aa82afc4b1bd50052011b1c45880",
+  "packaged_runtime_modules": [
+    {
+      "name": "avcodec-63.dll",
+      "sha256": "d9d892cbbff17a129d6c088e102dca375db25ebdba10a9b6c7fa76eb08b75313",
+      "matches_validated_native_build": true
+    },
+    {
+      "name": "avformat-63.dll",
+      "sha256": "9ec7c055114218f6ccb68e1bc0a0bbe77d17076ffd04ef552264f7e07c425408",
+      "matches_validated_native_build": true
+    },
+    {
+      "name": "avutil-61.dll",
+      "sha256": "bd1327659cd5d28e5d5d7dc7a380c74e279d26d7153dddfa47dd1339e4f03127",
+      "matches_validated_native_build": true
+    },
+    {
+      "name": "swresample-7.dll",
+      "sha256": "6b1fbca0846c8aaf4e3072e79b4222fd01281bfa0e5db9b78b15abe6fde2520c",
+      "matches_validated_native_build": true
+    }
+  ],
+  "notice_sha256": "8ae6aaeb33e41be956ff8b2e696ab44a06b4181334ec8b1d04b669652ebe353a",
+  "unrelated_codec_components_packaged": false,
+  "receiver_tested_package_preserved": true,
+  "new_package_installed": false,
+  "receiver_gate_repeated": false,
+  "cpp_runtime_changes": false
+}

@@ -52,7 +52,7 @@ adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
 Switching variants keeps the app's data only as an in-place update, which
 Windows allows only to a higher version. Before building the other variant,
 raise its `Version` above the installed one (the committed manifests are
-0.1.22.0 and 0.1.23.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
+0.1.28.0 and 0.1.29.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
 0.1.4.0, D55 used 0.1.6.0, 0.1.8.0, 0.1.10.0 and 0.1.12.0, D57 0.1.14.0 and D61
 0.1.16.0, 0.1.18.0, 0.1.20.0 and 0.1.22.0).
 Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
@@ -71,7 +71,8 @@ and `#` comments are skipped:
 | `discover [NAME]` | One scan; fills the address (default: the form's receiver name) |
 | `discover-model MODEL` | One scan; fills the address only when exactly one receiver matches the model |
 | `profile NAME` | Sets the PasswordVault profile; NAME uses the same 1-32 character syntax as script names |
-| `cast vault\|builtin LABEL [remux\|progressive] [start=SECONDS]` | Casts the file remembered as LABEL; remux is the default |
+| `cast vault\|builtin LABEL [remux\|progressive\|automatic\|stereo] [start=SECONDS] [preserve]` | Casts the remembered file; remux is the default. `preserve` requires automatic delivery and refuses conversion |
+| `fixtures` | Opens a manual folder picker and remembers the nine original D88 receiver controls as `receiver-CODEC` |
 | `wait SECONDS` | Waits |
 | `pause`, `play`, `seek SECONDS`, `status`, `stop` | The button actions |
 | `wait-state STATE SECONDS` | Until the receiver reports that `PlaybackState` |
@@ -83,6 +84,20 @@ receiver name). The first failing command ends the script and stops a cast it
 left running, so a run can be judged from `Script NAME: done` or
 `failed at line N`. Pick each file once with its label before the first
 script; the grant survives in-place updates. Observing the TV stays manual.
+
+D88 adds script-only automatic/forced stereo AAC delivery; the form keeps its
+existing delivery behavior. Build with `/p:Sap2StereoAac=true`,
+`/p:Sap2NativeDir=<validated UWP codec runtime directory>` and
+`/p:Sap2FfmpegShare=<matching FFmpeg notice directory>` to include the existing
+optional codec DLLs and notice. This property defaults to false. Automatic/stereo
+packaging requires `avcodec-63.dll`, `avformat-63.dll`, `avutil-61.dll` and
+`swresample-7.dll`. One explicit item list drives validation before
+`PrepareForBuild` and package content; missing components or the notice fail
+early. Unrelated DLLs are not picked up by a codec wildcard. Automatic/stereo
+casts use a per-cast TemporaryFolder fragment store, a 512-MiB quota and a 60-second
+start timeout. Fixed-field decision and cache counters are logged after disposal;
+an automatic copy also releases its unused store and removes its empty child.
+See [the receiver gate](automatic-audio-receiver-gate.md) for pending/tested cases.
 
 Found while adding it: under Native AOT, `args is CommandLineActivatedEventArgs`
 was false for a command-line activation; testing `ActivationKind` and the

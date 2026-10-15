@@ -18,7 +18,8 @@ namespace SendAirPlay2.UwpHost
     /// <item><c>discover [NAME]</c>: one scan; fills the address (default: the form's name).</item>
     /// <item><c>discover-model MODEL</c>: one scan; requires one receiver of that model.</item>
     /// <item><c>profile NAME</c>: selects a PasswordVault profile (script-token syntax).</item>
-    /// <item><c>cast vault|builtin LABEL [remux|progressive] [start=SECONDS]</c>: casts the
+    /// <item><c>fixtures</c>: manually grants the folder containing the nine original receiver controls.</item>
+    /// <item><c>cast vault|builtin LABEL [remux|progressive|automatic|stereo] [start=SECONDS] [preserve]</c>: casts the
     /// file remembered as LABEL (pick it once with that label); remux is the default.</item>
     /// <item><c>wait SECONDS</c>, <c>pause</c>, <c>play</c>, <c>seek SECONDS</c>, <c>status</c>, <c>stop</c>.</item>
     /// <item><c>wait-state STATE SECONDS</c>: until the receiver reports that PlaybackState.</item>
@@ -134,6 +135,8 @@ namespace SendAirPlay2.UwpHost
                     }
                     ProfileBox.Text = words[1];
                     return true;
+                case "fixtures":
+                    return await PickReceiverFixtures();
                 case "cast":
                     return await ScriptCast(words);
                 case "wait":
@@ -181,6 +184,7 @@ namespace SendAirPlay2.UwpHost
             }
             var delivery = CastDelivery.HlsRemux;
             var startSeconds = 0.0;
+            var preserveAudio = false;
             for (var index = 3; index < words.Length; ++index)
             {
                 var option = words[index];
@@ -192,12 +196,29 @@ namespace SendAirPlay2.UwpHost
                 {
                     delivery = CastDelivery.Progressive;
                 }
+                else if (option == "automatic")
+                {
+                    delivery = CastDelivery.AutomaticAudioHls;
+                }
+                else if (option == "stereo")
+                {
+                    delivery = CastDelivery.StereoAacHls;
+                }
+                else if (option == "preserve")
+                {
+                    preserveAudio = true;
+                }
                 else if (!option.StartsWith("start=", StringComparison.Ordinal) ||
                          !TryParseSeconds(option.Substring("start=".Length), out startSeconds))
                 {
                     Log("Script: unknown cast option");
                     return false;
                 }
+            }
+            if (preserveAudio && delivery != CastDelivery.AutomaticAudioHls)
+            {
+                Log("Script: preserve requires automatic delivery");
+                return false;
             }
             var label = words[2];
             if (!StorageApplicationPermissions.FutureAccessList.ContainsItem(label))
@@ -210,9 +231,26 @@ namespace SendAirPlay2.UwpHost
             Log("Script: file " + label + " is " + size + " bytes, type " + file.FileType.ToLowerInvariant());
             return words[1] == "vault"
                        ? await StartCast(ProfileBox.Text.Trim(), new PasswordVaultStore(), "PasswordVault", file,
-                                         delivery, startSeconds)
+                                         delivery, startSeconds, preserveAudio)
                        : await StartCast(BuiltInProfileBox.Text.Trim(), null, "built-in", file, delivery,
-                                         startSeconds);
+                                         startSeconds, preserveAudio);
+        }
+
+        /// <summary>Manually grants a folder of original D88 controls, remembering
+        /// only known filenames under fixed labels. Does not grant private media.</summary>
+        private async Task<bool> PickReceiverFixtures()
+        {
+            var picker = new Windows.Storage.Pickers.FolderPicker();
+            picker.FileTypeFilter.Add("*");
+            var folder = await picker.PickSingleFolderAsync();
+            if (folder == null) { Log("Fixtures: picker cancelled"); return false; }
+            foreach (var codec in new[] { "aac", "dts", "ac3", "eac3", "flac", "opus", "vorbis", "pcm", "truehd" })
+            {
+                var file = await folder.GetFileAsync("receiver-" + codec + (codec == "aac" ? ".mp4" : ".mkv"));
+                StorageApplicationPermissions.FutureAccessList.AddOrReplace("receiver-" + codec, file);
+            }
+            Log("Fixtures: nine original controls remembered");
+            return true;
         }
 
         private async Task<bool> WaitForState(string[] words)

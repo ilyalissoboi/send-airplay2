@@ -9,6 +9,42 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
+Native Mac and Apple TV AAC-copy/DTS-to-stereo-AAC checks pass by user observation;
+native Mac explicit Stop and unanswered-consent cancellation also pass. Packaged
+UWP 0.1.28.0 completes all nine original AAC/AC-3/E-AC-3/DTS/FLAC/Opus/Vorbis/PCM/
+TrueHD cases on each receiver, plus converted DTS Stop on both and manual
+pending-consent cancellation on the Mac. The user confirms synchronized A/V,
+LEFT/RIGHT/BOTH, start near 45 seconds, pause/resume, both seeks, natural ends
+and prompt/video closure. macOS 26.7.1 and tvOS 26.6 are unchanged by user report.
+Native seven loaded hashes and UWP AppContainer/six hashes are verified. The
+18 packaged natural ends, two Stops and one cancelled start have expected
+selected-stream/policy fields and complete cache cleanup. All native successful,
+Stop and cancel runs report one source release and no failed reads.
+
+Read [scope, failed attempts and evidence](automatic-audio-receiver-gate.md).
+An initial native Apple TV AAC seek disconnected; its manual retry passed and
+its cause remains unestablished. Two packaged Mac attempts expired/rejected
+before playback, including an intended cancellation before manual Stop arrived;
+only the later cancelled retry verifies cancellation. Preserve those distinctions.
+Original 120-second controls, not the private performance film, were cast.
+Core is unchanged from merged PR #68 (`f6c85ef`); optional codec backend remains
+OFF by default. Private test-host scripts/storage/package changes are in
+[PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69); inspect actual-head
+CI before merging. No cast is active; no further receiver input is pending.
+
+PR #69 review follow-up: optional codec packaging now validates all four required
+DLLs before `PrepareForBuild`, using the same explicit list for package content.
+Eight guard checks and a full enabled publish pass; packaged DLL/notice hashes
+match and the historical receiver-tested package is preserved. No new receiver
+claim or runtime change. Read [the review evidence](validation/automatic-audio-runtime-packaging-review-windows-2026-10-15.json).
+
+Next: review/merge this evidence slice, then obtain the user's choice for an
+opt-in package/Screenbox integration slice. Publication/pin changes are separate;
+speakers and discrete converted surround remain hardware-deferred. The isolated
+Apple TV disconnect remains an explicit reliability follow-up. No Computer Use
+for visual confirmation.
+
 **D87 bounded DTS seeks (2026-10-15, PR #68).**
 PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in
 run `38677650564`. The user's Resume work continues on fresh

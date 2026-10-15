@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#67 are merged. `main` contains
+Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#68 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,36 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
+Branch `codex/automatic-audio-receiver-gate` starts at merged PR #68, `f6c85ef`.
+Native Mac/Apple TV AAC copy and DTS conversion pass manual synchronization,
+channel-pattern, start, controls and natural-end checks. Native Mac Stop and
+unanswered-consent cancellation pass. Packaged UWP 0.1.28.0 passes all nine
+original format cases on each receiver, converted DTS Stop on both and manual
+Mac pending-consent cancellation: 18 natural ends, two Stops and one cancelled
+start, expected policy fields and complete cache cleanup. The user confirms all
+observations; macOS 26.7.1 and tvOS 26.6 unchanged. Native seven DLL hashes and
+UWP AppContainer/six loaded hashes are verified. Read
+[the gate and limitations](automatic-audio-receiver-gate.md).
+
+Retain one native Apple TV AAC seek disconnect separately from its successful
+retry; cause remains unestablished. Two packaged Mac consent expiries/rejections
+are also separate from the successful cancelled retry. The first native Mac AAC
+diagnostic omitted final/module fields and has a corrected repeat. No private
+film was cast. Original media and local scripts stay ignored under `build-review`;
+generator, provenance, host changes and sanitized evidence are in
+[PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69). Inspect actual-head
+CI before merging. No cast or receiver question is pending. Review/merge this
+slice, then separately approve opt-in packaging/Screenbox integration. Keep
+backend defaults, publication/pin boundaries and deferred speaker/discrete
+surround scope. No Computer Use for visual confirmation.
+
+PR #69 review: validate all four FFmpeg runtime DLLs before `PrepareForBuild`
+and package that same explicit list. Eight missing/complete/default-off guard
+checks and an enabled publish pass; DLL/notice hashes match. Historical receiver
+evidence/package remain unchanged. See
+[offline packaging evidence](validation/automatic-audio-runtime-packaging-review-windows-2026-10-15.json).
 
 **D87 bounded DTS seeks (2026-10-15, PR #68).**
 PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in
@@ -729,11 +759,14 @@ video cue coordinates and maximum-lace backoff. Owned PCM/EOF/refusal controls,
 both 137-case matrices and three independent brokered first/middle/last fragment
 samples pass in package 0.1.0.8 at `731db15`, with token/loaded hashes verified.
 Cold timings are 138/314/64 ms with byte-identical cached repeats and cleanup;
-this is bounded one-input evidence, not sustained whole-film throughput. Next:
-manual copied/converted receiver playback, stereo output, A/V sync, controls,
-Stop/cancellation and natural EOF/queue observations on the available recorded
-receivers and native/packaged hosts. Preserve firmware/build attribution and
-OFF-by-default/publication/Screenbox boundaries.
+this is bounded one-input evidence, not sustained whole-film throughput. D88
+now records native AAC/DTS and packaged nine-format playback on the recorded
+Mac/Apple TV, plus applicable Stop/cancellation and host-slot reuse observations.
+See its explicit firmware, failed-attempt and short-media limits above; this is
+not Screenbox queue or unrestricted reliability proof. Next: review/merge PR #69,
+then separately approve opt-in runtime packaging and Screenbox integration while
+preserving OFF-by-default/publication boundaries. The isolated Apple TV event
+disconnect remains an explicit follow-up.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12

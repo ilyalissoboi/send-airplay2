@@ -37,6 +37,19 @@ internal sealed class TemporaryAacFragmentStore : AacFragmentStore
             "sap2-" + Guid.NewGuid().ToString("N"), CreationCollisionOption.FailIfExists);
         return new TemporaryAacFragmentStore(folder, failReads);
     }
+    /// <summary>Abandons an empty reservation if source opening failed before
+    /// Cast.Create was called. Never call after handing the store to the binding.</summary>
+    internal void AbandonBeforeTransfer()
+    {
+        lock (gate)
+        {
+            if (files.Count != 0 || ReleaseCount != 0 || cleared)
+            {
+                throw new InvalidOperationException("Cache already handed to native ownership");
+            }
+            Directory.Delete(directory, false);
+        }
+    }
     private string FragmentPath(ulong index) => Path.Combine(directory,
         index.ToString(CultureInfo.InvariantCulture) + ".m4s");
 
