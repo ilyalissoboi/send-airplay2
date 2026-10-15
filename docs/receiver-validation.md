@@ -1,5 +1,14 @@
 # Receiver validation record
 
+**D87 offline gate (2026-10-15):** [bounded DTS seeks](matroska-dts-bounded-seek.md)
+pass owned PCM/EOF, maximum-lace and refusal controls. Private package 0.1.0.8 at
+`731db15` passes bundled/folder-granted 137-case/61-fixture matrices with actual
+AppContainer tokens/six loaded hashes verified. Three independent brokered
+first/middle/last fragment samples pass in 138/314/64 ms cold, with identical
+cached repeats, unchanged limits and complete cleanup. This adds bounded offline
+conversion evidence for one input/host. No receiver was contacted; audible output,
+A/V sync, controls and receiver EOF remain manual gates.
+
 **D86 offline gate (2026-10-15):** [DTS lace sample clocks](matroska-dts-frame-clock.md)
 pass exact owned PCM/AAC and gap-refusal controls plus bundled/folder-granted
 137-case/61-fixture matrices in private package 0.1.0.7 at `db35a6f`. AppContainer

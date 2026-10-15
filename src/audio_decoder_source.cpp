@@ -41,6 +41,7 @@ constexpr std::uint64_t maximum_read_bytes = 256ULL << 20;
 constexpr std::size_t maximum_read_calls = 1'048'576;
 constexpr int io_buffer_bytes = 32768;
 constexpr int maximum_frame_samples = 65536;
+constexpr std::size_t maximum_dts_lace_frames = 256;
 constexpr int output_rate = AudioDecoderSource::output_rate;
 constexpr std::uint32_t maximum_window_samples = 10 * AudioDecoderSource::output_rate;
 constexpr std::uint64_t maximum_input_samples = 20 * AudioDecoderSource::output_rate;
@@ -972,7 +973,74 @@ struct AudioDecoderSource::Impl {
         return {{packet.offset, packet.size, position, analysis.samples, skip, discard},
                 analysis.restartable};
     }
-    void seek(std::uint64_t begin) {
+    /// Choose a container seek coordinate, never a different decoded track. A
+    /// unique video's bracketing keyframe entries can locate a nearby Cluster
+    /// without asking the demuxer to extend its audio index by scanning payloads.
+    /// Uncovered/ambiguous coordinates retain the original bounded seek path.
+    struct SeekCoordinate {
+        int stream;
+        std::int64_t sample;
+    };
+    SeekCoordinate dts_seek_coordinate(std::int64_t target) const {
+        if (!cadence.enabled || codec->codec_id != AV_CODEC_ID_DTS || !cadence.frame_samples ||
+            target <= 0) {
+            return {stream_index, target};
+        }
+        const auto preceding_sample = [&](AVStream* candidate,
+                                          std::int64_t seek_sample) -> std::optional<std::int64_t> {
+            const auto timestamp =
+                av_rescale_q_rnd(seek_sample, output_clock, candidate->time_base, AV_ROUND_DOWN);
+            const auto before =
+                av_index_search_timestamp(candidate, timestamp, AVSEEK_FLAG_BACKWARD);
+            if (before < 0 || before + 1 >= avformat_index_get_entries_count(candidate)) {
+                return {};
+            }
+            const auto* entry = avformat_index_get_entry(candidate, before);
+            const auto* next = avformat_index_get_entry(candidate, before + 1);
+            if (!entry || !next || (entry->flags & AVINDEX_KEYFRAME) == 0 ||
+                entry->timestamp > timestamp || next->timestamp <= timestamp || entry->pos < 0 ||
+                next->pos <= entry->pos || static_cast<std::uint64_t>(next->pos) >= reader.size) {
+                return {};
+            }
+            const auto sample = av_rescale_q_rnd(entry->timestamp, candidate->time_base,
+                                                 output_clock, AV_ROUND_DOWN);
+            return sample >= 0 && sample <= seek_sample ? std::optional<std::int64_t>{sample}
+                                                        : std::nullopt;
+        };
+        const auto audio_sample = preceding_sample(format->streams[stream_index], target);
+        int video_index = -1;
+        for (unsigned index = 0; index < format->nb_streams; ++index) {
+            if (format->streams[index]->codecpar->codec_type != AVMEDIA_TYPE_VIDEO) {
+                continue;
+            }
+            if (video_index >= 0) {
+                return {stream_index, target};
+            }
+            video_index = static_cast<int>(index);
+        }
+        if (video_index < 0) {
+            return {stream_index, target};
+        }
+        // A video's cue can lie inside a DTS lace whose block starts in an
+        // earlier Cluster. Back off by the literal maximum lace span so that
+        // seeking cannot skip audio needed for the original preroll target.
+        const auto maximum_lace_samples = av_rescale_q_rnd(
+            static_cast<std::int64_t>(maximum_dts_lace_frames) * cadence.frame_samples,
+            AVRational{1, codec->sample_rate}, output_clock, AV_ROUND_UP);
+        const auto video_target = std::max<std::int64_t>(0, target - maximum_lace_samples);
+        const auto video_sample = preceding_sample(format->streams[video_index], video_target);
+        // Dynamically learned audio entries can bracket a huge unvisited gap
+        // after a late seek. Compare the actual preceding positions, not merely
+        // index coverage; otherwise a backward request scans from the beginning.
+        return video_sample && (!audio_sample || *video_sample > *audio_sample)
+                   ? SeekCoordinate{video_index, video_target}
+                   : SeekCoordinate{stream_index, target};
+    }
+
+    /// A video-coordinate seek additionally requires the first decoded audio
+    /// frame to cover the requested preroll. Return its latest permissible start
+    /// on the output sample clock; absence retains the original silence policy.
+    std::optional<std::int64_t> seek(std::uint64_t begin) {
         const auto metadata_preroll = av_rescale_q(
             static_cast<std::int64_t>(selected.seek_preroll_ns), nanosecond_clock, output_clock);
         const auto preroll = std::max<std::int64_t>(output_rate, metadata_preroll);
@@ -988,7 +1056,7 @@ struct AudioDecoderSource::Impl {
                                ? 0
                                : static_cast<std::size_t>(after - audio_anchors.begin() - 1);
             avcodec_flush_buffers(codec.get());
-            return;
+            return {};
         }
         if (cadence.rebuild_from_start ||
             (cadence.reopen_at_start && begin <= static_cast<std::uint64_t>(preroll))) {
@@ -1002,20 +1070,27 @@ struct AudioDecoderSource::Impl {
             reader.position = 0;
             open_format();
             open_codec();
-            return;
+            return {};
         }
-        const auto* stream = format->streams[stream_index];
         const auto raw_target = static_cast<std::int64_t>(begin) - preroll;
         // MOV's negative AAC packet carries the overlap/priming history at start.
         const auto target =
             container == SourceContainer::mp4 ? raw_target : std::max<std::int64_t>(0, raw_target);
-        const auto timestamp = av_rescale_q(target, output_clock, stream->time_base);
-        const auto result =
-            avformat_seek_file(format.get(), stream_index, std::numeric_limits<std::int64_t>::min(),
-                               timestamp, timestamp, AVSEEK_FLAG_BACKWARD);
+        const auto coordinate = dts_seek_coordinate(target);
+        const auto* stream = format->streams[coordinate.stream];
+        const auto timestamp =
+            coordinate.stream == stream_index
+                ? av_rescale_q(coordinate.sample, output_clock, stream->time_base)
+                : av_rescale_q_rnd(coordinate.sample, output_clock, stream->time_base,
+                                   AV_ROUND_DOWN);
+        const auto result = avformat_seek_file(format.get(), coordinate.stream,
+                                               std::numeric_limits<std::int64_t>::min(), timestamp,
+                                               timestamp, AVSEEK_FLAG_BACKWARD);
         reader.check();
         require(result >= 0, AudioDecodeFailure::unsupported, "selected audio seek failed");
         avcodec_flush_buffers(codec.get());
+        return coordinate.stream == stream_index ? std::nullopt
+                                                 : std::optional<std::int64_t>{target};
     }
 };
 
@@ -1025,10 +1100,12 @@ class WindowDecoder {
 public:
     WindowDecoder(AVCodecContext& codec, AVStream& stream, Reader& reader,
                   InputAudioFormat& input_format, AudioCadence& cadence, DecodedAudioWindow& output,
-                  std::uint32_t count, bool respect_opus_packet_duration)
+                  std::uint32_t count, bool respect_opus_packet_duration,
+                  std::optional<std::int64_t> latest_initial_sample)
         : codec_(codec), stream_(stream), reader_(reader), expected_format_(input_format),
           cadence_(cadence), output_(output), count_(count), frame_(av_frame_alloc()),
-          packet_(av_packet_alloc()), respect_opus_packet_duration_(respect_opus_packet_duration) {
+          packet_(av_packet_alloc()), respect_opus_packet_duration_(respect_opus_packet_duration),
+          latest_initial_sample_(latest_initial_sample) {
         require(frame_ && packet_, AudioDecodeFailure::codec_error,
                 "audio window allocation failed");
         const auto quantum = av_rescale_q_rnd(1, stream.time_base, output_clock, AV_ROUND_UP);
@@ -1162,6 +1239,7 @@ private:
     std::int64_t covered_ = 0;
     bool complete_ = false;
     bool respect_opus_packet_duration_ = false;
+    std::optional<std::int64_t> latest_initial_sample_;
     std::uint32_t continuity_precision_samples_ = 0;
     std::optional<std::int64_t> rebuild_origin_input_sample_;
     std::int64_t dts_block_file_offset_ = -1;
@@ -1188,8 +1266,7 @@ private:
             return;
         }
         // RFC 9559's one-octet lace count admits at most 256 frames per block.
-        constexpr std::size_t maximum_lace_frames = 256;
-        require(dts_block_frames_ < maximum_lace_frames, AudioDecodeFailure::unsupported,
+        require(dts_block_frames_ < maximum_dts_lace_frames, AudioDecodeFailure::unsupported,
                 "DTS block exceeds bounded lace frame count");
         if (!dts_block_origin_input_sample_) {
             dts_block_origin_input_sample_ = position;
@@ -1199,6 +1276,8 @@ private:
     }
 
     void finish_window() {
+        require(!latest_initial_sample_ || resampler_, AudioDecodeFailure::unsupported,
+                "Matroska video coordinate does not cover audio preroll");
         require(output_.channels != 0, AudioDecodeFailure::malformed,
                 "audio source has no decoded frames");
         const auto frames = covered_ <= static_cast<std::int64_t>(output_.first_sample)
@@ -1349,6 +1428,13 @@ private:
                 AudioDecodeFailure::unsupported,
                 "audio frame timestamp exceeds presentation bounds");
         if (!resampler_) {
+            // Cue coordinates describe video, not audio coverage. Refuse a
+            // misplaced/late audio landing rather than inventing leading silence
+            // or shortening decoder history. Allow only the reported clock tick.
+            require(!latest_initial_sample_ ||
+                        timestamp <= *latest_initial_sample_ + output_.timestamp_precision_samples,
+                    AudioDecodeFailure::unsupported,
+                    "Matroska video coordinate does not cover audio preroll");
             configure(frame, timestamp, position);
         }
         require(frame.sample_rate == input_rate_ && frame.format == input_format_ &&
@@ -1493,14 +1579,15 @@ DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, s
                 AudioDecodeFailure::unsupported,
                 "coarse Matroska window exceeds bounded start reconstruction");
         Operation operation(impl_->reader, context);
-        impl_->seek(first_sample);
+        const auto latest_initial_sample = impl_->seek(first_sample);
         DecodedAudioWindow window;
         window.source_track_id = impl_->selected.id;
         window.first_sample = first_sample;
         WindowDecoder decoder(*impl_->codec, *impl_->format->streams[impl_->stream_index],
                               impl_->reader, impl_->input_format, impl_->cadence, window, count,
                               impl_->container == SourceContainer::mp4 &&
-                                  impl_->codec->codec_id == AV_CODEC_ID_OPUS);
+                                  impl_->codec->codec_id == AV_CODEC_ID_OPUS,
+                              latest_initial_sample);
         if (!impl_->audio_anchors.empty()) {
             MkvAudioScanner scanner(impl_->header_reader(), impl_->reader.size, impl_->selected.id);
             const auto& anchor = impl_->audio_anchors[impl_->anchor_begin];

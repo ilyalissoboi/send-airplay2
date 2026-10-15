@@ -1,5 +1,10 @@
 # DTS lace clocks in converted HLS (D86)
 
+**Subsequent D87 result:** [bounded DTS seek coordinates](matroska-dts-bounded-seek.md)
+identify the middle request's demuxer index-extension scan and keep it within
+existing budgets. The same brokered video now passes first/middle/last samples
+in private package 0.1.0.8. D86's measured refusal below remains historical.
+
 The user's Proceed on 2026-10-15 (Asia/Tokyo) authorizes this slice from merged
 [PR #66](https://github.com/ilyalissoboi/send-airplay2/pull/66), `1fe9f61`.
 All 16 final-head checks passed at `cbe7440` in run `38669659266`.
