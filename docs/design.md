@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#66 merged.
+Implementation snapshot: 2026-10-15 (Asia/Tokyo), after PRs #1-#67 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,7 +17,12 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D86 (PR #67):** [DTS lace sample clocks](matroska-dts-frame-clock.md)
+**D87 in progress:** [bounded DTS seek coordinates](matroska-dts-bounded-seek.md)
+use the nearer already parsed audio/video index with a maximum-lace backoff,
+retaining selected audio and all existing budgets. Owned virtual read-amplification,
+fixed-offset PCM/EOF and refusal controls pass; package/performance gates follow.
+
+**D86 merged (PR #67, `8a284ad`):** [DTS lace sample clocks](matroska-dts-frame-clock.md)
 reproduce the frame-grid refusal with owned laces and count decoded continuation
 samples within a known block. Existing tolerances remain at each new block;
 gap-refusal and exact PCM/AAC controls pass. Bundled/folder-granted 137-case

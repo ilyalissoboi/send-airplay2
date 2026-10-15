@@ -90,6 +90,12 @@ struct DecodedAudioWindow {
  * known native block position (at most 256 frames). Each new block keeps the
  * original timestamp/grid/continuity checks; unknown positions stay on the
  * strict generic clock. This avoids double rounding of demuxer-derived lace PTS.
+ * Canonical DTS can use a unique video's already parsed, bracketing keyframe
+ * index as a container seek coordinate when it precedes the target more closely
+ * than the selected audio index. Audio identity/discard settings never change.
+ * The first decoded frame must cover the requested preroll within the reported
+ * clock precision; a late landing refuses rather than synthesizing silence.
+ * Missing, ambiguous or uncovered coordinates keep the original bounded seek.
  */
 class AudioDecoderSource {
 public:

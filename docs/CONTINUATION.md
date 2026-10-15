@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#66 are merged. `main` contains
+Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#67 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,20 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D87 bounded DTS seeks (2026-10-15, in progress).**
+PR #67 merged as `8a284ad`; all 16 final-head checks passed at `9064f78` in
+run `38677650564`. The user's Resume work continues on fresh
+`codex/matroska-dts-bounded-seek`. Read [the seek contract and owned reproduction](matroska-dts-bounded-seek.md).
+The private middle refusal occurs during demuxer index extension, before audio
+decoding. Canonical DTS can use the nearer already parsed video cue as a seek
+coordinate while retaining selected audio, bounds and failure behavior. A new
+owned >1-GiB virtual mux reproduces the original guard; fixed-offset PCM/EOF and
+missing/late-cue/source-failure controls pass. Full suites, package and brokered
+measurements remain in progress. No receiver/publication/Screenbox change.
+Video coordinates back off by the literal maximum 256-frame lace span to retain
+overlapping audio blocks. The actual desktop middle window accepts within
+76,775,424 requested bytes; packaged first/middle/last performance is still open.
 
 **D86 Matroska DTS lace clock (2026-10-15, PR #67).**
 The user's Proceed starts `codex/matroska-dts-frame-clock` from merged
