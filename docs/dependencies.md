@@ -1,5 +1,16 @@
 # Dependencies and reference provenance
 
+**D89 distribution staging (2026-10-16):** the opt-in x64 package reuses the
+already adopted FFmpeg 9.0.2 profile and original Apache-2.0 adapters; no new
+codec dependency/implementation is added. The staged DLLs must match the selected
+installed prefix, its SPDX port checksums must match this repository's exact
+overlay, and the included original source archive must match the recorded
+SHA-512 below. The separate package carries that archive, overlay/patches,
+manifest/triplet, installed records/configuration, vcpkg MIT notice and FFmpeg
+notices/rebuild instructions. Runtime libraries remain dynamic. No package
+publication, new license audit or Store certification is claimed. See
+[the packaging contract](opt-in-audio-runtime-package.md).
+
 **D82 provenance (2026-10-14):** selected-copy policy, descriptor bounds and the
 restricted Dolby BSI presence guard are original Apache-2.0 code, extending the
 existing ISO BMFF/ETSI TS 102 366 native readers. The pinned FFmpeg 9.0.2

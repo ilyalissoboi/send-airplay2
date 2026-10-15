@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#68 are merged. `main` contains
+Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#69 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,18 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D89 opt-in runtime packaging (2026-10-16, in progress).**
+PR #69 merged as `64ed4db`; all 16 final-head checks passed at `e6a9970`.
+The user's Proceed starts `codex/opt-in-audio-runtime-package` from origin/main.
+The separate `SendAirPlay2.StereoAac` package adds the validated x64 UWP codec
+runtime plus exact source/patch/configuration/notices; the existing package stays
+codec-free. Source/prefix/overlay/profile and private-export guards plus local
+restore/build/hash/refusal checks pass. Distribution core builds with private
+validation OFF. No release, Screenbox pin/app, native audio policy or new receiver
+claim is included. Read [the contract](opt-in-audio-runtime-package.md). Finish
+clean-head artifact evidence and actual PR-head CI; speakers/discrete surround
+remain hardware-deferred.
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
 Branch `codex/automatic-audio-receiver-gate` starts at merged PR #68, `f6c85ef`.

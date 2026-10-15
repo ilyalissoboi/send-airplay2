@@ -1,6 +1,6 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-15 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-16 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
@@ -8,6 +8,19 @@ The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
 ## 0. Resume here
+
+**D89 opt-in runtime packaging (2026-10-16, in progress).**
+PR #69 merged as `64ed4db`; all 16 final-head checks passed at `e6a9970`.
+The user's Proceed starts `codex/opt-in-audio-runtime-package` from origin/main.
+The separate `SendAirPlay2.StereoAac` package adds the validated x64 UWP codec
+runtime plus exact source/patch/configuration/notices; the existing package stays
+codec-free. Source/prefix/overlay/profile and private-export guards plus local
+restore/build/hash/refusal checks pass. Distribution core builds with private
+validation OFF. No release, Screenbox pin/app, native audio policy or new receiver
+claim is included. Read [the contract](opt-in-audio-runtime-package.md). Finish
+clean-head artifact evidence and actual PR-head CI; speakers/discrete surround
+remain hardware-deferred.
+
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
 Native Mac and Apple TV AAC-copy/DTS-to-stereo-AAC checks pass by user observation;

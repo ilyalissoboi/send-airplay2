@@ -12,6 +12,16 @@ cannot reach. nuget.org publishing is still pending, and is needed before an
 upstream Screenbox PR. This document covers the package, how to pack and
 publish it, and how a host consumes it.
 
+## Opt-in stereo AAC runtime (D89)
+
+The existing package identity/profile remains codec-free. The separate
+`SendAirPlay2.StereoAac` package (API-5 version base `0.5.0`) adds the validated x64
+UWP codec runtime only when `pack_nuget.ps1 -StereoAac` is requested. Reference
+one profile, not both. It includes all six DLLs, matching notices and the exact
+FFmpeg source archive/overlay/configuration records. This is an unpublished
+local/CI artifact; published `ci.207` and Screenbox remain unchanged. Read
+[the contract, commands and validation](opt-in-audio-runtime-package.md).
+
 ## Contents
 
 `SendAirPlay2.<version>.nupkg`:
