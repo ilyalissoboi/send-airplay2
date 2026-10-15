@@ -2,8 +2,8 @@
 
 **Checkpoint: resumed by the user on 2026-10-15 after target-device network
 adjustments.** Mac discovery succeeds. The user confirms macOS 26.7.1 and
-tvOS 26.6 are unchanged. Native Mac AAC-copy and DTS-to-stereo-AAC checks passed by user
-observation: synchronized flashes/beeps, channel pattern, start near 45 seconds,
+tvOS 26.6 are unchanged. Native Mac AAC-copy and DTS-to-stereo-AAC checks passed
+by user observation: synchronized flashes/beeps, channel pattern, start near 45 seconds,
 pause/resume, forward/backward seeks and natural end. The driver exited 0 and
 reported copied AAC stereo. Its first capture omitted end/cleanup/control lines
 and loaded-module evidence; a corrected AAC repeat and the DTS run verify all
@@ -13,11 +13,18 @@ released their cast slots with six loaded hashes and an AppContainer token
 verified; manual observation is pending. One earlier packaged consent attempt
 was receiver-rejected and cleaned up before playback. Native Apple TV DTS and
 an AAC repeat reached natural end; an initial AAC attempt disconnected during
-the forward seek and is retained as a failure. Apple TV manual observations,
-the packaged nine-codec matrix and Stop/cancellation checks remain pending.
+the forward seek and is retained as a failure. Apple TV manual observations
+remain pending. The packaged Apple TV nine-codec matrix
+completed all natural ends and explicit DTS Stop with successful telemetry.
+Native Mac cancellation returned `cancelled` after 5,058 ms with media cleanup
+and one source release. Its prompt observation is pending. A subsequent UWP
+manual-cancellation attempt was receiver-rejected after 15,553 ms before a Stop
+action was recorded; its empty conversion cache cleared/released once and was
+removed. That is rejection cleanup, not a cancellation pass. The user has been
+asked to signal readiness before that attempt is retried.
 Original controls and the local native driver are under ignored `build-review`;
-UWP script/cache/packaging changes are uncommitted. Do not change pairing or
-network settings as an incidental diagnostic action.
+UWP script/cache/packaging changes are in [draft PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69).
+Do not change pairing or network settings as an incidental diagnostic action.
 
 The user's Proceed starts `codex/automatic-audio-receiver-gate` from merged
 PR #68, `f6c85ef`. All 16 final-head checks passed at `9cad595` in run
@@ -49,3 +56,25 @@ Audio-only speakers and discrete converted surround remain hardware-deferred.
 [Sanitized in-progress evidence](validation/automatic-audio-receiver-windows-2026-10-15.json)
 keeps failed attempts distinct from retries and observer reports distinct from
 status telemetry. The private film used in D87 performance checks is not cast.
+
+## Remaining manual work
+
+No cast is active at this checkpoint. The development UWP host stays installed
+with its existing grants and pairing data. Its scripts and the native driver
+remain under ignored local output, with no private media content.
+
+1. Collect the outstanding packaged Mac AAC/DTS, native Apple TV AAC retry/DTS,
+   packaged Apple TV nine-codec/Stop and native Mac cancellation observations.
+   Do not infer these from the successful status logs.
+2. Wait for the user's readiness, then retry `d88-mac-cancel` in the UWP host.
+   The user leaves Mac consent unanswered and presses the host's Stop button.
+   Confirm a cancelled start, cache cleanup and prompt closure; the earlier
+   timed-out attempt does not satisfy this gate.
+3. Run native Mac DTS with explicit Stop, then `d88-mac-matrix`: AC-3, E-AC-3,
+   FLAC, Opus, Vorbis, PCM and TrueHD, followed by explicit DTS Stop. Collect
+   manual synchronization/channel/start/control/end/Stop observations. AAC/DTS
+   natural-end checks already ran in this packaged process; successive cases
+   also exercise host slot reuse, not Screenbox queue advancement.
+4. Refresh sanitized evidence and the handoff, inspect actual PR-head CI and
+   finish the PR only after the remaining outcomes are explicit. No merge,
+   publication or Screenbox update is authorized by this gate.

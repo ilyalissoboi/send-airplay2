@@ -30,13 +30,19 @@ The user resumed after network adjustments and confirms macOS 26.7.1 and tvOS
 corrected telemetry verifies loaded modules and final cleanup. Native Apple TV
 AAC retry/DTS and packaged Mac AAC/DTS reach natural end; their observer reports
 are pending. Packaged 0.1.28.0 verifies its token/six loaded hashes and cache
-cleanup. Continue its nine-codec Apple TV matrix, manual observations and
-Stop/cancellation checks; preserve the first native AAC disconnect and packaged
-Mac consent rejection as separate failed attempts. Read
+cleanup. Packaged Apple TV's nine-codec matrix and explicit Stop complete in
+telemetry; observer confirmation is pending. Native Mac cancellation returns
+cancelled in 5,058 ms; its prompt observation is pending. A UWP manual Stop did
+not arrive before consent expired, so that attempt verifies rejection cleanup
+only. Wait for the user's readiness before retrying; then native Mac explicit
+Stop and the remaining seven packaged Mac formats/Stop are still required.
+Preserve the first native AAC disconnect and both packaged Mac consent
+rejections as separate attempts. No cast is active. Read
 [the gate scope and checkpoint](automatic-audio-receiver-gate.md). Original
 flash/beep fixtures and diagnostic driver are ignored under `build-review`.
-Generator, UWP script/cache/optional packaging and documentation are uncommitted.
-No PR yet. Keep per-case results explicit; speakers and discrete converted
+Generator, UWP script/cache/optional packaging and provenance are in draft
+[PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69), initial head
+`76e7133`; CI is still in progress. Keep per-case results explicit; speakers and discrete converted
 surround remain hardware-deferred. No Computer Use for visual confirmation.
 
 **D87 bounded DTS seeks (2026-10-15, PR #68).**

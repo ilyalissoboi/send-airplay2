@@ -17,13 +17,20 @@ A corrected AAC repeat and DTS run verify loaded hashes, controls, natural EOF,
 cleanup and one source release. UWP Mac AAC/DTS reached natural end with cache
 cleanup and AppContainer/six hashes verified; observer report remains pending.
 Native Apple TV AAC retry and DTS reached natural end; initial AAC disconnected
-during seek and is retained separately. Apple TV observation, its packaged
-nine-codec matrix and Stop/cancellation checks remain pending.
+during seek and is retained separately. Packaged Apple TV completed nine codec
+cases and explicit Stop in telemetry; manual observations remain pending.
+Native Mac cancellation returned cancelled in 5,058 ms with media cleanup;
+prompt observation is pending. UWP manual cancellation expired before Stop was
+recorded and only verifies rejection cleanup. Wait for the user's readiness
+before retrying that manual action. Then run native Mac explicit Stop and the
+remaining seven packaged Mac codecs plus Stop. No cast is active.
 Original controls are generated under ignored `build-review/d88-receiver-controls`;
 AAC copy uses MP4 (supported priming/origin), PCM conversion uses stereo, other
 converted controls use 5.1. Offline preparation passes after those fixture fixes.
 Native hosts are built; UWP 0.1.28.0 is installed as an in-place update with the
-existing optional codec runtime. Script/cache/packaging changes are uncommitted.
+existing optional codec runtime. Script/cache/packaging changes and original
+fixture provenance are in [draft PR #69](https://github.com/ilyalissoboi/send-airplay2/pull/69),
+initial head `76e7133`; CI is in progress, not a completed validation claim.
 Mac discovery now finds `Mac14,10`. The user confirms macOS 26.7.1 and tvOS 26.6
 are unchanged.
 PR #68 merged as `f6c85ef`; all 16 checks passed at `9cad595` in run `38689760888`.

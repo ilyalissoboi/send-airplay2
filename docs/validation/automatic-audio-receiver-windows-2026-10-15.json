@@ -186,6 +186,55 @@
         "peak_working_set_bytes": 105312256
       },
       {
+        "capture_id": "d88-uwp-tv-after-modules",
+        "peak_working_set_bytes": 176807936,
+        "version": "0.1.28.0",
+        "captured_utc": "2026-10-15T13:28:22.7613367+00:00",
+        "app_container": true,
+        "private_bytes": 149762048,
+        "modules": [
+          {
+            "matches_layout": true,
+            "name": "send_airplay2.DLL",
+            "matches_native_build": true,
+            "sha256": "31ed21fb0106c658cbd7a424256c72ba0dc9efbe3dc84b334ee9f29a041d248d"
+          },
+          {
+            "matches_layout": true,
+            "name": "libcrypto-3-x64.dll",
+            "matches_native_build": true,
+            "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc"
+          },
+          {
+            "matches_layout": true,
+            "name": "avformat-63.dll",
+            "matches_native_build": true,
+            "sha256": "9ec7c055114218f6ccb68e1bc0a0bbe77d17076ffd04ef552264f7e07c425408"
+          },
+          {
+            "matches_layout": true,
+            "name": "avcodec-63.dll",
+            "matches_native_build": true,
+            "sha256": "d9d892cbbff17a129d6c088e102dca375db25ebdba10a9b6c7fa76eb08b75313"
+          },
+          {
+            "matches_layout": true,
+            "name": "swresample-7.dll",
+            "matches_native_build": true,
+            "sha256": "6b1fbca0846c8aaf4e3072e79b4222fd01281bfa0e5db9b78b15abe6fde2520c"
+          },
+          {
+            "matches_layout": true,
+            "name": "avutil-61.dll",
+            "matches_native_build": true,
+            "sha256": "bd1327659cd5d28e5d5d7dc7a380c74e279d26d7153dddfa47dd1339e4f03127"
+          }
+        ],
+        "executable_matches_registration": true,
+        "executable_sha256": "4aa865c2b12aa2712a121c1f9c45b1d1c520370523a93034076012fbae7c8004",
+        "cpu_ms": 50140.625
+      },
+      {
         "capture_id": "d88-uwp-tv-running-modules",
         "executable_sha256": "4aa865c2b12aa2712a121c1f9c45b1d1c520370523a93034076012fbae7c8004",
         "private_bytes": 146436096,
@@ -327,7 +376,112 @@
       "13:23:45.457 Cache: seals=0 reads=0 sealed_bytes=0 clear=0 release=1 removed=yes",
       "13:23:45.458 Ended cast released; media source released",
       "13:23:47.614 Script: file receiver-eac3 is 24561919 bytes, type .mkv",
-      "13:23:47.615 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)"
+      "13:23:47.615 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)",
+      "13:23:49.774 Cast start: ok after 2158 ms phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no audio_action=Copy source_family=Eac3 output_family=Eac3 selected_audio_id=2 channels=2",
+      "13:23:50.777 Status: phase=Active state=Playing end=None owned=yes position=2.1 failure=None/None cleaned=no audio_action=Copy source_family=Eac3 output_family=Eac3 selected_audio_id=2 channels=2",
+      "13:23:50.778 Control status: ok",
+      "13:23:53.847 Control pause: ok",
+      "13:23:55.914 Control play: ok",
+      "13:23:58.184 Control seek 90.0: ok",
+      "13:24:01.232 Control seek 30.0: ok",
+      "13:24:04.241 Status: phase=Active state=Playing end=None owned=yes position=32.7 failure=None/None cleaned=no audio_action=Copy source_family=Eac3 output_family=Eac3 selected_audio_id=2 channels=2",
+      "13:24:04.242 Control status: ok",
+      "13:24:04.295 Control seek 115.0: ok",
+      "13:24:09.620 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=120.0 failure=None/None cleaned=no audio_action=Copy source_family=Eac3 output_family=Eac3 selected_audio_id=2 channels=2",
+      "13:24:09.712 Cache: seals=0 reads=0 sealed_bytes=0 clear=0 release=1 removed=yes",
+      "13:24:09.713 Ended cast released; media source released",
+      "13:24:11.796 Script: file receiver-flac is 22171174 bytes, type .mkv",
+      "13:24:11.796 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)",
+      "13:24:13.927 Cast start: ok after 2130 ms phase=Active state=Playing end=None owned=yes position=1.0 failure=None/None cleaned=no audio_action=StereoAac source_family=Flac output_family=Aac selected_audio_id=2 channels=2",
+      "13:24:14.933 Status: phase=Active state=Playing end=None owned=yes position=2.0 failure=None/None cleaned=no audio_action=StereoAac source_family=Flac output_family=Aac selected_audio_id=2 channels=2",
+      "13:24:14.933 Control status: ok",
+      "13:24:17.988 Control pause: ok",
+      "13:24:20.058 Control play: ok",
+      "13:24:22.326 Control seek 90.0: ok",
+      "13:24:25.372 Control seek 30.0: ok",
+      "13:24:28.381 Status: phase=Active state=Playing end=None owned=yes position=32.7 failure=None/None cleaned=no audio_action=StereoAac source_family=Flac output_family=Aac selected_audio_id=2 channels=2",
+      "13:24:28.381 Control status: ok",
+      "13:24:28.420 Control seek 115.0: ok",
+      "13:24:33.766 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=120.0 failure=None/None cleaned=no audio_action=StereoAac source_family=Flac output_family=Aac selected_audio_id=2 channels=2",
+      "13:24:33.857 Cache: seals=20 reads=425 sealed_bytes=415910 clear=1 release=1 removed=yes",
+      "13:24:33.858 Ended cast released; media source released",
+      "13:24:35.933 Script: file receiver-opus is 22831086 bytes, type .mkv",
+      "13:24:35.933 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)",
+      "13:24:38.156 Cast start: ok after 2222 ms phase=Active state=Playing end=None owned=yes position=1.0 failure=None/None cleaned=no audio_action=StereoAac source_family=Opus output_family=Aac selected_audio_id=2 channels=2",
+      "13:24:39.172 Status: phase=Active state=Playing end=None owned=yes position=2.1 failure=None/None cleaned=no audio_action=StereoAac source_family=Opus output_family=Aac selected_audio_id=2 channels=2",
+      "13:24:39.172 Control status: ok",
+      "13:24:42.215 Control pause: ok",
+      "13:24:44.281 Control play: ok",
+      "13:24:46.533 Control seek 90.0: ok",
+      "13:24:49.605 Control seek 30.0: ok",
+      "13:24:52.622 Status: phase=Active state=Playing end=None owned=yes position=32.7 failure=None/None cleaned=no audio_action=StereoAac source_family=Opus output_family=Aac selected_audio_id=2 channels=2",
+      "13:24:52.623 Control status: ok",
+      "13:24:52.675 Control seek 115.0: ok",
+      "13:24:58.015 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=120.0 failure=None/None cleaned=no audio_action=StereoAac source_family=Opus output_family=Aac selected_audio_id=2 channels=2",
+      "13:24:58.053 Cache: seals=20 reads=820 sealed_bytes=459284 clear=1 release=1 removed=yes",
+      "13:24:58.053 Ended cast released; media source released",
+      "13:25:00.176 Script: file receiver-vorbis is 21869481 bytes, type .mkv",
+      "13:25:00.177 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)",
+      "13:25:02.246 Cast start: ok after 2068 ms phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no audio_action=StereoAac source_family=Vorbis output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:03.253 Status: phase=Active state=Playing end=None owned=yes position=2.1 failure=None/None cleaned=no audio_action=StereoAac source_family=Vorbis output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:03.254 Control status: ok",
+      "13:25:06.321 Control pause: ok",
+      "13:25:08.363 Control play: ok",
+      "13:25:10.616 Control seek 90.0: ok",
+      "13:25:13.659 Control seek 30.0: ok",
+      "13:25:16.673 Status: phase=Active state=Playing end=None owned=yes position=32.7 failure=None/None cleaned=no audio_action=StereoAac source_family=Vorbis output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:16.674 Control status: ok",
+      "13:25:16.728 Control seek 115.0: ok",
+      "13:25:22.066 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=120.0 failure=None/None cleaned=no audio_action=StereoAac source_family=Vorbis output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:22.131 Cache: seals=20 reads=454 sealed_bytes=448344 clear=1 release=1 removed=yes",
+      "13:25:22.132 Ended cast released; media source released",
+      "13:25:24.244 Script: file receiver-pcm is 44706907 bytes, type .mkv",
+      "13:25:24.245 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)",
+      "13:25:26.554 Cast start: ok after 2308 ms phase=Active state=Playing end=None owned=yes position=1.0 failure=None/None cleaned=no audio_action=StereoAac source_family=Pcm output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:27.564 Status: phase=Active state=Playing end=None owned=yes position=2.1 failure=None/None cleaned=no audio_action=StereoAac source_family=Pcm output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:27.564 Control status: ok",
+      "13:25:30.624 Control pause: ok",
+      "13:25:32.673 Control play: ok",
+      "13:25:34.951 Control seek 90.0: ok",
+      "13:25:38.003 Control seek 30.0: ok",
+      "13:25:41.008 Status: phase=Active state=Playing end=None owned=yes position=32.7 failure=None/None cleaned=no audio_action=StereoAac source_family=Pcm output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:41.009 Control status: ok",
+      "13:25:41.049 Control seek 115.0: ok",
+      "13:25:46.377 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=120.0 failure=None/None cleaned=no audio_action=StereoAac source_family=Pcm output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:46.423 Cache: seals=20 reads=460 sealed_bytes=449138 clear=1 release=1 removed=yes",
+      "13:25:46.423 Ended cast released; media source released",
+      "13:25:48.592 Script: file receiver-truehd is 26591890 bytes, type .mkv",
+      "13:25:48.593 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)",
+      "13:25:51.766 Cast start: ok after 3172 ms phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no audio_action=StereoAac source_family=TrueHd output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:52.774 Status: phase=Active state=Playing end=None owned=yes position=2.1 failure=None/None cleaned=no audio_action=StereoAac source_family=TrueHd output_family=Aac selected_audio_id=2 channels=2",
+      "13:25:52.775 Control status: ok",
+      "13:25:55.844 Control pause: ok",
+      "13:25:57.906 Control play: ok",
+      "13:26:00.175 Control seek 90.0: ok",
+      "13:26:03.242 Control seek 30.0: ok",
+      "13:26:06.258 Status: phase=Active state=Playing end=None owned=yes position=32.2 failure=None/None cleaned=no audio_action=StereoAac source_family=TrueHd output_family=Aac selected_audio_id=2 channels=2",
+      "13:26:06.258 Control status: ok",
+      "13:26:06.294 Control seek 115.0: ok",
+      "13:26:11.635 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=120.0 failure=None/None cleaned=no audio_action=StereoAac source_family=TrueHd output_family=Aac selected_audio_id=2 channels=2",
+      "13:26:11.671 Cache: seals=18 reads=659 sealed_bytes=374017 clear=1 release=1 removed=yes",
+      "13:26:11.672 Ended cast released; media source released",
+      "13:26:13.720 Script: file receiver-dts is 42929427 bytes, type .mkv",
+      "13:26:13.720 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)",
+      "13:26:15.559 Cast start: ok after 1838 ms phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no audio_action=StereoAac source_family=Dts output_family=Aac selected_audio_id=2 channels=2",
+      "13:26:19.569 Status: phase=Active state=Playing end=None owned=yes position=48.7 failure=None/None cleaned=no audio_action=StereoAac source_family=Dts output_family=Aac selected_audio_id=2 channels=2",
+      "13:26:19.569 Control status: ok",
+      "13:26:19.571 Ended: phase=Ended state=Playing end=SenderStop owned=yes position=48.7 failure=None/None cleaned=no audio_action=StereoAac source_family=Dts output_family=Aac selected_audio_id=2 channels=2",
+      "13:26:19.651 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=48.8 failure=None/None cleaned=yes audio_action=StereoAac source_family=Dts output_family=Aac selected_audio_id=2 channels=2",
+      "13:26:19.652 Cache: seals=20 reads=440 sealed_bytes=430412 clear=1 release=1 removed=yes",
+      "13:26:19.653 Cast disposed; media source released",
+      "13:26:21.654 Script d88-tv-matrix: done",
+      "13:27:42.203 Script d88-mac-cancel: begin",
+      "13:27:47.245 Script: file receiver-dts is 42929427 bytes, type .mkv",
+      "13:27:47.246 Cast: starting (PasswordVault store, delivery=AutomaticAudioHls, start=45.0 s)",
+      "13:28:02.799 Cache: seals=0 reads=0 sealed_bytes=0 clear=1 release=1 removed=yes",
+      "13:28:02.800 Cast start: receiver_rejected after 15553 ms phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no audio_action=StereoAac source_family=Dts output_family=Aac selected_audio_id=2 channels=2",
+      "13:28:02.800 Cast disposed; media source released",
+      "13:28:02.801 Script d88-mac-cancel: failed at line 3 cast"
     ]
   },
   "native_cases": [
@@ -336,7 +490,6 @@
       "receiver_model": "Mac14,10",
       "receiver_os_version_confirmation": "macOS 26.7.1; tvOS 26.6 unchanged by user report",
       "host": "Windows 11 x64 desktop public C API",
-      "source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
       "started_utc": "2026-10-15T13:09:08.300199+00:00",
       "executable_sha256": "ba96137552e9fe5b403b2a8f368c95b52f633abf310b41ec2129d7daa101ba3f",
       "native_sha256": "e6933f5c49be4554d6d2f906309adf3c7b152bdbc83471dca812230a4d49da9d",
@@ -359,6 +512,9 @@
       "exit_code": 0,
       "elapsed_seconds": 32.422,
       "telemetry_limit": "Initial diagnostic omitted end/cleanup/control lines and did not capture loaded modules; repeat required for those fields.",
+      "repository_head_at_run": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_build_source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_changes": false,
       "capture_id": "d88-mac-aac-natural-initial"
     },
     {
@@ -366,7 +522,6 @@
       "receiver_model": "Mac14,10",
       "receiver_os_version_confirmation": "macOS 26.7.1 unchanged by user report",
       "host": "Windows 11 x64 desktop public C API",
-      "source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
       "started_utc": "2026-10-15T13:14:09.155665+00:00",
       "executable_sha256": "ba96137552e9fe5b403b2a8f368c95b52f633abf310b41ec2129d7daa101ba3f",
       "native_sha256": "e6933f5c49be4554d6d2f906309adf3c7b152bdbc83471dca812230a4d49da9d",
@@ -505,14 +660,80 @@
       ],
       "exit_code": 0,
       "elapsed_seconds": 27.25,
+      "repository_head_at_run": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_build_source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_changes": false,
       "capture_id": "d88-mac-aac-natural"
+    },
+    {
+      "case": "mac-dts-cancel",
+      "receiver_model": "Mac14,10",
+      "receiver_os_version_confirmation": "pending",
+      "host": "Windows 11 x64 desktop public C API",
+      "started_utc": "2026-10-15T13:27:07.507003+00:00",
+      "executable_sha256": "ba96137552e9fe5b403b2a8f368c95b52f633abf310b41ec2129d7daa101ba3f",
+      "native_sha256": "e6933f5c49be4554d6d2f906309adf3c7b152bdbc83471dca812230a4d49da9d",
+      "fixture_sha256": "8baef473e57a28e1968f8b954714ac9f138de8d479bc9fbbce3d030a15c8cf5f",
+      "observer": "pending",
+      "observations": [
+        {
+          "elapsed_seconds": 5.078,
+          "line": "Cancel: start=cancelled start_ms=5058 stop_fired=yes"
+        },
+        {
+          "elapsed_seconds": 5.078,
+          "line": "Summary: api_version=5 linkage=shared start=cancelled audio_action=3 audio_reason=3 source_family=4 output_family=1 channels=2 phase=start_failed state=none end=none owned=no position=unknown duration=unknown rate=unknown failure=none/none cleaned=no media_failure=0 media_cleaned=1 selected_audio_id=2 authoring_flags=3 reads=526 bytes=9724484 failed_reads=0 releases=1"
+        }
+      ],
+      "loaded_modules": [
+        {
+          "name": "send_airplay2.dll",
+          "sha256": "e6933f5c49be4554d6d2f906309adf3c7b152bdbc83471dca812230a4d49da9d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        },
+        {
+          "name": "avcodec-63.dll",
+          "sha256": "1b6ca4cbaa68759fd806c9aacc2034c2173ddd130f90ca8dfd544efb75b81372",
+          "matches_build": true
+        },
+        {
+          "name": "avformat-63.dll",
+          "sha256": "0ce5df9ddf8cd3915355777d28ebf72f66828549683508bc49bc6ea07a7ba3b2",
+          "matches_build": true
+        },
+        {
+          "name": "avutil-61.dll",
+          "sha256": "7bff5dda4785d0d52c455068a8e7a126c9f8f2dfe216bd4f3c85a6c1560a9398",
+          "matches_build": true
+        },
+        {
+          "name": "swresample-7.dll",
+          "sha256": "dfa1a9aae71a4b9e74f0813aa968aa476321d805c44d7a6d47c3cd47cb8056f2",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.078,
+      "repository_head_at_run": "76e7133f5b8920fca6b08d50cff9f805fe17aea5",
+      "native_build_source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_changes": false,
+      "capture_id": "d88-mac-dts-cancel"
     },
     {
       "case": "mac-dts-natural",
       "receiver_model": "Mac14,10",
       "receiver_os_version_confirmation": "macOS 26.7.1 unchanged by user report",
       "host": "Windows 11 x64 desktop public C API",
-      "source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
       "started_utc": "2026-10-15T13:13:18.157504+00:00",
       "executable_sha256": "ba96137552e9fe5b403b2a8f368c95b52f633abf310b41ec2129d7daa101ba3f",
       "native_sha256": "e6933f5c49be4554d6d2f906309adf3c7b152bdbc83471dca812230a4d49da9d",
@@ -651,6 +872,9 @@
       ],
       "exit_code": 0,
       "elapsed_seconds": 34.234,
+      "repository_head_at_run": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_build_source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_changes": false,
       "capture_id": "d88-mac-dts-natural"
     },
     {
@@ -658,7 +882,6 @@
       "receiver_model": "AppleTV14,1",
       "receiver_os_version_confirmation": "pending",
       "host": "Windows 11 x64 desktop public C API",
-      "source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
       "started_utc": "2026-10-15T13:19:45.494359+00:00",
       "executable_sha256": "ba96137552e9fe5b403b2a8f368c95b52f633abf310b41ec2129d7daa101ba3f",
       "native_sha256": "e6933f5c49be4554d6d2f906309adf3c7b152bdbc83471dca812230a4d49da9d",
@@ -757,6 +980,9 @@
       ],
       "exit_code": 1,
       "elapsed_seconds": 15.36,
+      "repository_head_at_run": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_build_source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_changes": false,
       "capture_id": "d88-tv-aac-natural-disconnected"
     },
     {
@@ -764,7 +990,6 @@
       "receiver_model": "AppleTV14,1",
       "receiver_os_version_confirmation": "pending",
       "host": "Windows 11 x64 desktop public C API",
-      "source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
       "started_utc": "2026-10-15T13:21:10.657483+00:00",
       "executable_sha256": "ba96137552e9fe5b403b2a8f368c95b52f633abf310b41ec2129d7daa101ba3f",
       "native_sha256": "e6933f5c49be4554d6d2f906309adf3c7b152bdbc83471dca812230a4d49da9d",
@@ -903,6 +1128,9 @@
       ],
       "exit_code": 0,
       "elapsed_seconds": 27.406,
+      "repository_head_at_run": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_build_source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_changes": false,
       "capture_id": "d88-tv-aac-natural"
     },
     {
@@ -910,7 +1138,6 @@
       "receiver_model": "AppleTV14,1",
       "receiver_os_version_confirmation": "pending",
       "host": "Windows 11 x64 desktop public C API",
-      "source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
       "started_utc": "2026-10-15T13:20:06.018460+00:00",
       "executable_sha256": "ba96137552e9fe5b403b2a8f368c95b52f633abf310b41ec2129d7daa101ba3f",
       "native_sha256": "e6933f5c49be4554d6d2f906309adf3c7b152bdbc83471dca812230a4d49da9d",
@@ -1049,6 +1276,9 @@
       ],
       "exit_code": 0,
       "elapsed_seconds": 30.687,
+      "repository_head_at_run": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_build_source_commit": "f6c85efafe40246ec9d28fe29993e35c50dc9ff5",
+      "native_changes": false,
       "capture_id": "d88-tv-dts-natural"
     }
   ],
@@ -1071,7 +1301,7 @@
     "No Screenbox queue or visual UI claim; UWP sequential casts exercise host slot reuse",
     "Initial native Mac AAC capture lacks final-state/module fields; corrected repeat supplies telemetry",
     "One native TV AAC attempt disconnected during seek; retained separately from repeat",
-    "One packaged Mac attempt was receiver-rejected before playback; retry retained separately"
+    "Two packaged Mac attempts were receiver-rejected before playback; the second intended cancellation but no manual Stop was recorded; retries remain separate"
   ],
   "local_validation": {
     "original_fixtures_generated": 9,
