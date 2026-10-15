@@ -52,8 +52,52 @@ must preserve every AAC fragment byte against its original zero-origin source.
 Lossy-reference RMS is bounded by 0.006 absolute and 6% relative, with a 0.0005
 absolute floor for quiet AAC tails. Existing stricter legacy join tests remain.
 
-Implementation validation is in progress. Private package 0.1.0.6 adds these
-owned fixtures to the shared automatic catalog, then repeats the brokered
-private-file measurement. Keep that input's filename/path/hash/content outside
-committed evidence. Runtime results, loaded hashes and performance remain
-unclaimed until measured; receiver playback/A-V sync/EOF remain separate gates.
+## Recorded validation and remaining gate
+
+[Sanitized dated evidence](validation/matroska-presentation-origin-windows-2026-10-15.json)
+records native/package source `b946bb7`, with no native changes after that commit.
+Local Windows Release suites pass: static **39/39** (47.07 s), shared **40/40**
+(55.40 s), enabled shared **41/41** (99.07 s), and standalone codec **12/12**
+(86.65 s). The final focused origin check passes in 3.25 s, including the partial
+initial DTS-cadence refusal/cleanup control. Existing legacy join, delay/trim,
+large-seek and resource/refusal checks remain. The runtime catalog now covers
+57 fixtures and 126 automatic scenarios (129 desktop scenarios including the
+three bounded measurement modes), alongside 16 legacy forced-stereo scenarios.
+
+Private package **0.1.0.6** passes both bundled and hash-verified folder-granted
+126-case/57-fixture matrices on Windows 11 x64 10.0.26200. Each retains the 16
+forced-stereo cases, nine original public lifetimes, 11 public offline checks,
+33 automatic public lifetimes and explicit outside-profile AAC refusal. Expected
+failures/decisions, one-time source/store release, child removal and sibling
+preservation pass. The user selected the visible copy of owned fixtures. Actual
+AppContainer tokens and all six loaded DLL hashes match registration/native
+build for both runs and the private-video measurement. Six-DLL UWP import/profile
+inspection passes; default shared exports exclude the private hooks. Seven
+touched C++ files pass formatting; whitespace and 139 owned fixture hashes pass.
+Inspect actual PR-head CI before merging.
+
+The authorized brokered private video records **MEASURED_REFUSAL** again, at a
+different existing guard. Preparation returns media-unsupported (20) in 29 ms
+(30 ms elapsed), with 332 source callbacks, 5,746,551 requested bytes and
+5,553,062 returned bytes. No media fragment is requested/sealed; accepted
+conversion storage clears/releases once and its child is removed. These timings
+measure refusal, not conversion throughput. Process CPU/memory snapshots include
+app/runtime/picker overhead; no speed comparison with D84 is established.
+
+A bounded read-only desktop diagnostic accepts the source-zero seed and initial
+source-origin window (864 samples on the 48-kHz clock), then reports
+`AudioDecodeFailure::unsupported` at
+`Matroska timestamp is off the canonical frame grid` during the representative
+first-period measurement. The origin requirement is passed; the fixed-cadence
+audio clock needs separate investigation. This observation does not establish
+whether packet timestamps, decoder frame phase or a real source discontinuity
+causes the refusal. No tolerance was widened and no track/route was substituted.
+The input's filename/path/hash/content remain excluded from committed evidence.
+
+Next proposed slice: reproduce that fixed-cadence timing mismatch using owned
+Matroska DTS controls, distinguish valid coarse timestamps/decoder phase from
+discontinuities, and preserve refusal for actual discontinuities. After a validated
+correction, repeat first/middle/last cold/warm brokered measurements. Copied and
+converted receiver playback, A/V synchronization, controls and natural EOF remain
+subsequent gates. No receiver was contacted, package published or Screenbox pin
+changed; audio-only speakers and discrete converted surround remain hardware-deferred.

@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "decision": "D85",
+  "date": "2026-10-15",
+  "baseline": {
+    "merged_pr": 65,
+    "merge_commit": "76abc3ce1434aed33d71d88acc7e55302a22815d",
+    "final_head": "9290fb3bffe05586c127a37364041ed1b71acda8",
+    "successful_ci_checks": 16,
+    "ci_run": 38663140087
+  },
+  "scope": "Offline Matroska common-origin composition, owned audio/video/subtitle controls and brokered private-video refusal measurement; no receiver.",
+  "host": {
+    "os": "Windows 11",
+    "version": "10.0.26200",
+    "architecture": "x64"
+  },
+  "source_commit": "b946bb7ce8390a225efaf0be5b0a7b4a4b481a95",
+  "native_changes": false,
+  "package_version": "0.1.0.6",
+  "package_sha256": "ee6ffb0005b5db1c91a07c2d8198d8cbe22217da6c08ef27ceacdddb141123c9",
+  "profile": {
+    "api_version": 5,
+    "configuration": "Release",
+    "system": "WindowsStore 10.0",
+    "SAP2_STEREO_AAC": true,
+    "SAP2_RUNTIME_VALIDATION": true,
+    "BUILD_SHARED_LIBS": true,
+    "framework": "net10.0-windows10.0.26100.0 UWP Native AOT",
+    "core_dependency_triplet": "x64-uwp",
+    "codec_triplet": "x64-uwp-codec-release",
+    "quota_bytes": 536870912,
+    "fixture_source_read_limit": 1021,
+    "cache_read_limit": 997,
+    "benchmark_source_read_limit": 32749
+  },
+  "owned_origin_fixtures": [
+    {
+      "file": "dts-early-indexed.mkv",
+      "bytes": 2943833,
+      "sha256": "5d7c14e8dfa64996a5421d3e12288de5cd9a01ce4387c80c635043eb0e7ff7e8",
+      "owned_packet_source": "hls/dts.mkv",
+      "source_sha256": "7e314c1fd9bb10cd120105e758048437d01145d44acb777178e3bcb8eeb54f88",
+      "video_origin_ms": 83,
+      "audible_audio_origin_ms": 0,
+      "codec_delay_ms": 0,
+      "indexed": true
+    },
+    {
+      "file": "dts-late-full.mkv",
+      "bytes": 2942955,
+      "sha256": "92905822974fba0b89f864626d52a55ffac8f4008ffe4bbadbb5926160ed33f0",
+      "owned_packet_source": "hls/dts.mkv",
+      "source_sha256": "7e314c1fd9bb10cd120105e758048437d01145d44acb777178e3bcb8eeb54f88",
+      "video_origin_ms": 83,
+      "audible_audio_origin_ms": 203,
+      "codec_delay_ms": 0,
+      "indexed": false
+    },
+    {
+      "file": "dts-reordered-indexed.mkv",
+      "bytes": 2942960,
+      "sha256": "f7f37ce2d428fa41db9d0ebe10f55c2518b82bd203d647f544949625b3fb8c0f",
+      "owned_packet_source": "hls/dts-bframes.mp4",
+      "source_sha256": "dc16ad877ec7d7c38617cf7f6db1e7da9e6e2afb6a210d8c74db6bfb2171cbe5",
+      "video_origin_ms": 83,
+      "audible_audio_origin_ms": 0,
+      "codec_delay_ms": 0,
+      "indexed": true
+    },
+    {
+      "file": "flac-common-indexed.mkv",
+      "bytes": 157362,
+      "sha256": "f4d4ef7ff8e6d49d5700e94cd5278c178f495c160a4293ebe45147c5ecc10819",
+      "owned_packet_source": "expanded-decoder/flac.mkv",
+      "source_sha256": "04818805c9c51bb35ccc2e971d226e51b84b3bbb0cb3c3bf6c1343e691ba7e83",
+      "video_origin_ms": 123,
+      "audible_audio_origin_ms": 123,
+      "codec_delay_ms": 0,
+      "indexed": true
+    }
+  ],
+  "catalog_sha256": "543cbce9a4186df596ad3a2c3142773cc373796df8cc83de28726190eb0e6310",
+  "native_controls": {
+    "literal_video_origin_ms": [
+      83,
+      123
+    ],
+    "literal_origin_48khz_samples": [
+      3984,
+      5904
+    ],
+    "indexed_and_full_scan": true,
+    "reordered_video": true,
+    "compressed_video_bytes_unchanged": true,
+    "earlier_audio_clipped_and_later_silence_preserved": true,
+    "subtitle_clipping_and_cross_segment_cues": true,
+    "native_demux_clock_unchanged": true,
+    "cold_tail_backward_forward_cache_bytes_stable": true,
+    "literal_eof_samples": [
+      792000,
+      312000
+    ],
+    "common_flac_offset_preserves_exact_aac_fragment_bytes": true,
+    "lossy_reference_max_absolute_rms": 0.006,
+    "lossy_reference_max_relative_rms": 0.06,
+    "quiet_tail_absolute_rms_floor": 0.0005,
+    "legacy_join_tolerances_unchanged": true,
+    "partial_initial_dts_cadence_refusal_and_cleanup": true
+  },
+  "bundled": {
+    "run_id": "612d9451a2184c2fabeba6bc9dcfa771",
+    "utc": "2026-10-15T02:04:48.3154612+00:00",
+    "result": "PASS",
+    "log_sha256": "d50471c4c7ead2baef821f997970478243340205490a86f9f2a2c955b64b641f",
+    "process_and_loaded_modules": {
+      "app_container": true,
+      "version": "0.1.0.6",
+      "captured_utc": "2026-10-15T02:05:52.1960765+00:00",
+      "cpu_ms": 47671.875,
+      "executable_matches_registration": true,
+      "peak_working_set_bytes": 119447552,
+      "modules": [
+        {
+          "sha256": "143bb354d72afc96d4c8cc878cc7d6436b8f40c57ac353e2c0894cb0d30e0b85",
+          "matches_native_build": true,
+          "name": "send_airplay2.DLL",
+          "matches_layout": true
+        },
+        {
+          "sha256": "9ec7c055114218f6ccb68e1bc0a0bbe77d17076ffd04ef552264f7e07c425408",
+          "matches_native_build": true,
+          "name": "avformat-63.dll",
+          "matches_layout": true
+        },
+        {
+          "sha256": "6b1fbca0846c8aaf4e3072e79b4222fd01281bfa0e5db9b78b15abe6fde2520c",
+          "matches_native_build": true,
+          "name": "swresample-7.dll",
+          "matches_layout": true
+        },
+        {
+          "sha256": "d9d892cbbff17a129d6c088e102dca375db25ebdba10a9b6c7fa76eb08b75313",
+          "matches_native_build": true,
+          "name": "avcodec-63.dll",
+          "matches_layout": true
+        },
+        {
+          "sha256": "bd1327659cd5d28e5d5d7dc7a380c74e279d26d7153dddfa47dd1339e4f03127",
+          "matches_native_build": true,
+          "name": "avutil-61.dll",
+          "matches_layout": true
+        },
+        {
+          "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+          "matches_native_build": true,
+          "name": "libcrypto-3-x64.dll",
+          "matches_layout": true
+        }
+      ],
+      "private_bytes": 133472256
+    },
+    "automatic_fixtures": 57,
+    "automatic_cases": 126,
+    "cases_by_mode": {
+      "0": 57,
+      "1": 11,
+      "2": 7,
+      "3": 11,
+      "4": 11,
+      "6": 11,
+      "7": 11,
+      "8": 7
+    },
+    "forced_native_cases": 16,
+    "legacy_public_lifetimes": 9,
+    "public_offline_checks": 11,
+    "public_automatic_lifetimes": 33,
+    "outside_profile_aac_refusals": 1,
+    "picker_granted_and_all_owned_hashes_verified": false,
+    "expected_failures_and_literal_decisions_verified": true,
+    "all_contexts_released_once_and_children_removed": true,
+    "sibling_preserved": true
+  },
+  "outside_package_owned": {
+    "run_id": "a3862e6ed51e4980803a3b6673d3ef77",
+    "utc": "2026-10-15T02:06:06.4496234+00:00",
+    "result": "PASS",
+    "log_sha256": "c8804aa48fa4e68733a3c422cc34c278b6f77b42ad027eb4334243d76485690d",
+    "process_and_loaded_modules": {
+      "peak_working_set_bytes": 118644736,
+      "version": "0.1.0.6",
+      "executable_matches_registration": true,
+      "modules": [
+        {
+          "sha256": "143bb354d72afc96d4c8cc878cc7d6436b8f40c57ac353e2c0894cb0d30e0b85",
+          "name": "send_airplay2.DLL",
+          "matches_layout": true,
+          "matches_native_build": true
+        },
+        {
+          "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+          "name": "libcrypto-3-x64.dll",
+          "matches_layout": true,
+          "matches_native_build": true
+        },
+        {
+          "sha256": "9ec7c055114218f6ccb68e1bc0a0bbe77d17076ffd04ef552264f7e07c425408",
+          "name": "avformat-63.dll",
+          "matches_layout": true,
+          "matches_native_build": true
+        },
+        {
+          "sha256": "d9d892cbbff17a129d6c088e102dca375db25ebdba10a9b6c7fa76eb08b75313",
+          "name": "avcodec-63.dll",
+          "matches_layout": true,
+          "matches_native_build": true
+        },
+        {
+          "sha256": "6b1fbca0846c8aaf4e3072e79b4222fd01281bfa0e5db9b78b15abe6fde2520c",
+          "name": "swresample-7.dll",
+          "matches_layout": true,
+          "matches_native_build": true
+        },
+        {
+          "sha256": "bd1327659cd5d28e5d5d7dc7a380c74e279d26d7153dddfa47dd1339e4f03127",
+          "name": "avutil-61.dll",
+          "matches_layout": true,
+          "matches_native_build": true
+        }
+      ],
+      "app_container": true,
+      "private_bytes": 135172096,
+      "captured_utc": "2026-10-15T02:07:51.1414333+00:00",
+      "cpu_ms": 49046.875
+    },
+    "automatic_fixtures": 57,
+    "automatic_cases": 126,
+    "cases_by_mode": {
+      "0": 57,
+      "1": 11,
+      "2": 7,
+      "3": 11,
+      "4": 11,
+      "6": 11,
+      "7": 11,
+      "8": 7
+    },
+    "forced_native_cases": 16,
+    "legacy_public_lifetimes": 9,
+    "public_offline_checks": 11,
+    "public_automatic_lifetimes": 33,
+    "outside_profile_aac_refusals": 1,
+    "picker_granted_and_all_owned_hashes_verified": true,
+    "expected_failures_and_literal_decisions_verified": true,
+    "all_contexts_released_once_and_children_removed": true,
+    "sibling_preserved": true
+  },
+  "limitations": [
+    "No receiver playback, audible observer confirmation, A/V synchronization or receiver EOF observation.",
+    "A preparation refusal is not converted-fragment throughput evidence.",
+    "Source-read/callback/deadline, timeline/window, codec and cache bounds remain unchanged.",
+    "Private input filename/path/hash/content are excluded; it was not copied or rewritten.",
+    "Backend defaults OFF; no publication or Screenbox pin change; speakers/discrete surround stay hardware-deferred."
+  ],
+  "native_suites": {
+    "static": {
+      "passed": 39,
+      "total": 39,
+      "elapsed_seconds": 47.07
+    },
+    "shared": {
+      "passed": 40,
+      "total": 40,
+      "elapsed_seconds": 55.4
+    },
+    "enabled": {
+      "passed": 41,
+      "total": 41,
+      "elapsed_seconds": 99.07
+    },
+    "codec": {
+      "passed": 12,
+      "total": 12,
+      "elapsed_seconds": 86.65
+    }
+  },
+  "private_video": {
+    "run_id": "beb1b7a9291245028738b79c947fe271",
+    "utc": "2026-10-15T02:08:11.3607892+00:00",
+    "result": "MEASURED_REFUSAL",
+    "log_sha256": "288f16d3cf8141b585ee855981a795beb581b83dc2f891d6abf4216b9560bda4",
+    "read_only_user_authorized": true,
+    "manual_picker_grant": true,
+    "measurements": [
+      {
+        "mode": 9,
+        "preparation": 20,
+        "failure": 0,
+        "action": 0,
+        "family": 0,
+        "input_bytes": 47009830504,
+        "segments": 0,
+        "cold_ms": 0,
+        "warm_ms": 0,
+        "elapsed_ms": 30,
+        "prepare_ms": 29,
+        "request_ms": 0,
+        "prep_calls": 332,
+        "prep_requested": 5746551,
+        "prep_actual": 5553062,
+        "request_calls": 0,
+        "request_requested": 0,
+        "request_actual": 0,
+        "sealed_bytes": 0,
+        "clear": 1,
+        "release": 1,
+        "removed": 1
+      }
+    ],
+    "process_and_loaded_modules": {
+      "modules": [
+        {
+          "matches_layout": true,
+          "matches_native_build": true,
+          "name": "send_airplay2.DLL",
+          "sha256": "143bb354d72afc96d4c8cc878cc7d6436b8f40c57ac353e2c0894cb0d30e0b85"
+        },
+        {
+          "matches_layout": true,
+          "matches_native_build": true,
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc"
+        },
+        {
+          "matches_layout": true,
+          "matches_native_build": true,
+          "name": "avformat-63.dll",
+          "sha256": "9ec7c055114218f6ccb68e1bc0a0bbe77d17076ffd04ef552264f7e07c425408"
+        },
+        {
+          "matches_layout": true,
+          "matches_native_build": true,
+          "name": "avcodec-63.dll",
+          "sha256": "d9d892cbbff17a129d6c088e102dca375db25ebdba10a9b6c7fa76eb08b75313"
+        },
+        {
+          "matches_layout": true,
+          "matches_native_build": true,
+          "name": "swresample-7.dll",
+          "sha256": "6b1fbca0846c8aaf4e3072e79b4222fd01281bfa0e5db9b78b15abe6fde2520c"
+        },
+        {
+          "matches_layout": true,
+          "matches_native_build": true,
+          "name": "avutil-61.dll",
+          "sha256": "bd1327659cd5d28e5d5d7dc7a380c74e279d26d7153dddfa47dd1339e4f03127"
+        }
+      ],
+      "executable_matches_registration": true,
+      "version": "0.1.0.6",
+      "peak_working_set_bytes": 99332096,
+      "private_bytes": 131010560,
+      "captured_utc": "2026-10-15T02:08:24.5491248+00:00",
+      "cpu_ms": 484.375,
+      "app_container": true
+    },
+    "process_measurement_scope": "Total process CPU/peak working set/private bytes at capture; includes app startup, runtime and picker overhead.",
+    "diagnosis": {
+      "method": "Bounded read-only desktop diagnostic using existing private decoder/HLS owners.",
+      "initial_source_zero_seed": "accepted",
+      "source_origin_samples": 864,
+      "initial_source_origin_window": "accepted",
+      "category": "AudioDecodeFailure::unsupported",
+      "guard": "Matroska timestamp is off the canonical frame grid",
+      "interpretation": "Initial origin handling succeeds; representative first-period audio fails the existing fixed-cadence timestamp guard. No wider tolerance or alternate route used."
+    }
+  }
+}

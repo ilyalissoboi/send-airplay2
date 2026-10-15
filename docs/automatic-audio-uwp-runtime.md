@@ -1,5 +1,10 @@
 # Automatic audio AppContainer and performance gate (D84)
 
+**Subsequent D85 result:** [Matroska origin support](matroska-presentation-origin.md)
+passes native and expanded packaged controls. The private video passes its origin
+requirement, then refuses at the existing DTS frame-grid guard. The D84 refusal
+and package observations below remain historical; conversion throughput is open.
+
 Authorized by the user's Proceed on 2026-10-15 (Asia/Tokyo), from merged
 [PR #64](https://github.com/ilyalissoboi/send-airplay2/pull/64), `2bdd397`.
 All 16 checks passed at final head `4126ca9` in run `38593843522`.

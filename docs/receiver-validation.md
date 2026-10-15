@@ -1,5 +1,12 @@
 # Receiver validation record
 
+**D85 offline gate (2026-10-15):** [Matroska common-origin composition](matroska-presentation-origin.md)
+passes native video/audio/subtitle, seek and EOF controls plus bundled/folder-granted
+126-case/57-fixture matrices in private package 0.1.0.6 at `b946bb7`, with actual
+AppContainer token/six loaded hashes and cleanup verified. The private video now
+passes its origin requirement but refuses at the existing DTS frame-grid guard.
+This adds no conversion-throughput or receiver playback/A-V sync/EOF observation.
+
 **D84 offline gate (2026-10-15):** [expanded automatic AppContainer checks](automatic-audio-uwp-runtime.md)
 pass bundled and hash-verified folder-granted 115-case/53-fixture matrices in
 private package 0.1.0.5 at `b0cd5ec`, with actual token and six loaded hashes
