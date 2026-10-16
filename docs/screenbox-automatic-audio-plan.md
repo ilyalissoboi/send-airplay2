@@ -1,8 +1,9 @@
 # Screenbox automatic audio integration plan (D90 proposal)
 
 Follow-up: the user approved implementation. [D91](screenbox-automatic-audio-integration.md)
-records fork PR #13, passing local logic/MSIX checks and the pending host manual/CI
-gates. The proposal below is retained as the pre-implementation design record.
+records fork PR #13, passing local logic/MSIX checks and the completed recorded
+host manual gate; inspect current PR heads for CI. The proposal below is retained
+as the pre-implementation design record.
 
 2026-10-16. This is an engineering proposal for the next host slice, not an
 implemented or user-validated Screenbox feature. Candidate publication and host
