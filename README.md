@@ -30,40 +30,32 @@ C# binding and a development CLI.
 Not in scope: DRM-protected media, screen mirroring, system audio capture,
 multiroom audio and general video transcoding.
 
-An optional [offline stereo-AAC codec/packaging spike](docs/stereo-aac-codec-spike.md)
-now exercises audio decoding/downmixing in a separate development DLL and
-AppContainer host. It does not add transcoding to casting or change the
-published package. The optional [stereo AAC playback integration](docs/stereo-aac-playback.md)
-adds explicit video delivery with a selected source audio track downmixed to
-stereo AAC, host-owned cache callbacks and API version 4. It defaults OFF and
-has offline validation plus [recorded x64 AppContainer source/cache checks](docs/stereo-aac-uwp-runtime.md).
-Real-file performance and receiver playback validation remain gates.
+Optional [automatic audio delivery (API 5)](docs/automatic-audio-public.md) copies
+eligible AAC-LC/AC-3/E-AC-3 or converts the covered DTS-core, FLAC, Opus, Vorbis,
+PCM and TrueHD subset to 48-kHz stereo AAC while copying video. This is a finite
+delivery profile, not support for every stream with those codec names. Conversion
+requires an enabled codec backend, explicit stereo permission and host-owned
+per-cast storage with a finite quota. Native builds keep `SAP2_STEREO_AAC` OFF
+by default, and delivery still defaults to progressive.
 
-The [automatic audio expansion plan](docs/automatic-audio-transcoding-plan.md)
-proposes copying eligible audio or converting validated inputs to stereo AAC.
-Its [private decoder foundation](docs/audio-decoder-expansion.md) now supports
-the recorded FLAC, Opus, Vorbis, PCM and TrueHD subset with offline checks.
-The finite automatic policy is implemented. [Bounded Matroska clock reconstruction](docs/coarse-matroska-audio.md)
-covers ordinary millisecond clocks for short presentations. [Selected PCM indexing](docs/matroska-pcm-index.md)
-supports longer PCM presentations within its resource limits.
-[Compressed duration/restart indexing](docs/matroska-compressed-index.md) extends
-that subset to FLAC/Opus/Vorbis/TrueHD. [Compact restart anchors](docs/matroska-compact-index.md)
-remove the canonical decoder's full packet table, with synthetic high-count
-TrueHD/Opus scaling checks under unchanged I/O and decode budgets.
-[Private selected copy/conversion preparation](docs/automatic-audio-policy.md)
-now resolves the finite profile's copy table or bounded stereo route.
-[API 5 integration](docs/automatic-audio-public.md) exposes opt-in automatic
-delivery, offline preparation checks and decision reporting through C, C# and CLI.
-Copy needs no backend/cache; conversion retains the optional backend and host cache.
-The [expanded x64 AppContainer gate](docs/automatic-audio-uwp-runtime.md) passes
-bundled and folder-granted automatic fixture checks. An authorized real-video
-benchmark now passes [Matroska origin handling](docs/matroska-presentation-origin.md)
-and [DTS lace clock handling](docs/matroska-dts-frame-clock.md).
-[Bounded DTS seek coordinates](docs/matroska-dts-bounded-seek.md) now let the same
-brokered input complete first/middle/last fragment samples in 138/314/64 ms,
-with identical cached repeats and unchanged read limits. This is one host/input's
-bounded performance evidence; sustained whole-film throughput and converted
-receiver playback remain separate gates.
+The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.282`** is
+[published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282).
+It includes the enabled codec runtime, sources and notices. Reference it instead
+of the codec-free `SendAirPlay2` package; mixed direct/transitive profiles are
+rejected. The codec-free release and Screenbox pin remain `0.3.0-ci.207`.
+See [the package contract](docs/opt-in-audio-runtime-package.md) and
+[verified publication](docs/opt-in-audio-release-candidate.md). Neither package
+is on nuget.org. Audio-only speakers and discrete converted surround remain deferred.
+
+[Recorded receiver checks](docs/automatic-audio-receiver-gate.md) cover native
+AAC copy/DTS conversion and packaged UWP nine-format playback on the recorded
+MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6 from Windows x64, with applicable
+controls, Stop/cancellation and cleanup observations. Separately,
+[bounded DTS seek checks](docs/matroska-dts-bounded-seek.md) let one brokered
+input complete first/middle/last fragment samples in 138/314/64 ms with identical
+cached repeats and unchanged read limits. These observations do not establish
+sustained whole-film throughput, playback of the newly published binary bytes or
+Screenbox automatic-audio queue behavior; see the records for exact scope and retries.
 
 ## Build
 
@@ -133,7 +125,8 @@ runs the same casts through the public C API only.
 | Pairing and credentials (C) | [`pairing.h`](include/send_airplay2/pairing.h), [`credentials.h`](include/send_airplay2/credentials.h) |
 | Discovery (C) | [`receivers.h`](include/send_airplay2/receivers.h) |
 | C# (.NET Standard 2.0) | [`bindings/csharp`](bindings/csharp); see [the binding notes](docs/csharp-binding.md) |
-| NuGet package (binding + UWP native libraries) | Published as GitHub prerelease `nuget-v0.3.0-ci.207`, including Mac controls and explicit HLS EOF handling; not on nuget.org. See [docs/nuget-package.md](docs/nuget-package.md) |
+| Codec-free NuGet package (binding + UWP native libraries) | `SendAirPlay2 0.3.0-ci.207`, published as [GitHub prerelease `nuget-v0.3.0-ci.207`](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207); includes Mac controls and explicit HLS EOF handling. See [package notes](docs/nuget-package.md) |
+| Opt-in stereo AAC NuGet package (binding + x64 UWP codec runtime) | `SendAirPlay2.StereoAac 0.5.0-ci.282`, published as [GitHub prerelease `nuget-stereo-aac-v0.5.0-ci.282`](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282); includes sources/notices. See [the contract](docs/opt-in-audio-runtime-package.md). Neither package is on nuget.org |
 | Packaged UWP example | [`tools/uwp-host`](tools/uwp-host); see [its notes](docs/uwp-host.md) |
 
 The contracts and the version policy are in [docs/public-api.md](docs/public-api.md).
