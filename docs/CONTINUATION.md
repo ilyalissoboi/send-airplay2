@@ -23,23 +23,35 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D91 Screenbox host implementation / manual gate pending (2026-10-16).**
+**D91 recorded Screenbox host gate passed (2026-10-16).**
 The user's Proceed starts fork [PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)
 from `ce78235`, initial head `f621f267`. Experimental x64 package selection,
 verified cached/new downloads, isolated outputs, app-owned finite cache with
 serial cleanup/admission, Stop/supersession checks, explicit default-off stereo
 permission and error categories are implemented. Ordinary builds retain ci.207.
-Both Core/MSIX profiles build; 111/111 ordinary and 125/125 opt-in logic checks,
+Both Core/MSIX profiles build; 113/113 ordinary and 127/127 opt-in logic checks,
 hash/corruption/profile refusals and actual MSIX payload checks pass. Development
-1.0.0.8 is registered in place with data preserved; follow-up `bbbfbc9d` suppresses
-stale failure results when Stop wins. Both receivers are available
-by user report. Written setting/AAC readiness instructions are pending; installed
-AppContainer/loaded hashes and fresh Screenbox receiver/queue/cache checks follow.
-Read [the checkpoint](screenbox-automatic-audio-integration.md), inspect actual-head
-CI and keep the PR draft until its gate is resolved. GitHub creates no PR run and
-rejects manual dispatch with HTTP 422 "Actions has been disabled for this
-repository" despite enabled metadata; a workflow-enable request is pending.
-No CI success is claimed. No Computer Use for visual
+1.0.0.9 is registered in place with data preserved; follow-up `bbbfbc9d` suppresses
+stale failure results when Stop wins and `a6f1fcc9` exposes initial-start Cancel.
+Both receivers are available. The user confirms the setting/default off and
+unchanged macOS 26.7.1/tvOS 26.6. Version 1.0.0.9 passes AppContainer/six pinned
+loaded hashes and real Mac consent cancellation via Cancel: prompt closure,
+responsiveness, local paused/no error. Accepted AAC retry and AAC-copy controls
+pass on both receivers with sync/channel pattern, start near 45 seconds,
+pause/resume, both seeks, Stop closure and local paused handoff. Off-permission
+DTS refusal passes on the Mac and converted DTS controls pass on both receivers.
+Both pass natural AAC → converted DTS → AAC queue advance, rapid Next and Stop
+during a transition, with paused/responsive handoff and no delayed restart. Both
+250-ms cache samples end at zero and observe at most one directory/430,412 bytes;
+the independent final count is zero. Final process hashes are rechecked; the user
+restores conversion off and local paused. No manual gate remains.
+Read [the checkpoint](screenbox-automatic-audio-integration.md), inspect fork #13
+at final documentation head `912cab6d` and native #73, including actual-head CI,
+then review/ask before merging. The user enabled Actions
+after the initial HTTP 422 disabled response; manual run `38870523110` passes all
+four jobs at `bff9e2fc`. Cancel-head PR run `38871102108` at `a6f1fcc9` also passes all four.
+Native PR #73 passes 17 checks at `52c5a3b`. Recheck final evidence heads.
+No Computer Use for visual
 confirmation; original owned fixtures only. Native checkpoint branch starts from
 PR #72 merge `910b48e`. Do not repeat publication or infer host results from D88.
 
@@ -836,9 +848,11 @@ in PR #70 (`e6acba1`), with all 17 final-head checks passed. D90 published the
 approved clean-main `0.5.0-ci.282` opt-in prerelease: all 17 main checks and local
 artifact/consumer gates pass, and the unauthenticated public download matches.
 The user approved that slice: D91 implements it in fork PR #13. Next work is its
-pending manual setting/readiness confirmation, loaded DLL/AppContainer checks,
-fresh owned-fixture Screenbox receiver/queue/cache observations and final-head CI
-after GitHub Actions is re-enabled. Do not restart implementation or publication.
+review and final-head CI for fork #13/native #73 before user-approved merging.
+The 1.0.0.9 setting/default, loaded hashes/AppContainer, Mac consent cancellation,
+copied/converted controls, refusal, natural/rapid queue and cleanup checks pass;
+the user restores conversion off/local paused. GitHub Actions is enabled. Do not
+restart implementation, publication or completed manual checks.
 Preserve the
 OFF-by-default/publication boundaries. The isolated Apple TV event
 disconnect remains an explicit follow-up.
@@ -1028,12 +1042,16 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > separately authorized; do not restart completed receiver gates.
 > The user subsequently approved D91 Screenbox host implementation. Fork PR #13
 > contains the x64 profile, finite app cache/drain, default-off stereo permission
-> and error categories; ordinary builds retain ci.207. Local 111/125 logic suites
-> and both MSIX payload checks pass. Development 1.0.0.8 is registered in place.
-> Manual setting/readiness, loaded DLL/AppContainer and fresh Screenbox receiver/
-> queue/cache checks are pending. GitHub returns HTTP 422 Actions disabled despite
-> enabled metadata; workflow-enable confirmation is pending. Do not claim CI
-> success or restart completed D88 library tests as host proof. Continue existing
+> and error categories; ordinary builds retain ci.207. Local 113/127 logic suites
+> and both MSIX payload checks pass. Development 1.0.0.9 adds initial-start Cancel;
+> its loaded hashes/AppContainer and user Mac consent cancellation pass, with
+> paused/responsive handoff/no error. The setting/default, AAC copy, DTS refusal,
+> converted DTS controls and natural/rapid queue/transition Stop pass on both
+> applicable receivers. Both sampled cache windows end at zero; the final count
+> and process hashes pass. The user restores conversion off/local paused. No
+> manual check remains. GitHub Actions is enabled;
+> inspect actual-head CI, preserving the initial disabled response as history.
+> Do not restart completed D88 library tests as host proof. Continue existing
 > fork PR #13 and native checkpoint branch; inspect actual heads before editing.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and

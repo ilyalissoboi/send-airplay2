@@ -1,12 +1,24 @@
 # Receiver validation record
 
-**D91 Screenbox host gate pending (2026-10-16):** the
+**D91 recorded Screenbox host gate passed (2026-10-16):** the
 [host implementation checkpoint](screenbox-automatic-audio-integration.md) records
-passing local logic/MSIX checks and development version 1.0.0.8 installed in place.
-Both receivers are available by user report, but no fresh Screenbox observation
-has been recorded. Setting/readiness, loaded hashes/AppContainer, playback/controls,
-queue transitions and cache cleanup remain pending. GitHub Actions is also blocked
-by its disabled-repository response; local checks are not CI or interoperability.
+passing local logic/MSIX checks and development version 1.0.0.9 installed in place.
+It passes AppContainer/six pinned loaded hashes. The user confirms the setting
+layout/default off and Mac consent cancellation through the new startup Cancel:
+prompt appears/closes, app remains responsive, local playback paused/no error.
+macOS 26.7.1/tvOS 26.6 remain unchanged. AAC copy with conversion off passes on
+both receivers: start near 45 seconds, sync/channel pattern, pause/resume, both
+seeks, Stop closure and local paused handoff. DTS refuses with conversion off on
+the Mac; enabling conversion passes those same controls on both receivers. Both
+pass natural AAC → converted DTS → AAC queue advance, rapid Next twice to the
+third clip and Stop during a transition, with local paused/responsive handoff and
+no delayed restart. Each 250-ms cache sampling window observes at most one
+directory/430,412 bytes and ends at zero, with independent final count zero;
+sampling does not prove every instantaneous state. Final process hashes pass.
+The user restores conversion off/local paused. Original 120-second controls,
+including permitted late seeks before natural EOF, establish the recorded host
+gate without whole-film, speaker or discrete converted-surround proof. Actions
+is enabled now; inspect final-head CI separately from manual observations.
 
 **D88 recorded gate complete (2026-10-15):** [automatic audio receiver gate](automatic-audio-receiver-gate.md).
 On the recorded Windows x64 host and unchanged macOS 26.7.1 / tvOS 26.6 receivers,

@@ -17,11 +17,15 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D91 host integration in progress:** [Screenbox checkpoint](screenbox-automatic-audio-integration.md)
+**D91 recorded host gate passed:** [Screenbox checkpoint](screenbox-automatic-audio-integration.md)
 records fork PR #13's explicit x64 build option, default-off stereo permission,
 finite per-cast app storage and serial drain/admission. Both Core/MSIX profiles,
-111/125 logic suites and packaged payload controls pass. Fresh Screenbox manual
-receiver/queue validation and actual-head CI remain pending. Ordinary ci.207 and
+113/127 logic suites and packaged payload controls pass. Version 1.0.0.9 adds
+initial-start Cancel and passes AppContainer/six pinned loaded hashes plus user
+Mac consent cancellation with paused/responsive handoff. The user confirms copied
+and converted controls/Stop on both receivers, DTS refusal while off, natural and
+rapid queue changes and transition Stop. Sampled/final caches are empty; conversion
+is restored off/local paused. Inspect final PR heads/CI before merging. Ordinary ci.207 and
 published package bytes remain unchanged.
 
 **D90 published, public download verified:** [clean-main package](opt-in-audio-release-candidate.md)

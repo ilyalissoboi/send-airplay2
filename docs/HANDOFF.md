@@ -9,21 +9,38 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D91 Screenbox opt-in host implementation in progress (2026-10-16).**
+**D91 recorded Screenbox host gate passed (2026-10-16).**
 The user's Proceed starts [fork PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)
 from fork main `ce78235`, initial head `f621f267`. x64 profile/pinned download,
 app-owned cache/drain/cancellation, explicit default-off stereo permission and
-failure messages are implemented. Both Core/MSIX profiles build; 111/111 ordinary
-and 125/125 opt-in logic checks pass. Actual MSIX inspection matches two ordinary
+failure messages are implemented. Both Core/MSIX profiles build; 113/113 ordinary
+and 127/127 opt-in logic checks pass after the Cancel follow-up.
+Actual MSIX inspection matches two ordinary
 native files/no added codecs and all 40 opt-in DLL/source/notice files. The real
-opt-in MSIX is registered in place as development 1.0.0.8, with data preserved;
-runtime/test follow-up `bbbfbc9d` suppresses stale failure results after Stop.
-Read [the checkpoint](screenbox-automatic-audio-integration.md). Both receivers
-are available by user report; written setting/AAC instructions are pending user
-confirmation, then loaded-DLL/AppContainer and fresh host/queue checks remain.
-PR #13 is draft. GitHub has no PR runs and rejects manual dispatch with HTTP 422
-"Actions has been disabled for this repository" despite enabled metadata; a user
-workflow-enable request is pending. No CI success is claimed. Keep D88 library observations separate. No Computer Use for
+opt-in MSIX is registered in place as development 1.0.0.9, with data preserved;
+runtime/test follow-up `bbbfbc9d` suppresses stale failure results after Stop,
+and `a6f1fcc9` exposes Cancel while an initial cast starts. Read
+[the checkpoint](screenbox-automatic-audio-integration.md). The setting/default
+is confirmed by the user. AppContainer/six pinned loaded hashes pass independently
+in 1.0.0.9. Its Mac consent cancellation passes by user report: prompt appears and
+Cancel closes it, app remains responsive, local playback stays paused, no error.
+macOS 26.7.1/tvOS 26.6 remain unchanged. Accepted AAC retry and AAC-copy controls
+pass on both receivers, including synchronization/channel pattern, start near
+45 seconds, pause/resume, both seeks, Stop closure and local paused handoff.
+Off-permission DTS refusal passes on the Mac; converted DTS controls pass on both.
+Both receivers pass natural AAC → converted DTS → AAC queue advance, rapid Next
+supersession and Stop during a transition, with local paused/no delayed restart.
+Both 250-ms cache samples observe at most one directory/430,412 bytes and finish
+at zero; the independent final count is zero. The final process hashes are
+rechecked. The user restores conversion off/local paused. No manual gate remains.
+Inspect/review [fork #13](https://github.com/ilyalissoboi/Screenbox/pull/13) at final
+documentation head `912cab6d` and [native #73](https://github.com/ilyalissoboi/send-airplay2/pull/73),
+including their actual-head CI; ask before merging. The user enabled Actions after the initial HTTP 422 disabled
+response. Manual run `38870523110` passes all four jobs at `bff9e2fc`; Cancel-head
+PR run `38871102108` at `a6f1fcc9` also passes all four. Native checkpoint PR #73 passes all
+17 checks at `52c5a3b`. Earlier green heads do not establish final evidence-head CI.
+Do not repeat completed manual checks or republish the unchanged candidate.
+Keep D88 library observations separate. No Computer Use for
 visual confirmation, private-film cast or new publication. Native checkpoint
 branch is `codex/screenbox-automatic-audio-checkpoint` from merged PR #72 `910b48e`.
 
