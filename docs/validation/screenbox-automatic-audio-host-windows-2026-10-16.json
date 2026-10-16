@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "slice": "D91",
+  "date": "2026-10-16",
+  "status": "RECORDED_SCREENBOX_HOST_GATE_PASSED",
+  "native_base": "910b48e3cb8faab66d0b6d366eb3bb5d73dc5d7b",
+  "screenbox_base": "ce782356376d7991f23219abd25b3ada118bd3cc",
+  "screenbox_pr": "https://github.com/ilyalissoboi/Screenbox/pull/13",
+  "screenbox_runtime_head": "a6f1fcc9f81b5c3361b3269197c4e05eb477f17a",
+  "screenbox_documentation_head": "912cab6d3d01f5727c55598b91a9b39db8cec70e",
+  "toolchain": "Visual Studio 2026 MSBuild 18, Release x64",
+  "published_package": {
+    "sha256": "5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff",
+    "version": "0.5.0-ci.282",
+    "identity": "SendAirPlay2.StereoAac",
+    "unchanged": true
+  },
+  "profiles": [
+    {
+      "packaged_pinned_files_verified": 2,
+      "msix_build": "passed",
+      "logic_tests_failed": 0,
+      "msix_bytes": 57037407,
+      "msix_sha256": "c1073a2409d9b3757d6c63e3c075f023bf740ce096dd31d8a23b1e320fadeb35",
+      "profile": "codec-free",
+      "logic_tests_passed": 113
+    },
+    {
+      "packaged_pinned_files_verified": 40,
+      "msix_build": "passed",
+      "logic_tests_failed": 0,
+      "msix_bytes": 75948066,
+      "msix_sha256": "b0fb674988d2e34ad299a1d561a8422850b579e8d4ac287ea583348cf919cacc",
+      "profile": "stereo-aac",
+      "logic_tests_passed": 127
+    }
+  ],
+  "package_controls": {
+    "cached_pins": "passed both",
+    "msbuild_architecture_rid_flag_refusals": 3,
+    "xaml_styler": "passed",
+    "corrupt_cached_files_refused_and_preserved": "passed both",
+    "downloader_non_x64_refusal": "passed",
+    "git_diff_check": "passed",
+    "powershell_parser": "passed"
+  },
+  "development_app": {
+    "executable_sha256": "6253c86b73fc5e30e0fcadd30ce6f0493163486140feaa39f2b7d0d5c2530b6f",
+    "registered_in_place": true,
+    "source_manifest_restored": true,
+    "installed_native_payloads": [
+      {
+        "sha256": "a39c92684e2c8d414e9fc614b713a1087a4f92895194d5a880d00dfa7ec22039",
+        "loaded_process_verification": "passed",
+        "installed_matches_pinned_package": true,
+        "name": "send_airplay2.dll"
+      },
+      {
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc",
+        "loaded_process_verification": "passed",
+        "installed_matches_pinned_package": true,
+        "name": "libcrypto-3-x64.dll"
+      },
+      {
+        "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f",
+        "loaded_process_verification": "passed",
+        "installed_matches_pinned_package": true,
+        "name": "avcodec-63.dll"
+      },
+      {
+        "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282",
+        "loaded_process_verification": "passed",
+        "installed_matches_pinned_package": true,
+        "name": "avformat-63.dll"
+      },
+      {
+        "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740",
+        "loaded_process_verification": "passed",
+        "installed_matches_pinned_package": true,
+        "name": "avutil-61.dll"
+      },
+      {
+        "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d",
+        "loaded_process_verification": "passed",
+        "installed_matches_pinned_package": true,
+        "name": "swresample-7.dll"
+      }
+    ],
+    "version": "1.0.0.9",
+    "app_container_verification": "passed",
+    "owned_cache_directories_before_tests": 0,
+    "final_owned_cache_directories": 0,
+    "final_process_recheck": "same executable hash, AppContainer and six pinned modules verified after tests"
+  },
+  "manual_gate": {
+    "local_paused_handoff_and_cache_cleanup": "passed on both receivers; final app-owned cache directories and bytes zero",
+    "new_observations": [
+      {
+        "version": "1.0.0.9",
+        "forward_backward_seeks": true,
+        "case": "AAC copy",
+        "pause_resume": true,
+        "explicit_stop_closes_video": true,
+        "conversion_permission": "PreserveOriginal",
+        "start_near_45_seconds": true,
+        "observer": "user",
+        "local_stays_paused": true,
+        "synchronization_and_channel_pattern": true,
+        "receiver": "Mac"
+      },
+      {
+        "version": "1.0.0.9",
+        "forward_backward_seeks": true,
+        "case": "AAC copy",
+        "pause_resume": true,
+        "explicit_stop_closes_video": true,
+        "conversion_permission": "PreserveOriginal",
+        "start_near_45_seconds": true,
+        "observer": "user",
+        "local_stays_paused": true,
+        "synchronization_and_channel_pattern": true,
+        "receiver": "Apple TV"
+      },
+      {
+        "receiver": "Mac",
+        "synchronization_and_channel_pattern": true,
+        "conversion_permission": "AllowStereo",
+        "pause_resume": true,
+        "case": "DTS converted to stereo AAC",
+        "start_near_45_seconds": true,
+        "observer": "user",
+        "forward_backward_seeks": true,
+        "local_stays_paused": true,
+        "explicit_stop_closes_video": true,
+        "version": "1.0.0.9"
+      },
+      {
+        "receiver": "Apple TV",
+        "synchronization_and_channel_pattern": true,
+        "conversion_permission": "AllowStereo",
+        "pause_resume": true,
+        "case": "DTS converted to stereo AAC",
+        "start_near_45_seconds": true,
+        "observer": "user",
+        "forward_backward_seeks": true,
+        "local_stays_paused": true,
+        "explicit_stop_closes_video": true,
+        "version": "1.0.0.9"
+      },
+      {
+        "observer": "user",
+        "case": "natural queue AAC to converted DTS to AAC",
+        "natural_advance_to_both_following_items": true,
+        "scope": "original 120-second fixtures; seeking near 100 seconds permitted before natural end",
+        "local_paused_at_queue_end": true,
+        "receiver": "Mac",
+        "version": "1.0.0.9",
+        "synchronization_and_channel_pattern": true
+      },
+      {
+        "local_stays_paused": true,
+        "receiver": "Mac",
+        "transition_stop_closes_receiver": true,
+        "app_responsive": true,
+        "version": "1.0.0.9",
+        "no_delayed_restart": true,
+        "observer": "user",
+        "double_next_reaches_third_item": true,
+        "case": "rapid Next and Stop during transition"
+      },
+      {
+        "observer": "user",
+        "case": "natural queue AAC to converted DTS to AAC",
+        "natural_advance_to_both_following_items": true,
+        "scope": "original 120-second fixtures; seeking near 100 seconds permitted before natural end",
+        "local_paused_at_queue_end": true,
+        "receiver": "Apple TV",
+        "version": "1.0.0.9",
+        "synchronization_and_channel_pattern": true
+      },
+      {
+        "local_stays_paused": true,
+        "receiver": "Apple TV",
+        "transition_stop_closes_receiver": true,
+        "app_responsive": true,
+        "version": "1.0.0.9",
+        "no_delayed_restart": true,
+        "observer": "user",
+        "double_next_reaches_third_item": true,
+        "case": "rapid Next and Stop during transition"
+      }
+    ],
+    "loaded_dlls": "passed; six pinned DLLs in AppContainer 1.0.0.9",
+    "natural_queue_copy_conversion": "passed AAC to converted DTS to AAC natural advance on both receivers; local paused at end",
+    "receivers_available_by_user_report": [
+      "Mac",
+      "Apple TV"
+    ],
+    "consent_cancellation_retry": "passed; Mac cancellation then accepted AAC retry",
+    "owned_original_controls_only": true,
+    "computer_use_for_visual_confirmation": false,
+    "private_media_cast": false,
+    "aac_copy_dts_conversion_controls": "passed AAC copy with permission off and converted DTS with permission on, on Mac and Apple TV",
+    "setting_default_and_layout": "user confirmed correct/default off; 1.0.0.9 readiness explicitly kept conversion off",
+    "cancellation_observation": {
+      "local_remained_paused": true,
+      "cancel_closed_prompt": true,
+      "app_responsive": true,
+      "consent_prompt_appeared": true,
+      "receiver": "Mac",
+      "source": "user report",
+      "no_error_notification": true,
+      "version": "1.0.0.9"
+    },
+    "receiver_os_confirmation": {
+      "unchanged_by_user_report": true,
+      "macOS": "26.7.1",
+      "tvOS": "26.6"
+    },
+    "preserve_original_dts_refusal": {
+      "no_receiver_playback": true,
+      "observer": "user",
+      "local_paused": true,
+      "version": "1.0.0.9",
+      "receiver": "Mac",
+      "unsupported_notification": true
+    },
+    "post_test_state": {
+      "local_playback_left_paused_by_user": true,
+      "conversion_permission_restored_off_by_user": true,
+      "no_further_receiver_tests_needed": true
+    }
+  },
+  "ci": {
+    "pr_checks": [
+      "test",
+      "xaml-lint",
+      "build",
+      "airplay-stereo-aac"
+    ],
+    "passed": true,
+    "manual_dispatch_error": "Actions has been disabled for this repository.",
+    "read_only_permissions_metadata_enabled": true,
+    "manual_dispatch_http_status": 422,
+    "workflow_enable_user_confirmation": "done; dispatch accepted and PR events now run",
+    "active_runs": [
+      {
+        "event": "workflow_dispatch",
+        "head": "bff9e2fc5a4ed2f9aa0d090e90bf07c4bd6221f0",
+        "status": "completed",
+        "id": 38870523110,
+        "conclusion": "success"
+      },
+      {
+        "event": "pull_request",
+        "head": "a6f1fcc9f81b5c3361b3269197c4e05eb477f17a",
+        "status": "completed",
+        "id": 38871102108,
+        "conclusion": "success"
+      },
+      {
+        "id": 38873162675,
+        "status": "in_progress",
+        "head": "912cab6d3d01f5727c55598b91a9b39db8cec70e",
+        "conclusion": "",
+        "event": "pull_request"
+      }
+    ],
+    "checked_head": "a6f1fcc9f81b5c3361b3269197c4e05eb477f17a",
+    "final_evidence_head_validation": "Inspect the current PR heads/checks on Screenbox #13 and native #73 before merging; earlier run results remain commit-specific."
+  },
+  "superseded_development_app": {
+    "version": "1.0.0.8",
+    "six_loaded_hashes_verified": true,
+    "replaced_before_receiver_checks": true,
+    "receiver_observations": [],
+    "app_container_verified": true
+  },
+  "native_checkpoint_ci": {
+    "head": "52c5a3b84196a396c31d17b4bcb368205bf72f1c",
+    "pr": 73,
+    "run": 38851314214,
+    "passed_checks": 17
+  },
+  "cache_samples": [
+    {
+      "final_directories": 0,
+      "peak_observed_bytes": 430412,
+      "samples": 831,
+      "sample_interval_ms": 250,
+      "case": "DTS controls on both receivers",
+      "sampling_limit": "250 ms observations are not proof that every instantaneous state was captured",
+      "peak_observed_directories": 1,
+      "final_bytes": 0,
+      "unexpected_entry_observed": false
+    },
+    {
+      "final_directories": 0,
+      "final_bytes": 0,
+      "peak_observed_directories": 1,
+      "peak_observed_bytes": 430412,
+      "sampling_limit": "250 ms observations are not proof that every instantaneous state was captured",
+      "unexpected_entry_observed": false,
+      "case": "natural and rapid queue checks on both receivers",
+      "sample_interval_ms": 250,
+      "samples": 1040
+    }
+  ],
+  "post_validation_review_followup": {
+    "both_logic_suites_passed": true,
+    "opt_in_logic_tests": 127,
+    "head": "6377bccf43bdb22836cac0cce593dc2dc20f6cf5",
+    "ordinary_logic_tests": 113,
+    "change": "Restore prior playing state after a current failed start, including Cancelled; caller Cancel/Stop remains excluded by earlier request-generation guard",
+    "recorded_hardware_head_unchanged": "a6f1fcc9f81b5c3361b3269197c4e05eb477f17a",
+    "ci_validation": "Inspect current PR #13 head; earlier green checks do not cover this follow-up",
+    "new_receiver_observation": false
+  }
+}
