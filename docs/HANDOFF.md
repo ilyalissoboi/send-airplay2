@@ -9,6 +9,24 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D91 Screenbox opt-in host implementation in progress (2026-10-16).**
+The user's Proceed starts [fork PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)
+from fork main `ce78235`, initial head `f621f267`. x64 profile/pinned download,
+app-owned cache/drain/cancellation, explicit default-off stereo permission and
+failure messages are implemented. Both Core/MSIX profiles build; 111/111 ordinary
+and 125/125 opt-in logic checks pass. Actual MSIX inspection matches two ordinary
+native files/no added codecs and all 40 opt-in DLL/source/notice files. The real
+opt-in MSIX is registered in place as development 1.0.0.8, with data preserved;
+runtime/test follow-up `bbbfbc9d` suppresses stale failure results after Stop.
+Read [the checkpoint](screenbox-automatic-audio-integration.md). Both receivers
+are available by user report; written setting/AAC instructions are pending user
+confirmation, then loaded-DLL/AppContainer and fresh host/queue checks remain.
+PR #13 is draft. GitHub has no PR runs and rejects manual dispatch with HTTP 422
+"Actions has been disabled for this repository" despite enabled metadata; a user
+workflow-enable request is pending. No CI success is claimed. Keep D88 library observations separate. No Computer Use for
+visual confirmation, private-film cast or new publication. Native checkpoint
+branch is `codex/screenbox-automatic-audio-checkpoint` from merged PR #72 `910b48e`.
+
 **D90 opt-in prerelease published and public download verified (2026-10-16).**
 The user approved publication after [PR #71](https://github.com/ilyalissoboi/send-airplay2/pull/71)
 merged as `7f3aa6d`; all 17 final-head checks passed at `c16dc31` in run

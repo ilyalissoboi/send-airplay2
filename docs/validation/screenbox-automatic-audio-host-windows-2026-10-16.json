@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "slice": "D91",
+  "date": "2026-10-16",
+  "status": "LOCAL_CHECKS_PASS_MANUAL_AND_CI_PENDING",
+  "native_base": "910b48e3cb8faab66d0b6d366eb3bb5d73dc5d7b",
+  "screenbox_base": "ce782356376d7991f23219abd25b3ada118bd3cc",
+  "screenbox_pr": "https://github.com/ilyalissoboi/Screenbox/pull/13",
+  "screenbox_runtime_head": "bbbfbc9db240a51547fa7d3b180cca369f29cb23",
+  "screenbox_documentation_head": "bff9e2fc5a4ed2f9aa0d090e90bf07c4bd6221f0",
+  "toolchain": "Visual Studio 2026 MSBuild 18, Release x64",
+  "published_package": {
+    "sha256": "5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff",
+    "version": "0.5.0-ci.282",
+    "identity": "SendAirPlay2.StereoAac",
+    "unchanged": true
+  },
+  "profiles": [
+    {
+      "packaged_pinned_files_verified": 2,
+      "msix_build": "passed",
+      "logic_tests_failed": 0,
+      "msix_bytes": 57042318,
+      "msix_sha256": "8a8bfd7db0924318bc7972d0bd40de46f10e60ec0565a187f76794532e2ad4c9",
+      "profile": "codec-free",
+      "logic_tests_passed": 111
+    },
+    {
+      "packaged_pinned_files_verified": 40,
+      "msix_build": "passed",
+      "logic_tests_failed": 0,
+      "msix_bytes": 75943144,
+      "msix_sha256": "57cada0dc2f8d0aa24f3c84470a4980df78e15630b95d566fb16ec2862302035",
+      "profile": "stereo-aac",
+      "logic_tests_passed": 125
+    }
+  ],
+  "package_controls": {
+    "cached_pins": "passed both",
+    "msbuild_architecture_rid_flag_refusals": 3,
+    "xaml_styler": "passed",
+    "corrupt_cached_files_refused_and_preserved": "passed both",
+    "downloader_non_x64_refusal": "passed",
+    "git_diff_check": "passed",
+    "powershell_parser": "passed"
+  },
+  "development_app": {
+    "executable_sha256": "e2949f4047b2f0a46d99da4c2a388a0502e1db828fd6ccb2897d83b2022c03cc",
+    "registered_in_place": true,
+    "source_manifest_restored": true,
+    "installed_native_payloads": [
+      {
+        "sha256": "a39c92684e2c8d414e9fc614b713a1087a4f92895194d5a880d00dfa7ec22039",
+        "loaded_process_verification": "pending",
+        "installed_matches_pinned_package": true,
+        "name": "send_airplay2.dll"
+      },
+      {
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc",
+        "loaded_process_verification": "pending",
+        "installed_matches_pinned_package": true,
+        "name": "libcrypto-3-x64.dll"
+      },
+      {
+        "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f",
+        "loaded_process_verification": "pending",
+        "installed_matches_pinned_package": true,
+        "name": "avcodec-63.dll"
+      },
+      {
+        "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282",
+        "loaded_process_verification": "pending",
+        "installed_matches_pinned_package": true,
+        "name": "avformat-63.dll"
+      },
+      {
+        "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740",
+        "loaded_process_verification": "pending",
+        "installed_matches_pinned_package": true,
+        "name": "avutil-61.dll"
+      },
+      {
+        "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d",
+        "loaded_process_verification": "pending",
+        "installed_matches_pinned_package": true,
+        "name": "swresample-7.dll"
+      }
+    ],
+    "version": "1.0.0.8",
+    "app_container_verification": "pending"
+  },
+  "manual_gate": {
+    "local_paused_handoff_and_cache_cleanup": "pending",
+    "new_observations": [],
+    "loaded_dlls": "pending",
+    "natural_queue_copy_conversion": "pending",
+    "receivers_available_by_user_report": [
+      "Mac",
+      "Apple TV"
+    ],
+    "consent_cancellation_retry": "pending",
+    "owned_original_controls_only": true,
+    "computer_use_for_visual_confirmation": false,
+    "private_media_cast": false,
+    "aac_copy_dts_conversion_controls": "pending",
+    "setting_default_and_layout": "pending"
+  },
+  "ci": {
+    "pr_checks": [],
+    "passed": false,
+    "manual_dispatch_error": "Actions has been disabled for this repository.",
+    "read_only_permissions_metadata_enabled": true,
+    "manual_dispatch_http_status": 422,
+    "workflow_enable_user_confirmation": "pending"
+  }
+}

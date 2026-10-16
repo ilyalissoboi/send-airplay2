@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#71 are merged. `main` contains
+Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#72 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,26 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D91 Screenbox host implementation / manual gate pending (2026-10-16).**
+The user's Proceed starts fork [PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)
+from `ce78235`, initial head `f621f267`. Experimental x64 package selection,
+verified cached/new downloads, isolated outputs, app-owned finite cache with
+serial cleanup/admission, Stop/supersession checks, explicit default-off stereo
+permission and error categories are implemented. Ordinary builds retain ci.207.
+Both Core/MSIX profiles build; 111/111 ordinary and 125/125 opt-in logic checks,
+hash/corruption/profile refusals and actual MSIX payload checks pass. Development
+1.0.0.8 is registered in place with data preserved; follow-up `bbbfbc9d` suppresses
+stale failure results when Stop wins. Both receivers are available
+by user report. Written setting/AAC readiness instructions are pending; installed
+AppContainer/loaded hashes and fresh Screenbox receiver/queue/cache checks follow.
+Read [the checkpoint](screenbox-automatic-audio-integration.md), inspect actual-head
+CI and keep the PR draft until its gate is resolved. GitHub creates no PR run and
+rejects manual dispatch with HTTP 422 "Actions has been disabled for this
+repository" despite enabled metadata; a workflow-enable request is pending.
+No CI success is claimed. No Computer Use for visual
+confirmation; original owned fixtures only. Native checkpoint branch starts from
+PR #72 merge `910b48e`. Do not repeat publication or infer host results from D88.
 
 **D90 opt-in prerelease published / public hash verified (2026-10-16).**
 PR #71 merged as `7f3aa6d`, with all 17 checks passed at `c16dc31` in run
@@ -815,7 +835,10 @@ not Screenbox queue or unrestricted reliability proof. D89 packaging is now merg
 in PR #70 (`e6acba1`), with all 17 final-head checks passed. D90 published the
 approved clean-main `0.5.0-ci.282` opt-in prerelease: all 17 main checks and local
 artifact/consumer gates pass, and the unauthenticated public download matches.
-Next suggested slice: implement the reviewed Screenbox plan in its own fork PR.
+The user approved that slice: D91 implements it in fork PR #13. Next work is its
+pending manual setting/readiness confirmation, loaded DLL/AppContainer checks,
+fresh owned-fixture Screenbox receiver/queue/cache observations and final-head CI
+after GitHub Actions is re-enabled. Do not restart implementation or publication.
 Preserve the
 OFF-by-default/publication boundaries. The isolated Apple TV event
 disconnect remains an explicit follow-up.
@@ -980,7 +1003,7 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #71 are merged. D89 merged as e6acba1; all 17 checks passed at
+> PRs through #72 are merged. D89 merged as e6acba1; all 17 checks passed at
 > final head 4c4bfb8 in run 38830621263. Inspect origin/main and open PRs before writing.
 > D82/D83 implement finite automatic policy and API 5; D85 supports shared
 > Matroska origins. D86 corrects DTS lace clocks with exact owned PCM/AAC controls.
@@ -1003,6 +1026,15 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > prepared release notes and Screenbox profile/permission/cache plan. Keep
 > backend defaults and package/Screenbox publication boundaries unchanged until
 > separately authorized; do not restart completed receiver gates.
+> The user subsequently approved D91 Screenbox host implementation. Fork PR #13
+> contains the x64 profile, finite app cache/drain, default-off stereo permission
+> and error categories; ordinary builds retain ci.207. Local 111/125 logic suites
+> and both MSIX payload checks pass. Development 1.0.0.8 is registered in place.
+> Manual setting/readiness, loaded DLL/AppContainer and fresh Screenbox receiver/
+> queue/cache checks are pending. GitHub returns HTTP 422 Actions disabled despite
+> enabled metadata; workflow-enable confirmation is pending. Do not claim CI
+> success or restart completed D88 library tests as host proof. Continue existing
+> fork PR #13 and native checkpoint branch; inspect actual heads before editing.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

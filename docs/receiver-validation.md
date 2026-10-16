@@ -1,5 +1,13 @@
 # Receiver validation record
 
+**D91 Screenbox host gate pending (2026-10-16):** the
+[host implementation checkpoint](screenbox-automatic-audio-integration.md) records
+passing local logic/MSIX checks and development version 1.0.0.8 installed in place.
+Both receivers are available by user report, but no fresh Screenbox observation
+has been recorded. Setting/readiness, loaded hashes/AppContainer, playback/controls,
+queue transitions and cache cleanup remain pending. GitHub Actions is also blocked
+by its disabled-repository response; local checks are not CI or interoperability.
+
 **D88 recorded gate complete (2026-10-15):** [automatic audio receiver gate](automatic-audio-receiver-gate.md).
 On the recorded Windows x64 host and unchanged macOS 26.7.1 / tvOS 26.6 receivers,
 the user confirms native AAC-copy/DTS-conversion checks on both, native Mac

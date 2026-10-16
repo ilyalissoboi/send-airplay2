@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-16 (Asia/Tokyo), after PRs #1-#71 merged.
+Implementation snapshot: 2026-10-16 (Asia/Tokyo), after PRs #1-#72 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -16,6 +16,13 @@ host fragment storage, binding/CLI options and terminal conversion supervision.
 Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-10-14):** [AppContainer runtime/storage gate](stereo-aac-uwp-runtime.md). D73's authoring PR #54 is merged; preserve its known
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
+
+**D91 host integration in progress:** [Screenbox checkpoint](screenbox-automatic-audio-integration.md)
+records fork PR #13's explicit x64 build option, default-off stereo permission,
+finite per-cast app storage and serial drain/admission. Both Core/MSIX profiles,
+111/125 logic suites and packaged payload controls pass. Fresh Screenbox manual
+receiver/queue validation and actual-head CI remain pending. Ordinary ci.207 and
+published package bytes remain unchanged.
 
 **D90 published, public download verified:** [clean-main package](opt-in-audio-release-candidate.md)
 `0.5.0-ci.282` uses main `e6acba1`; all 17 checks in run `38836333166` and local
