@@ -1,5 +1,10 @@
 # D91 Screenbox x64 automatic-audio integration
 
+**Merged checkpoint:** fork #13 merged as `b52c58e`, native #73 as `d9cd2c2`.
+The following is the historical D91 short-control gate. A subsequent private
+long HEVC/DTS failure and its missing HDR range correction are recorded in
+[D92](hevc-hdr-range.md); do not interpret D91 as whole-file compatibility.
+
 2026-10-16. The user approved implementing the D90 host proposal after publication.
 Native PR #72 is merged as `910b48e`; the published `0.5.0-ci.282` bytes remain
 unchanged. Screenbox fork [PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)

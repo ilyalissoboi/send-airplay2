@@ -1,5 +1,12 @@
 # Dependencies and reference provenance
 
+**D92 HEVC metadata (2026-10-16):** the bounded SPS VUI reader and HDR HLS
+declaration are original Apache-2.0 code from ITU-T H.265 syntax and existing
+ISO BMFF framing, with no external parser copied or dependency added. An
+independently encoded original test-pattern SPS and owned syntax fixtures cover
+the correction. The development FFmpeg/libx265 encoder is not redistributed or
+linked into the runtime. See [the investigation and provenance](hevc-hdr-range.md).
+
 **D89 distribution staging (2026-10-16):** the opt-in x64 package reuses the
 already adopted FFmpeg 9.0.2 profile and original Apache-2.0 adapters; no new
 codec dependency/implementation is added. The staged DLLs must match the selected

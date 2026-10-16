@@ -211,10 +211,21 @@ VariantStream variant_stream(const Mp4Movie& movie, const std::vector<std::uint6
     variant.average_bits_per_second += subtitle_average;
     std::tie(variant.width, variant.height) = display_size(movie.tracks.at(0));
     variant.frame_rate_milli = frame_rate_milli;
+    variant.video_range = video_range(movie.tracks.at(0));
     for (const auto& track : movie.tracks) {
         variant.codecs += (variant.codecs.empty() ? "" : ",") + codec_string(track);
     }
     return variant;
+}
+
+/// HDR needs an explicit master even without separate audio or subtitles;
+/// a media playlist alone has no place for the required VIDEO-RANGE attribute.
+bool needs_multivariant(const Mp4Movie& movie) {
+    if (!movie.text_tracks.empty()) {
+        return true;
+    }
+    const auto range = video_range(movie.tracks.at(0));
+    return range == VideoRange::pq || range == VideoRange::hlg;
 }
 
 /// Frames per 1000 s of a video track, rounded: samples x timescale x 1000 / ticks.
@@ -591,7 +602,7 @@ RemuxedHls remux_indexed(MediaSource input, std::unique_ptr<MkvIndex> index,
         };
         result.resources.push_back(std::move(resource));
     }
-    if (metadata.text_tracks.empty()) {
+    if (!needs_multivariant(metadata)) {
         return result;
     }
     // Advertised bit rates use the index's cluster spans: segment sizes are
@@ -874,7 +885,7 @@ static RemuxedHls remux_to_hls_impl(MediaSource input, const std::atomic_bool* c
                 result.zero_origin_video && video_metadata.samples.front().composition_offset == 0;
         }
     }
-    if (movie.text_tracks.empty()) {
+    if (!needs_multivariant(movie)) {
         return result;
     }
     const auto text = [](const std::string& value) {

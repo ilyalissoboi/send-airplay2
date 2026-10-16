@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-16 (Asia/Tokyo), after PRs #1-#72 merged.
+Implementation snapshot: 2026-10-16 (Asia/Tokyo), after PRs #1-#73 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -9,6 +9,14 @@ fork has implemented its current design through PRs #1-#10, including the Mac
 package pin, final validation record and Forget-device follow-up; PR #11 adds
 the research checkpoint and PR #12 the next-slice planning checkpoint, without
 changing runtime behavior.
+
+**D92 HDR startup correction:** after fork #13 merged, a private long HEVC/DTS
+cast reproduces a Mac grey screen. Offline preparation passes; declaring the
+missing `VIDEO-RANGE=PQ` alone restores playback by user observation. The
+[bounded SPS VUI correction](hevc-hdr-range.md) now carries PQ/HLG through remux
+and automatic composition, including an HDR master without subtitles. The
+private Screenbox override check is pending. Published ci.282, audio policy,
+decoder coverage and cache quota are unchanged; no full-film claim is made.
 
 **D74 merged (PR #55, `774198d`):** [explicit stereo AAC playback integration](stereo-aac-playback.md)
 extends the core to API 4 with original track probe/selection,

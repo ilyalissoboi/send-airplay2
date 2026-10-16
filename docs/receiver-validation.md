@@ -1,5 +1,17 @@
 # Receiver validation record
 
+**D92 long HEVC/DTS startup investigation (2026-10-16):** after both D91 PRs
+merged, the user reports a grey-screen Mac failure from the beginning of one
+private input. Read-only preparation/initial fragments succeed; a native cast
+reproduces `start_timeout` without a source/conversion error. The Mac fetches
+playlists/init only. Adding only the missing HDR10 `VIDEO-RANGE=PQ` declaration
+makes that file play, confirmed by the user. The automatic SPS-based correction
+also reaches native playing; the private Screenbox 1.0.0.10 loaded-DLL override
+is verified and its written controls check is pending. See
+[D92 and its scope](hevc-hdr-range.md). This adds startup/short-play evidence,
+not full-film, HLG, Apple TV or discrete-surround validation. D91's original
+H.264 fixture observations remain separate. Published ci.282 is unchanged.
+
 **D91 recorded Screenbox host gate passed (2026-10-16):** the
 [host implementation checkpoint](screenbox-automatic-audio-integration.md) records
 passing local logic/MSIX checks and development version 1.0.0.9 installed in place.

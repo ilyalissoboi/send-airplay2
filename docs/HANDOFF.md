@@ -9,6 +9,23 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D92 long HEVC/DTS startup defect identified; HDR correction implemented.**
+The user confirms native #73 and Screenbox fork #13 are merged (`d9cd2c2` /
+`b52c58e`). A subsequent private long-video cast fails on the Mac after consent,
+with grey controls and local playback recovery. Offline conversion succeeds;
+native reproduction times out after the receiver downloads only playlists/init
+segments. Adding only the missing `VIDEO-RANGE=PQ` makes that same input play,
+confirmed by the user. The automatic fix reads bounded base-layer HEVC SPS VUI
+metadata, declares PQ/HLG, and creates an HDR master even without subtitles.
+No new decoder/dependency or audio policy/quota change is made. Read
+[the investigation](hevc-hdr-range.md). Work is on
+`codex/long-dts-cast-failure` from merged main. Regression checks and private UWP
+build pass; Screenbox 1.0.0.10 is a deliberate local native-DLL override with
+AppContainer/six loaded hashes verified. Written manual controls are pending.
+This is not the published pinned payload. Finish the host observation, record
+actual-head CI and open/review this slice; ask before merging. Do not overwrite
+published ci.282. A corrected candidate and host pin are later steps.
+
 **D91 recorded Screenbox host gate passed (2026-10-16).**
 The user's Proceed starts [fork PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)
 from fork main `ce78235`, initial head `f621f267`. x64 profile/pinned download,

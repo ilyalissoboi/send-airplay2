@@ -57,7 +57,7 @@ plan_segments(const Mp4Movie& movie, std::uint32_t target_seconds = default_segm
 struct RemuxedHls {
     /// The entry point: index.m3u8 (the media playlist) without text tracks;
     /// main.m3u8 (a multivariant playlist naming index.m3u8 and one WebVTT
-    /// rendition per text track) with them.
+    /// rendition per text track) with them or signaled HEVC HDR.
     std::string playlist_name;
     /// The playlists, init.mp4, s0.m4s, s1.m4s, ..., and for text track T its
     /// playlist t<T>.m3u8 and segments t<T>s0.vtt, t<T>s1.vtt, ...

@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#72 are merged. `main` contains
+Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#73 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,19 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**Current work: D92 HEVC HDR startup correction.** Fork #13 is merged as
+`b52c58e` and native #73 as `d9cd2c2`. The user reports a grey-screen failure
+for one private long HEVC/DTS input after enabling conversion. Native/offline
+diagnostics isolate the missing PQ declaration; the same file plays after
+adding only `VIDEO-RANGE=PQ`, confirmed manually. A bounded original SPS VUI
+reader now selects PQ/HLG automatically, preserving SDR behavior and video
+payload. Read [D92](hevc-hdr-range.md). Branch
+`codex/long-dts-cast-failure` starts from merged main. Screenbox 1.0.0.10 is a
+private DLL override, with verified AppContainer/loaded hashes; its written
+manual controls question is pending. Finish that result, evidence/PR and
+actual-head CI. The published ci.282 package is unchanged; a new candidate
+and host pin require a separate follow-up. Do not resume D91 as an unmerged PR.
 
 **D91 recorded Screenbox host gate passed (2026-10-16).**
 The user's Proceed starts fork [PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)
@@ -852,8 +865,11 @@ not Screenbox queue or unrestricted reliability proof. D89 packaging is now merg
 in PR #70 (`e6acba1`), with all 17 final-head checks passed. D90 published the
 approved clean-main `0.5.0-ci.282` opt-in prerelease: all 17 main checks and local
 artifact/consumer gates pass, and the unauthenticated public download matches.
-The user approved that slice: D91 implements it in fork PR #13. Next work is its
-review and final-head CI for fork #13/native #73 before user-approved merging.
+The user approved that slice: D91 implements it in merged fork PR #13; native
+checkpoint #73 is merged too. Current work is D92's HEVC HDR startup correction.
+Finish the private host observation, review/actual-head CI and its own PR, then
+prepare a fresh corrected candidate and a separate host pin. Do not replace
+the already published candidate under its old version.
 The 1.0.0.9 setting/default, loaded hashes/AppContainer, Mac consent cancellation,
 copied/converted controls, refusal, natural/rapid queue and cleanup checks pass;
 the user restores conversion off/local paused. GitHub Actions is enabled. Do not
@@ -1022,7 +1038,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #72 are merged. D89 merged as e6acba1; all 17 checks passed at
+> PRs through #73 and fork #13 are merged. D92 is now active: read
+> hevc-hdr-range.md and the current resume paragraphs before this history.
+> D89 merged as e6acba1; all 17 checks passed at
 > final head 4c4bfb8 in run 38830621263. Inspect origin/main and open PRs before writing.
 > D82/D83 implement finite automatic policy and API 5; D85 supports shared
 > Matroska origins. D86 corrects DTS lace clocks with exact owned PCM/AAC controls.
@@ -1057,7 +1075,8 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > manual check remains. GitHub Actions is enabled;
 > inspect actual-head CI, preserving the initial disabled response as history.
 > Do not restart completed D88 library tests as host proof. Continue existing
-> fork PR #13 and native checkpoint branch; inspect actual heads before editing.
+> D92 on codex/long-dts-cast-failure, preserving the merged D91 gate as history;
+> inspect any open slice PR's actual head before editing.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same
