@@ -6,4 +6,17 @@
     <Error Condition="'%(PackageReference.Identity)' == 'SendAirPlay2'"
            Text="Choose either SendAirPlay2 or SendAirPlay2.StereoAac; do not reference both runtime profiles." />
   </Target>
+  <!-- Run before conflict resolution can discard one of the identical paths.
+       SDK projects and UWP projects resolve NuGet assets through different targets. -->
+  <Target Name="Sap2CheckResolvedAudioPackageSelection"
+          AfterTargets="ResolvePackageAssets;ResolveNuGetPackageAssets;ResolveNuGetPackageAssetsNonAOT">
+    <ItemGroup>
+      <_Sap2ResolvedPackageId Include="@(PackageDependencies)" />
+      <_Sap2ResolvedPackageId Include="@(ResolvedCompileFileDefinitions->'%(NuGetPackageId)')" />
+      <_Sap2ResolvedPackageId Include="@(NativeCopyLocalItems->'%(NuGetPackageId)')" />
+      <_Sap2ResolvedPackageId Include="@(Reference->'%(NuGetPackageId)')" />
+    </ItemGroup>
+    <Error Condition="'%(_Sap2ResolvedPackageId.Identity)' == 'SendAirPlay2'"
+           Text="Choose either SendAirPlay2 or SendAirPlay2.StereoAac; do not reference both runtime profiles (including transitive dependencies)." />
+  </Target>
 </Project>

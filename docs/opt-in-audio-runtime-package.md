@@ -14,7 +14,8 @@ original binaries/host/receivers. This slice adds no new receiver result.
 
 The new identity is a deliberate opt-in boundary; reference it instead of the
 existing package. Both expose the same `SendAirPlay2` managed assembly/namespace.
-A build target refuses direct references to both profiles and a selected runtime
+A build target refuses both profiles in resolved package dependencies/assets,
+including transitive dependencies, and a selected runtime
 identifier other than `win-x64`. A class library without a RID may compile;
 the consuming app must choose the supported RID. The new version base matches
 experimental API 5 without changing the old package's versioning/published assets.
@@ -73,7 +74,9 @@ notice, source/prefix/overlay mismatch, GPL-enabled configuration, accidental
 codec input to the default profile and private development exports. Modified
 control DLLs are read only, never loaded. A package consumer compiles API-5
 automatic-delivery options and verifies six copied native hashes; unsupported
-RID and mixed direct references refuse. The default artifact is checked for
+RID, mixed direct references and a wrapper's transitive default-profile dependency
+refuse. The regression checks the restored graph to verify that the conflicting
+default profile is not a direct consumer reference. The default artifact is checked for
 absence of codec DLLs/source/profile payload.
 
 CI reuses the existing codec UWP job and cached dependencies, removes private

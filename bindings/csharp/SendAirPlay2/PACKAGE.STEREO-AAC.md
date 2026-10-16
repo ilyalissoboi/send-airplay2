@@ -8,7 +8,9 @@ converted surround. The API is experimental (version 5).
 
 Reference this package **instead of** `SendAirPlay2`. Both contain the same
 `SendAirPlay2` C# namespace/assembly. The original codec-free package and its
-published versions remain separate. This first profile includes only `win-x64`.
+published versions remain separate. Dependencies must also select the same profile;
+mixed direct or transitive profiles are rejected during asset resolution. This first
+profile includes only `win-x64`.
 
 The host must use `CastDelivery.AutomaticAudioHls`, provide an
 `AacFragmentStore` and quota, and supply brokered media callbacks and its

@@ -67,6 +67,46 @@ try {
             throw "Mixed runtime packages must fail clearly: $build"
         }
         Write-Host 'PASS: default package is codec-free and mixed-profile references are refused'
+
+        # A dependency-only package makes the default profile transitive, so a
+        # guard that checks only the consumer's PackageReference items misses it.
+        $wrapperId = 'SendAirPlay2.ConsumerTests.DefaultWrapper'
+        $wrapperVersion = '1.0.0-' + [Guid]::NewGuid().ToString('N')
+        $wrapperDirectory = Join-Path $work 'wrapper-feed'
+        New-Item -ItemType Directory $wrapperDirectory | Out-Null
+        $wrapperPath = Join-Path $wrapperDirectory "$wrapperId.$wrapperVersion.nupkg"
+        $wrapper = [IO.Compression.ZipFile]::Open($wrapperPath, [IO.Compression.ZipArchiveMode]::Create)
+        try {
+            $entry = $wrapper.CreateEntry("$wrapperId.nuspec")
+            $writer = [IO.StreamWriter]::new($entry.Open())
+            try {
+                $writer.Write(@"
+<?xml version="1.0"?>
+<package><metadata><id>$wrapperId</id><version>$wrapperVersion</version>
+<authors>send-airplay2 tests</authors><description>Owned transitive dependency fixture.</description>
+<dependencies><dependency id="SendAirPlay2" version="[$escapedDefault]" /></dependencies>
+</metadata></package>
+"@)
+            } finally { $writer.Dispose() }
+        } finally { $wrapper.Dispose() }
+        $transitive = $references + "<PackageReference Include=`"$wrapperId`" Version=`"$wrapperVersion`" />"
+        [IO.File]::WriteAllText($project, $prefix + $transitive + $suffix)
+        # MSBuild escapes the source separator so it remains one property value.
+        $sources = "$feed%3B$wrapperDirectory"
+        $build = & dotnet build $project -c Release --nologo "-p:RestoreAdditionalProjectSources=$sources" 2>&1 | Out-String
+        $buildExitCode = $LASTEXITCODE
+        [IO.File]::WriteAllText((Join-Path $work 'transitive-conflict-build.txt'), $build)
+        $assets = Get-Content -LiteralPath (Join-Path $work 'obj/project.assets.json') -Raw | ConvertFrom-Json
+        $dependencies = @($assets.project.frameworks.'net10.0'.dependencies.PSObject.Properties.Name)
+        $libraries = @($assets.libraries.PSObject.Properties.Name)
+        if ($dependencies -contains 'SendAirPlay2' -or $dependencies -notcontains $wrapperId -or
+            $libraries -notcontains "SendAirPlay2/$DefaultVersion") {
+            throw "Transitive-conflict fixture did not restore the default profile only through its wrapper: $build"
+        }
+        if ($buildExitCode -eq 0 -or -not $build.Contains('Choose either SendAirPlay2 or SendAirPlay2.StereoAac')) {
+            throw "Transitive mixed runtime packages must fail clearly: $build"
+        }
+        Write-Host 'PASS: resolved transitive default profile is refused without a direct PackageReference'
     }
 } finally { $zip.Dispose() }
 Write-Host 'Package restore/build/copy checks passed; consumer executable was not run.'
