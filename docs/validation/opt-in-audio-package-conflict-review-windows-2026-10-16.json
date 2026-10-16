@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "decision": "D89_REVIEW",
+  "date": "2026-10-16",
+  "pr": 70,
+  "review_comment_id": 4285059709,
+  "reviewed_head": "949492ba465f8923c4e3a62176460131c7b31305",
+  "reviewed_head_ci": {
+    "run_id": 38761426436,
+    "successful_checks": 17,
+    "scope": "Prior head only; not the review fix."
+  },
+  "implementation_source": "dd7b0374b3db19ac6674cf136830cc716cb3e396",
+  "host": "Windows 11 x64",
+  "dotnet_sdk": "10.0.401",
+  "regression": {
+    "fixture": "Owned dependency-only NuGet wrapper references the default package; consumer references only the wrapper and the opt-in package.",
+    "restored_graph_asserted": true,
+    "default_profile_is_direct_reference": false,
+    "reviewed_package_version": "0.5.0-d89.validation1",
+    "before_fix": "Build succeeds without the required mixed-profile error; regression fails as expected.",
+    "after_fix": "Build fails during resolved asset checks with the explicit mixed-profile error."
+  },
+  "package": {
+    "id": "SendAirPlay2.StereoAac",
+    "version": "0.5.0-d89.review1",
+    "sha256": "932d16dfbe7f87c14130abf2f6d043040e04afd9cc5b14fc6a2d8fe1f12e34da",
+    "bytes": 21307306,
+    "clean_build_info": true,
+    "native_source": "64ed4dbf1741012dc0701c1524855e6315058619",
+    "native_modules_unchanged_from_original_validation": true
+  },
+  "checks": {
+    "api5_consumer_build": "PASS",
+    "six_exact_native_copies": "PASS",
+    "unsupported_rid_refusal": "PASS",
+    "direct_mixed_profile_refusal": "PASS",
+    "transitive_mixed_profile_refusal": "PASS",
+    "default_artifact_remains_codec_free": "PASS",
+    "profile_controls_passed": 13
+  },
+  "limitations": [
+    "The regression uses SDK-style consumers; legacy UWP hooks are based on the installed NuGet target outputs and were not a separate application test.",
+    "No C++ or native runtime change; no consumer executable run, app installation, receiver check or package publication.",
+    "The original artifact evidence remains intact; this record adds a uniquely versioned review artifact.",
+    "Inspect CI for the final pushed PR head separately."
+  ]
+}

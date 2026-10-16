@@ -67,6 +67,14 @@ records versions/hashes without compiler paths. No consumer executable was run
 and no package was installed or published. These artifacts do not replace D88's
 recorded actual AppContainer/receiver evidence.
 
+PR #70 review adds resolved dependency/asset checks before duplicate-path conflict
+resolution, covering transitive profile conflicts. A wrapper-package regression
+reproduces the reviewed artifact's missed conflict and passes with clean fix
+`dd7b037` / unique package `0.5.0-d89.review1`. Existing consumer checks and all
+thirteen profile controls still pass. [Review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json)
+keeps this artifact separate. Reviewed head `949492b` passed all 17 CI checks in
+run `38761426436`; inspect the final review-fix head's CI separately.
+
 ## Ongoing CI and validation contract
 
 The profile checks cover the complete runtime, each missing codec DLL, missing

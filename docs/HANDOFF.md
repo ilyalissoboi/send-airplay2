@@ -25,6 +25,15 @@ claim is included. Read [the contract](opt-in-audio-runtime-package.md). Inspect
 actual PR-head CI; speakers/discrete surround
 remain hardware-deferred.
 
+D89 PR #70 review follow-up: detect the codec-free profile in resolved package
+dependencies/assets before duplicate paths can be discarded, including a wrapper's
+transitive dependency. The regression reproduces the old guard's missed conflict;
+clean fix `dd7b037` packs unique `0.5.0-d89.review1` and passes the new regression,
+existing consumer/copy/RID/direct-conflict checks and all thirteen profile controls.
+The reviewed head `949492b` passed all 17 CI checks in run `38761426436`; the final
+review-fix head needs its own CI inspection. Read [review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json).
+Native code and recorded receiver results are unchanged.
+
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
 Native Mac and Apple TV AAC-copy/DTS-to-stereo-AAC checks pass by user observation;

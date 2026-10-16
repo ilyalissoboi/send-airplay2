@@ -39,6 +39,14 @@ claim is included. Read [the contract](opt-in-audio-runtime-package.md). Inspect
 actual PR-head CI; speakers/discrete surround
 remain hardware-deferred.
 
+D89 review follow-up: `dd7b037` adds resolved dependency/asset checks for transitive
+mixed profiles plus a real wrapper-package restore regression. The old artifact
+misses the conflict; clean `0.5.0-d89.review1` rejects it. Consumer build, six copied
+hashes, RID/direct/transitive refusals and thirteen profile controls pass. Read
+[review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json).
+All 17 checks passed at reviewed head `949492b` in run `38761426436`; inspect the
+new final head separately. No new runtime, receiver or publication claim.
+
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
 Branch `codex/automatic-audio-receiver-gate` starts at merged PR #68, `f6c85ef`.
 Native Mac/Apple TV AAC copy and DTS conversion pass manual synchronization,
