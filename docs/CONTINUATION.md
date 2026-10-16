@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#69 are merged. `main` contains
+Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#70 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,7 +23,20 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D89 opt-in runtime packaging (2026-10-16, in progress).**
+**D90 candidate prepared / publication approval pending (2026-10-16).**
+The user's Proceed starts candidate preparation in open documentation PR #71
+(`codex/d89-merged-checkpoint`). Main run `38836333166` / number 282 builds
+`e6acba1`, with all 17 checks passed. The exact `0.5.0-ci.282` opt-in candidate
+is 21,306,805 bytes, SHA-256 `5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff`.
+Provenance/source/static and local/CI consumer checks pass; release notes and
+sidecar are ready. Publication approval is pending; no release or fork edit is
+authorized incidentally. Read
+[candidate preparation](opt-in-audio-release-candidate.md) and [Screenbox plan](screenbox-automatic-audio-plan.md).
+Remote fork main `ce78235` is the planning baseline; the local checkout was stale.
+
+**D89 opt-in runtime packaging merged (2026-10-16, PR #70).**
+PR #70 merged as `e6acba1`; all 17 checks passed at final head `4c4bfb8`
+in [CI run 38830621263](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38830621263).
 PR #69 merged as `64ed4db`; all 16 final-head checks passed at `e6a9970`.
 The user's Proceed starts `codex/opt-in-audio-runtime-package` from origin/main;
 implementation and clean local artifacts are in [PR #70](https://github.com/ilyalissoboi/send-airplay2/pull/70).
@@ -35,8 +48,7 @@ validation OFF. Clean source `50c2a66` passes thirteen profile controls plus the
 API-5 consumer build/copy/RID/mixed-profile checks, with both package hashes in
 [the sanitized record](validation/opt-in-audio-runtime-package-windows-2026-10-16.json).
 No release, Screenbox pin/app, native audio policy or new receiver
-claim is included. Read [the contract](opt-in-audio-runtime-package.md). Inspect
-actual PR-head CI; speakers/discrete surround
+claim is included. Read [the contract](opt-in-audio-runtime-package.md). Speakers/discrete surround
 remain hardware-deferred.
 
 D89 review follow-up: `dd7b037` adds resolved dependency/asset checks for transitive
@@ -44,8 +56,12 @@ mixed profiles plus a real wrapper-package restore regression. The old artifact
 misses the conflict; clean `0.5.0-d89.review1` rejects it. Consumer build, six copied
 hashes, RID/direct/transitive refusals and thirteen profile controls pass. Read
 [review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json).
-All 17 checks passed at reviewed head `949492b` in run `38761426436`; inspect the
-new final head separately. No new runtime, receiver or publication claim.
+All 17 checks passed at reviewed head `949492b` in run `38761426436` and final
+head `4c4bfb8` in run `38830621263`. No new runtime, receiver or publication claim.
+
+Follow D90 above for the prepared candidate and Screenbox proposal. Publication
+needs approval for the exact asset; host implementation/pins remain a later slice.
+Completed D88 checks remain recorded; do not restart them as pending work.
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
 Branch `codex/automatic-audio-receiver-gate` starts at merged PR #68, `f6c85ef`.
@@ -787,9 +803,13 @@ this is bounded one-input evidence, not sustained whole-film throughput. D88
 now records native AAC/DTS and packaged nine-format playback on the recorded
 Mac/Apple TV, plus applicable Stop/cancellation and host-slot reuse observations.
 See its explicit firmware, failed-attempt and short-media limits above; this is
-not Screenbox queue or unrestricted reliability proof. Next: review/merge PR #69,
-then separately approve opt-in runtime packaging and Screenbox integration while
-preserving OFF-by-default/publication boundaries. The isolated Apple TV event
+not Screenbox queue or unrestricted reliability proof. D89 packaging is now merged
+in PR #70 (`e6acba1`), with all 17 final-head checks passed. D90 now prepares the
+clean-main `0.5.0-ci.282` opt-in candidate: all 17 main checks and local artifact/
+consumer gates pass. Next: obtain approval for that exact prerelease, verify its
+public download after publication, then implement the reviewed Screenbox plan.
+Preserve the
+OFF-by-default/publication boundaries. The isolated Apple TV event
 disconnect remains an explicit follow-up.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
@@ -952,7 +972,8 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #67 are merged. Inspect PR #68 and its actual head/CI before writing.
+> PRs through #70 are merged. D89 merged as e6acba1; all 17 checks passed at
+> final head 4c4bfb8 in run 38830621263. Inspect origin/main and open PRs before writing.
 > D82/D83 implement finite automatic policy and API 5; D85 supports shared
 > Matroska origins. D86 corrects DTS lace clocks with exact owned PCM/AAC controls.
 > D87 corrects middle-seek index-extension I/O with maximum-lace backoff and
@@ -961,10 +982,18 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > matrices with token/six loaded hashes verified. Three fresh brokered owners pass
 > first/middle/last samples in 138/314/64 ms cold with identical cached repeats and
 > cleanup. These are bounded one-input observations, not whole-film or receiver
-> proof. Next: manually observe copied/converted playback, stereo output, A/V sync,
-> controls, Stop/cancellation and natural EOF/queue behavior on the available
-> recorded receivers and native/packaged hosts. Keep backend defaults and package/
-> Screenbox publication boundaries unchanged until separately authorized.
+> proof. D88 subsequently records copied/converted native and packaged playback,
+> stereo output, A/V sync, controls, Stop/cancellation and natural EOF on the recorded
+> Mac and Apple TV. Preserve its failed attempts and scope; Screenbox queue behavior
+> is not established by those checks. D89 adds the separate unpublished x64 UWP
+> SendAirPlay2.StereoAac package with source/notices and direct/transitive profile
+> guards. D90 prepares clean-main 0.5.0-ci.282 from e6acba1; all 17 main checks and
+> local artifact/consumer gates pass. Its SHA-256 is recorded in the candidate
+> evidence and handoff. Publication approval remains pending for that exact asset;
+> do not rebuild it under the same version or publish before approval. Read the
+> prepared release notes and Screenbox profile/permission/cache plan. Keep
+> backend defaults and package/Screenbox publication boundaries unchanged until
+> separately authorized; do not restart completed receiver gates.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

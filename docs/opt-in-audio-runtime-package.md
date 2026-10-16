@@ -5,6 +5,11 @@ PR #69 (`64ed4db`, final head `e6a9970`, all 16 checks passed). The recorded
 [D88 receiver results](automatic-audio-receiver-gate.md) remain specific to their
 original binaries/host/receivers. This slice adds no new receiver result.
 
+PR #70 merged as `e6acba1` on 2026-10-16. All 17 final-head checks passed at
+`4c4bfb8` in [run 38830621263](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38830621263),
+including the package consumer and transitive-conflict regression. This completes
+the packaging implementation gate; the package remains unpublished.
+
 ## Package contract
 
 | Profile | Identity/version base | Native assets | Default behavior |
@@ -73,7 +78,7 @@ reproduces the reviewed artifact's missed conflict and passes with clean fix
 `dd7b037` / unique package `0.5.0-d89.review1`. Existing consumer checks and all
 thirteen profile controls still pass. [Review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json)
 keeps this artifact separate. Reviewed head `949492b` passed all 17 CI checks in
-run `38761426436`; inspect the final review-fix head's CI separately.
+run `38761426436`; final review-fix head `4c4bfb8` passed all 17 in run `38830621263`.
 
 ## Ongoing CI and validation contract
 
@@ -91,8 +96,10 @@ CI reuses the existing codec UWP job and cached dependencies, removes private
 validation exports after development checks, then packs/uploads the separate
 `nuget-stereo-aac-x64` artifact with sources/notices. A lightweight consumer job
 checks it alongside `nuget-package`. No new architecture/codec compilation matrix
-or release publication is added. Actual PR-head CI remains a separate gate.
+or release publication is added. Final PR-head CI is recorded above separately
+from local artifact checks and receiver interoperability.
 
-Next after review/merge: decide publication of a clean-main candidate and plan
-Screenbox consumption/storage/policy integration. No release is published or app
-changed incidentally. Speakers and discrete converted surround remain deferred.
+D90 now prepares [a clean-main candidate](opt-in-audio-release-candidate.md) for
+publication approval and records [Screenbox consumption/storage/policy planning](screenbox-automatic-audio-plan.md).
+No release is published or app changed incidentally. Speakers and discrete
+converted surround remain deferred.

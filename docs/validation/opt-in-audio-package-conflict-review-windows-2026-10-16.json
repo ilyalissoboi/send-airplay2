@@ -11,6 +11,16 @@
     "scope": "Prior head only; not the review fix."
   },
   "implementation_source": "dd7b0374b3db19ac6674cf136830cc716cb3e396",
+  "final_head_ci": {
+    "head": "4c4bfb8bd011e4ccc1ea53ad04526a673c70fe19",
+    "run_id": 38830621263,
+    "successful_checks": 17,
+    "package_consumer": "SUCCESS"
+  },
+  "merged": {
+    "commit": "e6acba1f34b77ddd2a370a65209748f413bf2c8a",
+    "at_utc": "2026-10-16T01:35:29Z"
+  },
   "host": "Windows 11 x64",
   "dotnet_sdk": "10.0.401",
   "regression": {
@@ -43,6 +53,6 @@
     "The regression uses SDK-style consumers; legacy UWP hooks are based on the installed NuGet target outputs and were not a separate application test.",
     "No C++ or native runtime change; no consumer executable run, app installation, receiver check or package publication.",
     "The original artifact evidence remains intact; this record adds a uniquely versioned review artifact.",
-    "Inspect CI for the final pushed PR head separately."
+    "Final-head CI is recorded separately from the local artifact and prior-head CI evidence."
   ]
 }
