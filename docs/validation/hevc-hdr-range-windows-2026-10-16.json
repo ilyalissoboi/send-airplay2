@@ -100,8 +100,40 @@
         "name": "libcrypto-3-x64.dll"
       }
     ],
-    "manual_controls": "pending",
-    "post_stop_cache_and_modules": "pending"
+    "manual_mac_controls": "User confirms the requested cast, audio/video, pause/resume, forward/backward seeks and Stop/local paused checks worked as expected",
+    "post_stop_cache_and_modules": "Six loaded hashes rechecked; zero owned cache directories after the Mac check and user Apple TV attempt",
+    "apple_tv_attempt": "User reports silent failure after a few seconds; cause remains unestablished",
+    "apple_tv_native_start_zero": "User confirms normal audio/video through scheduled 20-second Stop; no source/conversion error, complete cleanup"
+  },
+  "uwp_private_comparison": {
+    "version": "0.1.29.0",
+    "same_fixed_native_dll": true,
+    "app_container_and_six_loaded_modules": "verified before and after",
+    "first_attempt": "Starts successfully, then receives MediaEnd near 16 seconds, before the scheduled Stop; this is a failed attempt, cause unestablished",
+    "visible_window_retry_seconds": 90,
+    "retry_observer": "User confirms everything worked as expected",
+    "retry_final_status": "Playing near 91 seconds, then SenderStop and complete cleanup",
+    "retry_cache": {
+      "seals": 24,
+      "sealed_bytes": 3489255,
+      "clear": 1,
+      "release": 1,
+      "removed": true
+    },
+    "retry_thread_samples": {
+      "count": 99,
+      "maximum_suspended_threads": 0
+    },
+    "monitor_postprocessing": "An unsupported Select-Object argument failed after the completed receiver Stop and saved samples; corrected locally, not a playback failure",
+    "screenbox_visible_retry": "User confirms the requested 90-second playback, Stop receiver closure and local paused handoff worked as expected",
+    "original_window_visibility": "Not reported; no causal lifecycle finding",
+    "screenbox_post_retry": "Final AppContainer/six loaded hashes verified; initially growing cache removed after user-confirmed Stop; zero directories/bytes"
+  },
+  "ci": {
+    "implementation_head": "1646ae3bdc72bdf01c119aa9afba84d8a06300ee",
+    "checks_passed": 17,
+    "run_id": 38883104462,
+    "final_evidence_head": "Inspect current PR head separately; this CI result identifies only the implementation commit"
   },
   "publication": {
     "unchanged": "SendAirPlay2.StereoAac 0.5.0-ci.282",
@@ -110,7 +142,8 @@
   },
   "scope_limits": [
     "Bounded startup/control attempts; no whole-film playback proof",
-    "No new HLG, Apple TV, speaker, discrete-surround or perceptual HDR calibration observation",
+    "Earlier Apple TV failures remain unexplained despite passing 90-second UWP and Screenbox retries",
+    "No new HLG, speaker, discrete-surround or perceptual HDR calibration observation",
     "SPS VUI detection only; no new container-only HDR or in-band configuration-change support"
   ],
   "privacy": "No private input name/path/content, receiver address/identifier, raw Mac logs, credentials or bearer URL retained"

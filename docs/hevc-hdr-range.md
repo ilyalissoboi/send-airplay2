@@ -63,7 +63,8 @@ The detection source in this slice is SPS VUI, not container-only colour tags
 or a guess from resolution/bit depth. Container-only HDR metadata and in-band
 configuration changes are not newly supported. HLG signaling has automated
 coverage, without a new HLG receiver observation. No full-film playback,
-perceptual HDR/display calibration, Apple TV or speaker result is inferred.
+perceptual HDR/display calibration or speaker result is inferred. The bounded
+Apple TV observations below are separate from this implementation coverage.
 
 ## Validation and development host
 
@@ -81,8 +82,41 @@ not the published hash-pinned package and not a new Screenbox package pin.
 Registration preserves app data. Its actual AppContainer and all six loaded
 DLLs are checked before the manual cast. The user is asked to confirm startup,
 audio/video, pause/resume, forward/backward seeks and Stop/paused local handoff
-using written instructions. Record that result before calling the host gate
-complete. The separate 1.0.0.9 recovery-only review fix is not being retested.
+using written instructions. The user confirms those Mac controls worked as
+expected. Six loaded module hashes are rechecked afterward and no owned cache
+directory remains. The separate 1.0.0.9 recovery-only review fix is not being
+retested.
+
+The user then reports that the same Screenbox build silently fails on Apple TV
+after a few seconds, also starting from zero. A native Apple TV cast of the same
+input stays active until its scheduled 20-second Stop; the user confirms normal
+video/audio before that Stop. No source/conversion error occurs and cleanup
+completes. This native result does not resolve the separate Screenbox attempt.
+A private copy of the existing packaged UWP test host, version 0.1.29.0, uses
+the same fixed native DLL with AppContainer/six loaded hashes verified. It
+reproduces a premature `MediaEnd` near 16 seconds, explaining the silent natural
+completion classification. The cause of that early receiver end is not yet
+established. At the user's request, a longer retry keeps the Windows host visible
+and plays for 90 seconds, confirmed by the user. It remains playing near 91
+seconds, then stops explicitly with complete cleanup (24 sealed fragments,
+3,489,255 bytes, one Clear/Release, directory removed). All 99 thread samples in
+that successful retry have zero suspended threads; there was no equivalent
+sample for the failed attempt, so suspension is a hypothesis, not a finding.
+A harmless monitor postprocessing parameter error occurs after the completed
+Stop and saved samples; it is corrected locally and does not negate playback.
+The user also confirms that the written 90-second Screenbox Apple TV retry
+works as expected, including normal video/audio, Stop closure and local paused
+handoff. Whether the original failed attempt was minimized or covered was not
+reported. Keep both failed attempts distinct from these passing retries; no
+lifecycle cause or general reliability correction has been established.
+Post-retry AppContainer/six loaded hashes pass. An initial cache snapshot still
+contains one growing owned directory; after the user explicitly confirms Stop,
+the final independent count is zero directories/zero bytes. This is completed
+cleanup, not a cache leak.
+
+All 17 CI checks pass on implementation head `1646ae3` in
+[run 38883104462](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38883104462).
+Inspect final evidence-head CI separately after this record is updated.
 
 The published `SendAirPlay2.StereoAac 0.5.0-ci.282` is unchanged and still lacks
 this correction. After review/merge, prepare a new source-complete candidate and

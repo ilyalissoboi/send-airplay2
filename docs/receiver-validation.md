@@ -7,9 +7,17 @@ reproduces `start_timeout` without a source/conversion error. The Mac fetches
 playlists/init only. Adding only the missing HDR10 `VIDEO-RANGE=PQ` declaration
 makes that file play, confirmed by the user. The automatic SPS-based correction
 also reaches native playing; the private Screenbox 1.0.0.10 loaded-DLL override
-is verified and its written controls check is pending. See
+is verified and its Mac controls pass by user report, with final hashes/empty
+cache checked. The user reports a subsequent silent Apple TV Screenbox failure
+from zero. Native Apple TV playback passes a bounded 20-second check by
+telemetry/user observation. The packaged UWP host first receives a premature
+`MediaEnd` near 16 seconds, then passes a visible-window 90-second retry with
+Stop/cleanup. A matching 90-second Screenbox retry passes by user report; final
+AppContainer/six hashes pass and confirmed Stop leaves zero owned cache
+directories/bytes. The earlier failures remain unexplained,
+and window visibility has not been established as a cause. See
 [D92 and its scope](hevc-hdr-range.md). This adds startup/short-play evidence,
-not full-film, HLG, Apple TV or discrete-surround validation. D91's original
+not full-film, HLG or discrete-surround validation. D91's original
 H.264 fixture observations remain separate. Published ci.282 is unchanged.
 
 **D91 recorded Screenbox host gate passed (2026-10-16):** the

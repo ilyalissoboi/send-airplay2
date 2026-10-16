@@ -15,7 +15,10 @@ cast reproduces a Mac grey screen. Offline preparation passes; declaring the
 missing `VIDEO-RANGE=PQ` alone restores playback by user observation. The
 [bounded SPS VUI correction](hevc-hdr-range.md) now carries PQ/HLG through remux
 and automatic composition, including an HDR master without subtitles. The
-private Screenbox override check is pending. Published ci.282, audio policy,
+private Screenbox override passes the user's Mac controls. A separate reported
+Apple TV Screenbox failure and premature UWP `MediaEnd` remain unexplained;
+native playback and visible-window 90-second UWP/Screenbox retries pass.
+Final loaded hashes and Stop/cache cleanup pass. Published ci.282, audio policy,
 decoder coverage and cache quota are unchanged; no full-film claim is made.
 
 **D74 merged (PR #55, `774198d`):** [explicit stereo AAC playback integration](stereo-aac-playback.md)

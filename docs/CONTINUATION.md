@@ -31,9 +31,17 @@ adding only `VIDEO-RANGE=PQ`, confirmed manually. A bounded original SPS VUI
 reader now selects PQ/HLG automatically, preserving SDR behavior and video
 payload. Read [D92](hevc-hdr-range.md). Branch
 `codex/long-dts-cast-failure` starts from merged main. Screenbox 1.0.0.10 is a
-private DLL override, with verified AppContainer/loaded hashes; its written
-manual controls question is pending. Finish that result, evidence/PR and
-actual-head CI. The published ci.282 package is unchanged; a new candidate
+private DLL override, with verified AppContainer/loaded hashes; the user's Mac
+controls pass, with final hashes/empty cache checked. The user then reports a
+silent Apple TV Screenbox failure from zero. A native Apple TV 20-second cast
+plays normally by user report. The packaged UWP comparison first receives early
+`MediaEnd` near 16 seconds; visible-window 90-second UWP and Screenbox retries
+then pass. The early failure remains unexplained; window visibility is an
+unproven hypothesis. Final Screenbox hashes/AppContainer pass again; confirmed
+Stop leaves zero owned cache directories/bytes.
+PR #74 starts at `1646ae3`, with all 17 implementation-head checks passed.
+Inspect actual-head CI and review. The published ci.282 package is unchanged; a
+new candidate
 and host pin require a separate follow-up. Do not resume D91 as an unmerged PR.
 
 **D91 recorded Screenbox host gate passed (2026-10-16).**
@@ -867,7 +875,9 @@ approved clean-main `0.5.0-ci.282` opt-in prerelease: all 17 main checks and loc
 artifact/consumer gates pass, and the unauthenticated public download matches.
 The user approved that slice: D91 implements it in merged fork PR #13; native
 checkpoint #73 is merged too. Current work is D92's HEVC HDR startup correction.
-Finish the private host observation, review/actual-head CI and its own PR, then
+Record the passing Mac controls and Apple TV 90-second retries separately from
+the unexplained earlier Apple TV end. Final Stop/cache cleanup is confirmed;
+review PR #74 and inspect actual-head CI, then
 prepare a fresh corrected candidate and a separate host pin. Do not replace
 the already published candidate under its old version.
 The 1.0.0.9 setting/default, loaded hashes/AppContainer, Mac consent cancellation,
