@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-16 (Asia/Tokyo), after PRs #1-#69 merged.
+Implementation snapshot: 2026-10-16 (Asia/Tokyo), after PRs #1-#70 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -17,10 +17,13 @@ Its backend defaults OFF. **D75 merged (PR #56, `02d8be6`, x64 gate passed 2026-
 estimate limitations. D75's recorded x64 AppContainer source/cache checks pass;
 real-file performance and packaged receiver playback remain later gates. This branch adds no package or Screenbox pin.
 
-**D89 in progress:** [opt-in runtime packaging](opt-in-audio-runtime-package.md)
+**D89 merged (PR #70, `e6acba1`):** [opt-in runtime packaging](opt-in-audio-runtime-package.md)
 adds a separate x64 UWP codec package with source/notice/provenance and consumer
 guards. Default package, backend selection and Screenbox/publication boundaries
 remain unchanged. No new receiver observation follows from these artifact checks.
+All 17 checks passed at final head `4c4bfb8`, including the transitive profile
+conflict regression. Clean-main candidate preparation/publication approval and
+Screenbox consumption planning are proposed next steps.
 
 **D88 recorded gate complete (PR #69):** [automatic audio receiver gate](automatic-audio-receiver-gate.md)
 adds original visible/audible controls and script-only automatic/stereo delivery

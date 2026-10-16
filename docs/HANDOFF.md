@@ -9,7 +9,9 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D89 opt-in runtime packaging (2026-10-16, in progress).**
+**D89 opt-in runtime packaging merged (2026-10-16, PR #70).**
+PR #70 merged as `e6acba1`; all 17 checks passed at final head `4c4bfb8`
+in [CI run 38830621263](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38830621263).
 PR #69 merged as `64ed4db`; all 16 final-head checks passed at `e6a9970`.
 The user's Proceed starts `codex/opt-in-audio-runtime-package` from origin/main;
 implementation and clean local artifact checks are in [PR #70](https://github.com/ilyalissoboi/send-airplay2/pull/70).
@@ -21,8 +23,7 @@ validation OFF. Clean source `50c2a66` packages both identities, with thirteen
 profile controls and consumer API-5/build/six copied hashes/RID/mixed-profile
 refusals passed. [Sanitized artifact evidence](validation/opt-in-audio-runtime-package-windows-2026-10-16.json)
 records the hashes. No release, Screenbox pin/app, native audio policy or new receiver
-claim is included. Read [the contract](opt-in-audio-runtime-package.md). Inspect
-actual PR-head CI; speakers/discrete surround
+claim is included. Read [the contract](opt-in-audio-runtime-package.md). Speakers/discrete surround
 remain hardware-deferred.
 
 D89 PR #70 review follow-up: detect the codec-free profile in resolved package
@@ -30,9 +31,16 @@ dependencies/assets before duplicate paths can be discarded, including a wrapper
 transitive dependency. The regression reproduces the old guard's missed conflict;
 clean fix `dd7b037` packs unique `0.5.0-d89.review1` and passes the new regression,
 existing consumer/copy/RID/direct-conflict checks and all thirteen profile controls.
-The reviewed head `949492b` passed all 17 CI checks in run `38761426436`; the final
-review-fix head needs its own CI inspection. Read [review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json).
+The reviewed head `949492b` and final review-fix head `4c4bfb8` each passed all
+17 CI checks. Read [review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json).
 Native code and recorded receiver results are unchanged.
+
+Suggested next slice: prepare and validate a source-complete clean-main opt-in
+package candidate, then obtain approval for its GitHub prerelease publication.
+Plan Screenbox's package selection, conversion permission and fragment-cache
+ownership/quota before implementation; inspect that repository's instructions.
+The merge notification does not authorize publication or a Screenbox pin change.
+Do not repeat completed D88 receiver checks as if they were still pending.
 
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
