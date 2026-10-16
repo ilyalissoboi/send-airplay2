@@ -29,6 +29,12 @@ current fork instructions. Published codec-free `ci.207` and the existing fork p
 remain unchanged. Continue publication documentation on
 `codex/published-stereo-aac-candidate`; do not publish this version again.
 
+PR #72 review follow-up: the README now describes API-5 automatic audio, the
+published opt-in package alongside the codec-free release, and completed D88
+observations with their limits. It no longer presents the spike/API-4 stages as
+current publication or receiver-validation status. No package bytes or runtime
+behavior changed.
+
 **D89 opt-in runtime packaging merged (2026-10-16, PR #70).**
 PR #70 merged as `e6acba1`; all 17 checks passed at final head `4c4bfb8`
 in [CI run 38830621263](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38830621263).
