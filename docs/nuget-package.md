@@ -21,6 +21,10 @@ one profile, not both. It includes all six DLLs, matching notices and the exact
 FFmpeg source archive/overlay/configuration records. This is an unpublished
 local/CI artifact; published `ci.207` and Screenbox remain unchanged. Read
 [the contract, commands and validation](opt-in-audio-runtime-package.md).
+The clean-main [D90 candidate](opt-in-audio-release-candidate.md), `0.5.0-ci.282`,
+passes all 17 main CI checks and local artifact/consumer validation. Its exact
+hash, prepared release notes and publication approval boundary are recorded there;
+it has not been published.
 
 ## Contents
 

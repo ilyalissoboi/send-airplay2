@@ -99,6 +99,7 @@ checks it alongside `nuget-package`. No new architecture/codec compilation matri
 or release publication is added. Final PR-head CI is recorded above separately
 from local artifact checks and receiver interoperability.
 
-Suggested next: prepare/validate a clean-main candidate, approve publication and plan
-Screenbox consumption/storage/policy integration. No release is published or app
-changed incidentally. Speakers and discrete converted surround remain deferred.
+D90 now prepares [a clean-main candidate](opt-in-audio-release-candidate.md) for
+publication approval and records [Screenbox consumption/storage/policy planning](screenbox-automatic-audio-plan.md).
+No release is published or app changed incidentally. Speakers and discrete
+converted surround remain deferred.

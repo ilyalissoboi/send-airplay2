@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "decision": "D90",
+  "date": "2026-10-16",
+  "result": "READY_FOR_PUBLICATION_REVIEW",
+  "source": "e6acba1f34b77ddd2a370a65209748f413bf2c8a",
+  "main_ci": {
+    "run_id": 38836333166,
+    "run_number": 282,
+    "event": "workflow_dispatch",
+    "final_conclusion": "SUCCESS",
+    "audio_uwp_job": "SUCCESS",
+    "profile_controls_passed": 12,
+    "successful_checks": 17,
+    "package_consumer": "SUCCESS"
+  },
+  "artifact": {
+    "id": 12020190857,
+    "name": "nuget-stereo-aac-x64",
+    "reported_archive_digest": "sha256:e35c24c66bd8197424cc95898e2f44f20c0e42cd20f309baace8a5cdb3df0593"
+  },
+  "candidate": {
+    "result": "PASS_STATIC_ARTIFACT_AUDIT",
+    "id": "SendAirPlay2.StereoAac",
+    "version": "0.5.0-ci.282",
+    "sha256": "5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff",
+    "bytes": 21306805,
+    "binding_source": "e6acba1f34b77ddd2a370a65209748f413bf2c8a",
+    "native_source": "e6acba1f34b77ddd2a370a65209748f413bf2c8a",
+    "clean_build_info": true,
+    "modules": [
+      {
+        "name": "send_airplay2.dll",
+        "sha256": "a39c92684e2c8d414e9fc614b713a1087a4f92895194d5a880d00dfa7ec22039"
+      },
+      {
+        "name": "libcrypto-3-x64.dll",
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+      },
+      {
+        "name": "avcodec-63.dll",
+        "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f"
+      },
+      {
+        "name": "avformat-63.dll",
+        "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282"
+      },
+      {
+        "name": "avutil-61.dll",
+        "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740"
+      },
+      {
+        "name": "swresample-7.dll",
+        "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d"
+      }
+    ],
+    "source_archive_sha512": "21bf3fbcdfd2f41ea6edeab40433fecfe362b09ecaa177a652471b54f9357011b4f74dab18245ab1c26f1a473b94205490baecb42289afd2effd603cd0b22b59",
+    "exact_overlay_files": 22,
+    "overlay_match": "Exact installed SPDX SHA256; repository text equal after CRLF/LF normalization",
+    "overlay_files_with_line_ending_differences": 21,
+    "notice_sha256": "5febaf911cbf5a58c8bdca0be8907176d1e4b241c74c268b96abb24bcd5fd649",
+    "profile_sha256": "98fd059ee57243000248a001b5e0949b710a2ab53d097af289a59b602a2f93df"
+  },
+  "comparison_package": {
+    "id": "SendAirPlay2",
+    "version": "0.3.0-ci.282",
+    "sha256": "5c4bb638daf7ae022a2d9bee8f257eb4ac185a2ec101932f1aa75ef3d742e7ad",
+    "bytes": 7041988,
+    "source": "e6acba1f34b77ddd2a370a65209748f413bf2c8a",
+    "clean_binding_and_three_native_sources": true,
+    "verified_dll_hashes": 6,
+    "codec_free": true,
+    "publication_candidate": false
+  },
+  "consumer_checks": {
+    "api5_compilation": "PASS",
+    "six_exact_native_copies": "PASS",
+    "unsupported_rid_refusal": "PASS",
+    "direct_mixed_profile_refusal": "PASS",
+    "transitive_mixed_profile_refusal": "PASS",
+    "default_contains_no_codec_source_profile_payload": "PASS",
+    "executable_run": false
+  },
+  "publication": {
+    "status": "NOT_PUBLISHED",
+    "approval": "PENDING",
+    "proposed_tag": "nuget-stereo-aac-v0.5.0-ci.282",
+    "asset": "SendAirPlay2.StereoAac.0.5.0-ci.282.nupkg",
+    "sidecar": "SendAirPlay2.StereoAac.0.5.0-ci.282.nupkg.sha256",
+    "target_commit": "e6acba1f34b77ddd2a370a65209748f413bf2c8a"
+  },
+  "screenbox_plan": {
+    "source": "ce782356376d7991f23219abd25b3ada118bd3cc",
+    "status": "PROPOSAL_ONLY",
+    "fork_modified": false,
+    "published_pin_unchanged": "0.3.0-ci.207"
+  },
+  "limitations": [
+    "Initial local overlay byte comparison stopped on CI CRLF versus local LF; final audit verifies exact installed SPDX bytes and normalized repository text, with original candidate bytes preserved.",
+    "Static/consumer checks add no receiver, installed-app, Screenbox queue, whole-film, speaker or converted-surround observation.",
+    "Core/binding remain Apache-2.0; this reuses the existing FFmpeg LGPL-2.1-or-later profile and adds no dependency or license audit."
+  ]
+}

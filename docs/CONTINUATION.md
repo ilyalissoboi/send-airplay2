@@ -23,6 +23,17 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D90 candidate prepared / publication approval pending (2026-10-16).**
+The user's Proceed starts candidate preparation in open documentation PR #71
+(`codex/d89-merged-checkpoint`). Main run `38836333166` / number 282 builds
+`e6acba1`, with all 17 checks passed. The exact `0.5.0-ci.282` opt-in candidate
+is 21,306,805 bytes, SHA-256 `5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff`.
+Provenance/source/static and local/CI consumer checks pass; release notes and
+sidecar are ready. Publication approval is pending; no release or fork edit is
+authorized incidentally. Read
+[candidate preparation](opt-in-audio-release-candidate.md) and [Screenbox plan](screenbox-automatic-audio-plan.md).
+Remote fork main `ce78235` is the planning baseline; the local checkout was stale.
+
 **D89 opt-in runtime packaging merged (2026-10-16, PR #70).**
 PR #70 merged as `e6acba1`; all 17 checks passed at final head `4c4bfb8`
 in [CI run 38830621263](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38830621263).
@@ -48,10 +59,8 @@ hashes, RID/direct/transitive refusals and thirteen profile controls pass. Read
 All 17 checks passed at reviewed head `949492b` in run `38761426436` and final
 head `4c4bfb8` in run `38830621263`. No new runtime, receiver or publication claim.
 
-Suggested next slice: prepare/validate a source-complete clean-main opt-in package
-candidate; publication needs its own approval. Plan Screenbox's profile choice,
-conversion permission and fragment-cache ownership/quota before implementation.
-The merge notification alone authorizes no publication or Screenbox pin change.
+Follow D90 above for the prepared candidate and Screenbox proposal. Publication
+needs approval for the exact asset; host implementation/pins remain a later slice.
 Completed D88 checks remain recorded; do not restart them as pending work.
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
@@ -795,9 +804,11 @@ now records native AAC/DTS and packaged nine-format playback on the recorded
 Mac/Apple TV, plus applicable Stop/cancellation and host-slot reuse observations.
 See its explicit firmware, failed-attempt and short-media limits above; this is
 not Screenbox queue or unrestricted reliability proof. D89 packaging is now merged
-in PR #70 (`e6acba1`), with all 17 final-head checks passed. Suggested next: prepare
-and validate a clean-main opt-in package candidate, seek publication approval,
-then plan Screenbox consumption/storage/policy integration. Preserve the
+in PR #70 (`e6acba1`), with all 17 final-head checks passed. D90 now prepares the
+clean-main `0.5.0-ci.282` opt-in candidate: all 17 main checks and local artifact/
+consumer gates pass. Next: obtain approval for that exact prerelease, verify its
+public download after publication, then implement the reviewed Screenbox plan.
+Preserve the
 OFF-by-default/publication boundaries. The isolated Apple TV event
 disconnect remains an explicit follow-up.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
@@ -976,8 +987,11 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > Mac and Apple TV. Preserve its failed attempts and scope; Screenbox queue behavior
 > is not established by those checks. D89 adds the separate unpublished x64 UWP
 > SendAirPlay2.StereoAac package with source/notices and direct/transitive profile
-> guards. Suggested next: prepare/validate a clean-main candidate, obtain approval
-> for publication, then plan Screenbox profile/permission/cache integration. Keep
+> guards. D90 prepares clean-main 0.5.0-ci.282 from e6acba1; all 17 main checks and
+> local artifact/consumer gates pass. Its SHA-256 is recorded in the candidate
+> evidence and handoff. Publication approval remains pending for that exact asset;
+> do not rebuild it under the same version or publish before approval. Read the
+> prepared release notes and Screenbox profile/permission/cache plan. Keep
 > backend defaults and package/Screenbox publication boundaries unchanged until
 > separately authorized; do not restart completed receiver gates.
 > Keep private input identity/content out
