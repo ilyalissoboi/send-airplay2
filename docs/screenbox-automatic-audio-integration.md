@@ -112,6 +112,14 @@ their CI after the final evidence updates before merging; do not reuse an earlie
 head's green checks. The user must approve merging. No Computer Use is used for
 visual confirmation.
 
+Review follow-up `6377bccf` restores previously playing local media for any
+failed start whose request is still current, including a cancellation returned
+by the receiver/library. Explicit caller Cancel/Stop already invalidates the
+request and returns before this branch, retaining paused handoff. Both 113/127
+logic suites compile and pass again. The recorded 1.0.0.9 hardware observations
+precede this recovery-only correction; no new receiver-dismissal behavior is
+claimed. Inspect CI on the corrected implementation head before merging.
+
 Only original D88 owned flash/beep fixtures may be cast. The private performance
 film is not involved. Audio-only speakers and discrete converted surround remain
 hardware-deferred; Chromecast hardware is unavailable. Sleeping Apple TV casting

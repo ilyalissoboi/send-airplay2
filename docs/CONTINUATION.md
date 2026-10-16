@@ -46,11 +46,16 @@ during a transition, with paused/responsive handoff and no delayed restart. Both
 the independent final count is zero. Final process hashes are rechecked; the user
 restores conversion off and local paused. No manual gate remains.
 Read [the checkpoint](screenbox-automatic-audio-integration.md), inspect fork #13
-at final documentation head `912cab6d` and native #73, including actual-head CI,
+at review-fix head `6377bccf` and native #73, including actual-head CI,
 then review/ask before merging. The user enabled Actions
 after the initial HTTP 422 disabled response; manual run `38870523110` passes all
 four jobs at `bff9e2fc`. Cancel-head PR run `38871102108` at `a6f1fcc9` also passes all four.
 Native PR #73 passes 17 checks at `52c5a3b`. Recheck final evidence heads.
+Review follow-up `6377bccf` restores previously playing local media after a current
+failed start, including a Cancelled result, while caller Cancel/Stop returns
+earlier via generation invalidation. Both logic suites pass again. This changes
+only recovery; the hardware record remains 1.0.0.9/`a6f1fcc9`, with no new
+receiver-dismissal observation.
 No Computer Use for visual
 confirmation; original owned fixtures only. Native checkpoint branch starts from
 PR #72 merge `910b48e`. Do not repeat publication or infer host results from D88.

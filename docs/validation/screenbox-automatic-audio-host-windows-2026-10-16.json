@@ -305,5 +305,15 @@
       "sample_interval_ms": 250,
       "samples": 1040
     }
-  ]
+  ],
+  "post_validation_review_followup": {
+    "both_logic_suites_passed": true,
+    "opt_in_logic_tests": 127,
+    "head": "6377bccf43bdb22836cac0cce593dc2dc20f6cf5",
+    "ordinary_logic_tests": 113,
+    "change": "Restore prior playing state after a current failed start, including Cancelled; caller Cancel/Stop remains excluded by earlier request-generation guard",
+    "recorded_hardware_head_unchanged": "a6f1fcc9f81b5c3361b3269197c4e05eb477f17a",
+    "ci_validation": "Inspect current PR #13 head; earlier green checks do not cover this follow-up",
+    "new_receiver_observation": false
+  }
 }
