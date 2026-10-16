@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "decision": "D90_PUBLICATION",
+  "date": "2026-10-16",
+  "result": "PUBLISHED_PUBLIC_DOWNLOAD_VERIFIED",
+  "user_authorization": "PR is now merged. Publish the candidate.",
+  "preparation_record": "opt-in-audio-release-candidate-windows-2026-10-16.json",
+  "merged_preparation_pr": {
+    "number": 71,
+    "merge": "7f3aa6dd2f87cb75e261a27d26fb157362374d64",
+    "final_head": "c16dc313ec184f1b5fb8c41b25514215ac0e16c4",
+    "ci_run": 38840760789,
+    "successful_checks": 17
+  },
+  "source_ci": {
+    "run_id": 38836333166,
+    "run_number": 282,
+    "event": "workflow_dispatch",
+    "final_conclusion": "SUCCESS",
+    "audio_uwp_job": "SUCCESS",
+    "profile_controls_passed": 12,
+    "successful_checks": 17,
+    "package_consumer": "SUCCESS"
+  },
+  "release": {
+    "assets": [
+      {
+        "browser_download_url": "https://github.com/ilyalissoboi/send-airplay2/releases/download/nuget-stereo-aac-v0.5.0-ci.282/SendAirPlay2.StereoAac.0.5.0-ci.282.nupkg",
+        "digest": "sha256:5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff",
+        "id": 645961308,
+        "name": "SendAirPlay2.StereoAac.0.5.0-ci.282.nupkg",
+        "size": 21306805
+      },
+      {
+        "browser_download_url": "https://github.com/ilyalissoboi/send-airplay2/releases/download/nuget-stereo-aac-v0.5.0-ci.282/SendAirPlay2.StereoAac.0.5.0-ci.282.nupkg.sha256",
+        "digest": "sha256:ef6a2748eccb945b458cafdb909d0ab0fd2ca00e115214c514d38333dc94408a",
+        "id": 645961307,
+        "name": "SendAirPlay2.StereoAac.0.5.0-ci.282.nupkg.sha256",
+        "size": 108
+      }
+    ],
+    "draft": false,
+    "html_url": "https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282",
+    "id": 414493114,
+    "prerelease": true,
+    "published_at": "2026-10-16T03:07:58Z",
+    "tag_name": "nuget-stereo-aac-v0.5.0-ci.282",
+    "target_commitish": "e6acba1f34b77ddd2a370a65209748f413bf2c8a"
+  },
+  "verified_tag_commit": "e6acba1f34b77ddd2a370a65209748f413bf2c8a",
+  "public_download": {
+    "authentication": "none",
+    "sha256": "5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff",
+    "bytes": 21306805,
+    "matches_approved_candidate": true,
+    "sidecar_matches": true,
+    "sidecar_sha256": "ef6a2748eccb945b458cafdb909d0ab0fd2ca00e115214c514d38333dc94408a"
+  },
+  "release_notes": {
+    "matches_submitted_body": true,
+    "reviewed_source": "7f3aa6dd2f87cb75e261a27d26fb157362374d64",
+    "relative_links_resolved_to_pinned_github_urls": true
+  },
+  "screenbox_pin": "0.3.0-ci.207",
+  "limitations": [
+    "The original package was uploaded without rebuilding or modifying its bytes.",
+    "No Screenbox implementation/pin change, app installation, consumer execution or new receiver observation was performed during publication.",
+    "Audio-only speakers and discrete converted surround remain hardware-deferred; the host integration plan remains a proposal.",
+    "The earlier preparation record preserves its then-unpublished/approval-pending state; this record establishes the approved publication outcome."
+  ]
+}

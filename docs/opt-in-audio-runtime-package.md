@@ -8,7 +8,8 @@ original binaries/host/receivers. This slice adds no new receiver result.
 PR #70 merged as `e6acba1` on 2026-10-16. All 17 final-head checks passed at
 `4c4bfb8` in [run 38830621263](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38830621263),
 including the package consumer and transitive-conflict regression. This completes
-the packaging implementation gate; the package remains unpublished.
+the packaging implementation gate. D90 subsequently published the user-approved
+[main-built prerelease](opt-in-audio-release-candidate.md) and verified its public hash.
 
 ## Package contract
 
@@ -99,7 +100,8 @@ checks it alongside `nuget-package`. No new architecture/codec compilation matri
 or release publication is added. Final PR-head CI is recorded above separately
 from local artifact checks and receiver interoperability.
 
-D90 now prepares [a clean-main candidate](opt-in-audio-release-candidate.md) for
-publication approval and records [Screenbox consumption/storage/policy planning](screenbox-automatic-audio-plan.md).
-No release is published or app changed incidentally. Speakers and discrete
+D90 published [the approved clean-main candidate](opt-in-audio-release-candidate.md)
+with its original hash verified on an unauthenticated public download and records
+[Screenbox consumption/storage/policy planning](screenbox-automatic-audio-plan.md).
+No app or pin changed. Speakers and discrete
 converted surround remain deferred.

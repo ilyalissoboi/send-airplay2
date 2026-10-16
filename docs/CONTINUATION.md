@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#70 are merged. `main` contains
+Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#71 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,16 +23,24 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D90 candidate prepared / publication approval pending (2026-10-16).**
-The user's Proceed starts candidate preparation in open documentation PR #71
-(`codex/d89-merged-checkpoint`). Main run `38836333166` / number 282 builds
+**D90 opt-in prerelease published / public hash verified (2026-10-16).**
+PR #71 merged as `7f3aa6d`, with all 17 checks passed at `c16dc31` in run
+`38840760789`. The user explicitly approved publishing the prepared candidate.
+Main run `38836333166` / number 282 builds
 `e6acba1`, with all 17 checks passed. The exact `0.5.0-ci.282` opt-in candidate
 is 21,306,805 bytes, SHA-256 `5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff`.
-Provenance/source/static and local/CI consumer checks pass; release notes and
-sidecar are ready. Publication approval is pending; no release or fork edit is
-authorized incidentally. Read
+Provenance/source/static and local/CI consumer checks pass. The
+[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282)
+is published with the original package and sidecar; its tag targets `e6acba1`.
+Unauthenticated public downloads match the exact package hash/size and sidecar.
+Read [publication evidence](validation/opt-in-audio-publication-windows-2026-10-16.json),
 [candidate preparation](opt-in-audio-release-candidate.md) and [Screenbox plan](screenbox-automatic-audio-plan.md).
 Remote fork main `ce78235` is the planning baseline; the local checkout was stale.
+No fork change or new receiver check was made. Next suggested slice is host
+implementation under that plan, with current fork instructions and its own PR.
+Keep codec-free `ci.207` and the fork pin unchanged until that integration slice.
+Publication documentation is on `codex/published-stereo-aac-candidate`; do not
+repeat publication or ask for approval of the already published candidate.
 
 **D89 opt-in runtime packaging merged (2026-10-16, PR #70).**
 PR #70 merged as `e6acba1`; all 17 checks passed at final head `4c4bfb8`
@@ -59,8 +67,8 @@ hashes, RID/direct/transitive refusals and thirteen profile controls pass. Read
 All 17 checks passed at reviewed head `949492b` in run `38761426436` and final
 head `4c4bfb8` in run `38830621263`. No new runtime, receiver or publication claim.
 
-Follow D90 above for the prepared candidate and Screenbox proposal. Publication
-needs approval for the exact asset; host implementation/pins remain a later slice.
+Follow D90 above for the published package and Screenbox proposal;
+host implementation/pins remain a later slice.
 Completed D88 checks remain recorded; do not restart them as pending work.
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
@@ -804,10 +812,10 @@ now records native AAC/DTS and packaged nine-format playback on the recorded
 Mac/Apple TV, plus applicable Stop/cancellation and host-slot reuse observations.
 See its explicit firmware, failed-attempt and short-media limits above; this is
 not Screenbox queue or unrestricted reliability proof. D89 packaging is now merged
-in PR #70 (`e6acba1`), with all 17 final-head checks passed. D90 now prepares the
-clean-main `0.5.0-ci.282` opt-in candidate: all 17 main checks and local artifact/
-consumer gates pass. Next: obtain approval for that exact prerelease, verify its
-public download after publication, then implement the reviewed Screenbox plan.
+in PR #70 (`e6acba1`), with all 17 final-head checks passed. D90 published the
+approved clean-main `0.5.0-ci.282` opt-in prerelease: all 17 main checks and local
+artifact/consumer gates pass, and the unauthenticated public download matches.
+Next suggested slice: implement the reviewed Screenbox plan in its own fork PR.
 Preserve the
 OFF-by-default/publication boundaries. The isolated Apple TV event
 disconnect remains an explicit follow-up.
@@ -972,7 +980,7 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #70 are merged. D89 merged as e6acba1; all 17 checks passed at
+> PRs through #71 are merged. D89 merged as e6acba1; all 17 checks passed at
 > final head 4c4bfb8 in run 38830621263. Inspect origin/main and open PRs before writing.
 > D82/D83 implement finite automatic policy and API 5; D85 supports shared
 > Matroska origins. D86 corrects DTS lace clocks with exact owned PCM/AAC controls.
@@ -985,12 +993,13 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > proof. D88 subsequently records copied/converted native and packaged playback,
 > stereo output, A/V sync, controls, Stop/cancellation and natural EOF on the recorded
 > Mac and Apple TV. Preserve its failed attempts and scope; Screenbox queue behavior
-> is not established by those checks. D89 adds the separate unpublished x64 UWP
+> is not established by those checks. D89 adds the separate x64 UWP
 > SendAirPlay2.StereoAac package with source/notices and direct/transitive profile
-> guards. D90 prepares clean-main 0.5.0-ci.282 from e6acba1; all 17 main checks and
+> guards. D90 published clean-main 0.5.0-ci.282 from e6acba1 with the user's approval;
+> its tag is nuget-stereo-aac-v0.5.0-ci.282. All 17 main checks and
 > local artifact/consumer gates pass. Its SHA-256 is recorded in the candidate
-> evidence and handoff. Publication approval remains pending for that exact asset;
-> do not rebuild it under the same version or publish before approval. Read the
+> evidence and handoff; the public download and sidecar match. Do not rebuild or
+> republish it under the same version, or request the same approval again. Read the
 > prepared release notes and Screenbox profile/permission/cache plan. Keep
 > backend defaults and package/Screenbox publication boundaries unchanged until
 > separately authorized; do not restart completed receiver gates.

@@ -3,6 +3,11 @@
 2026-10-16. The user's Proceed authorizes preparing and validating the candidate
 following merged D89/PR #70. Publication is a separate approval, following the
 existing [GitHub prerelease procedure](nuget-package.md#github-prereleases-for-the-screenbox-fork).
+After PR #71 merged, the user explicitly approved publication. The
+[prerelease is published](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282)
+and its unauthenticated public download matches the exact candidate/sidecar below.
+[Publication evidence](validation/opt-in-audio-publication-windows-2026-10-16.json)
+records the release, tag and asset checks; the preparation record remains intact.
 Screenbox implementation is a later slice; [the integration plan](screenbox-automatic-audio-plan.md)
 records concrete changes without modifying that repository.
 
@@ -42,7 +47,7 @@ consumer conflict test, not an additional publication candidate. Published
 - Record whole-package SHA-256/size and prepare exact release notes before asking
   to publish. Do not infer receiver or Screenbox results from these checks.
 
-## Proposed publication
+## Publication and verification
 
 Local candidate checks pass: clean main attribution, six recorded/copy hashes,
 UWP distribution properties, pinned source archive, complete source/notice/rebuild
@@ -50,8 +55,8 @@ payload and consumer API-5/RID/direct/transitive-conflict checks. The same-run
 default package is codec-free with clean binding/three-architecture source stamps
 and six matching DLL hashes. All 17 final main CI checks passed at `e6acba1`,
 including the independent CI package-consumer job. The UWP audio job also passes
-all 12 profile controls. This completes preparation; publication approval remains
-pending for the exact candidate above.
+all 12 profile controls. Preparation completed before the user's explicit
+publication approval for this exact candidate.
 
 An initial local overlay audit assumed checkout bytes would match across hosts.
 CI's CRLF checkout differs from the local LF checkout in 21 of 22 files. All 22
@@ -60,16 +65,20 @@ repository text after CRLF/LF normalization. Only that comparison assumption was
 corrected; the candidate archive was not rewritten. Original source tar SHA-512
 matches the pinned value without normalization.
 
-Use a distinct tag namespace, `nuget-stereo-aac-v0.5.0-ci.282`, targeting the
+The published release uses the distinct tag `nuget-stereo-aac-v0.5.0-ci.282`, targeting the
 source commit above. Title: `SendAirPlay2.StereoAac 0.5.0-ci.282 (x64 prerelease)`.
-Attach the unchanged `.nupkg` and its SHA-256 sidecar; use the reviewed release
-notes as the release body. This is a GitHub prerelease, not a nuget.org publication
+It attaches the unchanged `.nupkg` and its SHA-256 sidecar and uses the reviewed
+release notes as the body, with relative documentation links resolved to pinned
+GitHub URLs. This is a GitHub prerelease, not a nuget.org publication
 or Store result.
-After approval/publication, independently download the public asset and verify
-its hash before any Screenbox pin change. A version/tag collision or changed
+The tag resolves to the exact source commit above. An independent unauthenticated
+download verifies the package's original SHA-256/size and matching sidecar before
+any Screenbox pin change. A version/tag collision or changed
 candidate bytes requires a new review, not overwriting the recorded candidate.
 
 [Prepared release notes](releases/sendairplay2-stereo-aac-0.5.0-ci.282.md) describe
 the profile, host obligations, redistribution payload and evidence limits.
 
-No public release or tag has been created by this preparation step.
+Publication occurred at `2026-10-16T03:07:58Z`. The user has already approved this
+specific release; do not ask again or republish it. Screenbox implementation/pins
+remain a separate slice under the linked plan.

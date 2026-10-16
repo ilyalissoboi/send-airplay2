@@ -18,13 +18,16 @@ The existing package identity/profile remains codec-free. The separate
 `SendAirPlay2.StereoAac` package (API-5 version base `0.5.0`) adds the validated x64
 UWP codec runtime only when `pack_nuget.ps1 -StereoAac` is requested. Reference
 one profile, not both. It includes all six DLLs, matching notices and the exact
-FFmpeg source archive/overlay/configuration records. This is an unpublished
-local/CI artifact; published `ci.207` and Screenbox remain unchanged. Read
+FFmpeg source archive/overlay/configuration records. The opt-in profile is now a
+[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282);
+published codec-free `ci.207` and Screenbox remain unchanged. Read
 [the contract, commands and validation](opt-in-audio-runtime-package.md).
 The clean-main [D90 candidate](opt-in-audio-release-candidate.md), `0.5.0-ci.282`,
 passes all 17 main CI checks and local artifact/consumer validation. Its exact
-hash, prepared release notes and publication approval boundary are recorded there;
-it has not been published.
+hash, release notes and [approved publication/public-download evidence](validation/opt-in-audio-publication-windows-2026-10-16.json)
+are recorded separately. The published tag targets `e6acba1`; the public package
+and sidecar match the approved bytes. Its tag prefix is `nuget-stereo-aac-v`,
+distinct from the codec-free package's `nuget-v` prefix.
 
 ## Contents
 

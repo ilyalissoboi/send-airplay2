@@ -9,18 +9,25 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D90 clean-main candidate prepared; publication approval pending (2026-10-16).**
-The user's Proceed authorizes candidate preparation and integration planning.
-Continue the open documentation [PR #71](https://github.com/ilyalissoboi/send-airplay2/pull/71)
-on `codex/d89-merged-checkpoint`; do not edit the fork in this slice.
+**D90 opt-in prerelease published and public download verified (2026-10-16).**
+The user approved publication after [PR #71](https://github.com/ilyalissoboi/send-airplay2/pull/71)
+merged as `7f3aa6d`; all 17 final-head checks passed at `c16dc31` in run
+`38840760789`. The [GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282)
+contains the unchanged candidate and checksum sidecar; its tag targets `e6acba1`.
 Main workflow run `38836333166` (number 282) passed all 17 checks at `e6acba1`.
 Its source-complete `SendAirPlay2.StereoAac 0.5.0-ci.282` candidate is 21,306,805
 bytes, SHA-256 `5280f0868721476b2cae9018bd8197c3de3c9f356408781209ec57fd4b9ba4ff`.
 Clean binding/native stamps, six DLL hashes, UWP distribution/source/SPDX checks
 and local API-5/copy/RID/direct/transitive-conflict controls pass. Read [candidate preparation](opt-in-audio-release-candidate.md)
-and [the Screenbox proposal](screenbox-automatic-audio-plan.md). Publication remains
-subject to approval for the exact candidate. The plan is based on fork main
-`ce78235`; its x64 build option, conversion preference and quota are proposals.
+and [the publication record](validation/opt-in-audio-publication-windows-2026-10-16.json).
+An unauthenticated public download matches that exact hash/size and sidecar.
+No repack, new receiver check or Screenbox change occurred. The
+[Screenbox proposal](screenbox-automatic-audio-plan.md) is based on fork main
+`ce78235`; its x64 build option, conversion preference and quota remain proposals.
+Next suggested slice: implement that host plan in its own fork PR after inspecting
+current fork instructions. Published codec-free `ci.207` and the existing fork pin
+remain unchanged. Continue publication documentation on
+`codex/published-stereo-aac-candidate`; do not publish this version again.
 
 **D89 opt-in runtime packaging merged (2026-10-16, PR #70).**
 PR #70 merged as `e6acba1`; all 17 checks passed at final head `4c4bfb8`
@@ -48,9 +55,8 @@ The reviewed head `949492b` and final review-fix head `4c4bfb8` each passed all
 17 CI checks. Read [review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json).
 Native code and recorded receiver results are unchanged.
 
-Follow D90 above for the prepared candidate, publication approval and proposed
-Screenbox package/policy/storage integration. The package remains unpublished;
-no Screenbox pin or runtime change is included.
+Follow D90 above for the published opt-in package and proposed Screenbox
+package/policy/storage integration. No Screenbox pin or runtime change is included.
 Do not repeat completed D88 receiver checks as if they were still pending.
 
 
