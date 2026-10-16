@@ -8,7 +8,8 @@
 param(
     [Parameter(Mandatory = $true)][string]$Directory,
     [ValidateSet('x64', 'x86', 'ARM64')][string]$Machine = 'x64',
-    [switch]$StereoAac
+    [switch]$StereoAac,
+    [switch]$Distribution
 )
 
 $ErrorActionPreference = 'Stop'
@@ -26,12 +27,16 @@ function Fail([string]$message) {
 }
 
 $library = Join-Path $Directory 'send_airplay2.dll'
-$crypto = Get-ChildItem -Path $Directory -Filter 'libcrypto-*.dll' | Select-Object -First 1
+$cryptoFiles = @(Get-ChildItem -Path $Directory -Filter 'libcrypto-*.dll')
+$crypto = $cryptoFiles | Select-Object -First 1
 if (-not (Test-Path $library)) {
     throw "send_airplay2.dll not found in $Directory"
 }
 if (-not $crypto) {
     Fail 'libcrypto DLL was not staged beside send_airplay2.dll'
+}
+if ($Distribution -and $cryptoFiles.Count -ne 1) {
+    Fail 'Distribution requires exactly one libcrypto DLL for the selected architecture'
 }
 
 $checkedDlls = @($library, $crypto.FullName) | Where-Object { $_ }
@@ -76,6 +81,22 @@ foreach ($dll in $checkedDlls) {
 }
 
 $libraryDependents = (& $dumpbin /nologo /dependents $library) -join "`n"
+if (-not $StereoAac -and $libraryDependents -match '(?im)^\s*(avcodec|avformat|avutil|swresample)-\d+\.dll\s*$') {
+    Fail 'Codec-enabled libraries require the explicit -StereoAac package/check profile'
+}
+if ($StereoAac) {
+    foreach ($name in @('avcodec-63.dll', 'avformat-63.dll', 'avutil-61.dll', 'swresample-7.dll')) {
+        if ($libraryDependents -notmatch ('(?im)^\s*' + [regex]::Escape($name) + '\s*$')) {
+            Fail "StereoAac core must import $name; rebuild with SAP2_STEREO_AAC=ON"
+        }
+    }
+}
+if ($Distribution) {
+    $exports = (& $dumpbin /nologo /exports $library) -join "`n"
+    if ($exports -match 'sap2_runtime_validate') {
+        Fail 'Distribution libraries must disable SAP2_RUNTIME_VALIDATION (private development exports)'
+    }
+}
 if ($libraryDependents -match '(?im)^\s*ADVAPI32\.dll\s*$') {
     Fail 'send_airplay2.dll imports ADVAPI32.dll (Credential Manager must be compiled out)'
 }

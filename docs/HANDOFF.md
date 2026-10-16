@@ -1,6 +1,6 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-15 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-16 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
@@ -8,6 +8,32 @@ The focused [separate-session handoff](CONTINUATION.md) contains the current
 checkpoint, review disposition, validation commands and ordered development queue.
 
 ## 0. Resume here
+
+**D89 opt-in runtime packaging (2026-10-16, in progress).**
+PR #69 merged as `64ed4db`; all 16 final-head checks passed at `e6a9970`.
+The user's Proceed starts `codex/opt-in-audio-runtime-package` from origin/main;
+implementation and clean local artifact checks are in [PR #70](https://github.com/ilyalissoboi/send-airplay2/pull/70).
+The separate `SendAirPlay2.StereoAac` package adds the validated x64 UWP codec
+runtime plus exact source/patch/configuration/notices; the existing package stays
+codec-free. Source/prefix/overlay/profile and private-export guards plus local
+restore/build/hash/refusal checks pass. Distribution core builds with private
+validation OFF. Clean source `50c2a66` packages both identities, with thirteen
+profile controls and consumer API-5/build/six copied hashes/RID/mixed-profile
+refusals passed. [Sanitized artifact evidence](validation/opt-in-audio-runtime-package-windows-2026-10-16.json)
+records the hashes. No release, Screenbox pin/app, native audio policy or new receiver
+claim is included. Read [the contract](opt-in-audio-runtime-package.md). Inspect
+actual PR-head CI; speakers/discrete surround
+remain hardware-deferred.
+
+D89 PR #70 review follow-up: detect the codec-free profile in resolved package
+dependencies/assets before duplicate paths can be discarded, including a wrapper's
+transitive dependency. The regression reproduces the old guard's missed conflict;
+clean fix `dd7b037` packs unique `0.5.0-d89.review1` and passes the new regression,
+existing consumer/copy/RID/direct-conflict checks and all thirteen profile controls.
+The reviewed head `949492b` passed all 17 CI checks in run `38761426436`; the final
+review-fix head needs its own CI inspection. Read [review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json).
+Native code and recorded receiver results are unchanged.
+
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
 Native Mac and Apple TV AAC-copy/DTS-to-stereo-AAC checks pass by user observation;

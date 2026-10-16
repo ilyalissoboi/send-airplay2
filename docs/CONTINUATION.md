@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-15 (Asia/Tokyo). PRs #12-#68 are merged. `main` contains
+Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#69 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,30 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D89 opt-in runtime packaging (2026-10-16, in progress).**
+PR #69 merged as `64ed4db`; all 16 final-head checks passed at `e6a9970`.
+The user's Proceed starts `codex/opt-in-audio-runtime-package` from origin/main;
+implementation and clean local artifacts are in [PR #70](https://github.com/ilyalissoboi/send-airplay2/pull/70).
+The separate `SendAirPlay2.StereoAac` package adds the validated x64 UWP codec
+runtime plus exact source/patch/configuration/notices; the existing package stays
+codec-free. Source/prefix/overlay/profile and private-export guards plus local
+restore/build/hash/refusal checks pass. Distribution core builds with private
+validation OFF. Clean source `50c2a66` passes thirteen profile controls plus the
+API-5 consumer build/copy/RID/mixed-profile checks, with both package hashes in
+[the sanitized record](validation/opt-in-audio-runtime-package-windows-2026-10-16.json).
+No release, Screenbox pin/app, native audio policy or new receiver
+claim is included. Read [the contract](opt-in-audio-runtime-package.md). Inspect
+actual PR-head CI; speakers/discrete surround
+remain hardware-deferred.
+
+D89 review follow-up: `dd7b037` adds resolved dependency/asset checks for transitive
+mixed profiles plus a real wrapper-package restore regression. The old artifact
+misses the conflict; clean `0.5.0-d89.review1` rejects it. Consumer build, six copied
+hashes, RID/direct/transitive refusals and thirteen profile controls pass. Read
+[review evidence](validation/opt-in-audio-package-conflict-review-windows-2026-10-16.json).
+All 17 checks passed at reviewed head `949492b` in run `38761426436`; inspect the
+new final head separately. No new runtime, receiver or publication claim.
 
 **D88 recorded automatic audio receiver gate complete (2026-10-15, PR #69).**
 Branch `codex/automatic-audio-receiver-gate` starts at merged PR #68, `f6c85ef`.

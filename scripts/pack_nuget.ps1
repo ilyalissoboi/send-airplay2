@@ -21,12 +21,21 @@
 # plus "-" and -VersionSuffix, by default "local.<UTC timestamp>", so every local
 # pack has a new version and NuGet's global package cache never serves a stale
 # copy. Relative paths are from the repository root.
+#
+# -StereoAac selects the separate SendAirPlay2.StereoAac identity (API-5 base
+# 0.5.0), initially x64 only. It requires a distribution build (private runtime
+# validation OFF), the matching FFmpeg share/prefix and checksum-pinned source
+# archive. Sources/patches/configuration/notices accompany the dynamic runtime.
+# Nothing here publishes a package or changes the codec-free default identity.
 param(
     [string[]]$Native = @('x64=build-uwp/Release', 'x86=build-uwp-x86/Release', 'arm64=build-uwp-arm64/Release'),
     [string]$Version,
     [string]$VersionSuffix,
     [string]$OutputDirectory = 'packages-local',
     [string]$VcpkgShare,
+    [switch]$StereoAac,
+    [string]$FfmpegShare,
+    [string]$FfmpegSourceArchive,
     [switch]$Build
 )
 
@@ -37,6 +46,8 @@ $project = Join-Path $root 'bindings/csharp/SendAirPlay2/SendAirPlay2.csproj'
 $machines = @{ x64 = 'x64'; x86 = 'x86'; arm64 = 'ARM64' }
 # The native build's inputs; CMakeLists.txt passes the same list to the stamp.
 $nativePaths = @('src', 'include', 'CMakeLists.txt', 'cmake', 'vcpkg.json', 'vcpkg-overlays')
+. (Join-Path $PSScriptRoot 'stereo_aac_package.ps1')
+$packageId = if ($StereoAac) { 'SendAirPlay2.StereoAac' } else { 'SendAirPlay2' }
 
 # The source commit of the library in $directory, checked against HEAD.
 function Read-SourceStamp([string]$directory, [string]$arch) {
@@ -104,13 +115,32 @@ foreach ($item in $Native) {
     if (-not (Test-Path (Join-Path $directory 'send_airplay2.dll'))) {
         throw "no send_airplay2.dll in $directory for $($parts[0]); build it (docs/uwp-native-build.md) or leave $($parts[0]) out of -Native"
     }
-    & (Join-Path $PSScriptRoot 'check_uwp_binaries.ps1') -Directory $directory -Machine $machines[$parts[0]]
+    & (Join-Path $PSScriptRoot 'check_uwp_binaries.ps1') -Directory $directory -Machine $machines[$parts[0]] -StereoAac:$StereoAac -Distribution
     if ($LASTEXITCODE -ne 0) { throw "UWP binary checks failed for $($parts[0])" }
     $source = Read-SourceStamp $directory $parts[0]
     $entries += [pscustomobject]@{ Arch = $parts[0]; Directory = $directory; Source = $source }
 }
 if ($entries.Count -eq 0) { throw 'no architectures to pack' }
 if (@($entries.Arch | Sort-Object -Unique).Count -ne $entries.Count) { throw 'an architecture is listed twice' }
+
+# The first opt-in distribution slice is the recorded x64 UWP profile only.
+$audioProfile = $null
+if ($StereoAac) {
+    if ($entries.Count -ne 1 -or $entries[0].Arch -ne 'x64') {
+        throw 'The StereoAac package currently requires exactly the validated x64 UWP architecture'
+    }
+    if (-not $FfmpegShare) {
+        $tree = Split-Path -Parent $entries[0].Directory
+        $import = Read-CMakeCache $tree 'FFMPEG_avcodec_LIBRARY_RELEASE'
+        if (-not $import) { throw 'Pass -FfmpegShare for the codec runtime prefix used by this build' }
+        $prefix = Split-Path -Parent (Split-Path -Parent $import)
+        $FfmpegShare = Join-Path $prefix 'share/ffmpeg'
+    }
+    $audioProfile = Get-StereoAacPackageProfile -Root $root -Directory $entries[0].Directory `
+        -Share (Resolve-FromRoot $FfmpegShare) -SourceArchive (Resolve-FromRoot $FfmpegSourceArchive)
+} elseif ($FfmpegShare -or $FfmpegSourceArchive) {
+    throw 'FFmpeg package inputs require -StereoAac'
+}
 
 # --- Notices ---------------------------------------------------------------------
 if (-not $VcpkgShare) {
@@ -132,20 +162,24 @@ $notices = [ordered]@{
 
 # --- Version ---------------------------------------------------------------------
 if (-not $Version) {
-    $base = ([xml](Get-Content $project -Raw)).SelectSingleNode('/Project/PropertyGroup/Version').InnerText
+    $base = if ($StereoAac) { '0.5.0' } else {
+        ([xml](Get-Content $project -Raw)).SelectSingleNode('/Project/PropertyGroup/Version').InnerText
+    }
     if (-not $VersionSuffix) { $VersionSuffix = "local.$([DateTime]::UtcNow.ToString('yyyyMMddHHmmss'))" }
     $Version = "$base-$VersionSuffix"
 }
 
 # --- Stage -----------------------------------------------------------------------
-$stage = Join-Path $root 'build-pack/content'
-if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
+$stageRoot = [IO.Path]::GetFullPath((Join-Path $root 'build-pack'))
+$stage = [IO.Path]::GetFullPath((Join-Path $stageRoot $packageId))
+if ((Split-Path -Parent $stage) -ne $stageRoot) { throw 'Package stage escaped the owned build-pack directory' }
+if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
 New-Item -ItemType Directory -Force $stage | Out-Null
 $utf8 = New-Object Text.UTF8Encoding $false
 
 $commit = (& git -C $root rev-parse HEAD).Trim()
 $dirty = if (& git -C $root status --porcelain) { ' (with uncommitted changes)' } else { '' }
-$info = @("SendAirPlay2 $Version", "Binding and package source: $commit$dirty",
+$info = @("$packageId $Version", "Binding and package source: $commit$dirty",
     "Architectures: $($entries.Arch -join ', ')", '')
 foreach ($entry in $entries) {
     $info += "win-$($entry.Arch) built from $($entry.Source) (native sources identical at the binding's commit)"
@@ -156,10 +190,20 @@ foreach ($entry in $entries) {
     New-Item -ItemType Directory -Force $target | Out-Null
     $files = @(Get-Item (Join-Path $entry.Directory 'send_airplay2.dll')) +
         @(Get-ChildItem -Path $entry.Directory -Filter 'libcrypto-*.dll')
+    if ($audioProfile) {
+        $files += @($audioProfile.Files | ForEach-Object { Get-Item -LiteralPath (Join-Path $entry.Directory $_) })
+    }
     foreach ($file in $files) {
         Copy-Item $file.FullName $target
         $info += "win-$($entry.Arch)/$($file.Name) SHA-256 $((Get-FileHash $file.FullName).Hash.ToLowerInvariant())"
     }
+}
+if ($audioProfile) {
+    $info += 'Profile: stereo-aac (opt-in; 48-kHz stereo conversion, no audio-only transport)'
+    $info += "FFmpeg source SHA-512 $($audioProfile.Record.source_sha512)"
+    Copy-StereoAacPackageSources -Root $root -Stage $stage -Profile $audioProfile
+    New-Item -ItemType Directory -Force (Join-Path $stage 'buildTransitive') | Out-Null
+    Copy-Item -LiteralPath (Join-Path $root 'bindings/csharp/SendAirPlay2/SendAirPlay2.StereoAac.targets') -Destination (Join-Path $stage 'buildTransitive')
 }
 [IO.File]::WriteAllText((Join-Path $stage 'BUILD-INFO.txt'), ($info -join "`n") + "`n", $utf8)
 
@@ -172,17 +216,23 @@ foreach ($name in $notices.Keys) {
     if (-not (Test-Path $file)) { throw "notice not found: $file" }
     $text += ('=' * 78), $name, ('=' * 78), '', (Get-Content $file -Raw).TrimEnd(), ''
 }
+if ($audioProfile) {
+    $text += ('=' * 78), 'FFmpeg (dynamic runtime, LGPL-2.1-or-later)', ('=' * 78), '',
+        (Get-Content -LiteralPath (Join-Path $audioProfile.Share 'copyright') -Raw).TrimEnd(), '',
+        (Get-Content -LiteralPath (Join-Path $root 'vcpkg-overlays/LICENSE-vcpkg.txt') -Raw).TrimEnd(), ''
+}
 [IO.File]::WriteAllText((Join-Path $stage 'THIRD-PARTY-NOTICES.txt'), ($text -join "`n") + "`n", $utf8)
 Copy-Item (Join-Path $root 'LICENSE') (Join-Path $stage 'LICENSE.txt')
-Copy-Item (Join-Path $root 'bindings/csharp/SendAirPlay2/PACKAGE.md') (Join-Path $stage 'README.md')
+$readme = if ($StereoAac) { 'PACKAGE.STEREO-AAC.md' } else { 'PACKAGE.md' }
+Copy-Item (Join-Path $root "bindings/csharp/SendAirPlay2/$readme") (Join-Path $stage 'README.md')
 
 # --- Pack ------------------------------------------------------------------------
 $output = Resolve-FromRoot $OutputDirectory
 New-Item -ItemType Directory -Force $output | Out-Null
-& dotnet pack $project -c Release --nologo -o $output "-p:Version=$Version" "-p:Sap2PackageContent=$stage"
+& dotnet pack $project -c Release --nologo -o $output "-p:PackageId=$packageId" "-p:Version=$Version" "-p:Sap2PackageContent=$stage"
 if ($LASTEXITCODE -ne 0) { throw 'dotnet pack failed' }
 
-$package = Join-Path $output "SendAirPlay2.$Version.nupkg"
+$package = Join-Path $output "$packageId.$Version.nupkg"
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [IO.Compression.ZipFile]::OpenRead($package)
 try {
@@ -193,6 +243,13 @@ try {
 foreach ($required in @('lib/netstandard2.0/SendAirPlay2.dll', 'THIRD-PARTY-NOTICES.txt', 'BUILD-INFO.txt', 'README.md') +
     ($entries | ForEach-Object { "runtimes/win-$($_.Arch)/native/send_airplay2.dll" })) {
     if ($names -notcontains $required) { throw "package lacks $required" }
+}
+if ($audioProfile) {
+    foreach ($required in @('AUDIO-PROFILE.json', 'source/ffmpeg/ffmpeg-n9.0.2.tar.gz',
+        'buildTransitive/SendAirPlay2.StereoAac.targets') +
+        @($audioProfile.Files | ForEach-Object { "runtimes/win-x64/native/$_" })) {
+        if ($names -notcontains $required) { throw "package lacks $required" }
+    }
 }
 Write-Host "Packed $package"
 Write-Host "Version $Version; architectures $($entries.Arch -join ', ')"

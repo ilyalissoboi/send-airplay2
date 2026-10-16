@@ -130,7 +130,8 @@ jobs:
           retention-days: 14
   audio-codec-spike:
     # Optional probe and explicitly enabled core integration checks. Baseline
-    # package artifacts remain codec-free; these jobs do not publish a package.
+    # package artifacts remain codec-free. The UWP job also packs an opt-in x64
+    # artifact with sources/notices; nothing is published.
     strategy:
       fail-fast: false
       matrix:
@@ -211,12 +212,54 @@ jobs:
           } else {
             ./scripts/check_uwp_binaries.ps1 -Directory build-stereo/Release -StereoAac
           }
+      - name: Pack the opt-in x64 UWP runtime with sources and notices
+        if: matrix.kind == 'uwp'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build-package-development | Out-Null
+          Copy-Item build-stereo/Release/*.dll build-package-development
+          cmake -S . -B build-stereo -DSAP2_RUNTIME_VALIDATION=OFF
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build-stereo --config Release --target send_airplay2_source_stamp --parallel 2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $source = 'build-tools/vcpkg/downloads/ffmpeg-ffmpeg-n9.0.2.tar.gz'
+          if (!(Test-Path -LiteralPath $source)) {
+            New-Item -ItemType Directory -Force (Split-Path -Parent $source) | Out-Null
+            Invoke-WebRequest 'https://github.com/ffmpeg/ffmpeg/archive/refs/tags/n9.0.2.tar.gz' -OutFile $source -MaximumRetryCount 3 -RetryIntervalSec 2
+          }
+          ./scripts/pack_nuget.ps1 -StereoAac -Native 'x64=build-stereo/Release' -FfmpegSourceArchive $source -VersionSuffix 'ci.${{ github.run_number }}' -OutputDirectory build-ci-audio-package
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/package_profiles_tests.ps1 -AudioNative (Resolve-Path build-stereo/Release) -FfmpegShare (Resolve-Path 'build-stereo/vcpkg_installed/${{ matrix.triplet }}/share/ffmpeg') -SourceArchive (Resolve-Path $source) -DevelopmentNative (Resolve-Path build-package-development)
+      - name: Keep the opt-in package as a separate artifact
+        if: matrix.kind == 'uwp'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-stereo-aac-x64
+          path: build-ci-audio-package/*.nupkg
+          if-no-files-found: error
+          retention-days: 14
       - name: Save completed codec dependency binaries even after a later failure
         if: ${{ !cancelled() && hashFiles('build-vcpkg-cache/**/*.zip') != '' && steps.codec-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: build-vcpkg-cache
           key: ${{ steps.codec-cache.outputs.cache-primary-key }}
+  package-consumer:
+    needs: [nuget, audio-codec-spike]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nuget-*
+          path: build-ci-consumer-feed
+          merge-multiple: true
+      - name: Restore, build and verify mutually exclusive package profiles
+        shell: pwsh
+        run: ./tests/package_consumer_tests.ps1 -PackagesDirectory build-ci-consumer-feed -AudioVersion '0.5.0-ci.${{ github.run_number }}' -DefaultVersion '0.3.0-ci.${{ github.run_number }}'
   sanitizers:
     runs-on: ubuntu-latest
     steps:
