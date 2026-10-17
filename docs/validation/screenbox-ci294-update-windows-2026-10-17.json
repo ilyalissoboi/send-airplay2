@@ -54,7 +54,7 @@
     "number": 14,
     "initial_head": "66660bf7ca9e3654fe960f9888396b97afac80c1",
     "package_checkpoint_head": "e2a0c19c033465fb6108cb49d2ad4e2e5b3125ea",
-    "actual_checkpoint_head_ci": "Four jobs passed at test-only correction fbb01d20; inspect final documentation head separately"
+    "actual_checkpoint_head_ci": "Four validation jobs passed at final head 3a9de5b1; merged as 8d2851c8"
   },
   "ordinary_artifact": {
     "msix_sha256": "7fdda165a014757cf4c5fd0128154a4006d56852967f9e8407d6621744c2cc68",
@@ -252,5 +252,134 @@
   "final_owned_cache": {
     "owned_directories": 0,
     "owned_bytes": 0
-  }
+  },
+  "merged_checkpoint": {
+    "native": {
+      "merge_commit": "449457aaac2a1f5112c0fdf1d12ec32cac839620",
+      "merged_at": "2026-10-17T05:57:00Z",
+      "final_head": "722e84b0862a904daebacececd2fb5cafbc546ed",
+      "passed_checks": 17,
+      "checks": [
+        {
+          "name": "e2e-runner-contracts (ubuntu-latest)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324586"
+        },
+        {
+          "name": "e2e-runner-contracts (windows-latest)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324541"
+        },
+        {
+          "name": "e2e-runner-contracts (macos-latest)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324561"
+        },
+        {
+          "name": "native (ubuntu-latest, OFF)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324599"
+        },
+        {
+          "name": "native (ubuntu-latest, ON)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324651"
+        },
+        {
+          "name": "native (windows-latest, OFF)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324601"
+        },
+        {
+          "name": "native (windows-latest, ON)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324623"
+        },
+        {
+          "name": "native (macos-latest, OFF)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324625"
+        },
+        {
+          "name": "native (macos-latest, ON)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324643"
+        },
+        {
+          "name": "uwp (x64, x64, x64)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324503"
+        },
+        {
+          "name": "uwp (x86, Win32, x86)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324591"
+        },
+        {
+          "name": "uwp (arm64, ARM64, ARM64)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324593"
+        },
+        {
+          "name": "audio-codec-spike (desktop, x64-windows-codec-release)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324511"
+        },
+        {
+          "name": "audio-codec-spike (uwp, x64-uwp-codec-release)",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324438"
+        },
+        {
+          "name": "sanitizers",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319324633"
+        },
+        {
+          "name": "nuget",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117319782838"
+        },
+        {
+          "name": "package-consumer",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777/job/117321580178"
+        }
+      ]
+    },
+    "fork": {
+      "merge_commit": "8d2851c852dfb007c18326511b4fece21eedef85",
+      "merged_at": "2026-10-17T05:57:20Z",
+      "final_head": "3a9de5b1bb8d87abbf65ea5325b454cc8d04099b",
+      "passed_checks": 4,
+      "checks": [
+        {
+          "name": "xaml-lint",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39006286791/job/117319335515"
+        },
+        {
+          "name": "test",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39006286791/job/117319335725"
+        },
+        {
+          "name": "build",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39006286791/job/117319335792"
+        },
+        {
+          "name": "airplay-stereo-aac",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39006286791/job/117319335723"
+        },
+        {
+          "name": "release",
+          "conclusion": "SKIPPED",
+          "url": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39006286791/job/117320987584"
+        }
+      ]
+    }
+  },
+  "next_scope": "No new implementation authorized; proposed evaluation of sustained long-input playback and finite-cache/quota behavior, retaining current quota pending design"
 }
