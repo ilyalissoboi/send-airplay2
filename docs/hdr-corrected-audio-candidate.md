@@ -46,9 +46,12 @@ or packaged app is run by these checks.
 
 [D92](hevc-hdr-range.md) records Mac controls and bounded Apple TV retries on
 private development builds, with earlier failures retained separately. These
-candidate bytes add no receiver or Screenbox queue observation. The earlier
-Apple TV premature end remains unexplained; successful visible-window retries
-do not establish a lifecycle cause or general reliability fix. Whole-film
+candidate bytes add no coordinated receiver or Screenbox queue observation.
+On 2026-10-17 the user reports later testing suggests incorrect HDR signaling
+caused the Apple TV symptom, with no recurrence since the correction. That
+follow-up provides a likely cause by user assessment, without independently
+isolating the earlier attempts or identifying the exact candidate build tested.
+Window visibility was not established as a cause. Whole-film
 playback, HLG receiver behavior, perceptual HDR calibration, speakers and discrete
 converted surround remain outside the recorded validation.
 

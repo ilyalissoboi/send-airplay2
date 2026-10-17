@@ -23,16 +23,20 @@ profile/notices match ci.282. Read [candidate preparation](hdr-corrected-audio-c
 and its release notes/evidence. Publication approval is pending; no release,
 Screenbox pin or app installation is changed. Review this slice before publishing
 the exact candidate, verify its public download, then update the host pin separately.
-Published ci.282 remains unchanged. D92's private-build observations and earlier
-unexplained Apple TV end remain separate; this slice adds no receiver claim.
+Published ci.282 remains unchanged. The user's later testing suggests the Apple
+TV symptom was HDR-related, with no recurrence since the correction. Earlier
+failed attempts remain in D92's history; candidate checks add no instrumented
+receiver observation or verification of these exact candidate bytes.
 
 **D92 HDR startup correction merged (PR #74, 2026-10-17).**
 PR #74 merged as `f1598cf`. All 17 checks passed at final head `1e917aa`
 in [run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
 D93 above records completed corrected-candidate preparation; publication approval
 and the Screenbox pin update remain separate.
-Published ci.282 remains unchanged and lacks this fix. The earlier Apple TV
-premature end remains an unexplained reliability follow-up despite passing retries.
+Published ci.282 remains unchanged and lacks this fix. On 2026-10-17 the user
+reports later testing suggests incorrect HDR signaling caused the Apple TV issue,
+with no recurrence since the correction. This is the user's causal assessment;
+the earlier recorded attempts did not isolate that cause independently.
 No further manual receiver observation is pending for the recorded D92 checks.
 The user confirms native #73 and Screenbox fork #13 are merged (`d9cd2c2` /
 `b52c58e`). A subsequent private long-video cast fails on the Mac after consent,
@@ -51,9 +55,9 @@ Screenbox attempt silently fails from zero. Native Apple TV playback then
 passes its bounded 20-second check by telemetry and user observation; the
 packaged UWP comparison initially receives premature `MediaEnd` near 16 seconds.
 Visible-window 90-second UWP and Screenbox retries then pass by user observation;
-the UWP retry stays playing through its scheduled Stop and cleans up. The earlier
-Apple TV failure remains unexplained, including whether window visibility
-contributed. Final Screenbox AppContainer/six hashes pass again; after the
+the UWP retry stays playing through its scheduled Stop and cleans up. The later
+user follow-up above associates the symptom with HDR; window visibility was
+never established as a cause. Final Screenbox AppContainer/six hashes pass again; after the
 user confirms Stop, the owned cache directory/byte counts are zero.
 The private DLL is not the published pinned payload. The implementation and
 final evidence heads each passed all 17 checks; the merged checkpoint above

@@ -45,9 +45,10 @@ See [candidate preparation](../hdr-corrected-audio-candidate.md).
 
 D92 records Mac controls and bounded Apple TV retries on private development
 builds from Windows x64, with macOS 26.7.1/tvOS 26.6 most recently reported.
-An earlier Screenbox failure and packaged UWP premature `MediaEnd` remain
-unexplained; successful visible-window retries do not establish a lifecycle cause
-or a general reliability fix. These candidate bytes have no new receiver or
-Screenbox queue observation. Whole-film playback, HLG receiver behavior,
-perceptual HDR calibration, other receivers/hosts, speakers and discrete
-converted surround remain outside the recorded evidence.
+Earlier Screenbox and packaged UWP failures remain in the validation history.
+Subsequent user testing suggests the Apple TV issue was caused by incorrect HDR
+signaling and has not recurred since the correction; that attribution was not
+independently isolated in the recorded attempts. These exact candidate bytes
+have no new coordinated receiver or Screenbox queue observation. Whole-film
+playback, HLG receiver behavior, perceptual HDR calibration, other receivers/hosts,
+speakers and discrete converted surround remain outside the recorded evidence.

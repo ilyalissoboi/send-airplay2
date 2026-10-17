@@ -25,8 +25,10 @@ missing `VIDEO-RANGE=PQ` alone restores playback by user observation. The
 [bounded SPS VUI correction](hevc-hdr-range.md) now carries PQ/HLG through remux
 and automatic composition, including an HDR master without subtitles. The
 private Screenbox override passes the user's Mac controls. A separate reported
-Apple TV Screenbox failure and premature UWP `MediaEnd` remain unexplained;
-native playback and visible-window 90-second UWP/Screenbox retries pass.
+Apple TV Screenbox failure and premature UWP `MediaEnd` remain historical
+attempts; native playback and visible-window 90-second UWP/Screenbox retries pass.
+Later user testing suggests incorrect HDR signaling caused the Apple TV issue,
+with no recurrence since the correction; the cause was not independently isolated.
 Final loaded hashes and Stop/cache cleanup pass. Published ci.282, audio policy,
 decoder coverage and cache quota are unchanged; no full-film claim is made.
 

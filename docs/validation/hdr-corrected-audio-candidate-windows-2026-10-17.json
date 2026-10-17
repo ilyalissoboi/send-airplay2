@@ -111,7 +111,17 @@
   "receiver_scope": {
     "new_receiver_observation": false,
     "prior_record": "hevc-hdr-range-windows-2026-10-16.json",
-    "earlier_apple_tv_premature_end": "Unexplained; passing visible-window retries do not establish a lifecycle cause or general reliability fix"
+    "earlier_apple_tv_premature_end": "Historical failed attempts retained; later user testing suggests incorrect HDR signaling as the cause, with no reported recurrence after correction",
+    "user_follow_up": {
+      "date": "2026-10-17",
+      "source": "User follow-up testing report",
+      "observation": "Apple TV issue has not been observed again after the HDR correction",
+      "user_inference": "Testing suggests the incorrect HDR flag caused the Apple TV issue",
+      "status": "Likely HDR-related by user assessment; no reported recurrence since correction",
+      "independently_isolated_cause": false,
+      "tested_build_identity": "Not specified in follow-up",
+      "new_coordinated_cast_for_this_update": false
+    }
   },
   "limitations": [
     "Candidate artifact and consumer checks do not establish receiver interoperability for these exact bytes",

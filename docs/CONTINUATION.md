@@ -37,8 +37,10 @@ profile/notices match ci.282. Read [candidate preparation](hdr-corrected-audio-c
 and its release notes/evidence. Publication approval is pending; no release,
 Screenbox pin or app installation is changed. Review this slice before publishing
 the exact candidate, verify its public download, then update the host pin separately.
-Published ci.282 remains unchanged. D92's private-build observations and earlier
-unexplained Apple TV end remain separate; this slice adds no receiver claim.
+Published ci.282 remains unchanged. The user's later testing suggests the Apple
+TV symptom was HDR-related, with no recurrence since the correction. Earlier
+failed attempts remain in D92's history; candidate checks add no instrumented
+receiver observation or verification of these exact candidate bytes.
 
 **D92 HDR startup correction merged (historical implementation record).** PR #74 merged
 as `f1598cf`; all 17 checks passed at final head `1e917aa` in
@@ -47,7 +49,9 @@ D93 above records the new clean-main candidate and passing artifact/consumer
 checks. Publication approval and the Screenbox pin update remain separate;
 do not overwrite ci.282.
 No receiver observation is pending for the recorded D92 checks. Preserve the
-unexplained earlier Apple TV premature end as a reliability follow-up.
+earlier Apple TV attempts and the 2026-10-17 user follow-up: later testing suggests
+the incorrect HDR flag caused the issue, with no recurrence since the correction.
+Do not present it as a separately recurring defect or an independently isolated cause.
 
 Fork #13 is merged as
 `b52c58e` and native #73 as `d9cd2c2`. The user reports a grey-screen failure
@@ -62,8 +66,9 @@ controls pass, with final hashes/empty cache checked. The user then reports a
 silent Apple TV Screenbox failure from zero. A native Apple TV 20-second cast
 plays normally by user report. The packaged UWP comparison first receives early
 `MediaEnd` near 16 seconds; visible-window 90-second UWP and Screenbox retries
-then pass. The early failure remains unexplained; window visibility is an
-unproven hypothesis. Final Screenbox hashes/AppContainer pass again; confirmed
+then pass. The later user follow-up suggests HDR as the cause and reports no
+recurrence after the correction; window visibility was not established as a cause.
+Final Screenbox hashes/AppContainer pass again; confirmed
 Stop leaves zero owned cache directories/bytes.
 Both implementation and final evidence heads of #74 passed all 17 checks.
 The published ci.282 package is unchanged; candidate preparation/publication
@@ -902,7 +907,8 @@ The user approved that slice: D91 implements it in merged fork PR #13; native
 checkpoint #73 is merged too. D92's HEVC HDR startup correction is merged in
 PR #74 as `f1598cf`, with all 17 final-head checks passed at `1e917aa`.
 Passing Mac controls and Apple TV 90-second retries remain separate from the
-unexplained earlier Apple TV end. Final Stop/cache cleanup is confirmed.
+earlier Apple TV end. Later user testing suggests incorrect HDR signaling as the
+cause, with no recurrence since the fix. Final Stop/cache cleanup is confirmed.
 D93 completes corrected candidate preparation. Next, review that slice, obtain
 publication approval for its exact bytes and update the host pin separately. Do not replace
 the already published candidate under its old version.
@@ -1112,7 +1118,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > inspect actual-head CI, preserving the initial disabled response as history.
 > Do not restart completed D88 library tests as host proof. D92 is merged in
 > #74 as f1598cf, with all 17 final-head checks passed at 1e917aa. Preserve its
-> passing Mac/Apple TV retries and unexplained earlier Apple TV end separately.
+> passing Mac/Apple TV retries and earlier failed attempts separately. Later user
+> testing suggests the Apple TV issue was HDR-related, with no recurrence since
+> the correction; retain that attribution as user-reported.
 > D93 prepares 0.5.0-ci.294 from clean main 72e73ea in run 38993860187, with
 > all 17 main checks and local artifact/consumer controls passed. Read
 > hdr-corrected-audio-candidate.md; review the preparation PR, obtain publication

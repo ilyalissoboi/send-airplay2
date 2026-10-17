@@ -108,11 +108,25 @@ The user also confirms that the written 90-second Screenbox Apple TV retry
 works as expected, including normal video/audio, Stop closure and local paused
 handoff. Whether the original failed attempt was minimized or covered was not
 reported. Keep both failed attempts distinct from these passing retries; no
-lifecycle cause or general reliability correction has been established.
+lifecycle cause had been established in those attempts. The later user follow-up
+below updates the observed status and likely cause.
 Post-retry AppContainer/six loaded hashes pass. An initial cache snapshot still
 contains one growing owned directory; after the user explicitly confirms Stop,
 the final independent count is zero directories/zero bytes. This is completed
 cleanup, not a cache leak.
+
+### Later user follow-up (2026-10-17)
+
+The user reports that further testing suggests the Apple TV issue was caused by
+the incorrect HDR flag and that it has not been observed again after the HDR
+correction. Record incorrect HDR signaling as the likely cause by user assessment,
+with no reported recurrence since the fix. Retain the earlier Screenbox failure
+and packaged UWP early `MediaEnd` as historical attempts; the captured runs did
+not independently isolate that Apple TV cause. The follow-up does not specify a
+build identity, run count or duration, and adds no verification of the exact D93
+candidate bytes. No new coordinated cast is performed for this documentation
+update. Window visibility remains an unconfirmed earlier hypothesis, not the
+current explanation.
 
 All 17 CI checks pass on implementation head `1646ae3` in
 [run 38883104462](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38883104462).
