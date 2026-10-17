@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#79 are merged. `main` contains
+Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#80 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -24,7 +24,24 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Current D97 checkpoint (2026-10-17).**
+**Current D98 packaged AAC/M4A gate (2026-10-18), in progress.** The user's
+Proceed authorizes the next packaged UWP gate from merged #80 (`377b7ce`);
+all 17 final-head checks passed at `b105333`. Test-host implementation `153a840`
+adds a bounded progressive MIME option, `.m4a` picker support and fixed read/
+release counters. It does not change the native core, API, Screenbox or codec
+policy. The codec-free x64 UWP build and binary checks pass; actual MSIX 0.1.30.0
+builds without warnings/errors and is registered in place with identity/data
+preserved. Its actual AppContainer/executable and both loaded DLL hashes match.
+The two MIME/delivery guards reject locally before source open. The original D97
+video-free fixture is reused. Receiver availability, the manual picker grant
+and written listening/controls/cancellation checks remain pending. Do not infer
+receiver success from package/unit checks or start a cast without coordination.
+See [the current gate](audio-only-uwp-gate.md). Keep D97's desktop evidence and
+the published fork preview separate; neither proves this packaged audio gate.
+The later Screenbox routing proposal and deferred speaker/surround scopes remain
+separate. No new release is published.
+
+**Completed D97 checkpoint (2026-10-17).**
 [PR #80](https://github.com/ilyalissoboi/send-airplay2/pull/80) records the native
 AAC/M4A audio-only URL gate on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6,
 with versions explicitly unchanged. Both receivers pass audible playback,
@@ -971,11 +988,10 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 
 The current queue follows [D97's recorded result](audio-only-url-probe.md#consequences-and-next-slice):
 
-1. **Complete review of PR #80.** Preserve the recorded native/audio-only results
-   and inspect actual-head CI. No further D97 listening check is pending. D94's
-   pin update, D95's Casting settings and D96's preview publication are complete
-   in merged checkpoint #79; do not repeat them.
-2. **Next proposed gate: packaged UWP AAC/M4A.** Use the original video-free
+1. **D97 complete, PR #80 merged.** Merge `377b7ce` includes all 17 passing
+   final-head checks at `b105333`. No further native listening check is pending.
+   D94-D96 are complete in merged #79; do not repeat pin/publication work.
+2. **Active authorized D98 gate: packaged UWP AAC/M4A.** Use the original video-free
    fixture through a brokered source, progressive delivery and explicit
    `audio/mp4`. Verify the AppContainer/loaded package, audible controls,
    natural end, Stop/cancellation and source cleanup on the recorded available
@@ -988,7 +1004,7 @@ The current queue follows [D97's recorded result](audio-only-url-probe.md#conseq
    implementation/validation scopes. The published preview does not gain these
    features from this documentation-only probe.
 
-No new implementation or receiver run is started by this review fix. Preserve
+The user now authorizes D98; its package/build checks pass and manual gates are pending. Preserve
 the speaker/discrete-surround/Chromecast hardware deferrals and user-deferred
 remote-Stop classification. Long-input/cache-quota evaluation is a separate
 proposal, not the immediate D97 follow-up; the existing quota is unchanged.
@@ -1217,30 +1233,27 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 
 ## Suggested opening prompt for the next session
 
-> Continue send-airplay2 from AGENTS.md, docs/HANDOFF.md, docs/design.md,
-> docs/receiver-validation.md and docs/CONTINUATION.md. Start with the current
-> D97 checkpoint, audio-only-url-probe.md and its sanitized evidence; the long
-> D63-D96 history is reference. PR #80 records a passed native progressive
-> AAC/M4A gate on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6, explicitly
-> unchanged. An original AAC-LC fixture has no video; the existing public C API
-> at 449457a uses audio/mp4 without remux, transcoding or production changes.
-> Both receivers pass user listening, pause/resume, both seeks, natural end and
-> Stop/no delayed restart; Mac consent cancellation passes. All 17 checks pass
-> at initial head 99c2ee3; inspect actual final review-head CI separately. No
-> further D97 manual check is pending.
-> Native #79 is merged as 7403044. D94's ci.294 pin update, D95's Casting group
-> and D96's fork preview publication are complete; do not repeat them or their
-> completed manual checks. The preview is not an audio-file feature.
-> The next proposed slice is the packaged UWP brokered-source AAC/M4A gate with
-> progressive delivery and explicit audio MIME. After that passes, plan Screenbox
-> audio-file routing/controls. Keep audio-only HLS/transcoding and broader codecs
-> separate; HomePod/audio-only speakers, discrete converted surround and
-> Chromecast validation remain hardware-deferred, and remote-Stop classification
-> remains user-deferred. Long-input/cache-quota evaluation is a separate proposal.
-> This documentation review has not started the next implementation. Inspect
-> origin/main and any open PR's actual head before writing. Keep private input,
+> Continue send-airplay2 from AGENTS.md, HANDOFF.md, design.md,
+> receiver-validation.md and CONTINUATION.md. Start with current D98 and
+> audio-only-uwp-gate.md. The user authorized the packaged UWP AAC/M4A gate
+> after native #80 merged as 377b7ce; all 17 checks passed at final head b105333.
+> Test-host implementation 153a840 adds explicit progressive audio/mp4 MIME,
+> m4a picker access and fixed read/release counters. The codec-free x64 MSIX
+> 0.1.30.0 builds without warnings/errors and is installed in place with existing
+> identity/data preserved. Actual AppContainer/executable/two loaded native
+> hashes match the inspected MSIX; invalid MIME/delivery guards pass locally.
+> Receiver availability/version confirmation, the owned fixture picker grant
+> and coordinated listening/controls/Stop/cancellation observations are pending.
+> Do not start uncoordinated casts or infer receiver success from build checks.
+> Preserve the compiled source/package identity and failed attempts in evidence.
+> D97's desktop AAC/M4A gate already passed on Mac/macOS 26.7.1 and Apple TV/
+> tvOS 26.6; do not repeat it as packaged proof. D94 pin/D95 settings/D96 preview
+> publication are complete in merged #79 (7403044); do not repeat publication.
+> The later Screenbox audio-file routing proposal is separate from this UWP
+> gate. Audio-only HLS, broader codecs/transcoding, HomePod/RAOP, discrete
+> converted surround and Chromecast validation remain separate/deferred;
+> remote-Stop classification remains user-deferred. Keep the existing quota.
+> Inspect the actual open slice PR head before editing. Use written user
+> observations, not Computer Use, for visual UI checks. Keep private media,
 > addresses, identifiers, credentials and bearer URLs out of committed evidence.
-> Preserve exact source/binary/host/firmware and failed-attempt attribution.
-> Use written user observations for visual UI checks, without Computer Use.
-> Ask before merging or publishing a new release; do not request approval again
-> for the already completed ci.294 or Screenbox preview publications.
+> Ask before merging or publishing a new release; no release is part of D98.

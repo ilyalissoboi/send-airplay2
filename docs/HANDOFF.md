@@ -1,8 +1,25 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-17 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
 
-**Current D97 checkpoint (2026-10-17):** the user-authorized
+**Current D98 packaged AAC/M4A gate (2026-10-18), in progress.** The user's
+Proceed authorizes the next packaged UWP gate from merged #80 (`377b7ce`);
+all 17 final-head checks passed at `b105333`. Test-host implementation `153a840`
+adds a bounded progressive MIME option, `.m4a` picker support and fixed read/
+release counters. It does not change the native core, API, Screenbox or codec
+policy. The codec-free x64 UWP build and binary checks pass; actual MSIX 0.1.30.0
+builds without warnings/errors and is registered in place with identity/data
+preserved. Its actual AppContainer/executable and both loaded DLL hashes match.
+The two MIME/delivery guards reject locally before source open. The original D97
+video-free fixture is reused. Receiver availability, the manual picker grant
+and written listening/controls/cancellation checks remain pending. Do not infer
+receiver success from package/unit checks or start a cast without coordination.
+See [the current gate](audio-only-uwp-gate.md). Keep D97's desktop evidence and
+the published fork preview separate; neither proves this packaged audio gate.
+The later Screenbox routing proposal and deferred speaker/surround scopes remain
+separate. No new release is published.
+
+**Completed D97 checkpoint (2026-10-17):** the user-authorized
 [native audio-only URL probe](audio-only-url-probe.md) passes on MacBook Pro
 (macOS 26.7.1) and Apple TV (tvOS 26.6), with versions explicitly unchanged.
 The existing progressive C API plays an original AAC/M4A with no video or
