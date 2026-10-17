@@ -71,7 +71,7 @@ and `#` comments are skipped:
 | `discover [NAME]` | One scan; fills the address (default: the form's receiver name) |
 | `discover-model MODEL` | One scan; fills the address only when exactly one receiver matches the model |
 | `profile NAME` | Sets the PasswordVault profile; NAME uses the same 1-32 character syntax as script names |
-| `cast vault\|builtin LABEL [remux\|progressive\|automatic\|stereo] [start=SECONDS] [preserve]` | Casts the remembered file; remux is the default. `preserve` requires automatic delivery and refuses conversion |
+| `cast vault\|builtin LABEL [remux\|progressive\|automatic\|stereo] [start=SECONDS] [preserve] [type=audio/mp4\|video/mp4]` | Casts the remembered file; remux is the default. `preserve` requires automatic delivery and refuses conversion. Explicit MIME requires progressive delivery |
 | `fixtures` | Opens a manual folder picker and remembers the nine original D88 receiver controls as `receiver-CODEC` |
 | `wait SECONDS` | Waits |
 | `pause`, `play`, `seek SECONDS`, `status`, `stop` | The button actions |
@@ -98,6 +98,26 @@ casts use a per-cast TemporaryFolder fragment store, a 512-MiB quota and a 60-se
 start timeout. Fixed-field decision and cache counters are logged after disposal;
 an automatic copy also releases its unused store and removes its empty child.
 See [the receiver gate](automatic-audio-receiver-gate.md) for pending/tested cases.
+
+D98 adds an explicit `type=audio/mp4` script option for the owned AAC/M4A
+packaged gate. Only `audio/mp4` and `video/mp4` are accepted as explicit types;
+they require `progressive`. Other explicit values fail before opening a source.
+Omitting the option preserves the previous native default (`video/mp4`). The
+picker accepts `.m4a`; when HLS remux is unchecked, the form uses `audio/mp4`
+for that extension. It does not automatically bypass video-required remux.
+Cast startup logs the selected content type, and each source's release callback
+logs only read calls, bytes and release count after its streams close. No private
+file identity/data is logged. The observer defaults to absent for the shared
+offline adapter. Example after manually remembering the fixture as `audio-only`:
+
+```text
+cast vault audio-only progressive type=audio/mp4
+```
+
+The default capability manifest is version 0.1.30.0; the extra-server variant is
+0.1.31.0. D98 changes test-host options/diagnostics, not native audio policy,
+Screenbox, audio-only HLS, transcoding or speaker transport. Receiver/package
+proof must be recorded separately from a successful build.
 
 Found while adding it: under Native AOT, `args is CommandLineActivatedEventArgs`
 was false for a command-line activation; testing `ActivationKind` and the
