@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#76 are merged. `main` contains
+Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#77 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -22,6 +22,29 @@ has a documented next slice in D67; do not resume these completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D94 Screenbox ci.294 recorded host gate passed (2026-10-17).** Fork
+[PR #14](https://github.com/ilyalissoboi/Screenbox/pull/14) updates the opt-in
+x64 pin from ci.282 to published ci.294, retaining ordinary ci.207 and existing
+host code/UI, permission, audio policy and quota. Both Core profiles pass
+113/127 logic checks; public download/cache integrity and profile refusals pass.
+Both actual MSIX layouts match their pins (two ordinary native files; all 40
+opt-in native/source/notice files). The inspected implementation `66660bf7` MSIX
+is registered in place as development 1.0.0.11, preserving data and source manifest.
+Before and after playback, its AppContainer, executable and six loaded published
+DLL hashes pass. The user confirms both Mac and Apple TV passed the written
+90-second HDR/DTS playback, pause/resume, forward/backward seeks, Stop closure
+and local-paused checks. Final owned cache is zero directories/bytes. The most
+recently reported receiver versions are macOS 26.7.1/tvOS 26.6; this reply reports
+no change but does not explicitly reconfirm them. The test-only cleanup gate fix
+at `fbb01d20` passes all four fork CI jobs; production/app code is unchanged.
+Read [the checkpoint](screenbox-hdr-package-update.md) and inspect final PR-head
+CI separately. Review/merge fork #14 and native
+[PR #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) next; do not merge
+without user approval. No further D94 manual check is pending. Keep D91/D92
+history separate; no whole-film, HLG, speaker or discrete converted-surround
+claim is added. Use written manual steps, with no Computer Use for visual
+confirmation. Do not republish ci.294.
 
 **D93 HDR-corrected prerelease published; public download verified (2026-10-17).**
 The user's Proceed starts `codex/hdr-corrected-audio-candidate` from clean merged
