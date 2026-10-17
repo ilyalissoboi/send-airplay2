@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-17 (Asia/Tokyo), after PRs #1-#74 merged.
+Implementation snapshot: 2026-10-17 (Asia/Tokyo), after PRs #1-#75 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -10,16 +10,25 @@ package pin, final validation record and Forget-device follow-up; PR #11 adds
 the research checkpoint and PR #12 the next-slice planning checkpoint, without
 changing runtime behavior.
 
+**D93 candidate prepared:** [HDR-corrected ci.294](hdr-corrected-audio-candidate.md)
+comes from clean merged main `72e73ea` in dispatch run `38993860187`. All 17
+main checks, 12 package controls and local artifact/fresh consumer checks pass.
+Publication approval and the Screenbox pin update remain separate. No new
+receiver observation, dependency or runtime change is introduced by preparation.
+
 **D92 HDR startup correction (merged PR #74, `f1598cf`):** all 17 checks
-passed at final head `1e917aa`. Next is a corrected source-complete opt-in
-candidate, publication approval and a separate Screenbox pin update. After fork #13 merged, a private long HEVC/DTS
+passed at final head `1e917aa`. D93 above records corrected-candidate preparation;
+publication approval and a separate Screenbox pin update remain. After fork #13
+merged, a private long HEVC/DTS
 cast reproduces a Mac grey screen. Offline preparation passes; declaring the
 missing `VIDEO-RANGE=PQ` alone restores playback by user observation. The
 [bounded SPS VUI correction](hevc-hdr-range.md) now carries PQ/HLG through remux
 and automatic composition, including an HDR master without subtitles. The
 private Screenbox override passes the user's Mac controls. A separate reported
-Apple TV Screenbox failure and premature UWP `MediaEnd` remain unexplained;
-native playback and visible-window 90-second UWP/Screenbox retries pass.
+Apple TV Screenbox failure and premature UWP `MediaEnd` remain historical
+attempts; native playback and visible-window 90-second UWP/Screenbox retries pass.
+Later user testing suggests incorrect HDR signaling caused the Apple TV issue,
+with no recurrence since the correction; the cause was not independently isolated.
 Final loaded hashes and Stop/cache cleanup pass. Published ci.282, audio policy,
 decoder coverage and cache quota are unchanged; no full-film claim is made.
 

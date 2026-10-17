@@ -147,7 +147,7 @@
   },
   "scope_limits": [
     "Bounded startup/control attempts; no whole-film playback proof",
-    "Earlier Apple TV failures remain unexplained despite passing 90-second UWP and Screenbox retries",
+    "Earlier Apple TV attempts did not independently isolate a cause; later user testing suggests HDR signaling and reports no recurrence since the correction",
     "No new HLG, speaker, discrete-surround or perceptual HDR calibration observation",
     "SPS VUI detection only; no new container-only HDR or in-band configuration-change support"
   ],
@@ -160,5 +160,15 @@
     "new_receiver_observation": false,
     "publication_unchanged": true,
     "next_step": "Prepare a new source-complete candidate from merged main; validate before publication approval and a separate Screenbox pin update"
+  },
+  "user_follow_up": {
+    "date": "2026-10-17",
+    "source": "User follow-up testing report",
+    "observation": "Apple TV issue has not been observed again after the HDR correction",
+    "user_inference": "Testing suggests the incorrect HDR flag caused the Apple TV issue",
+    "status": "Likely HDR-related by user assessment; no reported recurrence since correction",
+    "independently_isolated_cause": false,
+    "tested_build_identity": "Not specified in follow-up",
+    "new_coordinated_cast_for_this_update": false
   }
 }

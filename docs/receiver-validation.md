@@ -1,11 +1,21 @@
 # Receiver validation record
 
+**D93 candidate preparation (2026-10-17):** [ci.294](hdr-corrected-audio-candidate.md)
+passes clean-main CI and local artifact/consumer validation, without a new
+receiver or installed-app observation. D92 private-build results below do not
+establish interoperability for these exact candidate bytes. Published ci.282
+and Screenbox pins are unchanged. The user's later 2026-10-17 testing suggests
+the Apple TV symptom was caused by incorrect HDR signaling and has not recurred
+since the correction. This is user-reported follow-up, with no build identity or
+new coordinated receiver run recorded for these exact candidate bytes.
+
 D92 status update (2026-10-17): PR #74 is merged as `f1598cf`; all 17 CI
 checks passed at final head `1e917aa` in
 [run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
 This adds merge/CI evidence only, with no new receiver observation. Recorded
-D92 manual checks are complete; the earlier Apple TV premature end remains
-unexplained. Published ci.282 still predates the fix.
+D92 manual checks are complete. The later user follow-up above supersedes the
+then-unexplained Apple TV status while preserving the failed-attempt record.
+Published ci.282 still predates the fix.
 
 **D92 long HEVC/DTS startup investigation (2026-10-16):** after both D91 PRs
 merged, the user reports a grey-screen Mac failure from the beginning of one
@@ -21,8 +31,10 @@ telemetry/user observation. The packaged UWP host first receives a premature
 `MediaEnd` near 16 seconds, then passes a visible-window 90-second retry with
 Stop/cleanup. A matching 90-second Screenbox retry passes by user report; final
 AppContainer/six hashes pass and confirmed Stop leaves zero owned cache
-directories/bytes. The earlier failures remain unexplained,
-and window visibility has not been established as a cause. See
+directories/bytes. The later user follow-up above associates the symptom with
+incorrect HDR signaling and reports no recurrence since the correction; window
+visibility was not established as a cause. The earlier runs did not independently
+isolate the Apple TV cause. See
 [D92 and its scope](hevc-hdr-range.md). This adds startup/short-play evidence,
 not full-film, HLG or discrete-surround validation. D91's original
 H.264 fixture observations remain separate. Published ci.282 is unchanged.
