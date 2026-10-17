@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-17 (Asia/Tokyo), after PRs #1-#77 merged.
+Implementation snapshot: 2026-10-17 (Asia/Tokyo), after PRs #1-#78 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -18,8 +18,9 @@ executable and six loaded published hashes pass before and after playback.
 The user confirms 90-second HDR/DTS playback, pause/resume, both seeks and
 Stop/local-paused handoff on Mac and Apple TV. Final owned cache is empty.
 The test-only explicit cleanup-gate release passes 113/127 local tests and all
-four CI jobs at `fbb01d20`. Review the final documentation heads separately;
-no additional D94 receiver check is pending. Read [the checkpoint](screenbox-hdr-package-update.md).
+four CI jobs at `fbb01d20`. Fork #14/native #78 are now merged as
+`8d2851c8`/`449457a`; all four/17 checks pass at final heads
+`3a9de5b1`/`722e84b`. No additional D94 receiver check is pending. Read [the checkpoint](screenbox-hdr-package-update.md).
 
 **D93 prerelease published:** [HDR-corrected ci.294](hdr-corrected-audio-candidate.md)
 comes from clean merged main `72e73ea` in dispatch run `38993860187`. All 17

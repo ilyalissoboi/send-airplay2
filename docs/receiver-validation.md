@@ -13,6 +13,9 @@ recently reported versions; this response reports no change without explicitly
 reconfirming them. These are bounded observations for these installed bytes,
 separate from historical D91/D92 results, without whole-film, HLG, speaker or
 discrete converted-surround verification. No D94 manual check remains pending.
+Fork #14/native #78 are merged (`8d2851c8`/`449457a`), with all four/17 checks
+passed at final heads `3a9de5b1`/`722e84b`. Merge/CI evidence adds no new receiver
+observation.
 
 **D93 publication (2026-10-17):** ci.294 is published after explicit user approval;
 [unauthenticated package/checksum verification](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)

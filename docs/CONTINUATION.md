@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#77 are merged. `main` contains
+Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#78 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,6 +23,22 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D94 merged checkpoint (2026-10-17).** Native
+[PR #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) merged as
+`449457a`; all 17 checks pass at final head `722e84b` in
+[run 39006282777](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777).
+Screenbox [PR #14](https://github.com/ilyalissoboi/Screenbox/pull/14) merged as
+`8d2851c8`; all four validation jobs pass at final head `3a9de5b1` in
+[run 39006286791](https://github.com/ilyalissoboi/Screenbox/actions/runs/39006286791)
+(release intentionally skipped). The opt-in pin update and recorded bounded
+Mac/Apple TV gate are complete; ordinary ci.207 remains unchanged. This merge
+record adds no new runtime or receiver observation. Do not repeat publication,
+the pin update or completed manual checks. No new implementation slice has been
+authorized. A suggested next slice is to evaluate sustained long-input playback
+and finite-cache/quota behavior, preserving the existing 512-MiB boundary until
+a design is agreed. Speaker audio, discrete surround and Chromecast validation
+remain hardware-deferred; remote-Stop classification remains user-deferred.
+
 **D94 Screenbox ci.294 recorded host gate passed (2026-10-17).** Fork
 [PR #14](https://github.com/ilyalissoboi/Screenbox/pull/14) updates the opt-in
 x64 pin from ci.282 to published ci.294, retaining ordinary ci.207 and existing
@@ -38,10 +54,8 @@ and local-paused checks. Final owned cache is zero directories/bytes. The most
 recently reported receiver versions are macOS 26.7.1/tvOS 26.6; this reply reports
 no change but does not explicitly reconfirm them. The test-only cleanup gate fix
 at `fbb01d20` passes all four fork CI jobs; production/app code is unchanged.
-Read [the checkpoint](screenbox-hdr-package-update.md) and inspect final PR-head
-CI separately. Review/merge fork #14 and native
-[PR #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) next; do not merge
-without user approval. No further D94 manual check is pending. Keep D91/D92
+Both PRs are merged with final-head CI passed, as recorded above. Read
+[the checkpoint](screenbox-hdr-package-update.md). No further D94 manual check is pending. Keep D91/D92
 history separate; no whole-film, HLG, speaker or discrete converted-surround
 claim is added. Use written manual steps, with no Computer Use for visual
 confirmation. Do not republish ci.294.
@@ -940,16 +954,19 @@ Passing Mac controls and Apple TV 90-second retries remain separate from the
 earlier Apple TV end. Later user testing suggests incorrect HDR signaling as the
 cause, with no recurrence since the fix. Final Stop/cache cleanup is confirmed.
 D93 completes corrected candidate preparation and approved publication, including
-independent public-download verification. Next, update the Screenbox opt-in pin
-in its own slice after inspecting current fork instructions. Do not replace
-the already published candidate under its old version.
+independent public-download verification. D94 completes the Screenbox opt-in
+ci.294 update in merged fork #14 and native #78, with final-head CI and bounded
+Mac/Apple TV controls passed. Do not repeat publication or this host gate.
+No next implementation is authorized; evaluate sustained long-input/cache-quota
+behavior as a proposed follow-up before widening the existing finite budget.
 The 1.0.0.9 setting/default, loaded hashes/AppContainer, Mac consent cancellation,
 copied/converted controls, refusal, natural/rapid queue and cleanup checks pass;
 the user restores conversion off/local paused. GitHub Actions is enabled. Do not
 restart implementation, publication or completed manual checks.
 Preserve the
-OFF-by-default/publication boundaries. The isolated Apple TV event
-disconnect remains an explicit follow-up.
+OFF-by-default/publication boundaries. Preserve the earlier Apple TV attempts
+as history alongside the user's later HDR-related attribution and no recurrence;
+do not treat the symptom as a separately recurring defect.
 Grant-timer/key research, other fork follow-ups, MRP track/queue research, HDR and growing
 HLS, nuget.org publishing, and additional host/receiver support remain choices.
 Remote-Stop classification stays deferred by the user. The following PR #12
@@ -1157,8 +1174,12 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > hdr-corrected-audio-candidate.md and its publication record: #76 merged as
 > b4e38a3, the user approved ci.294 publication and its unauthenticated public
 > download is verified. Do not republish it or ask for that approval again.
-> Next is a separate Screenbox opt-in pin update. Inspect any
-> open slice PR's actual head before editing.
+> D94 completes the ci.294 pin update in merged fork #14 (8d2851c8) and native
+> #78 (449457a). Final-head CI passes (four/17 checks); development 1.0.0.11
+> passes the bounded Mac/Apple TV HDR/DTS controls, with loaded hashes and empty
+> final cache verified. Do not repeat completed tests or publication. A next
+> slice has not been authorized; sustained long-input/cache-quota behavior is
+> a proposed evaluation. Inspect any open slice PR's actual head before editing.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

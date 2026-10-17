@@ -49,9 +49,9 @@ controls and D92's private DLL checks remain separate. The user's later Apple
 TV testing suggests incorrect HDR signaling caused the prior symptom, with no
 recurrence after correction; earlier attempts remain in D92's history. No
 whole-film, HLG receiver, speaker or discrete converted-surround claim is added.
-No further D94 receiver check is pending. Review fork #14 and
-[native #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) before merging;
-user approval is required to merge.
+No further D94 receiver check is pending. Fork #14 and
+[native #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) are merged as
+`8d2851c8` and `449457a`, respectively.
 
 ## CI cleanup-test follow-up
 
@@ -68,3 +68,15 @@ the inspected `66660bf7` MSIX. On corrected head `fbb01d20`, all four CI jobs
 [run 39005238604](https://github.com/ilyalissoboi/Screenbox/actions/runs/39005238604).
 Release is intentionally skipped for the PR. Inspect actual final documentation
 head CI separately; the receiver-tested binary remains the `66660bf7` MSIX.
+
+## Final-head CI and merge checkpoint
+
+All four fork validation jobs pass at final head `3a9de5b1` in
+[run 39006286791](https://github.com/ilyalissoboi/Screenbox/actions/runs/39006286791);
+the PR release job is intentionally skipped. All 17 native checks pass at
+`722e84b` in [run 39006282777](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39006282777).
+Both PRs merged on 2026-10-17. This closes D94 without republishing ci.294 or
+changing the receiver-tested MSIX. A new implementation is not authorized.
+Sustained long-input playback and finite-cache/quota behavior are a suggested
+next evaluation; keep the existing quota until a design is agreed. Hardware-
+deferred speaker audio, discrete surround and Chromecast checks remain deferred.
