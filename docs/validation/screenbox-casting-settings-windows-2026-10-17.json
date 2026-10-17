@@ -1,0 +1,80 @@
+{
+  "decision": "D95",
+  "date": "2026-10-17",
+  "timezone": "Asia/Tokyo",
+  "scope": "Settings presentation only, before preparing a fork release",
+  "fork_pr": 15,
+  "fork_base": "8d2851c852dfb007c18326511b4fece21eedef85",
+  "implementation_head": "6d3a30b4589faaa97574545ca39188cb625573e7",
+  "changes": [
+    "Localized Casting group between General and Player",
+    "Existing audio glyph on the conversion settings card",
+    "Heading and card share the existing experimental-profile visibility gate"
+  ],
+  "unchanged": [
+    "Toggle binding and accessibility labels",
+    "Saved preference and default-off policy",
+    "Package pins",
+    "Casting behavior"
+  ],
+  "checks": {
+    "xaml_styler": "PASS",
+    "localized_resource_and_visibility": "PASS",
+    "diff_check": "PASS",
+    "ordinary_release_msix": "PASS; two pinned files verified",
+    "experimental_release_msix": "PASS; 40 pinned files verified"
+  },
+  "registration": {
+    "identity_preserved": true,
+    "source_manifest_unchanged": true,
+    "version": "1.0.0.12",
+    "native_source_notice_files_verified": 40,
+    "executable_sha256": "95b44dd27422e3a624af1ace7e0ebd18c6129bac8bf4a822d036c2100f82beda",
+    "msix_sha256": "446756ce88c65da3ef7c699d2e2be5e10c0e4f7c43ce3006e68077d6108149c8",
+    "extracted_manifest_version_only_adjustment": true,
+    "app_data_reset": false,
+    "source": "6d3a30b4589faaa97574545ca39188cb625573e7"
+  },
+  "runtime_ready": {
+    "executable_matches_inspected_msix": true,
+    "executable_sha256": "95b44dd27422e3a624af1ace7e0ebd18c6129bac8bf4a822d036c2100f82beda",
+    "version": "1.0.0.12"
+  },
+  "manual_layout_gate": {
+    "status": "PASS",
+    "user_response": "Confirmed.",
+    "checks": [
+      "Casting group between General and Player",
+      "Conversion audio icon aligns with other settings",
+      "Toggle works and persists after leaving/reopening Settings"
+    ],
+    "observation_method": "Written instructions and user confirmation; no Computer Use visual confirmation"
+  },
+  "receiver_gate": "No new receiver test required or claimed for this presentation-only change",
+  "release": "Not prepared or published by this UI change",
+  "implementation_head_ci_snapshot": {
+    "head": "6d3a30b4589faaa97574545ca39188cb625573e7",
+    "checks": [
+      {
+        "name": "xaml-lint",
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS"
+      },
+      {
+        "name": "test",
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS"
+      },
+      {
+        "name": "build",
+        "status": "IN_PROGRESS",
+        "conclusion": ""
+      },
+      {
+        "name": "airplay-stereo-aac",
+        "status": "IN_PROGRESS",
+        "conclusion": ""
+      }
+    ]
+  }
+}

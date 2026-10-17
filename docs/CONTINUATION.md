@@ -23,6 +23,27 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
+**D95 Casting settings presentation (2026-10-17), before fork release.**
+The user asks to move the stereo conversion preference into its own localized
+**Casting** settings group and add an icon consistent with other settings.
+Fork [PR #15](https://github.com/ilyalissoboi/Screenbox/pull/15), branch
+`codex/casting-settings-group` from merged `8d2851c8`, implements the group
+between General and Player with the existing audio glyph and settings-card
+styles. Both heading/card use the existing opt-in visibility gate; ordinary
+builds have no empty Casting group. Toggle binding, accessibility labels,
+stored preference/default, audio policy and package pins are unchanged.
+XAML Styler and diff checks pass. Both Release MSIX profiles build, and their
+two/40 pinned payload files verify. Development 1.0.0.12 is registered in place
+with identity/data preserved and source manifest unchanged; its running
+executable matches the inspected implementation `6d3a30b4` MSIX. The written
+manual layout/toggle persistence check passes by user confirmation: Casting
+appears between General and Player, the icon aligns with neighboring settings,
+and the toggle retains its value after leaving/reopening Settings. No Computer Use visual confirmation
+is permitted by the user. Preparing/publishing a fork release remains separate;
+do not trigger the upstream-style tag/Store/Sentry path. No new receiver
+playback check is required for this presentation-only change. Continue on the
+actual open fork PR head and keep native checkpoint PR #79 current.
+
 **D94 merged checkpoint (2026-10-17).** Native
 [PR #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) merged as
 `449457a`; all 17 checks pass at final head `722e84b` in
