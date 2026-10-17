@@ -19,8 +19,11 @@ audio policy and quota are unchanged. Both Core builds/113 ordinary and 127
 opt-in logic checks, fresh/cached package integrity/profile refusals, and the
 ordinary MSIX/two native-file check pass. The opt-in MSIX also passes all 40
 native/source/notice hashes and is registered in place as development 1.0.0.11,
-with data preserved and source manifest unchanged. Runtime hash verification,
-receiver readiness and bounded published-DLL checks remain pending. Read
+with data preserved and source manifest unchanged. The actual AppContainer,
+inspected executable and six loaded published DLL hashes pass; the user confirms
+both receivers available. Bounded HDR/DTS observations remain pending. The fork
+CI follow-up `fbb01d20` fixes a self-expiring cleanup-test gate; both logic suites
+pass again, and corrected-head CI is running. Production/app code is unchanged. Read
 [the current checkpoint](screenbox-hdr-package-update.md). No new receiver result
 is claimed from D91/D92 or the local build. Use written manual instructions;
 no Computer Use for visual confirmation. Do not republish ci.294.

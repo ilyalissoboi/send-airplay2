@@ -3,9 +3,9 @@
 **D94 Screenbox pin update (2026-10-17):** [the ci.294 checkpoint](screenbox-hdr-package-update.md)
 records passing 113/127 logic checks, integrity/profile controls and actual
 ordinary/opt-in MSIX payload checks (two/40 files). Development 1.0.0.11 is
-registered in place with data preserved. Runtime executable/AppContainer/six
-loaded published-DLL verification and bounded manual receiver observations
-remain pending. D91/D92 results are not claimed for these installed bytes.
+registered in place with data preserved. The runtime executable/AppContainer
+and all six loaded published DLL hashes pass. The user confirms both receivers
+available; written 90-second HDR/DTS/controls/Stop observations remain pending. D91/D92 results are not claimed for these installed bytes.
 
 **D93 publication (2026-10-17):** ci.294 is published after explicit user approval;
 [unauthenticated package/checksum verification](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)

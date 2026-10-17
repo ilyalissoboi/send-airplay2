@@ -14,8 +14,10 @@ changing runtime behavior.
 selects published ci.294 for the opt-in x64 profile, retaining ordinary ci.207
 and the existing host policy/permission/quota. Logic and ordinary MSIX checks
 pass; both MSIX profiles match their pinned payloads. Development 1.0.0.11 is
-registered in place, with data preserved. Runtime verification and a bounded
-installed-published-DLL receiver check are pending. Read [the checkpoint](screenbox-hdr-package-update.md).
+registered in place, with data preserved. AppContainer/executable/six loaded
+published DLL hashes pass; bounded receiver observations are pending. A test-only
+CI follow-up replaces a self-expiring cleanup gate with explicit release and
+bounded completion; both logic suites pass again locally, corrected-head CI pending. Read [the checkpoint](screenbox-hdr-package-update.md).
 
 **D93 prerelease published:** [HDR-corrected ci.294](hdr-corrected-audio-candidate.md)
 comes from clean merged main `72e73ea` in dispatch run `38993860187`. All 17

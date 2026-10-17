@@ -18,7 +18,7 @@ and audio policy are unchanged. No third-party source or dependency is added.
 The package's six dynamic runtime DLLs and complete FFmpeg source/notice/rebuild
 payload remain subject to the existing redistribution checks.
 
-## Automated validation and pending receiver gate
+## Automated validation and receiver gate
 
 Required VS 2026 MSBuild restores/builds both Core profiles. Existing pure logic
 suites pass 113/113 ordinary and 127/127 opt-in, without XAML instantiation. New
@@ -41,8 +41,25 @@ original short controls and D92's private local-DLL correction checks; neither
 is presented as a new published-ci.294 observation. No Computer Use is used for
 visual confirmation. Written manual steps are provided in chat.
 
-Installed AppContainer/loaded-DLL verification, receiver availability and
-new-package observations remain pending. The user's
+The user reports both receivers available and the installed app ready. Its
+AppContainer, inspected MSIX executable and all six loaded published ci.294 DLL
+hashes are verified, with zero owned cache directories before playback. Written
+90-second HDR/DTS startup, audio/video, pause/resume, forward/backward seeks and
+Stop/local-paused observations remain pending for both receivers. The user's
 later Apple TV testing suggests incorrect HDR signaling caused the prior symptom,
 with no recurrence after the correction; earlier attempts remain in D92's history.
 No whole-film, HLG receiver, speaker or discrete converted-surround claim is added.
+
+## CI cleanup-test follow-up
+
+The initial opt-in CI job at `e2a0c19c` builds successfully but fails both boolean
+cases of the cleanup-admission test near its five-second release deadline.
+The gate's own timed wait can expire while a busy runner delays the assertion,
+allowing admission to complete before it is checked. The correction holds the
+gate until explicit test release, drains in `finally`, and retains a separate
+30-second completion watchdog. Existing ordering, supersession and logger-failure
+coverage remains. Both 113/127 logic suites pass again locally. No production
+host/native code or installed package changes; the receiver check continues on
+the inspected `66660bf7` MSIX. On corrected head `fbb01d20`, opt-in logic, MSIX
+build and distribution-verification steps pass in CI; the overall run is still
+finishing at this checkpoint. Inspect actual final-head CI before review.
