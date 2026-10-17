@@ -29,6 +29,13 @@ are recorded separately. The published tag targets `e6acba1`; the public package
 and sidecar match the approved bytes. Its tag prefix is `nuget-stereo-aac-v`,
 distinct from the codec-free package's `nuget-v` prefix.
 
+The [D93 ci.294 candidate](hdr-corrected-audio-candidate.md) includes the merged
+HEVC HDR declaration fix missing from ci.282. All 17 clean-main checks and local
+artifact/fresh consumer checks pass; its exact hash and prepared release notes
+are recorded for publication review. It is not published. Screenbox's ordinary
+pin remains ci.207 and its merged opt-in profile pins ci.282; neither changes
+during candidate preparation.
+
 ## Contents
 
 `SendAirPlay2.<version>.nupkg`:

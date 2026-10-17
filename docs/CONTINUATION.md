@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#74 are merged. `main` contains
+Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#75 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,12 +23,29 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D92 merged; next step is corrected candidate preparation.** PR #74 merged
+**D93 HDR-corrected candidate ready for publication review (2026-10-17).**
+The user's Proceed starts `codex/hdr-corrected-audio-candidate` from clean merged
+main `72e73ea`, after PR #75 merged (all 17 final-head checks passed at `98cda90`).
+[Main dispatch run 38993860187](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38993860187)
+passes all 17 checks and produces `SendAirPlay2.StereoAac 0.5.0-ci.294`, including
+D92's HDR fix. The unchanged candidate is 21,314,548 bytes, SHA-256
+`a06216e954e8ef1e2452abe8472e95fbbc04c036e5e1c017e4a92642b20c76b8`.
+Clean binding/native attribution, six DLL hashes, UWP distribution/source/profile
+checks and fresh local API-5/copy/RID/direct/transitive consumer checks pass;
+the UWP job passes all 12 packaging controls. Five dependency DLLs and the
+profile/notices match ci.282. Read [candidate preparation](hdr-corrected-audio-candidate.md)
+and its release notes/evidence. Publication approval is pending; no release,
+Screenbox pin or app installation is changed. Review this slice before publishing
+the exact candidate, verify its public download, then update the host pin separately.
+Published ci.282 remains unchanged. D92's private-build observations and earlier
+unexplained Apple TV end remain separate; this slice adds no receiver claim.
+
+**D92 HDR startup correction merged (historical implementation record).** PR #74 merged
 as `f1598cf`; all 17 checks passed at final head `1e917aa` in
 [run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
-Prepare a new source-complete opt-in candidate from clean merged main and
-validate its contents/consumers before requesting publication approval. Update
-the Screenbox pin separately after publication; do not overwrite ci.282.
+D93 above records the new clean-main candidate and passing artifact/consumer
+checks. Publication approval and the Screenbox pin update remain separate;
+do not overwrite ci.282.
 No receiver observation is pending for the recorded D92 checks. Preserve the
 unexplained earlier Apple TV premature end as a reliability follow-up.
 
@@ -886,8 +903,8 @@ checkpoint #73 is merged too. D92's HEVC HDR startup correction is merged in
 PR #74 as `f1598cf`, with all 17 final-head checks passed at `1e917aa`.
 Passing Mac controls and Apple TV 90-second retries remain separate from the
 unexplained earlier Apple TV end. Final Stop/cache cleanup is confirmed.
-Next, prepare a fresh corrected candidate, obtain publication approval and
-update the host pin separately. Do not replace
+D93 completes corrected candidate preparation. Next, review that slice, obtain
+publication approval for its exact bytes and update the host pin separately. Do not replace
 the already published candidate under its old version.
 The 1.0.0.9 setting/default, loaded hashes/AppContainer, Mac consent cancellation,
 copied/converted controls, refusal, natural/rapid queue and cleanup checks pass;
@@ -1057,7 +1074,7 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #74 and fork #13 are merged. D92 is complete; read
+> PRs through #75 and fork #13 are merged. D92 is complete; read
 > hevc-hdr-range.md and the current resume paragraphs before this history.
 > D89 merged as e6acba1; all 17 checks passed at
 > final head 4c4bfb8 in run 38830621263. Inspect origin/main and open PRs before writing.
@@ -1096,8 +1113,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > Do not restart completed D88 library tests as host proof. D92 is merged in
 > #74 as f1598cf, with all 17 final-head checks passed at 1e917aa. Preserve its
 > passing Mac/Apple TV retries and unexplained earlier Apple TV end separately.
-> Next is corrected source-complete candidate preparation from clean merged main,
-> followed by publication approval and a separate host pin update; inspect any
+> D93 prepares 0.5.0-ci.294 from clean main 72e73ea in run 38993860187, with
+> all 17 main checks and local artifact/consumer controls passed. Read
+> hdr-corrected-audio-candidate.md; review the preparation PR, obtain publication
+> approval and update the host pin separately. Inspect any
 > open slice PR's actual head before editing.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and

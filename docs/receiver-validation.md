@@ -1,5 +1,11 @@
 # Receiver validation record
 
+**D93 candidate preparation (2026-10-17):** [ci.294](hdr-corrected-audio-candidate.md)
+passes clean-main CI and local artifact/consumer validation, without a new
+receiver or installed-app observation. D92 private-build results below do not
+establish interoperability for these exact candidate bytes. Published ci.282
+and Screenbox pins are unchanged; the earlier Apple TV end remains unexplained.
+
 D92 status update (2026-10-17): PR #74 is merged as `f1598cf`; all 17 CI
 checks passed at final head `1e917aa` in
 [run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).

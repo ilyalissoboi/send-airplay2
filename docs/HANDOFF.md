@@ -9,11 +9,28 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D93 HDR-corrected candidate ready for publication review (2026-10-17).**
+The user's Proceed starts `codex/hdr-corrected-audio-candidate` from clean merged
+main `72e73ea`, after PR #75 merged (all 17 final-head checks passed at `98cda90`).
+[Main dispatch run 38993860187](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38993860187)
+passes all 17 checks and produces `SendAirPlay2.StereoAac 0.5.0-ci.294`, including
+D92's HDR fix. The unchanged candidate is 21,314,548 bytes, SHA-256
+`a06216e954e8ef1e2452abe8472e95fbbc04c036e5e1c017e4a92642b20c76b8`.
+Clean binding/native attribution, six DLL hashes, UWP distribution/source/profile
+checks and fresh local API-5/copy/RID/direct/transitive consumer checks pass;
+the UWP job passes all 12 packaging controls. Five dependency DLLs and the
+profile/notices match ci.282. Read [candidate preparation](hdr-corrected-audio-candidate.md)
+and its release notes/evidence. Publication approval is pending; no release,
+Screenbox pin or app installation is changed. Review this slice before publishing
+the exact candidate, verify its public download, then update the host pin separately.
+Published ci.282 remains unchanged. D92's private-build observations and earlier
+unexplained Apple TV end remain separate; this slice adds no receiver claim.
+
 **D92 HDR startup correction merged (PR #74, 2026-10-17).**
 PR #74 merged as `f1598cf`. All 17 checks passed at final head `1e917aa`
 in [run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
-Next: prepare and validate a new source-complete opt-in candidate from merged
-main, then request publication approval and update the Screenbox pin separately.
+D93 above records completed corrected-candidate preparation; publication approval
+and the Screenbox pin update remain separate.
 Published ci.282 remains unchanged and lacks this fix. The earlier Apple TV
 premature end remains an unexplained reliability follow-up despite passing retries.
 No further manual receiver observation is pending for the recorded D92 checks.

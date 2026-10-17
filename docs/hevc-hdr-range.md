@@ -122,8 +122,9 @@ PR #74 merged on 2026-10-17 as `f1598cf`. This status update adds no new
 receiver observation.
 
 The published `SendAirPlay2.StereoAac 0.5.0-ci.282` is unchanged and still lacks
-this correction. Next, prepare a new source-complete candidate from merged main and
-then update the host pin in a separate slice; publication needs user approval.
+this correction. [D93 prepares the corrected ci.294 candidate](hdr-corrected-audio-candidate.md)
+from merged main with passing artifact/consumer checks. Publication needs user
+approval; the host pin update remains a separate slice.
 Do not overwrite or republish the old candidate.
 
 ## Standards and provenance
