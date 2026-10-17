@@ -1,0 +1,68 @@
+{
+  "decision": "D98",
+  "date": "2026-10-18",
+  "timezone": "Asia/Tokyo",
+  "result": "BUILD_AND_RUNTIME_PASSED_MANUAL_PENDING",
+  "registration": {
+    "version": "0.1.30.0",
+    "codec_backend": "OFF",
+    "capabilities": [
+      "internetClient",
+      "privateNetworkClientServer"
+    ],
+    "native_binary_checks": "AppContainer/app C runtime/no desktop credential imports passed",
+    "app_data_reset": false,
+    "architecture": "x64",
+    "modules": [
+      {
+        "sha256": "f52712ab1525c1080c23cffea3f8afdb17d321a2458d317549a11a921d574cc8",
+        "matches_build": true,
+        "name": "send_airplay2.dll"
+      },
+      {
+        "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+        "matches_build": true,
+        "name": "libcrypto-3-x64.dll"
+      }
+    ],
+    "source_commit": "153a840084c7d2efcbf691b31c6a6c20393d77dd",
+    "msix_sha256": "b6cef9f8f69b840435cc6eed43a249b72dd42dafd45dd31687d0ce94b3bdd876",
+    "identity_preserved": true,
+    "network_category": "Private",
+    "executable_sha256": "2fbf42767653bd4d5048c6d450d5b0a2654df49465664f9e0a59b9d3cdda6b96"
+  },
+  "runtime_before": {
+    "executable_matches_inspected_msix": true,
+    "modules": [
+      {
+        "name": "send_airplay2.dll",
+        "matches_inspected_package": true,
+        "sha256": "f52712ab1525c1080c23cffea3f8afdb17d321a2458d317549a11a921d574cc8",
+        "matches_native_build": true
+      },
+      {
+        "name": "libcrypto-3-x64.dll",
+        "matches_inspected_package": true,
+        "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+        "matches_native_build": true
+      }
+    ],
+    "executable_sha256": "2fbf42767653bd4d5048c6d450d5b0a2654df49465664f9e0a59b9d3cdda6b96",
+    "captured_utc": "2026-10-17T15:44:28.9488780+00:00",
+    "app_container": true,
+    "version": "0.1.30.0"
+  },
+  "parser_guards": [
+    "15:43:06.915 Script d98-invalid-hls-type: begin",
+    "15:43:06.915 Script d98-invalid-hls-type: line 1 cast",
+    "15:43:06.915 Script: explicit content type requires progressive delivery",
+    "15:43:06.916 Script d98-invalid-hls-type: failed at line 1 cast",
+    "15:43:27.839 Script d98-invalid-type: begin",
+    "15:43:27.839 Script d98-invalid-type: line 1 cast",
+    "15:43:27.840 Script: unknown cast option",
+    "15:43:27.840 Script d98-invalid-type: failed at line 1 cast"
+  ],
+  "manual_gate": "Availability, picker grant and receiver observations pending; no receiver claim",
+  "production_native_changes": false,
+  "release_published": false
+}
