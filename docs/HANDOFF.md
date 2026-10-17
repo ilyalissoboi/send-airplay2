@@ -9,6 +9,22 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D94 Screenbox ci.294 pin update in progress (2026-10-17).** The user's Proceed
+starts fork `codex/airplay-hdr-ci294` from merged main `b52c58e` and native
+`codex/screenbox-ci294-checkpoint` from #77 merge `31b4474`. Fork
+[PR #14](https://github.com/ilyalissoboi/Screenbox/pull/14) is a draft at initial
+implementation head `66660bf7`. The opt-in pin/tag/hash and matching cache-test
+filename select published ci.294; ordinary ci.207, host code/UI, permission,
+audio policy and quota are unchanged. Both Core builds/113 ordinary and 127
+opt-in logic checks, fresh/cached package integrity/profile refusals, and the
+ordinary MSIX/two native-file check pass. The opt-in MSIX also passes all 40
+native/source/notice hashes and is registered in place as development 1.0.0.11,
+with data preserved and source manifest unchanged. Runtime hash verification,
+receiver readiness and bounded published-DLL checks remain pending. Read
+[the current checkpoint](screenbox-hdr-package-update.md). No new receiver result
+is claimed from D91/D92 or the local build. Use written manual instructions;
+no Computer Use for visual confirmation. Do not republish ci.294.
+
 **D93 HDR-corrected prerelease published; public download verified (2026-10-17).**
 The user's Proceed starts `codex/hdr-corrected-audio-candidate` from clean merged
 main `72e73ea`, after PR #75 merged (all 17 final-head checks passed at `98cda90`).

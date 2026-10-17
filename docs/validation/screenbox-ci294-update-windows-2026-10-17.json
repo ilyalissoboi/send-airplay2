@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "decision": "D94",
+  "date": "2026-10-17",
+  "timezone": "Asia/Tokyo",
+  "result": "AUTOMATED_CHECKS_PASSED_MANUAL_PENDING",
+  "fork_base": "b52c58ec8493b54e6bbd8984cff5ff2958997f42",
+  "fork_branch": "codex/airplay-hdr-ci294",
+  "native_base": "31b4474baf600b7fca2df216b004efb6b80bdf8b",
+  "package": {
+    "id": "SendAirPlay2.StereoAac",
+    "version": "0.5.0-ci.294",
+    "sha256": "a06216e954e8ef1e2452abe8472e95fbbc04c036e5e1c017e4a92642b20c76b8",
+    "ordinary_pin_unchanged": "0.3.0-ci.207"
+  },
+  "automated_checks": {
+    "ordinary_logic": "113/113 passed",
+    "opt_in_logic": "127/127 passed",
+    "fresh_download_and_cache_hash": "passed",
+    "existing_integrity_profile_controls": "passed",
+    "ordinary_msix": "built; two pinned native hashes match and codec DLLs absent",
+    "audio_msix": "built; all 40 pinned native/source/notice hashes match"
+  },
+  "manual_gate": {
+    "status": "Awaiting user readiness; installed AppContainer/executable/six published DLL verification precedes the written bounded receiver check",
+    "new_receiver_claim": false
+  },
+  "privacy": "No private media identity/path/content, receiver address/identifier, credentials or bearer URL retained",
+  "fork_pr": {
+    "number": 14,
+    "initial_head": "66660bf7ca9e3654fe960f9888396b97afac80c1",
+    "draft": true,
+    "package_checkpoint_head": "e2a0c19c033465fb6108cb49d2ad4e2e5b3125ea",
+    "actual_checkpoint_head_ci": "pending; inspect separately from compiled source 66660bf7"
+  },
+  "ordinary_artifact": {
+    "msix_sha256": "7fdda165a014757cf4c5fd0128154a4006d56852967f9e8407d6621744c2cc68",
+    "msix_bytes": 57038936,
+    "codec_dlls_absent": true,
+    "verified_native_files": 2,
+    "executable_sha256": "d380c6ba84aef4c0aba4d29eb05a9b51da5c39ad37348dcba219a1cc3444113f"
+  },
+  "audio_artifact": {
+    "source": "66660bf7ca9e3654fe960f9888396b97afac80c1",
+    "modules": [
+      {
+        "sha256": "83b169399219424644f60eac2042c4e73b531bb60f24d8f34d5e028c772142d7",
+        "name": "send_airplay2.dll"
+      },
+      {
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc",
+        "name": "libcrypto-3-x64.dll"
+      },
+      {
+        "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f",
+        "name": "avcodec-63.dll"
+      },
+      {
+        "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282",
+        "name": "avformat-63.dll"
+      },
+      {
+        "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740",
+        "name": "avutil-61.dll"
+      },
+      {
+        "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d",
+        "name": "swresample-7.dll"
+      }
+    ],
+    "verified_native_source_notice_files": 40,
+    "msix_sha256": "01503b9d0fd55f28c04950313a07e99d11342866d1687f52b70e2fcfa4e20c60",
+    "msix_bytes": 75952316,
+    "executable_sha256": "19bb50d8a0a311cb77b9a95aaa296458b8b23535b7eae7de01223086813ec5fb"
+  },
+  "development_registration": {
+    "version": "1.0.0.11",
+    "source_manifest_unchanged": true,
+    "app_data_reset": false,
+    "identity_preserved": true,
+    "layout_from_inspected_msix": true,
+    "manifest_only_version_adjustment": true,
+    "registration_in_place": true
+  },
+  "implementation_ci_snapshot": {
+    "head": "66660bf7ca9e3654fe960f9888396b97afac80c1",
+    "checks": [
+      {
+        "name": "xaml-lint",
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS"
+      },
+      {
+        "name": "test",
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS"
+      },
+      {
+        "name": "build",
+        "status": "IN_PROGRESS",
+        "conclusion": ""
+      },
+      {
+        "name": "airplay-stereo-aac",
+        "status": "IN_PROGRESS",
+        "conclusion": ""
+      }
+    ]
+  }
+}
