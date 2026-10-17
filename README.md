@@ -27,6 +27,11 @@ C# binding and a development CLI.
   from MKV files, and tx3g or WebVTT from MP4 files. A ready-made HLS playlist
   can also be cast as is.
 
+The current source preserves HEVC SPS PQ/HLG range signaling in the HLS master.
+This fixes a recorded Mac grey-screen startup failure with HDR10 video and
+converted DTS audio. The published `0.5.0-ci.282` package predates the fix;
+see [the scoped investigation](docs/hevc-hdr-range.md).
+
 Not in scope: DRM-protected media, screen mirroring, system audio capture,
 multiroom audio and general video transcoding.
 
@@ -42,7 +47,8 @@ The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.282`** is
 [published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282).
 It includes the enabled codec runtime, sources and notices. Reference it instead
 of the codec-free `SendAirPlay2` package; mixed direct/transitive profiles are
-rejected. The codec-free release and Screenbox pin remain `0.3.0-ci.207`.
+rejected. Ordinary Screenbox builds retain codec-free `0.3.0-ci.207`; its merged
+experimental x64 profile pins the separate stereo-AAC candidate.
 See [the package contract](docs/opt-in-audio-runtime-package.md) and
 [verified publication](docs/opt-in-audio-release-candidate.md). Neither package
 is on nuget.org. Audio-only speakers and discrete converted surround remain deferred.

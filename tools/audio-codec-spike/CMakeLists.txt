@@ -27,6 +27,7 @@ add_library(sap2_audio_decoder STATIC
   "${sap2_decoder_root}/src/hls_authoring.cpp"
   "${sap2_decoder_root}/src/hls_remux.cpp"
   "${sap2_decoder_root}/src/hls_variant.cpp"
+  "${sap2_decoder_root}/src/hevc_video_range.cpp"
   "${sap2_decoder_root}/src/fmp4_writer.cpp"
   "${sap2_decoder_root}/src/media_track_inventory.cpp"
   "${sap2_decoder_root}/src/mp4_demux.cpp"

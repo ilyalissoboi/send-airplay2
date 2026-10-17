@@ -9,6 +9,34 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
+**D92 long HEVC/DTS startup defect identified; HDR correction implemented.**
+The user confirms native #73 and Screenbox fork #13 are merged (`d9cd2c2` /
+`b52c58e`). A subsequent private long-video cast fails on the Mac after consent,
+with grey controls and local playback recovery. Offline conversion succeeds;
+native reproduction times out after the receiver downloads only playlists/init
+segments. Adding only the missing `VIDEO-RANGE=PQ` makes that same input play,
+confirmed by the user. The automatic fix reads bounded base-layer HEVC SPS VUI
+metadata, declares PQ/HLG, and creates an HDR master even without subtitles.
+No new decoder/dependency or audio policy/quota change is made. Read
+[the investigation](hevc-hdr-range.md). Work is on
+`codex/long-dts-cast-failure` from merged main. Regression checks and private UWP
+build pass; Screenbox 1.0.0.10 is a deliberate local native-DLL override with
+AppContainer/six loaded hashes verified. The user confirms the Mac controls
+pass, with final module hashes/cache cleanup checked. A subsequent Apple TV
+Screenbox attempt silently fails from zero. Native Apple TV playback then
+passes its bounded 20-second check by telemetry and user observation; the
+packaged UWP comparison initially receives premature `MediaEnd` near 16 seconds.
+Visible-window 90-second UWP and Screenbox retries then pass by user observation;
+the UWP retry stays playing through its scheduled Stop and cleans up. The earlier
+Apple TV failure remains unexplained, including whether window visibility
+contributed. Final Screenbox AppContainer/six hashes pass again; after the
+user confirms Stop, the owned cache directory/byte counts are zero.
+[PR #74](https://github.com/ilyalissoboi/send-airplay2/pull/74) starts at `1646ae3`,
+with all 17 implementation-head checks passed. This is not the published pinned
+payload. Review this slice and inspect actual-head CI; ask before merging. Do
+not overwrite
+published ci.282. A corrected candidate and host pin are later steps.
+
 **D91 recorded Screenbox host gate passed (2026-10-16).**
 The user's Proceed starts [fork PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)
 from fork main `ce78235`, initial head `f621f267`. x64 profile/pinned download,

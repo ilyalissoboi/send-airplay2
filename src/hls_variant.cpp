@@ -185,6 +185,18 @@ std::string codec_string(const Mp4Track& track) {
     return codec; // "ac-3" and "ec-3" are their own codec strings.
 }
 
+VideoRange video_range(const Mp4Track& track) {
+    if (track.codec != "hvc1" && track.codec != "hev1") {
+        return VideoRange::unspecified;
+    }
+    const auto configuration =
+        child(track.sample_entry, box_header_bytes + visual_entry_fields, "hvcC");
+    if (!configuration) {
+        malformed("hvcC missing");
+    }
+    return hevc_video_range(*configuration);
+}
+
 std::string multivariant_playlist(const VariantStream& variant,
                                   const std::vector<SubtitleRendition>& subtitles,
                                   const AudioRendition* audio) {
@@ -213,6 +225,11 @@ std::string multivariant_playlist(const VariantStream& variant,
     out += "#EXT-X-STREAM-INF:BANDWIDTH=" + std::to_string(variant.peak_bits_per_second) +
            ",AVERAGE-BANDWIDTH=" + std::to_string(variant.average_bits_per_second) +
            ",CODECS=" + quoted(variant.codecs);
+    if (variant.video_range == VideoRange::pq) {
+        out += ",VIDEO-RANGE=PQ";
+    } else if (variant.video_range == VideoRange::hlg) {
+        out += ",VIDEO-RANGE=HLG";
+    }
     if (variant.width && variant.height) {
         out +=
             ",RESOLUTION=" + std::to_string(variant.width) + 'x' + std::to_string(variant.height);

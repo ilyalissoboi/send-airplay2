@@ -2,6 +2,7 @@
 #ifndef SEND_AIRPLAY2_HLS_VARIANT_H
 #define SEND_AIRPLAY2_HLS_VARIANT_H
 #include "mp4_demux.h"
+#include "hevc_video_range.h"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -35,7 +36,10 @@ struct VariantStream {
     std::uint32_t height = 0;
     std::uint64_t frame_rate_milli = 0; ///< Frames per 1000 s; 0 omits FRAME-RATE.
     std::string codecs;
+    VideoRange video_range = VideoRange::unspecified;
 };
+/// HEVC SPS VUI metadata; other codecs retain the existing implicit SDR behavior.
+[[nodiscard]] VideoRange video_range(const Mp4Track& track);
 /// Private separate stereo audio rendition; source language is retained.
 struct AudioRendition {
     std::string uri;
@@ -48,7 +52,8 @@ struct AudioRendition {
  * NAME, DEFAULT, AUTOSELECT=YES, FORCED, and the accessibility
  * CHARACTERISTICS for hearing-impaired tracks), and one EXT-X-STREAM-INF with
  * BANDWIDTH, AVERAGE-BANDWIDTH, CODECS, RESOLUTION, FRAME-RATE and
- * SUBTITLES="subs". Lines end in LF.
+ * SUBTITLES="subs". HEVC PQ/HLG carries VIDEO-RANGE; SDR is implicit as before.
+ * Lines end in LF.
  * With separate audio, the master omits INDEPENDENT-SEGMENTS: cold AAC overlap
  * requires history. The video media playlist retains its own independence tag. */
 [[nodiscard]] std::string multivariant_playlist(const VariantStream& variant,

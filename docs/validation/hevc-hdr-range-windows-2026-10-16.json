@@ -1,0 +1,150 @@
+{
+  "checkpoint": "D92",
+  "date": "2026-10-16",
+  "timezone": "Asia/Tokyo",
+  "source_base": "d9cd2c2d771884aefce68dfe9ddc62f561d47dbb",
+  "source_branch": "codex/long-dts-cast-failure",
+  "receiver": "MacBook Pro; most recently reported macOS 26.7.1",
+  "private_input": {
+    "identity_omitted": true,
+    "read_only": true,
+    "description": "One user-authorized local HEVC Main-10/PQ video with DTS audio"
+  },
+  "original_failure": {
+    "observer": "User reports grey screen/inactive receiver controls and local playback recovery from the beginning",
+    "native_reproduction": "start_timeout",
+    "audio_preparation": "passed",
+    "source_read_failures": 0,
+    "conversion_failure": false,
+    "http_diagnostic": {
+      "completed_responses": 6,
+      "all_status_200": true,
+      "media_fragments_requested": false
+    }
+  },
+  "isolated_pq_experiment": {
+    "change": "Only add VIDEO-RANGE=PQ to the master playlist",
+    "native_start": "ok",
+    "observer": "User confirms normal film video and audio",
+    "automatic_stop": "passed",
+    "source_read_failures": 0,
+    "media_cleanup_complete": true
+  },
+  "automatic_fix_native": {
+    "start": "ok",
+    "audio_action": "stereo_aac",
+    "output_channels": 2,
+    "automatic_stop": "passed",
+    "source_read_failures": 0,
+    "conversion_failure": false,
+    "media_cleanup_complete": true
+  },
+  "synthetic_hevc_control": {
+    "owned_original_pixels_and_audio": true,
+    "video_observer": "Test pattern played normally",
+    "end_to_end_result": "not a pass: separate final-audio-fragment unsupported refusal during startup buffering"
+  },
+  "automated_validation": {
+    "codec_free_static_ctest": "40/40 passed",
+    "codec_free_shared_ctest": "41/41 passed",
+    "enabled_shared_ctest": "42/42 passed with codec runtime PATH",
+    "codec_adapter_ctest": "14/14 passed",
+    "final_sps_count_boundary": "passed in static/shared/enabled range tests",
+    "initial_enabled_runner_failure": "missing FFmpeg DLL search path (0xc0000135); retained separately, corrected environment rerun passed",
+    "uwp_x64_shipping_profile_build": "passed",
+    "clang_format": "passed",
+    "git_diff_check": "passed"
+  },
+  "screenbox_private_override": {
+    "version": "1.0.0.10",
+    "app_container": true,
+    "executable_sha256": "6253c86b73fc5e30e0fcadd30ce6f0493163486140feaa39f2b7d0d5c2530b6f",
+    "host_code": "Reused D91 1.0.0.9 host; private manifest version increment only",
+    "native_override": "Locally built UWP automatic HDR correction; not the published pinned DLL",
+    "five_other_dependencies": "Unchanged from the verified ci.282 layout",
+    "modules": [
+      {
+        "sha256": "9c96ea49e20a46cbbd0426e16f8f4b3e052d399f589aa9b6e4cccf35e9a7c832",
+        "matches_pinned_distribution": false,
+        "matches_layout": true,
+        "name": "send_airplay2.DLL"
+      },
+      {
+        "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "avcodec-63.dll"
+      },
+      {
+        "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "swresample-7.dll"
+      },
+      {
+        "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "avformat-63.dll"
+      },
+      {
+        "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "avutil-61.dll"
+      },
+      {
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "libcrypto-3-x64.dll"
+      }
+    ],
+    "manual_mac_controls": "User confirms the requested cast, audio/video, pause/resume, forward/backward seeks and Stop/local paused checks worked as expected",
+    "post_stop_cache_and_modules": "Six loaded hashes rechecked; zero owned cache directories after the Mac check and user Apple TV attempt",
+    "apple_tv_attempt": "User reports silent failure after a few seconds; cause remains unestablished",
+    "apple_tv_native_start_zero": "User confirms normal audio/video through scheduled 20-second Stop; no source/conversion error, complete cleanup"
+  },
+  "uwp_private_comparison": {
+    "version": "0.1.29.0",
+    "same_fixed_native_dll": true,
+    "app_container_and_six_loaded_modules": "verified before and after",
+    "first_attempt": "Starts successfully, then receives MediaEnd near 16 seconds, before the scheduled Stop; this is a failed attempt, cause unestablished",
+    "visible_window_retry_seconds": 90,
+    "retry_observer": "User confirms everything worked as expected",
+    "retry_final_status": "Playing near 91 seconds, then SenderStop and complete cleanup",
+    "retry_cache": {
+      "seals": 24,
+      "sealed_bytes": 3489255,
+      "clear": 1,
+      "release": 1,
+      "removed": true
+    },
+    "retry_thread_samples": {
+      "count": 99,
+      "maximum_suspended_threads": 0
+    },
+    "monitor_postprocessing": "An unsupported Select-Object argument failed after the completed receiver Stop and saved samples; corrected locally, not a playback failure",
+    "screenbox_visible_retry": "User confirms the requested 90-second playback, Stop receiver closure and local paused handoff worked as expected",
+    "original_window_visibility": "Not reported; no causal lifecycle finding",
+    "screenbox_post_retry": "Final AppContainer/six loaded hashes verified; initially growing cache removed after user-confirmed Stop; zero directories/bytes"
+  },
+  "ci": {
+    "implementation_head": "1646ae3bdc72bdf01c119aa9afba84d8a06300ee",
+    "checks_passed": 17,
+    "run_id": 38883104462,
+    "final_evidence_head": "Inspect current PR head separately; this CI result identifies only the implementation commit"
+  },
+  "publication": {
+    "unchanged": "SendAirPlay2.StereoAac 0.5.0-ci.282",
+    "contains_fix": false,
+    "new_publication": false
+  },
+  "scope_limits": [
+    "Bounded startup/control attempts; no whole-film playback proof",
+    "Earlier Apple TV failures remain unexplained despite passing 90-second UWP and Screenbox retries",
+    "No new HLG, speaker, discrete-surround or perceptual HDR calibration observation",
+    "SPS VUI detection only; no new container-only HDR or in-band configuration-change support"
+  ],
+  "privacy": "No private input name/path/content, receiver address/identifier, raw Mac logs, credentials or bearer URL retained"
+}

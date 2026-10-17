@@ -2,6 +2,7 @@
 // Synthetic in-memory Matroska files and codec headers only: no receiver,
 // network or private media.
 #include "hls_remux.h"
+#include "hevc_video_range_fixture.h"
 #include "mkv_demux.h"
 #include "media_track_inventory.h"
 #include "sample_entries.h"
@@ -874,8 +875,9 @@ Bytes cluster_bytes(const ClusterSpec& spec, std::uint8_t cluster_id_byte) {
 /// A Matroska file whose SeekHead (first in the Segment) points to Cues after
 /// the clusters; one cue point per cluster that starts with a keyframe.
 Bytes indexed_mkv(const std::vector<ClusterSpec>& specs, bool with_cues = true,
-                  std::size_t first_cued_cluster = 0, const std::string& audio_codec = "A_AAC") {
-    Bytes track_data = join({track_entry(video_spec()), track_entry([&audio_codec] {
+                  std::size_t first_cued_cluster = 0, const std::string& audio_codec = "A_AAC",
+                  const TrackSpec& video = video_spec()) {
+    Bytes track_data = join({track_entry(video), track_entry([&audio_codec] {
                                  auto audio = aac_spec();
                                  audio.codec = audio_codec;
                                  audio.codec_delay_ns = 0;
@@ -1417,6 +1419,54 @@ void packet_coordinate_limit() {
     check(count == 262145, "constant-memory scan crosses retained-table cap");
 }
 
+void hdr_range_presentation_tests() {
+    group = "HEVC HDR range across Matroska routes";
+    auto video = video_spec();
+    video.codec = "V_MPEGH/ISO/HEVC";
+    video.codec_private = sap2_test::hdr10_configuration();
+    for (const bool indexed : {false, true}) {
+        auto bytes = std::make_shared<const Bytes>(
+            indexed_mkv(regular_clusters(), indexed, 0, "A_AAC", video));
+        check((MkvIndex::open(memory_reader(*bytes), bytes->size()) != nullptr) == indexed,
+              "fixture route indexed=" + std::to_string(indexed));
+        MediaSource source{[bytes] { return bytes->size(); },
+                           [bytes](std::uint64_t offset, std::uint8_t* output, std::size_t capacity,
+                                   const MediaReadContext&) {
+                               const auto count = static_cast<std::size_t>(
+                                   std::min<std::uint64_t>(capacity, bytes->size() - offset));
+                               std::memcpy(output, bytes->data() + offset, count);
+                               return count;
+                           }};
+        for (const bool video_only : {false, true}) {
+            const auto hls = remux_to_hls(source, nullptr, video_only);
+            const auto label = " indexed=" + std::to_string(indexed) +
+                               " composition=" + std::to_string(video_only);
+            check(hls.playlist_name == "main.m3u8",
+                  "HDR requires master without subtitles" + label);
+            if (video_only) {
+                check(hls.variant.video_range == VideoRange::pq,
+                      "composition carries PQ metadata" + label);
+            }
+            const auto found =
+                std::find_if(hls.resources.begin(), hls.resources.end(),
+                             [](const auto& resource) { return resource.name == "main.m3u8"; });
+            check(found != hls.resources.end(), "master exists" + label);
+            if (found != hls.resources.end()) {
+                std::atomic_bool stopped{false};
+                const MediaReadContext context{
+                    &stopped, &stopped, std::chrono::steady_clock::now() + std::chrono::seconds(5)};
+                Bytes master(static_cast<std::size_t>(found->source.size()));
+                check(found->source.read_at(0, master.data(), master.size(), context) ==
+                          master.size(),
+                      "master readable" + label);
+                const std::string text(master.begin(), master.end());
+                check(text.find(",VIDEO-RANGE=PQ") != std::string::npos,
+                      "master signals PQ" + label);
+            }
+        }
+    }
+}
+
 int main() {
     try {
         sample_entry_tests();
@@ -1434,6 +1484,7 @@ int main() {
         source_video_index_tests();
         selected_packet_coordinates();
         packet_coordinate_limit();
+        hdr_range_presentation_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()
                   << '\n';
