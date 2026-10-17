@@ -1,6 +1,6 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-16 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-17 (Asia/Tokyo). Audience: the next human developer or model.
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
@@ -9,7 +9,14 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D92 long HEVC/DTS startup defect identified; HDR correction implemented.**
+**D92 HDR startup correction merged (PR #74, 2026-10-17).**
+PR #74 merged as `f1598cf`. All 17 checks passed at final head `1e917aa`
+in [run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
+Next: prepare and validate a new source-complete opt-in candidate from merged
+main, then request publication approval and update the Screenbox pin separately.
+Published ci.282 remains unchanged and lacks this fix. The earlier Apple TV
+premature end remains an unexplained reliability follow-up despite passing retries.
+No further manual receiver observation is pending for the recorded D92 checks.
 The user confirms native #73 and Screenbox fork #13 are merged (`d9cd2c2` /
 `b52c58e`). A subsequent private long-video cast fails on the Mac after consent,
 with grey controls and local playback recovery. Offline conversion succeeds;
@@ -18,8 +25,8 @@ segments. Adding only the missing `VIDEO-RANGE=PQ` makes that same input play,
 confirmed by the user. The automatic fix reads bounded base-layer HEVC SPS VUI
 metadata, declares PQ/HLG, and creates an HDR master even without subtitles.
 No new decoder/dependency or audio policy/quota change is made. Read
-[the investigation](hevc-hdr-range.md). Work is on
-`codex/long-dts-cast-failure` from merged main. Regression checks and private UWP
+[the investigation](hevc-hdr-range.md). The implementation branch was
+`codex/long-dts-cast-failure`. Regression checks and private UWP
 build pass; Screenbox 1.0.0.10 is a deliberate local native-DLL override with
 AppContainer/six loaded hashes verified. The user confirms the Mac controls
 pass, with final module hashes/cache cleanup checked. A subsequent Apple TV
@@ -31,11 +38,10 @@ the UWP retry stays playing through its scheduled Stop and cleans up. The earlie
 Apple TV failure remains unexplained, including whether window visibility
 contributed. Final Screenbox AppContainer/six hashes pass again; after the
 user confirms Stop, the owned cache directory/byte counts are zero.
-[PR #74](https://github.com/ilyalissoboi/send-airplay2/pull/74) starts at `1646ae3`,
-with all 17 implementation-head checks passed. This is not the published pinned
-payload. Review this slice and inspect actual-head CI; ask before merging. Do
-not overwrite
-published ci.282. A corrected candidate and host pin are later steps.
+The private DLL is not the published pinned payload. The implementation and
+final evidence heads each passed all 17 checks; the merged checkpoint above
+is current. Do not overwrite published ci.282 or repeat the completed checks
+as pending work. A corrected candidate and host pin are separate steps.
 
 **D91 recorded Screenbox host gate passed (2026-10-16).**
 The user's Proceed starts [fork PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)

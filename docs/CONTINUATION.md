@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-16 (Asia/Tokyo). PRs #12-#73 are merged. `main` contains
+Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#74 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,14 +23,23 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Current work: D92 HEVC HDR startup correction.** Fork #13 is merged as
+**D92 merged; next step is corrected candidate preparation.** PR #74 merged
+as `f1598cf`; all 17 checks passed at final head `1e917aa` in
+[run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
+Prepare a new source-complete opt-in candidate from clean merged main and
+validate its contents/consumers before requesting publication approval. Update
+the Screenbox pin separately after publication; do not overwrite ci.282.
+No receiver observation is pending for the recorded D92 checks. Preserve the
+unexplained earlier Apple TV premature end as a reliability follow-up.
+
+Fork #13 is merged as
 `b52c58e` and native #73 as `d9cd2c2`. The user reports a grey-screen failure
 for one private long HEVC/DTS input after enabling conversion. Native/offline
 diagnostics isolate the missing PQ declaration; the same file plays after
 adding only `VIDEO-RANGE=PQ`, confirmed manually. A bounded original SPS VUI
 reader now selects PQ/HLG automatically, preserving SDR behavior and video
-payload. Read [D92](hevc-hdr-range.md). Branch
-`codex/long-dts-cast-failure` starts from merged main. Screenbox 1.0.0.10 is a
+payload. Read [D92](hevc-hdr-range.md). The implementation branch
+`codex/long-dts-cast-failure` started from merged main. Screenbox 1.0.0.10 is a
 private DLL override, with verified AppContainer/loaded hashes; the user's Mac
 controls pass, with final hashes/empty cache checked. The user then reports a
 silent Apple TV Screenbox failure from zero. A native Apple TV 20-second cast
@@ -39,10 +48,9 @@ plays normally by user report. The packaged UWP comparison first receives early
 then pass. The early failure remains unexplained; window visibility is an
 unproven hypothesis. Final Screenbox hashes/AppContainer pass again; confirmed
 Stop leaves zero owned cache directories/bytes.
-PR #74 starts at `1646ae3`, with all 17 implementation-head checks passed.
-Inspect actual-head CI and review. The published ci.282 package is unchanged; a
-new candidate
-and host pin require a separate follow-up. Do not resume D91 as an unmerged PR.
+Both implementation and final evidence heads of #74 passed all 17 checks.
+The published ci.282 package is unchanged; candidate preparation/publication
+and the host pin remain separate follow-ups. Do not resume D91/D92 as open PRs.
 
 **D91 recorded Screenbox host gate passed (2026-10-16).**
 The user's Proceed starts fork [PR #13](https://github.com/ilyalissoboi/Screenbox/pull/13)
@@ -61,7 +69,7 @@ responsiveness, local paused/no error. Accepted AAC retry and AAC-copy controls
 pass on both receivers with sync/channel pattern, start near 45 seconds,
 pause/resume, both seeks, Stop closure and local paused handoff. Off-permission
 DTS refusal passes on the Mac and converted DTS controls pass on both receivers.
-Both pass natural AAC → converted DTS → AAC queue advance, rapid Next and Stop
+Both pass natural AAC â†’ converted DTS â†’ AAC queue advance, rapid Next and Stop
 during a transition, with paused/responsive handoff and no delayed restart. Both
 250-ms cache samples end at zero and observe at most one directory/430,412 bytes;
 the independent final count is zero. Final process hashes are rechecked; the user
@@ -581,7 +589,7 @@ build/date attribution supplied. Do not repeat it as an uncompleted gate.
   failure feedback, selection-change protection and pairing/start/cast guards.
   Logic tests pass 96/96 and the VS 2026 MSBuild x64 package passed. Private
   development 1.0.0.3 was registered in place; source manifest restored. Running
-  executable/native module hashes match. Computer Use verified Forget → Pair,
+  executable/native module hashes match. Computer Use verified Forget â†’ Pair,
   other receiver's paired actions retained, Chromecast/active-cast visibility,
   restored Cast after user re-pairing and local paused handoff. The user confirmed
   normal Mac video/audio, pause/resume and Stop closure. All three CI checks passed
@@ -874,11 +882,12 @@ in PR #70 (`e6acba1`), with all 17 final-head checks passed. D90 published the
 approved clean-main `0.5.0-ci.282` opt-in prerelease: all 17 main checks and local
 artifact/consumer gates pass, and the unauthenticated public download matches.
 The user approved that slice: D91 implements it in merged fork PR #13; native
-checkpoint #73 is merged too. Current work is D92's HEVC HDR startup correction.
-Record the passing Mac controls and Apple TV 90-second retries separately from
-the unexplained earlier Apple TV end. Final Stop/cache cleanup is confirmed;
-review PR #74 and inspect actual-head CI, then
-prepare a fresh corrected candidate and a separate host pin. Do not replace
+checkpoint #73 is merged too. D92's HEVC HDR startup correction is merged in
+PR #74 as `f1598cf`, with all 17 final-head checks passed at `1e917aa`.
+Passing Mac controls and Apple TV 90-second retries remain separate from the
+unexplained earlier Apple TV end. Final Stop/cache cleanup is confirmed.
+Next, prepare a fresh corrected candidate, obtain publication approval and
+update the host pin separately. Do not replace
 the already published candidate under its old version.
 The 1.0.0.9 setting/default, loaded hashes/AppContainer, Mac consent cancellation,
 copied/converted controls, refusal, natural/rapid queue and cleanup checks pass;
@@ -1048,7 +1057,7 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #73 and fork #13 are merged. D92 is now active: read
+> PRs through #74 and fork #13 are merged. D92 is complete; read
 > hevc-hdr-range.md and the current resume paragraphs before this history.
 > D89 merged as e6acba1; all 17 checks passed at
 > final head 4c4bfb8 in run 38830621263. Inspect origin/main and open PRs before writing.
@@ -1084,9 +1093,12 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > and process hashes pass. The user restores conversion off/local paused. No
 > manual check remains. GitHub Actions is enabled;
 > inspect actual-head CI, preserving the initial disabled response as history.
-> Do not restart completed D88 library tests as host proof. Continue existing
-> D92 on codex/long-dts-cast-failure, preserving the merged D91 gate as history;
-> inspect any open slice PR's actual head before editing.
+> Do not restart completed D88 library tests as host proof. D92 is merged in
+> #74 as f1598cf, with all 17 final-head checks passed at 1e917aa. Preserve its
+> passing Mac/Apple TV retries and unexplained earlier Apple TV end separately.
+> Next is corrected source-complete candidate preparation from clean merged main,
+> followed by publication approval and a separate host pin update; inspect any
+> open slice PR's actual head before editing.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
 > 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same

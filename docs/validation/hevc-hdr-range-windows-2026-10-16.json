@@ -133,7 +133,12 @@
     "implementation_head": "1646ae3bdc72bdf01c119aa9afba84d8a06300ee",
     "checks_passed": 17,
     "run_id": 38883104462,
-    "final_evidence_head": "Inspect current PR head separately; this CI result identifies only the implementation commit"
+    "final_evidence_head": {
+      "head": "1e917aae68773ba9c9883931b3225f37f91a721e",
+      "checks_passed": 17,
+      "run_id": 38909207891,
+      "conclusion": "success"
+    }
   },
   "publication": {
     "unchanged": "SendAirPlay2.StereoAac 0.5.0-ci.282",
@@ -146,5 +151,14 @@
     "No new HLG, speaker, discrete-surround or perceptual HDR calibration observation",
     "SPS VUI detection only; no new container-only HDR or in-band configuration-change support"
   ],
-  "privacy": "No private input name/path/content, receiver address/identifier, raw Mac logs, credentials or bearer URL retained"
+  "privacy": "No private input name/path/content, receiver address/identifier, raw Mac logs, credentials or bearer URL retained",
+  "merge_checkpoint": {
+    "date": "2026-10-17",
+    "timezone": "Asia/Tokyo",
+    "pr": 74,
+    "merge_commit": "f1598cfc9b810721f4780582e4c05eb9e6f96439",
+    "new_receiver_observation": false,
+    "publication_unchanged": true,
+    "next_step": "Prepare a new source-complete candidate from merged main; validate before publication approval and a separate Screenbox pin update"
+  }
 }

@@ -1,5 +1,12 @@
 # Receiver validation record
 
+D92 status update (2026-10-17): PR #74 is merged as `f1598cf`; all 17 CI
+checks passed at final head `1e917aa` in
+[run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
+This adds merge/CI evidence only, with no new receiver observation. Recorded
+D92 manual checks are complete; the earlier Apple TV premature end remains
+unexplained. Published ci.282 still predates the fix.
+
 **D92 long HEVC/DTS startup investigation (2026-10-16):** after both D91 PRs
 merged, the user reports a grey-screen Mac failure from the beginning of one
 private input. Read-only preparation/initial fragments succeed; a native cast

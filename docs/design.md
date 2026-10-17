@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-16 (Asia/Tokyo), after PRs #1-#73 merged.
+Implementation snapshot: 2026-10-17 (Asia/Tokyo), after PRs #1-#74 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -10,7 +10,9 @@ package pin, final validation record and Forget-device follow-up; PR #11 adds
 the research checkpoint and PR #12 the next-slice planning checkpoint, without
 changing runtime behavior.
 
-**D92 HDR startup correction:** after fork #13 merged, a private long HEVC/DTS
+**D92 HDR startup correction (merged PR #74, `f1598cf`):** all 17 checks
+passed at final head `1e917aa`. Next is a corrected source-complete opt-in
+candidate, publication approval and a separate Screenbox pin update. After fork #13 merged, a private long HEVC/DTS
 cast reproduces a Mac grey screen. Offline preparation passes; declaring the
 missing `VIDEO-RANGE=PQ` alone restores playback by user observation. The
 [bounded SPS VUI correction](hevc-hdr-range.md) now carries PQ/HLG through remux
