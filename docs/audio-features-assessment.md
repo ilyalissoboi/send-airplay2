@@ -5,6 +5,16 @@ Assessment: 2026-10-12, against native main `8a40ec3` and Screenbox main
 not a new receiver test. The initial assessment did not select implementation;
 the user's subsequent planning decision is recorded below.
 
+**D97 receiver feasibility update (2026-10-17):** the user authorizes a bounded
+audio-only test on the available Mac/Apple TV. The existing progressive C API
+successfully plays an original AAC-LC M4A containing no video on both receivers,
+with user-confirmed controls/natural end/Stop and Mac consent cancellation.
+Read [the exact source/binary/firmware scope](audio-only-url-probe.md).
+The earlier statement that this URL-audio experiment is unverified is historical.
+Speaker-inclusive audio transport remains deferred; this does not add audio-only
+HLS/transcoding, UWP proof or Screenbox audio-file support. The old effort ranges
+are initial planning estimates, not measured remaining work after this probe.
+
 **Subsequent scope expansion (D76, 2026-10-14):** the user selected automatic
 policy plus FLAC, Opus, Vorbis, PCM and TrueHD. Read [the expanded plan](automatic-audio-transcoding-plan.md)
 for the current input targets and ordered implementation queue. It supersedes

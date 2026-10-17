@@ -1,6 +1,20 @@
 # Project handoff: send-airplay2
 
 Snapshot: 2026-10-17 (Asia/Tokyo). Audience: the next human developer or model.
+
+**Current D97 checkpoint (2026-10-17):** the user-authorized
+[native audio-only URL probe](audio-only-url-probe.md) passes on MacBook Pro
+(macOS 26.7.1) and Apple TV (tvOS 26.6), with versions explicitly unchanged.
+The existing progressive C API plays an original AAC/M4A with no video or
+runtime change; both receivers pass audible controls, natural end and Stop,
+and Mac pending-consent cancellation passes. No further D97 manual check is
+pending. Review this slice separately from [publication checkpoint PR #79](https://github.com/ilyalissoboi/send-airplay2/pull/79);
+the published fork preview is not an audio-file feature. Proposed next work is
+a packaged UWP AAC/M4A gate, then Screenbox audio-file routing. Audio-only
+speakers remain deferred. Earlier queue entries below are historical where
+this current checkpoint or #79 supersedes them. No additional implementation
+or package publication is started by this recorded probe.
+
 Read this first, then [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This is a continuation record,
 not a claim that the sender has been completed.
