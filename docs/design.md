@@ -10,6 +10,15 @@ package pin, final validation record and Forget-device follow-up; PR #11 adds
 the research checkpoint and PR #12 the next-slice planning checkpoint, without
 changing runtime behavior.
 
+**D95/D96 completed:** fork #15 merges the localized Casting group/audio icon;
+the user confirms layout and preference persistence in development 1.0.0.12.
+The separately authorized [fork preview release](screenbox-airplay-preview-release.md)
+builds merged `7cea7023` as an unsigned, separate-identity Windows 11 x64
+experimental package. 127 logic checks, MSIX/payload/dependency/source controls,
+elevated install, exact executable launch and all five public asset downloads
+pass. Existing runtime policy/pins/quota remain unchanged. Publication adds no
+new receiver observation; do not repeat it or the completed D94 gate.
+
 **D94 recorded host gate passed:** [fork #14](https://github.com/ilyalissoboi/Screenbox/pull/14)
 selects published ci.294 for the opt-in x64 profile, retaining ordinary ci.207
 and existing host policy/permission/quota. Both logic suites and actual MSIX

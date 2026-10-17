@@ -9,7 +9,28 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D95 Casting settings presentation (2026-10-17), before fork release.**
+**D96 fork preview published and verified (2026-10-17).** The user explicitly
+authorizes a Release build and GitHub release after fork #15 merged as `7cea7023`;
+all four checks pass at final head `7f80fa25`. The
+[Screenbox AirPlay Preview 0.1.0-preview.1 prerelease](https://github.com/ilyalissoboi/Screenbox/releases/tag/airplay-preview-0.1.0-preview.1)
+is published from that merged commit, with x64 Release/experimental ci.294,
+package version 0.1.0.0 and a separate unsigned preview identity. Packaging-only
+version/identity/display changes are included in the corresponding source ZIP.
+127 release-source logic checks, the actual MSIX build, all 40 pinned payload
+files, dependency metadata and complete installer/source checksum coverage pass.
+The elevated installer passes after avoiding redundant shared-framework installs;
+Windows activation and the running executable hash pass. This adds installation/
+launch evidence, not a new visual or receiver observation. All five public assets
+download without authentication and match sizes/hashes; the tag resolves to
+`7cea7023`. Read [the release record](screenbox-airplay-preview-release.md).
+No Store upload, Sentry DSN, winget submission, existing app data reset or new
+library publication is performed. The preview coexists with Store/debug apps.
+Publication is complete and authorized; do not ask again or replace assets.
+Next is review of native checkpoint PR #79; no new implementation slice is
+started. Long-input/cache-quota behavior remains a proposed evaluation, with
+the current 512-MiB budget unchanged. Hardware/user-deferred work stays deferred.
+
+**D95 Casting settings presentation merged (2026-10-17).**
 The user asks to move the stereo conversion preference into its own localized
 **Casting** settings group and add an icon consistent with other settings.
 Fork [PR #15](https://github.com/ilyalissoboi/Screenbox/pull/15), branch
@@ -25,10 +46,10 @@ executable matches the inspected implementation `6d3a30b4` MSIX. The written
 manual layout/toggle persistence check passes by user confirmation: Casting
 appears between General and Player, the icon aligns with neighboring settings,
 and the toggle retains its value after leaving/reopening Settings. No Computer Use visual confirmation
-is permitted by the user. Preparing/publishing a fork release remains separate;
-do not trigger the upstream-style tag/Store/Sentry path. No new receiver
-playback check is required for this presentation-only change. Continue on the
-actual open fork PR head and keep native checkpoint PR #79 current.
+is permitted by the user. Fork #15 is merged as `7cea7023`, with all four CI
+checks passed at final head `7f80fa25`. D96 above records the separately
+authorized fork release, without the upstream tag/Store/Sentry path. No new
+receiver check is required for this presentation-only change.
 
 **D94 merged checkpoint (2026-10-17).** Native
 [PR #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) merged as
