@@ -2155,3 +2155,13 @@ fail whole-VOD accuracy audits explicitly. A real 33-second video GOP is refused
 before calibration/sealing, with cache cleanup. See [policy and evidence](stereo-aac-authoring.md).
 These checks do not establish Apple-wide authoring conformance, real-file/host
 performance or a new receiver/packaged runtime result. Speaker/surround stays deferred.
+
+**D97 native audio-only URL gate (2026-10-17):** an original 64-second AAC-LC
+M4A with zero video streams passes on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS
+26.6, explicitly unchanged. The user confirms audible playback, pause/resume,
+forward/backward seeks, natural end and separate Stop/no delayed restart on
+both; Mac pending-consent cancellation also passes. Every native run exits zero
+and releases its source once with media cleanup/no media failure. This uses
+the existing progressive C API 5 at source `449457a`, with no production change.
+See [fixture/runtime evidence and scope](audio-only-url-probe.md). Speaker,
+UWP, Screenbox, other codecs and audio-only HLS remain separate gates.

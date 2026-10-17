@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#78 are merged. `main` contains
+Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#79 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -17,11 +17,33 @@ is complete: eleven clean casts, reuse across process/session/name changes, and
 re-prompting during an equal-idle chain. Exact timer/key/renewal remain unproven;
 no sender behavior change is proposed. D65 evidence PR #42 merged as `8a40ec3`
 and D66 Screenbox PR #10 merged as `8bfd3dd9`. All 14 native checks and three
-fork checks passed at final heads `8978188` and `47016474`. Further development
-has a documented next slice in D67; do not resume these completed slices.
+fork checks passed at final heads `8978188` and `47016474`. D67 and the following
+historical increments are superseded by the current D97 checkpoint and ordered
+queue below; do not resume completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**Current D97 checkpoint (2026-10-17).**
+[PR #80](https://github.com/ilyalissoboi/send-airplay2/pull/80) records the native
+AAC/M4A audio-only URL gate on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6,
+with versions explicitly unchanged. Both receivers pass audible playback,
+pause/resume, forward/backward seeks, natural end and separate Stop/no delayed
+restart. Mac pending-consent cancellation also passes. The runtime is merged
+source `449457a`, public C API 5/progressive delivery with `audio/mp4`, with no
+production change or video track. The fixture, exact binary hashes, user
+observations and limits are in [the D97 record](audio-only-url-probe.md).
+All five existing progressive-path CTests pass. All 17 PR checks pass at the
+original probe head `99c2ee3`; inspect review-follow-up CI at its actual head
+separately. No further D97 manual check is pending.
+
+Publication/UI checkpoint #79 is merged as `7403044`; its completed D94 pin,
+D95 settings and D96 fork prerelease are historical below. Do not repeat them.
+The next proposed gate is packaged UWP brokered AAC/M4A progressive playback,
+followed by Screenbox audio-file routing after that gate passes. Follow the
+[ordered work queue](#open-issues-and-ordered-next-work); audio-only HLS,
+transcoding and speaker transport are separate scopes. This review request
+updates documentation only; it does not start the proposed implementation.
 
 **D96 fork preview published and verified (2026-10-17).** The user explicitly
 authorizes a Release build and GitHub release after fork #15 merged as `7cea7023`;
@@ -40,9 +62,9 @@ download without authentication and match sizes/hashes; the tag resolves to
 No Store upload, Sentry DSN, winget submission, existing app data reset or new
 library publication is performed. The preview coexists with Store/debug apps.
 Publication is complete and authorized; do not ask again or replace assets.
-Next is review of native checkpoint PR #79; no new implementation slice is
-started. Long-input/cache-quota behavior remains a proposed evaluation, with
-the current 512-MiB budget unchanged. Hardware/user-deferred work stays deferred.
+Native checkpoint #79 is merged as `7403044`. D97 above supersedes this slice's
+next-work suggestion. Long-input/cache-quota behavior remains a separate proposal;
+the current 512-MiB budget and hardware/user deferrals are unchanged.
 
 **D95 Casting settings presentation merged (2026-10-17).**
 The user asks to move the stereo conversion preference into its own localized
@@ -947,7 +969,31 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 
 ## Open issues and ordered next work
 
-The active queue is [HANDOFF.md section 0](HANDOFF.md#0-resume-here): C API/UWP
+The current queue follows [D97's recorded result](audio-only-url-probe.md#consequences-and-next-slice):
+
+1. **Complete review of PR #80.** Preserve the recorded native/audio-only results
+   and inspect actual-head CI. No further D97 listening check is pending. D94's
+   pin update, D95's Casting settings and D96's preview publication are complete
+   in merged checkpoint #79; do not repeat them.
+2. **Next proposed gate: packaged UWP AAC/M4A.** Use the original video-free
+   fixture through a brokered source, progressive delivery and explicit
+   `audio/mp4`. Verify the AppContainer/loaded package, audible controls,
+   natural end, Stop/cancellation and source cleanup on the recorded available
+   receivers. Native success does not establish this packaged gate; keep source,
+   binary, receiver/firmware and user observations explicit.
+3. **After that gate passes: Screenbox audio-file routing and controls.** Plan
+   explicit delivery/MIME selection and host lifecycle/queue handling without
+   treating video-required automatic-audio HLS as audio-file support. Broader
+   codecs, audio-only HLS/transcoding and HomePod/RAOP transport remain separate
+   implementation/validation scopes. The published preview does not gain these
+   features from this documentation-only probe.
+
+No new implementation or receiver run is started by this review fix. Preserve
+the speaker/discrete-surround/Chromecast hardware deferrals and user-deferred
+remote-Stop classification. Long-input/cache-quota evaluation is a separate
+proposal, not the immediate D97 follow-up; the existing quota is unchanged.
+
+The implementation history below is reference, not the active queue. C API/UWP
 and private Screenbox checks are recorded in completed D63; D64 published the
 approved main prerelease and merged its fork pins. Running DLL hashes match,
 and final-package receiver checks passed by user report; final evidence PRs
@@ -1001,9 +1047,11 @@ ci.294 update in merged fork #14 and native #78, with final-head CI and bounded
 Mac/Apple TV controls passed. Do not repeat publication or this host gate.
 D95's Casting group/icon is merged in fork #15 and manually confirmed. D96
 publishes the authorized separate-identity x64 preview, with public-download,
-installer and launch checks passed. See the current checkpoint above. No next
-implementation is started; sustained long-input/cache-quota behavior remains
-a proposed follow-up before widening the existing finite budget.
+installer and launch checks passed; native checkpoint #79 is merged. D97 now
+records native audio-only AAC/M4A success on both receivers. The next proposed
+gate is packaged UWP brokered AAC/M4A, then Screenbox audio-file routing, in the
+order above. Sustained long-input/cache-quota behavior remains a separate
+proposal; do not widen the existing budget as part of this probe.
 The 1.0.0.9 setting/default, loaded hashes/AppContainer, Mac consent cancellation,
 copied/converted controls, refusal, natural/rapid queue and cleanup checks pass;
 the user restores conversion off/local paused. GitHub Actions is enabled. Do not
@@ -1170,68 +1218,29 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue send-airplay2 from AGENTS.md, docs/HANDOFF.md, docs/design.md,
-> docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
-> merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
-> merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #76 and fork #13 are merged. D92 is complete; read
-> hevc-hdr-range.md and the current resume paragraphs before this history.
-> D89 merged as e6acba1; all 17 checks passed at
-> final head 4c4bfb8 in run 38830621263. Inspect origin/main and open PRs before writing.
-> D82/D83 implement finite automatic policy and API 5; D85 supports shared
-> Matroska origins. D86 corrects DTS lace clocks with exact owned PCM/AAC controls.
-> D87 corrects middle-seek index-extension I/O with maximum-lace backoff and
-> unchanged bounds. Read matroska-dts-bounded-seek.md and its sanitized evidence.
-> Private package 0.1.0.8 at 731db15 passes bundled/folder-granted 137-case/61-fixture
-> matrices with token/six loaded hashes verified. Three fresh brokered owners pass
-> first/middle/last samples in 138/314/64 ms cold with identical cached repeats and
-> cleanup. These are bounded one-input observations, not whole-film or receiver
-> proof. D88 subsequently records copied/converted native and packaged playback,
-> stereo output, A/V sync, controls, Stop/cancellation and natural EOF on the recorded
-> Mac and Apple TV. Preserve its failed attempts and scope; Screenbox queue behavior
-> is not established by those checks. D89 adds the separate x64 UWP
-> SendAirPlay2.StereoAac package with source/notices and direct/transitive profile
-> guards. D90 published clean-main 0.5.0-ci.282 from e6acba1 with the user's approval;
-> its tag is nuget-stereo-aac-v0.5.0-ci.282. All 17 main checks and
-> local artifact/consumer gates pass. Its SHA-256 is recorded in the candidate
-> evidence and handoff; the public download and sidecar match. Do not rebuild or
-> republish it under the same version, or request the same approval again. Read the
-> prepared release notes and Screenbox profile/permission/cache plan. Keep
-> backend defaults and package/Screenbox publication boundaries unchanged until
-> separately authorized; do not restart completed receiver gates.
-> The user subsequently approved D91 Screenbox host implementation. Fork PR #13
-> contains the x64 profile, finite app cache/drain, default-off stereo permission
-> and error categories; ordinary builds retain ci.207. Local 113/127 logic suites
-> and both MSIX payload checks pass. Development 1.0.0.9 adds initial-start Cancel;
-> its loaded hashes/AppContainer and user Mac consent cancellation pass, with
-> paused/responsive handoff/no error. The setting/default, AAC copy, DTS refusal,
-> converted DTS controls and natural/rapid queue/transition Stop pass on both
-> applicable receivers. Both sampled cache windows end at zero; the final count
-> and process hashes pass. The user restores conversion off/local paused. No
-> manual check remains. GitHub Actions is enabled;
-> inspect actual-head CI, preserving the initial disabled response as history.
-> Do not restart completed D88 library tests as host proof. D92 is merged in
-> #74 as f1598cf, with all 17 final-head checks passed at 1e917aa. Preserve its
-> passing Mac/Apple TV retries and earlier failed attempts separately. Later user
-> testing suggests the Apple TV issue was HDR-related, with no recurrence since
-> the correction; retain that attribution as user-reported.
-> D93 prepares 0.5.0-ci.294 from clean main 72e73ea in run 38993860187, with
-> all 17 main checks and local artifact/consumer controls passed. Read
-> hdr-corrected-audio-candidate.md and its publication record: #76 merged as
-> b4e38a3, the user approved ci.294 publication and its unauthenticated public
-> download is verified. Do not republish it or ask for that approval again.
-> D94 completes the ci.294 pin update in merged fork #14 (8d2851c8) and native
-> #78 (449457a). Final-head CI passes (four/17 checks); development 1.0.0.11
-> passes the bounded Mac/Apple TV HDR/DTS controls, with loaded hashes and empty
-> final cache verified. Do not repeat completed tests or publication. A next
-> slice beyond the completed D95 UI/D96 publication has not been started.
-> D95 is merged as 7cea7023; D96 publishes airplay-preview-0.1.0-preview.1
-> with public downloads, elevated install and exact executable launch checked.
-> Do not republish the preview. Sustained long-input/cache-quota behavior is
-> a proposed evaluation. Inspect any open slice PR's actual head before editing.
-> Keep private input identity/content out
-> of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and
-> 5.1/7.1 output remain deferred for unavailable hardware. Do not ask for the same
-> implementation authorization again. Inspect `origin/main` and open
-> PRs before writing, without repeating completed checks. Preserve receiver-specific
-> evidence and historical failures. Ask before merging and before publishing each
-> package prerelease.
+> docs/receiver-validation.md and docs/CONTINUATION.md. Start with the current
+> D97 checkpoint, audio-only-url-probe.md and its sanitized evidence; the long
+> D63-D96 history is reference. PR #80 records a passed native progressive
+> AAC/M4A gate on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6, explicitly
+> unchanged. An original AAC-LC fixture has no video; the existing public C API
+> at 449457a uses audio/mp4 without remux, transcoding or production changes.
+> Both receivers pass user listening, pause/resume, both seeks, natural end and
+> Stop/no delayed restart; Mac consent cancellation passes. All 17 checks pass
+> at initial head 99c2ee3; inspect actual final review-head CI separately. No
+> further D97 manual check is pending.
+> Native #79 is merged as 7403044. D94's ci.294 pin update, D95's Casting group
+> and D96's fork preview publication are complete; do not repeat them or their
+> completed manual checks. The preview is not an audio-file feature.
+> The next proposed slice is the packaged UWP brokered-source AAC/M4A gate with
+> progressive delivery and explicit audio MIME. After that passes, plan Screenbox
+> audio-file routing/controls. Keep audio-only HLS/transcoding and broader codecs
+> separate; HomePod/audio-only speakers, discrete converted surround and
+> Chromecast validation remain hardware-deferred, and remote-Stop classification
+> remains user-deferred. Long-input/cache-quota evaluation is a separate proposal.
+> This documentation review has not started the next implementation. Inspect
+> origin/main and any open PR's actual head before writing. Keep private input,
+> addresses, identifiers, credentials and bearer URLs out of committed evidence.
+> Preserve exact source/binary/host/firmware and failed-attempt attribution.
+> Use written user observations for visual UI checks, without Computer Use.
+> Ask before merging or publishing a new release; do not request approval again
+> for the already completed ci.294 or Screenbox preview publications.
