@@ -69,7 +69,7 @@ responsiveness, local paused/no error. Accepted AAC retry and AAC-copy controls
 pass on both receivers with sync/channel pattern, start near 45 seconds,
 pause/resume, both seeks, Stop closure and local paused handoff. Off-permission
 DTS refusal passes on the Mac and converted DTS controls pass on both receivers.
-Both pass natural AAC â†’ converted DTS â†’ AAC queue advance, rapid Next and Stop
+Both pass natural AAC → converted DTS → AAC queue advance, rapid Next and Stop
 during a transition, with paused/responsive handoff and no delayed restart. Both
 250-ms cache samples end at zero and observe at most one directory/430,412 bytes;
 the independent final count is zero. Final process hashes are rechecked; the user
@@ -589,7 +589,7 @@ build/date attribution supplied. Do not repeat it as an uncompleted gate.
   failure feedback, selection-change protection and pairing/start/cast guards.
   Logic tests pass 96/96 and the VS 2026 MSBuild x64 package passed. Private
   development 1.0.0.3 was registered in place; source manifest restored. Running
-  executable/native module hashes match. Computer Use verified Forget â†’ Pair,
+  executable/native module hashes match. Computer Use verified Forget → Pair,
   other receiver's paired actions retained, Chromecast/active-cast visibility,
   restored Cast after user re-pairing and local paused handoff. The user confirmed
   normal Mac video/audio, pause/resume and Stop closure. All three CI checks passed
