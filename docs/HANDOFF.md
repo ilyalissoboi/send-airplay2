@@ -8,11 +8,12 @@ Snapshot: 2026-10-17 (Asia/Tokyo). Audience: the next human developer or model.
 The existing progressive C API plays an original AAC/M4A with no video or
 runtime change; both receivers pass audible controls, natural end and Stop,
 and Mac pending-consent cancellation passes. No further D97 manual check is
-pending. Review this slice separately from [publication checkpoint PR #79](https://github.com/ilyalissoboi/send-airplay2/pull/79);
-the published fork preview is not an audio-file feature. Proposed next work is
-a packaged UWP AAC/M4A gate, then Screenbox audio-file routing. Audio-only
+pending. [Publication checkpoint PR #79](https://github.com/ilyalissoboi/send-airplay2/pull/79)
+is merged as `7403044`; the published preview is not an audio-file feature.
+The [current continuation queue](CONTINUATION.md#open-issues-and-ordered-next-work)
+proposes packaged UWP AAC/M4A next, then Screenbox audio-file routing. Audio-only
 speakers remain deferred. Earlier queue entries below are historical where
-this current checkpoint or #79 supersedes them. No additional implementation
+this current checkpoint or merged #79 supersedes them. No additional implementation
 or package publication is started by this recorded probe.
 
 Read this first, then [design.md](design.md) and

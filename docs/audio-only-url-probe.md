@@ -84,6 +84,8 @@ remains; actual speaker transport/compatibility stays hardware-deferred. The
 probe does not resume discrete converted surround, Chromecast validation or
 user-deferred remote-Stop classification. No new release is published.
 
-The separate UI/publication checkpoint remains in
-[PR #79](https://github.com/ilyalissoboi/send-airplay2/pull/79). Do not repeat its
-completed release work while continuing this audio-only sequence.
+The separate UI/publication [checkpoint PR #79](https://github.com/ilyalissoboi/send-airplay2/pull/79)
+is merged as `7403044`. Do not repeat its completed release work. The
+[continuation queue](CONTINUATION.md#open-issues-and-ordered-next-work) and
+suggested opening prompt now match D97's packaged-UWP-then-Screenbox order;
+this documentation review starts no new implementation or receiver gate.
