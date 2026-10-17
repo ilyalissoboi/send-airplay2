@@ -1,6 +1,6 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-17 (Asia/Tokyo), after PRs #1-#75 merged.
+Implementation snapshot: 2026-10-17 (Asia/Tokyo), after PRs #1-#76 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and
@@ -10,15 +10,17 @@ package pin, final validation record and Forget-device follow-up; PR #11 adds
 the research checkpoint and PR #12 the next-slice planning checkpoint, without
 changing runtime behavior.
 
-**D93 candidate prepared:** [HDR-corrected ci.294](hdr-corrected-audio-candidate.md)
+**D93 prerelease published:** [HDR-corrected ci.294](hdr-corrected-audio-candidate.md)
 comes from clean merged main `72e73ea` in dispatch run `38993860187`. All 17
 main checks, 12 package controls and local artifact/fresh consumer checks pass.
-Publication approval and the Screenbox pin update remain separate. No new
-receiver observation, dependency or runtime change is introduced by preparation.
+After #76 merged, the user approved publication. The unchanged package and
+checksum are published, and an unauthenticated public download verifies both.
+The Screenbox opt-in pin update is next, separately; no new receiver observation,
+dependency or runtime change is introduced by publication.
 
 **D92 HDR startup correction (merged PR #74, `f1598cf`):** all 17 checks
-passed at final head `1e917aa`. D93 above records corrected-candidate preparation;
-publication approval and a separate Screenbox pin update remain. After fork #13
+passed at final head `1e917aa`. D93 above records approved corrected-candidate
+publication; a separate Screenbox pin update remains. After fork #13
 merged, a private long HEVC/DTS
 cast reproduces a Mac grey screen. Offline preparation passes; declaring the
 missing `VIDEO-RANGE=PQ` alone restores playback by user observation. The

@@ -1,9 +1,11 @@
 # SendAirPlay2.StereoAac 0.5.0-ci.294 (x64 prerelease)
 
-Prepared for review; publication requires explicit approval.
+[Published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294)
+after explicit user approval. Public package and checksum downloads match the
+original candidate; see [publication evidence](../validation/hdr-corrected-audio-publication-windows-2026-10-17.json).
 
 Source/tag target: `72e73ea914a7859f5cb900b5fb129d8e92d2d15b` (merged main).
-Proposed tag: `nuget-stereo-aac-v0.5.0-ci.294`.
+Tag: `nuget-stereo-aac-v0.5.0-ci.294`.
 
 This corrects HEVC HDR HLS signaling. Bounded SPS VUI parsing identifies PQ/HLG
 and adds `VIDEO-RANGE` to the master, including videos without subtitles and
@@ -38,7 +40,7 @@ Core/binding remain Apache-2.0. Private runtime validation exports are disabled.
 Produced by [main CI run 38993860187](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38993860187), with all 17 checks passed.
 Package: 21,314,548 bytes, SHA-256
 `a06216e954e8ef1e2452abe8472e95fbbc04c036e5e1c017e4a92642b20c76b8`.
-The unchanged package and matching SHA-256 sidecar are the proposed assets.
+The unchanged package and matching SHA-256 sidecar are the release assets.
 Clean source stamps, six runtime hashes, UWP distribution/source/profile controls
 and fresh API-5/copy/RID/direct/transitive-conflict consumer checks pass.
 See [candidate preparation](../hdr-corrected-audio-candidate.md).

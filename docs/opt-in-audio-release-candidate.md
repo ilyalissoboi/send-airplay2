@@ -1,8 +1,9 @@
 # Clean-main opt-in package candidate (D90)
 
 This is the historical preparation/publication record for ci.282. The newer
-[HDR-corrected D93 candidate](hdr-corrected-audio-candidate.md), ci.294, is prepared
-for separate publication approval; ci.282 remains unchanged.
+[HDR-corrected D93 release](hdr-corrected-audio-candidate.md), ci.294, is now
+published after separate approval and public-download verification; ci.282
+remains unchanged.
 
 2026-10-16. The user's Proceed authorizes preparing and validating the candidate
 following merged D89/PR #70. Publication is a separate approval, following the

@@ -29,8 +29,8 @@ C# binding and a development CLI.
 
 The current source preserves HEVC SPS PQ/HLG range signaling in the HLS master.
 This fixes a recorded Mac grey-screen startup failure with HDR10 video and
-converted DTS audio. The published `0.5.0-ci.282` package predates the fix;
-see [the scoped investigation](docs/hevc-hdr-range.md).
+converted DTS audio. Published `0.5.0-ci.294` includes the fix; the prior
+`ci.282` package predates it. See [the scoped investigation](docs/hevc-hdr-range.md).
 
 Not in scope: DRM-protected media, screen mirroring, system audio capture,
 multiroom audio and general video transcoding.
@@ -43,14 +43,14 @@ requires an enabled codec backend, explicit stereo permission and host-owned
 per-cast storage with a finite quota. Native builds keep `SAP2_STEREO_AAC` OFF
 by default, and delivery still defaults to progressive.
 
-The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.282`** is
-[published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282).
+The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.294`** is
+[published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294).
 It includes the enabled codec runtime, sources and notices. Reference it instead
 of the codec-free `SendAirPlay2` package; mixed direct/transitive profiles are
 rejected. Ordinary Screenbox builds retain codec-free `0.3.0-ci.207`; its merged
-experimental x64 profile pins the separate stereo-AAC candidate.
+experimental x64 profile still pins stereo-AAC `ci.282`; its update is separate.
 See [the package contract](docs/opt-in-audio-runtime-package.md) and
-[verified publication](docs/opt-in-audio-release-candidate.md). Neither package
+[verified publication](docs/validation/hdr-corrected-audio-publication-windows-2026-10-17.json). Neither package
 is on nuget.org. Audio-only speakers and discrete converted surround remain deferred.
 
 [Recorded receiver checks](docs/automatic-audio-receiver-gate.md) cover native
