@@ -1,5 +1,13 @@
 # Receiver validation record
 
+**D95/D96 settings and publication (2026-10-17):** the user confirms the new
+Casting group, audio-icon alignment and toggle persistence in development
+1.0.0.12 (`6d3a30b4`). Fork #15 merges as `7cea7023`, with all four final-head
+checks passed. The [separate preview release](screenbox-airplay-preview-release.md)
+adds package/public-download, elevated installation and process/executable-hash
+launch evidence. It adds no visual or receiver observation for its new identity;
+D94's bounded receiver checks below retain their original binary/host scope.
+
 **D94 Screenbox published-ci.294 gate passed (2026-10-17):**
 [the checkpoint](screenbox-hdr-package-update.md) records passing 113/127 logic
 checks, package/profile controls and both actual MSIX payload checks (two/40
@@ -13,6 +21,9 @@ recently reported versions; this response reports no change without explicitly
 reconfirming them. These are bounded observations for these installed bytes,
 separate from historical D91/D92 results, without whole-film, HLG, speaker or
 discrete converted-surround verification. No D94 manual check remains pending.
+Fork #14/native #78 are merged (`8d2851c8`/`449457a`), with all four/17 checks
+passed at final heads `3a9de5b1`/`722e84b`. Merge/CI evidence adds no new receiver
+observation.
 
 **D93 publication (2026-10-17):** ci.294 is published after explicit user approval;
 [unauthenticated package/checksum verification](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)
