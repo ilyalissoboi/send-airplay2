@@ -1,5 +1,10 @@
 # Receiver validation record
 
+**D93 publication (2026-10-17):** ci.294 is published after explicit user approval;
+[unauthenticated package/checksum verification](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)
+matches the unchanged candidate. This adds no receiver or installed-app result.
+Screenbox's opt-in pin remains ci.282 until the separate host update.
+
 **D93 candidate preparation (2026-10-17):** [ci.294](hdr-corrected-audio-candidate.md)
 passes clean-main CI and local artifact/consumer validation, without a new
 receiver or installed-app observation. D92 private-build results below do not

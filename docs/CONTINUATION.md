@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#75 are merged. `main` contains
+Checkpoint: 2026-10-17 (Asia/Tokyo). PRs #12-#76 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,7 +23,7 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D93 HDR-corrected candidate ready for publication review (2026-10-17).**
+**D93 HDR-corrected prerelease published; public download verified (2026-10-17).**
 The user's Proceed starts `codex/hdr-corrected-audio-candidate` from clean merged
 main `72e73ea`, after PR #75 merged (all 17 final-head checks passed at `98cda90`).
 [Main dispatch run 38993860187](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38993860187)
@@ -34,9 +34,16 @@ Clean binding/native attribution, six DLL hashes, UWP distribution/source/profil
 checks and fresh local API-5/copy/RID/direct/transitive consumer checks pass;
 the UWP job passes all 12 packaging controls. Five dependency DLLs and the
 profile/notices match ci.282. Read [candidate preparation](hdr-corrected-audio-candidate.md)
-and its release notes/evidence. Publication approval is pending; no release,
-Screenbox pin or app installation is changed. Review this slice before publishing
-the exact candidate, verify its public download, then update the host pin separately.
+and its release notes/evidence. After PR #76 merged as `b4e38a3` (all 17 final-head
+checks passed at `3d63486`), the user explicitly approves publication. The
+[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294)
+contains the unchanged package and checksum, with the tag on `72e73ea`. An
+unauthenticated public download matches the original SHA-256/size and sidecar;
+[publication evidence](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)
+records the result. This approval is complete; do not ask again or republish ci.294.
+Publication documentation is on `codex/published-hdr-corrected-candidate` from
+merged main; inspect its actual PR head when reviewing. Next is a separate
+Screenbox opt-in pin update. Its current ci.282 pin/app is unchanged.
 Published ci.282 remains unchanged. The user's later testing suggests the Apple
 TV symptom was HDR-related, with no recurrence since the correction. Earlier
 failed attempts remain in D92's history; candidate checks add no instrumented
@@ -45,9 +52,9 @@ receiver observation or verification of these exact candidate bytes.
 **D92 HDR startup correction merged (historical implementation record).** PR #74 merged
 as `f1598cf`; all 17 checks passed at final head `1e917aa` in
 [run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
-D93 above records the new clean-main candidate and passing artifact/consumer
-checks. Publication approval and the Screenbox pin update remain separate;
-do not overwrite ci.282.
+D93 above records the new clean-main candidate, passing artifact/consumer
+checks and approved publication/public-download verification. The Screenbox
+pin update remains separate; do not overwrite ci.282 or republish ci.294.
 No receiver observation is pending for the recorded D92 checks. Preserve the
 earlier Apple TV attempts and the 2026-10-17 user follow-up: later testing suggests
 the incorrect HDR flag caused the issue, with no recurrence since the correction.
@@ -909,8 +916,9 @@ PR #74 as `f1598cf`, with all 17 final-head checks passed at `1e917aa`.
 Passing Mac controls and Apple TV 90-second retries remain separate from the
 earlier Apple TV end. Later user testing suggests incorrect HDR signaling as the
 cause, with no recurrence since the fix. Final Stop/cache cleanup is confirmed.
-D93 completes corrected candidate preparation. Next, review that slice, obtain
-publication approval for its exact bytes and update the host pin separately. Do not replace
+D93 completes corrected candidate preparation and approved publication, including
+independent public-download verification. Next, update the Screenbox opt-in pin
+in its own slice after inspecting current fork instructions. Do not replace
 the already published candidate under its old version.
 The 1.0.0.9 setting/default, loaded hashes/AppContainer, Mac consent cancellation,
 copied/converted controls, refusal, natural/rapid queue and cleanup checks pass;
@@ -1080,7 +1088,7 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > docs/receiver-validation.md and docs/CONTINUATION.md. D65/D66 are complete and
 > merged in native PR #42 and Screenbox PR #10; research PR #43/fork #11 also
 > merged. D67's planning PR #44 and fork checkpoint #12 are merged too.
-> PRs through #75 and fork #13 are merged. D92 is complete; read
+> PRs through #76 and fork #13 are merged. D92 is complete; read
 > hevc-hdr-range.md and the current resume paragraphs before this history.
 > D89 merged as e6acba1; all 17 checks passed at
 > final head 4c4bfb8 in run 38830621263. Inspect origin/main and open PRs before writing.
@@ -1123,8 +1131,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > the correction; retain that attribution as user-reported.
 > D93 prepares 0.5.0-ci.294 from clean main 72e73ea in run 38993860187, with
 > all 17 main checks and local artifact/consumer controls passed. Read
-> hdr-corrected-audio-candidate.md; review the preparation PR, obtain publication
-> approval and update the host pin separately. Inspect any
+> hdr-corrected-audio-candidate.md and its publication record: #76 merged as
+> b4e38a3, the user approved ci.294 publication and its unauthenticated public
+> download is verified. Do not republish it or ask for that approval again.
+> Next is a separate Screenbox opt-in pin update. Inspect any
 > open slice PR's actual head before editing.
 > Keep private input identity/content out
 > of committed evidence. Read the spike/evidence and D67's stereo AAC plan; speaker audio and

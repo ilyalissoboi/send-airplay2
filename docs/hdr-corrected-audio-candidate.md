@@ -1,7 +1,12 @@
 # HDR-corrected opt-in package candidate (D93)
 
 2026-10-17 (Asia/Tokyo). The user authorizes candidate preparation after merged
-PR #75; publication and the Screenbox pin update remain separate steps.
+PR #75. After PR #76 merged, the user explicitly approved publication. The
+[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294)
+now contains the unchanged candidate and sidecar; an unauthenticated public
+download matches the original SHA-256/size and checksum. Read
+[the publication record](validation/hdr-corrected-audio-publication-windows-2026-10-17.json).
+The Screenbox pin update remains separate; do not republish this version.
 The existing published `SendAirPlay2.StereoAac 0.5.0-ci.282` is unchanged.
 
 ## Selected source and changes
@@ -55,9 +60,11 @@ Window visibility was not established as a cause. Whole-film
 playback, HLG receiver behavior, perceptual HDR calibration, speakers and discrete
 converted surround remain outside the recorded validation.
 
-Publication remains pending explicit approval. The proposed new tag is
+Publication was explicitly approved after PR #76 merged as `b4e38a3`, with all
+17 final-head checks passed at `3d63486`. The published tag is
 `nuget-stereo-aac-v0.5.0-ci.294`, targeting the selected main commit, with the
-unchanged package and its sidecar as assets. [Prepared release notes](releases/sendairplay2-stereo-aac-0.5.0-ci.294.md)
-describe the fix and the evidence limits. Do not overwrite ci.282. After approved publication,
-verify the public download independently before updating Screenbox's opt-in pin
-in a separate slice. Its current pinned package and installation are unchanged.
+unchanged package and its sidecar as assets. [Release notes](releases/sendairplay2-stereo-aac-0.5.0-ci.294.md)
+describe the fix and the evidence limits. The tag points to the exact source
+commit above; package and sidecar hashes match on an unauthenticated public
+download. Do not overwrite ci.282 or republish ci.294. Next is updating Screenbox's
+opt-in pin in a separate slice; its current pin and installation are unchanged.

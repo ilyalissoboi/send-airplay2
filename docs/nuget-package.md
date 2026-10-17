@@ -19,7 +19,7 @@ The existing package identity/profile remains codec-free. The separate
 UWP codec runtime only when `pack_nuget.ps1 -StereoAac` is requested. Reference
 one profile, not both. It includes all six DLLs, matching notices and the exact
 FFmpeg source archive/overlay/configuration records. The opt-in profile is now a
-[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282);
+[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294);
 published codec-free `ci.207` and Screenbox remain unchanged. Read
 [the contract, commands and validation](opt-in-audio-runtime-package.md).
 The clean-main [D90 candidate](opt-in-audio-release-candidate.md), `0.5.0-ci.282`,
@@ -29,12 +29,13 @@ are recorded separately. The published tag targets `e6acba1`; the public package
 and sidecar match the approved bytes. Its tag prefix is `nuget-stereo-aac-v`,
 distinct from the codec-free package's `nuget-v` prefix.
 
-The [D93 ci.294 candidate](hdr-corrected-audio-candidate.md) includes the merged
+The [D93 ci.294 release](hdr-corrected-audio-candidate.md) includes the merged
 HEVC HDR declaration fix missing from ci.282. All 17 clean-main checks and local
-artifact/fresh consumer checks pass; its exact hash and prepared release notes
-are recorded for publication review. It is not published. Screenbox's ordinary
-pin remains ci.207 and its merged opt-in profile pins ci.282; neither changes
-during candidate preparation.
+artifact/fresh consumer checks pass. The user approved its publication after
+PR #76 merged; [public package/checksum verification](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)
+matches the unchanged candidate. The tag targets `72e73ea`. Screenbox's ordinary
+pin remains ci.207 and its merged opt-in profile pins ci.282; the opt-in pin
+update is a separate next slice. No nuget.org publication is included.
 
 ## Contents
 

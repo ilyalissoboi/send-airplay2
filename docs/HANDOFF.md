@@ -9,7 +9,7 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D93 HDR-corrected candidate ready for publication review (2026-10-17).**
+**D93 HDR-corrected prerelease published; public download verified (2026-10-17).**
 The user's Proceed starts `codex/hdr-corrected-audio-candidate` from clean merged
 main `72e73ea`, after PR #75 merged (all 17 final-head checks passed at `98cda90`).
 [Main dispatch run 38993860187](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38993860187)
@@ -20,9 +20,16 @@ Clean binding/native attribution, six DLL hashes, UWP distribution/source/profil
 checks and fresh local API-5/copy/RID/direct/transitive consumer checks pass;
 the UWP job passes all 12 packaging controls. Five dependency DLLs and the
 profile/notices match ci.282. Read [candidate preparation](hdr-corrected-audio-candidate.md)
-and its release notes/evidence. Publication approval is pending; no release,
-Screenbox pin or app installation is changed. Review this slice before publishing
-the exact candidate, verify its public download, then update the host pin separately.
+and its release notes/evidence. After PR #76 merged as `b4e38a3` (all 17 final-head
+checks passed at `3d63486`), the user explicitly approves publication. The
+[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294)
+contains the unchanged package and checksum, with the tag on `72e73ea`. An
+unauthenticated public download matches the original SHA-256/size and sidecar;
+[publication evidence](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)
+records the result. This approval is complete; do not ask again or republish ci.294.
+Publication documentation is on `codex/published-hdr-corrected-candidate` from
+merged main; inspect its actual PR head when reviewing. Next is a separate
+Screenbox opt-in pin update. Its current ci.282 pin/app is unchanged.
 Published ci.282 remains unchanged. The user's later testing suggests the Apple
 TV symptom was HDR-related, with no recurrence since the correction. Earlier
 failed attempts remain in D92's history; candidate checks add no instrumented
@@ -31,8 +38,8 @@ receiver observation or verification of these exact candidate bytes.
 **D92 HDR startup correction merged (PR #74, 2026-10-17).**
 PR #74 merged as `f1598cf`. All 17 checks passed at final head `1e917aa`
 in [run 38909207891](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38909207891).
-D93 above records completed corrected-candidate preparation; publication approval
-and the Screenbox pin update remain separate.
+D93 above records approved corrected-candidate publication; the Screenbox pin
+update remains separate.
 Published ci.282 remains unchanged and lacks this fix. On 2026-10-17 the user
 reports later testing suggests incorrect HDR signaling caused the Apple TV issue,
 with no recurrence since the correction. This is the user's causal assessment;
