@@ -32,23 +32,26 @@ manifest and app identity/data are preserved. Existing translation, legacy
 migration and third-party AOT warnings
 remain separate from failures.
 
-The bounded manual follow-up will identify the installed AppContainer and six
-loaded published DLL hashes before observing HDR/DTS startup, audio/video,
-pause/resume, seeks, 90-second continued playback and Stop/local paused handoff
-on available receivers. It may use the previously user-authorized input without
-committing its identity, path or contents. This is separate from D91's completed
-original short controls and D92's private local-DLL correction checks; neither
-is presented as a new published-ci.294 observation. No Computer Use is used for
-visual confirmation. Written manual steps are provided in chat.
+The recorded manual gate passes on both Mac and Apple TV. Before and after
+playback, the actual AppContainer, inspected MSIX executable and all six loaded
+published ci.294 DLL hashes match. The user confirms the written checks:
+HDR/DTS playback from zero for about 90 seconds, normal audio/video, pause/resume,
+forward/backward seeks, Stop closing receiver playback and local playback
+remaining paused. Final owned AirPlay cache is zero directories/bytes. The reply
+is "Both receivers worked as expected." macOS 26.7.1/tvOS 26.6 are the most
+recently reported versions; the reply reports no change but does not explicitly
+reconfirm them.
 
-The user reports both receivers available and the installed app ready. Its
-AppContainer, inspected MSIX executable and all six loaded published ci.294 DLL
-hashes are verified, with zero owned cache directories before playback. Written
-90-second HDR/DTS startup, audio/video, pause/resume, forward/backward seeks and
-Stop/local-paused observations remain pending for both receivers. The user's
-later Apple TV testing suggests incorrect HDR signaling caused the prior symptom,
-with no recurrence after the correction; earlier attempts remain in D92's history.
-No whole-film, HLG receiver, speaker or discrete converted-surround claim is added.
+The bounded check uses the previously user-authorized input without retaining
+its identity, path or contents. Written manual steps and user observation are
+used, with no Computer Use for visual confirmation. D91's original short
+controls and D92's private DLL checks remain separate. The user's later Apple
+TV testing suggests incorrect HDR signaling caused the prior symptom, with no
+recurrence after correction; earlier attempts remain in D92's history. No
+whole-film, HLG receiver, speaker or discrete converted-surround claim is added.
+No further D94 receiver check is pending. Review fork #14 and
+[native #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) before merging;
+user approval is required to merge.
 
 ## CI cleanup-test follow-up
 
@@ -60,6 +63,8 @@ gate until explicit test release, drains in `finally`, and retains a separate
 30-second completion watchdog. Existing ordering, supersession and logger-failure
 coverage remains. Both 113/127 logic suites pass again locally. No production
 host/native code or installed package changes; the receiver check continues on
-the inspected `66660bf7` MSIX. On corrected head `fbb01d20`, opt-in logic, MSIX
-build and distribution-verification steps pass in CI; the overall run is still
-finishing at this checkpoint. Inspect actual final-head CI before review.
+the inspected `66660bf7` MSIX. On corrected head `fbb01d20`, all four CI jobs
+(xaml-lint, test, build and airplay-stereo-aac) pass in
+[run 39005238604](https://github.com/ilyalissoboi/Screenbox/actions/runs/39005238604).
+Release is intentionally skipped for the PR. Inspect actual final documentation
+head CI separately; the receiver-tested binary remains the `66660bf7` MSIX.

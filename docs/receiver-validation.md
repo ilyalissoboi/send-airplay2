@@ -1,11 +1,18 @@
 # Receiver validation record
 
-**D94 Screenbox pin update (2026-10-17):** [the ci.294 checkpoint](screenbox-hdr-package-update.md)
-records passing 113/127 logic checks, integrity/profile controls and actual
-ordinary/opt-in MSIX payload checks (two/40 files). Development 1.0.0.11 is
-registered in place with data preserved. The runtime executable/AppContainer
-and all six loaded published DLL hashes pass. The user confirms both receivers
-available; written 90-second HDR/DTS/controls/Stop observations remain pending. D91/D92 results are not claimed for these installed bytes.
+**D94 Screenbox published-ci.294 gate passed (2026-10-17):**
+[the checkpoint](screenbox-hdr-package-update.md) records passing 113/127 logic
+checks, package/profile controls and both actual MSIX payload checks (two/40
+files). Development 1.0.0.11 is registered in place from implementation
+`66660bf7`, with data preserved. AppContainer, executable and six loaded
+published DLL hashes match before and after playback. The user confirms BOTH
+Mac and Apple TV passed the written 90-second HDR/DTS startup/playback,
+pause/resume, forward/backward seeks, Stop closure and local-paused checks.
+Final owned cache: zero directories/bytes. macOS 26.7.1/tvOS 26.6 are the most
+recently reported versions; this response reports no change without explicitly
+reconfirming them. These are bounded observations for these installed bytes,
+separate from historical D91/D92 results, without whole-film, HLG, speaker or
+discrete converted-surround verification. No D94 manual check remains pending.
 
 **D93 publication (2026-10-17):** ci.294 is published after explicit user approval;
 [unauthenticated package/checksum verification](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)

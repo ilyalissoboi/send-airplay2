@@ -9,24 +9,28 @@ checkpoint, review disposition, validation commands and ordered development queu
 
 ## 0. Resume here
 
-**D94 Screenbox ci.294 pin update in progress (2026-10-17).** The user's Proceed
-starts fork `codex/airplay-hdr-ci294` from merged main `b52c58e` and native
-`codex/screenbox-ci294-checkpoint` from #77 merge `31b4474`. Fork
-[PR #14](https://github.com/ilyalissoboi/Screenbox/pull/14) is a draft at initial
-implementation head `66660bf7`. The opt-in pin/tag/hash and matching cache-test
-filename select published ci.294; ordinary ci.207, host code/UI, permission,
-audio policy and quota are unchanged. Both Core builds/113 ordinary and 127
-opt-in logic checks, fresh/cached package integrity/profile refusals, and the
-ordinary MSIX/two native-file check pass. The opt-in MSIX also passes all 40
-native/source/notice hashes and is registered in place as development 1.0.0.11,
-with data preserved and source manifest unchanged. The actual AppContainer,
-inspected executable and six loaded published DLL hashes pass; the user confirms
-both receivers available. Bounded HDR/DTS observations remain pending. The fork
-CI follow-up `fbb01d20` fixes a self-expiring cleanup-test gate; both logic suites
-pass again, and corrected-head CI is running. Production/app code is unchanged. Read
-[the current checkpoint](screenbox-hdr-package-update.md). No new receiver result
-is claimed from D91/D92 or the local build. Use written manual instructions;
-no Computer Use for visual confirmation. Do not republish ci.294.
+**D94 Screenbox ci.294 recorded host gate passed (2026-10-17).** Fork
+[PR #14](https://github.com/ilyalissoboi/Screenbox/pull/14) updates the opt-in
+x64 pin from ci.282 to published ci.294, retaining ordinary ci.207 and existing
+host code/UI, permission, audio policy and quota. Both Core profiles pass
+113/127 logic checks; public download/cache integrity and profile refusals pass.
+Both actual MSIX layouts match their pins (two ordinary native files; all 40
+opt-in native/source/notice files). The inspected implementation `66660bf7` MSIX
+is registered in place as development 1.0.0.11, preserving data and source manifest.
+Before and after playback, its AppContainer, executable and six loaded published
+DLL hashes pass. The user confirms both Mac and Apple TV passed the written
+90-second HDR/DTS playback, pause/resume, forward/backward seeks, Stop closure
+and local-paused checks. Final owned cache is zero directories/bytes. The most
+recently reported receiver versions are macOS 26.7.1/tvOS 26.6; this reply reports
+no change but does not explicitly reconfirm them. The test-only cleanup gate fix
+at `fbb01d20` passes all four fork CI jobs; production/app code is unchanged.
+Read [the checkpoint](screenbox-hdr-package-update.md) and inspect final PR-head
+CI separately. Review/merge fork #14 and native
+[PR #78](https://github.com/ilyalissoboi/send-airplay2/pull/78) next; do not merge
+without user approval. No further D94 manual check is pending. Keep D91/D92
+history separate; no whole-film, HLG, speaker or discrete converted-surround
+claim is added. Use written manual steps, with no Computer Use for visual
+confirmation. Do not republish ci.294.
 
 **D93 HDR-corrected prerelease published; public download verified (2026-10-17).**
 The user's Proceed starts `codex/hdr-corrected-audio-candidate` from clean merged

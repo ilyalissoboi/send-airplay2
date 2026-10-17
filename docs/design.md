@@ -10,14 +10,16 @@ package pin, final validation record and Forget-device follow-up; PR #11 adds
 the research checkpoint and PR #12 the next-slice planning checkpoint, without
 changing runtime behavior.
 
-**D94 host pin update in progress:** [fork #14](https://github.com/ilyalissoboi/Screenbox/pull/14)
+**D94 recorded host gate passed:** [fork #14](https://github.com/ilyalissoboi/Screenbox/pull/14)
 selects published ci.294 for the opt-in x64 profile, retaining ordinary ci.207
-and the existing host policy/permission/quota. Logic and ordinary MSIX checks
-pass; both MSIX profiles match their pinned payloads. Development 1.0.0.11 is
-registered in place, with data preserved. AppContainer/executable/six loaded
-published DLL hashes pass; bounded receiver observations are pending. A test-only
-CI follow-up replaces a self-expiring cleanup gate with explicit release and
-bounded completion; both logic suites pass again locally, corrected-head CI pending. Read [the checkpoint](screenbox-hdr-package-update.md).
+and existing host policy/permission/quota. Both logic suites and actual MSIX
+payload controls pass. Development 1.0.0.11 preserves data; its AppContainer,
+executable and six loaded published hashes pass before and after playback.
+The user confirms 90-second HDR/DTS playback, pause/resume, both seeks and
+Stop/local-paused handoff on Mac and Apple TV. Final owned cache is empty.
+The test-only explicit cleanup-gate release passes 113/127 local tests and all
+four CI jobs at `fbb01d20`. Review the final documentation heads separately;
+no additional D94 receiver check is pending. Read [the checkpoint](screenbox-hdr-package-update.md).
 
 **D93 prerelease published:** [HDR-corrected ci.294](hdr-corrected-audio-candidate.md)
 comes from clean merged main `72e73ea` in dispatch run `38993860187`. All 17
