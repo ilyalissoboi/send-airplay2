@@ -15,6 +15,9 @@ PCM, final trim, cold/backward reads, selection, cancellation, cache failure and
 cleanup. Static/shared suites pass 40/41; the codec suite passes 15 and UWP
 private-library compilation passes. This is offline evidence, not a new receiver
 result. See [the scope and ordered follow-ups](audio-only-aac-foundation.md).
+The user adds MP3 input support, direct-playback validation on Mac/Apple TV and
+a conditional AAC fallback decision to the work plan. These are planned only;
+MP3 is not admitted or receiver-verified by D100.
 
 **D99 dimension-review gate passed on Mac (2026-10-18).** Fork #16 is merged
 as `c10dc464`, with all four checks passed at final head `a0888786` in

@@ -83,7 +83,8 @@ See [the machine-readable checkpoint](validation/audio-only-aac-foundation-windo
    audio-only Matroska require their own validated audible-end calculation.
    Demuxers outside the currently pinned MOV/Matroska backend require an explicit
    codec-profile/package rebuild and source/license record. Decoder availability
-   inside a video container is not proof of standalone file support.
+   inside a video container is not proof of standalone file support. Include the
+   MP3 work track below as explicitly requested by the user.
 2. Connect automatic delivery to an explicit audio-only profile: copy only a
    validated receiver-delivery subset, otherwise convert covered streams when
    stereo permission is enabled. Preserve-original, absent backend, unknown
@@ -97,6 +98,38 @@ See [the machine-readable checkpoint](validation/audio-only-aac-foundation-windo
 4. Repeat brokered-source/lifetime/storage gates in a packaged UWP host. Only
    then extend Screenbox routing/settings/queue behavior and provide written
    manual instructions. Preserve current opt-in stereo permission and defaults.
+
+### MP3 work track added by the user (2026-10-18)
+
+MP3 is now explicitly in the work plan. This adds planning scope only: D100's
+private factory remains FLAC/PCM-only, with no MP3 implementation, backend
+profile change or receiver observation.
+
+1. **Input support and offline evidence.** Define bounded MP3 stream inventory,
+   frame validation, duration and seek coordinates, including CBR/VBR, mono/stereo,
+   sample-rate admission, leading/trailing metadata and gapless trim metadata.
+   Use owned tone fixtures with independently recorded frame counts and seek
+   markers. Validate short reads, cancellation/deadlines, malformed/truncated
+   frames and metadata, changing stream parameters and long-file resource bounds.
+   Inspect the pinned backend and record source/license provenance before any
+   required demuxer/decoder/profile expansion; file extension alone is not proof
+   of stream eligibility.
+2. **Direct playback first.** Probe progressive MP3 delivery with the appropriate
+   explicit MIME on both recorded MacBook Pro and Apple TV, using owned CBR/VBR
+   fixtures. Record receiver/OS and exact binary bytes. Verify audible start and
+   nonzero starting position, duration/end, pause/resume, forward/backward seek,
+   separate Stop/no delayed restart and applicable consent cancellation. Keep
+   native, brokered packaged UWP and later Screenbox queue gates separate; use
+   written user observations. Current AAC/M4A or audio-in-video evidence does not
+   establish MP3 playback. Audio-only speakers remain outside these observations.
+3. **Choose delivery from evidence.** If validated direct delivery covers an MP3
+   subset, keep that subset on a copy/direct path without requiring conversion
+   permission. Decide whether an AAC fallback is needed from the receiver results
+   and document its trigger and admitted stream subset. Add conversion only when
+   justified, with explicit stereo permission, validated decoder/timeline support,
+   the existing bounded cache/cleanup contract and independent AAC-output checks.
+   Unknown or unvalidated streams must not silently become eligible. A fallback
+   decision remains pending; this plan does not presume MP3 requires transcoding.
 
 HomePod/RAOP speakers, discrete converted surround, Chromecast hardware checks,
 user-deferred remote-Stop classification and separate long-input/cache-quota

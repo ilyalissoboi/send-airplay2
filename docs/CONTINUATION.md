@@ -39,6 +39,9 @@ PCM, final trim, cold/backward reads, selection, cancellation, cache failure and
 cleanup. Static/shared suites pass 40/41; the codec suite passes 15 and UWP
 private-library compilation passes. This is offline evidence, not a new receiver
 result. See [the scope and ordered follow-ups](audio-only-aac-foundation.md).
+The user adds MP3 input support, direct-playback validation on Mac/Apple TV and
+a conditional AAC fallback decision to the work plan. These are planned only;
+MP3 is not admitted or receiver-verified by D100.
 
 **D99 dimension-review gate passed on Mac (2026-10-18).** Fork #16 is merged
 as `c10dc464`, with all four checks passed at final head `a0888786` in
@@ -1075,7 +1078,8 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    ask before merging. Static/shared CTests pass 40/41, codec CTests 15, and the
    private UWP library compiles. No new receiver observation or public routing.
 5. **Following slices:** validated input timelines/container support (including
-   native FLAC and WAV, then Ogg Opus/Vorbis); automatic copy/conversion policy
+   native FLAC and WAV, then Ogg Opus/Vorbis, plus the MP3 input/direct-playback
+   work track and evidence-based AAC fallback decision); automatic copy/conversion policy
    and public integration with explicit stereo permission; native/packaged
    receiver gates, then Screenbox routing/queue checks. Existing decoder coverage
    inside MP4/MKV does not prove standalone support. Keep these gates separate.
@@ -1321,7 +1325,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > unchanged. Static/shared CTests pass 40/41, codec CTests 15 and private UWP
 > compilation passes; these are not new receiver observations. Standalone
 > FLAC/Ogg/WAV, edited/MKA timelines and automatic policy/public integration
-> remain ordered follow-ups. No new app install, release or hardware gate starts
-> here. Preserve speaker/discrete-surround/Chromecast and remote-Stop deferrals.
+> remain ordered follow-ups. MP3 input support and Mac/Apple TV direct-playback
+> validation are now explicitly in the user-requested plan; decide AAC fallback
+> only from those results. No MP3 implementation or interoperability is claimed.
+> No new app install, release or hardware gate starts here. Preserve speaker/discrete-surround/Chromecast and remote-Stop deferrals.
 > Use written manual confirmation, not Computer Use, for any future visual UI
 > gate. Ask before merging or publishing.

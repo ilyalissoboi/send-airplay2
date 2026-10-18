@@ -48,7 +48,8 @@ AAC/M4A audio-only progressive playback has separate recorded
 and [Screenbox](docs/screenbox-audio-files.md) gates. The next
 [private audio-only AAC foundation](docs/audio-only-aac-foundation.md) is tested
 only offline with unedited FLAC/PCM MP4/MOV input. Public automatic conversion
-still requires video; standalone FLAC/Ogg/WAV support remains future work.
+still requires video; standalone FLAC/Ogg/WAV and planned MP3 input/direct
+playback validation remain future work. MP3 AAC fallback depends on those results.
 
 The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.294`** is
 [published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294).

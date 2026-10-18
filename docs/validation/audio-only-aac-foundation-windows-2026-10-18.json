@@ -175,8 +175,22 @@
   ],
   "next": [
     "Validated standalone container/timeline admission",
+    "User-requested MP3 input support and direct-playback validation on Mac/Apple TV; decide AAC fallback from evidence",
     "Automatic copy/conversion policy and public integration",
     "Native and packaged Mac/Apple TV receiver gates",
     "Screenbox integration and written manual queue checks"
+  ],
+  "plan_additions": [
+    {
+      "date": "2026-10-18",
+      "authorization": "User requests adding MP3 items to the work plan",
+      "scope": [
+        "Bounded MP3 input/duration/seek/trim rules and owned CBR/VBR fixture checks",
+        "Direct progressive playback and controls on MacBook Pro and Apple TV, then separate packaged UWP and Screenbox gates",
+        "Evidence-based decision on AAC fallback; explicit stereo permission and validated backend/timeline required if implemented"
+      ],
+      "status": "PLANNED_ONLY_NOT_IMPLEMENTED_OR_RECEIVER_VERIFIED",
+      "d100_admission_unchanged": true
+    }
   ]
 }
