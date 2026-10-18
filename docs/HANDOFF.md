@@ -2,10 +2,13 @@
 
 Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
 
-**Current D99 dimension-review follow-up (2026-10-18), in progress.** Native
+**Current D99 dimension-review fixes merged (2026-10-18); focused check pending.** Native
 #83 is merged as `e551388` with all 17 final-head checks passed at `9d594d8` and
-no review findings. Open fork #16 has two valid current/queued video-size
-comments. Implementation `c8cc5584` preserves VLC's current natural dimensions
+no review findings. Fork #16 is merged as `c10dc464`, with all four checks passed
+at final head `a0888786` in
+[run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).
+Both current/queued video-size comments are resolved. Implementation `c8cc5584`
+preserves VLC's current natural dimensions
 and resolves unopened queued video metadata independently, with SAR/orientation,
 bounded owned parsing, cancellation and normal failure handoff. Both logic
 suites pass 142/157. Both actual MSIX/pinned payload checks pass; development
@@ -32,7 +35,7 @@ intentionally closed the original process, so these are not continuous-process
 before/after captures. Final owned cache is zero directories/bytes. All four
 fork/17 native checks pass at checkpoints `9c5202bf`/`5502e8e`; inspect final
 documentation-head CI separately. No further original 1.0.0.13 receiver check is pending.
-See [the complete record and limits](screenbox-audio-files.md). Fork #16 remains open for review; native #83 is merged. Do not merge automatically. Automatic audio-only
+See [the complete record and limits](screenbox-audio-files.md). Fork #16 and native #83 are merged; the focused review-fix gate above remains separate. Automatic audio-only
 conversion is a separate next proposal, not implemented here. No release or
 pin update is published, and ordinary-profile receiver behavior is not newly
 verified. Preserve the hardware/user deferrals and completed D97/D98 evidence.

@@ -1,6 +1,9 @@
 # Receiver validation record
 
-**D99 dimension review follow-up active:** fork #16 `c8cc5584` fixes current
+**D99 dimension fixes merged; focused check pending:** fork #16 merged as
+`c10dc464`, with all four final-head checks passed at `a0888786` in
+[run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).
+Implementation `c8cc5584` fixes current
 natural display size and unopened queued-video metadata, with SAR/orientation
 and cancellation guards. Logic suites pass 142/157; both actual MSIX/payload
 profiles pass. Development 1.0.0.14 is installed in place; loaded-runtime and

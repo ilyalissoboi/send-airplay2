@@ -1,9 +1,13 @@
 # D99 review follow-up: current and queued video dimensions
 
-2026-10-18 (Asia/Tokyo), in progress. Native #83 is merged as `e551388`, with
+2026-10-18 (Asia/Tokyo), code merged; focused validation pending.
+Fork #16 is merged as `c10dc464`, with all four checks passed at final head
+`a0888786` in [run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).
+This adds merge/CI evidence only, not a manual layout observation or publication.
+Native #83 is merged as `e551388`, with
 all 17 final-head checks passed at `9d594d8`. It has no review findings. The
-user requests addressing the two actionable comments on open fork #16, reviewed
-head `f4ae4b27`; the existing fork branch is continued after inspecting its actual
+user requested addressing the two actionable comments on then-open fork #16,
+reviewed head `f4ae4b27`; the existing fork branch is continued after inspecting its actual
 head. The current Screenbox instructions are read before C# changes.
 
 Implementation `c8cc5584` preserves VLC's natural display dimensions when an

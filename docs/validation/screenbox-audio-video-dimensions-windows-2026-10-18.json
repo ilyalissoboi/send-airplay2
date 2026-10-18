@@ -2,7 +2,7 @@
   "decision": "D99_REVIEW",
   "date": "2026-10-18",
   "timezone": "Asia/Tokyo",
-  "result": "LOGIC_AND_MSIX_PASSED_FOCUSED_MANUAL_PENDING",
+  "result": "FIXES_MERGED_LOGIC_AND_MSIX_PASSED_FOCUSED_MANUAL_PENDING",
   "fork_pr": 16,
   "reviewed_head": "f4ae4b2747535b564f10a88bdefd8a59a9166c1e",
   "implementation_head": "c8cc55842437c248d286fa9732f44659e3b17504",
@@ -74,5 +74,15 @@
       "resolved": true,
       "reply": "https://github.com/ilyalissoboi/Screenbox/pull/16#discussion_r4305892483"
     }
-  ]
+  ],
+  "merged_fork_pr": {
+    "number": 16,
+    "merge_commit": "c10dc4642fe2853a6122aa6ddf814a52289cacdc",
+    "merged_utc": "2026-10-18T11:02:50Z",
+    "final_head": "a08887862c89c9abd575dbe5565361918d67c002",
+    "passed_checks": 4,
+    "release_job": "intentionally skipped",
+    "ci_run": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534",
+    "scope": "Merge/CI verification only; no new manual observation or release publication"
+  }
 }

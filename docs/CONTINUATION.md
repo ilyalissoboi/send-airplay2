@@ -24,10 +24,13 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Current D99 dimension-review follow-up (2026-10-18), in progress.** Native
+**Current D99 dimension-review fixes merged (2026-10-18); focused check pending.** Native
 #83 is merged as `e551388` with all 17 final-head checks passed at `9d594d8` and
-no review findings. Open fork #16 has two valid current/queued video-size
-comments. Implementation `c8cc5584` preserves VLC's current natural dimensions
+no review findings. Fork #16 is merged as `c10dc464`, with all four checks passed
+at final head `a0888786` in
+[run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).
+Both current/queued video-size comments are resolved. Implementation `c8cc5584`
+preserves VLC's current natural dimensions
 and resolves unopened queued video metadata independently, with SAR/orientation,
 bounded owned parsing, cancellation and normal failure handoff. Both logic
 suites pass 142/157. Both actual MSIX/pinned payload checks pass; development
@@ -54,7 +57,7 @@ intentionally closed the original process, so these are not continuous-process
 before/after captures. Final owned cache is zero directories/bytes. All four
 fork/17 native checks pass at checkpoints `9c5202bf`/`5502e8e`; inspect final
 documentation-head CI separately. No further original 1.0.0.13 receiver check is pending.
-See [the complete record and limits](screenbox-audio-files.md). Fork #16 remains open for review; native #83 is merged. Do not merge automatically. Automatic audio-only
+See [the complete record and limits](screenbox-audio-files.md). Fork #16 and native #83 are merged; the focused review-fix gate above remains separate. Automatic audio-only
 conversion is a separate next proposal, not implemented here. No release or
 pin update is published, and ordinary-profile receiver behavior is not newly
 verified. Preserve the hardware/user deferrals and completed D97/D98 evidence.
@@ -1036,9 +1039,10 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    Retain the initial timeout and two Mac connection failures alongside the
    successful retry; no further D98 manual check is pending. All 17 checks pass
    at final head `0c16c4a`; merge/CI adds no new receiver observation.
-3. **D99 original host gate complete; dimension review follow-up active.**
+3. **D99 original host gate complete; dimension fixes merged, focused check pending.**
    Native #83 is merged as `e551388` (17 checks passed at `9d594d8`). Fork #16
-   implementation `c8cc5584` addresses current natural-size preservation and
+   is merged as `c10dc464` with all four checks passed at `a0888786`.
+   Implementation `c8cc5584` addresses current natural-size preservation and
    unopened queued-video metadata. Both logic suites pass 142/157; both actual
    MSIX/payload checks pass. Development 1.0.0.14 is installed in place; complete
    loaded-runtime and focused written layout/queue checks. Both review threads
@@ -1281,8 +1285,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 
 > Continue from AGENTS.md, HANDOFF.md, design.md, receiver-validation.md and
 > CONTINUATION.md. D99 original host gate is complete; the dimension-review
-> follow-up is active. Read screenbox-audio-video-dimensions.md and actual fork
-> #16 head/review/CI. Implementation c8cc5584 fixes both current/queued display
+> fixes are merged, with focused validation pending. Read
+> screenbox-audio-video-dimensions.md and actual native #84 head/review/CI.
+> Fork #16 merged as c10dc464 with all four checks passed at final head a0888786
+> in run 39101341534. Implementation c8cc5584 fixes both current/queued display
 > size comments, with owned bounded metadata parsing, cancellation, SAR/orientation
 > and invalid-size guards. Both logic suites pass 142/157 and both actual MSIX/
 > payload checks pass. Development 1.0.0.14 is installed in place. Loaded-runtime
@@ -1290,7 +1296,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > Preserve original aff57b6f/development1.0.0.13 observations as historical bytes.
 > Native #83 is merged as e551388 with 17 checks passed at final head 9d594d8
 > and no findings; do not write review changes to its old merged branch.
-> Continue the existing fork branch and current companion checkpoint branch.
+> Continue the open native #84 checkpoint branch. Fork #16 is merged; any new
+> Screenbox code slice needs its own branch from current main. Merge/CI adds no
+> new manual observation and does not publish a release.
 > No full audio matrix repeat, new native API/pin/delivery/audio policy or release
 > is part of this review. Inspect current Screenbox instructions, use VS 2026
 > MSBuild and preserve identity/data/grants. Use written manual confirmation,
