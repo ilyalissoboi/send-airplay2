@@ -37,6 +37,7 @@ struct VariantStream {
     std::uint64_t frame_rate_milli = 0; ///< Frames per 1000 s; 0 omits FRAME-RATE.
     std::string codecs;
     VideoRange video_range = VideoRange::unspecified;
+    bool independent_segments = true; ///< False when cold audio synthesis needs overlap history.
 };
 /// HEVC SPS VUI metadata; other codecs retain the existing implicit SDR behavior.
 [[nodiscard]] VideoRange video_range(const Mp4Track& track);
@@ -54,8 +55,9 @@ struct AudioRendition {
  * BANDWIDTH, AVERAGE-BANDWIDTH, CODECS, RESOLUTION, FRAME-RATE and
  * SUBTITLES="subs". HEVC PQ/HLG carries VIDEO-RANGE; SDR is implicit as before.
  * Lines end in LF.
- * With separate audio, the master omits INDEPENDENT-SEGMENTS: cold AAC overlap
- * requires history. The video media playlist retains its own independence tag. */
+ * Separate audio or variant.independent_segments=false omits INDEPENDENT-SEGMENTS:
+ * cold AAC overlap requires history. A copied video media playlist retains its
+ * own independence tag. */
 [[nodiscard]] std::string multivariant_playlist(const VariantStream& variant,
                                                 const std::vector<SubtitleRendition>& subtitles,
                                                 const AudioRendition* audio = nullptr);

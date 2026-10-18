@@ -1,5 +1,21 @@
 # Receiver validation record
 
+**D100 private audio-only AAC foundation (2026-10-18).** After native #84
+merged as `b9af011` (all 17 checks passed at `64c3595` in
+[run 39124033437](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39124033437)),
+the user authorizes the next automatic audio-only conversion slice. A private
+`StereoAacHls::open_audio_only` entry now derives a 48-kHz timeline from the
+selected unedited progressive MP4/MOV packet index, admits the covered FLAC/PCM
+subset without video tracks, and authors one audio-only AAC HLS variant. It
+reuses bounded decoding, stereo downmix/encoding, lazy host storage and joined
+Stop cleanup. Public API/automatic routing, packages and Screenbox are unchanged.
+Standalone FLAC/Ogg/WAV, edited timelines and Matroska audio-only duration are
+not admitted by this slice. Offline tests cover owned 48/44.1-kHz FLAC and 5.1
+PCM, final trim, cold/backward reads, selection, cancellation, cache failure and
+cleanup. Static/shared suites pass 40/41; the codec suite passes 15 and UWP
+private-library compilation passes. This is offline evidence, not a new receiver
+result. See [the scope and ordered follow-ups](audio-only-aac-foundation.md).
+
 **D99 dimension-review gate passed on Mac (2026-10-18).** Fork #16 is merged
 as `c10dc464`, with all four checks passed at final head `a0888786` in
 [run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).

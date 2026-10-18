@@ -1,0 +1,113 @@
+{
+  "license": "Apache-2.0 repository-owned synthetic tones",
+  "generator": "generate_audio_only_fixtures.py",
+  "ffmpeg": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+  "files": [
+    {
+      "file": "flac-stereo.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 624144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+      },
+      "sha256": "972a828403bd9a53f26ba94f211fdac3b82a4a3fbffa3a23030aeb1d4611f334",
+      "bytes": 333270,
+      "streams": 1,
+      "edited": false
+    },
+    {
+      "file": "flac-44100.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 573432,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "24ffec906b231477c8480d206ca51923b04cb4df900728edeb774d6d9336985d"
+      },
+      "sha256": "5832ebe6534f75a190e2ada0fbf1611790b4d594a82d6c86a5c27f5b44094619",
+      "bytes": 304872,
+      "streams": 1,
+      "edited": false
+    },
+    {
+      "file": "pcm-51.mov",
+      "original_tones": {
+        "channels": 6,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          310,
+          470,
+          630,
+          80,
+          790,
+          950
+        ],
+        "sha256": "6851721e804cbf46ba8244658757d7fbc96272a1da491675a9e70528c9335085"
+      },
+      "sha256": "3a1630c4030cb69bf6a4c795e61f39e5126518bbfe1b4dbba998be73c2440ea6",
+      "bytes": 1730393,
+      "streams": 1,
+      "edited": false
+    },
+    {
+      "file": "aac.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "sha256": "98324371914b2633f5e2c730bfdadc218e5bb56890ece33f70a2309404d89bb5",
+      "bytes": 49419,
+      "streams": 1,
+      "edited": false
+    },
+    {
+      "file": "edited-pcm.mov",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "sha256": "65283d817a848e134711cfd563bd02897a05f3046d416276e19801533c51966f",
+      "bytes": 577261,
+      "streams": 1,
+      "edited": true
+    },
+    {
+      "file": "multiple-flac.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "sha256": "de6cf9a7452abd1c35d7da79985a779706e359acc2466184ef973545f0f861e9",
+      "bytes": 155499,
+      "streams": 2,
+      "edited": false
+    }
+  ]
+}

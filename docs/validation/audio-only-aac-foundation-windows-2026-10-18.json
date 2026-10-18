@@ -1,0 +1,182 @@
+{
+  "decision": "D100",
+  "date": "2026-10-18",
+  "timezone": "Asia/Tokyo",
+  "result": "PRIVATE_AUDIO_ONLY_FOUNDATION_OFFLINE_PASSED_NO_RECEIVER_GATE",
+  "base": {
+    "pr": 84,
+    "merge_commit": "b9af0119ef06399640cef5b4f6f9f281aba0fa00",
+    "final_head": "64c3595a3bb48d8e6233c17fbeceff16680255e0",
+    "passed_ci_checks": 17,
+    "ci_run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39124033437"
+  },
+  "branch": "codex/audio-only-aac-foundation",
+  "implemented": "Private selected FLAC/PCM in unedited progressive MP4/MOV, no video tracks; native packet-index duration; audio-only HLS and existing lazy stereo AAC cache/lifetime",
+  "source_hashes": {
+    "src/audio_decoder_source.h": "0fab9602ad7efd28e9c16d2a6078d325b8f0fd537447ba71f3c4bcfd9f86733e",
+    "src/audio_decoder_source.cpp": "7db9b121287839fa13b2d9ab6a9e5fe45cb7d0be0a8ce09a01e2a3a2c0bed21e",
+    "src/hls_variant.h": "a7a477ad46161e87df0272805a7c2f81ec52af89ce62314e1c93833ca45178ce",
+    "src/hls_variant.cpp": "8c39fb133909c7c76033610998f8e4eb98ee538d4a462e10aee82717afa8e057",
+    "src/stereo_aac_hls.h": "5cbc01b0ee1be7931f7fedafca64e640866b1cc13f3229a8f01c54f344789287",
+    "src/stereo_aac_hls.cpp": "2bb769cb175b96d78458e838036593d5607d6be32f590a99e0938ef45ae20640",
+    "tools/audio-codec-spike/audio_only_hls_tests.cpp": "1f65b8bdb0dd52ce54d895b79ac14cb47d3f5f28fcaaa189ce15d377b2c5276e",
+    "tools/audio-codec-spike/generate_audio_only_fixtures.py": "8a3950889a0ab893bddba9cc90a7ce6b733db540b55550c0dfa925ba5652ff8d"
+  },
+  "tests": {
+    "native_static": {
+      "passed": 40,
+      "failed": 0
+    },
+    "native_shared": {
+      "passed": 41,
+      "failed": 0
+    },
+    "desktop_codec": {
+      "passed": 15,
+      "failed": 0,
+      "seconds": 89.57
+    },
+    "final_audio_only_with_legacy_regression": {
+      "passed": 1,
+      "failed": 0,
+      "seconds": 1.5
+    },
+    "private_uwp_library": "BUILD_PASSED_NO_NEW_PACKAGE_OR_RUNTIME_GATE",
+    "clang_format": "TOUCHED_FILES_FORMATTED_DRY_RUN_WERROR_PASSED",
+    "git_diff_check": "PASSED"
+  },
+  "owned_fixtures": [
+    {
+      "file": "flac-stereo.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 624144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+      },
+      "sha256": "972a828403bd9a53f26ba94f211fdac3b82a4a3fbffa3a23030aeb1d4611f334",
+      "bytes": 333270,
+      "streams": 1,
+      "edited": false
+    },
+    {
+      "file": "flac-44100.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 573432,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "24ffec906b231477c8480d206ca51923b04cb4df900728edeb774d6d9336985d"
+      },
+      "sha256": "5832ebe6534f75a190e2ada0fbf1611790b4d594a82d6c86a5c27f5b44094619",
+      "bytes": 304872,
+      "streams": 1,
+      "edited": false
+    },
+    {
+      "file": "pcm-51.mov",
+      "original_tones": {
+        "channels": 6,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          310,
+          470,
+          630,
+          80,
+          790,
+          950
+        ],
+        "sha256": "6851721e804cbf46ba8244658757d7fbc96272a1da491675a9e70528c9335085"
+      },
+      "sha256": "3a1630c4030cb69bf6a4c795e61f39e5126518bbfe1b4dbba998be73c2440ea6",
+      "bytes": 1730393,
+      "streams": 1,
+      "edited": false
+    },
+    {
+      "file": "aac.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "sha256": "98324371914b2633f5e2c730bfdadc218e5bb56890ece33f70a2309404d89bb5",
+      "bytes": 49419,
+      "streams": 1,
+      "edited": false
+    },
+    {
+      "file": "edited-pcm.mov",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "sha256": "65283d817a848e134711cfd563bd02897a05f3046d416276e19801533c51966f",
+      "bytes": 577261,
+      "streams": 1,
+      "edited": true
+    },
+    {
+      "file": "multiple-flac.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "sha256": "de6cf9a7452abd1c35d7da79985a779706e359acc2466184ef973545f0f861e9",
+      "bytes": 155499,
+      "streams": 2,
+      "edited": false
+    }
+  ],
+  "fixture_initial_issue": "Muxer disabled the second MP4 audio track; explicitly enabled both track flags for the ambiguous-selection fixture before passing tests",
+  "observations": [
+    "Independent MOV/AAC decode verifies stereo output frame counts 624144, 624144 and 144144",
+    "Literal AAC-frame playlist cuts and final partial duration checked",
+    "Cold final fragment, backward reads and cache repeat byte identity with one seal per fragment",
+    "No video attributes/resource/group or independence claim in audio-only master",
+    "No startup sealing; invalid selection, ambiguous selection, edited input, excluded codec, video/MKV input, cancellation and insufficient quota refuse",
+    "Explicit source track selection plus injected terminal seal failure and exact-once cleanup checked",
+    "Retained audio resources become inert after Stop; old video composition still refuses audio-only input"
+  ],
+  "public_api_automatic_route_or_host_changes": false,
+  "dependencies_profile_or_license_changes": false,
+  "package_or_release_published": false,
+  "receiver_observations": [],
+  "limits": [
+    "Private factory only; existing automatic conversion still requires video",
+    "No standalone FLAC/Ogg/WAV or audio-only Matroska/edited MP4 support",
+    "No new receiver/packaged runtime/Screenbox or sustained long-file gate",
+    "Existing stereo permission, resource budgets and cache quota unchanged"
+  ],
+  "next": [
+    "Validated standalone container/timeline admission",
+    "Automatic copy/conversion policy and public integration",
+    "Native and packaged Mac/Apple TV receiver gates",
+    "Screenbox integration and written manual queue checks"
+  ]
+}
