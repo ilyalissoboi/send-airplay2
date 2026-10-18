@@ -1,6 +1,23 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-19 (Asia/Tokyo). Audience: the next human developer or model.
+
+**D101 standalone FLAC/WAVE private input slice (2026-10-19).** Native #85
+is merged as `23a030f`, with all 17 final-head checks passed at `d0392a2` in
+[run 39130131090](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39130131090).
+The user authorizes the next input slice. A private content probe admits bounded
+native FLAC and RIFF/RF64 WAVE, supplies source identity/sample count/layout,
+and drives the existing audio-only AAC owner. Tail/EOF and seek-coverage checks
+refuse inconsistent duration or truncation. The pinned FFmpeg 9.0.2 overlay adds
+only FLAC demuxing (port version 5); WAV was already enabled, and source/license
+provenance is recorded. Existing public/default video probes, automatic policy,
+packages and Screenbox do not gain standalone admission. Owned offline tests
+cover decoded output, native malformed-input bounds and sparse five-GiB RF64;
+no new receiver gate is claimed. Static/shared CTests pass 41/42 and codec
+CTests 16; final focused checks and UWP compilation/binary inspection pass.
+Read [the subset and next gates](standalone-flac-wave.md).
+Ogg Opus/Vorbis and the user-requested MP3 input/direct-playback/fallback work
+remain planned. No release or hardware/user deferral changes.
 
 **D100 private audio-only AAC foundation (2026-10-18).** After native #84
 merged as `b9af011` (all 17 checks passed at `64c3595` in

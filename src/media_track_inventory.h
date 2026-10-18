@@ -10,12 +10,13 @@
 #include <vector>
 
 namespace send_airplay2::detail {
-enum class SourceContainer { mp4, matroska };
+enum class SourceContainer { mp4, matroska, wave, flac };
 enum class SourceTrackKind { video, audio, other };
 
 /// Container identity and metadata, before decoder/remux capability filtering.
 struct SourceTrack {
-    std::uint64_t id = 0; ///< MP4 tkhd track_ID or Matroska TrackNumber, never an array index.
+    std::uint64_t id =
+        0; ///< MP4 tkhd ID, Matroska TrackNumber or standalone identity 1; never an ordinal.
     SourceTrackKind kind = SourceTrackKind::other;
     bool enabled = true;
     bool standard_timeline = true; ///< False for Matroska TrackTimestampScale/TrackOffset changes.
@@ -26,15 +27,18 @@ struct SourceTrack {
     std::string name;    ///< Available container label, without inferred role or commentary status.
     Bytes configuration; ///< First complete MP4 sample entry, or Matroska CodecPrivate.
     std::uint32_t sample_description_count = 0; ///< MP4 stsd count; zero when absent or Matroska.
-    std::uint32_t timescale = 0;                ///< MP4 mdhd ticks/second; zero for Matroska.
-    std::vector<Mp4Edit> edits; ///< MP4 media offsets retained in their original timebases.
+    std::uint32_t timescale = 0; ///< MP4 mdhd or standalone sample clock; zero for Matroska.
+    std::vector<Mp4Edit> edits;  ///< MP4 media offsets retained in their original timebases.
     std::uint64_t codec_delay_ns = 0;
     std::uint64_t seek_preroll_ns = 0;
     std::uint64_t default_duration_ns = 0;
-    double audio_sample_rate = 0; ///< Matroska Audio metadata; not inferred from a codec name.
+    double audio_sample_rate = 0; ///< Matroska/standalone metadata; not inferred from a codec name.
     double audio_output_sample_rate = 0; ///< Matroska output rate; zero means SamplingFrequency.
     std::uint64_t audio_channels = 0;    ///< Original declared channel count, not a layout.
-    std::uint64_t audio_bit_depth = 0;   ///< Required to identify Matroska PCM packing.
+    std::uint64_t standalone_sample_frames = 0; ///< Validated standalone duration in source frames.
+    std::uint64_t audio_channel_mask =
+        0;                             ///< Explicit/default standalone speaker map; zero elsewhere.
+    std::uint64_t audio_bit_depth = 0; ///< Required to identify Matroska PCM packing.
 };
 
 inline constexpr std::size_t max_source_tracks = 128;

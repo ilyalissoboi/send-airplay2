@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "audio_decoder_source.h"
+#include "standalone_audio.h"
 #include "media_track_inventory.h"
 #include "mkv_demux.h"
 extern "C" {
@@ -419,9 +420,9 @@ AVCodecID mov_pcm_codec(const SourceTrack& track) {
     }
     return little ? AV_CODEC_ID_PCM_F64LE : AV_CODEC_ID_PCM_F64BE;
 }
-AVCodecID matroska_pcm_codec(const SourceTrack& track) {
-    const bool little = track.codec == "A_PCM/INT/LIT";
-    if (track.codec == "A_PCM/FLOAT/IEEE") {
+AVCodecID packed_pcm_codec(const SourceTrack& track) {
+    const bool little = track.codec == "A_PCM/INT/LIT" || track.codec == "PCM_INT_LE";
+    if (track.codec == "A_PCM/FLOAT/IEEE" || track.codec == "PCM_FLOAT_LE") {
         if (track.audio_bit_depth == 32) {
             return AV_CODEC_ID_PCM_F32LE;
         }
@@ -439,10 +440,16 @@ AVCodecID matroska_pcm_codec(const SourceTrack& track) {
             return little ? AV_CODEC_ID_PCM_S32LE : AV_CODEC_ID_PCM_S32BE;
         }
     }
-    fail(AudioDecodeFailure::unsupported, "Matroska PCM bit depth is unsupported");
+    fail(AudioDecodeFailure::unsupported, "PCM bit depth is unsupported");
 }
 AVCodecID source_codec(const SourceTrack& track, SourceContainer container) {
     const auto& name = track.codec;
+    if (container == SourceContainer::flac && name == "FLAC") {
+        return AV_CODEC_ID_FLAC;
+    }
+    if (container == SourceContainer::wave && (name == "PCM_INT_LE" || name == "PCM_FLOAT_LE")) {
+        return packed_pcm_codec(track);
+    }
     if (container == SourceContainer::mp4) {
         if (name == "mp4a") {
             // MPEG-4 systems objectTypeIndication, never a fourcc-only guess.
@@ -528,7 +535,7 @@ AVCodecID source_codec(const SourceTrack& track, SourceContainer container) {
             return AV_CODEC_ID_TRUEHD;
         }
         if (name == "A_PCM/INT/LIT" || name == "A_PCM/INT/BIG" || name == "A_PCM/FLOAT/IEEE") {
-            return matroska_pcm_codec(track);
+            return packed_pcm_codec(track);
         }
     }
     fail(AudioDecodeFailure::unsupported, "selected audio codec is unsupported");
@@ -551,6 +558,9 @@ void validate_timeline(const SourceTrack& track, SourceContainer container) {
     }
 }
 std::uint64_t decoder_track_id(const AVStream& stream, SourceContainer container) {
+    if (is_standalone_audio(container)) {
+        return 1; // Native single-stream identity, never a demuxer ordinal.
+    }
     if (container == SourceContainer::mp4) {
         // MOV reads the unsigned tkhd ID into its signed int field.
         return static_cast<std::uint32_t>(stream.id);
@@ -569,6 +579,8 @@ int match_stream(const AVFormatContext& format, const SourceTrack& selected,
                  SourceContainer container) {
     require(format.nb_streams <= max_source_tracks, AudioDecodeFailure::too_large,
             "decoder has too many streams");
+    require(!is_standalone_audio(container) || format.nb_streams == 1,
+            AudioDecodeFailure::unsupported, "standalone audio requires one decoder stream");
     int matched = -1;
     for (unsigned index = 0; index < format.nb_streams; ++index) {
         const auto& stream = *format.streams[index];
@@ -757,8 +769,11 @@ struct AudioDecoderSource::Impl {
         format->probesize = 1 << 20;
         format->max_streams = static_cast<int>(max_source_tracks);
         format->max_analyze_duration = AV_TIME_BASE;
-        const auto* demuxer =
-            av_find_input_format(container == SourceContainer::mp4 ? "mov" : "matroska");
+        const auto* demuxer_name = container == SourceContainer::mp4    ? "mov"
+                                   : container == SourceContainer::wave ? "wav"
+                                   : container == SourceContainer::flac ? "flac"
+                                                                        : "matroska";
+        const auto* demuxer = av_find_input_format(demuxer_name);
         require(demuxer != nullptr, AudioDecodeFailure::unsupported, "audio demuxer unavailable");
         auto* raw_format = format.release();
         const auto opened = avformat_open_input(&raw_format, nullptr, demuxer, nullptr);
@@ -789,6 +804,25 @@ struct AudioDecoderSource::Impl {
             const auto channels = codec->ch_layout.nb_channels;
             av_channel_layout_uninit(&codec->ch_layout);
             av_channel_layout_default(&codec->ch_layout, channels);
+        }
+        if (is_standalone_audio(container)) {
+            require(parameters->sample_rate == selected.audio_sample_rate &&
+                        parameters->ch_layout.nb_channels ==
+                            static_cast<int>(selected.audio_channels),
+                    AudioDecodeFailure::unsupported, "standalone audio decoder metadata mismatch");
+            if (codec->ch_layout.order == AV_CHANNEL_ORDER_UNSPEC) {
+                av_channel_layout_uninit(&codec->ch_layout);
+                checked(
+                    av_channel_layout_from_mask(&codec->ch_layout, selected.audio_channel_mask));
+            }
+            require(codec->ch_layout.order == AV_CHANNEL_ORDER_NATIVE &&
+                        codec->ch_layout.u.mask == selected.audio_channel_mask,
+                    AudioDecodeFailure::unsupported, "standalone audio speaker layout mismatch");
+            const auto bits = parameters->bits_per_raw_sample
+                                  ? parameters->bits_per_raw_sample
+                                  : av_get_bits_per_sample(parameters->codec_id);
+            require(bits == static_cast<int>(selected.audio_bit_depth),
+                    AudioDecodeFailure::unsupported, "standalone audio bit depth mismatch");
         }
         // MOV/MKV already publish edited/delay-adjusted PTS and packet skip data.
         // Decoder preinit must not independently skip codecpar padding again.
@@ -1070,7 +1104,7 @@ struct AudioDecoderSource::Impl {
             reader.position = 0;
             open_format();
             open_codec();
-            return {};
+            return is_standalone_audio(container) ? std::optional<std::int64_t>{0} : std::nullopt;
         }
         const auto raw_target = static_cast<std::int64_t>(begin) - preroll;
         // MOV's negative AAC packet carries the overlap/priming history at start.
@@ -1089,8 +1123,9 @@ struct AudioDecoderSource::Impl {
         reader.check();
         require(result >= 0, AudioDecodeFailure::unsupported, "selected audio seek failed");
         avcodec_flush_buffers(codec.get());
-        return coordinate.stream == stream_index ? std::nullopt
-                                                 : std::optional<std::int64_t>{target};
+        return coordinate.stream == stream_index && !is_standalone_audio(container)
+                   ? std::nullopt
+                   : std::optional<std::int64_t>{target};
     }
 };
 
@@ -1530,7 +1565,7 @@ void validate_audio_codec_backend() {
 std::unique_ptr<AudioDecoderSource>
 AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& context,
                          std::optional<std::uint64_t> explicit_track_id,
-                         bool canonical_matroska_clock) {
+                         bool canonical_matroska_clock, bool allow_standalone_audio) {
     require(source.size && source.read_at, AudioDecodeFailure::source_error,
             "audio source callbacks missing");
     validate_backend();
@@ -1541,7 +1576,8 @@ AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& cont
             "audio source size is unsupported");
     auto snapshot = source;
     snapshot.size = [size] { return size; };
-    const auto inventory = probe_media_tracks(snapshot, context);
+    const auto inventory = allow_standalone_audio ? probe_audio_only_tracks(snapshot, context)
+                                                  : probe_media_tracks(snapshot, context);
     const auto selection = select_source_audio(inventory, explicit_track_id);
     require(selection.status != AudioSelectionStatus::selection_required,
             AudioDecodeFailure::selection_required, "source audio selection is required");
@@ -1564,7 +1600,16 @@ AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& cont
     return std::unique_ptr<AudioDecoderSource>(new AudioDecoderSource(std::move(impl)));
 }
 
-std::uint64_t AudioDecoderSource::unedited_mp4_duration_samples(const MediaReadContext& context) {
+std::uint64_t AudioDecoderSource::audio_only_duration_samples(const MediaReadContext& context) {
+    if (is_standalone_audio(impl_->container)) {
+        Operation operation(impl_->reader, context);
+        const auto rate = impl_->selected.timescale;
+        const auto frames = impl_->selected.standalone_sample_frames;
+        require(impl_->usable && rate > 0 && frames > 0, AudioDecodeFailure::unsupported,
+                "standalone audio duration unavailable");
+        impl_->reader.check();
+        return frames / rate * output_rate + (frames % rate * output_rate + rate / 2) / rate;
+    }
     require(impl_->usable && impl_->container == SourceContainer::mp4 &&
                 impl_->selected.edits.empty(),
             AudioDecodeFailure::unsupported, "audio-only duration requires unedited MP4 audio");

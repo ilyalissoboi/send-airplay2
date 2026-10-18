@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "stereo_aac_hls.h"
+#include "standalone_audio.h"
 #include "audio_decoder_source.h"
 #include "audio_delivery_policy.h"
 #include "media_track_inventory.h"
@@ -228,6 +229,7 @@ struct StereoAacHls::Impl {
     Bytes config;
     StereoAacHlsAuthoring authoring;
     std::vector<std::uint64_t> boundaries;
+    bool require_complete_audio = false;
     std::uint64_t source_origin_samples = 0;
     std::uint32_t channels = 0;
     std::uint64_t channel_mask = 0;
@@ -362,6 +364,9 @@ struct StereoAacHls::Impl {
             input.channels = channels;
             input.channel_mask = channel_mask;
         }
+        require(!require_complete_audio ||
+                    (input.channels != 0 && input.samples.size() / input.channels == source_count),
+                AudioDecodeFailure::malformed, "standalone audio ended before declared duration");
         // Final lookahead is movie-external silence, not additional source audio.
         // This also keeps an exact seven-day movie inside D70's seek bound.
         if (source_count < count && input.samples.size() / input.channels == source_count) {
@@ -495,7 +500,8 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open_impl(MediaSource source, AacFra
     impl->quota = quota;
     const auto size = source.size();
     source.size = [size] { return size; };
-    const auto inventory = probe_media_tracks(source, context);
+    const auto inventory =
+        audio_only ? probe_audio_only_tracks(source, context) : probe_media_tracks(source, context);
     const auto selection = select_source_audio(inventory, selected_id);
     require(selection.status != AudioSelectionStatus::selection_required,
             AudioDecodeFailure::selection_required, "AAC HLS source selection required");
@@ -503,23 +509,38 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open_impl(MediaSource source, AacFra
             AudioDecodeFailure::invalid_selection, "AAC HLS has no selected audio");
     const auto& selected = inventory.tracks.at(selection.track_index);
     if (audio_only) {
-        require(inventory.container == SourceContainer::mp4 &&
+        require((inventory.container == SourceContainer::mp4 ||
+                 is_standalone_audio(inventory.container)) &&
                     std::none_of(inventory.tracks.begin(), inventory.tracks.end(),
                                  [](const SourceTrack& track) {
                                      return track.kind == SourceTrackKind::video;
                                  }),
                 AudioDecodeFailure::unsupported,
-                "audio-only HLS requires MP4 without video tracks");
-        const auto plan =
-            plan_audio_delivery(inventory, AudioDeliveryProfile::apple_hls_v1, selected.id);
-        require(plan.source_family == SourceAudioFamily::flac ||
-                    plan.source_family == SourceAudioFamily::pcm,
-                AudioDecodeFailure::unsupported, "audio-only foundation requires FLAC or PCM");
+                "audio-only HLS requires an admitted container without video tracks");
+        if (!is_standalone_audio(inventory.container)) {
+            const auto plan =
+                plan_audio_delivery(inventory, AudioDeliveryProfile::apple_hls_v1, selected.id);
+            require(plan.source_family == SourceAudioFamily::flac ||
+                        plan.source_family == SourceAudioFamily::pcm,
+                    AudioDecodeFailure::unsupported, "audio-only foundation requires FLAC or PCM");
+        }
     }
-    impl->decoder = AudioDecoderSource::open(source, context, selected.id, true);
+    impl->decoder = AudioDecoderSource::open(source, context, selected.id, true, audio_only);
     RemuxedHls presentation;
     if (audio_only) {
-        const auto duration = impl->decoder->unedited_mp4_duration_samples(context);
+        const auto duration = impl->decoder->audio_only_duration_samples(context);
+        impl->require_complete_audio = is_standalone_audio(inventory.container);
+        if (impl->require_complete_audio) {
+            // Validate the declared tail with one extra output frame. This bounded
+            // window must hit EOF exactly, not clip hidden audio or pad truncation.
+            const auto tail_samples = std::min<std::uint64_t>(duration, stereo_aac_frame_samples);
+            const auto tail = impl->decoder->read_window(
+                duration - tail_samples, static_cast<std::uint32_t>(tail_samples + 1), context);
+            require(tail.channels != 0 && tail.samples.size() / tail.channels == tail_samples &&
+                        tail.eof,
+                    AudioDecodeFailure::malformed,
+                    "standalone audio declared end disagrees with decoded tail");
+        }
         impl->boundaries = plan_stereo_aac_boundaries({0, duration});
         presentation.segment_count = impl->boundaries.size() - 1;
         presentation.target_duration_seconds = default_segment_target_seconds;
@@ -584,7 +605,7 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open_impl(MediaSource source, AacFra
         // Calibration owns a separate decoder: demux/codec seek history must
         // not perturb the serving decoder's established startup state.
         auto serving_decoder = std::move(impl->decoder);
-        impl->decoder = AudioDecoderSource::open(source, context, selected.id, true);
+        impl->decoder = AudioDecoderSource::open(source, context, selected.id, true, audio_only);
         if (impl->source_origin_samples != 0) {
             // Legacy fixed-frame Matroska clocks establish cadence at source
             // zero before any offset seek, independently for each decoder owner.

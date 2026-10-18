@@ -1,0 +1,203 @@
+{
+  "license": "Apache-2.0 original repository-generated tones and metadata",
+  "generator": "generate_standalone_audio_fixtures.py",
+  "development_tool": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+  "files": [
+    {
+      "file": "flac48.flac",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 624144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+      },
+      "output_channels": 2,
+      "bytes": 340280,
+      "sha256": "d081a923f23d4d41a45e365fdf9f669e50295bd899dc9bc1335733aba6ebe172"
+    },
+    {
+      "file": "flac441.flac",
+      "original_tones": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 573432,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "24ffec906b231477c8480d206ca51923b04cb4df900728edeb774d6d9336985d"
+      },
+      "output_channels": 2,
+      "bytes": 311926,
+      "sha256": "be175f4e5cd1fa895109bc75f59fbf8e18193d85f63789abb0e73bf63c864f0c"
+    },
+    {
+      "file": "flac51.flac",
+      "original_tones": {
+        "channels": 6,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          310,
+          470,
+          630,
+          80,
+          790,
+          950
+        ],
+        "sha256": "6851721e804cbf46ba8244658757d7fbc96272a1da491675a9e70528c9335085"
+      },
+      "output_channels": 6,
+      "bytes": 241085,
+      "sha256": "b05bc23c1f95693e1eb472a4fe1f5a8b011d7a0d640a18f1027a03917c7040f8"
+    },
+    {
+      "file": "pcm16.wav",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 624144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+      },
+      "output_channels": 2,
+      "bytes": 2496654,
+      "sha256": "ec57e9002a12781255f4ac5953f105184d18d56dc7ad27158f5407122827787d"
+    },
+    {
+      "file": "pcm24-51.wav",
+      "original_tones": {
+        "channels": 6,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          310,
+          470,
+          630,
+          80,
+          790,
+          950
+        ],
+        "sha256": "6851721e804cbf46ba8244658757d7fbc96272a1da491675a9e70528c9335085"
+      },
+      "output_channels": 6,
+      "bytes": 2594694,
+      "sha256": "6b8a1634b8b1edb5bfac62d21dd363477964bca590ba2a536c301035c4cc455d"
+    },
+    {
+      "file": "pcm32.wav",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "output_channels": 2,
+      "bytes": 1153254,
+      "sha256": "a8b0b52fd53751ebe585717aa9b2e44b293c4e402fc5606696b1d68481a73ddd"
+    },
+    {
+      "file": "float32.wav",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "output_channels": 2,
+      "bytes": 1153266,
+      "sha256": "5318650281a7544a0f94100475e1969b95dd8e9bf5705070e53712c657bf7f17"
+    },
+    {
+      "file": "float64.wav",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "output_channels": 2,
+      "bytes": 2306418,
+      "sha256": "ff0adb89a34c6314b501dbb8d76116658ae55f87f87a03b2c83f78c1c0734a3d"
+    },
+    {
+      "file": "mono441.wav",
+      "original_tones": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 132432,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "52490554d400ac83feb37951db303f598f8c5898cdb32762a45a82b25bc5c3bb"
+      },
+      "output_channels": 1,
+      "bytes": 264942,
+      "sha256": "b5b4288e7763345cc1d11171764a8b116b071dec2e49d7a33e12970f8ed4b816"
+    },
+    {
+      "file": "rf64.wav",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "output_channels": 2,
+      "bytes": 576690,
+      "sha256": "1ed98338178f56b3d5b6522978a31b97269010453750e510eccbc317b8d23941"
+    },
+    {
+      "file": "seektable.flac",
+      "derived_from": "flac48.flac",
+      "seek_points": 1,
+      "bytes": 340302,
+      "sha256": "0806f787a603713a1cc1a34d6d12715f20fab4e9d48d62ed285cd08902b5a8e6"
+    },
+    {
+      "file": "too-long.flac",
+      "derived_from": "flac48.flac",
+      "declared_frame_delta": 1024,
+      "bytes": 340280,
+      "sha256": "3bcd34f8e19e61a86cb202f133ab5d40362b30c3a9c3e9d5b9d249a161b32128"
+    },
+    {
+      "file": "too-short.flac",
+      "derived_from": "flac48.flac",
+      "declared_frame_delta": -1024,
+      "bytes": 340280,
+      "sha256": "d204edc059922b9cab8a09185327cc845425f00277617c93f419c9f157b00eab"
+    },
+    {
+      "file": "oddchunk.wav",
+      "derived_from": "rf64.wav",
+      "odd_unknown_chunk_bytes": 3,
+      "bytes": 576666,
+      "sha256": "75d4bbccf7bb0dd42dfad9e6eccbc92c7935ac2527e8759d26a15c2768b0a760"
+    }
+  ]
+}

@@ -128,8 +128,10 @@ bool plain_eac3_bsi(const std::array<std::uint8_t, dolby_copy_header_bytes>& hea
 AudioDeliveryPlan plan_audio_delivery(const MediaTrackInventory& inventory,
                                       AudioDeliveryProfile profile,
                                       std::optional<std::uint64_t> selected_id) {
-    if (profile != AudioDeliveryProfile::apple_hls_v1) {
-        unsupported("unknown audio delivery profile");
+    if (profile != AudioDeliveryProfile::apple_hls_v1 ||
+        (inventory.container != SourceContainer::mp4 &&
+         inventory.container != SourceContainer::matroska)) {
+        unsupported("audio delivery profile or container is unsupported");
     }
     const auto selected = select_source_audio(inventory, selected_id);
     AudioDeliveryPlan plan;
