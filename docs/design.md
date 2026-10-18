@@ -9,10 +9,13 @@ passes. Actual AppContainer/executable/two loaded native hashes match before/
 after; all eight source instances release once. Preserve the initial timeout
 and two pre-media Mac connection failures alongside the later successful retry;
 their cause is not isolated. See [the bounded gate and evidence](audio-only-uwp-gate.md).
-No further D98 manual check is pending. Screenbox AAC/M4A routing is the next
-proposal; no native core/API, decoder, speaker transport or release change occurs.
+No further D98 manual check is pending. PR #81 merges as `45f39be`, with all 17
+checks passed at final head `0c16c4a` in
+[run 39092030693](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39092030693).
+This adds no receiver observation. Screenbox AAC/M4A routing is the next proposal;
+no native core/API, decoder, speaker transport or release change occurs.
 
-Implementation snapshot: 2026-10-18 (Asia/Tokyo), after PRs #1-#80 merged.
+Implementation snapshot: 2026-10-18 (Asia/Tokyo), after PRs #1-#81 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and

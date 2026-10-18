@@ -9,8 +9,11 @@ passes. Actual AppContainer/executable/two loaded native hashes match before/
 after; all eight source instances release once. Preserve the initial timeout
 and two pre-media Mac connection failures alongside the later successful retry;
 their cause is not isolated. See [the bounded gate and evidence](audio-only-uwp-gate.md).
-No further D98 manual check is pending. Screenbox AAC/M4A routing is the next
-proposal; no native core/API, decoder, speaker transport or release change occurs.
+No further D98 manual check is pending. PR #81 merges as `45f39be`, with all 17
+checks passed at final head `0c16c4a` in
+[run 39092030693](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39092030693).
+This adds no receiver observation. Screenbox AAC/M4A routing is the next proposal;
+no native core/API, decoder, speaker transport or release change occurs.
 
 **D95/D96 settings and publication (2026-10-17):** the user confirms the new
 Casting group, audio-icon alignment and toggle persistence in development
