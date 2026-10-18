@@ -1,5 +1,15 @@
 # Design and implementation sequence
 
+**D99 dimension review follow-up active:** fork #16 `c8cc5584` fixes current
+natural display size and unopened queued-video metadata, with SAR/orientation
+and cancellation guards. Logic suites pass 142/157; both actual MSIX/payload
+profiles pass. Development 1.0.0.14 is installed in place; loaded-runtime and
+focused written checks remain pending. Native #83 is merged as `e551388` with
+17 final-head checks passed at `9d594d8` and no findings. The original 1.0.0.13
+observations below remain scoped to `aff57b6f`, not these changed bytes. Read
+[the active review gate](screenbox-audio-video-dimensions.md). No native pin/API,
+audio policy/delivery or publication changes.
+
 **D99 Screenbox AAC/M4A recorded host gate passed (2026-10-18):** fork #16
 implementation `aff57b6f`, opt-in x64 development 1.0.0.13, passes user-confirmed
 Mac/Apple TV audio controls/Stop with conversion OFF/ON, natural mixed queue,
@@ -28,7 +38,7 @@ checks passed at final head `0c16c4a` in
 This adds no receiver observation. Screenbox AAC/M4A routing is the next proposal;
 no native core/API, decoder, speaker transport or release change occurs.
 
-Implementation snapshot: 2026-10-18 (Asia/Tokyo), after PRs #1-#82 merged.
+Implementation snapshot: 2026-10-18 (Asia/Tokyo), after PRs #1-#83 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and

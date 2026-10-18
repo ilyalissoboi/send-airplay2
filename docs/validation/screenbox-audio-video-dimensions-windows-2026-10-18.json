@@ -1,0 +1,78 @@
+{
+  "decision": "D99_REVIEW",
+  "date": "2026-10-18",
+  "timezone": "Asia/Tokyo",
+  "result": "LOGIC_AND_MSIX_PASSED_FOCUSED_MANUAL_PENDING",
+  "fork_pr": 16,
+  "reviewed_head": "f4ae4b2747535b564f10a88bdefd8a59a9166c1e",
+  "implementation_head": "c8cc55842437c248d286fa9732f44659e3b17504",
+  "native_pr83_merge": "e551388dbc5ff316a54f4115523e1e628e7cff9b",
+  "review_findings": [
+    "Keep VLC natural display size for an already-open current video",
+    "Resolve queued video dimensions independently of the preceding audio player"
+  ],
+  "changes": [
+    "Current video uses VLC effective dimensions; M4A remains zero sized",
+    "Queued metadata uses its own parsed track or a separately owned brokered playback descriptor; existing helper bounds parsing and disposal is in finally",
+    "Stop/supersession cancel metadata; admission rechecks the generation before native source creation",
+    "Queued display size applies sample aspect ratio and orientation, rejecting zero/overflow/missing dimensions"
+  ],
+  "logic_tests": {
+    "ordinary": 142,
+    "opt_in": 157,
+    "failed": 0
+  },
+  "focused_manual_gate": "Readiness requested in 1.0.0.14 with owned anamorphic clip; loaded DLL verification and focused layout/queue observations pending",
+  "historical_gate": "Original development 1.0.0.13 from aff57b6f remains separate; no full matrix repeat requested",
+  "native_api_runtime_or_pin_changes": false,
+  "release_published": false,
+  "owned_fixture": {
+    "provenance": "Re-encode first 30 seconds of existing repository-owned D88 AAC flash/beep video; scale 720x576, SAR16:15, copy original AAC; no third-party media",
+    "sha256": "db438d85d96cedb04c994dbeada0c9698ee6c9f7e9b96a45c9c5865a44d4f0be",
+    "coded_width": 720,
+    "coded_height": 576,
+    "sar": "16:15",
+    "display_aspect_ratio": "4:3"
+  },
+  "packages": {
+    "ordinary": {
+      "executable_sha256": "01886d9b1f9b7a17c7bcdb611c7f1c1e0ff02c34baf17c88a7de23a8a6ffb7ae",
+      "source_commit": "c8cc55842437c248d286fa9732f44659e3b17504",
+      "pinned_payload_files": 2,
+      "msix_sha256": "003ad685a04a1fb8e2f2645826b6b8ab421a74178ec11a338c6b70c5f9a41714"
+    },
+    "audio": {
+      "executable_sha256": "5ab90e18c08a80182772e2b473a7b798b6c98fbb9ed895334c6cd730954e9272",
+      "source_commit": "c8cc55842437c248d286fa9732f44659e3b17504",
+      "pinned_payload_files": 40,
+      "msix_sha256": "672c1793968265642cd5c99cc2c043f350b14b9fd25846bfdf24eff6e462fc7b"
+    }
+  },
+  "registration": {
+    "app_data_reset": false,
+    "msix_sha256": "672c1793968265642cd5c99cc2c043f350b14b9fd25846bfdf24eff6e462fc7b",
+    "extracted_manifest_version_only_adjustment": true,
+    "executable_sha256": "5ab90e18c08a80182772e2b473a7b798b6c98fbb9ed895334c6cd730954e9272",
+    "source_commit": "c8cc55842437c248d286fa9732f44659e3b17504",
+    "source_manifest_unchanged": true,
+    "network_category": [
+      "Private"
+    ],
+    "identity_preserved": true,
+    "version": "1.0.0.14"
+  },
+  "review_threads": [
+    {
+      "id": "PRRT_kwDOVBM36s6tneJM",
+      "finding": "Current natural display dimensions",
+      "resolved": true,
+      "reply": "https://github.com/ilyalissoboi/Screenbox/pull/16#discussion_r4305892400"
+    },
+    {
+      "id": "PRRT_kwDOVBM36s6tneJN",
+      "finding": "Unopened video after audio",
+      "resolved": true,
+      "reply": "https://github.com/ilyalissoboi/Screenbox/pull/16#discussion_r4305892483"
+    }
+  ]
+}

@@ -2,7 +2,21 @@
 
 Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
 
-**Current D99 Screenbox AAC/M4A recorded gate passed (2026-10-18).** Fork
+**Current D99 dimension-review follow-up (2026-10-18), in progress.** Native
+#83 is merged as `e551388` with all 17 final-head checks passed at `9d594d8` and
+no review findings. Open fork #16 has two valid current/queued video-size
+comments. Implementation `c8cc5584` preserves VLC's current natural dimensions
+and resolves unopened queued video metadata independently, with SAR/orientation,
+bounded owned parsing, cancellation and normal failure handoff. Both logic
+suites pass 142/157. Both actual MSIX/pinned payload checks pass; development
+1.0.0.14 is installed in place with data preserved. Loaded-runtime and focused
+written layout/queue checks remain pending; readiness is requested. Both review
+threads are replied to and resolved. Read [the follow-up](screenbox-audio-video-dimensions.md).
+The original 1.0.0.13 playback gate below remains complete for its exact bytes;
+it does not verify the review fix. No full receiver matrix repeat is requested.
+No native runtime/API/pin, delivery/audio policy or publication change occurs.
+
+**Completed original D99 Screenbox AAC/M4A gate passed (2026-10-18).** Fork
 [PR #16](https://github.com/ilyalissoboi/Screenbox/pull/16), implementation
 `aff57b6f`, routes local M4A per item through progressive `audio/mp4` in both
 profiles, bypassing conversion/cache regardless of stereo permission. Video
@@ -17,9 +31,8 @@ and reopened process match the inspected executable/six pinned DLLs; the user
 intentionally closed the original process, so these are not continuous-process
 before/after captures. Final owned cache is zero directories/bytes. All four
 fork/17 native checks pass at checkpoints `9c5202bf`/`5502e8e`; inspect final
-documentation-head CI separately. No further D99 receiver check is pending.
-See [the complete record and limits](screenbox-audio-files.md). Fork #16/native
-#83 await review/merge; do not merge automatically. Automatic audio-only
+documentation-head CI separately. No further original 1.0.0.13 receiver check is pending.
+See [the complete record and limits](screenbox-audio-files.md). Fork #16 remains open for review; native #83 is merged. Do not merge automatically. Automatic audio-only
 conversion is a separate next proposal, not implemented here. No release or
 pin update is published, and ordinary-profile receiver behavior is not newly
 verified. Preserve the hardware/user deferrals and completed D97/D98 evidence.

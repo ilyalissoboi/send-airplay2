@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#82 are merged. `main` contains
+Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#83 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -24,7 +24,21 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Current D99 Screenbox AAC/M4A recorded gate passed (2026-10-18).** Fork
+**Current D99 dimension-review follow-up (2026-10-18), in progress.** Native
+#83 is merged as `e551388` with all 17 final-head checks passed at `9d594d8` and
+no review findings. Open fork #16 has two valid current/queued video-size
+comments. Implementation `c8cc5584` preserves VLC's current natural dimensions
+and resolves unopened queued video metadata independently, with SAR/orientation,
+bounded owned parsing, cancellation and normal failure handoff. Both logic
+suites pass 142/157. Both actual MSIX/pinned payload checks pass; development
+1.0.0.14 is installed in place with data preserved. Loaded-runtime and focused
+written layout/queue checks remain pending; readiness is requested. Both review
+threads are replied to and resolved. Read [the follow-up](screenbox-audio-video-dimensions.md).
+The original 1.0.0.13 playback gate below remains complete for its exact bytes;
+it does not verify the review fix. No full receiver matrix repeat is requested.
+No native runtime/API/pin, delivery/audio policy or publication change occurs.
+
+**Completed original D99 Screenbox AAC/M4A gate passed (2026-10-18).** Fork
 [PR #16](https://github.com/ilyalissoboi/Screenbox/pull/16), implementation
 `aff57b6f`, routes local M4A per item through progressive `audio/mp4` in both
 profiles, bypassing conversion/cache regardless of stereo permission. Video
@@ -39,9 +53,8 @@ and reopened process match the inspected executable/six pinned DLLs; the user
 intentionally closed the original process, so these are not continuous-process
 before/after captures. Final owned cache is zero directories/bytes. All four
 fork/17 native checks pass at checkpoints `9c5202bf`/`5502e8e`; inspect final
-documentation-head CI separately. No further D99 receiver check is pending.
-See [the complete record and limits](screenbox-audio-files.md). Fork #16/native
-#83 await review/merge; do not merge automatically. Automatic audio-only
+documentation-head CI separately. No further original 1.0.0.13 receiver check is pending.
+See [the complete record and limits](screenbox-audio-files.md). Fork #16 remains open for review; native #83 is merged. Do not merge automatically. Automatic audio-only
 conversion is a separate next proposal, not implemented here. No release or
 pin update is published, and ordinary-profile receiver behavior is not newly
 verified. Preserve the hardware/user deferrals and completed D97/D98 evidence.
@@ -1023,14 +1036,15 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    Retain the initial timeout and two Mac connection failures alongside the
    successful retry; no further D98 manual check is pending. All 17 checks pass
    at final head `0c16c4a`; merge/CI adds no new receiver observation.
-3. **D99 host gate complete; fork #16/native #83 await review/merge.**
-   Implementation `aff57b6f`, development opt-in x64 1.0.0.13, passes the written
-   Mac/Apple TV M4A controls with conversion OFF/ON, Mac cancellation, mixed
-   natural queue, rapid Next and transition Stop. Both logic/MSIX profiles pass;
-   actual package/runtime hashes and final empty cache verify. Preserve the
-   intentional-close/reopened-process distinction and bounded observer scope.
-   All four/17 checks pass at `9c5202bf`/`5502e8e`; inspect final documentation
-   head CI separately. Do not repeat completed D99 manual checks.
+3. **D99 original host gate complete; dimension review follow-up active.**
+   Native #83 is merged as `e551388` (17 checks passed at `9d594d8`). Fork #16
+   implementation `c8cc5584` addresses current natural-size preservation and
+   unopened queued-video metadata. Both logic suites pass 142/157; both actual
+   MSIX/payload checks pass. Development 1.0.0.14 is installed in place; complete
+   loaded-runtime and focused written layout/queue checks. Both review threads
+   are resolved; readiness is requested. Preserve original 1.0.0.13/aff57b6f
+   evidence separately and
+   do not repeat its full audio matrix. Use screenbox-audio-video-dimensions.md.
 4. **Next proposal after review/merge and user authorization: automatic
    audio-only conversion.** Design an audio-only timeline/output and validated
    standalone input-container support, reusing decoder/downmix/AAC components.
@@ -1266,25 +1280,19 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md, HANDOFF.md, design.md, receiver-validation.md and
-> CONTINUATION.md. D99 Screenbox AAC/M4A gate is complete; read
-> screenbox-audio-files.md and actual fork #16/native #83 heads/reviews/CI.
-> Implementation aff57b6f is tested in opt-in x64 development 1.0.0.13. Both
-> logic suites pass 122/137 and actual MSIX/payload profiles pass. The user
-> confirms both receivers pass conversion-OFF/ON M4A controls/Stop, natural
-> audio/video/audio queue, rapid Next and transition Stop; Mac consent cancel
-> also passes. macOS 26.7.1/tvOS 26.6 are explicitly unchanged. Pre-gate process,
-> post-test registered layout and reopened process match the inspected host/six
-> pinned DLLs. The user closed the original app intentionally; do not describe
-> those as same-process before/after captures. Final owned cache is empty.
-> No further D99 receiver check is pending; do not repeat completed gates.
-> All four/17 checks pass at 9c5202bf/5502e8e; inspect final documentation-head
-> CI separately. Ask before merging #16/#83. Pins/native API remain unchanged;
-> ordinary-profile receiver behavior is not newly verified. The next proposal
-> after review/merge and user authorization is automatic audio-only conversion
-> with a video-independent output/timeline and standalone container coverage.
-> It is not implemented here. Preserve speaker/surround/Chromecast and remote-
-> Stop deferrals, quota/privacy boundaries and existing source/license provenance.
-> Inspect current Screenbox instructions before editing it; use VS 2026 MSBuild,
-> never dotnet build. Use written user observations, not Computer Use, for visual
-> UI confirmation. Preserve identity/data/grants. D97/D98 and the preview release
-> are complete; no new publication is authorized by this checkpoint.
+> CONTINUATION.md. D99 original host gate is complete; the dimension-review
+> follow-up is active. Read screenbox-audio-video-dimensions.md and actual fork
+> #16 head/review/CI. Implementation c8cc5584 fixes both current/queued display
+> size comments, with owned bounded metadata parsing, cancellation, SAR/orientation
+> and invalid-size guards. Both logic suites pass 142/157 and both actual MSIX/
+> payload checks pass. Development 1.0.0.14 is installed in place. Loaded-runtime
+> and focused written layout/queue checks are pending; readiness is requested.
+> Preserve original aff57b6f/development1.0.0.13 observations as historical bytes.
+> Native #83 is merged as e551388 with 17 checks passed at final head 9d594d8
+> and no findings; do not write review changes to its old merged branch.
+> Continue the existing fork branch and current companion checkpoint branch.
+> No full audio matrix repeat, new native API/pin/delivery/audio policy or release
+> is part of this review. Inspect current Screenbox instructions, use VS 2026
+> MSBuild and preserve identity/data/grants. Use written manual confirmation,
+> not Computer Use, for visual UI checks. Ask before merging or publishing.
+> Automatic audio-only conversion and hardware/user deferrals remain separate.
