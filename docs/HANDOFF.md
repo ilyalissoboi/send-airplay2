@@ -2,22 +2,23 @@
 
 Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
 
-**Current D98 packaged AAC/M4A gate (2026-10-18), in progress.** The user's
-Proceed authorizes the next packaged UWP gate from merged #80 (`377b7ce`);
-all 17 final-head checks passed at `b105333`. Test-host implementation `153a840`
-adds a bounded progressive MIME option, `.m4a` picker support and fixed read/
-release counters. It does not change the native core, API, Screenbox or codec
-policy. The codec-free x64 UWP build and binary checks pass; actual MSIX 0.1.30.0
-builds without warnings/errors and is registered in place with identity/data
-preserved. Its actual AppContainer/executable and both loaded DLL hashes match.
-The two MIME/delivery guards reject locally before source open. The original D97
-video-free fixture is reused. Receiver availability, the manual picker grant
-and written listening/controls/cancellation checks remain pending. Do not infer
-receiver success from package/unit checks or start a cast without coordination.
-See [the current gate](audio-only-uwp-gate.md). Keep D97's desktop evidence and
-the published fork preview separate; neither proves this packaged audio gate.
-The later Screenbox routing proposal and deferred speaker/surround scopes remain
-separate. No new release is published.
+**Current D98 packaged AAC/M4A gate passed (2026-10-18).** Test-host
+implementation `153a840` is installed as codec-free x64 MSIX 0.1.30.0, preserving
+identity/data. The user confirms the original video-free brokered AAC/M4A plays
+through progressive `audio/mp4` on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS
+26.6, explicitly unchanged. Both pass audible pause/resume, forward/backward
+seeks, natural end and separate Stop/no delayed restart. Mac pending-consent
+cancellation passes through the existing Stop button, with the app responsive.
+Before and after, actual AppContainer/executable/two loaded DLL hashes match the
+inspected package. All eight source instances release exactly once. Preserve the
+initial consent timeout and two pre-media Mac connection failures; a later Mac
+retry passes using the same package, with cause not isolated.
+Build/binary/parser checks pass; all 17 CI checks pass at checkpoint `f63ca5b`;
+inspect final documentation-head CI separately. No further D98 manual check is
+pending. See [the gate and bounded scope](audio-only-uwp-gate.md). Native D97 and
+the published fork preview remain separate evidence. PR #81 awaits review/merge;
+do not merge automatically. The next proposed slice is Screenbox AAC/M4A routing
+and lifecycle/queue controls, not started here. No new release is published.
 
 **Completed D97 checkpoint (2026-10-17):** the user-authorized
 [native audio-only URL probe](audio-only-url-probe.md) passes on MacBook Pro
@@ -28,7 +29,7 @@ and Mac pending-consent cancellation passes. No further D97 manual check is
 pending. [Publication checkpoint PR #79](https://github.com/ilyalissoboi/send-airplay2/pull/79)
 is merged as `7403044`; the published preview is not an audio-file feature.
 The [current continuation queue](CONTINUATION.md#open-issues-and-ordered-next-work)
-proposes packaged UWP AAC/M4A next, then Screenbox audio-file routing. Audio-only
+records D98 complete and proposes Screenbox audio-file routing next. Audio-only
 speakers remain deferred. Earlier queue entries below are historical where
 this current checkpoint or merged #79 supersedes them. No additional implementation
 or package publication is started by this recorded probe.

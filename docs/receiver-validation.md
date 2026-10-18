@@ -1,5 +1,17 @@
 # Receiver validation record
 
+**D98 packaged audio-only gate passed (2026-10-18):** codec-free x64 UWP
+test host 0.1.30.0 from implementation `153a840` plays the original brokered
+AAC/M4A through progressive `audio/mp4`. The user confirms both Mac/macOS 26.7.1
+and Apple TV/tvOS 26.6 unchanged and passing audible pause/resume, both seeks,
+natural end and separate Stop/no restart; Mac pending-consent cancellation also
+passes. Actual AppContainer/executable/two loaded native hashes match before/
+after; all eight source instances release once. Preserve the initial timeout
+and two pre-media Mac connection failures alongside the later successful retry;
+their cause is not isolated. See [the bounded gate and evidence](audio-only-uwp-gate.md).
+No further D98 manual check is pending. Screenbox AAC/M4A routing is the next
+proposal; no native core/API, decoder, speaker transport or release change occurs.
+
 **D95/D96 settings and publication (2026-10-17):** the user confirms the new
 Casting group, audio-icon alignment and toggle persistence in development
 1.0.0.12 (`6d3a30b4`). Fork #15 merges as `7cea7023`, with all four final-head

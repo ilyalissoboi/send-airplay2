@@ -2,7 +2,7 @@
   "decision": "D98",
   "date": "2026-10-18",
   "timezone": "Asia/Tokyo",
-  "result": "BUILD_AND_RUNTIME_PASSED_MANUAL_PENDING",
+  "result": "PACKAGED_UWP_PROGRESSIVE_AAC_M4A_GATE_PASSED_ON_BOTH_RECORDED_RECEIVERS",
   "registration": {
     "version": "0.1.30.0",
     "codec_backend": "OFF",
@@ -32,7 +32,238 @@
     "executable_sha256": "2fbf42767653bd4d5048c6d450d5b0a2654df49465664f9e0a59b9d3cdda6b96"
   },
   "runtime_before": {
+    "version": "0.1.30.0",
+    "modules": [
+      {
+        "matches_native_build": true,
+        "name": "send_airplay2.dll",
+        "sha256": "f52712ab1525c1080c23cffea3f8afdb17d321a2458d317549a11a921d574cc8",
+        "matches_inspected_package": true
+      },
+      {
+        "matches_native_build": true,
+        "name": "libcrypto-3-x64.dll",
+        "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+        "matches_inspected_package": true
+      }
+    ],
+    "executable_sha256": "2fbf42767653bd4d5048c6d450d5b0a2654df49465664f9e0a59b9d3cdda6b96",
+    "captured_utc": "2026-10-18T02:50:39.2936474+00:00",
+    "app_container": true,
+    "executable_matches_inspected_msix": true
+  },
+  "parser_guards": [
+    "15:43:06.915 Script d98-invalid-hls-type: begin",
+    "15:43:06.915 Script d98-invalid-hls-type: line 1 cast",
+    "15:43:06.915 Script: explicit content type requires progressive delivery",
+    "15:43:06.916 Script d98-invalid-hls-type: failed at line 1 cast",
+    "15:43:27.839 Script d98-invalid-type: begin",
+    "15:43:27.839 Script d98-invalid-type: line 1 cast",
+    "15:43:27.840 Script: unknown cast option",
+    "15:43:27.840 Script d98-invalid-type: failed at line 1 cast"
+  ],
+  "manual_gate": "Complete: user confirms both receiver sequences and Mac pending-consent cancellation; no further D98 manual check pending",
+  "production_native_changes": false,
+  "release_published": false,
+  "receivers": [
+    {
+      "receiver": "MacBook Pro",
+      "os": "macOS 26.7.1",
+      "user_confirmed_available_and_version_unchanged": true
+    },
+    {
+      "receiver": "Apple TV",
+      "os": "tvOS 26.6",
+      "user_confirmed_available_and_version_unchanged": true
+    }
+  ],
+  "fixture": {
+    "sha256": "6f951e78d72ea8be4a687bc8dd1b12f0c1843dbaba41a56e3edde265d4c17d16",
+    "bytes": 1209466,
+    "video_streams": 0,
+    "manual_brokered_grant": "user confirmed; app logged .m4a and remembered audio-only"
+  },
+  "attempts": [
+    {
+      "case": "Mac pending-consent cancellation, first attempt",
+      "result": "NOT_VERIFIED_CONSENT_TIMEOUT",
+      "telemetry": [
+        "02:52:10.920 Activated: CommandLineLaunch",
+        "02:52:10.926 Script d98-mac-cancel: begin",
+        "02:52:10.927 Script d98-mac-cancel: line 1 discover-model",
+        "02:52:10.927 Discover: starting (5 s)",
+        "02:52:15.944 Discover: ok receivers=2",
+        "02:52:15.945 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+        "02:52:15.945 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=no",
+        "02:52:15.947 Discover: expected receiver found; address box filled",
+        "02:52:15.947 Script d98-mac-cancel: line 2 profile",
+        "02:52:15.948 Script d98-mac-cancel: line 3 cast",
+        "02:52:15.962 Script: file audio-only is 1209466 bytes, type .m4a",
+        "02:52:15.963 Cast: starting (PasswordVault store, delivery=Progressive, start=0.0 s, content_type=audio/mp4)",
+        "02:52:31.122 Source released: reads=0 bytes=0 releases=1",
+        "02:52:31.123 Cast start: receiver_rejected after 15159 ms phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no",
+        "02:52:31.123 Cast disposed; media source released",
+        "02:52:31.126 Script d98-mac-cancel: failed at line 3 cast"
+      ],
+      "observation": "No Stop action recorded; do not count source release as cancellation proof."
+    },
+    {
+      "case": "Mac playback connection attempt 1",
+      "result": "CONNECTION_FAILED_BEFORE_MEDIA",
+      "telemetry": [
+        "02:54:37.537 Activated: CommandLineLaunch",
+        "02:54:37.543 Script d98-mac-sequence: begin",
+        "02:54:37.543 Script d98-mac-sequence: line 1 discover-model",
+        "02:54:37.544 Discover: starting (5 s)",
+        "02:54:42.554 Discover: ok receivers=2",
+        "02:54:42.555 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+        "02:54:42.555 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=no",
+        "02:54:42.558 Discover: expected receiver found; address box filled",
+        "02:54:42.558 Script d98-mac-sequence: line 2 profile",
+        "02:54:42.559 Script d98-mac-sequence: line 3 cast",
+        "02:54:42.574 Script: file audio-only is 1209466 bytes, type .m4a",
+        "02:54:42.574 Cast: starting (PasswordVault store, delivery=Progressive, start=0.0 s, content_type=audio/mp4)",
+        "02:54:47.621 Source released: reads=0 bytes=0 releases=1",
+        "02:54:47.622 Cast start: connection after 5046 ms phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no",
+        "02:54:47.622 Cast disposed; media source released",
+        "02:54:47.625 Script d98-mac-sequence: failed at line 3 cast"
+      ],
+      "observation": "No receiver playback claim; reads=0 bytes=0 releases=1.",
+      "user_observation": "No: no successful Mac audio sequence"
+    },
+    {
+      "case": "Mac playback connection attempt 2",
+      "result": "CONNECTION_FAILED_BEFORE_MEDIA",
+      "telemetry": [
+        "02:54:58.162 Activated: CommandLineLaunch",
+        "02:54:58.164 Script d98-mac-sequence: begin",
+        "02:54:58.164 Script d98-mac-sequence: line 1 discover-model",
+        "02:54:58.165 Discover: starting (5 s)",
+        "02:55:03.169 Discover: ok receivers=2",
+        "02:55:03.170 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+        "02:55:03.170 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=no",
+        "02:55:03.174 Discover: expected receiver found; address box filled",
+        "02:55:03.174 Script d98-mac-sequence: line 2 profile",
+        "02:55:03.174 Script d98-mac-sequence: line 3 cast",
+        "02:55:03.186 Script: file audio-only is 1209466 bytes, type .m4a",
+        "02:55:03.186 Cast: starting (PasswordVault store, delivery=Progressive, start=0.0 s, content_type=audio/mp4)",
+        "02:55:08.227 Source released: reads=0 bytes=0 releases=1",
+        "02:55:08.228 Cast start: connection after 5041 ms phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no",
+        "02:55:08.228 Cast disposed; media source released",
+        "02:55:08.232 Script d98-mac-sequence: failed at line 3 cast"
+      ],
+      "observation": "No receiver playback claim; reads=0 bytes=0 releases=1.",
+      "user_observation": "No: no successful Mac audio sequence"
+    }
+  ],
+  "mac_cancellation_retry": {
+    "sender_result": "cancelled after 1802 ms; Stop recorded; reads=0 bytes=0 releases=1",
+    "user_observation": "Yes: Stop closed unanswered prompt; Windows app responsive",
+    "telemetry": [
+      "02:54:22.214 Activated: CommandLineLaunch",
+      "02:54:22.215 Script d98-mac-cancel: begin",
+      "02:54:22.215 Script d98-mac-cancel: line 1 discover-model",
+      "02:54:22.216 Discover: starting (5 s)",
+      "02:54:27.228 Discover: ok receivers=2",
+      "02:54:27.229 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+      "02:54:27.229 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=no",
+      "02:54:27.231 Discover: expected receiver found; address box filled",
+      "02:54:27.232 Script d98-mac-cancel: line 2 profile",
+      "02:54:27.232 Script d98-mac-cancel: line 3 cast",
+      "02:54:27.250 Script: file audio-only is 1209466 bytes, type .m4a",
+      "02:54:27.250 Cast: starting (PasswordVault store, delivery=Progressive, start=0.0 s, content_type=audio/mp4)",
+      "02:54:29.052 Stopped: phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no",
+      "02:54:29.052 Cast disposed; media source released",
+      "02:54:29.053 Source released: reads=0 bytes=0 releases=1",
+      "02:54:29.053 Cast start: cancelled after 1802 ms phase=StartFailed state=None end=None owned=no position=unknown failure=None/None cleaned=no",
+      "02:54:29.054 Cast disposed; media source released",
+      "02:54:29.056 Script d98-mac-cancel: failed at line 3 cast"
+    ]
+  },
+  "apple_tv_sequence": {
+    "user_observation": "Yes: audible tones, pause/resume, both seeks, natural end, separate Stop/no delayed restart",
+    "telemetry": [
+      "02:55:24.163 Activated: CommandLineLaunch",
+      "02:55:24.169 Script d98-tv-sequence: begin",
+      "02:55:24.169 Script d98-tv-sequence: line 1 discover-model",
+      "02:55:24.170 Discover: starting (5 s)",
+      "02:55:29.177 Discover: ok receivers=2",
+      "02:55:29.178 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=no",
+      "02:55:29.178 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=yes",
+      "02:55:29.182 Discover: expected receiver found; address box filled",
+      "02:55:29.183 Script d98-tv-sequence: line 2 profile",
+      "02:55:29.183 Script d98-tv-sequence: line 3 cast",
+      "02:55:29.193 Script: file audio-only is 1209466 bytes, type .m4a",
+      "02:55:29.194 Cast: starting (PasswordVault store, delivery=Progressive, start=0.0 s, content_type=audio/mp4)",
+      "02:55:36.258 Cast start: ok after 7063 ms phase=Active state=Playing end=None owned=yes position=1.1 failure=None/None cleaned=no",
+      "02:55:36.259 Script d98-tv-sequence: line 4 wait-state",
+      "02:55:36.259 Script: state Playing reached",
+      "02:55:36.260 Script d98-tv-sequence: line 5 wait",
+      "02:55:39.261 Script d98-tv-sequence: line 6 status",
+      "02:55:39.262 Status: phase=Active state=Playing end=None owned=yes position=3.8 failure=None/None cleaned=no",
+      "02:55:39.263 Control status: ok",
+      "02:55:39.266 Script d98-tv-sequence: line 7 pause",
+      "02:55:39.298 State: Paused",
+      "02:55:39.301 Control pause: ok",
+      "02:55:39.301 Script d98-tv-sequence: line 8 wait-state",
+      "02:55:39.302 Script: state Paused reached",
+      "02:55:39.302 Script d98-tv-sequence: line 9 wait",
+      "02:55:41.317 Script d98-tv-sequence: line 10 play",
+      "02:55:41.369 Control play: ok",
+      "02:55:41.369 State: Loading",
+      "02:55:41.370 Script d98-tv-sequence: line 11 wait-state",
+      "02:55:41.410 State: Playing",
+      "02:55:41.578 Script: state Playing reached",
+      "02:55:41.578 Script d98-tv-sequence: line 12 wait",
+      "02:55:44.591 Script d98-tv-sequence: line 13 seek",
+      "02:55:44.627 Control seek 32.0: ok",
+      "02:55:44.628 Script d98-tv-sequence: line 14 wait",
+      "02:55:47.630 Script d98-tv-sequence: line 15 seek",
+      "02:55:47.681 Control seek 8.0: ok",
+      "02:55:47.681 Script d98-tv-sequence: line 16 wait",
+      "02:55:50.693 Script d98-tv-sequence: line 17 seek",
+      "02:55:50.731 Control seek 58.0: ok",
+      "02:55:50.731 Script d98-tv-sequence: line 18 wait-end",
+      "02:55:57.056 State: Ended",
+      "02:55:57.056 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=64.0 failure=None/None cleaned=no",
+      "02:55:57.061 Script: the cast has ended",
+      "02:55:57.062 Script d98-tv-sequence: line 19 wait",
+      "02:55:57.102 Source released: reads=20 bytes=1209468 releases=1",
+      "02:55:57.102 Ended cast released; media source released",
+      "02:55:58.069 Script d98-tv-sequence: line 20 cast",
+      "02:55:58.085 Script: file audio-only is 1209466 bytes, type .m4a",
+      "02:55:58.086 Cast: starting (PasswordVault store, delivery=Progressive, start=0.0 s, content_type=audio/mp4)",
+      "02:55:59.715 Cast start: ok after 1628 ms phase=Active state=Playing end=None owned=yes position=1.2 failure=None/None cleaned=no",
+      "02:55:59.716 Script d98-tv-sequence: line 21 wait-state",
+      "02:55:59.716 Script: state Playing reached",
+      "02:55:59.717 Script d98-tv-sequence: line 22 wait",
+      "02:56:07.722 Script d98-tv-sequence: line 23 stop",
+      "02:56:07.723 Ended: phase=Ended state=Playing end=SenderStop owned=yes position=9.2 failure=None/None cleaned=no",
+      "02:56:07.817 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=9.3 failure=None/None cleaned=yes",
+      "02:56:07.819 Source released: reads=20 bytes=1209468 releases=1",
+      "02:56:07.819 Cast disposed; media source released",
+      "02:56:07.819 Script d98-tv-sequence: line 24 wait",
+      "02:56:10.830 Script d98-tv-sequence: done"
+    ],
+    "elapsed_seconds": 46.75,
+    "source_releases": [
+      {
+        "reads": 20,
+        "bytes": 1209468,
+        "releases": 1
+      },
+      {
+        "reads": 20,
+        "bytes": 1209468,
+        "releases": 1
+      }
+    ]
+  },
+  "runtime_after_tv": {
     "executable_matches_inspected_msix": true,
+    "captured_utc": "2026-10-18T02:56:16.2271055+00:00",
+    "version": "0.1.30.0",
+    "executable_sha256": "2fbf42767653bd4d5048c6d450d5b0a2654df49465664f9e0a59b9d3cdda6b96",
     "modules": [
       {
         "name": "send_airplay2.dll",
@@ -47,22 +278,130 @@
         "matches_native_build": true
       }
     ],
-    "executable_sha256": "2fbf42767653bd4d5048c6d450d5b0a2654df49465664f9e0a59b9d3cdda6b96",
-    "captured_utc": "2026-10-17T15:44:28.9488780+00:00",
-    "app_container": true,
-    "version": "0.1.30.0"
+    "app_container": true
   },
-  "parser_guards": [
-    "15:43:06.915 Script d98-invalid-hls-type: begin",
-    "15:43:06.915 Script d98-invalid-hls-type: line 1 cast",
-    "15:43:06.915 Script: explicit content type requires progressive delivery",
-    "15:43:06.916 Script d98-invalid-hls-type: failed at line 1 cast",
-    "15:43:27.839 Script d98-invalid-type: begin",
-    "15:43:27.839 Script d98-invalid-type: line 1 cast",
-    "15:43:27.840 Script: unknown cast option",
-    "15:43:27.840 Script d98-invalid-type: failed at line 1 cast"
-  ],
-  "manual_gate": "Availability, picker grant and receiver observations pending; no receiver claim",
-  "production_native_changes": false,
-  "release_published": false
+  "mac_sequence": {
+    "attempt": 3,
+    "user_observation": "Yes: tones, pause/resume, both seeks, natural end, separate eight-second Stop/no delayed restart",
+    "telemetry": [
+      "02:56:43.650 Activated: CommandLineLaunch",
+      "02:56:43.652 Script d98-mac-sequence: begin",
+      "02:56:43.652 Script d98-mac-sequence: line 1 discover-model",
+      "02:56:43.653 Discover: starting (5 s)",
+      "02:56:48.661 Discover: ok receivers=2",
+      "02:56:48.661 Receiver: index=0 address=ipv4 port_set=yes features=yes expected=yes",
+      "02:56:48.662 Receiver: index=1 address=ipv4 port_set=yes features=yes expected=no",
+      "02:56:48.666 Discover: expected receiver found; address box filled",
+      "02:56:48.667 Script d98-mac-sequence: line 2 profile",
+      "02:56:48.667 Script d98-mac-sequence: line 3 cast",
+      "02:56:48.685 Script: file audio-only is 1209466 bytes, type .m4a",
+      "02:56:48.685 Cast: starting (PasswordVault store, delivery=Progressive, start=0.0 s, content_type=audio/mp4)",
+      "02:56:54.866 Cast start: ok after 6180 ms phase=Active state=Playing end=None owned=yes position=0.9 failure=None/None cleaned=no",
+      "02:56:54.867 Script d98-mac-sequence: line 4 wait-state",
+      "02:56:54.868 Script: state Playing reached",
+      "02:56:54.868 Script d98-mac-sequence: line 5 wait",
+      "02:56:57.874 Script d98-mac-sequence: line 6 status",
+      "02:56:57.875 Status: phase=Active state=Playing end=None owned=yes position=3.9 failure=None/None cleaned=no",
+      "02:56:57.875 Control status: ok",
+      "02:56:57.876 Script d98-mac-sequence: line 7 pause",
+      "02:56:57.885 Control pause: ok",
+      "02:56:57.886 Script d98-mac-sequence: line 8 wait-state",
+      "02:56:57.921 State: Paused",
+      "02:56:58.092 Script: state Paused reached",
+      "02:56:58.092 Script d98-mac-sequence: line 9 wait",
+      "02:57:00.098 Script d98-mac-sequence: line 10 play",
+      "02:57:00.108 Control play: ok",
+      "02:57:00.109 Script d98-mac-sequence: line 11 wait-state",
+      "02:57:00.109 State: Loading",
+      "02:57:00.123 State: Playing",
+      "02:57:00.314 Script: state Playing reached",
+      "02:57:00.315 Script d98-mac-sequence: line 12 wait",
+      "02:57:03.319 Script d98-mac-sequence: line 13 seek",
+      "02:57:03.328 Control seek 32.0: ok",
+      "02:57:03.328 Script d98-mac-sequence: line 14 wait",
+      "02:57:06.332 Script d98-mac-sequence: line 15 seek",
+      "02:57:06.342 Control seek 8.0: ok",
+      "02:57:06.343 Script d98-mac-sequence: line 16 wait",
+      "02:57:09.351 Script d98-mac-sequence: line 17 seek",
+      "02:57:09.416 Control seek 58.0: ok",
+      "02:57:09.416 Script d98-mac-sequence: line 18 wait-end",
+      "02:57:15.561 State: Ended",
+      "02:57:15.561 Ended: phase=Ended state=Ended end=MediaEnd owned=yes position=64.0 failure=None/None cleaned=no",
+      "02:57:15.572 Source released: reads=20 bytes=1209468 releases=1",
+      "02:57:15.573 Ended cast released; media source released",
+      "02:57:15.709 Script: the cast has ended",
+      "02:57:15.709 Script d98-mac-sequence: line 19 wait",
+      "02:57:16.719 Script d98-mac-sequence: line 20 cast",
+      "02:57:16.730 Script: file audio-only is 1209466 bytes, type .m4a",
+      "02:57:16.730 Cast: starting (PasswordVault store, delivery=Progressive, start=0.0 s, content_type=audio/mp4)",
+      "02:57:18.385 Cast start: ok after 1654 ms phase=Active state=Playing end=None owned=yes position=1.0 failure=None/None cleaned=no",
+      "02:57:18.386 Script d98-mac-sequence: line 21 wait-state",
+      "02:57:18.387 Script: state Playing reached",
+      "02:57:18.387 Script d98-mac-sequence: line 22 wait",
+      "02:57:26.399 Script d98-mac-sequence: line 23 stop",
+      "02:57:26.400 Ended: phase=Ended state=Playing end=SenderStop owned=yes position=9.0 failure=None/None cleaned=no",
+      "02:57:26.446 Stopped: phase=Stopped state=Playing end=SenderStop owned=yes position=9.1 failure=None/None cleaned=yes",
+      "02:57:26.448 Source released: reads=20 bytes=1209468 releases=1",
+      "02:57:26.448 Cast disposed; media source released",
+      "02:57:26.449 Script d98-mac-sequence: line 24 wait",
+      "02:57:29.462 Script d98-mac-sequence: done"
+    ],
+    "elapsed_seconds": 45.844,
+    "source_releases": [
+      {
+        "reads": 20,
+        "bytes": 1209468,
+        "releases": 1
+      },
+      {
+        "reads": 20,
+        "bytes": 1209468,
+        "releases": 1
+      }
+    ]
+  },
+  "runtime_after": {
+    "executable_sha256": "2fbf42767653bd4d5048c6d450d5b0a2654df49465664f9e0a59b9d3cdda6b96",
+    "executable_matches_inspected_msix": true,
+    "version": "0.1.30.0",
+    "app_container": true,
+    "captured_utc": "2026-10-18T02:57:40.0407440+00:00",
+    "modules": [
+      {
+        "name": "send_airplay2.dll",
+        "sha256": "f52712ab1525c1080c23cffea3f8afdb17d321a2458d317549a11a921d574cc8",
+        "matches_inspected_package": true,
+        "matches_native_build": true
+      },
+      {
+        "name": "libcrypto-3-x64.dll",
+        "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+        "matches_inspected_package": true,
+        "matches_native_build": true
+      }
+    ]
+  },
+  "scope": {
+    "delivery": "Progressive; explicit audio/mp4; brokered original 64-second AAC-LC stereo M4A, no video",
+    "controls": "Pause/resume, seek to 32, back to 8, then 58; natural MediaEnd at 64; second cast stopped eight seconds after start, then observed for three seconds",
+    "read_bytes": "Cumulative successful bytes across callback reads; overlapping/range reads can exceed the file size",
+    "cleanup": "Exactly one source release per attempt, including all three unsuccessful attempts; natural-end status precedes disposal and reports cleaned=no; explicit Stop reports cleaned=yes; cancellation reports cleaned=no and never plays",
+    "failed_attempts": "Initial consent timeout does not verify cancellation. Two subsequent Mac connections fail before media; a later retry passes. Cause not isolated; same package and script on the passing playback retry.",
+    "not_established": [
+      "Uninterrupted 64-second playback",
+      "Long audio files",
+      "Other input codecs or audio conversion",
+      "Audio-only HLS",
+      "Screenbox routing/queue handling",
+      "HomePod/RAOP or other audio-only speakers",
+      "Discrete converted surround",
+      "Chromecast interoperability"
+    ]
+  },
+  "ci_checkpoint": {
+    "head": "f63ca5bf9336f38681ab079f38ebd2c0ce2a3d73",
+    "passed_checks": 17,
+    "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39046654418",
+    "scope": "Implementation and pre-gate documentation checkpoint; inspect final documentation-head CI separately"
+  }
 }

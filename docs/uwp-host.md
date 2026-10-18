@@ -119,6 +119,11 @@ The default capability manifest is version 0.1.30.0; the extra-server variant is
 Screenbox, audio-only HLS, transcoding or speaker transport. Receiver/package
 proof must be recorded separately from a successful build.
 
+The [D98 packaged AAC/M4A gate](audio-only-uwp-gate.md) passes on the recorded
+Mac/macOS 26.7.1 and Apple TV/tvOS 26.6 with this codec-free x64 package.
+The record retains failed attempts and separates audible user confirmation from
+sender telemetry and package checks; it does not establish other codec support.
+
 Found while adding it: under Native AOT, `args is CommandLineActivatedEventArgs`
 was false for a command-line activation; testing `ActivationKind` and the
 `ICommandLineActivatedEventArgs` interface works. The alias's `Executable` must
