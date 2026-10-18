@@ -13,11 +13,12 @@ Before and after, actual AppContainer/executable/two loaded DLL hashes match the
 inspected package. All eight source instances release exactly once. Preserve the
 initial consent timeout and two pre-media Mac connection failures; a later Mac
 retry passes using the same package, with cause not isolated.
-Build/binary/parser checks pass; all 17 CI checks pass at checkpoint `f63ca5b`;
-inspect final documentation-head CI separately. No further D98 manual check is
-pending. See [the gate and bounded scope](audio-only-uwp-gate.md). Native D97 and
-the published fork preview remain separate evidence. PR #81 awaits review/merge;
-do not merge automatically. The next proposed slice is Screenbox AAC/M4A routing
+Build/binary/parser checks pass. PR #81 is merged as `45f39be`, with all 17
+checks passed at final head `0c16c4a` in
+[run 39092030693](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39092030693).
+No further D98 manual check is pending. See [the gate and bounded scope](audio-only-uwp-gate.md). Native D97 and
+the published fork preview remain separate evidence. Merge/CI adds no new
+receiver observation. The next proposed slice is Screenbox AAC/M4A routing
 and lifecycle/queue controls, not started here. No new release is published.
 
 **Completed D97 checkpoint (2026-10-17):** the user-authorized

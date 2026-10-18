@@ -402,6 +402,16 @@
     "head": "f63ca5bf9336f38681ab079f38ebd2c0ce2a3d73",
     "passed_checks": 17,
     "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39046654418",
-    "scope": "Implementation and pre-gate documentation checkpoint; inspect final documentation-head CI separately"
+    "scope": "Implementation and pre-gate documentation checkpoint; final-head CI is recorded under merged_pr"
+  },
+  "merged_pr": {
+    "number": 81,
+    "url": "https://github.com/ilyalissoboi/send-airplay2/pull/81",
+    "merge_commit": "45f39be0464b911c8fe19b26a723c7956a491556",
+    "merged_utc": "2026-10-18T03:25:24Z",
+    "final_head": "0c16c4aa4db5e119ee067c758b8b34daa5758a24",
+    "passed_checks": 17,
+    "ci_run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39092030693",
+    "scope": "Merge/CI verification only; no additional receiver observation or publication"
   }
 }

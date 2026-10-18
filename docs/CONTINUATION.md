@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#80 are merged. `main` contains
+Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#81 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -18,7 +18,7 @@ re-prompting during an equal-idle chain. Exact timer/key/renewal remain unproven
 no sender behavior change is proposed. D65 evidence PR #42 merged as `8a40ec3`
 and D66 Screenbox PR #10 merged as `8bfd3dd9`. All 14 native checks and three
 fork checks passed at final heads `8978188` and `47016474`. D67 and the following
-historical increments are superseded by the current D97 checkpoint and ordered
+historical increments are superseded by the current D98 checkpoint and ordered
 queue below; do not resume completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
@@ -35,11 +35,12 @@ Before and after, actual AppContainer/executable/two loaded DLL hashes match the
 inspected package. All eight source instances release exactly once. Preserve the
 initial consent timeout and two pre-media Mac connection failures; a later Mac
 retry passes using the same package, with cause not isolated.
-Build/binary/parser checks pass; all 17 CI checks pass at checkpoint `f63ca5b`;
-inspect final documentation-head CI separately. No further D98 manual check is
-pending. See [the gate and bounded scope](audio-only-uwp-gate.md). Native D97 and
-the published fork preview remain separate evidence. PR #81 awaits review/merge;
-do not merge automatically. The next proposed slice is Screenbox AAC/M4A routing
+Build/binary/parser checks pass. PR #81 is merged as `45f39be`, with all 17
+checks passed at final head `0c16c4a` in
+[run 39092030693](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39092030693).
+No further D98 manual check is pending. See [the gate and bounded scope](audio-only-uwp-gate.md). Native D97 and
+the published fork preview remain separate evidence. Merge/CI adds no new
+receiver observation. The next proposed slice is Screenbox AAC/M4A routing
 and lifecycle/queue controls, not started here. No new release is published.
 
 **Completed D97 checkpoint (2026-10-17).**
@@ -992,17 +993,17 @@ The current queue follows [D98's recorded result](audio-only-uwp-gate.md#next-sl
 1. **D97 complete, PR #80 merged.** Merge `377b7ce` includes all 17 passing
    final-head checks at `b105333`. No further native listening check is pending.
    D94-D96 are complete in merged #79; do not repeat pin/publication work.
-2. **D98 packaged gate complete; PR #81 awaits review/merge.** Implementation
+2. **D98 packaged gate complete; PR #81 merged as `45f39be`.** Implementation
    `153a840`, codec-free x64 MSIX 0.1.30.0, passes brokered progressive AAC/M4A
    audible controls/natural end/separate Stop on both recorded receivers and
    Mac pending-consent cancellation. Actual AppContainer/executable/two loaded
    native hashes match before/after; all eight source instances release once.
    Retain the initial timeout and two Mac connection failures alongside the
    successful retry; no further D98 manual check is pending. All 17 checks pass
-   at checkpoint `f63ca5b`; inspect final documentation-head CI separately.
-3. **Next proposed slice: Screenbox AAC/M4A routing and controls.** After #81
-   review/merge and user authorization, implement explicit progressive/audio MIME
-   selection plus host lifecycle/queue handling. Do not treat video-required
+   at final head `0c16c4a`; merge/CI adds no new receiver observation.
+3. **Next proposed slice: Screenbox AAC/M4A routing and controls.** After user
+   authorization, implement explicit progressive/audio MIME selection plus host
+   lifecycle/queue handling. Do not treat video-required
    automatic-audio HLS as audio-file support. Broader codecs, audio-only HLS/
    transcoding and HomePod/RAOP transport remain separate scopes. The published
    preview does not gain audio-file routing from this UWP test-host gate.
@@ -1238,7 +1239,8 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 
 > Continue send-airplay2 from AGENTS.md, HANDOFF.md, design.md,
 > receiver-validation.md and CONTINUATION.md. D98's packaged UWP AAC/M4A gate
-> is complete; inspect audio-only-uwp-gate.md and actual PR #81 head/review/CI.
+> is complete and PR #81 is merged as 45f39be. All 17 checks pass at final
+> head 0c16c4a in run 39092030693; see audio-only-uwp-gate.md.
 > Test-host implementation 153a840 is installed as codec-free x64 MSIX 0.1.30.0
 > with identity/data preserved. Both recorded receivers pass audible controls,
 > natural end and separate Stop/no restart; Mac pending-consent cancellation
@@ -1247,9 +1249,8 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > all eight source instances release exactly once. Keep the initial consent
 > timeout and two pre-media Mac connection failures alongside the later passing
 > retry. No cause for those transient failures is isolated. Do not repeat
-> completed manual checks. All 17 checks pass at checkpoint f63ca5b; inspect
-> final documentation-head CI separately. Ask before merging #81.
-> The next proposed slice after review/merge and user authorization is Screenbox
+> completed manual checks. Merge/CI adds no new receiver observation.
+> The next proposed slice after user authorization is Screenbox
 > AAC/M4A progressive routing, controls and queue/lifecycle handling. Inspect
 > that repository's current instructions before editing. No Screenbox feature
 > or release is started by D98. D94 pin/D95 settings/D96 preview publication

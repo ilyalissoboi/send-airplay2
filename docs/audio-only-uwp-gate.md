@@ -75,17 +75,17 @@ inspected MSIX. No further D98 manual check is pending.
 
 See [the sanitized evidence](validation/audio-only-uwp-gate-windows-2026-10-18.json)
 for package/source hashes, attempts, exact control/state lines and observer scope.
-All 17 CI checks pass at checkpoint `f63ca5b` in
-[run 39046654418](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39046654418);
-inspect final documentation-head CI separately. Build/CI success and audible
-receiver observations remain distinct.
+PR #81 is merged as `45f39be`. All 17 CI checks pass at final head `0c16c4a` in
+[run 39092030693](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39092030693).
+This adds merge/CI evidence only; build/CI success and audible receiver
+observations remain distinct.
 
 ## Next slice
 
-PR #81 records the completed UWP gate and awaits review/merge. The next proposed
-slice is Screenbox AAC/M4A progressive routing with explicit audio MIME, controls
-and queue/lifecycle handling. Inspect that repository's current instructions and
-scope the change after merge/user authorization. The existing automatic-audio HLS
+Merged PR #81 records the completed UWP gate. The next proposed slice is
+Screenbox AAC/M4A progressive routing with explicit audio MIME, controls and
+queue/lifecycle handling. Inspect that repository's current instructions and
+scope the change after user authorization. The existing automatic-audio HLS
 path still requires video; it must not be used as an audio-file fallback.
 
 This gate starts no Screenbox audio-file implementation or release. Only the
