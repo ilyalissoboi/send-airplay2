@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#81 are merged. `main` contains
+Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#82 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -18,13 +18,29 @@ re-prompting during an equal-idle chain. Exact timer/key/renewal remain unproven
 no sender behavior change is proposed. D65 evidence PR #42 merged as `8a40ec3`
 and D66 Screenbox PR #10 merged as `8bfd3dd9`. All 14 native checks and three
 fork checks passed at final heads `8978188` and `47016474`. D67 and the following
-historical increments are superseded by the current D98 checkpoint and ordered
+historical increments are superseded by the current D99 checkpoint and ordered
 queue below; do not resume completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Current D98 packaged AAC/M4A gate passed (2026-10-18).** Test-host
+**Current D99 Screenbox AAC/M4A slice (2026-10-18), in progress.** The user's
+Proceed after merged native #82 (`afb9ee8`; all 17 final-head checks passed at
+`481ab01`) authorizes Screenbox AAC/M4A routing/controls/queue handling. Fork
+[PR #16](https://github.com/ilyalissoboi/Screenbox/pull/16), implementation
+`aff57b6f` from merged `7cea7023`, selects progressive `audio/mp4` for local M4A
+per queue item in both existing profiles and bypasses conversion/cache even
+when stereo permission is on. Video retains its existing HLS policy; pins and
+native API are unchanged. Pure logic suites pass 122/137. Both actual Release
+MSIX builds and two/40 pinned payloads pass. Development 1.0.0.13 is installed
+in place with identity/data preserved; loaded-runtime and written receiver
+gates are pending. The user confirms both
+receivers available with macOS 26.7.1/tvOS 26.6 unchanged. See
+[the active slice](screenbox-audio-files.md). Automatic conversion of other
+standalone audio formats is a separate follow-up, not implemented here. No new
+release is published; D97/D98 are complete and must not be repeated.
+
+**Completed D98 packaged AAC/M4A gate passed (2026-10-18).** Test-host
 implementation `153a840` is installed as codec-free x64 MSIX 0.1.30.0, preserving
 identity/data. The user confirms the original video-free brokered AAC/M4A plays
 through progressive `audio/mp4` on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS
@@ -988,7 +1004,7 @@ Do not commit the media. PC playback past 18 seconds was user-confirmed normal.
 
 ## Open issues and ordered next work
 
-The current queue follows [D98's recorded result](audio-only-uwp-gate.md#next-slice):
+The current queue follows [D99's active slice](screenbox-audio-files.md):
 
 1. **D97 complete, PR #80 merged.** Merge `377b7ce` includes all 17 passing
    final-head checks at `b105333`. No further native listening check is pending.
@@ -1001,17 +1017,19 @@ The current queue follows [D98's recorded result](audio-only-uwp-gate.md#next-sl
    Retain the initial timeout and two Mac connection failures alongside the
    successful retry; no further D98 manual check is pending. All 17 checks pass
    at final head `0c16c4a`; merge/CI adds no new receiver observation.
-3. **Next proposed slice: Screenbox AAC/M4A routing and controls.** After user
-   authorization, implement explicit progressive/audio MIME selection plus host
-   lifecycle/queue handling. Do not treat video-required
-   automatic-audio HLS as audio-file support. Broader codecs, audio-only HLS/
-   transcoding and HomePod/RAOP transport remain separate scopes. The published
-   preview does not gain audio-file routing from this UWP test-host gate.
+3. **Active authorized D99 slice: Screenbox AAC/M4A routing/controls.** Fork
+   #16 implementation `aff57b6f` passes 122/137 logic tests and both actual MSIX/
+   pinned-payload checks. Development 1.0.0.13 is installed in place. Verify
+   loaded runtime after the user opens M4A/Cast, then coordinate written
+   Mac/Apple TV audio/controls/cancellation/queue checks.
+   Use the current slice record and preserve exact bytes and failed attempts.
+4. **Later proposal: automatic audio-only conversion.** Reuse decoder/downmix/
+   AAC components with an audio-only timeline/output and validated standalone
+   container support. This is separate from D99 and is not implemented here.
 
-No Screenbox implementation or new publication starts here. Preserve the
-speaker/discrete-surround/Chromecast hardware deferrals and user-deferred
-remote-Stop classification. Long-input/cache-quota evaluation is a separate
-proposal; the existing quota is unchanged.
+No new publication starts here. Preserve speaker/discrete-surround/Chromecast
+hardware deferrals and user-deferred remote-Stop classification. Long-input/
+cache-quota evaluation is separate; the existing quota is unchanged.
 
 The implementation history below is reference, not the active queue. C API/UWP
 and private Screenbox checks are recorded in completed D63; D64 published the
@@ -1237,27 +1255,20 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 
 ## Suggested opening prompt for the next session
 
-> Continue send-airplay2 from AGENTS.md, HANDOFF.md, design.md,
-> receiver-validation.md and CONTINUATION.md. D98's packaged UWP AAC/M4A gate
-> is complete and PR #81 is merged as 45f39be. All 17 checks pass at final
-> head 0c16c4a in run 39092030693; see audio-only-uwp-gate.md.
-> Test-host implementation 153a840 is installed as codec-free x64 MSIX 0.1.30.0
-> with identity/data preserved. Both recorded receivers pass audible controls,
-> natural end and separate Stop/no restart; Mac pending-consent cancellation
-> passes. The user explicitly confirms macOS 26.7.1/tvOS 26.6 unchanged.
-> Actual AppContainer/executable/two loaded native hashes match before/after;
-> all eight source instances release exactly once. Keep the initial consent
-> timeout and two pre-media Mac connection failures alongside the later passing
-> retry. No cause for those transient failures is isolated. Do not repeat
-> completed manual checks. Merge/CI adds no new receiver observation.
-> The next proposed slice after user authorization is Screenbox
-> AAC/M4A progressive routing, controls and queue/lifecycle handling. Inspect
-> that repository's current instructions before editing. No Screenbox feature
-> or release is started by D98. D94 pin/D95 settings/D96 preview publication
-> and native D97 are complete; do not repeat them. Audio-only HLS, broader
-> codecs/transcoding, HomePod/RAOP, discrete converted surround and Chromecast
-> validation remain separate/deferred; remote-Stop classification remains
-> user-deferred. Keep the existing quota. Use written user observations, not
-> Computer Use, for visual UI checks. Keep private media, addresses, identifiers,
-> credentials and bearer URLs out of committed evidence. Ask before publishing
-> a new release; none is part of D98.
+> Continue from AGENTS.md, HANDOFF.md, design.md, receiver-validation.md and
+> CONTINUATION.md. D99 Screenbox AAC/M4A is authorized and in progress; read
+> screenbox-audio-files.md and actual fork PR #16 head/review/CI before editing.
+> Fork implementation aff57b6f from merged 7cea7023 routes local M4A per item to
+> progressive audio/mp4 in both profiles, bypassing conversion/cache regardless
+> of stereo permission. Video policy/pins/native API remain unchanged. Both
+> logic suites pass 122/137; both actual MSIX/pinned payload checks pass.
+> Development 1.0.0.13 is installed in place with identity/data preserved.
+> Loaded-runtime and written receiver/queue checks are pending. The user confirms both receivers available
+> with macOS 26.7.1/tvOS 26.6 unchanged. Inspect current fork instructions before
+> editing; use VS 2026 MSBuild, never dotnet build. Preserve identity/data/grants.
+> Use written user observations, not Computer Use, for visual UI confirmation.
+> D97/D98 and merged native #82 (afb9ee8; 17 checks passed at head 481ab01) are
+> complete; do not repeat those checks or the published preview release.
+> Automatic audio-only conversion is a distinct later slice, not part of D99.
+> Keep speaker/surround/Chromecast and remote-Stop deferrals, existing quota and
+> privacy boundaries. Ask before merging or publishing; no release is part of D99.

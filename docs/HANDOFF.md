@@ -2,7 +2,23 @@
 
 Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
 
-**Current D98 packaged AAC/M4A gate passed (2026-10-18).** Test-host
+**Current D99 Screenbox AAC/M4A slice (2026-10-18), in progress.** The user's
+Proceed after merged native #82 (`afb9ee8`; all 17 final-head checks passed at
+`481ab01`) authorizes Screenbox AAC/M4A routing/controls/queue handling. Fork
+[PR #16](https://github.com/ilyalissoboi/Screenbox/pull/16), implementation
+`aff57b6f` from merged `7cea7023`, selects progressive `audio/mp4` for local M4A
+per queue item in both existing profiles and bypasses conversion/cache even
+when stereo permission is on. Video retains its existing HLS policy; pins and
+native API are unchanged. Pure logic suites pass 122/137. Both actual Release
+MSIX builds and two/40 pinned payloads pass. Development 1.0.0.13 is installed
+in place with identity/data preserved; loaded-runtime and written receiver
+gates are pending. The user confirms both
+receivers available with macOS 26.7.1/tvOS 26.6 unchanged. See
+[the active slice](screenbox-audio-files.md). Automatic conversion of other
+standalone audio formats is a separate follow-up, not implemented here. No new
+release is published; D97/D98 are complete and must not be repeated.
+
+**Completed D98 packaged AAC/M4A gate passed (2026-10-18).** Test-host
 implementation `153a840` is installed as codec-free x64 MSIX 0.1.30.0, preserving
 identity/data. The user confirms the original video-free brokered AAC/M4A plays
 through progressive `audio/mp4` on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS

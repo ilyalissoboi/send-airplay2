@@ -1,0 +1,74 @@
+{
+  "decision": "D99",
+  "date": "2026-10-18",
+  "timezone": "Asia/Tokyo",
+  "result": "LOGIC_AND_PACKAGE_PASSED_RUNTIME_AND_MANUAL_PENDING",
+  "fork_pr": 16,
+  "fork_base": "7cea7023",
+  "implementation_head": "aff57b6f575453e59920b907412d7dc8184455c9",
+  "logic_tests": {
+    "ordinary": 122,
+    "opt_in": 137,
+    "failed": 0
+  },
+  "receivers": [
+    {
+      "receiver": "MacBook Pro",
+      "os": "macOS 26.7.1",
+      "user_confirmed_available_and_version_unchanged": true
+    },
+    {
+      "receiver": "Apple TV",
+      "os": "tvOS 26.6",
+      "user_confirmed_available_and_version_unchanged": true
+    }
+  ],
+  "manual_gate": "Pending; no new Screenbox receiver observation",
+  "native_runtime_or_api_changes": false,
+  "release_published": false,
+  "packages": {
+    "ordinary": {
+      "source_commit": "aff57b6f575453e59920b907412d7dc8184455c9",
+      "executable_sha256": "e5da9b16080b0518d15568a2b0626f9d5ed22b93e760a21058875c0c9cab6602",
+      "msix_sha256": "d54fedd0b5331c10c21aa3d7713ee3ed3a87c34ec9843440ae3a90f254709f82",
+      "pinned_payload_files": 2
+    },
+    "audio": {
+      "source_commit": "aff57b6f575453e59920b907412d7dc8184455c9",
+      "executable_sha256": "e5b98300f2e87bfd718f0b1c8eba1c1da979eae4ce58aab016c3743fdfedd7ac",
+      "msix_sha256": "23f34504eaf2fc65aee31e100908e3a0bc1e9ad6a444a7e2477bf1d6a2dc087b",
+      "pinned_payload_files": 40
+    }
+  },
+  "registration": {
+    "app_data_reset": false,
+    "network_category": [
+      "Private"
+    ],
+    "source_commit": "aff57b6f575453e59920b907412d7dc8184455c9",
+    "executable_sha256": "e5b98300f2e87bfd718f0b1c8eba1c1da979eae4ce58aab016c3743fdfedd7ac",
+    "version": "1.0.0.13",
+    "identity_preserved": true,
+    "extracted_manifest_version_only_adjustment": true,
+    "source_manifest_unchanged": true,
+    "msix_sha256": "23f34504eaf2fc65aee31e100908e3a0bc1e9ad6a444a7e2477bf1d6a2dc087b"
+  },
+  "fixtures": [
+    {
+      "label": "01-audio.m4a",
+      "sha256": "6f951e78d72ea8be4a687bc8dd1b12f0c1843dbaba41a56e3edde265d4c17d16",
+      "bytes": 1209466
+    },
+    {
+      "label": "02-video.mp4",
+      "sha256": "9d939b4f03dc781d1ceb22575797adeb091a0c256a8125b6846501d908aad8c9",
+      "bytes": 22096002
+    },
+    {
+      "label": "03-audio.m4a",
+      "sha256": "6f951e78d72ea8be4a687bc8dd1b12f0c1843dbaba41a56e3edde265d4c17d16",
+      "bytes": 1209466
+    }
+  ],
+  "runtime_gate": "Expected executable/AppContainer match; six loaded DLL gate pending until Cast opens; no full loaded-module pass claimed"
+}

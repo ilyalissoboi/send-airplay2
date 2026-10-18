@@ -1,5 +1,15 @@
 # Receiver validation record
 
+**D99 Screenbox AAC/M4A slice in progress (2026-10-18):** fork #16 implementation
+`aff57b6f` routes local M4A per item through progressive `audio/mp4`, bypassing
+conversion/cache even with stereo permission on. Video policy and native pins
+are unchanged. Both logic suites pass 122/137 and both actual MSIX/pinned payload
+checks pass; development 1.0.0.13 is installed in place with data preserved.
+Loaded-module and written Screenbox receiver/queue gates remain pending; this
+adds no receiver observation. Both receivers are available with versions
+explicitly unchanged. Read [the active slice](screenbox-audio-files.md).
+Automatic audio-only conversion remains a separate follow-up.
+
 **D98 packaged audio-only gate passed (2026-10-18):** codec-free x64 UWP
 test host 0.1.30.0 from implementation `153a840` plays the original brokered
 AAC/M4A through progressive `audio/mp4`. The user confirms both Mac/macOS 26.7.1
