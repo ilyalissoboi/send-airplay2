@@ -2,22 +2,25 @@
 
 Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
 
-**Current D99 dimension-review fixes merged (2026-10-18); focused check pending.** Native
-#83 is merged as `e551388` with all 17 final-head checks passed at `9d594d8` and
-no review findings. Fork #16 is merged as `c10dc464`, with all four checks passed
-at final head `a0888786` in
+**D99 dimension-review gate passed on Mac (2026-10-18).** Fork #16 is merged
+as `c10dc464`, with all four checks passed at final head `a0888786` in
 [run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).
-Both current/queued video-size comments are resolved. Implementation `c8cc5584`
-preserves VLC's current natural dimensions
-and resolves unopened queued video metadata independently, with SAR/orientation,
-bounded owned parsing, cancellation and normal failure handoff. Both logic
-suites pass 142/157. Both actual MSIX/pinned payload checks pass; development
-1.0.0.14 is installed in place with data preserved. Loaded-runtime and focused
-written layout/queue checks remain pending; readiness is requested. Both review
-threads are replied to and resolved. Read [the follow-up](screenbox-audio-video-dimensions.md).
-The original 1.0.0.13 playback gate below remains complete for its exact bytes;
-it does not verify the review fix. No full receiver matrix repeat is requested.
-No native runtime/API/pin, delivery/audio policy or publication change occurs.
+Implementation `c8cc5584`, development 1.0.0.14, passes the user's written checks:
+current anamorphic-video compact proportions, fresh-session M4A to an unopened
+video with correct compact proportions and enabled Aspect ratio, Stop during
+transition with no delayed restart, and rapid Next to the third audio item.
+Receiver output, responsiveness and paused local handoff pass as requested.
+AppContainer, the inspected MSIX executable and six pinned ci.294 DLL hashes
+match in before/after-current/after-queued/after-final snapshots. These are
+point-in-time captures across the requested app restart, not continuous process
+monitoring. Final owned cache is zero directories/files/bytes. Mac OS version
+was not reconfirmed in this focused exchange; no new Apple TV result is claimed.
+Both logic suites pass 142/157 and both actual MSIX/payload profiles pass.
+Native #83 is merged as `e551388`, with 17 checks passed at `9d594d8` and no
+findings; both fork review threads are resolved. The original 1.0.0.13/`aff57b6f`
+full playback gate remains historical for its exact bytes. No further focused
+manual check is pending. Read [the completed follow-up](screenbox-audio-video-dimensions.md).
+No native runtime/API/pin, audio delivery/policy or publication changes occur.
 
 **Completed original D99 Screenbox AAC/M4A gate passed (2026-10-18).** Fork
 [PR #16](https://github.com/ilyalissoboi/Screenbox/pull/16), implementation

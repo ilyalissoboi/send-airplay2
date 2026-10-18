@@ -1,17 +1,24 @@
 # Receiver validation record
 
-**D99 dimension fixes merged; focused check pending:** fork #16 merged as
-`c10dc464`, with all four final-head checks passed at `a0888786` in
+**D99 dimension-review gate passed on Mac (2026-10-18).** Fork #16 is merged
+as `c10dc464`, with all four checks passed at final head `a0888786` in
 [run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).
-Implementation `c8cc5584` fixes current
-natural display size and unopened queued-video metadata, with SAR/orientation
-and cancellation guards. Logic suites pass 142/157; both actual MSIX/payload
-profiles pass. Development 1.0.0.14 is installed in place; loaded-runtime and
-focused written checks remain pending. Native #83 is merged as `e551388` with
-17 final-head checks passed at `9d594d8` and no findings. The original 1.0.0.13
-observations below remain scoped to `aff57b6f`, not these changed bytes. Read
-[the active review gate](screenbox-audio-video-dimensions.md). No native pin/API,
-audio policy/delivery or publication changes.
+Implementation `c8cc5584`, development 1.0.0.14, passes the user's written checks:
+current anamorphic-video compact proportions, fresh-session M4A to an unopened
+video with correct compact proportions and enabled Aspect ratio, Stop during
+transition with no delayed restart, and rapid Next to the third audio item.
+Receiver output, responsiveness and paused local handoff pass as requested.
+AppContainer, the inspected MSIX executable and six pinned ci.294 DLL hashes
+match in before/after-current/after-queued/after-final snapshots. These are
+point-in-time captures across the requested app restart, not continuous process
+monitoring. Final owned cache is zero directories/files/bytes. Mac OS version
+was not reconfirmed in this focused exchange; no new Apple TV result is claimed.
+Both logic suites pass 142/157 and both actual MSIX/payload profiles pass.
+Native #83 is merged as `e551388`, with 17 checks passed at `9d594d8` and no
+findings; both fork review threads are resolved. The original 1.0.0.13/`aff57b6f`
+full playback gate remains historical for its exact bytes. No further focused
+manual check is pending. Read [the completed follow-up](screenbox-audio-video-dimensions.md).
+No native runtime/API/pin, audio delivery/policy or publication changes occur.
 
 **D99 Screenbox AAC/M4A recorded host gate passed (2026-10-18):** fork #16
 implementation `aff57b6f`, opt-in x64 development 1.0.0.13, passes user-confirmed

@@ -24,22 +24,25 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**Current D99 dimension-review fixes merged (2026-10-18); focused check pending.** Native
-#83 is merged as `e551388` with all 17 final-head checks passed at `9d594d8` and
-no review findings. Fork #16 is merged as `c10dc464`, with all four checks passed
-at final head `a0888786` in
+**D99 dimension-review gate passed on Mac (2026-10-18).** Fork #16 is merged
+as `c10dc464`, with all four checks passed at final head `a0888786` in
 [run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).
-Both current/queued video-size comments are resolved. Implementation `c8cc5584`
-preserves VLC's current natural dimensions
-and resolves unopened queued video metadata independently, with SAR/orientation,
-bounded owned parsing, cancellation and normal failure handoff. Both logic
-suites pass 142/157. Both actual MSIX/pinned payload checks pass; development
-1.0.0.14 is installed in place with data preserved. Loaded-runtime and focused
-written layout/queue checks remain pending; readiness is requested. Both review
-threads are replied to and resolved. Read [the follow-up](screenbox-audio-video-dimensions.md).
-The original 1.0.0.13 playback gate below remains complete for its exact bytes;
-it does not verify the review fix. No full receiver matrix repeat is requested.
-No native runtime/API/pin, delivery/audio policy or publication change occurs.
+Implementation `c8cc5584`, development 1.0.0.14, passes the user's written checks:
+current anamorphic-video compact proportions, fresh-session M4A to an unopened
+video with correct compact proportions and enabled Aspect ratio, Stop during
+transition with no delayed restart, and rapid Next to the third audio item.
+Receiver output, responsiveness and paused local handoff pass as requested.
+AppContainer, the inspected MSIX executable and six pinned ci.294 DLL hashes
+match in before/after-current/after-queued/after-final snapshots. These are
+point-in-time captures across the requested app restart, not continuous process
+monitoring. Final owned cache is zero directories/files/bytes. Mac OS version
+was not reconfirmed in this focused exchange; no new Apple TV result is claimed.
+Both logic suites pass 142/157 and both actual MSIX/payload profiles pass.
+Native #83 is merged as `e551388`, with 17 checks passed at `9d594d8` and no
+findings; both fork review threads are resolved. The original 1.0.0.13/`aff57b6f`
+full playback gate remains historical for its exact bytes. No further focused
+manual check is pending. Read [the completed follow-up](screenbox-audio-video-dimensions.md).
+No native runtime/API/pin, audio delivery/policy or publication changes occur.
 
 **Completed original D99 Screenbox AAC/M4A gate passed (2026-10-18).** Fork
 [PR #16](https://github.com/ilyalissoboi/Screenbox/pull/16), implementation
@@ -1039,16 +1042,16 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    Retain the initial timeout and two Mac connection failures alongside the
    successful retry; no further D98 manual check is pending. All 17 checks pass
    at final head `0c16c4a`; merge/CI adds no new receiver observation.
-3. **D99 original host gate complete; dimension fixes merged, focused check pending.**
-   Native #83 is merged as `e551388` (17 checks passed at `9d594d8`). Fork #16
-   is merged as `c10dc464` with all four checks passed at `a0888786`.
-   Implementation `c8cc5584` addresses current natural-size preservation and
-   unopened queued-video metadata. Both logic suites pass 142/157; both actual
-   MSIX/payload checks pass. Development 1.0.0.14 is installed in place; complete
-   loaded-runtime and focused written layout/queue checks. Both review threads
-   are resolved; readiness is requested. Preserve original 1.0.0.13/aff57b6f
-   evidence separately and
-   do not repeat its full audio matrix. Use screenbox-audio-video-dimensions.md.
+3. **D99 original and focused dimension-review gates complete.** Fork #16 is
+   merged as `c10dc464` (four checks passed at `a0888786`). Development 1.0.0.14
+   from `c8cc5584` passes written Mac current proportions, unopened queued-video
+   dimensions/controls, transition Stop and rapid Next checks. Runtime hashes
+   match in four point-in-time captures; final owned cache is zero. Both logic
+   suites pass 142/157 and both actual MSIX/payload profiles pass. Native #83 is
+   merged as `e551388` (17 checks passed at `9d594d8`). Complete review/CI on
+   companion native #84; do not merge automatically. Preserve original
+   1.0.0.13/aff57b6f evidence separately; no full matrix repeat or further focused
+   manual check is pending. Read screenbox-audio-video-dimensions.md.
 4. **Next proposal after review/merge and user authorization: automatic
    audio-only conversion.** Design an audio-only timeline/output and validated
    standalone input-container support, reusing decoder/downmix/AAC components.
@@ -1285,14 +1288,17 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 
 > Continue from AGENTS.md, HANDOFF.md, design.md, receiver-validation.md and
 > CONTINUATION.md. D99 original host gate is complete; the dimension-review
-> fixes are merged, with focused validation pending. Read
+> fixes are merged and the focused Mac gate has passed. Read
 > screenbox-audio-video-dimensions.md and actual native #84 head/review/CI.
 > Fork #16 merged as c10dc464 with all four checks passed at final head a0888786
 > in run 39101341534. Implementation c8cc5584 fixes both current/queued display
 > size comments, with owned bounded metadata parsing, cancellation, SAR/orientation
 > and invalid-size guards. Both logic suites pass 142/157 and both actual MSIX/
-> payload checks pass. Development 1.0.0.14 is installed in place. Loaded-runtime
-> and focused written layout/queue checks are pending; readiness is requested.
+> payload checks pass. Development 1.0.0.14 passes written Mac current/queued
+> compact proportions, video controls, transition Stop and rapid Next checks.
+> Four runtime snapshots match the inspected host and six pinned DLLs; final
+> owned cache is zero. No further focused manual check is pending. No new
+> Apple TV observation or Mac OS-version reconfirmation is claimed.
 > Preserve original aff57b6f/development1.0.0.13 observations as historical bytes.
 > Native #83 is merged as e551388 with 17 checks passed at final head 9d594d8
 > and no findings; do not write review changes to its old merged branch.
