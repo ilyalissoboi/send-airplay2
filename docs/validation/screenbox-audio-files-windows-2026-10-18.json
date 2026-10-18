@@ -1,0 +1,310 @@
+{
+  "decision": "D99",
+  "date": "2026-10-18",
+  "timezone": "Asia/Tokyo",
+  "result": "SCREENBOX_OPT_IN_X64_AAC_M4A_RECORDED_RECEIVER_GATE_PASSED",
+  "fork_pr": 16,
+  "fork_base": "7cea7023",
+  "implementation_head": "aff57b6f575453e59920b907412d7dc8184455c9",
+  "logic_tests": {
+    "ordinary": 122,
+    "opt_in": 137,
+    "failed": 0
+  },
+  "receivers": [
+    {
+      "receiver": "MacBook Pro",
+      "os": "macOS 26.7.1",
+      "user_confirmed_available_and_version_unchanged": true
+    },
+    {
+      "receiver": "Apple TV",
+      "os": "tvOS 26.6",
+      "user_confirmed_available_and_version_unchanged": true
+    }
+  ],
+  "manual_gate": "Complete for the recorded opt-in x64 build and two receivers; no further D99 receiver check pending",
+  "native_runtime_or_api_changes": false,
+  "release_published": false,
+  "packages": {
+    "ordinary": {
+      "source_commit": "aff57b6f575453e59920b907412d7dc8184455c9",
+      "executable_sha256": "e5da9b16080b0518d15568a2b0626f9d5ed22b93e760a21058875c0c9cab6602",
+      "msix_sha256": "d54fedd0b5331c10c21aa3d7713ee3ed3a87c34ec9843440ae3a90f254709f82",
+      "pinned_payload_files": 2
+    },
+    "audio": {
+      "source_commit": "aff57b6f575453e59920b907412d7dc8184455c9",
+      "executable_sha256": "e5b98300f2e87bfd718f0b1c8eba1c1da979eae4ce58aab016c3743fdfedd7ac",
+      "msix_sha256": "23f34504eaf2fc65aee31e100908e3a0bc1e9ad6a444a7e2477bf1d6a2dc087b",
+      "pinned_payload_files": 40
+    }
+  },
+  "registration": {
+    "app_data_reset": false,
+    "network_category": [
+      "Private"
+    ],
+    "source_commit": "aff57b6f575453e59920b907412d7dc8184455c9",
+    "executable_sha256": "e5b98300f2e87bfd718f0b1c8eba1c1da979eae4ce58aab016c3743fdfedd7ac",
+    "version": "1.0.0.13",
+    "identity_preserved": true,
+    "extracted_manifest_version_only_adjustment": true,
+    "source_manifest_unchanged": true,
+    "msix_sha256": "23f34504eaf2fc65aee31e100908e3a0bc1e9ad6a444a7e2477bf1d6a2dc087b"
+  },
+  "fixtures": [
+    {
+      "label": "01-audio.m4a",
+      "sha256": "6f951e78d72ea8be4a687bc8dd1b12f0c1843dbaba41a56e3edde265d4c17d16",
+      "bytes": 1209466
+    },
+    {
+      "label": "02-video.mp4",
+      "sha256": "9d939b4f03dc781d1ceb22575797adeb091a0c256a8125b6846501d908aad8c9",
+      "bytes": 22096002
+    },
+    {
+      "label": "03-audio.m4a",
+      "sha256": "6f951e78d72ea8be4a687bc8dd1b12f0c1843dbaba41a56e3edde265d4c17d16",
+      "bytes": 1209466
+    }
+  ],
+  "runtime_gate": "Pre-gate process matches AppContainer/executable/six pinned native hashes; post-test registered layout matches; reopened process independently matches. This is not a same-process before/after capture.",
+  "runtime_before": {
+    "app_container": true,
+    "cpu_ms": 5937.5,
+    "executable_sha256": "e5b98300f2e87bfd718f0b1c8eba1c1da979eae4ce58aab016c3743fdfedd7ac",
+    "modules": [
+      {
+        "name": "send_airplay2.DLL",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "sha256": "83b169399219424644f60eac2042c4e73b531bb60f24d8f34d5e028c772142d7"
+      },
+      {
+        "name": "avformat-63.dll",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282"
+      },
+      {
+        "name": "swresample-7.dll",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d"
+      },
+      {
+        "name": "avcodec-63.dll",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f"
+      },
+      {
+        "name": "libcrypto-3-x64.dll",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+      },
+      {
+        "name": "avutil-61.dll",
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740"
+      }
+    ],
+    "peak_working_set_bytes": 211021824,
+    "executable_matches_registration": true,
+    "private_bytes": 237666304,
+    "captured_utc": "2026-10-18T04:35:00.7122695+00:00",
+    "version": "1.0.0.13"
+  },
+  "fork_ci_checkpoint": {
+    "head": "9c5202bff8ec6717d3b18300b78145fdae2dc8b6",
+    "passed_checks": 4,
+    "run": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39097092257",
+    "scope": "Implementation/package checkpoint before final gate documentation; inspect final documentation-head CI separately"
+  },
+  "manual_observations": {
+    "mac_consent_cancellation": {
+      "result": "PASS_BY_USER_CONFIRMATION",
+      "response": "Everything worked as expected.",
+      "scope": "M4A paused near eight seconds; conversion OFF; unanswered Mac prompt closed after Screenbox Cancel, app responsive, local paused, no error notification"
+    },
+    "m4a_conversion_off_mac": {
+      "result": "PASS_BY_USER_CONFIRMATION",
+      "response": "Everything working as expected.",
+      "scope": "Conversion OFF; audible M4A near eight seconds, pause/resume, seek to about 32 and back to eight, Stop clean, local paused and app responsive"
+    },
+    "m4a_conversion_off_apple_tv": {
+      "result": "PASS_BY_USER_CONFIRMATION",
+      "response": "Everything worked as expected.",
+      "scope": "Conversion OFF; audible M4A near eight seconds, pause/resume, seek to about 32 and back to eight, Stop clean, local paused and app responsive"
+    },
+    "m4a_conversion_on": {
+      "result": "PASS_BY_USER_CONFIRMATION",
+      "response": "Yes",
+      "scope": "Both receivers; stereo conversion ON; audible current-position start, pause/resume, forward/backward seeks, Stop, local paused and responsive app"
+    },
+    "mixed_queue": {
+      "result": "PASS_BY_USER_CONFIRMATION",
+      "response": "Yes",
+      "scope": "Both receivers; conversion ON, repeat OFF; owned 01 audio -> 02 video -> 03 audio natural advance with correct output and local paused at queue end; procedure permits seeking near each end"
+    },
+    "rapid_next_and_stop_during_transition": {
+      "result": "PASS_BY_USER_CONFIRMATION",
+      "response": "Yes",
+      "scope": "Both receivers; rapid Next twice reaches third audio; separate queue restart with Next then immediate Stop prevents delayed restart, leaves local paused and app responsive"
+    }
+  },
+  "cache_observation_cancel_window": {
+    "samples": 454,
+    "elapsed_seconds": 120.2148915,
+    "peak_observed_directories": 0,
+    "stopped_by_request": false,
+    "unexpected_entry_observed": false,
+    "peak_observed_bytes": 0,
+    "final_directories": 0,
+    "final_bytes": 0,
+    "version": "1.0.0.13",
+    "sample_interval_ms": 250
+  },
+  "cache_observation_scope": "Two read-only sampling windows, with no per-action timestamps or uninterrupted case-level coverage inferred. Combined enabled-audio/video window observes at most one empty child; final directories/bytes are zero. It does not attribute that child to M4A or prove that no transient allocation escaped sampling.",
+  "after_layout": {
+    "executable_sha256": "e5b98300f2e87bfd718f0b1c8eba1c1da979eae4ce58aab016c3743fdfedd7ac",
+    "executable_matches_registration": true,
+    "captured_utc": "2026-10-18T04:49:29.0185304+00:00",
+    "version": "1.0.0.13",
+    "modules": [
+      {
+        "name": "send_airplay2.dll",
+        "sha256": "83b169399219424644f60eac2042c4e73b531bb60f24d8f34d5e028c772142d7",
+        "matches_pinned_distribution": true
+      },
+      {
+        "name": "libcrypto-3-x64.dll",
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc",
+        "matches_pinned_distribution": true
+      },
+      {
+        "name": "avcodec-63.dll",
+        "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f",
+        "matches_pinned_distribution": true
+      },
+      {
+        "name": "avformat-63.dll",
+        "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282",
+        "matches_pinned_distribution": true
+      },
+      {
+        "name": "avutil-61.dll",
+        "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740",
+        "matches_pinned_distribution": true
+      },
+      {
+        "name": "swresample-7.dll",
+        "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d",
+        "matches_pinned_distribution": true
+      }
+    ],
+    "scope": "Registered on-disk layout after manual tests; no running Screenbox process found at the attempted post-run process check"
+  },
+  "runtime_after_reopen": {
+    "cpu_ms": 2546.875,
+    "private_bytes": 228093952,
+    "app_container": true,
+    "executable_sha256": "e5b98300f2e87bfd718f0b1c8eba1c1da979eae4ce58aab016c3743fdfedd7ac",
+    "executable_matches_registration": true,
+    "peak_working_set_bytes": 197160960,
+    "captured_utc": "2026-10-18T04:49:59.6178740+00:00",
+    "version": "1.0.0.13",
+    "modules": [
+      {
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "send_airplay2.DLL",
+        "sha256": "83b169399219424644f60eac2042c4e73b531bb60f24d8f34d5e028c772142d7"
+      },
+      {
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "avformat-63.dll",
+        "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282"
+      },
+      {
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "libcrypto-3-x64.dll",
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+      },
+      {
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "avcodec-63.dll",
+        "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f"
+      },
+      {
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "swresample-7.dll",
+        "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d"
+      },
+      {
+        "matches_pinned_distribution": true,
+        "matches_layout": true,
+        "name": "avutil-61.dll",
+        "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740"
+      }
+    ]
+  },
+  "process_checkpoint": {
+    "post_test_attempt": "No Screenbox process found; no post-test running-process result inferred from that attempt",
+    "user_explanation": "I closed screenbox manually earlier. It is now reopened.",
+    "classification": "Intentional user exit, not a reported crash",
+    "restoration": "Requested conversion OFF and paused local playback on reopen; no additional receiver cast requested"
+  },
+  "cache_observation_enabled_queue_window": {
+    "peak_observed_directories": 1,
+    "version": "1.0.0.13",
+    "final_bytes": 0,
+    "stopped_by_request": true,
+    "finished_utc": "2026-10-18T04:49:28.6289604+00:00",
+    "peak_observed_bytes": 0,
+    "final_directories": 0,
+    "started_utc": "2026-10-18T04:43:43.5387578+00:00",
+    "unexpected_entry_observed": false,
+    "sample_interval_ms": 250,
+    "elapsed_seconds": 345.0911186,
+    "samples": 1306
+  },
+  "native_ci_checkpoint": {
+    "head": "5502e8eced719e8d4ff005814399d6f72ae4cea9",
+    "passed_checks": 17,
+    "run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39097086015",
+    "scope": "Implementation/package checkpoint before final gate documentation; inspect final documentation-head CI separately"
+  },
+  "scope": {
+    "receiver_host": "Development 1.0.0.13 from opt-in x64 MSIX compiled at aff57b6f; pinned ci.294; ordinary ci.207 has logic/build/payload checks only",
+    "media": "Original owned 64-second AAC-LC stereo M4A, no video, plus existing owned AAC video for the mixed queue; M4A queue copies preserve the original hash",
+    "observations": "Written user confirmation; no Computer Use visual confirmation; no timed sender trace or per-callback source counter instrumentation in Screenbox",
+    "not_established": [
+      "Every M4A codec/configuration or protected file",
+      "Other audio-only containers/codecs or transcoding",
+      "Audio-only HLS",
+      "Uninterrupted full-file or long-audio playback",
+      "New repeat-one receiver coverage",
+      "Ordinary-profile receiver interoperability",
+      "Speaker/HomePod/RAOP",
+      "Discrete converted surround",
+      "Chromecast interoperability"
+    ]
+  },
+  "receiver_failures_reported": false,
+  "final_cache": {
+    "directories": 0,
+    "scope": "Final owned AirPlay cache snapshot after reopened-process verification",
+    "version": "1.0.0.13",
+    "captured_utc": "2026-10-18T04:52:46.2759341+00:00",
+    "bytes": 0
+  }
+}
