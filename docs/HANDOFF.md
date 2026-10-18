@@ -1,8 +1,26 @@
 # Project handoff: send-airplay2
 
-Snapshot: 2026-10-17 (Asia/Tokyo). Audience: the next human developer or model.
+Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
 
-**Current D97 checkpoint (2026-10-17):** the user-authorized
+**Current D98 packaged AAC/M4A gate passed (2026-10-18).** Test-host
+implementation `153a840` is installed as codec-free x64 MSIX 0.1.30.0, preserving
+identity/data. The user confirms the original video-free brokered AAC/M4A plays
+through progressive `audio/mp4` on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS
+26.6, explicitly unchanged. Both pass audible pause/resume, forward/backward
+seeks, natural end and separate Stop/no delayed restart. Mac pending-consent
+cancellation passes through the existing Stop button, with the app responsive.
+Before and after, actual AppContainer/executable/two loaded DLL hashes match the
+inspected package. All eight source instances release exactly once. Preserve the
+initial consent timeout and two pre-media Mac connection failures; a later Mac
+retry passes using the same package, with cause not isolated.
+Build/binary/parser checks pass; all 17 CI checks pass at checkpoint `f63ca5b`;
+inspect final documentation-head CI separately. No further D98 manual check is
+pending. See [the gate and bounded scope](audio-only-uwp-gate.md). Native D97 and
+the published fork preview remain separate evidence. PR #81 awaits review/merge;
+do not merge automatically. The next proposed slice is Screenbox AAC/M4A routing
+and lifecycle/queue controls, not started here. No new release is published.
+
+**Completed D97 checkpoint (2026-10-17):** the user-authorized
 [native audio-only URL probe](audio-only-url-probe.md) passes on MacBook Pro
 (macOS 26.7.1) and Apple TV (tvOS 26.6), with versions explicitly unchanged.
 The existing progressive C API plays an original AAC/M4A with no video or
@@ -11,7 +29,7 @@ and Mac pending-consent cancellation passes. No further D97 manual check is
 pending. [Publication checkpoint PR #79](https://github.com/ilyalissoboi/send-airplay2/pull/79)
 is merged as `7403044`; the published preview is not an audio-file feature.
 The [current continuation queue](CONTINUATION.md#open-issues-and-ordered-next-work)
-proposes packaged UWP AAC/M4A next, then Screenbox audio-file routing. Audio-only
+records D98 complete and proposes Screenbox audio-file routing next. Audio-only
 speakers remain deferred. Earlier queue entries below are historical where
 this current checkpoint or merged #79 supersedes them. No additional implementation
 or package publication is started by this recorded probe.

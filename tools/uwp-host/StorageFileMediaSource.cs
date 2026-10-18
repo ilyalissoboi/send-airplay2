@@ -18,23 +18,33 @@ namespace SendAirPlay2.UwpHost
         private readonly IRandomAccessStreamWithContentType stream;
         private readonly Stream reader;
         private readonly int readLimit;
+        private readonly Action<long, long, int>? releasedObserver;
         internal long ReadCalls { get; private set; }
         internal long ReadBytes { get; private set; }
         internal int ReleaseCount { get; private set; }
 
-        private StorageFileMediaSource(IRandomAccessStreamWithContentType stream, int readLimit)
+        private StorageFileMediaSource(IRandomAccessStreamWithContentType stream, int readLimit,
+                                       Action<long, long, int>? releasedObserver)
         {
             this.stream = stream;
             this.readLimit = readLimit;
+            this.releasedObserver = releasedObserver;
             reader = stream.AsStreamForRead(0); // No extra buffering: offsets jump.
             Size = checked((long)stream.Size);
         }
 
-        internal static async Task<StorageFileMediaSource> OpenAsync(StorageFile file, int readLimit = MaxReadSize)
+        /// <summary>
+        /// Opens one brokered source. The optional diagnostic observer receives read-call,
+        /// byte and release counts after both streams close, outside the stream lock.
+        /// Observer failures cannot prevent stream cleanup; the binding contains exceptions
+        /// at its release-callback boundary. The observer must not retain private file data.
+        /// </summary>
+        internal static async Task<StorageFileMediaSource> OpenAsync(StorageFile file, int readLimit = MaxReadSize,
+                                                                    Action<long, long, int>? releasedObserver = null)
         {
             if (readLimit < 1 || readLimit > MaxReadSize) { throw new ArgumentOutOfRangeException(nameof(readLimit)); }
             var stream = await file.OpenReadAsync();
-            try { return new StorageFileMediaSource(stream, readLimit); }
+            try { return new StorageFileMediaSource(stream, readLimit, releasedObserver); }
             catch { stream.Dispose(); throw; }
         }
 
@@ -65,6 +75,7 @@ namespace SendAirPlay2.UwpHost
                 reader.Dispose();
                 stream.Dispose();
             }
+            releasedObserver?.Invoke(ReadCalls, ReadBytes, ReleaseCount);
         }
     }
 }

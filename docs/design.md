@@ -1,6 +1,18 @@
 # Design and implementation sequence
 
-Implementation snapshot: 2026-10-17 (Asia/Tokyo), after PRs #1-#78 merged.
+**D98 packaged audio-only gate passed (2026-10-18):** codec-free x64 UWP
+test host 0.1.30.0 from implementation `153a840` plays the original brokered
+AAC/M4A through progressive `audio/mp4`. The user confirms both Mac/macOS 26.7.1
+and Apple TV/tvOS 26.6 unchanged and passing audible pause/resume, both seeks,
+natural end and separate Stop/no restart; Mac pending-consent cancellation also
+passes. Actual AppContainer/executable/two loaded native hashes match before/
+after; all eight source instances release once. Preserve the initial timeout
+and two pre-media Mac connection failures alongside the later successful retry;
+their cause is not isolated. See [the bounded gate and evidence](audio-only-uwp-gate.md).
+No further D98 manual check is pending. Screenbox AAC/M4A routing is the next
+proposal; no native core/API, decoder, speaker transport or release change occurs.
+
+Implementation snapshot: 2026-10-18 (Asia/Tokyo), after PRs #1-#80 merged.
 The C++17 core implements discovery, PIN pairing, authenticated transport,
 URL/MRP playback and joined cleanup, the experimental C API version 5 and C#
 binding, Windows/macOS/Linux credential stores, packaged UWP builds, and

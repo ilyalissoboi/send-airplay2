@@ -253,6 +253,7 @@ namespace SendAirPlay2.UwpHost
             var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.VideosLibrary };
             picker.FileTypeFilter.Add(".mp4");
             picker.FileTypeFilter.Add(".m4v");
+            picker.FileTypeFilter.Add(".m4a");
             picker.FileTypeFilter.Add(".mov");
             picker.FileTypeFilter.Add(".mkv");
             var file = await picker.PickSingleFileAsync();
@@ -298,7 +299,10 @@ namespace SendAirPlay2.UwpHost
             {
                 startSeconds = -1; // Rejected by Cast.Create as invalid options.
             }
-            return StartCast(profile, store, storeName, file, delivery, startSeconds);
+            var contentType = delivery == CastDelivery.Progressive &&
+                              file.FileType.Equals(".m4a", StringComparison.OrdinalIgnoreCase)
+                                  ? "audio/mp4" : null;
+            return StartCast(profile, store, storeName, file, delivery, startSeconds, contentType: contentType);
         }
 
         /// <summary>
@@ -308,7 +312,8 @@ namespace SendAirPlay2.UwpHost
         /// Call on the UI thread: the address comes from the form.
         /// </summary>
         private Task<bool> StartCast(string profile, ICredentialStore? store, string storeName, StorageFile file,
-                                     CastDelivery delivery, double startSeconds, bool preserveAudio = false)
+                                     CastDelivery delivery, double startSeconds, bool preserveAudio = false,
+                                     string? contentType = null)
         {
             // Reserve the single cast slot before any asynchronous work, so two quick
             // clicks cannot both start a cast (one of which Stop could never reach).
@@ -323,7 +328,8 @@ namespace SendAirPlay2.UwpHost
             }
             var address = AddressBox.Text.Trim();
             Log("Cast: starting (" + storeName + " store, delivery=" + delivery + ", start=" +
-                startSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s)");
+                startSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s, content_type=" +
+                (contentType ?? "video/mp4") + ")");
             return Task.Run(async () =>
             {
                 Cast? created = null;
@@ -341,13 +347,15 @@ namespace SendAirPlay2.UwpHost
                         Profile = profile,
                         CredentialStore = store,
                         Delivery = delivery,
+                        ContentType = contentType,
                         StartPositionSeconds = startSeconds,
                         CacheQuotaBytes = converts ? 512ul * 1024 * 1024 : 0,
                         FragmentStore = cache,
                         ConversionPermission = preserveAudio ? AudioConversionPermission.PreserveOriginal : AudioConversionPermission.AllowStereo,
                     };
                     if (converts) { options.StartTimeout = TimeSpan.FromSeconds(60); }
-                    var source = await StorageFileMediaSource.OpenAsync(file);
+                    var source = await StorageFileMediaSource.OpenAsync(file, releasedObserver: (reads, bytes, releases) =>
+                        Log("Source released: reads=" + reads + " bytes=" + bytes + " releases=" + releases));
                     handedToBinding = true; // Create consumes source/store even on failure.
                     created = Cast.Create(options, source);
                     lock (castGate)
