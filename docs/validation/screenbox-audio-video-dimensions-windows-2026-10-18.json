@@ -1,0 +1,323 @@
+{
+  "decision": "D99_REVIEW",
+  "date": "2026-10-18",
+  "timezone": "Asia/Tokyo",
+  "result": "FIXES_MERGED_LOGIC_MSIX_AND_FOCUSED_MAC_GATE_PASSED",
+  "fork_pr": 16,
+  "reviewed_head": "f4ae4b2747535b564f10a88bdefd8a59a9166c1e",
+  "implementation_head": "c8cc55842437c248d286fa9732f44659e3b17504",
+  "native_pr83_merge": "e551388dbc5ff316a54f4115523e1e628e7cff9b",
+  "review_findings": [
+    "Keep VLC natural display size for an already-open current video",
+    "Resolve queued video dimensions independently of the preceding audio player"
+  ],
+  "changes": [
+    "Current video uses VLC effective dimensions; M4A remains zero sized",
+    "Queued metadata uses its own parsed track or a separately owned brokered playback descriptor; existing helper bounds parsing and disposal is in finally",
+    "Stop/supersession cancel metadata; admission rechecks the generation before native source creation",
+    "Queued display size applies sample aspect ratio and orientation, rejecting zero/overflow/missing dimensions"
+  ],
+  "logic_tests": {
+    "ordinary": 142,
+    "opt_in": 157,
+    "failed": 0
+  },
+  "focused_manual_gate": "PASS: development 1.0.0.14 Mac current/queued video proportions, video controls, transition Stop and rapid Next; runtime snapshots match; final owned cache zero",
+  "historical_gate": "Original development 1.0.0.13 from aff57b6f remains separate; no full matrix repeat requested",
+  "native_api_runtime_or_pin_changes": false,
+  "release_published": false,
+  "owned_fixture": {
+    "provenance": "Re-encode first 30 seconds of existing repository-owned D88 AAC flash/beep video; scale 720x576, SAR16:15, copy original AAC; no third-party media",
+    "sha256": "db438d85d96cedb04c994dbeada0c9698ee6c9f7e9b96a45c9c5865a44d4f0be",
+    "coded_width": 720,
+    "coded_height": 576,
+    "sar": "16:15",
+    "display_aspect_ratio": "4:3"
+  },
+  "packages": {
+    "ordinary": {
+      "executable_sha256": "01886d9b1f9b7a17c7bcdb611c7f1c1e0ff02c34baf17c88a7de23a8a6ffb7ae",
+      "source_commit": "c8cc55842437c248d286fa9732f44659e3b17504",
+      "pinned_payload_files": 2,
+      "msix_sha256": "003ad685a04a1fb8e2f2645826b6b8ab421a74178ec11a338c6b70c5f9a41714"
+    },
+    "audio": {
+      "executable_sha256": "5ab90e18c08a80182772e2b473a7b798b6c98fbb9ed895334c6cd730954e9272",
+      "source_commit": "c8cc55842437c248d286fa9732f44659e3b17504",
+      "pinned_payload_files": 40,
+      "msix_sha256": "672c1793968265642cd5c99cc2c043f350b14b9fd25846bfdf24eff6e462fc7b"
+    }
+  },
+  "registration": {
+    "app_data_reset": false,
+    "msix_sha256": "672c1793968265642cd5c99cc2c043f350b14b9fd25846bfdf24eff6e462fc7b",
+    "extracted_manifest_version_only_adjustment": true,
+    "executable_sha256": "5ab90e18c08a80182772e2b473a7b798b6c98fbb9ed895334c6cd730954e9272",
+    "source_commit": "c8cc55842437c248d286fa9732f44659e3b17504",
+    "source_manifest_unchanged": true,
+    "network_category": [
+      "Private"
+    ],
+    "identity_preserved": true,
+    "version": "1.0.0.14"
+  },
+  "review_threads": [
+    {
+      "id": "PRRT_kwDOVBM36s6tneJM",
+      "finding": "Current natural display dimensions",
+      "resolved": true,
+      "reply": "https://github.com/ilyalissoboi/Screenbox/pull/16#discussion_r4305892400"
+    },
+    {
+      "id": "PRRT_kwDOVBM36s6tneJN",
+      "finding": "Unopened video after audio",
+      "resolved": true,
+      "reply": "https://github.com/ilyalissoboi/Screenbox/pull/16#discussion_r4305892483"
+    }
+  ],
+  "merged_fork_pr": {
+    "number": 16,
+    "merge_commit": "c10dc4642fe2853a6122aa6ddf814a52289cacdc",
+    "merged_utc": "2026-10-18T11:02:50Z",
+    "final_head": "a08887862c89c9abd575dbe5565361918d67c002",
+    "passed_checks": 4,
+    "release_job": "intentionally skipped",
+    "ci_run": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534",
+    "scope": "Merge/CI verification only; no new manual observation or release publication"
+  },
+  "focused_manual_observations": {
+    "receiver": "MacBook Pro",
+    "method": "Written user confirmation; no Computer Use visual verification",
+    "os_version_reconfirmed_in_this_exchange": false,
+    "current_video": {
+      "result": "PASS",
+      "compact_proportions_preserved": true,
+      "receiver_video_audio": true,
+      "stop_closes_receiver": true,
+      "local_playback_paused_after_stop": true
+    },
+    "unopened_queued_video": {
+      "result": "PASS",
+      "fresh_session_video_not_played_locally": true,
+      "natural_audio_to_video_advance": true,
+      "receiver_video_audio": true,
+      "compact_video_proportions": true,
+      "aspect_ratio_menu_enabled": true,
+      "local_playback_paused_after_stop": true
+    },
+    "transition_stop": {
+      "result": "PASS",
+      "receiver_playback_closes": true,
+      "no_delayed_restart_during_requested_15_second_wait": true,
+      "screenbox_responsive": true,
+      "local_playback_paused": true
+    },
+    "rapid_next": {
+      "result": "PASS",
+      "third_audio_item_plays": true,
+      "no_delayed_return_to_video": true,
+      "local_playback_paused_after_stop": true
+    },
+    "limits": "Written user observations; one Mac receiver only; snapshots across requested app restart are not continuous monitoring; original 1.0.0.13 full matrix remains separate"
+  },
+  "loaded_runtime_snapshots": [
+    {
+      "label": "before",
+      "captured_utc": "2026-10-18T11:15:14.0038496+00:00",
+      "version": "1.0.0.14",
+      "app_container": true,
+      "executable_sha256": "5ab90e18c08a80182772e2b473a7b798b6c98fbb9ed895334c6cd730954e9272",
+      "executable_matches_registration": true,
+      "modules": [
+        {
+          "name": "send_airplay2.DLL",
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "sha256": "83b169399219424644f60eac2042c4e73b531bb60f24d8f34d5e028c772142d7"
+        },
+        {
+          "name": "swresample-7.dll",
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d"
+        },
+        {
+          "name": "avcodec-63.dll",
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f"
+        },
+        {
+          "name": "avformat-63.dll",
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282"
+        },
+        {
+          "name": "avutil-61.dll",
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740"
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+        }
+      ]
+    },
+    {
+      "label": "after-current",
+      "captured_utc": "2026-10-18T11:16:52.8963801+00:00",
+      "version": "1.0.0.14",
+      "app_container": true,
+      "executable_sha256": "5ab90e18c08a80182772e2b473a7b798b6c98fbb9ed895334c6cd730954e9272",
+      "executable_matches_registration": true,
+      "modules": [
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "send_airplay2.DLL",
+          "sha256": "83b169399219424644f60eac2042c4e73b531bb60f24d8f34d5e028c772142d7"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "swresample-7.dll",
+          "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "avcodec-63.dll",
+          "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "avformat-63.dll",
+          "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "avutil-61.dll",
+          "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+        }
+      ]
+    },
+    {
+      "label": "after-queued",
+      "captured_utc": "2026-10-18T11:33:17.3774968+00:00",
+      "version": "1.0.0.14",
+      "app_container": true,
+      "executable_sha256": "5ab90e18c08a80182772e2b473a7b798b6c98fbb9ed895334c6cd730954e9272",
+      "executable_matches_registration": true,
+      "modules": [
+        {
+          "sha256": "83b169399219424644f60eac2042c4e73b531bb60f24d8f34d5e028c772142d7",
+          "matches_pinned_distribution": true,
+          "name": "send_airplay2.DLL",
+          "matches_layout": true
+        },
+        {
+          "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d",
+          "matches_pinned_distribution": true,
+          "name": "swresample-7.dll",
+          "matches_layout": true
+        },
+        {
+          "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282",
+          "matches_pinned_distribution": true,
+          "name": "avformat-63.dll",
+          "matches_layout": true
+        },
+        {
+          "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f",
+          "matches_pinned_distribution": true,
+          "name": "avcodec-63.dll",
+          "matches_layout": true
+        },
+        {
+          "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740",
+          "matches_pinned_distribution": true,
+          "name": "avutil-61.dll",
+          "matches_layout": true
+        },
+        {
+          "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc",
+          "matches_pinned_distribution": true,
+          "name": "libcrypto-3-x64.dll",
+          "matches_layout": true
+        }
+      ]
+    },
+    {
+      "label": "after-final",
+      "captured_utc": "2026-10-18T11:36:26.7388183+00:00",
+      "version": "1.0.0.14",
+      "app_container": true,
+      "executable_sha256": "5ab90e18c08a80182772e2b473a7b798b6c98fbb9ed895334c6cd730954e9272",
+      "executable_matches_registration": true,
+      "modules": [
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "send_airplay2.DLL",
+          "sha256": "83b169399219424644f60eac2042c4e73b531bb60f24d8f34d5e028c772142d7"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "swresample-7.dll",
+          "sha256": "cdfccd987834949020b11af832bc6c548377d13426a59f2202881959f1ab309d"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "avformat-63.dll",
+          "sha256": "fc41da76a34ffce5105fbf3c9a3c6b053bb3197abd3568955b4170c2eb0e5282"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "avcodec-63.dll",
+          "sha256": "ea46c6fe5bcab147d0229787797cd627773d5c57e3290c0d5bb42bc1531d988f"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "avutil-61.dll",
+          "sha256": "5443312d0a588e15576a1bddbcde545a628a435cdb41a16a73d178d5cd92c740"
+        },
+        {
+          "matches_pinned_distribution": true,
+          "matches_layout": true,
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+        }
+      ]
+    }
+  ],
+  "final_owned_cache": {
+    "captured_utc": "2026-10-18T11:36:50.5223673+00:00",
+    "package_version": "1.0.0.14",
+    "scope": "Final point-in-time count of owned screenbox-airplay-* temporary children only",
+    "owned_directories": 0,
+    "owned_files": 0,
+    "owned_bytes": 0
+  },
+  "companion_ci_checkpoint_before_final_evidence": {
+    "head": "0f907b7e87ab7d39c19f26c29aa18819620c2bd8",
+    "passed_checks": 17,
+    "run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39121882659",
+    "scope": "Prior documentation head only; inspect CI separately for final evidence commit"
+  }
+}

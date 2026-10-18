@@ -2,7 +2,27 @@
 
 Snapshot: 2026-10-18 (Asia/Tokyo). Audience: the next human developer or model.
 
-**Current D99 Screenbox AAC/M4A recorded gate passed (2026-10-18).** Fork
+**D99 dimension-review gate passed on Mac (2026-10-18).** Fork #16 is merged
+as `c10dc464`, with all four checks passed at final head `a0888786` in
+[run 39101341534](https://github.com/ilyalissoboi/Screenbox/actions/runs/39101341534).
+Implementation `c8cc5584`, development 1.0.0.14, passes the user's written checks:
+current anamorphic-video compact proportions, fresh-session M4A to an unopened
+video with correct compact proportions and enabled Aspect ratio, Stop during
+transition with no delayed restart, and rapid Next to the third audio item.
+Receiver output, responsiveness and paused local handoff pass as requested.
+AppContainer, the inspected MSIX executable and six pinned ci.294 DLL hashes
+match in before/after-current/after-queued/after-final snapshots. These are
+point-in-time captures across the requested app restart, not continuous process
+monitoring. Final owned cache is zero directories/files/bytes. Mac OS version
+was not reconfirmed in this focused exchange; no new Apple TV result is claimed.
+Both logic suites pass 142/157 and both actual MSIX/payload profiles pass.
+Native #83 is merged as `e551388`, with 17 checks passed at `9d594d8` and no
+findings; both fork review threads are resolved. The original 1.0.0.13/`aff57b6f`
+full playback gate remains historical for its exact bytes. No further focused
+manual check is pending. Read [the completed follow-up](screenbox-audio-video-dimensions.md).
+No native runtime/API/pin, audio delivery/policy or publication changes occur.
+
+**Completed original D99 Screenbox AAC/M4A gate passed (2026-10-18).** Fork
 [PR #16](https://github.com/ilyalissoboi/Screenbox/pull/16), implementation
 `aff57b6f`, routes local M4A per item through progressive `audio/mp4` in both
 profiles, bypassing conversion/cache regardless of stereo permission. Video
@@ -17,9 +37,8 @@ and reopened process match the inspected executable/six pinned DLLs; the user
 intentionally closed the original process, so these are not continuous-process
 before/after captures. Final owned cache is zero directories/bytes. All four
 fork/17 native checks pass at checkpoints `9c5202bf`/`5502e8e`; inspect final
-documentation-head CI separately. No further D99 receiver check is pending.
-See [the complete record and limits](screenbox-audio-files.md). Fork #16/native
-#83 await review/merge; do not merge automatically. Automatic audio-only
+documentation-head CI separately. No further original 1.0.0.13 receiver check is pending.
+See [the complete record and limits](screenbox-audio-files.md). Fork #16 and native #83 are merged; the focused review-fix gate above remains separate. Automatic audio-only
 conversion is a separate next proposal, not implemented here. No release or
 pin update is published, and ordinary-profile receiver behavior is not newly
 verified. Preserve the hardware/user deferrals and completed D97/D98 evidence.
