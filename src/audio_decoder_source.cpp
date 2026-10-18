@@ -1564,6 +1564,32 @@ AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& cont
     return std::unique_ptr<AudioDecoderSource>(new AudioDecoderSource(std::move(impl)));
 }
 
+std::uint64_t AudioDecoderSource::unedited_mp4_duration_samples(const MediaReadContext& context) {
+    require(impl_->usable && impl_->container == SourceContainer::mp4 &&
+                impl_->selected.edits.empty(),
+            AudioDecodeFailure::unsupported, "audio-only duration requires unedited MP4 audio");
+    Operation operation(impl_->reader, context);
+    const auto audio =
+        read_mp4_source_audio(impl_->header_reader(), impl_->reader.size, impl_->selected.id);
+    validate_mp4_audio_index(audio);
+    require(audio.samples.front().decode_time == 0 && audio.edits.empty(),
+            AudioDecodeFailure::unsupported, "audio-only MP4 requires a zero origin and no edits");
+    const auto& last = audio.samples.back();
+    constexpr std::uint64_t maximum_seconds = maximum_presentation_samples / output_rate;
+    const auto maximum_ticks = maximum_seconds * audio.timescale;
+    require(last.decode_time <= maximum_ticks && last.duration <= maximum_ticks - last.decode_time,
+            AudioDecodeFailure::too_large, "audio-only MP4 duration exceeds seven days");
+    const auto ticks = last.decode_time + last.duration;
+    // Split whole seconds from the remainder before rounding once to 48 kHz.
+    // Even a UINT32_MAX track timescale cannot overflow the remainder product.
+    const auto samples =
+        (ticks / audio.timescale) * output_rate +
+        ((ticks % audio.timescale) * output_rate + audio.timescale / 2) / audio.timescale;
+    require(samples > 0, AudioDecodeFailure::unsupported, "audio-only MP4 duration is empty");
+    impl_->reader.check();
+    return samples;
+}
+
 AudioDecoderSource::IndexStatistics AudioDecoderSource::index_statistics() const noexcept {
     return {impl_->indexed_packet_count, impl_->audio_anchors.size(),
             impl_->audio_anchors.capacity() * sizeof(AudioRestartAnchor)};

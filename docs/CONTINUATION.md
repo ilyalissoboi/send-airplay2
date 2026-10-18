@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#83 are merged. `main` contains
+Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#84 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,6 +23,25 @@ queue below; do not resume completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D100 private audio-only AAC foundation (2026-10-18).** After native #84
+merged as `b9af011` (all 17 checks passed at `64c3595` in
+[run 39124033437](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39124033437)),
+the user authorizes the next automatic audio-only conversion slice. A private
+`StereoAacHls::open_audio_only` entry now derives a 48-kHz timeline from the
+selected unedited progressive MP4/MOV packet index, admits the covered FLAC/PCM
+subset without video tracks, and authors one audio-only AAC HLS variant. It
+reuses bounded decoding, stereo downmix/encoding, lazy host storage and joined
+Stop cleanup. Public API/automatic routing, packages and Screenbox are unchanged.
+Standalone FLAC/Ogg/WAV, edited timelines and Matroska audio-only duration are
+not admitted by this slice. Offline tests cover owned 48/44.1-kHz FLAC and 5.1
+PCM, final trim, cold/backward reads, selection, cancellation, cache failure and
+cleanup. Static/shared suites pass 40/41; the codec suite passes 15 and UWP
+private-library compilation passes. This is offline evidence, not a new receiver
+result. See [the scope and ordered follow-ups](audio-only-aac-foundation.md).
+The user adds MP3 input support, direct-playback validation on Mac/Apple TV and
+a conditional AAC fallback decision to the work plan. These are planned only;
+MP3 is not admitted or receiver-verified by D100.
 
 **D99 dimension-review gate passed on Mac (2026-10-18).** Fork #16 is merged
 as `c10dc464`, with all four checks passed at final head `a0888786` in
@@ -1048,15 +1067,22 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    dimensions/controls, transition Stop and rapid Next checks. Runtime hashes
    match in four point-in-time captures; final owned cache is zero. Both logic
    suites pass 142/157 and both actual MSIX/payload profiles pass. Native #83 is
-   merged as `e551388` (17 checks passed at `9d594d8`). Complete review/CI on
-   companion native #84; do not merge automatically. Preserve original
+   merged as `e551388` (17 checks passed at `9d594d8`). Companion native #84
+   merged as `b9af011` with all 17 checks passed at `64c3595`. Preserve original
    1.0.0.13/aff57b6f evidence separately; no full matrix repeat or further focused
    manual check is pending. Read screenbox-audio-video-dimensions.md.
-4. **Next proposal after review/merge and user authorization: automatic
-   audio-only conversion.** Design an audio-only timeline/output and validated
-   standalone input-container support, reusing decoder/downmix/AAC components.
-   Current conversion requires video; a decoder supported inside MP4/MKV is not
-   proof of standalone FLAC/Ogg/Opus/WAV support. This is not implemented by D99.
+4. **D100 private audio-only foundation implemented; review/CI next.** The
+   authorized slice adds a private FLAC/PCM-in-unedited-MP4/MOV AAC HLS path,
+   independent of video. Read audio-only-aac-foundation.md and inspect the actual
+   open PR head. Continue its codex/audio-only-aac-foundation branch while open;
+   ask before merging. Static/shared CTests pass 40/41, codec CTests 15, and the
+   private UWP library compiles. No new receiver observation or public routing.
+5. **Following slices:** validated input timelines/container support (including
+   native FLAC and WAV, then Ogg Opus/Vorbis, plus the MP3 input/direct-playback
+   work track and evidence-based AAC fallback decision); automatic copy/conversion policy
+   and public integration with explicit stereo permission; native/packaged
+   receiver gates, then Screenbox routing/queue checks. Existing decoder coverage
+   inside MP4/MKV does not prove standalone support. Keep these gates separate.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1287,26 +1313,21 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md, HANDOFF.md, design.md, receiver-validation.md and
-> CONTINUATION.md. D99 original host gate is complete; the dimension-review
-> fixes are merged and the focused Mac gate has passed. Read
-> screenbox-audio-video-dimensions.md and actual native #84 head/review/CI.
-> Fork #16 merged as c10dc464 with all four checks passed at final head a0888786
-> in run 39101341534. Implementation c8cc5584 fixes both current/queued display
-> size comments, with owned bounded metadata parsing, cancellation, SAR/orientation
-> and invalid-size guards. Both logic suites pass 142/157 and both actual MSIX/
-> payload checks pass. Development 1.0.0.14 passes written Mac current/queued
-> compact proportions, video controls, transition Stop and rapid Next checks.
-> Four runtime snapshots match the inspected host and six pinned DLLs; final
-> owned cache is zero. No further focused manual check is pending. No new
-> Apple TV observation or Mac OS-version reconfirmation is claimed.
-> Preserve original aff57b6f/development1.0.0.13 observations as historical bytes.
-> Native #83 is merged as e551388 with 17 checks passed at final head 9d594d8
-> and no findings; do not write review changes to its old merged branch.
-> Continue the open native #84 checkpoint branch. Fork #16 is merged; any new
-> Screenbox code slice needs its own branch from current main. Merge/CI adds no
-> new manual observation and does not publish a release.
-> No full audio matrix repeat, new native API/pin/delivery/audio policy or release
-> is part of this review. Inspect current Screenbox instructions, use VS 2026
-> MSBuild and preserve identity/data/grants. Use written manual confirmation,
-> not Computer Use, for visual UI checks. Ask before merging or publishing.
-> Automatic audio-only conversion and hardware/user deferrals remain separate.
+> CONTINUATION.md. Native #84 merged as b9af011 with all 17 final-head checks
+> passed at 64c3595. D99 and its focused Mac dimension checks are complete; do
+> not repeat them. The user authorized D100, the private audio-only AAC foundation.
+> Read audio-only-aac-foundation.md and inspect the actual open PR head/review/CI
+> before writing. Continue codex/audio-only-aac-foundation while its PR is open;
+> otherwise use a fresh branch from main. The new private factory admits only
+> covered FLAC/PCM in unedited progressive MP4/MOV with no video tracks, derives
+> duration from the native audio packet index and reuses lazy AAC/cache/Stop.
+> Public automatic routing/API/packages, pinned dependencies and Screenbox are
+> unchanged. Static/shared CTests pass 40/41, codec CTests 15 and private UWP
+> compilation passes; these are not new receiver observations. Standalone
+> FLAC/Ogg/WAV, edited/MKA timelines and automatic policy/public integration
+> remain ordered follow-ups. MP3 input support and Mac/Apple TV direct-playback
+> validation are now explicitly in the user-requested plan; decide AAC fallback
+> only from those results. No MP3 implementation or interoperability is claimed.
+> No new app install, release or hardware gate starts here. Preserve speaker/discrete-surround/Chromecast and remote-Stop deferrals.
+> Use written manual confirmation, not Computer Use, for any future visual UI
+> gate. Ask before merging or publishing.

@@ -88,6 +88,18 @@ public:
     [[nodiscard]] static std::unique_ptr<StereoAacHls>
     open(MediaSource source, AacFragmentStore store, std::uint64_t quota_bytes,
          const MediaReadContext& context, std::optional<std::uint64_t> selected_id = {});
+    /** Private audio-only foundation; does not change public automatic routing.
+     * Admits only an unedited progressive MP4/MOV with no video tracks and a
+     * selected enabled FLAC or PCM stream supported by AudioDecoderSource. The native
+     * packet index determines duration, not a host-supplied or FFmpeg estimate.
+     * Uses the existing stereo encoder, lazy cache, deadlines and Stop contract.
+     * Returns one direct audio variant, no video resources or rendition group.
+     * Standalone FLAC/Ogg/WAV and Matroska timelines are outside this first slice.
+     * Store cleanup is consumed on every call, including startup failure.
+     */
+    [[nodiscard]] static std::unique_ptr<StereoAacHls>
+    open_audio_only(MediaSource source, AacFragmentStore store, std::uint64_t quota_bytes,
+                    const MediaReadContext& context, std::optional<std::uint64_t> selected_id = {});
     ~StereoAacHls();
     StereoAacHls(const StereoAacHls&) = delete;
     StereoAacHls& operator=(const StereoAacHls&) = delete;
@@ -103,6 +115,10 @@ public:
     void stop() noexcept;
 
 private:
+    [[nodiscard]] static std::unique_ptr<StereoAacHls>
+    open_impl(MediaSource source, AacFragmentStore store, std::uint64_t quota_bytes,
+              const MediaReadContext& context, std::optional<std::uint64_t> selected_id,
+              bool audio_only);
     struct Impl;
     explicit StereoAacHls(std::shared_ptr<Impl> impl, RemuxedHls presentation);
     std::shared_ptr<Impl> impl_;

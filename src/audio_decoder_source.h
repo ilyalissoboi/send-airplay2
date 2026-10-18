@@ -115,6 +115,13 @@ public:
     open(const MediaSource& source, const MediaReadContext& context,
          std::optional<std::uint64_t> explicit_track_id = {},
          bool canonical_matroska_clock = false);
+    /** Selected unedited progressive MP4/MOV audio duration on the 48-kHz clock.
+     * Reads the native packet index under the caller's operation budgets; no PCM
+     * decoding or FFmpeg duration estimate. Requires zero-based contiguous samples,
+     * no edit list, positive duration <=7 days. Matroska and edited inputs refuse.
+     * Serialized like read_window; callbacks end on return and exceptions propagate.
+     */
+    [[nodiscard]] std::uint64_t unedited_mp4_duration_samples(const MediaReadContext& context);
     ~AudioDecoderSource();
     AudioDecoderSource(const AudioDecoderSource&) = delete;
     AudioDecoderSource& operator=(const AudioDecoderSource&) = delete;

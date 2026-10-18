@@ -202,9 +202,9 @@ std::string multivariant_playlist(const VariantStream& variant,
                                   const AudioRendition* audio) {
     std::string out = "#EXTM3U\n#EXT-X-VERSION:7\n";
     // A master independence tag applies to every rendition. The optional AAC
-    // path has a cold synthesis-overlap frame, so only its video playlist makes
-    // the independence claim; the legacy master remains unchanged.
-    if (!audio) {
+    // path has a cold synthesis-overlap frame, so only a copied video playlist
+    // makes that claim. Direct audio variants also opt out; legacy video stays unchanged.
+    if (!audio && variant.independent_segments) {
         out += "#EXT-X-INDEPENDENT-SEGMENTS\n";
     }
     if (audio) {

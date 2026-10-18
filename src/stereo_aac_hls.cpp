@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "stereo_aac_hls.h"
 #include "audio_decoder_source.h"
+#include "audio_delivery_policy.h"
 #include "media_track_inventory.h"
 #include "sample_entries.h"
 #include "stereo_aac_encoder.h"
@@ -471,6 +472,19 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
                                                  std::uint64_t quota,
                                                  const MediaReadContext& context,
                                                  std::optional<std::uint64_t> selected_id) {
+    return open_impl(std::move(source), std::move(store), quota, context, selected_id, false);
+}
+std::unique_ptr<StereoAacHls>
+StereoAacHls::open_audio_only(MediaSource source, AacFragmentStore store, std::uint64_t quota,
+                              const MediaReadContext& context,
+                              std::optional<std::uint64_t> selected_id) {
+    return open_impl(std::move(source), std::move(store), quota, context, selected_id, true);
+}
+std::unique_ptr<StereoAacHls> StereoAacHls::open_impl(MediaSource source, AacFragmentStore store,
+                                                      std::uint64_t quota,
+                                                      const MediaReadContext& context,
+                                                      std::optional<std::uint64_t> selected_id,
+                                                      bool audio_only) {
     const bool valid_store = store.seal && store.read_at && store.clear;
     StoreCleanup cleanup(std::move(store));
     check_request(context);
@@ -488,13 +502,42 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     require(selection.status == AudioSelectionStatus::selected,
             AudioDecodeFailure::invalid_selection, "AAC HLS has no selected audio");
     const auto& selected = inventory.tracks.at(selection.track_index);
+    if (audio_only) {
+        require(inventory.container == SourceContainer::mp4 &&
+                    std::none_of(inventory.tracks.begin(), inventory.tracks.end(),
+                                 [](const SourceTrack& track) {
+                                     return track.kind == SourceTrackKind::video;
+                                 }),
+                AudioDecodeFailure::unsupported,
+                "audio-only HLS requires MP4 without video tracks");
+        const auto plan =
+            plan_audio_delivery(inventory, AudioDeliveryProfile::apple_hls_v1, selected.id);
+        require(plan.source_family == SourceAudioFamily::flac ||
+                    plan.source_family == SourceAudioFamily::pcm,
+                AudioDecodeFailure::unsupported, "audio-only foundation requires FLAC or PCM");
+    }
     impl->decoder = AudioDecoderSource::open(source, context, selected.id, true);
-    auto presentation = remux_to_hls(source, context.request_cancelled, true, &context);
-    require(presentation.zero_origin_video, AudioDecodeFailure::unsupported,
-            "AAC HLS video timeline requires a zero origin and no trim");
-    impl->source_origin_samples = presentation.audio_source_origin_48khz;
-    validate_stereo_video_spans(presentation.durations_us);
-    impl->boundaries = plan_stereo_aac_boundaries(presentation.video_boundaries_48khz);
+    RemuxedHls presentation;
+    if (audio_only) {
+        const auto duration = impl->decoder->unedited_mp4_duration_samples(context);
+        impl->boundaries = plan_stereo_aac_boundaries({0, duration});
+        presentation.segment_count = impl->boundaries.size() - 1;
+        presentation.target_duration_seconds = default_segment_target_seconds;
+        presentation.variant.uri = "audio.m3u8";
+        presentation.variant.independent_segments = false;
+        for (std::size_t index = 1; index < impl->boundaries.size(); ++index) {
+            const auto span = impl->boundaries[index] - impl->boundaries[index - 1];
+            presentation.durations_us.push_back((span * microseconds_per_second + sample_rate / 2) /
+                                                sample_rate);
+        }
+    } else {
+        presentation = remux_to_hls(source, context.request_cancelled, true, &context);
+        require(presentation.zero_origin_video, AudioDecodeFailure::unsupported,
+                "AAC HLS video timeline requires a zero origin and no trim");
+        impl->source_origin_samples = presentation.audio_source_origin_48khz;
+        validate_stereo_video_spans(presentation.durations_us);
+        impl->boundaries = plan_stereo_aac_boundaries(presentation.video_boundaries_48khz);
+    }
     const auto audio_count = impl->boundaries.size() - 1;
     auto target = presentation.target_duration_seconds;
     for (std::size_t index = 0; index < audio_count; ++index) {
@@ -505,7 +548,11 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     }
     // Audio snapping can move a segment across an integer-rounding boundary.
     // All renditions share the larger target, including video and subtitles.
-    raise_composition_target_duration(presentation, target);
+    if (audio_only) {
+        presentation.target_duration_seconds = target;
+    } else {
+        raise_composition_target_duration(presentation, target);
+    }
     const auto duration = impl->boundaries.back();
     require(impl->source_origin_samples <= maximum_movie_samples &&
                 duration <= maximum_movie_samples - impl->source_origin_samples,
@@ -551,8 +598,10 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
             {impl->authoring.representative_audio_duration_us}, {reference.size()}, target);
         impl->decoder = std::move(serving_decoder);
     }
-    impl->authoring.copied_rates =
-        hls_bit_rates(presentation.durations_us, presentation.video_segment_bytes, target);
+    if (!audio_only) {
+        impl->authoring.copied_rates =
+            hls_bit_rates(presentation.durations_us, presentation.video_segment_bytes, target);
+    }
     HlsBitRates subtitle_rates;
     for (const auto& sizes : presentation.subtitle_segment_bytes) {
         const auto rates = hls_bit_rates(presentation.durations_us, sizes, target);
@@ -593,14 +642,15 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open(MediaSource source, AacFragment
     }
     playlist += "#EXT-X-ENDLIST\n";
     presentation.resources.push_back(text_resource("audio.m3u8", playlist));
-    presentation.variant.codecs += ",mp4a.40.2";
+    presentation.variant.codecs += audio_only ? "mp4a.40.2" : ",mp4a.40.2";
     const auto declared_rates =
         add_hls_bit_rates(impl->authoring.copied_rates, impl->authoring.representative_audio_rates);
     presentation.variant.peak_bits_per_second = declared_rates.peak;
     presentation.variant.average_bits_per_second = declared_rates.average;
     const AudioRendition audio{"audio.m3u8", language};
     presentation.resources.push_back(text_resource(
-        "main.m3u8", multivariant_playlist(presentation.variant, presentation.subtitles, &audio)));
+        "main.m3u8", multivariant_playlist(presentation.variant, presentation.subtitles,
+                                           audio_only ? nullptr : &audio)));
     presentation.playlist_name = "main.m3u8";
     check_request(context);
     auto result = std::unique_ptr<StereoAacHls>(new StereoAacHls(impl, std::move(presentation)));
