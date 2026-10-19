@@ -27,11 +27,14 @@ public:
     [[nodiscard]] StereoAacHlsFailure failure() const noexcept;
     [[nodiscard]] std::uint32_t authoring_flags() const noexcept;
     void stop() noexcept;
-    /** Select/resolve before resource registration. Copy/video-only never call
+    /** Select/resolve before resource registration. Copy/video-only/progressive never call
      * or take ownership of store, and work in codec-free builds. Conversion
      * requires an enabled backend and complete per-cast store/quota; ownership
      * transfers only when entering the existing stereo preparation function.
      * No retry after source/configuration/cache/codec/timeout/cancellation failure.
+     * apple_audio_v1 admits no video and only the finite audio-only subset.
+     * Its progressive presentation is one original MIME-typed resource; the
+     * presentation's playlist_name is the entry resource, not an HLS assertion.
      * Source remains immutable; operations borrow context until return only.
      */
     [[nodiscard]] static std::unique_ptr<PreparedAutomaticMedia>

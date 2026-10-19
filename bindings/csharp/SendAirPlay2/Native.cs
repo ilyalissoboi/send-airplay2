@@ -6,7 +6,7 @@ using System.Text;
 namespace SendAirPlay2
 {
     /// <summary>
-    /// P/Invoke declarations mirroring include/send_airplay2/*.h (API version 5,
+    /// P/Invoke declarations mirroring include/send_airplay2/*.h (API version 6,
     /// plus receivers.h).
     /// Struct layouts follow the C declarations field for field with natural
     /// alignment; every callback uses the C calling convention.
@@ -17,7 +17,7 @@ namespace SendAirPlay2
         internal const string Library = "send_airplay2";
 
         /// <summary>The header version this binding was written against.</summary>
-        internal const uint ApiVersion = 5;
+        internal const uint ApiVersion = 6;
 
         /// <summary>SAP2_CREDENTIAL_RECORD_MAX: upper bound of an encoded record.</summary>
         internal const int CredentialRecordMax = 203;

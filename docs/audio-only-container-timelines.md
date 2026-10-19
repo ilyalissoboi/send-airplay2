@@ -1,5 +1,7 @@
 # D105: private edited MP4 and Matroska audio-only timelines
 
+**Merged checkpoint:** #90 merged as 06e094c, all 17 checks passed at fec9448 in [run 39209440573](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39209440573). [D106](automatic-audio-only.md) now connects the finite audio-only subset to an explicit public profile; D105's offline evidence below is unchanged.
+
 2026-10-19 (Asia/Tokyo), private offline gate complete. The user
 authorizes this slice after #89 merged as e4d1a28, with all 17 checks passed at
 final head 3e59f9c in

@@ -60,5 +60,10 @@ public:
 [[nodiscard]] std::unique_ptr<PreparedStereoMedia>
 prepare_stereo_media(MediaSource source, AacFragmentStore store, std::uint64_t quota,
                      const MediaReadContext& context, std::optional<std::uint64_t> selected_id);
+/// Separate audio-only entry; takes store ownership on entry, including refusal.
+/// Uses only the finite private audio-only decoder/timeline subset.
+[[nodiscard]] std::unique_ptr<PreparedStereoMedia>
+prepare_audio_only_media(MediaSource source, AacFragmentStore store, std::uint64_t quota,
+                         const MediaReadContext& context, std::uint64_t selected_id);
 } // namespace send_airplay2::detail
 #endif

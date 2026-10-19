@@ -1,5 +1,7 @@
 # Public automatic audio delivery (D83 / API 5)
 
+**D106/API 6 extension:** [the separate Apple Audio v1 profile](automatic-audio-only.md) adds audio-only progressive/conversion admission. The original video profile below keeps its behavior and defaults; published packages/pins are unchanged.
+
 The user's Proceed on 2026-10-15 (Asia/Tokyo) starts this slice from merged
 [PR #63](https://github.com/ilyalissoboi/send-airplay2/pull/63), `6788583`.
 All 16 checks passed at final head `4f2494b` in

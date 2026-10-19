@@ -1,0 +1,191 @@
+{
+  "decision": "D106",
+  "date": "2026-10-19",
+  "timezone": "Asia/Tokyo",
+  "result": "EXPLICIT_AUTOMATIC_AUDIO_ONLY_API_6_OFFLINE_PASSED",
+  "base": {
+    "pr": 90,
+    "merge_commit": "06e094ca05d4084e442f6410fb4740d2e9f3b856",
+    "final_head": "fec94489ca2105b843813b10d1319d461a37d713",
+    "passed_ci_checks": 17,
+    "ci_run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39209440573"
+  },
+  "branch": "codex/automatic-audio-only-delivery",
+  "implementation_commit": "46321d02d7d62542d398a8b9adb5d2acde25a295",
+  "source_hashes": {
+    "CMakeLists.txt": "f56f892a8c982332f09543708f0e7920be6fa289db5235002e986d66ce697ae6",
+    "bindings/csharp/SendAirPlay2.Tests/Program.cs": "cb8fc2f34ed8e5c935eb42870f362c272ce543771289bc1837a7e89682a97c26",
+    "bindings/csharp/SendAirPlay2/AudioDelivery.cs": "6c8fcdf60324dd0de65b1c15fd54b5da988b9ff685f9fb13624f9a63bc9db3c1",
+    "bindings/csharp/SendAirPlay2/Native.cs": "19b3eeb88dc290636340b60678ceea2a2671089a5c3ca6bc23b23ad639a69abe",
+    "include/send_airplay2/playback.h": "8fc557a42f29cdc8a90035519a89d3349b6176921cc2fd97c7f9c74515e3c72b",
+    "src/audio_delivery_policy.h": "aae1a5a4ed563e801b683ffbbfe966894b7f7de3617d1f2582152c710ae25e89",
+    "src/cast_cli.cpp": "ca961dd9fa7b7b22d3e56493c04be2cf3d75daab8721fea84c11fb2951968aa5",
+    "src/playback_api.cpp": "aeb7779d967ddff2471e5bfed1773ce868e19d646be42fad7d192f8c3ed8249f",
+    "src/prepared_automatic_media.cpp": "358e7b12849eb204f5478248f7510b7975161c9b3a99644b068987f4f6509195",
+    "src/prepared_automatic_media.h": "fe2ae47ef6c5f591c9e250af7b10c6e48eb52424aaad08e916d1737ca50edd03",
+    "src/prepared_stereo_media.cpp": "12b50f39bfd2b0b61e22f2b3cfdfc2ec6918d3448555a81041fbcab397e08b09",
+    "src/prepared_stereo_media.h": "b4ccf47c62b089eaa3b73e5b03c3dc5665675de836889132288c494980209cab",
+    "src/stereo_aac_hls.h": "0a72092b8ca4f2019e4d825279f486779ff039f3e9c1ca16297164e6aba804f4",
+    "tests/api_host_arguments.cmake": "6f7327815707b356bb32318c10623d3579bb6a930e895199cd02c0d224337349",
+    "tests/automatic_audio_api_tests.cpp": "3fa37c13319746331bf4aa85897e30c6dfc53c450567c44464200c4b21102aee",
+    "tests/automatic_audio_tests.cpp": "149282720c9278b89183f6d9c22571de35a6a443707863b0c3a26d0e96c9d9e1",
+    "tests/c_playback_smoke.c": "39048ab1961c33a7fbc6ff65e9930f6b434f688ace2e90cfb7f07d362d27a3a1",
+    "tests/cast_controller_tests.cpp": "9521c124abf7c294cb9eb00723a0041def5371ab41b95ca077c0eaccf84606bc",
+    "tools/airplay2_api_host.cpp": "fa1756b1a812dbf5e045d72afff54235961698c88794d5a312a52069c8a90147",
+    "tools/audio-codec-spike/CMakeLists.txt": "c198e0531115f29cd64fb26ca5b4b7deeaafdbda84c051da686da19c5d39cc79"
+  },
+  "hash_scope": "Actual Windows working-file bytes; implementation commit precedes validation documentation. All runtime inputs match this working tree; no receiver run.",
+  "api": {
+    "version": 6,
+    "profile": 2,
+    "progressive_action": 4,
+    "progressive_reason": 4,
+    "mp3_family": 10,
+    "structure_sizes_prefixes_and_defaults": "unchanged",
+    "binding": "development binding requires API 6",
+    "metadata_probe": "unchanged MP4/Matroska interface"
+  },
+  "progressive": {
+    "aac": "One-track unprotected stereo 44.1/48-kHz progressive MP4 with validated index/configuration/finite edits",
+    "mp3": "Stereo 44.1/48-kHz CBR/VBR within existing bounded MPEG layer III framing/metadata/trim subset",
+    "bytes_and_mime": "Exact original bytes, inferred audio/mp4 or audio/mpeg; no store/backend/quota with either permission",
+    "payload_integrity_limit": "Framing/configuration checks, not full compressed-payload decoding"
+  },
+  "conversion": {
+    "inputs": "Finite existing FLAC/PCM MP4/MOV/Matroska/native FLAC/WAVE and single-stream Ogg Opus/Vorbis subsets",
+    "output": "48-kHz stereo AAC HLS using existing audio-only owner",
+    "permission": "AllowStereo required; PreserveOriginal refuses before store acceptance",
+    "backend_and_storage": "Enabled backend, complete per-cast store, positive quota; accepted store clears once after drain",
+    "endpoint_oracle": "Independent generated-AAC decode matches literal counts 624144, 144144, 108000 and 143904"
+  },
+  "coverage": [
+    "Static/shared ABI and old default/prefix coverage",
+    "C public decisions and stale-output clearing",
+    "C# mapping and source/store ownership",
+    "CLI offline AAC/MP3 and mode refusals",
+    "One immutable host size per preparation",
+    "Content parsing independent of filenames/caller MIME",
+    "Invalid/ambiguous identity, protection, video, truncated MP3, mono MP3 and chained Ogg refusal",
+    "Cancellation/deadline propagation",
+    "Terminal conversion cache failure without fallback",
+    "Scripted controller progressive entry, Stop and natural-end drain"
+  ],
+  "tests": {
+    "static": {
+      "passed": 43,
+      "total": 43,
+      "seconds": 47.66,
+      "log_sha256": "5216191a117073139723eb413e0f28823f14962b43eafdec6828103db186716a"
+    },
+    "shared": {
+      "passed": 44,
+      "total": 44,
+      "seconds": 51.03,
+      "log_sha256": "94f3d73f99473f28be0fb89bd218283724bec1d13433c1ddee458d0bde6c5894"
+    },
+    "enabled_shared": {
+      "passed": 45,
+      "total": 45,
+      "seconds": 110.25,
+      "log_sha256": "fe45ea96874cc37226cd8bfa66a9833b8db8b640a36af902db77c42cbec41467"
+    },
+    "codec": {
+      "passed": 17,
+      "total": 17,
+      "seconds": 83.48,
+      "log_sha256": "09963bf96c7983c2b6363353f76b5ecb9eafdd5889dfb2198e395873dbbb1d06"
+    }
+  },
+  "strict_clang": {
+    "version": "22.1.3",
+    "host": "Windows x64",
+    "result": "PASS",
+    "translation_units": [
+      "src/cast_cli.cpp",
+      "src/playback_api.cpp",
+      "src/prepared_automatic_media.cpp",
+      "src/prepared_stereo_media.cpp",
+      "tests/automatic_audio_api_tests.cpp",
+      "tests/automatic_audio_tests.cpp",
+      "tests/cast_controller_tests.cpp",
+      "tools/airplay2_api_host.cpp"
+    ],
+    "flags": "-std=c++17 -Wall -Wextra -Wpedantic -Werror -fsyntax-only; stereo backend enabled; pinned native/codec headers"
+  },
+  "formatting": "All touched C/C++ files clang-format dry-run/Werror PASS; git diff --check PASS",
+  "uwp": {
+    "ordinary_x64_compile": "PASS",
+    "ordinary_binary_imports": "PASS",
+    "enabled_x64_compile": "PASS",
+    "enabled_six_dll_appcontainer_imports_codec_config": "PASS",
+    "installed_or_run": false
+  },
+  "binaries": {
+    "build-shared/Release/send_airplay2.dll": "7896ca60959196893790ccba2c1713f8835f4baa24f25c22eed8e78521d08e7f",
+    "build-stereo-shared/Release/send_airplay2.dll": "c816caa138fcc76d44527a2eff7ab8bed960aa1b014995facd8cfa9635f2d774",
+    "build-uwp/Release/send_airplay2.dll": "da718bbbe8ab8aa1d185ad6cce7970bab3ad7a3c33110863586db77f725f9483",
+    "build-stereo-uwp-correct/Release/send_airplay2.dll": "2cc04e665b30d8b0ea52f5eeea7cd2b31b6fc60120ab14bbfc6af20a51ff50e9",
+    "build-stereo-uwp-correct/Release/libcrypto-3-x64.dll": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc",
+    "build-stereo-uwp-correct/Release/avformat-63.dll": "8960883ff2bb390b3b9f1c5b755d31306a2ef2d2ff6f3be927e03689ba1ecf28",
+    "build-stereo-uwp-correct/Release/avcodec-63.dll": "d59924ce092ba55cbf80278c21607fc6bef56d346900306de424b6b358be56de",
+    "build-stereo-uwp-correct/Release/avutil-61.dll": "cc3998327239978df5128ebb604ab2e18dbb6345ed880cc2fbda7a1ebb12aeb6",
+    "build-stereo-uwp-correct/Release/swresample-7.dll": "bbd763035ef1686d8169aa8c169d1497798e15c4f98ab7ca78b542d04eeebf65"
+  },
+  "fixtures": {
+    "new_files": 0,
+    "provenance": "Existing repository-owned Apache-2.0 fixtures/provenance unchanged",
+    "files": {
+      "tools/mp3-probe/fixtures/cbr48.mp3": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b",
+      "tools/mp3-probe/fixtures/vbr441.mp3": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa",
+      "tools/mp3-probe/fixtures/mono24.mp3": "5a5e316982781b0a3ab79026d31ae0ee4fd724b2d7ff224adfb98cf544457638",
+      "tools/audio-codec-spike/fixtures/audio-only/aac.mp4": "98324371914b2633f5e2c730bfdadc218e5bb56890ece33f70a2309404d89bb5",
+      "tools/audio-codec-spike/fixtures/audio-only/flac-stereo.mp4": "972a828403bd9a53f26ba94f211fdac3b82a4a3fbffa3a23030aeb1d4611f334",
+      "tools/audio-codec-spike/fixtures/audio-only/pcm-51.mov": "3a1630c4030cb69bf6a4c795e61f39e5126518bbfe1b4dbba998be73c2440ea6",
+      "tools/audio-codec-spike/fixtures/audio-only/multiple-flac.mp4": "de6cf9a7452abd1c35d7da79985a779706e359acc2466184ef973545f0f861e9",
+      "tools/audio-codec-spike/fixtures/standalone-audio/flac48.flac": "d081a923f23d4d41a45e365fdf9f669e50295bd899dc9bc1335733aba6ebe172",
+      "tools/audio-codec-spike/fixtures/standalone-audio/pcm16.wav": "ec57e9002a12781255f4ac5953f105184d18d56dc7ad27158f5407122827787d",
+      "tools/audio-codec-spike/fixtures/ogg-audio/opus48.opus": "edfb5815053a47930d2f06c4df55856410f26cbc0b4b59d19395081f3922c91d",
+      "tools/audio-codec-spike/fixtures/ogg-audio/vorbis441.ogg": "d82804c63b0a4f81375d4a78005ec2d71545fa84ac1d07375c5d5a409e392744",
+      "tools/audio-codec-spike/fixtures/ogg-audio/chained.opus": "b85d871ca687407cc8b608381fb3efeccbf823157014f6432b07d9366586c8ea",
+      "tools/audio-codec-spike/fixtures/audio-timelines/pcm-edit.mov": "8b91bd159b130bac3e5324d35ca020d7387f8aeb107ec5da2783418b5ef7cf73",
+      "tools/audio-codec-spike/fixtures/audio-timelines/flac-edit441.mp4": "4d54c132deca8fb0df71219c49fdc86b74279b812fa9b5731aaeace3c6726353",
+      "tools/audio-codec-spike/fixtures/audio-timelines/pcm-trim.mka": "d160e378a8736c6faec39f2cfd94694883c491bda1cf01f7d75e4d2cd7282c2b"
+    }
+  },
+  "codec_profile": {
+    "ffmpeg": "9.0.2",
+    "port_version": 6,
+    "changed": false,
+    "note": "Enabled desktop build reconfigured from its old port-4 prefix to the already verified cached port-6 headers/libraries/four runtime DLLs; no dependency install/profile edit"
+  },
+  "receiver_checks": "NONE: historical direct AAC/MP3 gates remain separate; new native then packaged generated audio-only HLS gates required",
+  "screenbox_package_release_pin_quota_changes": "NONE",
+  "deferrals": [
+    "Audio-only speakers/RAOP",
+    "Discrete converted surround",
+    "Chromecast hardware",
+    "User-deferred remote Stop classification",
+    "Separate long-input/cache-quota evaluation"
+  ],
+  "x86_ci_followup": {
+    "implementation_commit": "0245f49e4e4e9155fa91b8a7825967b00f700a51",
+    "trigger": "Initial PR head 061825f failed x86 UWP CI C4244 at standalone_audio.cpp FLAC layout lookup; x64 and ARM64 UWP passed",
+    "change": "Explicit size_t index after STREAMINFO three-bit channel field guarantees count 1..8; behavior preserved",
+    "source_sha256": "dfe096e846aa18cc5a7cac38ca69e3e68eb9b6e05bf3a72e77bf8ac244aac1ee",
+    "clang": "22.1.3 strict C++17 syntax PASS for standalone_audio.cpp, Windows x64 and i686-pc-windows-msvc targets",
+    "formatting": "clang-format dry-run/Werror and whitespace PASS",
+    "tests": {
+      "static": {
+        "passed": 43,
+        "total": 43,
+        "seconds": 46.67
+      },
+      "shared": {
+        "passed": 44,
+        "total": 44,
+        "seconds": 50.98
+      }
+    },
+    "ci": "Inspect final PR head separately; initial failure is not final-head evidence"
+  }
+}

@@ -57,8 +57,6 @@ set(sap2_playback_api_sources src/cast_controller.cpp src/prepared_stereo_media.
 # The C discovery interface (D54) wraps discover() for non-C++ hosts.
 set(sap2_receivers_api_sources src/discovery_api.cpp src/receiver_list.cpp)
 add_library(send_airplay2 src/http_range.cpp src/media_server.cpp src/discovery.cpp src/discovery_core.cpp src/discovery_transport.cpp ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources} ${sap2_receiver_sources} ${sap2_session_sources} ${sap2_playback_api_sources} ${sap2_remux_sources} ${sap2_receivers_api_sources})
-target_sources(send_airplay2 PRIVATE src/mp3_audio.cpp)
-
 target_link_libraries(send_airplay2 PRIVATE OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS} Boost::beast Boost::asio ${sap2_credential_libraries})
 target_compile_features(send_airplay2 PUBLIC cxx_std_17)
 target_include_directories(send_airplay2 PUBLIC
@@ -106,8 +104,10 @@ endfunction()
 sap2_warnings(send_airplay2)
 option(SAP2_STEREO_AAC "Enable explicit video delivery with selected audio converted to stereo AAC" OFF)
 function(sap2_stereo_backend target)
+  # Automatic audio-only admission also works in codec-free builds.
+  target_sources(${target} PRIVATE src/standalone_audio.cpp src/ogg_audio.cpp src/mp3_audio.cpp)
   if(SAP2_STEREO_AAC)
-    target_sources(${target} PRIVATE src/standalone_audio.cpp src/ogg_audio.cpp src/audio_decoder_source.cpp src/stereo_aac_encoder.cpp src/stereo_aac_hls.cpp src/hls_authoring.cpp)
+    target_sources(${target} PRIVATE src/audio_decoder_source.cpp src/stereo_aac_encoder.cpp src/stereo_aac_hls.cpp src/hls_authoring.cpp)
     target_compile_definitions(${target} PRIVATE SAP2_HAS_STEREO_AAC=1)
     target_include_directories(${target} SYSTEM PRIVATE ${FFMPEG_INCLUDE_DIRS})
     target_link_libraries(${target} PRIVATE ${FFMPEG_LIBRARIES})

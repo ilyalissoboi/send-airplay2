@@ -41,8 +41,10 @@ extern "C" {
  *    remux) and the MEDIA_UNSUPPORTED and MEDIA_MALFORMED results. Option
  *    structs of earlier versions (shorter struct_size) are still accepted.
  * 4: optional stereo AAC delivery, track probe, host fragment storage and
- *    conversion failure/status extensions. */
-#define SAP2_PLAYBACK_API_VERSION 5u
+ *    conversion failure/status extensions. 5: automatic video audio policy and
+ *    offline decision reporting. 6: explicit finite audio-only profile and
+ *    progressive action; all structure sizes and older defaults are preserved. */
+#define SAP2_PLAYBACK_API_VERSION 6u
 
 /* Results. Fixed-width values for foreign-function bindings. */
 #define SAP2_OK 0
@@ -161,16 +163,22 @@ extern "C" {
 /* Version 5: selected copy or bounded stereo conversion under an explicit profile. */
 #define SAP2_DELIVERY_AUTOMATIC_AUDIO_HLS 3u
 #define SAP2_AUDIO_PROFILE_APPLE_HLS_V1 1u
+/* Audio-only: stereo AAC/M4A and MP3 progressively, covered FLAC/PCM/Ogg
+ * Opus/Vorbis via permitted stereo AAC HLS. No video, speakers or negotiation.
+ * See docs/automatic-audio-only.md for exact finite input/timeline bounds. */
+#define SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1 2u
 #define SAP2_AUDIO_ALLOW_STEREO 0u
 #define SAP2_AUDIO_PRESERVE_ORIGINAL 1u
 #define SAP2_AUDIO_ACTION_NONE 0u
 #define SAP2_AUDIO_ACTION_VIDEO_ONLY 1u
 #define SAP2_AUDIO_ACTION_COPY 2u
 #define SAP2_AUDIO_ACTION_STEREO_AAC 3u
+#define SAP2_AUDIO_ACTION_PROGRESSIVE 4u
 #define SAP2_AUDIO_REASON_NONE 0u
 #define SAP2_AUDIO_REASON_NO_ENABLED_AUDIO 1u
 #define SAP2_AUDIO_REASON_PROFILE_COPY 2u
 #define SAP2_AUDIO_REASON_PROFILE_REQUIRES_STEREO 3u
+#define SAP2_AUDIO_REASON_PROFILE_PROGRESSIVE 4u
 #define SAP2_AUDIO_FAMILY_NONE 0u
 #define SAP2_AUDIO_FAMILY_AAC 1u
 #define SAP2_AUDIO_FAMILY_AC3 2u
@@ -181,6 +189,7 @@ extern "C" {
 #define SAP2_AUDIO_FAMILY_VORBIS 7u
 #define SAP2_AUDIO_FAMILY_PCM 8u
 #define SAP2_AUDIO_FAMILY_TRUEHD 9u
+#define SAP2_AUDIO_FAMILY_MP3 10u
 
 /* Option bounds. */
 #define SAP2_DEFAULT_RECEIVER_PORT 7000u
@@ -328,7 +337,7 @@ SAP2_API void sap2_audio_options_init(sap2_audio_options* options, size_t struct
  * Discards the temporary presentation after recording its decision. Conversion
  * requires an enabled backend, complete store and quota, and clears only that
  * accepted per-check store after draining workers (also on startup failure).
- * Copy/video-only never call seal/read/clear and need no backend/store/quota.
+ * Copy/video-only/progressive never call seal/read/clear and need no backend/store/quota.
  * The output is zeroed on failure except its caller-supplied struct_size; it is
  * written only when the whole known decision fits. Cancellation reaches slow
  * callbacks through their borrowed controls; should_cancel must be thread-safe

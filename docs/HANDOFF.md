@@ -2,6 +2,27 @@
 
 Snapshot: 2026-10-19 (Asia/Tokyo). Audience: the next human developer or model.
 
+**D106 explicit automatic audio-only offline gate complete (2026-10-19).**
+Native #90 merged as `06e094c`; all 17 checks passed at final head `fec9448` in
+[run 39209440573](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39209440573).
+The user authorizes the next slice. API 6 adds the explicit Apple Audio v1 profile,
+progressive action/reason and MP3 family, preserving structure sizes, older
+prefixes/defaults and the video profile. Content-based finite admission serves
+original stereo AAC/M4A/MP3 progressively or converts covered FLAC/PCM/Ogg
+Opus/Vorbis through the existing audio-only AAC owner with stereo permission,
+backend and bounded host storage. Public check/cast reporting, CLI and C# binding
+are connected. Read [the exact subset and remaining gates](automatic-audio-only.md).
+Implementation 46321d0 passes static/shared/enabled suites 43/44/45 and codec 17;
+strict Clang, formatting and both x64 UWP compile/binary gates pass. Initial
+x86 UWP CI exposed a narrowing warning in the now-common FLAC probe; 0245f49
+uses its proven 1..8 channel bound for an explicit index conversion. Strict x64/
+i686 Clang and repeated static/shared suites 43/44 pass. Inspect PR #91 final-head
+CI separately. There is no new receiver/app observation, codec-profile,
+package, Screenbox, quota or publication change. Native/packaged generated audio-only
+HLS receiver gates follow review/merge before Screenbox routing/queues. All
+hardware/user deferrals remain. Continue `codex/automatic-audio-only-delivery`
+while its PR is open and inspect its actual head before writing.
+
 **D105 private edited/container audio-only offline gate complete (2026-10-19).**
 Native #89 merged as e4d1a28; all 17 checks passed at final head 3e59f9c in
 [run 39204589746](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39204589746).

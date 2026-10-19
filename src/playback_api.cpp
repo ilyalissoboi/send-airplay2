@@ -357,7 +357,8 @@ CastResult settings_from(const sap2_cast_options& options, CastSettings& setting
             settings.cache_quota_bytes = options.cache_quota_bytes;
         } else if (options.delivery == SAP2_DELIVERY_AUTOMATIC_AUDIO_HLS) {
             if (options.struct_size < sizeof(sap2_cast_options) ||
-                options.audio_profile != SAP2_AUDIO_PROFILE_APPLE_HLS_V1 ||
+                (options.audio_profile != SAP2_AUDIO_PROFILE_APPLE_HLS_V1 &&
+                 options.audio_profile != SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1) ||
                 options.conversion_permission > SAP2_AUDIO_PRESERVE_ORIGINAL) {
                 return CastResult::invalid_argument;
             }
@@ -368,6 +369,9 @@ CastResult settings_from(const sap2_cast_options& options, CastSettings& setting
                 return CastResult::invalid_argument;
             }
             settings.delivery = CastDelivery::automatic_audio_hls;
+            settings.audio_profile = options.audio_profile == SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1
+                                         ? AudioDeliveryProfile::apple_audio_v1
+                                         : AudioDeliveryProfile::apple_hls_v1;
             settings.audio_track_id = options.audio_track_id
                                           ? std::optional<std::uint64_t>(options.audio_track_id)
                                           : std::nullopt;
@@ -411,13 +415,17 @@ std::uint32_t audio_family_code(SourceAudioFamily family) noexcept {
         return SAP2_AUDIO_FAMILY_PCM;
     case SourceAudioFamily::truehd:
         return SAP2_AUDIO_FAMILY_TRUEHD;
+    case SourceAudioFamily::mp3:
+        return SAP2_AUDIO_FAMILY_MP3;
     }
     return SAP2_AUDIO_FAMILY_NONE;
 }
 void write_audio_decision(const AudioDeliveryPlan& plan, sap2_audio_decision& decision) noexcept {
     decision = {};
     decision.struct_size = sizeof(decision);
-    decision.profile = SAP2_AUDIO_PROFILE_APPLE_HLS_V1;
+    decision.profile = plan.profile == AudioDeliveryProfile::apple_audio_v1
+                           ? SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1
+                           : SAP2_AUDIO_PROFILE_APPLE_HLS_V1;
     decision.selected_audio_id = plan.source_id;
     decision.source_family = audio_family_code(plan.source_family);
     decision.output_family = audio_family_code(plan.output_family);
@@ -432,6 +440,9 @@ void write_audio_decision(const AudioDeliveryPlan& plan, sap2_audio_decision& de
     case AudioDeliveryAction::stereo_aac:
         decision.action = SAP2_AUDIO_ACTION_STEREO_AAC;
         break;
+    case AudioDeliveryAction::progressive:
+        decision.action = SAP2_AUDIO_ACTION_PROGRESSIVE;
+        break;
     }
     switch (plan.reason) {
     case AudioDeliveryReason::no_enabled_audio:
@@ -442,6 +453,9 @@ void write_audio_decision(const AudioDeliveryPlan& plan, sap2_audio_decision& de
         break;
     case AudioDeliveryReason::profile_requires_stereo:
         decision.reason = SAP2_AUDIO_REASON_PROFILE_REQUIRES_STEREO;
+        break;
+    case AudioDeliveryReason::profile_progressive:
+        decision.reason = SAP2_AUDIO_REASON_PROFILE_PROGRESSIVE;
         break;
     }
 }
@@ -812,7 +826,8 @@ int32_t sap2_media_check_audio(const sap2_media_source* source, const sap2_audio
     decision->struct_size = output_size;
     if (!source || source->struct_size < sizeof(sap2_media_source) || !source->read_at ||
         !options || options->struct_size < sizeof(sap2_audio_options) ||
-        options->profile != SAP2_AUDIO_PROFILE_APPLE_HLS_V1 ||
+        (options->profile != SAP2_AUDIO_PROFILE_APPLE_HLS_V1 &&
+         options->profile != SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1) ||
         options->conversion_permission > SAP2_AUDIO_PRESERVE_ORIGINAL || !options->timeout_ms ||
         options->timeout_ms > SAP2_MAX_START_TIMEOUT_MS) {
         return SAP2_ERROR_INVALID_ARGUMENT;
@@ -860,7 +875,9 @@ int32_t sap2_media_check_audio(const sap2_media_source* source, const sap2_audio
         }
         auto prepared = PreparedAutomaticMedia::open(
             std::move(borrowed), std::move(store), options->cache_quota_bytes, request,
-            AudioDeliveryProfile::apple_hls_v1,
+            options->profile == SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1
+                ? AudioDeliveryProfile::apple_audio_v1
+                : AudioDeliveryProfile::apple_hls_v1,
             options->conversion_permission == SAP2_AUDIO_ALLOW_STEREO
                 ? AudioConversionPermission::allow_stereo
                 : AudioConversionPermission::preserve_original,

@@ -484,7 +484,7 @@ int run_cast_cli(int argc, const char* const* argv) {
         const std::string_view option = argv[index];
         if (option == "--stereo-aac" || option == "--probe-tracks" ||
             option == "--automatic-audio" || option == "--check-audio" ||
-            option == "--preserve-audio") {
+            option == "--preserve-audio" || option == "--audio-only") {
             return run_api_host(argc, argv);
         }
         // Do not interpret option values (including paths beginning with --)

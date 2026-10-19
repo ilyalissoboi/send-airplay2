@@ -305,6 +305,22 @@ internal static class Program
         }
         Check(dts.Releases == 0, "failed offline checks preserve source ownership");
         dts.ReleaseUnowned();
+        var audioOnly = new OwnedFixtureSource(Path.Combine(fixtures, "audio-only", "aac.mp4"));
+        counters = new CacheCounters();
+        decision = AudioDelivery.Check(audioOnly, TimeSpan.FromSeconds(30),
+            fragmentStore: new CountingCache(counters), profile: AudioDeliveryProfile.AppleAudioV1,
+            permission: AudioConversionPermission.PreserveOriginal);
+        Check(decision.Profile == AudioDeliveryProfile.AppleAudioV1 &&
+              decision.Action == AudioDeliveryAction.Progressive &&
+              decision.Reason == AudioDeliveryReason.ProfileProgressive &&
+              decision.SelectedAudioId == 1 && decision.OutputFamily == AudioFamily.Aac &&
+              counters.Clears == 0 && counters.Releases == 1 && audioOnly.Releases == 0,
+              "managed audio-only progressive decision borrows source and releases unused store");
+        options = LoopbackOptions(new MemoryStore());
+        options.Delivery = CastDelivery.AutomaticAudioHls;
+        options.AudioProfile = AudioDeliveryProfile.AppleAudioV1;
+        using (var cast = Cast.Create(options, audioOnly)) { cast.Stop(); }
+        Check(audioOnly.Releases == 1, "managed audio-only cast releases source once");
     }
     private static void VersionAndLayout()
     {

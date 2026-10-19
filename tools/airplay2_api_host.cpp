@@ -61,7 +61,7 @@ const char* usage =
     "         [--content-type TYPE] [--start-timeout-ms N] [--media-connections N]\n"
     "         [--start-position SECONDS] [--remux]\n"
     "         [--stereo-aac [--audio-track ID] --cache-directory PATH --cache-quota-bytes N]\n"
-    "         [--automatic-audio [--preserve-audio] [--audio-track ID]]\n"
+    "         [--automatic-audio [--audio-only] [--preserve-audio] [--audio-track ID]]\n"
     "         [--cache-directory PATH --cache-quota-bytes N]\n"
     "         [--cancel-after-ms N | --cycles N [--hold-ms N]]\n"
     "       airplay2-api-host --probe-tracks --file PATH (metadata only, no receiver)\n"
@@ -69,6 +69,7 @@ const char* usage =
     "         [--preserve-audio] [--cache-directory PATH --cache-quota-bytes N]\n"
     "--automatic-audio: copy eligible selected audio or convert to stereo AAC.\n"
     "--check-audio: prepare/report/discard offline; conversion needs a cache.\n"
+    "--audio-only: use the finite Apple Audio v1 profile with automatic/check mode.\n"
     "--remux: SAP2_DELIVERY_HLS_REMUX (MP4/MOV or MKV as HLS; content type ignored).\n"
     "Interactive (default): status, pause, play, seek SECONDS, stop; Enter stops locally.\n"
     "--cancel-after-ms: call sap2_cast_stop() N ms into a blocking start.\n"
@@ -100,6 +101,7 @@ struct HostArguments {
     bool automatic_audio = false;
     bool check_audio = false;
     bool preserve_audio = false;
+    bool audio_only = false;
     std::uint64_t audio_track = 0;
     std::uint64_t cache_quota = 0;
     std::string cache_directory;
@@ -153,13 +155,15 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
         check_incompatible_option =
             check_incompatible_option ||
             (option != "--check-audio" && option != "--file" && option != "--audio-track" &&
-             option != "--preserve-audio" && option != "--cache-directory" &&
-             option != "--cache-quota-bytes" && option != "--start-timeout-ms");
+             option != "--preserve-audio" && option != "--audio-only" &&
+             option != "--cache-directory" && option != "--cache-quota-bytes" &&
+             option != "--start-timeout-ms");
         if (option == "--automatic-audio" || option == "--check-audio" ||
-            option == "--preserve-audio") {
+            option == "--preserve-audio" || option == "--audio-only") {
             arguments.automatic_audio = arguments.automatic_audio || option == "--automatic-audio";
             arguments.check_audio = arguments.check_audio || option == "--check-audio";
             arguments.preserve_audio = arguments.preserve_audio || option == "--preserve-audio";
+            arguments.audio_only = arguments.audio_only || option == "--audio-only";
             other_option_given = true;
             continue;
         }
@@ -245,8 +249,8 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
     }
     if (arguments.pair) {
         if (arguments.stereo_aac || arguments.probe_tracks || arguments.automatic_audio ||
-            arguments.check_audio || arguments.preserve_audio || arguments.audio_track ||
-            arguments.cache_quota || !arguments.cache_directory.empty()) {
+            arguments.check_audio || arguments.preserve_audio || arguments.audio_only ||
+            arguments.audio_track || arguments.cache_quota || !arguments.cache_directory.empty()) {
             throw std::invalid_argument("conversion and probe options are not pairing options");
         }
         if (arguments.address.empty() || arguments.profile.empty() || !arguments.file.empty() ||
@@ -275,6 +279,9 @@ HostArguments parse_arguments(int argc, const char* const* argv) {
     }
     if (arguments.preserve_audio && !arguments.automatic_audio && !arguments.check_audio) {
         throw std::invalid_argument("--preserve-audio requires automatic audio");
+    }
+    if (arguments.audio_only && !arguments.automatic_audio && !arguments.check_audio) {
+        throw std::invalid_argument("--audio-only requires automatic audio");
     }
     if ((arguments.automatic_audio || arguments.check_audio) &&
         (arguments.cache_directory.empty() != (arguments.cache_quota == 0))) {
@@ -648,6 +655,8 @@ std::int32_t create(const HostArguments& arguments, HostFile& file, CastHandle& 
     if (arguments.stereo_aac || arguments.automatic_audio) {
         options.delivery = arguments.automatic_audio ? SAP2_DELIVERY_AUTOMATIC_AUDIO_HLS
                                                      : SAP2_DELIVERY_STEREO_AAC_HLS;
+        options.audio_profile = arguments.audio_only ? SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1
+                                                     : SAP2_AUDIO_PROFILE_APPLE_HLS_V1;
         options.conversion_permission =
             arguments.preserve_audio ? SAP2_AUDIO_PRESERVE_ORIGINAL : SAP2_AUDIO_ALLOW_STEREO;
         if (!arguments.cache_directory.empty()) {
@@ -1112,6 +1121,8 @@ int send_airplay2::detail::run_api_host(int argc, const char* const* argv) {
             auto source = file->source();
             sap2_audio_options options{};
             sap2_audio_options_init(&options, sizeof(options));
+            options.profile = arguments.audio_only ? SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1
+                                                   : SAP2_AUDIO_PROFILE_APPLE_HLS_V1;
             options.audio_track_id = arguments.audio_track;
             options.conversion_permission =
                 arguments.preserve_audio ? SAP2_AUDIO_PRESERVE_ORIGINAL : SAP2_AUDIO_ALLOW_STEREO;

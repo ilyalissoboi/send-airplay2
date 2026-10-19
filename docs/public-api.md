@@ -1,5 +1,7 @@
 # Public playback interface
 
+**D106/API 6:** [explicit automatic audio-only delivery](automatic-audio-only.md) adds a finite progressive/conversion profile and reporting. Structure sizes, prior prefixes/defaults and video behavior are preserved. The new route has offline gates; native/packaged generated-HLS receiver checks follow separately.
+
 **D83/API 5:** [opt-in automatic audio delivery and offline preparation checks](automatic-audio-public.md)
 add a named copy/conversion profile, preservation choice and retained decision
 reporting. Sized v1-v4 prefixes/defaults remain valid. This is offline integration;
