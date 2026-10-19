@@ -1,5 +1,7 @@
 # C# binding (D52)
 
+**D106 update:** the development binding now requires API 6 and exposes the explicit Apple Audio v1 profile and progressive/MP3 decisions. See [the finite contract](automatic-audio-only.md). Published packages/pins are unchanged; earlier version notes below are historical.
+
 **D83 update:** the development binding requires API 5 and adds
 `CastDelivery.AutomaticAudioHls`, profile/preservation options,
 `CastStatus.AudioDecision` and `AudioDelivery.Check()` without receiver access.

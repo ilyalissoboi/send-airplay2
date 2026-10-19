@@ -54,13 +54,17 @@ with bounded native input and decoded-end checks. The private
 CRC/granule probe and offline seek/trim checks. The private
 [edited MP4/Matroska timeline slice](docs/audio-only-container-timelines.md) adds
 checked FLAC/PCM edits, packet-derived audible ends and decoded coverage.
-These input builders have offline evidence only. Public automatic conversion
-still requires video. The [private MP3 inventory and native probe](docs/mp3-input-probe.md)
+These input builders have offline evidence only. The new explicit
+[Apple Audio v1 profile (API 6)](docs/automatic-audio-only.md) connects their finite
+subset to automatic delivery: original stereo AAC/M4A or MP3 progressively,
+and permitted conversion of covered FLAC/PCM/Ogg Opus/Vorbis to stereo AAC HLS.
+Its new automatic route still needs native and packaged receiver gates before
+Screenbox integration. The [private MP3 inventory and native probe](docs/mp3-input-probe.md)
 cover bounded MPEG layer-III framing/timeline metadata and user-confirmed direct
 progressive CBR/VBR playback on both recorded receivers. No AAC fallback is
 justified by those cases. The separate [packaged UWP MP3 gate](docs/mp3-uwp-gate.md)
 also passes brokered CBR/VBR controls, natural end, Stop and Mac consent cancellation.
-Public format admission and Screenbox MP3 routing remain separate next gates.
+Automatic-profile receiver validation and Screenbox MP3 routing remain separate gates.
 
 The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.294`** is
 [published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294).
