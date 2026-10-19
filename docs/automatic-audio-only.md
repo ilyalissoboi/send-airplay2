@@ -113,6 +113,15 @@ port-4 prefix; no dependency/profile change is made. The
 contains source/fixture/binary hashes and exact scope. CI at the actual PR head
 must be inspected separately. These are offline results, not new interoperability.
 
+The initial PR head `061825f` failed x86 UWP CI with MSVC C4244 in the existing
+FLAC channel-layout lookup, newly included in ordinary builds. Follow-up
+`0245f49` explicitly converts the index after STREAMINFO's three-bit field
+guarantees a 1..8 channel count. Behavior is preserved. Strict Clang for this
+ninth touched C++ translation unit passes on x64 and i686 Windows targets;
+full static/shared suites pass again **43/43** (46.67 s) and **44/44** (50.98 s).
+The validation record retains the initial runtime/binary scope and separately
+records this portability fix. Inspect final-head CI before merge.
+
 The next gates are observed native and packaged audio-only generated-HLS playback,
 controls, seeks/end/Stop/cancellation and cleanup with exact binaries; then
 Screenbox per-item routing and mixed queues. Historical direct AAC/MP3 receiver

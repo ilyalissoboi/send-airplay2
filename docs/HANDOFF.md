@@ -13,8 +13,11 @@ Opus/Vorbis through the existing audio-only AAC owner with stereo permission,
 backend and bounded host storage. Public check/cast reporting, CLI and C# binding
 are connected. Read [the exact subset and remaining gates](automatic-audio-only.md).
 Implementation 46321d0 passes static/shared/enabled suites 43/44/45 and codec 17;
-strict Clang, formatting and both x64 UWP compile/binary gates pass. There is
-no new receiver/app observation, codec-profile,
+strict Clang, formatting and both x64 UWP compile/binary gates pass. Initial
+x86 UWP CI exposed a narrowing warning in the now-common FLAC probe; 0245f49
+uses its proven 1..8 channel bound for an explicit index conversion. Strict x64/
+i686 Clang and repeated static/shared suites 43/44 pass. Inspect PR #91 final-head
+CI separately. There is no new receiver/app observation, codec-profile,
 package, Screenbox, quota or publication change. Native/packaged generated audio-only
 HLS receiver gates follow review/merge before Screenbox routing/queues. All
 hardware/user deferrals remain. Continue `codex/automatic-audio-only-delivery`

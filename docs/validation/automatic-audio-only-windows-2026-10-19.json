@@ -166,5 +166,26 @@
     "Chromecast hardware",
     "User-deferred remote Stop classification",
     "Separate long-input/cache-quota evaluation"
-  ]
+  ],
+  "x86_ci_followup": {
+    "implementation_commit": "0245f49e4e4e9155fa91b8a7825967b00f700a51",
+    "trigger": "Initial PR head 061825f failed x86 UWP CI C4244 at standalone_audio.cpp FLAC layout lookup; x64 and ARM64 UWP passed",
+    "change": "Explicit size_t index after STREAMINFO three-bit channel field guarantees count 1..8; behavior preserved",
+    "source_sha256": "dfe096e846aa18cc5a7cac38ca69e3e68eb9b6e05bf3a72e77bf8ac244aac1ee",
+    "clang": "22.1.3 strict C++17 syntax PASS for standalone_audio.cpp, Windows x64 and i686-pc-windows-msvc targets",
+    "formatting": "clang-format dry-run/Werror and whitespace PASS",
+    "tests": {
+      "static": {
+        "passed": 43,
+        "total": 43,
+        "seconds": 46.67
+      },
+      "shared": {
+        "passed": 44,
+        "total": 44,
+        "seconds": 50.98
+      }
+    },
+    "ci": "Inspect final PR head separately; initial failure is not final-head evidence"
+  }
 }
