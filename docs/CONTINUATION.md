@@ -24,16 +24,20 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D104 packaged MP3 gate in progress (2026-10-19).** Native #88 merged as
+**D104 packaged MP3 gate passed (2026-10-19).** Native #88 merged as
 be5ae92, with all 17 checks passed at final head 552ebca in
 [run 39201242905](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39201242905).
 The user authorizes the next gate and confirms both receivers available with
-macOS 26.7.1/tvOS 26.6 unchanged. The test host adds progressive audio/mpeg
-scripts/form support and MP3 picking; native playback/API, codec profile,
-public admission and Screenbox stay unchanged. Private codec-free x64 package
-0.1.32.0 will update in place, preserving credentials/data/grants. Actual package,
-AppContainer/module, negative-script and written receiver checks are pending.
-Read [the active scope](mp3-uwp-gate.md); do not substitute D103 native evidence.
+macOS 26.7.1/tvOS 26.6 unchanged. Test-host implementation b098646 adds
+progressive audio/mpeg options and MP3 picking. Codec-free x64 MSIX 0.1.32.0
+updates in place with identity/data/grants preserved. Build/binary checks and
+negative MIME/HLS scripts pass. Actual AppContainer/executable/two native hashes
+match the inspected package in five before/after captures. The user confirms
+CBR/VBR nonzero start, controls, natural end and separate Stop on both receivers,
+plus Mac consent cancellation. All nine brokered sources release exactly once.
+No further D104 manual check is pending; no AAC fallback is demonstrated.
+Native/public policy, codec profile, Screenbox and publication stay unchanged.
+Read [the scoped evidence and next work](mp3-uwp-gate.md). Preserve all deferrals.
 
 **D103 private MP3 inventory/native direct-playback gate complete (2026-10-19).**
 Native #87 merged as `e6b0a4b`; all 17 checks passed at final head `13602e0` in
@@ -1154,12 +1158,14 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    with Mac consent cancellation and unchanged versions. Nine sources release
    once and loaded executable/crypto hashes match. Direct audio/mpeg is feasible;
    no AAC fallback is demonstrated. No publication or automatic eligibility.
-8. **D104 active: packaged brokered-source MP3 gate.** Continue
+8. **D104 complete: packaged brokered-source MP3 gate.** Continue
    codex/mp3-uwp-gate while its PR is open, inspecting actual head first. Read
-   mp3-uwp-gate.md. Reuse the owned CBR/VBR files,
-   verify actual AppContainer/module bytes, audible controls/natural end/separate
-   Stop and Mac consent cancellation with exactly-once source release. Following
-   slices: edited MP4/Matroska audio-only admission; automatic delivery with
+   mp3-uwp-gate.md. Implementation b098646/MSIX 0.1.32.0 passes both receivers'
+   CBR/VBR nonzero start, controls/natural end/separate Stop and Mac consent
+   cancellation. Nine sources release once; five actual AppContainer/module
+   captures match. Both negative scripts pass. No further D104 manual check.
+9. **Next: edited MP4/Matroska audio-only admission.** Following slices:
+   automatic delivery with
    explicit stereo permission/public reporting, broader native/packaged receiver
    gates, then Screenbox routing/queue checks. Larger/chained Ogg needs separate
    design/evidence. Preserve completed gates and hardware/user deferrals.
@@ -1398,7 +1404,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > codex/mp3-uwp-gate actual PR/head before writing. Read mp3-uwp-gate.md.
 > Native D103 suites pass 43/44 and progressive CBR/VBR audio/mpeg
 > controls/end/Stop pass on both receivers, with Mac consent cancellation and
-> unchanged macOS 26.7.1/tvOS 26.6. D104 package/runtime/receiver checks are pending.
+> unchanged macOS 26.7.1/tvOS 26.6. D104 packaged checks now pass for implementation
+> b098646/MSIX 0.1.32.0: nine sources release once and five runtime captures match.
+> No further D104 manual check. Review/merge before the next edited-input slice.
 > Default/public/AAC/automatic routes, codec profile, packages and Screenbox stay
 > unchanged. Direct playback passed; no AAC fallback is currently justified.
 > Preserve all hardware/user deferrals, use written manual confirmation for UI,

@@ -1,15 +1,19 @@
 # Receiver validation record
 
-**D104 packaged MP3 gate in progress (2026-10-19).** Native #88 merged as
+**D104 packaged MP3 gate passed (2026-10-19).** Native #88 merged as
 be5ae92, with all 17 checks passed at final head 552ebca in
 [run 39201242905](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39201242905).
 The user authorizes the next gate and confirms both receivers available with
-macOS 26.7.1/tvOS 26.6 unchanged. The test host adds progressive audio/mpeg
-scripts/form support and MP3 picking; native playback/API, codec profile,
-public admission and Screenbox stay unchanged. Private codec-free x64 package
-0.1.32.0 will update in place, preserving credentials/data/grants. Actual package,
-AppContainer/module, negative-script and written receiver checks are pending.
-Read [the active scope](mp3-uwp-gate.md); do not substitute D103 native evidence.
+macOS 26.7.1/tvOS 26.6 unchanged. Test-host implementation b098646 adds
+progressive audio/mpeg options and MP3 picking. Codec-free x64 MSIX 0.1.32.0
+updates in place with identity/data/grants preserved. Build/binary checks and
+negative MIME/HLS scripts pass. Actual AppContainer/executable/two native hashes
+match the inspected package in five before/after captures. The user confirms
+CBR/VBR nonzero start, controls, natural end and separate Stop on both receivers,
+plus Mac consent cancellation. All nine brokered sources release exactly once.
+No further D104 manual check is pending; no AAC fallback is demonstrated.
+Native/public policy, codec profile, Screenbox and publication stay unchanged.
+Read [the scoped evidence and next work](mp3-uwp-gate.md). Preserve all deferrals.
 
 **D103 private MP3 inventory/native direct-playback gate complete (2026-10-19).**
 Native #87 merged as `e6b0a4b`; all 17 checks passed at final head `13602e0` in

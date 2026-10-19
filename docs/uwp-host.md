@@ -126,8 +126,10 @@ sender telemetry and package checks; it does not establish other codec support.
 
 D104 adds the MP3 picker entry and progressive audio/mpeg form/script type for
 the original CBR/VBR fixtures. Explicit MIME with HLS still refuses before file
-access. The [packaged MP3 gate](mp3-uwp-gate.md) records pending/completed results
-separately; these test-host options do not expand native or Screenbox policy.
+access. The [packaged MP3 gate](mp3-uwp-gate.md) passes on the two recorded
+receivers with MSIX 0.1.32.0: controls, natural end, separate Stop and applicable
+Mac consent cancellation. These test-host options do not expand native or
+Screenbox policy; see the record for exact source/binary bytes and limits.
 
 Found while adding it: under Native AOT, `args is CommandLineActivatedEventArgs`
 was false for a command-line activation; testing `ActivationKind` and the

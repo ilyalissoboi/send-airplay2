@@ -55,8 +55,9 @@ CRC/granule probe and offline seek/trim checks. Public automatic conversion
 still requires video. The [private MP3 inventory and native probe](docs/mp3-input-probe.md)
 cover bounded MPEG layer-III framing/timeline metadata and user-confirmed direct
 progressive CBR/VBR playback on both recorded receivers. No AAC fallback is
-justified by those cases. Packaged MP3, public format admission and Screenbox
-routing remain separate next gates.
+justified by those cases. The separate [packaged UWP MP3 gate](docs/mp3-uwp-gate.md)
+also passes brokered CBR/VBR controls, natural end, Stop and Mac consent cancellation.
+Public format admission and Screenbox MP3 routing remain separate next gates.
 
 The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.294`** is
 [published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294).
