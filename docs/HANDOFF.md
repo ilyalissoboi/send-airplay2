@@ -2,6 +2,17 @@
 
 Snapshot: 2026-10-19 (Asia/Tokyo). Audience: the next human developer or model.
 
+**D104 packaged MP3 gate in progress (2026-10-19).** Native #88 merged as
+be5ae92, with all 17 checks passed at final head 552ebca in
+[run 39201242905](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39201242905).
+The user authorizes the next gate and confirms both receivers available with
+macOS 26.7.1/tvOS 26.6 unchanged. The test host adds progressive audio/mpeg
+scripts/form support and MP3 picking; native playback/API, codec profile,
+public admission and Screenbox stay unchanged. Private codec-free x64 package
+0.1.32.0 will update in place, preserving credentials/data/grants. Actual package,
+AppContainer/module, negative-script and written receiver checks are pending.
+Read [the active scope](mp3-uwp-gate.md); do not substitute D103 native evidence.
+
 **D103 private MP3 inventory/native direct-playback gate complete (2026-10-19).**
 Native #87 merged as `e6b0a4b`; all 17 checks passed at final head `13602e0` in
 [run 39182522426](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39182522426).
@@ -17,13 +28,13 @@ Direct progressive audio/mpeg works in this tested subset; no AAC fallback is
 justified by this gate. Packaged brokered-source MP3 verification is next.
 Read [the scope, evidence and decision](mp3-input-probe.md). Preserve all deferrals.
 
-**PR #88 portability review follow-up (2026-10-19).** Continue its
-codex/mp3-input-probe branch. The reservoir distance now has an unsigned type,
+**PR #88 portability review follow-up merged (2026-10-19).** The reservoir distance now has an unsigned type,
 and the test marker uses bounded string_view iterators. Strict local Clang
 compilation and MP3 scenarios pass; see the
 [review validation record](validation/mp3-input-review-windows-2026-10-19.json).
 The nine receiver results retain their original 7f8fb30 source/binary scope.
-Inspect the actual updated PR head's CI before merging; no new receiver gate.
+Both review threads are resolved; all 17 checks passed at final head 552ebca.
+The merge/CI checkpoint adds no new receiver observation.
 
 **D102 standalone Ogg Opus/Vorbis private slice (2026-10-19).** Native #86
 is merged as `7d4ac4c`, with all 17 checks passed at final head `9ee6cc8` in

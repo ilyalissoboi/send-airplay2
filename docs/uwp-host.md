@@ -52,7 +52,7 @@ adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
 Switching variants keeps the app's data only as an in-place update, which
 Windows allows only to a higher version. Before building the other variant,
 raise its `Version` above the installed one (the committed manifests are
-0.1.30.0 and 0.1.31.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
+0.1.32.0 and 0.1.33.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
 0.1.4.0, D55 used 0.1.6.0, 0.1.8.0, 0.1.10.0 and 0.1.12.0, D57 0.1.14.0 and D61
 0.1.16.0, 0.1.18.0, 0.1.20.0 and 0.1.22.0).
 Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
@@ -71,7 +71,7 @@ and `#` comments are skipped:
 | `discover [NAME]` | One scan; fills the address (default: the form's receiver name) |
 | `discover-model MODEL` | One scan; fills the address only when exactly one receiver matches the model |
 | `profile NAME` | Sets the PasswordVault profile; NAME uses the same 1-32 character syntax as script names |
-| `cast vault\|builtin LABEL [remux\|progressive\|automatic\|stereo] [start=SECONDS] [preserve] [type=audio/mp4\|video/mp4]` | Casts the remembered file; remux is the default. `preserve` requires automatic delivery and refuses conversion. Explicit MIME requires progressive delivery |
+| `cast vault\|builtin LABEL [remux\|progressive\|automatic\|stereo] [start=SECONDS] [preserve] [type=audio/mp4\|audio/mpeg\|video/mp4]` | Casts the remembered file; remux is the default. `preserve` requires automatic delivery and refuses conversion. Explicit MIME requires progressive delivery |
 | `fixtures` | Opens a manual folder picker and remembers the nine original D88 receiver controls as `receiver-CODEC` |
 | `wait SECONDS` | Waits |
 | `pause`, `play`, `seek SECONDS`, `status`, `stop` | The button actions |
@@ -114,8 +114,8 @@ offline adapter. Example after manually remembering the fixture as `audio-only`:
 cast vault audio-only progressive type=audio/mp4
 ```
 
-The default capability manifest is version 0.1.30.0; the extra-server variant is
-0.1.31.0. D98 changes test-host options/diagnostics, not native audio policy,
+The default capability manifest is version 0.1.32.0; the extra-server variant is
+0.1.33.0. D98 changes test-host options/diagnostics, not native audio policy,
 Screenbox, audio-only HLS, transcoding or speaker transport. Receiver/package
 proof must be recorded separately from a successful build.
 
@@ -123,6 +123,11 @@ The [D98 packaged AAC/M4A gate](audio-only-uwp-gate.md) passes on the recorded
 Mac/macOS 26.7.1 and Apple TV/tvOS 26.6 with this codec-free x64 package.
 The record retains failed attempts and separates audible user confirmation from
 sender telemetry and package checks; it does not establish other codec support.
+
+D104 adds the MP3 picker entry and progressive audio/mpeg form/script type for
+the original CBR/VBR fixtures. Explicit MIME with HLS still refuses before file
+access. The [packaged MP3 gate](mp3-uwp-gate.md) records pending/completed results
+separately; these test-host options do not expand native or Screenbox policy.
 
 Found while adding it: under Native AOT, `args is CommandLineActivatedEventArgs`
 was false for a command-line activation; testing `ActivationKind` and the
