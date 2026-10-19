@@ -117,10 +117,12 @@ void check_rendition(const std::filesystem::path& path, std::size_t segment_coun
            scenario + ": independently decoded stereo trim, actual frames=" +
                std::to_string(decoded.size() / 2));
     double energy = 0;
-    for (std::size_t index = 96000; index < 104192; ++index) {
+    const auto energy_samples = std::min<std::size_t>(8192, decoded.size());
+    const auto energy_begin = std::min<std::size_t>(96000, decoded.size() - energy_samples);
+    for (std::size_t index = energy_begin; index < energy_begin + energy_samples; ++index) {
         energy += decoded.at(index) * decoded.at(index);
     }
-    expect(energy / 8192 > 0.0001, scenario + ": audible converted tones");
+    expect(energy / energy_samples > 0.0001, scenario + ": audible converted tones");
     expect(sap2_test::read(late_resource, context.value) == late && store.seals == segment_count,
            scenario + ": cold final/backward reads are stable and generated once");
     expect(hls->authoring().copied_rates.peak == 0 &&
@@ -189,10 +191,70 @@ void check_ogg_refusals(const std::filesystem::path& directory) {
     }
 }
 
+void check_container_windows(const std::filesystem::path& path, std::uint32_t expected_frames,
+                             std::uint32_t leading_frames, double source_start_seconds,
+                             std::uint64_t expected_source_id = 1) {
+    const auto scenario = path.filename().string();
+    sap2_test::Context context;
+    sap2_test::Source source(path);
+    auto decoder = AudioDecoderSource::open(source.callbacks(), context.value, {}, true, true);
+    expect(decoder->audio_only_duration_samples(context.value) == expected_frames,
+           scenario + ": literal edited/indexed audible end");
+    const auto reference_frames = std::min(expected_frames, 9U * 48000);
+    const auto reference = decoder->read_window(0, reference_frames, context.value);
+    expect(reference.channels == 2 && reference.source_track_id == expected_source_id &&
+               reference.samples.size() == reference_frames * 2,
+           scenario + ": full presentation coverage including edit silence");
+    for (std::size_t index = 0; index < leading_frames * 2; ++index) {
+        expect(reference.samples[index] == 0, scenario + ": initial empty edit is silence");
+    }
+    constexpr double pi = 3.14159265358979323846;
+    double tone_error = 0;
+    for (std::uint32_t frame = leading_frames + 480; frame < leading_frames + 48000; ++frame) {
+        for (std::size_t channel = 0; channel < 2; ++channel) {
+            const auto frequency = channel == 0 ? 173 : 227;
+            const auto time = source_start_seconds + (frame - leading_frames) / 48000.0;
+            const auto expected = 0.125 * std::sin(2 * pi * frequency * time);
+            const auto error = reference.samples[frame * 2 + channel] - expected;
+            tone_error += error * error;
+        }
+    }
+    expect(tone_error / (47520 * 2) < 0.000001,
+           scenario + ": independent source offset, phase and stereo tone oracle");
+    auto cold = AudioDecoderSource::open(source.callbacks(), context.value, {}, true, true);
+    expect(cold->audio_only_duration_samples(context.value) == expected_frames,
+           scenario + ": cold owner derives the same endpoint");
+    const auto tail = cold->read_window(expected_frames - 1000, 1001, context.value);
+    expect(tail.eof && tail.samples.size() == 2000,
+           scenario + ": cold final window clips exactly at audible end");
+    const auto after_end = cold->read_window(expected_frames, 1, context.value);
+    expect(after_end.eof && after_end.samples.empty() && after_end.channels == 2,
+           scenario + ": read at presentation end returns empty EOF");
+    for (const auto first :
+         {std::min(48001U, reference_frames - 4096), 0U, leading_frames, reference_frames - 4096}) {
+        const auto window = cold->read_window(first, 4096, context.value);
+        expect(window.samples.size() == 8192, scenario + ": cold/backward seek coverage");
+        double error = 0;
+        for (std::size_t index = 0; index < window.samples.size(); ++index) {
+            const auto difference = window.samples[index] - reference.samples[first * 2 + index];
+            error += difference * difference;
+        }
+        expect(error / window.samples.size() < 0.000001,
+               scenario + ": seek phase mismatch at " + std::to_string(first));
+    }
+    context.cancelled = true;
+    try {
+        (void)cold->read_window(expected_frames, 1, context.value);
+        throw std::runtime_error(scenario + ": past-end read ignored cancellation");
+    } catch (const AudioDecodeException& error) {
+        expect(error.reason() == AudioDecodeFailure::stopped,
+               scenario + ": past-end cancellation category");
+    }
+}
+
 void check_selection_and_failure(const std::filesystem::path& directory,
                                  const std::filesystem::path& video_directory) {
     expect_refusal(directory / "aac.mp4", AudioDecodeFailure::unsupported);
-    expect_refusal(directory / "edited-pcm.mov", AudioDecodeFailure::unsupported);
     expect_refusal(directory / "multiple-flac.mp4", AudioDecodeFailure::selection_required);
     expect_refusal(directory / "flac-stereo.mp4", AudioDecodeFailure::invalid_selection, 99);
     expect_refusal(directory / "flac-stereo.mp4", AudioDecodeFailure::too_large, {}, 1);
@@ -235,11 +297,31 @@ void check_selection_and_failure(const std::filesystem::path& directory,
 
 int main(int argc, char** argv) {
     try {
-        expect(argc == 5, "MP4, video, standalone and Ogg fixture directories required");
+        expect(argc == 6, "MP4, video, standalone, Ogg and timeline fixture directories required");
         const std::filesystem::path directory(argv[1]);
         check_rendition(directory / "flac-stereo.mp4", 3, 624144);
         check_rendition(directory / "flac-44100.mp4", 3, 624144);
         check_rendition(directory / "pcm-51.mov", 1, 144144);
+        check_rendition(directory / "edited-pcm.mov", 1, 144144);
+        const std::filesystem::path timelines(argv[5]);
+        for (const auto* name : {"pcm-edit.mov", "flac-edit441.mp4"}) {
+            check_container_windows(timelines / name, 108000, 12000, 0.5);
+            check_rendition(timelines / name, 1, 108000);
+        }
+        check_container_windows(timelines / "pcm-cut.mov", 48000, 0, 0.5);
+        check_rendition(timelines / "pcm-cut.mov", 1, 48000);
+        for (const auto* name : {"flac48.mka", "flac441.mka"}) {
+            check_container_windows(timelines / name, 624144, 0, 0);
+            check_rendition(timelines / name, 3, 624144);
+        }
+        check_container_windows(timelines / "pcm48.mka", 144144, 0, 0);
+        check_rendition(timelines / "pcm48.mka", 1, 144144);
+        check_container_windows(timelines / "pcm-trim.mka", 143904, 0, 0.002, 42);
+        check_rendition(timelines / "pcm-trim.mka", 1, 143904);
+        for (const auto* name :
+             {"pcm-leading-gap.mka", "pcm-internal-trim.mka", "pcm-excess-skip.mka"}) {
+            expect_refusal(timelines / name, AudioDecodeFailure::unsupported);
+        }
         const std::filesystem::path standalone(argv[3]);
         for (const auto* name : {"flac48.flac", "flac441.flac", "pcm16.wav", "seektable.flac"}) {
             check_rendition(standalone / name, 3, 624144);

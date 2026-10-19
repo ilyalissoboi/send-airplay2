@@ -192,6 +192,55 @@ void validate_mp4_audio_index(const Mp4Track& audio) {
     }
 }
 
+std::uint64_t mp4_audio_presentation_samples(const Mp4Track& audio, std::uint32_t movie_timescale) {
+    validate_mp4_audio_index(audio);
+    constexpr std::uint32_t output_rate = 48000;
+    constexpr std::uint64_t maximum_seconds = 7 * 24 * 3600;
+    const auto& last = audio.samples.back();
+    const auto media_end = checked_add(last.decode_time, last.duration);
+    if (audio.samples.front().decode_time != 0 || media_end > maximum_seconds * audio.timescale) {
+        unsupported_time();
+    }
+    auto duration = media_end;
+    auto timescale = audio.timescale;
+    if (!audio.edits.empty()) {
+        const auto& media = audio.edits.back();
+        if (!movie_timescale || audio.edits.size() > 2 || media.media_time < 0 ||
+            media.rate_integer != 1 || media.rate_fraction != 0 || !media.segment_duration ||
+            media.segment_duration > maximum_seconds * movie_timescale) {
+            unsupported_time();
+        }
+        std::uint64_t empty_ticks = 0;
+        if (audio.edits.size() == 2) {
+            const auto& empty = audio.edits.front();
+            if (empty.media_time != -1 || empty.rate_integer != 1 || empty.rate_fraction != 0) {
+                unsupported_time();
+            }
+            empty_ticks = empty.segment_duration;
+        }
+        const auto media_start = static_cast<std::uint64_t>(media.media_time);
+        // Ceil to source ticks: even a fractional final tick needs source coverage.
+        const auto needed_ticks =
+            scale_floor(media.segment_duration, movie_timescale, audio.timescale) +
+            ((media.segment_duration % movie_timescale) * audio.timescale % movie_timescale != 0);
+        if (media_start >= media_end || needed_ticks > media_end - media_start) {
+            unsupported_time();
+        }
+        duration = checked_add(empty_ticks, media.segment_duration);
+        timescale = movie_timescale;
+    }
+    if (!duration || duration > maximum_seconds * timescale) {
+        unsupported_time();
+    }
+    const auto result =
+        scale_floor(duration, timescale, output_rate) +
+        ((duration % timescale) * output_rate % timescale >= (std::uint64_t{timescale} + 1) / 2);
+    if (!result) {
+        unsupported_time();
+    }
+    return result;
+}
+
 Mp4AudioSeek plan_mp4_audio_seek(const Mp4Track& audio, std::uint32_t movie_timescale,
                                  std::uint64_t presentation_ns,
                                  std::uint64_t decoder_preroll_ticks) {

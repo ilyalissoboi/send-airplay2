@@ -1,0 +1,215 @@
+{
+  "license": "Apache-2.0 original repository-generated tones and edit metadata",
+  "generator": "generate_audio_timeline_fixtures.py",
+  "development_encoder": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+  "files": [
+    {
+      "file": "pcm-edit.mov",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "source_rate": 48000,
+      "source_frames": 144144,
+      "leading_48khz_frames": 12000,
+      "source_start_ticks": 24000,
+      "media_duration_movie_ticks": 96000,
+      "movie_timescale": 48000,
+      "expected_48khz_frames": 108000,
+      "bytes": 577273,
+      "sha256": "8b91bd159b130bac3e5324d35ca020d7387f8aeb107ec5da2783418b5ef7cf73"
+    },
+    {
+      "file": "pcm-cut.mov",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "source_rate": 48000,
+      "source_frames": 144144,
+      "leading_48khz_frames": 0,
+      "source_start_ticks": 24000,
+      "media_duration_movie_ticks": 48000,
+      "movie_timescale": 48000,
+      "expected_48khz_frames": 48000,
+      "bytes": 577261,
+      "sha256": "a2e77ff4db8fb2b28ebbbac6e735258fbb06f51ee3b9c45221da0b3e79a0a537"
+    },
+    {
+      "file": "flac-edit441.mp4",
+      "original_tones": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 132432,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "52490554d400ac83feb37951db303f598f8c5898cdb32762a45a82b25bc5c3bb"
+      },
+      "source_rate": 44100,
+      "source_frames": 132432,
+      "leading_48khz_frames": 12000,
+      "source_start_ticks": 22050,
+      "media_duration_movie_ticks": 96000,
+      "movie_timescale": 48000,
+      "expected_48khz_frames": 108000,
+      "bytes": 71115,
+      "sha256": "4d54c132deca8fb0df71219c49fdc86b74279b812fa9b5731aaeace3c6726353"
+    },
+    {
+      "file": "flac48.mka",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 624144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+      },
+      "source_rate": 48000,
+      "source_frames": 624144,
+      "leading_48khz_frames": 0,
+      "source_start_ticks": 0,
+      "media_duration_movie_ticks": null,
+      "movie_timescale": null,
+      "expected_48khz_frames": 624144,
+      "bytes": 333608,
+      "sha256": "d38ef67c9dbe263dabf1362d4b0f2bdb26fb79487d1bb201a7acea901e144ae0"
+    },
+    {
+      "file": "flac441.mka",
+      "original_tones": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 573432,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "24ffec906b231477c8480d206ca51923b04cb4df900728edeb774d6d9336985d"
+      },
+      "source_rate": 44100,
+      "source_frames": 573432,
+      "leading_48khz_frames": 0,
+      "source_start_ticks": 0,
+      "media_duration_movie_ticks": null,
+      "movie_timescale": null,
+      "expected_48khz_frames": 624144,
+      "bytes": 305177,
+      "sha256": "28d89589ef7852620053cda90041863bcbe0ac1b76d01a8931fb75bbacfc33c0"
+    },
+    {
+      "file": "pcm48.mka",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "source_rate": 48000,
+      "source_frames": 144144,
+      "leading_48khz_frames": 0,
+      "source_start_ticks": 0,
+      "media_duration_movie_ticks": null,
+      "movie_timescale": null,
+      "expected_48khz_frames": 144144,
+      "bytes": 578120,
+      "sha256": "06d005186291708f80a9128f3627e6d6de6f145166997c5e877e30888268688f"
+    },
+    {
+      "file": "pcm-trim.mka",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "codec_delay_source_frames": 96,
+      "final_discard_source_frames": 144,
+      "expected_48khz_frames": 143904,
+      "purpose": "positive trim",
+      "bytes": 577524,
+      "sha256": "d160e378a8736c6faec39f2cfd94694883c491bda1cf01f7d75e4d2cd7282c2b"
+    },
+    {
+      "file": "pcm-leading-gap.mka",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "codec_delay_source_frames": 96,
+      "final_discard_source_frames": 144,
+      "expected_48khz_frames": null,
+      "purpose": "zero-origin/contiguous coverage refusal",
+      "bytes": 577526,
+      "sha256": "d8bee66de98711208e663b25b6a880d44c1933ed21b222b4f88a03bfcc0e11c1"
+    },
+    {
+      "file": "pcm-internal-trim.mka",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "codec_delay_source_frames": 96,
+      "final_discard_source_frames": 144,
+      "expected_48khz_frames": null,
+      "purpose": "zero-origin/contiguous coverage refusal",
+      "bytes": 577539,
+      "sha256": "ee953794eaf987f6d8a823d0ff0f3e64648fd8057f52d13be82a8b560882dbaf"
+    },
+    {
+      "file": "pcm-excess-skip.mka",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "codec_delay_source_frames": 96,
+      "final_discard_source_frames": 144,
+      "expected_48khz_frames": null,
+      "purpose": "zero-origin/contiguous coverage refusal",
+      "bytes": 577539,
+      "sha256": "b0ae996cd3540c71ab5710c0f266fe8642fdcb6c217b74ab6bcf55d51e2053dc"
+    }
+  ]
+}

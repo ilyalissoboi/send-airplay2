@@ -118,11 +118,16 @@ public:
          std::optional<std::uint64_t> explicit_track_id = {}, bool canonical_matroska_clock = false,
          bool allow_standalone_audio = false);
     /** Selected audio-only duration on the 48-kHz clock. Standalone FLAC/WAVE/Ogg
-     * uses its native probe metadata; MP4/MOV uses the unedited packet index.
+     * uses native probe metadata; MP4/MOV uses its packet index and a finite
+     * unit-rate media edit, optionally preceded by one empty edit. Calling this
+     * sets that edited MP4 presentation endpoint for subsequent read_window calls;
+     * EOF at this boundary need not mean physical decoder EOF of excluded media.
+     * Matroska FLAC/PCM requires canonical indexing and zero-based contiguous
+     * audible coverage; CodecDelay and terminal DiscardPadding determine its end.
      * Reads the native packet index under the caller's operation budgets; no PCM
-     * decoding or FFmpeg duration estimate. Requires zero-based contiguous samples,
-     * no edit list, positive duration <=7 days. Standalone duration is <7 days.
-     * Matroska and edited inputs refuse; FLAC end/coverage needs decoding checks.
+     * decoding or FFmpeg duration estimate. Requires positive duration <=7 days;
+     * standalone duration is <7 days. Complex edits, gaps and other Matroska
+     * codecs refuse; decoded end/window coverage still needs validation.
      * Serialized like read_window; callbacks end on return and exceptions propagate.
      */
     [[nodiscard]] std::uint64_t audio_only_duration_samples(const MediaReadContext& context);
@@ -141,6 +146,9 @@ public:
      * Indexed audio constructs its packet clock/trim from native container fields,
      * avoiding generic demuxer overwrite of first-block skip with CodecDelay.
      * MOV Opus frame duration bounds the audible packet tail before resampling.
+     * Within the existing window bounds, requests at/past an installed edited
+     * MP4 endpoint return empty EOF and still check cancellation. Clipped windows
+     * cannot synthesize missing decoded coverage before that endpoint.
      * This does not encode AAC or establish independent HLS segment priming.
      */
     [[nodiscard]] DecodedAudioWindow read_window(std::uint64_t first_sample, std::uint32_t count,
