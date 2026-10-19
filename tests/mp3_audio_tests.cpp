@@ -14,6 +14,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace {
@@ -220,7 +221,9 @@ void owned_fixtures(const std::filesystem::path& directory) {
                        std::to_string(index));
         }
         auto damaged = input.bytes;
-        const auto found = std::search(damaged.begin(), damaged.end(), "Lavc", "Lavc" + 4);
+        constexpr std::string_view encoder_marker = "Lavc";
+        const auto found = std::search(damaged.begin(), damaged.end(), encoder_marker.begin(),
+                                       encoder_marker.end());
         expect(found != damaged.end(), std::string(item.name) + ": owned encoder marker exists");
         damaged.at(static_cast<std::size_t>(found - damaged.begin()) + 21) ^= 1;
         refusal(std::move(damaged), std::string(item.name) + ": encoder trim CRC",

@@ -120,3 +120,21 @@ still needs public delivery integration and receiver validation.
 
 No packaged MP3, Screenbox, low-rate mono receiver or sample-exact gapless playback
 claim follows from these native stereo checks.
+
+## PR #88 portability review follow-up
+
+The original head 645ff5e failed Linux/macOS native and sanitizer compilation:
+the integer-promoted reservoir distance compared as signed against uint64_t.
+Clang also flags arithmetic directly on the test's encoder-marker string literal.
+The distance is now explicitly narrowed to its unsigned 9-bit/8-bit byte range,
+and the marker uses bounded string_view iterators with a direct include. Both
+changes preserve parser behavior and fixture coverage.
+
+Local Clang 22.1.3 compiles both changed files with C++17 and
+-Wall -Wextra -Wpedantic -Werror; its separately built MP3 test executable passes
+all existing scenarios. These are Windows-host Clang results, not Linux/macOS
+runtime or new receiver observations. The original receiver source/binary hashes
+remain historical; the progressive delivery path is unchanged.
+Full Windows Release static/shared reruns pass 43/43 and 44/44; x64 UWP native
+compilation also passes. The [review validation record](validation/mp3-input-review-windows-2026-10-19.json)
+keeps these results separate from the original receiver gate and failing CI head.

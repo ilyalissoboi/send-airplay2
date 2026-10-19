@@ -261,9 +261,10 @@ Mp3AudioInventory probe_mp3_audio(const MediaSource& source, const MediaReadCont
         require(header.bytes <= extent.second - position, RemuxFailure::malformed,
                 "MP3 final frame truncated");
         const auto side = reader.read(position + mpeg_header_bytes, header.side_bytes);
-        const auto back =
-            header.version == 3 ? (std::uint16_t{side[0]} << 1) | (side[1] >> 7) : side[0];
-        require(back <= reservoir_available, RemuxFailure::malformed,
+        // main_data_begin is a 9-bit MPEG-1 or 8-bit low-rate byte distance.
+        const auto reservoir_back_bytes = static_cast<std::uint16_t>(
+            header.version == 3 ? (std::uint16_t{side[0]} << 1) | (side[1] >> 7) : side[0]);
+        require(reservoir_back_bytes <= reservoir_available, RemuxFailure::malformed,
                 "MP3 reservoir points before source");
         if (!(physical_frames == 1 && metadata.present)) {
             if (first_audio_bitrate == 0) {
@@ -276,7 +277,7 @@ Mp3AudioInventory probe_mp3_audio(const MediaSource& source, const MediaReadCont
                 require(result.seek_points.size() < maximum_seek_points, RemuxFailure::too_large,
                         "MP3 seek locator bound");
                 result.seek_points.push_back(
-                    {position, result.coded_samples, static_cast<std::uint16_t>(back)});
+                    {position, result.coded_samples, reservoir_back_bytes});
             }
             ++result.frame_count;
             result.coded_samples += header.samples;
