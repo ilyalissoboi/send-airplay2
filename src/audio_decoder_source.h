@@ -61,7 +61,7 @@ struct DecodedAudioWindow {
  * per window, channels 1..8. Resampling phase periods above 8192 input samples
  * are refused. Both cancellation pointers in MediaReadContext must be valid.
  * A failed window invalidates the object; discard it and any tentative output.
- * Standalone FLAC/WAVE requires allow_standalone_audio=true and native header
+ * Standalone FLAC/WAVE/Ogg requires allow_standalone_audio=true and native header
  * validation; the default source probe remains MP4/Matroska-only.
  * Known native layouts and the documented AAC/Dolby/DTS-core/FLAC/Opus/Vorbis/
  * PCM/TrueHD source matrix only. Layout/rate/format changes,
@@ -117,7 +117,7 @@ public:
     open(const MediaSource& source, const MediaReadContext& context,
          std::optional<std::uint64_t> explicit_track_id = {}, bool canonical_matroska_clock = false,
          bool allow_standalone_audio = false);
-    /** Selected audio-only duration on the 48-kHz clock. Standalone FLAC/WAVE
+    /** Selected audio-only duration on the 48-kHz clock. Standalone FLAC/WAVE/Ogg
      * uses its native probe metadata; MP4/MOV uses the unedited packet index.
      * Reads the native packet index under the caller's operation budgets; no PCM
      * decoding or FFmpeg duration estimate. Requires zero-based contiguous samples,

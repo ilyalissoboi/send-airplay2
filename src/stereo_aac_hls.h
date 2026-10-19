@@ -89,14 +89,15 @@ public:
     open(MediaSource source, AacFragmentStore store, std::uint64_t quota_bytes,
          const MediaReadContext& context, std::optional<std::uint64_t> selected_id = {});
     /** Private audio-only foundation; does not change public automatic routing.
-     * Admits unedited progressive MP4/MOV or the bounded standalone FLAC/WAVE
-     * subset, without video and with a selected supported FLAC/PCM stream. Native
-     * packet index determines duration, not a host-supplied or FFmpeg estimate.
+     * Admits unedited progressive MP4/MOV or the bounded standalone FLAC/WAVE/Ogg
+     * subset, without video and with a selected supported FLAC/PCM/Opus/Vorbis
+     * stream. Native sample/granule metadata or the MP4 packet index determines
+     * duration, not a host-supplied or FFmpeg estimate.
      * Uses the existing stereo encoder, lazy cache, deadlines and Stop contract.
      * Returns one direct audio variant, no video resources or rendition group.
      * Standalone metadata is validated against a bounded decoded end/EOF window;
      * shorter windows fail rather than padding a truncated declared presentation.
-     * Ogg/MP3, edited MP4 and Matroska audio-only timelines remain separate.
+     * MP3, edited MP4 and Matroska audio-only timelines remain separate.
      * Store cleanup is consumed on every call, including startup failure.
      */
     [[nodiscard]] static std::unique_ptr<StereoAacHls>

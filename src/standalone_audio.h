@@ -7,10 +7,11 @@ namespace send_airplay2::detail {
 /// True only for the explicitly admitted single-stream standalone containers.
 [[nodiscard]] bool is_standalone_audio(SourceContainer container) noexcept;
 /** Private audio-only probe; existing public/video inventory behavior is unchanged.
- * Detects native FLAC or little-endian RIFF/RF64 WAVE, otherwise uses the existing
+ * Detects native FLAC, RIFF/RF64 WAVE or Ogg Opus/Vorbis, otherwise uses the existing
  * MP4/Matroska inventory. Standalone audio has one stable source identity, 1.
- * Reads only headers through borrowed host callbacks; no filesystem/network I/O.
- * The standalone bounds below apply before decoding; MP4/Matroska delegates
+ * FLAC/WAVE reads only headers; Ogg performs its separately bounded <=64 MiB
+ * full-page CRC scan (ogg_audio.h). Borrowed callbacks only; no file/network I/O.
+ * The FLAC/WAVE bounds below apply before decoding; MP4/Matroska delegates
  * its legacy probe after a four-byte signature read.
  * Bounds: immutable source <=1 TiB, 4096 metadata/chunk headers, FLAC metadata
  * <=16 MiB, 65536 seek points, 128 MiB requested bytes, 1048576 callbacks,

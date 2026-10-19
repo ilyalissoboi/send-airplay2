@@ -22,6 +22,7 @@ set(sap2_decoder_root "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 add_library(sap2_audio_decoder STATIC
   "${sap2_decoder_root}/src/audio_delivery_policy.cpp"
   "${sap2_decoder_root}/src/standalone_audio.cpp"
+  "${sap2_decoder_root}/src/ogg_audio.cpp"
   "${sap2_decoder_root}/src/audio_decoder_source.cpp"
   "${sap2_decoder_root}/src/stereo_aac_encoder.cpp"
   "${sap2_decoder_root}/src/stereo_aac_hls.cpp"
@@ -116,6 +117,11 @@ elseif(BUILD_TESTING)
   add_test(NAME coarse_matroska_clock COMMAND sap2_coarse_clock_tests
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/coarse-clock")
   set_tests_properties(coarse_matroska_clock PROPERTIES TIMEOUT 90)
+  add_executable(sap2_ogg_audio_tests "${sap2_decoder_root}/tests/ogg_audio_tests.cpp")
+  target_link_libraries(sap2_ogg_audio_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
+  sap2_codec_warnings(sap2_ogg_audio_tests)
+  add_test(NAME ogg_audio_input COMMAND sap2_ogg_audio_tests)
+  set_tests_properties(ogg_audio_input PROPERTIES TIMEOUT 30)
   add_executable(sap2_standalone_audio_tests "${sap2_decoder_root}/tests/standalone_audio_tests.cpp")
   target_link_libraries(sap2_standalone_audio_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})
   sap2_codec_warnings(sap2_standalone_audio_tests)
@@ -128,7 +134,8 @@ elseif(BUILD_TESTING)
   add_test(NAME audio_only_hls COMMAND sap2_audio_only_hls_tests
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/audio-only"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/expanded-decoder"
-    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/standalone-audio")
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/standalone-audio"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/ogg-audio")
   set_tests_properties(audio_only_hls PROPERTIES TIMEOUT 60)
   add_executable(sap2_expanded_hls_tests expanded_hls_tests.cpp)
   target_link_libraries(sap2_expanded_hls_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})

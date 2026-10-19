@@ -49,9 +49,11 @@ and [Screenbox](docs/screenbox-audio-files.md) gates. The next
 [private audio-only AAC foundation](docs/audio-only-aac-foundation.md) is tested
 only offline with unedited FLAC/PCM MP4/MOV input. The next private
 [standalone FLAC/WAVE slice](docs/standalone-flac-wave.md) extends that foundation
-with bounded native input and decoded-end checks. Public automatic conversion
-still requires video. Ogg and MP3 input/direct-playback validation remain future
-work; MP3 AAC fallback depends on those results.
+with bounded native input and decoded-end checks. The private
+[Ogg Opus/Vorbis slice](docs/standalone-ogg-audio.md) adds a bounded single-stream
+CRC/granule probe and offline seek/trim checks. Public automatic conversion
+still requires video. MP3 input/direct-playback validation remains future work;
+MP3 AAC fallback depends on those results.
 
 The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.294`** is
 [published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294).
