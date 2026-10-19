@@ -51,7 +51,10 @@ only offline with unedited FLAC/PCM MP4/MOV input. The next private
 [standalone FLAC/WAVE slice](docs/standalone-flac-wave.md) extends that foundation
 with bounded native input and decoded-end checks. The private
 [Ogg Opus/Vorbis slice](docs/standalone-ogg-audio.md) adds a bounded single-stream
-CRC/granule probe and offline seek/trim checks. Public automatic conversion
+CRC/granule probe and offline seek/trim checks. The private
+[edited MP4/Matroska timeline slice](docs/audio-only-container-timelines.md) adds
+checked FLAC/PCM edits, packet-derived audible ends and decoded coverage.
+These input builders have offline evidence only. Public automatic conversion
 still requires video. The [private MP3 inventory and native probe](docs/mp3-input-probe.md)
 cover bounded MPEG layer-III framing/timeline metadata and user-confirmed direct
 progressive CBR/VBR playback on both recorded receivers. No AAC fallback is

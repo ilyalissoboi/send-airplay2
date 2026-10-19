@@ -7,6 +7,11 @@ D99's completed Mac layout/queue gate remains separate historical evidence.
 
 ## Implemented boundary
 
+D105 later extends this private foundation with checked finite MP4 edits and
+indexed Matroska FLAC/PCM audible ends. See [the current input subset and offline
+evidence](audio-only-container-timelines.md); D100's original unedited scope below
+remains historical. Public automatic routing still requires video.
+
 The existing conversion owner borrowed video duration, segment cuts, resources
 and master-playlist shape. A private `StereoAacHls::open_audio_only` now uses
 its own selected audio packet clock with the same decoder, 48-kHz stereo AAC

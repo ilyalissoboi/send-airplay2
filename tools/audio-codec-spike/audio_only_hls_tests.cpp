@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "hls_test_support.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -252,6 +253,44 @@ void check_container_windows(const std::filesystem::path& path, std::uint32_t ex
     }
 }
 
+void check_fractional_edit_phase(const std::filesystem::path& path) {
+    sap2_test::Context context;
+    sap2_test::Source source(path);
+    constexpr std::array<std::uint8_t, 4> edit_marker{'e', 'l', 's', 't'};
+    const auto marker = std::search(source.bytes->begin(), source.bytes->end(), edit_marker.begin(),
+                                    edit_marker.end());
+    expect(marker != source.bytes->end(), "fractional edit: owned elst marker");
+    // From fourcc: 4 type + 4 full-box + 4 count + 12 empty entry + 4 duration.
+    constexpr std::size_t media_start_field = 28;
+    const auto offset =
+        static_cast<std::size_t>(marker - source.bytes->begin()) + media_start_field;
+    expect(offset + 4 <= source.bytes->size(), "fractional edit: owned elst bounds");
+    expect(source.bytes->at(offset) == 0 && source.bytes->at(offset + 1) == 0 &&
+               source.bytes->at(offset + 2) == 0x56 && source.bytes->at(offset + 3) == 0x22,
+           "fractional edit: literal original media start 22050, big endian");
+    constexpr std::uint32_t source_start = 22051; // 44.1-kHz ticks; not a 48-kHz sample.
+    source.bytes->at(offset + 3) = 0x23;
+    auto decoder = AudioDecoderSource::open(source.callbacks(), context.value, {}, true, true);
+    expect(decoder->audio_only_duration_samples(context.value) == 108000,
+           "fractional edit: unchanged 2.25-second presentation duration");
+    const auto window = decoder->read_window(12480, 4096, context.value);
+    expect(window.channels == 2 && window.samples.size() == 8192,
+           "fractional edit: post-silence source coverage");
+    constexpr double pi = 3.14159265358979323846;
+    double error = 0;
+    for (std::size_t frame = 0; frame < 4096; ++frame) {
+        for (std::size_t channel = 0; channel < 2; ++channel) {
+            const auto frequency = channel == 0 ? 173 : 227;
+            const auto time = source_start / 44100.0 + (480 + frame) / 48000.0;
+            const auto difference =
+                window.samples[frame * 2 + channel] - 0.125 * std::sin(2 * pi * frequency * time);
+            error += difference * difference;
+        }
+    }
+    expect(error / 8192 < 0.000001,
+           "fractional edit: source phase at 22051/44100 s, MSE=" + std::to_string(error / 8192));
+}
+
 void check_selection_and_failure(const std::filesystem::path& directory,
                                  const std::filesystem::path& video_directory) {
     expect_refusal(directory / "aac.mp4", AudioDecodeFailure::unsupported);
@@ -304,6 +343,7 @@ int main(int argc, char** argv) {
         check_rendition(directory / "pcm-51.mov", 1, 144144);
         check_rendition(directory / "edited-pcm.mov", 1, 144144);
         const std::filesystem::path timelines(argv[5]);
+        check_fractional_edit_phase(timelines / "flac-edit441.mp4");
         for (const auto* name : {"pcm-edit.mov", "flac-edit441.mp4"}) {
             check_container_windows(timelines / name, 108000, 12000, 0.5);
             check_rendition(timelines / name, 1, 108000);

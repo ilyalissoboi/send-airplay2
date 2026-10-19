@@ -1,14 +1,16 @@
 # Design and implementation sequence
 
-**D105 private edited/container audio-only slice in progress (2026-10-19).**
+**D105 private edited/container audio-only offline gate complete (2026-10-19).**
 Native #89 merged as e4d1a28; all 17 checks passed at final head 3e59f9c in
 [run 39204589746](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39204589746).
 The user authorizes the next slice. Private FLAC/PCM admission now uses checked
 finite MP4 edits or zero-based contiguous Matroska packet clocks/trim. Edited
 MP4 windows clip at the intentional presentation boundary; video/default decoder
 behavior stays separate. Owned offline tests cover source phase, endpoint,
-seeks and refusal/cleanup. Full validation is pending. Public policy/API, codec
-profile, packages, Screenbox and receiver observations are unchanged. Read
+seeks and refusal/cleanup, including a fractional 44.1-kHz edit offset. Static/
+shared CTests pass 43/44 and codec CTests 17. Both UWP builds/binary checks,
+strict Clang and formatting pass. Implementation 6b81756 adds no public policy/
+API, codec-profile, package, Screenbox or receiver changes. Read
 [the scope and remaining gates](audio-only-container-timelines.md).
 
 **D104 packaged MP3 gate passed (2026-10-19).** Native #88 merged as
