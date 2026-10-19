@@ -173,13 +173,13 @@ if(WIN32)
   target_link_libraries(airplay2-cli PRIVATE ws2_32 advapi32)
 endif()
 sap2_warnings(airplay2-cli)
-# Development host for the public playback interface: library calls go through
-# send_airplay2/playback.h only; cli_input.cpp is a host-side stdin helper.
 # Private offline framing/timeline tool; does not expand playback admission.
 add_executable(airplay2-mp3-probe tools/mp3_probe_main.cpp src/mp3_audio.cpp src/file_media_source.cpp)
 target_include_directories(airplay2-mp3-probe PRIVATE src)
 target_link_libraries(airplay2-mp3-probe PRIVATE send_airplay2)
 sap2_warnings(airplay2-mp3-probe)
+# Development host for the public playback interface: library calls go through
+# send_airplay2/playback.h only; cli_input.cpp is a host-side stdin helper.
 add_executable(airplay2-api-host tools/airplay2_api_host_main.cpp tools/airplay2_api_host.cpp src/host_fragment_store.cpp src/cli_input.cpp)
 target_include_directories(airplay2-api-host PRIVATE src)
 target_link_libraries(airplay2-api-host PRIVATE send_airplay2 Threads::Threads)

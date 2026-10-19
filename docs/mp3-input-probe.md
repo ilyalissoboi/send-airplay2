@@ -4,7 +4,8 @@
 merged as e6b0a4b; all 17 checks passed at final head 13602e0 in
 [run 39182522426](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39182522426).
 The user confirms MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6 available,
-with versions unchanged. Offline implementation and receiver checks are pending.
+with versions unchanged. The private inventory, offline checks and native
+CBR/VBR direct-playback gate are complete on both recorded receivers.
 
 ## Provenance and engineering boundary
 
@@ -21,7 +22,7 @@ FFmpeg is LGPL-2.1-or-later; LAME's referenced implementation is LGPL-2.0-or-lat
 Only externally installed development encoders generate original owned tones.
 No new library dependency, codec profile expansion or distributed tool is added.
 
-The private inventory will not change default/public probes, automatic audio
+The private inventory does not change default/public probes, automatic audio
 routing, the AAC factory, packages or Screenbox. Direct receiver checks use the
 existing progressive C API and explicit audio/mpeg, without conversion permission
 or an AAC decoder/encoder. Any fallback remains an evidence-based later decision.
@@ -76,7 +77,46 @@ original invalid mono file as a refusal fixture. Encoded audio, delay/padding an
 independent decoded sample counts are unchanged. Stereo receiver fixtures need
 no repair. Native CRC checks remain strict.
 
-Focused offline checks pass; full static/shared results and native receiver
-observations will be recorded before completing this slice. Tests cover literal
+Windows Release static/shared CTests pass 43/43 and 44/44 (45.51/50.35 seconds);
+the ordinary x64 UWP native library also compiles. After test-only naming changes,
+focused MP3 checks pass in both builds (0.83 seconds each). Tests cover literal
 headers/counts, malformed metadata/framing/reservoir/trim, locators, short reads,
 cancellation/deadlines and literal source/frame/callback/locator limits.
+
+## Native direct-delivery gate and decision
+
+The codec-free Windows x64 static C API host from implementation 7f8fb30 uses
+explicit audio/mpeg and the original complete MP3 bytes. Actual loaded executable
+and two crypto dependency paths/hashes match the build in each run. The helper
+does not participate in this existing progressive delivery path.
+
+The user confirms Mac pending-consent cancellation and both receivers' CBR/VBR
+listening checks: start near eight seconds, pause/resume, forward/backward marker
+seeks, natural end and separate Stop with no delayed restart. All nine sender
+records show one source release per run, no failed reads and completed media
+cleanup. Cancellation has zero media reads; the pre-start controller retains
+cleaned=no, while its media source is cleaned and released. Early Start/Status
+position snapshots sometimes still report near zero; retain those raw snapshots
+alongside the user's explicit start-position/marker confirmations. They do not
+establish sample-exact initial seek timing.
+
+The [sanitized evidence](validation/mp3-input-probe-windows-2026-10-19.json)
+records source/binary/fixture hashes, commands, telemetry and separate written
+observations. No cast failed or required a runtime change in this gate.
+
+**Engineering decision:** retain direct progressive audio/mpeg as the proposed
+delivery for this tested MP3 subset on these receivers. There is no demonstrated
+need for an AAC fallback, so no MP3 decoder, codec-profile expansion or conversion
+permission is added. This is not universal MP3 or receiver support. If a later
+admitted input/receiver fails, investigate that concrete failure before deciding
+whether to refuse it or add a separately validated AAC fallback.
+
+**Next slice:** verify the same CBR/VBR files through the packaged UWP host's
+brokered source, with actual AppContainer/module hashes, audible controls/natural
+end/separate Stop, Mac consent cancellation and exactly-once source release.
+Keep public/default admission and Screenbox routing separate until their own
+design and lifecycle/queue gates. The existing private FLAC/WAVE/Ogg-to-AAC work
+still needs public delivery integration and receiver validation.
+
+No packaged MP3, Screenbox, low-rate mono receiver or sample-exact gapless playback
+claim follows from these native stereo checks.

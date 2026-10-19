@@ -24,17 +24,20 @@ Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
 
-**D103 MP3 input/direct-playback investigation in progress (2026-10-19).**
+**D103 private MP3 inventory/native direct-playback gate complete (2026-10-19).**
 Native #87 merged as `e6b0a4b`; all 17 checks passed at final head `13602e0` in
 [run 39182522426](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39182522426).
 The user authorizes MP3 work and confirms both receivers available with macOS
 26.7.1/tvOS 26.6 unchanged. A separate private MP3 framing/timeline inventory and
 offline tool cover bounded MPEG-1/2/2.5 CBR/VBR, metadata, sparse locators and
 checked gapless fields. Default/public probes, AAC/automatic routing, codec
-profile, packages and Screenbox are unchanged. Focused offline tests pass;
-full static/shared and native progressive audio/mpeg receiver gates are pending.
-Do not infer an AAC fallback requirement from format name or earlier AAC evidence.
-Read [the active scope and provenance](mp3-input-probe.md). Preserve all deferrals.
+profile, packages and Screenbox are unchanged. Static/shared CTests pass 43/44;
+UWP native compilation passes. The user confirms native CBR/VBR controls, natural
+end and separate Stop on both receivers, plus Mac consent cancellation. All nine
+source instances release once; actual loaded executable/crypto hashes match.
+Direct progressive audio/mpeg works in this tested subset; no AAC fallback is
+justified by this gate. Packaged brokered-source MP3 verification is next.
+Read [the scope, evidence and decision](mp3-input-probe.md). Preserve all deferrals.
 
 **D102 standalone Ogg Opus/Vorbis private slice (2026-10-19).** Native #86
 is merged as `7d4ac4c`, with all 17 checks passed at final head `9ee6cc8` in
@@ -1125,14 +1128,17 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    gates are merged; no public routing, package or receiver claim is added.
 6. **D102 complete; #87 merged as e6b0a4b**, all 17 final-head checks passed
    at 13602e0. Preserve its private bounded Ogg/offline evidence separately.
-7. **D103 active: MP3 private inventory and direct-playback probe.** Continue
+7. **D103 complete: MP3 private inventory and native direct-playback gate.** Continue
    codex/mp3-input-probe while its PR is open, inspecting actual head first. Read
-   mp3-input-probe.md. Focused native input checks pass; full native suites and
-   written native Mac/Apple TV observations remain pending. Receiver availability
-   and unchanged versions are confirmed. Do not add an MP3 decoder/fallback or
-   automatic eligibility before the direct-delivery decision. No publication.
-8. **Following slices:** packaged brokered-source MP3 gates and any justified
-   fallback work; edited MP4/Matroska audio-only admission; automatic delivery with
+   mp3-input-probe.md. Static/shared suites pass 43/44; UWP compilation passes.
+   Written native CBR/VBR controls/natural end/separate Stop pass on Mac/Apple TV,
+   with Mac consent cancellation and unchanged versions. Nine sources release
+   once and loaded executable/crypto hashes match. Direct audio/mpeg is feasible;
+   no AAC fallback is demonstrated. No publication or automatic eligibility.
+8. **Next: packaged brokered-source MP3 gate.** Reuse the owned CBR/VBR files,
+   verify actual AppContainer/module bytes, audible controls/natural end/separate
+   Stop and Mac consent cancellation with exactly-once source release. Following
+   slices: edited MP4/Matroska audio-only admission; automatic delivery with
    explicit stereo permission/public reporting, broader native/packaged receiver
    gates, then Screenbox routing/queue checks. Larger/chained Ogg needs separate
    design/evidence. Preserve completed gates and hardware/user deferrals.
@@ -1369,9 +1375,10 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > documents. Native #87 merged as e6b0a4b, all 17 checks passed at 13602e0.
 > D103 implements private MP3 framing/timeline inventory and an offline probe;
 > inspect codex/mp3-input-probe actual PR/head before writing. Read
-> mp3-input-probe.md. Full native tests and progressive audio/mpeg hardware gates
-> are pending; user confirms both receivers/unchanged macOS 26.7.1/tvOS 26.6.
+> mp3-input-probe.md. Native suites pass 43/44 and progressive CBR/VBR audio/mpeg
+> controls/end/Stop pass on both receivers, with Mac consent cancellation and
+> unchanged macOS 26.7.1/tvOS 26.6. Packaged brokered-source MP3 is the next gate.
 > Default/public/AAC/automatic routes, codec profile, packages and Screenbox stay
-> unchanged. Decide fallback from direct evidence; do not presume MP3 needs AAC.
+> unchanged. Direct playback passed; no AAC fallback is currently justified.
 > Preserve all hardware/user deferrals, use written manual confirmation for UI,
 > and ask before merging or publishing.

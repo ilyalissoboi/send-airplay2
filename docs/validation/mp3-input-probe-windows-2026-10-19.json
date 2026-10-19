@@ -1,0 +1,1102 @@
+{
+  "decision": "D103",
+  "date": "2026-10-19",
+  "timezone": "Asia/Tokyo",
+  "result": "PRIVATE_MP3_INVENTORY_AND_NATIVE_CBR_VBR_DIRECT_PLAYBACK_PASSED_ON_BOTH_RECORDED_RECEIVERS",
+  "base": {
+    "pr": 87,
+    "merge_commit": "e6b0a4be248614ed8ed0771e1c92940906375bec",
+    "final_head": "13602e00c9e3507b1c03cd07854214390f2a0d1e",
+    "passed_ci_checks": 17,
+    "ci_run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39182522426"
+  },
+  "branch": "codex/mp3-input-probe",
+  "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+  "host": "Windows 11 x64; existing C API 5 desktop host; static core; codec backend OFF",
+  "version_confirmation": "User: Both available; versions unchanged",
+  "production_boundary": "New private MP3 header/timeline helper; existing progressive delivery unchanged; helper is not wired into public/default probes, AAC factory or automatic policy",
+  "source_hashes": {
+    "src/mp3_audio.h": "b7891f6e1dc3db854505e821bc7f8e3d14302dd444d3abca330acb3156868a8e",
+    "src/mp3_audio.cpp": "01cf58e171feb9daf4d8278cb4dbe15bc75a04bf433a7f559f476f712f18f389",
+    "tests/mp3_audio_tests.cpp": "06f3969cd1de1c194f8760deebd8dab080ce89c9ad3102e1a608404479679abd",
+    "tools/mp3_probe_main.cpp": "f1548920fa9da2fbd5a30d7c2959dfe6d81379b21e1510036fd008a87c194f77",
+    "tools/mp3-probe/generate_fixtures.py": "67e0fff618d7a64d2a4748ddca7b1bfd4b58b33887566d9f88fce92ed0f943a6",
+    "CMakeLists.txt": "9ac133f43c845cead08567b0008bf5e23ba42d04b313676047f59b28b851f459"
+  },
+  "hash_scope": "Actual Windows working-file bytes; final test-only descriptive naming changes do not alter the receiver runtime",
+  "offline_checks": {
+    "static_release": {
+      "passed": 43,
+      "total": 43,
+      "seconds": 45.51
+    },
+    "shared_release": {
+      "passed": 44,
+      "total": 44,
+      "seconds": 50.35
+    },
+    "final_focused_mp3": {
+      "static": "1/1 passed, 0.83 seconds",
+      "shared": "1/1 passed, 0.83 seconds"
+    },
+    "uwp_x64_native_library": "Compile passed; not a packaged receiver result",
+    "formatting": "clang-format --dry-run --Werror on all four touched C++ files; git diff --check passed",
+    "fixture_manifest": "All seven committed files match recorded SHA-256",
+    "scaling": "Virtual 216000000-byte / 150000-frame source: 172800000 coded samples, under 6 MB of headers; literal source/frame/callback/locator limits tested",
+    "codec_suite": "Not rerun: no decoder/AAC/backend/profile change in D103"
+  },
+  "fixtures": {
+    "license": "Apache-2.0 original repository-generated pulse/channel tones and metadata",
+    "generator": "tools/mp3-probe/generate_fixtures.py",
+    "development_encoder_decoder": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+    "tone_intervals": [
+      {
+        "start_seconds": 0,
+        "end_seconds": 8,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start_seconds": 8,
+        "end_seconds": 16,
+        "left_hz": 0,
+        "right_hz": 660
+      },
+      {
+        "start_seconds": 16,
+        "end_seconds": 24,
+        "left_hz": 880,
+        "right_hz": 880
+      },
+      {
+        "start_seconds": 24,
+        "end_seconds": 32,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start_seconds": 32,
+        "end_seconds": 40,
+        "left_hz": 1100,
+        "right_hz": 1100
+      },
+      {
+        "start_seconds": 40,
+        "end_seconds": 48,
+        "left_hz": 0,
+        "right_hz": 660
+      },
+      {
+        "start_seconds": 48,
+        "end_seconds": 56,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start_seconds": 56,
+        "end_seconds": 64,
+        "left_hz": 880,
+        "right_hz": 880
+      }
+    ],
+    "pulse": "0.75 seconds tone, 0.25 seconds silence, 10-ms fades; mono cases downmix original stereo",
+    "files": [
+      {
+        "file": "cbr48.mp3",
+        "source_rate": 48000,
+        "source_frames": 3072000,
+        "output_channels": 2,
+        "independent_decoded_frames": 3072000,
+        "source_wave_sha256": "2a615c09d1822d3d47061cb025e8026ee84039b697bd3af1656b70492fcca5ca",
+        "encoder_options": [
+          "-b:a",
+          "192k"
+        ],
+        "info_crc_repair": null,
+        "bytes": 1537388,
+        "sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b"
+      },
+      {
+        "file": "vbr441.mp3",
+        "source_rate": 44100,
+        "source_frames": 2822400,
+        "output_channels": 2,
+        "independent_decoded_frames": 2822400,
+        "source_wave_sha256": "e60f476deeb10ae0e76f11b7b3ecbb07a02ced3dc3ce8f5f588800a802e7eead",
+        "encoder_options": [
+          "-q:a",
+          "3"
+        ],
+        "info_crc_repair": null,
+        "bytes": 268288,
+        "sha256": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa"
+      },
+      {
+        "file": "invalid-mono-crc.mp3",
+        "purpose": "Original development encoder CRC refusal",
+        "derived_from": "mono24.mp3",
+        "crc_metadata": {
+          "original_sha256": "45812e8411c21943027c367e3dca400de0aa142a5d33d44b386930d0c14d0275",
+          "original_crc16": 19914,
+          "corrected_crc16": 44124,
+          "covered_frame_bytes": 167,
+          "changed_bytes": "Only the two-byte Info-tag checksum; encoded audio and trim unchanged"
+        },
+        "bytes": 78572,
+        "sha256": "45812e8411c21943027c367e3dca400de0aa142a5d33d44b386930d0c14d0275"
+      },
+      {
+        "file": "mono24.mp3",
+        "source_rate": 24000,
+        "source_frames": 312000,
+        "output_channels": 1,
+        "independent_decoded_frames": 312000,
+        "source_wave_sha256": "47d33eeb9313d45e664188e4544a6a279868ae568cb5990042837bee656afe76",
+        "encoder_options": [
+          "-b:a",
+          "48k"
+        ],
+        "info_crc_repair": {
+          "original_sha256": "45812e8411c21943027c367e3dca400de0aa142a5d33d44b386930d0c14d0275",
+          "original_crc16": 19914,
+          "corrected_crc16": 44124,
+          "covered_frame_bytes": 167,
+          "changed_bytes": "Only the two-byte Info-tag checksum; encoded audio and trim unchanged"
+        },
+        "bytes": 78572,
+        "sha256": "5a5e316982781b0a3ab79026d31ae0ee4fd724b2d7ff224adfb98cf544457638"
+      },
+      {
+        "file": "mono12.mp3",
+        "source_rate": 12000,
+        "source_frames": 36000,
+        "output_channels": 1,
+        "independent_decoded_frames": 36000,
+        "source_wave_sha256": "61e5b5df62c56294d35697fbee9b4740814fe1519c43b2aaf837c5d20a4400fa",
+        "encoder_options": [
+          "-b:a",
+          "24k"
+        ],
+        "info_crc_repair": {
+          "original_sha256": "cddf58573dbdf20ac38aa4d4692ec84c6e44c76d8252cb4efb66d2bd032f0be8",
+          "original_crc16": 6380,
+          "corrected_crc16": 62290,
+          "covered_frame_bytes": 167,
+          "changed_bytes": "Only the two-byte Info-tag checksum; encoded audio and trim unchanged"
+        },
+        "bytes": 9596,
+        "sha256": "6b8d8ccaea783b8bc1d48f9f7ec69c76d3a4369973d2a808d8a7afd680b2f43d"
+      },
+      {
+        "file": "bare48.mp3",
+        "source_rate": 48000,
+        "source_frames": 144000,
+        "output_channels": 2,
+        "independent_decoded_frames": 145152,
+        "source_wave_sha256": "c2b671e12cf15874cf22239878e72304dd7efe4634ff3536215fb0494d559203",
+        "encoder_options": [
+          "-b:a",
+          "128k",
+          "-write_xing",
+          "0",
+          "-id3v2_version",
+          "0"
+        ],
+        "info_crc_repair": null,
+        "bytes": 48384,
+        "sha256": "5362b20bc3f5d9bdcf5e5204e4d067bae8e9078a145cdfd534d50d102bfaec2f"
+      },
+      {
+        "file": "id3-bare48.mp3",
+        "derived_from": "bare48.mp3",
+        "metadata": "ID3v2.3 4-byte opaque body and ID3v1",
+        "bytes": 48526,
+        "sha256": "5505e94df2aa5c4b5cedb534f4078b1170b27b238e4ed6188a4b982d0e8692b9"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "receiver": "mac",
+      "case": "cancel",
+      "fixture": "cbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 0,
+      "fixture_sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:31:49.083930+00:00",
+      "observations": [
+        {
+          "seconds": 5.094,
+          "line": "Cancel: start=cancelled start_ms=5051 stop_fired=yes"
+        },
+        {
+          "seconds": 5.094,
+          "line": "Summary: api_version=5 linkage=static start=cancelled phase=start_failed state=none end=none owned=no position=unknown duration=unknown rate=unknown failure=none/none cleaned=no media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=0 bytes=0 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "Unanswered Mac consent prompt appeared and closed after cancellation"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.094,
+      "receiver_environment": "MacBook Pro / macOS 26.7.1"
+    },
+    {
+      "receiver": "mac",
+      "case": "natural",
+      "fixture": "cbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 8,
+      "fixture_sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:33:01.824120+00:00",
+      "observations": [
+        {
+          "seconds": 5.609,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 6.703,
+          "command": "status"
+        },
+        {
+          "seconds": 6.718,
+          "line": "Status: phase=active state=playing end=none owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 9.671,
+          "command": "pause"
+        },
+        {
+          "seconds": 9.703,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.703,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 12.656,
+          "command": "play"
+        },
+        {
+          "seconds": 12.687,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 12.687,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 12.703,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 15.703,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 15.781,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.625,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 19.656,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 23.656,
+          "command": "status"
+        },
+        {
+          "seconds": 23.656,
+          "line": "Status: phase=active state=playing end=none owned=yes position=11.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 25.625,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 25.781,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 28.64,
+          "command": "status"
+        },
+        {
+          "seconds": 28.656,
+          "line": "Status: phase=active state=playing end=none owned=yes position=60.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 32.031,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 32.031,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 32.031,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 32.281,
+          "line": "Summary: api_version=5 linkage=static start=ok phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=32 bytes=1983110 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "Audible tones start near eight seconds; pause/resume; seek 32 gives higher BOTH marker; seek eight gives RIGHT; seek 58 reaches natural end"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 32.281,
+      "receiver_environment": "MacBook Pro / macOS 26.7.1"
+    },
+    {
+      "receiver": "mac",
+      "case": "stop",
+      "fixture": "cbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 0,
+      "fixture_sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:35:50.303731+00:00",
+      "observations": [
+        {
+          "seconds": 3.656,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 4.75,
+          "command": "status"
+        },
+        {
+          "seconds": 4.766,
+          "line": "Status: phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 11.656,
+          "command": "stop"
+        },
+        {
+          "seconds": 11.672,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 11.703,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 11.734,
+          "line": "Summary: api_version=5 linkage=static start=ok phase=stopped state=paused end=sender_stop owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=25 bytes=1537390 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "LEFT pulses play from zero and stop after about eight seconds without delayed restart"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.734,
+      "receiver_environment": "MacBook Pro / macOS 26.7.1"
+    },
+    {
+      "receiver": "mac",
+      "case": "natural",
+      "fixture": "vbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 8,
+      "fixture_sha256": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:36:35.777799+00:00",
+      "observations": [
+        {
+          "seconds": 1.625,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 2.718,
+          "command": "status"
+        },
+        {
+          "seconds": 2.734,
+          "line": "Status: phase=active state=playing end=none owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 5.687,
+          "command": "pause"
+        },
+        {
+          "seconds": 5.765,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 5.781,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 8.703,
+          "command": "play"
+        },
+        {
+          "seconds": 8.718,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.718,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 8.75,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.718,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 11.812,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.64,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 15.812,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.64,
+          "command": "status"
+        },
+        {
+          "seconds": 19.656,
+          "line": "Status: phase=active state=playing end=none owned=yes position=11.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 21.625,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 21.75,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.718,
+          "command": "status"
+        },
+        {
+          "seconds": 24.734,
+          "line": "Status: phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 27.937,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 27.937,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 27.953,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.187,
+          "line": "Summary: api_version=5 linkage=static start=ok phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=6 bytes=268290 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "Audible tones start near eight seconds; pause/resume; seek 32 gives higher BOTH marker; seek eight gives RIGHT; seek 58 reaches natural end"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 28.203,
+      "receiver_environment": "MacBook Pro / macOS 26.7.1"
+    },
+    {
+      "receiver": "mac",
+      "case": "stop",
+      "fixture": "vbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 0,
+      "fixture_sha256": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:37:20.927448+00:00",
+      "observations": [
+        {
+          "seconds": 7.25,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 8.344,
+          "command": "status"
+        },
+        {
+          "seconds": 8.359,
+          "line": "Status: phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 15.266,
+          "command": "stop"
+        },
+        {
+          "seconds": 15.297,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.297,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 15.344,
+          "line": "Summary: api_version=5 linkage=static start=ok phase=stopped state=paused end=sender_stop owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=6 bytes=268290 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "LEFT pulses play from zero and stop after about eight seconds without delayed restart"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 15.344,
+      "receiver_environment": "MacBook Pro / macOS 26.7.1"
+    },
+    {
+      "receiver": "tv",
+      "case": "natural",
+      "fixture": "cbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 8,
+      "fixture_sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:38:01.804105+00:00",
+      "observations": [
+        {
+          "seconds": 6.781,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=0.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 7.781,
+          "command": "status"
+        },
+        {
+          "seconds": 7.812,
+          "line": "Status: phase=active state=playing end=none owned=yes position=1.5 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 10.875,
+          "command": "pause"
+        },
+        {
+          "seconds": 10.922,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 10.922,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 13.781,
+          "command": "play"
+        },
+        {
+          "seconds": 13.828,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 13.828,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 13.875,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 16.859,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 16.937,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.781,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 20.828,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.875,
+          "command": "status"
+        },
+        {
+          "seconds": 24.891,
+          "line": "Status: phase=active state=playing end=none owned=yes position=11.4 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 26.875,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 26.937,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 29.781,
+          "command": "status"
+        },
+        {
+          "seconds": 29.797,
+          "line": "Status: phase=active state=playing end=none owned=yes position=60.2 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 33.312,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 33.312,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 33.312,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 33.562,
+          "line": "Summary: api_version=5 linkage=static start=ok phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=25 bytes=1537390 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "Audible tones start near eight seconds; pause/resume; seek 32 gives higher BOTH marker; seek eight gives RIGHT; seek 58 reaches natural end"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 33.562,
+      "receiver_environment": "Apple TV / tvOS 26.6"
+    },
+    {
+      "receiver": "tv",
+      "case": "stop",
+      "fixture": "cbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 0,
+      "fixture_sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:40:09.546700+00:00",
+      "observations": [
+        {
+          "seconds": 1.735,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=0.7 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 2.828,
+          "command": "status"
+        },
+        {
+          "seconds": 2.844,
+          "line": "Status: phase=active state=playing end=none owned=yes position=1.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 9.75,
+          "command": "stop"
+        },
+        {
+          "seconds": 9.844,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 9.844,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 10.219,
+          "line": "Summary: api_version=5 linkage=static start=ok phase=stopped state=paused end=sender_stop owned=yes position=9.2 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=25 bytes=1537390 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "LEFT pulses play from zero and stop after about eight seconds without delayed restart"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 10.219,
+      "receiver_environment": "Apple TV / tvOS 26.6"
+    },
+    {
+      "receiver": "tv",
+      "case": "natural",
+      "fixture": "vbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 8,
+      "fixture_sha256": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:42:35.696145+00:00",
+      "observations": [
+        {
+          "seconds": 1.828,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=0.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 2.921,
+          "command": "status"
+        },
+        {
+          "seconds": 2.937,
+          "line": "Status: phase=active state=playing end=none owned=yes position=2.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 5.906,
+          "command": "pause"
+        },
+        {
+          "seconds": 5.968,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 5.968,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.921,
+          "command": "play"
+        },
+        {
+          "seconds": 8.968,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.968,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.015,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.859,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 11.906,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.89,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 15.968,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.906,
+          "command": "status"
+        },
+        {
+          "seconds": 19.921,
+          "line": "Status: phase=active state=playing end=none owned=yes position=11.3 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 21.89,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 21.937,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.906,
+          "command": "status"
+        },
+        {
+          "seconds": 24.921,
+          "line": "Status: phase=active state=playing end=none owned=yes position=60.3 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 28.328,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.328,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.328,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.578,
+          "line": "Summary: api_version=5 linkage=static start=ok phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=9 bytes=491338 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "Audible tones start near eight seconds; pause/resume; seek 32 gives higher BOTH marker; seek eight gives RIGHT; seek 58 reaches natural end"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 28.593,
+      "receiver_environment": "Apple TV / tvOS 26.6"
+    },
+    {
+      "receiver": "tv",
+      "case": "stop",
+      "fixture": "vbr",
+      "content_type": "audio/mpeg",
+      "delivery": "progressive; no remux/transcoding/dummy video",
+      "runtime_source_commit": "7f8fb3097a1d47044d25ef08c204a5fd1bafb608",
+      "start_position_seconds": 0,
+      "fixture_sha256": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa",
+      "executable_sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+      "started_utc": "2026-10-19T01:43:22.121268+00:00",
+      "observations": [
+        {
+          "seconds": 1.688,
+          "line": "Start: ok phase=active state=playing end=none owned=yes position=0.7 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 2.782,
+          "command": "status"
+        },
+        {
+          "seconds": 2.797,
+          "line": "Status: phase=active state=playing end=none owned=yes position=1.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=0 authoring_flags=0"
+        },
+        {
+          "seconds": 9.704,
+          "command": "stop"
+        },
+        {
+          "seconds": 9.766,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 9.766,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 10.125,
+          "line": "Summary: api_version=5 linkage=static start=ok phase=stopped state=paused end=sender_stop owned=yes position=9.2 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=0 authoring_flags=0 reads=8 bytes=443178 failed_reads=0 releases=1"
+        }
+      ],
+      "observer": {
+        "source": "Written manual user confirmation",
+        "response": "Yes",
+        "confirmed_checks": "LEFT pulses play from zero and stop after about eight seconds without delayed restart"
+      },
+      "loaded_modules": [
+        {
+          "name": "airplay2-api-host.exe",
+          "sha256": "973804a9a2afda2fce46402bc399e4a78e105965d59353f4b78ab1190476281d",
+          "matches_build": true
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+          "matches_build": true
+        },
+        {
+          "name": "botan-3.dll",
+          "sha256": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+          "matches_build": true
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 10.125,
+      "receiver_environment": "Apple TV / tvOS 26.6"
+    }
+  ],
+  "source_instances": {
+    "total": 9,
+    "exactly_once_release": 9,
+    "failed_reads": 0,
+    "media_cleanup_complete": 9
+  },
+  "cancellation_note": "Pre-start controller cleaned=no is preserved; media_cleaned=1, zero media reads and exactly one release; user confirms prompt closure",
+  "initial_position_note": "Retain early Start/Status snapshots near zero alongside explicit user start/marker confirmations; no sample-exact initial-seek timing claim",
+  "engineering_decision": "Direct progressive audio/mpeg is feasible for tested stereo MPEG-1 CBR/VBR cases on these receivers. No demonstrated AAC fallback requirement; do not add a decoder/profile expansion just from the format name",
+  "next_gate": "Packaged UWP brokered-source MP3 CBR/VBR controls, natural end, separate Stop and Mac consent cancellation with actual AppContainer/module verification and source release",
+  "not_claimed": [
+    "Public/default MP3 admission",
+    "Screenbox MP3 routing or queues",
+    "Packaged MP3 playback",
+    "Low-rate mono receiver playback",
+    "Sample-exact gapless receiver playback",
+    "All MP3 inputs or receivers",
+    "New automatic audio-only AAC receiver evidence",
+    "Publication"
+  ],
+  "deferrals_preserved": [
+    "Audio-only speakers/HomePod/RAOP",
+    "Discrete converted surround",
+    "Chromecast",
+    "User-deferred remote Stop classification",
+    "Separate long-input/cache-quota work"
+  ]
+}

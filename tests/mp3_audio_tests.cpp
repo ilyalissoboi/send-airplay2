@@ -92,16 +92,16 @@ void literal_headers_and_refusals() {
                info.seek_points.front().byte_offset == 0,
            "literal raw CBR frame count, extent and unknown trim");
     struct HeaderMutation {
-        std::size_t first;
-        std::uint8_t second;
+        std::size_t offset;
+        std::uint8_t value;
     };
     for (const auto& mutation :
          {HeaderMutation{1, 0xfa}, {1, 0xf9}, {1, 0xeb}, {2, 0}, {2, 0xf0}, {2, 0x9c}, {3, 2}}) {
         auto bytes = stream();
-        bytes[mutation.first] = mutation.second;
+        bytes[mutation.offset] = mutation.value;
         refusal(std::move(bytes),
-                "unsupported header field offset " + std::to_string(mutation.first) + " value " +
-                    std::to_string(mutation.second),
+                "unsupported header field offset " + std::to_string(mutation.offset) + " value " +
+                    std::to_string(mutation.value),
                 RemuxFailure::unsupported);
     }
     auto truncated = stream();
@@ -237,7 +237,7 @@ void owned_fixtures(const std::filesystem::path& directory) {
     refusal(invalid_mono.bytes, "retained development encoder invalid mono CRC",
             RemuxFailure::malformed);
 }
-void sparse_scaling_and_frame_bound() {
+void sparse_scaling_and_resource_bounds() {
     std::atomic_bool stopped{false}, cancelled{false};
     MediaReadContext context{&stopped, &cancelled,
                              std::chrono::steady_clock::now() + std::chrono::seconds(20)};
@@ -315,7 +315,7 @@ int main(int argc, char** argv) {
         xing_counts_without_gapless();
         metadata_bounds_and_contexts();
         owned_fixtures(argv[1]);
-        sparse_scaling_and_frame_bound();
+        sparse_scaling_and_resource_bounds();
         std::cout << "MP3 framing, metadata, clock, locators, bounds and cancellation passed\n";
         return 0;
     } catch (const std::exception& error) {
