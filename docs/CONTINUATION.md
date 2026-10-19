@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-19 (Asia/Tokyo). PRs #12-#86 are merged. `main` contains
+Checkpoint: 2026-10-19 (Asia/Tokyo). PRs #12-#87 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,6 +23,18 @@ queue below; do not resume completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D103 MP3 input/direct-playback investigation in progress (2026-10-19).**
+Native #87 merged as `e6b0a4b`; all 17 checks passed at final head `13602e0` in
+[run 39182522426](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39182522426).
+The user authorizes MP3 work and confirms both receivers available with macOS
+26.7.1/tvOS 26.6 unchanged. A separate private MP3 framing/timeline inventory and
+offline tool cover bounded MPEG-1/2/2.5 CBR/VBR, metadata, sparse locators and
+checked gapless fields. Default/public probes, AAC/automatic routing, codec
+profile, packages and Screenbox are unchanged. Focused offline tests pass;
+full static/shared and native progressive audio/mpeg receiver gates are pending.
+Do not infer an AAC fallback requirement from format name or earlier AAC evidence.
+Read [the active scope and provenance](mp3-input-probe.md). Preserve all deferrals.
 
 **D102 standalone Ogg Opus/Vorbis private slice (2026-10-19).** Native #86
 is merged as `7d4ac4c`, with all 17 checks passed at final head `9ee6cc8` in
@@ -1111,17 +1123,19 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
 5. **D101 complete; native #86 merged as `7d4ac4c`.** All 17 checks pass at
    final head `9ee6cc8`. Its private standalone FLAC/WAVE input and tail/coverage
    gates are merged; no public routing, package or receiver claim is added.
-6. **D102 private Ogg Opus/Vorbis implemented; review/CI next.** Continue
-   codex/standalone-ogg-audio while its PR is open, inspecting actual head first.
-   Read standalone-ogg-audio.md and the dated evidence. The 64-MiB CRC scan,
-   single-stream granule rules, restored initial skip and decoded seek/end checks
-   remain private; public automatic routing, packages and Screenbox are unchanged.
-   Ask before merging. Do not repeat completed gates or start uncoordinated casts.
-7. **Following slices:** MP3 bounded input and direct playback on Mac/Apple TV
-   before deciding AAC fallback; edited MP4/Matroska audio-only admission;
-   automatic copy/conversion with explicit stereo permission and public integration;
-   native/packaged receiver gates, then Screenbox routing/queue checks. Larger or
-   chained/grouped Ogg input needs separate design/evidence. Keep gates separate.
+6. **D102 complete; #87 merged as e6b0a4b**, all 17 final-head checks passed
+   at 13602e0. Preserve its private bounded Ogg/offline evidence separately.
+7. **D103 active: MP3 private inventory and direct-playback probe.** Continue
+   codex/mp3-input-probe while its PR is open, inspecting actual head first. Read
+   mp3-input-probe.md. Focused native input checks pass; full native suites and
+   written native Mac/Apple TV observations remain pending. Receiver availability
+   and unchanged versions are confirmed. Do not add an MP3 decoder/fallback or
+   automatic eligibility before the direct-delivery decision. No publication.
+8. **Following slices:** packaged brokered-source MP3 gates and any justified
+   fallback work; edited MP4/Matroska audio-only admission; automatic delivery with
+   explicit stereo permission/public reporting, broader native/packaged receiver
+   gates, then Screenbox routing/queue checks. Larger/chained Ogg needs separate
+   design/evidence. Preserve completed gates and hardware/user deferrals.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1351,17 +1365,13 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 
 ## Suggested opening prompt for the next session
 
-> Continue from AGENTS.md, HANDOFF.md, design.md, receiver-validation.md and
-> CONTINUATION.md. Native #86 merged as 7d4ac4c with all 17 checks passed at
-> 9ee6cc8. D102 adds private single-stream Ogg Opus/Vorbis inventory, granule
-> duration/trim, near-start skip restoration and decoded seek/end checks. Read
-> standalone-ogg-audio.md and inspect actual open PR head/review/CI before writing.
-> Continue codex/standalone-ogg-audio while open; otherwise start fresh from main.
-> FFmpeg stays pinned 9.0.2 with unchanged source/license; port version 6 adds
-> only Ogg demuxing. The native probe scans at most 64 MiB and refuses chains/
-> groups; do not claim large-file scaling. Public/default/automatic routes,
-> packages and Screenbox are unchanged, with no new receiver observation. MP3
-> input/direct-playback/fallback is next, retaining its evidence-based decision
-> and explicit conversion permission. Do not repeat completed UI/hardware gates,
-> install apps, publish or cast without the relevant gate. Preserve hardware/user
-> deferrals, use written manual UI confirmation and ask before merging/publishing.
+> Continue from AGENTS.md and the four handoff/design/validation/continuation
+> documents. Native #87 merged as e6b0a4b, all 17 checks passed at 13602e0.
+> D103 implements private MP3 framing/timeline inventory and an offline probe;
+> inspect codex/mp3-input-probe actual PR/head before writing. Read
+> mp3-input-probe.md. Full native tests and progressive audio/mpeg hardware gates
+> are pending; user confirms both receivers/unchanged macOS 26.7.1/tvOS 26.6.
+> Default/public/AAC/automatic routes, codec profile, packages and Screenbox stay
+> unchanged. Decide fallback from direct evidence; do not presume MP3 needs AAC.
+> Preserve all hardware/user deferrals, use written manual confirmation for UI,
+> and ask before merging or publishing.

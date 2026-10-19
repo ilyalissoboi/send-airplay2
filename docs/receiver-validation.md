@@ -1,5 +1,17 @@
 # Receiver validation record
 
+**D103 MP3 input/direct-playback investigation in progress (2026-10-19).**
+Native #87 merged as `e6b0a4b`; all 17 checks passed at final head `13602e0` in
+[run 39182522426](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39182522426).
+The user authorizes MP3 work and confirms both receivers available with macOS
+26.7.1/tvOS 26.6 unchanged. A separate private MP3 framing/timeline inventory and
+offline tool cover bounded MPEG-1/2/2.5 CBR/VBR, metadata, sparse locators and
+checked gapless fields. Default/public probes, AAC/automatic routing, codec
+profile, packages and Screenbox are unchanged. Focused offline tests pass;
+full static/shared and native progressive audio/mpeg receiver gates are pending.
+Do not infer an AAC fallback requirement from format name or earlier AAC evidence.
+Read [the active scope and provenance](mp3-input-probe.md). Preserve all deferrals.
+
 **D102 standalone Ogg Opus/Vorbis private slice (2026-10-19).** Native #86
 is merged as `7d4ac4c`, with all 17 checks passed at final head `9ee6cc8` in
 [run 39178182511](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39178182511).
