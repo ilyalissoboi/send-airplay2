@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "standalone_audio.h"
+#include "ogg_audio.h"
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -351,7 +352,8 @@ MediaTrackInventory flac_inventory(HeaderReader& reader) {
 }
 } // namespace
 bool is_standalone_audio(SourceContainer container) noexcept {
-    return container == SourceContainer::wave || container == SourceContainer::flac;
+    return container == SourceContainer::wave || container == SourceContainer::flac ||
+           container == SourceContainer::ogg;
 }
 MediaTrackInventory probe_audio_only_tracks(const MediaSource& source,
                                             const MediaReadContext& context) {
@@ -365,6 +367,9 @@ MediaTrackInventory probe_audio_only_tracks(const MediaSource& source,
     }
     auto snapshot = source;
     snapshot.size = [size = reader.size] { return size; };
+    if (tag(signature, 0, "OggS")) {
+        return probe_ogg_audio_tracks(snapshot, context);
+    }
     return probe_media_tracks(snapshot, context);
 }
 } // namespace send_airplay2::detail

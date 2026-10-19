@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace send_airplay2::detail {
-enum class SourceContainer { mp4, matroska, wave, flac };
+enum class SourceContainer { mp4, matroska, wave, flac, ogg };
 enum class SourceTrackKind { video, audio, other };
 
 /// Container identity and metadata, before decoder/remux capability filtering.
@@ -22,10 +22,10 @@ struct SourceTrack {
     bool standard_timeline = true; ///< False for Matroska TrackTimestampScale/TrackOffset changes.
     bool default_track = false;    ///< Only Matroska defines the default-selection flag here.
     bool encoded = false;          ///< MP4 encrypted entry or Matroska ContentEncodings.
-    std::string codec;             ///< Original fourcc or Matroska CodecID; no support guarantee.
+    std::string codec; ///< Original fourcc/CodecID or standalone name; no support guarantee.
     std::string language;
     std::string name;    ///< Available container label, without inferred role or commentary status.
-    Bytes configuration; ///< First complete MP4 sample entry, or Matroska CodecPrivate.
+    Bytes configuration; ///< MP4 sample entry, Matroska CodecPrivate or Ogg identification packet.
     std::uint32_t sample_description_count = 0; ///< MP4 stsd count; zero when absent or Matroska.
     std::uint32_t timescale = 0; ///< MP4 mdhd or standalone sample clock; zero for Matroska.
     std::vector<Mp4Edit> edits;  ///< MP4 media offsets retained in their original timebases.

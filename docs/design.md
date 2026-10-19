@@ -1,5 +1,21 @@
 # Design and implementation sequence
 
+**D102 standalone Ogg Opus/Vorbis private slice (2026-10-19).** Native #86
+is merged as `7d4ac4c`, with all 17 checks passed at final head `9ee6cc8` in
+[run 39178182511](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39178182511).
+The user authorizes the next input slice. A bounded native Ogg inventory checks
+page CRC, lacing, one stream, sequence/continuation and EOS; granules derive the
+audible clock, with Opus pre-skip and final trim. The private audio-only AAC owner
+reuses decoded tail/coverage checks and restores initial skip state on near-start
+seeks. The 64-MiB full scan is an initial subset, not large-file scaling proof;
+chained/grouped inputs refuse. FFmpeg 9.0.2 port version 6 adds only Ogg demuxing,
+with unchanged source/license and existing Opus/Vorbis decoders. Owned offline
+checks cover PCM seek/origin, exact AAC trim, malformed inputs and cleanup.
+Read [the subset and validation record](standalone-ogg-audio.md). Public/default
+inventory and automatic routing, packages, Screenbox and receiver evidence stay
+separate. MP3 input/direct playback/fallback is next; all hardware/user deferrals
+and publication boundaries remain unchanged.
+
 **D101 standalone FLAC/WAVE private input slice (2026-10-19).** Native #85
 is merged as `23a030f`, with all 17 final-head checks passed at `d0392a2` in
 [run 39130131090](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39130131090).

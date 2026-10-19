@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "hls_test_support.h"
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -12,6 +14,59 @@ namespace {
 using namespace send_airplay2;
 using namespace send_airplay2::detail;
 using sap2_test::expect;
+
+void check_ogg_windows(const std::filesystem::path& path, std::uint32_t channels,
+                       std::uint32_t expected_frames) {
+    const auto scenario = path.filename().string();
+    sap2_test::Context context;
+    sap2_test::Source source(path);
+    auto decoder = AudioDecoderSource::open(source.callbacks(), context.value, 1, false, true);
+    expect(decoder->audio_only_duration_samples(context.value) == expected_frames,
+           scenario + ": native granule-derived duration");
+    // A linear decode shorter than the ten-second window budget is an independent
+    // history reference for seeks. A separate owner starts cold near the end.
+    const auto reference_frames = std::min(expected_frames, 9U * 48000);
+    const auto reference = decoder->read_window(0, reference_frames, context.value);
+    expect(reference.channels == channels &&
+               reference.samples.size() == reference_frames * channels,
+           scenario + ": start/pre-skip reference coverage");
+    if (channels == 2) {
+        // Original authored tones, independent of demuxer timestamps and skip
+        // data. Lossy encoding permits small error but not an overlap-sized
+        // shift of the audible zero point or swapped stereo channels.
+        constexpr double pi = 3.14159265358979323846;
+        double tone_error = 0;
+        for (std::size_t frame = 4800; frame < 48000; ++frame) {
+            for (std::size_t channel = 0; channel < 2; ++channel) {
+                const auto frequency = channel == 0 ? 173 : 227;
+                const auto expected = 0.125 * std::sin(2 * pi * frequency * frame / 48000);
+                const auto difference = reference.samples[frame * 2 + channel] - expected;
+                tone_error += difference * difference;
+            }
+        }
+        expect(tone_error / (43200 * 2) < 0.0001,
+               scenario + ": independent tone origin/channel mismatch");
+    }
+    auto cold = AudioDecoderSource::open(source.callbacks(), context.value, 1, false, true);
+    const auto tail = cold->read_window(expected_frames - 1000, 1001, context.value);
+    expect(tail.eof && tail.samples.size() == 1000 * channels,
+           scenario + ": literal cold-end granule trim");
+    for (const auto first :
+         {reference_frames - 8192, 0U, 48000U, 48001U, 96001U, reference_frames - 8192}) {
+        const auto window = cold->read_window(first, 8192, context.value);
+        expect(window.channels == channels && window.source_track_id == 1 &&
+                   window.samples.size() == 8192 * channels,
+               scenario + ": seek coverage at " + std::to_string(first));
+        double squared_error = 0;
+        for (std::size_t index = 0; index < window.samples.size(); ++index) {
+            const auto error = window.samples[index] - reference.samples[first * channels + index];
+            expect(std::isfinite(error), scenario + ": finite seek PCM");
+            squared_error += error * error;
+        }
+        expect(squared_error / window.samples.size() < 0.000001,
+               scenario + ": seek/reopen PCM mismatch at " + std::to_string(first));
+    }
+}
 
 void check_rendition(const std::filesystem::path& path, std::size_t segment_count,
                      std::size_t expected_frames) {
@@ -104,6 +159,36 @@ void expect_refusal(const std::filesystem::path& path, AudioDecodeFailure reason
     expect(store.clears == 1 && store.seals == 0, scenario + ": cleanup on startup refusal");
 }
 
+void check_ogg_refusals(const std::filesystem::path& directory) {
+    for (const auto* name : {"chained.opus", "missing-eos.opus", "bad-crc.opus", "bad-end.opus",
+                             "bad-vorbis-end.ogg"}) {
+        sap2_test::Context context;
+        sap2_test::Source source(directory / name);
+        sap2_test::Store store;
+        bool refused = false;
+        try {
+            (void)StereoAacHls::open_audio_only(source.callbacks(), store.callbacks(), 8ULL << 20,
+                                                context.value);
+        } catch (const RemuxException&) {
+            refused = true; // Native framing/clock refusal before decoder admission.
+        } catch (const AudioDecodeException&) {
+            refused = true; // Decoder/tail/coverage refusal for inconsistent encoded content.
+        }
+        expect(refused && store.clears == 1 && store.seals == 0,
+               std::string(name) + ": failed startup owns cleanup and exposes no fragments");
+    }
+    expect_refusal(directory / "opus48.opus", AudioDecodeFailure::invalid_selection, 99);
+    expect_refusal(directory / "opus48.opus", AudioDecodeFailure::too_large, {}, 1);
+    expect_refusal(directory / "opus48.opus", AudioDecodeFailure::stopped, {}, 8ULL << 20, true);
+    sap2_test::Context context;
+    sap2_test::Source source(directory / "opus48.opus");
+    try {
+        (void)AudioDecoderSource::open(source.callbacks(), context.value);
+        throw std::logic_error("default decoder unexpectedly admits Ogg");
+    } catch (const RemuxException&) {
+    }
+}
+
 void check_selection_and_failure(const std::filesystem::path& directory,
                                  const std::filesystem::path& video_directory) {
     expect_refusal(directory / "aac.mp4", AudioDecodeFailure::unsupported);
@@ -150,7 +235,7 @@ void check_selection_and_failure(const std::filesystem::path& directory,
 
 int main(int argc, char** argv) {
     try {
-        expect(argc == 4, "audio-only and existing expanded fixture directories required");
+        expect(argc == 5, "MP4, video, standalone and Ogg fixture directories required");
         const std::filesystem::path directory(argv[1]);
         check_rendition(directory / "flac-stereo.mp4", 3, 624144);
         check_rendition(directory / "flac-44100.mp4", 3, 624144);
@@ -175,6 +260,16 @@ int main(int argc, char** argv) {
         }
         expect_refusal(standalone / "too-long.flac", AudioDecodeFailure::malformed);
         expect_refusal(standalone / "too-short.flac", AudioDecodeFailure::malformed);
+        const std::filesystem::path ogg(argv[4]);
+        for (const auto* name : {"opus48.opus", "vorbis48.ogg", "vorbis441.ogg"}) {
+            check_ogg_windows(ogg / name, 2, 624144);
+            check_rendition(ogg / name, 3, 624144);
+        }
+        for (const auto* name : {"opus-mono.opus", "opus51.opus", "vorbis51.ogg"}) {
+            check_ogg_windows(ogg / name, std::string(name) == "opus-mono.opus" ? 1 : 6, 144144);
+            check_rendition(ogg / name, 1, 144144);
+        }
+        check_ogg_refusals(ogg);
         check_selection_and_failure(directory, argv[2]);
         std::cout << "Audio-only admission, cancellation and terminal failure checks passed\n";
         return 0;

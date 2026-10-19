@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-19 (Asia/Tokyo). PRs #12-#85 are merged. `main` contains
+Checkpoint: 2026-10-19 (Asia/Tokyo). PRs #12-#86 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,6 +23,22 @@ queue below; do not resume completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D102 standalone Ogg Opus/Vorbis private slice (2026-10-19).** Native #86
+is merged as `7d4ac4c`, with all 17 checks passed at final head `9ee6cc8` in
+[run 39178182511](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39178182511).
+The user authorizes the next input slice. A bounded native Ogg inventory checks
+page CRC, lacing, one stream, sequence/continuation and EOS; granules derive the
+audible clock, with Opus pre-skip and final trim. The private audio-only AAC owner
+reuses decoded tail/coverage checks and restores initial skip state on near-start
+seeks. The 64-MiB full scan is an initial subset, not large-file scaling proof;
+chained/grouped inputs refuse. FFmpeg 9.0.2 port version 6 adds only Ogg demuxing,
+with unchanged source/license and existing Opus/Vorbis decoders. Owned offline
+checks cover PCM seek/origin, exact AAC trim, malformed inputs and cleanup.
+Read [the subset and validation record](standalone-ogg-audio.md). Public/default
+inventory and automatic routing, packages, Screenbox and receiver evidence stay
+separate. MP3 input/direct playback/fallback is next; all hardware/user deferrals
+and publication boundaries remain unchanged.
 
 **D101 standalone FLAC/WAVE private input slice (2026-10-19).** Native #85
 is merged as `23a030f`, with all 17 final-head checks passed at `d0392a2` in
@@ -1092,17 +1108,20 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    final head `d0392a2`. Its private unedited MP4/MOV FLAC/PCM foundation and
    user-requested MP3 work-plan addition are merged; prior offline evidence stays
    scoped to that code/profile, without new receiver claims.
-5. **D101 private standalone FLAC/WAVE implemented; review/CI next.** Continue
-   codex/standalone-flac-wave while its PR is open, inspecting actual head first.
-   Read standalone-flac-wave.md and its evidence. Native metadata, RF64 bounds,
-   decoded end/coverage and the one-demuxer codec-profile expansion are private;
-   public automatic routing, packages and Screenbox are unchanged. Ask before
-   merging. Do not repeat D99 or start uncoordinated casts.
-6. **Following slices:** Ogg Opus/Vorbis input/timeline rules; MP3 bounded input
-   and direct playback on Mac/Apple TV before deciding AAC fallback; edited MP4/
-   Matroska audio-only admission; automatic copy/conversion with explicit stereo
-   permission and public integration; native/packaged receiver gates, then
-   Screenbox routing/queue checks. Keep these gates separate.
+5. **D101 complete; native #86 merged as `7d4ac4c`.** All 17 checks pass at
+   final head `9ee6cc8`. Its private standalone FLAC/WAVE input and tail/coverage
+   gates are merged; no public routing, package or receiver claim is added.
+6. **D102 private Ogg Opus/Vorbis implemented; review/CI next.** Continue
+   codex/standalone-ogg-audio while its PR is open, inspecting actual head first.
+   Read standalone-ogg-audio.md and the dated evidence. The 64-MiB CRC scan,
+   single-stream granule rules, restored initial skip and decoded seek/end checks
+   remain private; public automatic routing, packages and Screenbox are unchanged.
+   Ask before merging. Do not repeat completed gates or start uncoordinated casts.
+7. **Following slices:** MP3 bounded input and direct playback on Mac/Apple TV
+   before deciding AAC fallback; edited MP4/Matroska audio-only admission;
+   automatic copy/conversion with explicit stereo permission and public integration;
+   native/packaged receiver gates, then Screenbox routing/queue checks. Larger or
+   chained/grouped Ogg input needs separate design/evidence. Keep gates separate.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1333,17 +1352,16 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md, HANDOFF.md, design.md, receiver-validation.md and
-> CONTINUATION.md. Native #85 merged as 23a030f with all 17 final-head checks
-> passed at d0392a2. D101 adds private native FLAC/RIFF/RF64 WAVE input,
-> metadata-derived duration/layout and decoded tail/seek-coverage checks, reusing
-> audio-only AAC HLS. Read standalone-flac-wave.md and inspect the actual open PR
-> head/review/CI before writing. Continue codex/standalone-flac-wave while open;
-> otherwise start fresh from main. FFmpeg remains pinned 9.0.2 with the same
-> source/license and four-library network-disabled profile; port version 5 adds
-> only the FLAC demuxer. Public default/automatic routes, packages and Screenbox
-> are unchanged; no new receiver or sustained long-file gate is claimed. Ogg
-> Opus/Vorbis and MP3 input/direct-playback/fallback remain planned. Do not repeat
-> D99, install apps, publish or start hardware checks without the relevant gate.
-> Preserve speaker/discrete-surround/Chromecast and remote-Stop deferrals. Use
-> written manual confirmation, not Computer Use, for visual UI gates. Ask before
-> merging or publishing.
+> CONTINUATION.md. Native #86 merged as 7d4ac4c with all 17 checks passed at
+> 9ee6cc8. D102 adds private single-stream Ogg Opus/Vorbis inventory, granule
+> duration/trim, near-start skip restoration and decoded seek/end checks. Read
+> standalone-ogg-audio.md and inspect actual open PR head/review/CI before writing.
+> Continue codex/standalone-ogg-audio while open; otherwise start fresh from main.
+> FFmpeg stays pinned 9.0.2 with unchanged source/license; port version 6 adds
+> only Ogg demuxing. The native probe scans at most 64 MiB and refuses chains/
+> groups; do not claim large-file scaling. Public/default/automatic routes,
+> packages and Screenbox are unchanged, with no new receiver observation. MP3
+> input/direct-playback/fallback is next, retaining its evidence-based decision
+> and explicit conversion permission. Do not repeat completed UI/hardware gates,
+> install apps, publish or cast without the relevant gate. Preserve hardware/user
+> deferrals, use written manual UI confirmation and ask before merging/publishing.

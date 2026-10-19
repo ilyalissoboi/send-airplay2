@@ -61,7 +61,7 @@ void refused_coordinates(const std::filesystem::path& fixture) {
                                    source.requested == 268435456
                              : error.reason() == AudioDecodeFailure::unsupported &&
                                    std::string(error.what()) ==
-                                       "Matroska video coordinate does not cover audio preroll";
+                                       "audio seek does not cover required preroll";
         }
         expect(refused, absent ? "missing cues retain literal 256-MiB bound"
                                : "late video coordinate cannot synthesize missing audio");

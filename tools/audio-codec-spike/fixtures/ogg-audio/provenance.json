@@ -1,0 +1,153 @@
+{
+  "license": "Apache-2.0 original repository-generated tones and metadata",
+  "generator": "generate_ogg_audio_fixtures.py",
+  "development_tool": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+  "files": [
+    {
+      "file": "opus48.opus",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 624144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+      },
+      "output_channels": 2,
+      "expected_48khz_frames": 624144,
+      "bytes": 163704,
+      "sha256": "edfb5815053a47930d2f06c4df55856410f26cbc0b4b59d19395081f3922c91d"
+    },
+    {
+      "file": "opus-mono.opus",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+      },
+      "output_channels": 1,
+      "expected_48khz_frames": 144144,
+      "bytes": 20208,
+      "sha256": "df4621a69f4dcf431393bf10ec48f8823e6b023c8854ed8a711ef955855320d2"
+    },
+    {
+      "file": "opus51.opus",
+      "original_tones": {
+        "channels": 6,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          310,
+          470,
+          630,
+          80,
+          790,
+          950
+        ],
+        "sha256": "6851721e804cbf46ba8244658757d7fbc96272a1da491675a9e70528c9335085"
+      },
+      "output_channels": 6,
+      "expected_48khz_frames": 144144,
+      "bytes": 170124,
+      "sha256": "8dda4cc1ff49c2fe0c67664347cf0e3dea7575a8806d1bea96afad8d328d0a6c"
+    },
+    {
+      "file": "vorbis48.ogg",
+      "original_tones": {
+        "channels": 2,
+        "rate": 48000,
+        "frames": 624144,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+      },
+      "output_channels": 2,
+      "expected_48khz_frames": 624144,
+      "bytes": 44846,
+      "sha256": "327babaf8106cecb7180e2f185566442b1d842fad4116e480bb5c499037d0841"
+    },
+    {
+      "file": "vorbis441.ogg",
+      "original_tones": {
+        "channels": 2,
+        "rate": 44100,
+        "frames": 573432,
+        "frequencies_hz": [
+          173,
+          227
+        ],
+        "sha256": "24ffec906b231477c8480d206ca51923b04cb4df900728edeb774d6d9336985d"
+      },
+      "output_channels": 2,
+      "expected_48khz_frames": 624144,
+      "bytes": 41412,
+      "sha256": "d82804c63b0a4f81375d4a78005ec2d71545fa84ac1d07375c5d5a409e392744"
+    },
+    {
+      "file": "vorbis51.ogg",
+      "original_tones": {
+        "channels": 6,
+        "rate": 48000,
+        "frames": 144144,
+        "frequencies_hz": [
+          310,
+          470,
+          630,
+          80,
+          790,
+          950
+        ],
+        "sha256": "6851721e804cbf46ba8244658757d7fbc96272a1da491675a9e70528c9335085"
+      },
+      "output_channels": 6,
+      "expected_48khz_frames": 144144,
+      "bytes": 43974,
+      "sha256": "9130f3f184f3b36f6f3d99c8d414e8c2bf90105401cf47eb83b831120086657a"
+    },
+    {
+      "file": "chained.opus",
+      "derived_from": "opus48.opus",
+      "purpose": "refusal",
+      "bytes": 327408,
+      "sha256": "b85d871ca687407cc8b608381fb3efeccbf823157014f6432b07d9366586c8ea"
+    },
+    {
+      "file": "missing-eos.opus",
+      "derived_from": "opus48.opus",
+      "purpose": "refusal",
+      "bytes": 163219,
+      "sha256": "0bbebd967197dbaeb372a99972fab64c39da05db95dceb4d82f2fee3ba50b226"
+    },
+    {
+      "file": "bad-crc.opus",
+      "derived_from": "opus48.opus",
+      "purpose": "refusal",
+      "bytes": 163704,
+      "sha256": "43ab7d75f46044de75b5003370ad6b26adeb5ff1798d5cf4686bdcdeae37c4f0"
+    },
+    {
+      "file": "bad-end.opus",
+      "derived_from": "opus48.opus",
+      "purpose": "refusal",
+      "bytes": 163704,
+      "sha256": "5f7091e2e9bb649db627ff1aeeeb2977d59168721be57e1f8957e6556ecf8916"
+    },
+    {
+      "file": "bad-vorbis-end.ogg",
+      "derived_from": "vorbis48.ogg",
+      "purpose": "decoded end/coverage refusal",
+      "declared_frame_delta": 4096,
+      "bytes": 44846,
+      "sha256": "cfe334242f2f7dc53da4b903a82cb389d95029e467fe44bfd96f453438e10e9f"
+    }
+  ]
+}

@@ -177,9 +177,9 @@ jobs:
       - name: Build and test desktop probe
         if: matrix.kind == 'desktop'
         run: |
-          cmake --build build-codec --config Release --target sap2_standalone_audio_tests sap2_audio_only_hls_tests sap2_codec_probe_tests sap2_automatic_audio_tests sap2_audio_decoder_tests sap2_expanded_decoder_tests sap2_expanded_hls_tests sap2_coarse_clock_tests sap2_pcm_index_tests sap2_compressed_index_tests sap2_compact_index_tests sap2_stereo_aac_hls_tests sap2_stereo_aac_readiness_tests sap2_origin_hls_tests sap2_dts_lacing_tests sap2_dts_seek_tests
+          cmake --build build-codec --config Release --target sap2_standalone_audio_tests sap2_ogg_audio_tests sap2_audio_only_hls_tests sap2_codec_probe_tests sap2_automatic_audio_tests sap2_audio_decoder_tests sap2_expanded_decoder_tests sap2_expanded_hls_tests sap2_coarse_clock_tests sap2_pcm_index_tests sap2_compressed_index_tests sap2_compact_index_tests sap2_stereo_aac_hls_tests sap2_stereo_aac_readiness_tests sap2_origin_hls_tests sap2_dts_lacing_tests sap2_dts_seek_tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          ctest --test-dir build-codec -C Release -R '^(standalone_audio_input|audio_only_hls|automatic_audio_policy|audio_(codec_probe|decoder_source)|expanded_audio_(decoder|hls)|coarse_matroska_clock|matroska_(pcm|compressed|compact)_index|matroska_presentation_origin|matroska_dts_(lacing|bounded_seek)|stereo_aac_(hls|readiness))$' --output-on-failure
+          ctest --test-dir build-codec -C Release -R '^(standalone_audio_input|ogg_audio_input|audio_only_hls|automatic_audio_policy|audio_(codec_probe|decoder_source)|expanded_audio_(decoder|hls)|coarse_matroska_clock|matroska_(pcm|compressed|compact)_index|matroska_presentation_origin|matroska_dts_(lacing|bounded_seek)|stereo_aac_(hls|readiness))$' --output-on-failure
       - name: Build and inspect AppContainer probe
         if: matrix.kind == 'uwp'
         run: |

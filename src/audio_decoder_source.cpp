@@ -444,6 +444,11 @@ AVCodecID packed_pcm_codec(const SourceTrack& track) {
 }
 AVCodecID source_codec(const SourceTrack& track, SourceContainer container) {
     const auto& name = track.codec;
+    if (container == SourceContainer::ogg) {
+        require(name == "OPUS" || name == "VORBIS", AudioDecodeFailure::unsupported,
+                "Ogg codec outside private subset");
+        return name == "OPUS" ? AV_CODEC_ID_OPUS : AV_CODEC_ID_VORBIS;
+    }
     if (container == SourceContainer::flac && name == "FLAC") {
         return AV_CODEC_ID_FLAC;
     }
@@ -772,6 +777,7 @@ struct AudioDecoderSource::Impl {
         const auto* demuxer_name = container == SourceContainer::mp4    ? "mov"
                                    : container == SourceContainer::wave ? "wav"
                                    : container == SourceContainer::flac ? "flac"
+                                   : container == SourceContainer::ogg  ? "ogg"
                                                                         : "matroska";
         const auto* demuxer = av_find_input_format(demuxer_name);
         require(demuxer != nullptr, AudioDecodeFailure::unsupported, "audio demuxer unavailable");
@@ -821,10 +827,11 @@ struct AudioDecoderSource::Impl {
             const auto bits = parameters->bits_per_raw_sample
                                   ? parameters->bits_per_raw_sample
                                   : av_get_bits_per_sample(parameters->codec_id);
-            require(bits == static_cast<int>(selected.audio_bit_depth),
+            require(container == SourceContainer::ogg ||
+                        bits == static_cast<int>(selected.audio_bit_depth),
                     AudioDecodeFailure::unsupported, "standalone audio bit depth mismatch");
         }
-        // MOV/MKV already publish edited/delay-adjusted PTS and packet skip data.
+        // Demuxers publish edited/delay-adjusted PTS and packet skip data.
         // Decoder preinit must not independently skip codecpar padding again.
         codec->initial_padding = 0;
         codec->err_recognition = AV_EF_EXPLODE;
@@ -1092,7 +1099,8 @@ struct AudioDecoderSource::Impl {
             avcodec_flush_buffers(codec.get());
             return {};
         }
-        if (cadence.rebuild_from_start ||
+        if ((container == SourceContainer::ogg && begin <= static_cast<std::uint64_t>(preroll)) ||
+            cadence.rebuild_from_start ||
             (cadence.reopen_at_start && begin <= static_cast<std::uint64_t>(preroll))) {
             // A timestamp-zero seek can land after a negative CodecDelay packet;
             // the demuxer also clears consumed initial skip state on seeks.
@@ -1312,7 +1320,7 @@ private:
 
     void finish_window() {
         require(!latest_initial_sample_ || resampler_, AudioDecodeFailure::unsupported,
-                "Matroska video coordinate does not cover audio preroll");
+                "audio seek does not cover required preroll");
         require(output_.channels != 0, AudioDecodeFailure::malformed,
                 "audio source has no decoded frames");
         const auto frames = covered_ <= static_cast<std::int64_t>(output_.first_sample)
@@ -1468,8 +1476,7 @@ private:
             // or shortening decoder history. Allow only the reported clock tick.
             require(!latest_initial_sample_ ||
                         timestamp <= *latest_initial_sample_ + output_.timestamp_precision_samples,
-                    AudioDecodeFailure::unsupported,
-                    "Matroska video coordinate does not cover audio preroll");
+                    AudioDecodeFailure::unsupported, "audio seek does not cover required preroll");
             configure(frame, timestamp, position);
         }
         require(frame.sample_rate == input_rate_ && frame.format == input_format_ &&
