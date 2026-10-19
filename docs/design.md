@@ -1,5 +1,20 @@
 # Design and implementation sequence
 
+**D103 private MP3 inventory/native direct-playback gate complete (2026-10-19).**
+Native #87 merged as `e6b0a4b`; all 17 checks passed at final head `13602e0` in
+[run 39182522426](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39182522426).
+The user authorizes MP3 work and confirms both receivers available with macOS
+26.7.1/tvOS 26.6 unchanged. A separate private MP3 framing/timeline inventory and
+offline tool cover bounded MPEG-1/2/2.5 CBR/VBR, metadata, sparse locators and
+checked gapless fields. Default/public probes, AAC/automatic routing, codec
+profile, packages and Screenbox are unchanged. Static/shared CTests pass 43/44;
+UWP native compilation passes. The user confirms native CBR/VBR controls, natural
+end and separate Stop on both receivers, plus Mac consent cancellation. All nine
+source instances release once; actual loaded executable/crypto hashes match.
+Direct progressive audio/mpeg works in this tested subset; no AAC fallback is
+justified by this gate. Packaged brokered-source MP3 verification is next.
+Read [the scope, evidence and decision](mp3-input-probe.md). Preserve all deferrals.
+
 **D102 standalone Ogg Opus/Vorbis private slice (2026-10-19).** Native #86
 is merged as `7d4ac4c`, with all 17 checks passed at final head `9ee6cc8` in
 [run 39178182511](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39178182511).

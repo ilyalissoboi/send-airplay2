@@ -1,0 +1,170 @@
+{
+  "license": "Apache-2.0 original repository-generated pulse/channel tones and metadata",
+  "generator": "tools/mp3-probe/generate_fixtures.py",
+  "development_encoder_decoder": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+  "tone_intervals": [
+    {
+      "start_seconds": 0,
+      "end_seconds": 8,
+      "left_hz": 440,
+      "right_hz": 0
+    },
+    {
+      "start_seconds": 8,
+      "end_seconds": 16,
+      "left_hz": 0,
+      "right_hz": 660
+    },
+    {
+      "start_seconds": 16,
+      "end_seconds": 24,
+      "left_hz": 880,
+      "right_hz": 880
+    },
+    {
+      "start_seconds": 24,
+      "end_seconds": 32,
+      "left_hz": 440,
+      "right_hz": 0
+    },
+    {
+      "start_seconds": 32,
+      "end_seconds": 40,
+      "left_hz": 1100,
+      "right_hz": 1100
+    },
+    {
+      "start_seconds": 40,
+      "end_seconds": 48,
+      "left_hz": 0,
+      "right_hz": 660
+    },
+    {
+      "start_seconds": 48,
+      "end_seconds": 56,
+      "left_hz": 440,
+      "right_hz": 0
+    },
+    {
+      "start_seconds": 56,
+      "end_seconds": 64,
+      "left_hz": 880,
+      "right_hz": 880
+    }
+  ],
+  "pulse": "0.75 seconds tone, 0.25 seconds silence, 10-ms fades; mono cases downmix original stereo",
+  "files": [
+    {
+      "file": "cbr48.mp3",
+      "source_rate": 48000,
+      "source_frames": 3072000,
+      "output_channels": 2,
+      "independent_decoded_frames": 3072000,
+      "source_wave_sha256": "2a615c09d1822d3d47061cb025e8026ee84039b697bd3af1656b70492fcca5ca",
+      "encoder_options": [
+        "-b:a",
+        "192k"
+      ],
+      "info_crc_repair": null,
+      "bytes": 1537388,
+      "sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b"
+    },
+    {
+      "file": "vbr441.mp3",
+      "source_rate": 44100,
+      "source_frames": 2822400,
+      "output_channels": 2,
+      "independent_decoded_frames": 2822400,
+      "source_wave_sha256": "e60f476deeb10ae0e76f11b7b3ecbb07a02ced3dc3ce8f5f588800a802e7eead",
+      "encoder_options": [
+        "-q:a",
+        "3"
+      ],
+      "info_crc_repair": null,
+      "bytes": 268288,
+      "sha256": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa"
+    },
+    {
+      "file": "invalid-mono-crc.mp3",
+      "purpose": "Original development encoder CRC refusal",
+      "derived_from": "mono24.mp3",
+      "crc_metadata": {
+        "original_sha256": "45812e8411c21943027c367e3dca400de0aa142a5d33d44b386930d0c14d0275",
+        "original_crc16": 19914,
+        "corrected_crc16": 44124,
+        "covered_frame_bytes": 167,
+        "changed_bytes": "Only the two-byte Info-tag checksum; encoded audio and trim unchanged"
+      },
+      "bytes": 78572,
+      "sha256": "45812e8411c21943027c367e3dca400de0aa142a5d33d44b386930d0c14d0275"
+    },
+    {
+      "file": "mono24.mp3",
+      "source_rate": 24000,
+      "source_frames": 312000,
+      "output_channels": 1,
+      "independent_decoded_frames": 312000,
+      "source_wave_sha256": "47d33eeb9313d45e664188e4544a6a279868ae568cb5990042837bee656afe76",
+      "encoder_options": [
+        "-b:a",
+        "48k"
+      ],
+      "info_crc_repair": {
+        "original_sha256": "45812e8411c21943027c367e3dca400de0aa142a5d33d44b386930d0c14d0275",
+        "original_crc16": 19914,
+        "corrected_crc16": 44124,
+        "covered_frame_bytes": 167,
+        "changed_bytes": "Only the two-byte Info-tag checksum; encoded audio and trim unchanged"
+      },
+      "bytes": 78572,
+      "sha256": "5a5e316982781b0a3ab79026d31ae0ee4fd724b2d7ff224adfb98cf544457638"
+    },
+    {
+      "file": "mono12.mp3",
+      "source_rate": 12000,
+      "source_frames": 36000,
+      "output_channels": 1,
+      "independent_decoded_frames": 36000,
+      "source_wave_sha256": "61e5b5df62c56294d35697fbee9b4740814fe1519c43b2aaf837c5d20a4400fa",
+      "encoder_options": [
+        "-b:a",
+        "24k"
+      ],
+      "info_crc_repair": {
+        "original_sha256": "cddf58573dbdf20ac38aa4d4692ec84c6e44c76d8252cb4efb66d2bd032f0be8",
+        "original_crc16": 6380,
+        "corrected_crc16": 62290,
+        "covered_frame_bytes": 167,
+        "changed_bytes": "Only the two-byte Info-tag checksum; encoded audio and trim unchanged"
+      },
+      "bytes": 9596,
+      "sha256": "6b8d8ccaea783b8bc1d48f9f7ec69c76d3a4369973d2a808d8a7afd680b2f43d"
+    },
+    {
+      "file": "bare48.mp3",
+      "source_rate": 48000,
+      "source_frames": 144000,
+      "output_channels": 2,
+      "independent_decoded_frames": 145152,
+      "source_wave_sha256": "c2b671e12cf15874cf22239878e72304dd7efe4634ff3536215fb0494d559203",
+      "encoder_options": [
+        "-b:a",
+        "128k",
+        "-write_xing",
+        "0",
+        "-id3v2_version",
+        "0"
+      ],
+      "info_crc_repair": null,
+      "bytes": 48384,
+      "sha256": "5362b20bc3f5d9bdcf5e5204e4d067bae8e9078a145cdfd534d50d102bfaec2f"
+    },
+    {
+      "file": "id3-bare48.mp3",
+      "derived_from": "bare48.mp3",
+      "metadata": "ID3v2.3 4-byte opaque body and ID3v1",
+      "bytes": 48526,
+      "sha256": "5505e94df2aa5c4b5cedb534f4078b1170b27b238e4ed6188a4b982d0e8692b9"
+    }
+  ]
+}

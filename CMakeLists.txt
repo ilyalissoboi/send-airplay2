@@ -57,6 +57,8 @@ set(sap2_playback_api_sources src/cast_controller.cpp src/prepared_stereo_media.
 # The C discovery interface (D54) wraps discover() for non-C++ hosts.
 set(sap2_receivers_api_sources src/discovery_api.cpp src/receiver_list.cpp)
 add_library(send_airplay2 src/http_range.cpp src/media_server.cpp src/discovery.cpp src/discovery_core.cpp src/discovery_transport.cpp ${sap2_pairing_sources} ${sap2_verification_sources} ${sap2_setup_sources} ${sap2_receiver_sources} ${sap2_session_sources} ${sap2_playback_api_sources} ${sap2_remux_sources} ${sap2_receivers_api_sources})
+target_sources(send_airplay2 PRIVATE src/mp3_audio.cpp)
+
 target_link_libraries(send_airplay2 PRIVATE OpenSSL::Crypto ${sap2_botan_target} Threads::Threads ${CMAKE_DL_LIBS} Boost::beast Boost::asio ${sap2_credential_libraries})
 target_compile_features(send_airplay2 PUBLIC cxx_std_17)
 target_include_directories(send_airplay2 PUBLIC
@@ -171,6 +173,11 @@ if(WIN32)
   target_link_libraries(airplay2-cli PRIVATE ws2_32 advapi32)
 endif()
 sap2_warnings(airplay2-cli)
+# Private offline framing/timeline tool; does not expand playback admission.
+add_executable(airplay2-mp3-probe tools/mp3_probe_main.cpp src/mp3_audio.cpp src/file_media_source.cpp)
+target_include_directories(airplay2-mp3-probe PRIVATE src)
+target_link_libraries(airplay2-mp3-probe PRIVATE send_airplay2)
+sap2_warnings(airplay2-mp3-probe)
 # Development host for the public playback interface: library calls go through
 # send_airplay2/playback.h only; cli_input.cpp is a host-side stdin helper.
 add_executable(airplay2-api-host tools/airplay2_api_host_main.cpp tools/airplay2_api_host.cpp src/host_fragment_store.cpp src/cli_input.cpp)
@@ -232,6 +239,13 @@ if(BUILD_TESTING)
   sap2_warnings(hls_directory_tests)
   add_test(NAME hls_directory_tests COMMAND hls_directory_tests)
   set_tests_properties(hls_directory_tests PROPERTIES TIMEOUT 60)
+  add_executable(mp3_audio_tests tests/mp3_audio_tests.cpp src/mp3_audio.cpp)
+  target_include_directories(mp3_audio_tests PRIVATE src)
+  target_link_libraries(mp3_audio_tests PRIVATE send_airplay2)
+  target_compile_features(mp3_audio_tests PRIVATE cxx_std_17)
+  sap2_warnings(mp3_audio_tests)
+  add_test(NAME mp3_audio_tests COMMAND mp3_audio_tests "${CMAKE_CURRENT_SOURCE_DIR}/tools/mp3-probe/fixtures")
+  set_tests_properties(mp3_audio_tests PROPERTIES TIMEOUT 30)
   add_executable(ogg_audio_tests tests/ogg_audio_tests.cpp src/ogg_audio.cpp src/standalone_audio.cpp ${sap2_remux_sources})
   target_include_directories(ogg_audio_tests PRIVATE src)
   target_link_libraries(ogg_audio_tests PRIVATE send_airplay2)

@@ -52,8 +52,11 @@ only offline with unedited FLAC/PCM MP4/MOV input. The next private
 with bounded native input and decoded-end checks. The private
 [Ogg Opus/Vorbis slice](docs/standalone-ogg-audio.md) adds a bounded single-stream
 CRC/granule probe and offline seek/trim checks. Public automatic conversion
-still requires video. MP3 input/direct-playback validation remains future work;
-MP3 AAC fallback depends on those results.
+still requires video. The [private MP3 inventory and native probe](docs/mp3-input-probe.md)
+cover bounded MPEG layer-III framing/timeline metadata and user-confirmed direct
+progressive CBR/VBR playback on both recorded receivers. No AAC fallback is
+justified by those cases. Packaged MP3, public format admission and Screenbox
+routing remain separate next gates.
 
 The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.294`** is
 [published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294).
