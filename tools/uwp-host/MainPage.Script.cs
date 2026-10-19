@@ -19,7 +19,7 @@ namespace SendAirPlay2.UwpHost
     /// <item><c>discover-model MODEL</c>: one scan; requires one receiver of that model.</item>
     /// <item><c>profile NAME</c>: selects a PasswordVault profile (script-token syntax).</item>
     /// <item><c>fixtures</c>: manually grants the folder containing the nine original receiver controls.</item>
-    /// <item><c>cast vault|builtin LABEL [remux|progressive|automatic|stereo] [start=SECONDS] [preserve] [type=audio/mp4|video/mp4]</c>:
+    /// <item><c>cast vault|builtin LABEL [remux|progressive|automatic|stereo] [start=SECONDS] [preserve] [type=audio/mp4|audio/mpeg|video/mp4]</c>:
     /// casts the remembered file; remux is the default. An explicit type requires progressive delivery.</item>
     /// <item><c>wait SECONDS</c>, <c>pause</c>, <c>play</c>, <c>seek SECONDS</c>, <c>status</c>, <c>stop</c>.</item>
     /// <item><c>wait-state STATE SECONDS</c>: until the receiver reports that PlaybackState.</item>
@@ -212,6 +212,10 @@ namespace SendAirPlay2.UwpHost
                 else if (option == "type=audio/mp4")
                 {
                     contentType = "audio/mp4";
+                }
+                else if (option == "type=audio/mpeg")
+                {
+                    contentType = "audio/mpeg";
                 }
                 else if (option == "type=video/mp4")
                 {

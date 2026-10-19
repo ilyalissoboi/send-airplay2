@@ -254,6 +254,7 @@ namespace SendAirPlay2.UwpHost
             picker.FileTypeFilter.Add(".mp4");
             picker.FileTypeFilter.Add(".m4v");
             picker.FileTypeFilter.Add(".m4a");
+            picker.FileTypeFilter.Add(".mp3");
             picker.FileTypeFilter.Add(".mov");
             picker.FileTypeFilter.Add(".mkv");
             var file = await picker.PickSingleFileAsync();
@@ -299,9 +300,14 @@ namespace SendAirPlay2.UwpHost
             {
                 startSeconds = -1; // Rejected by Cast.Create as invalid options.
             }
-            var contentType = delivery == CastDelivery.Progressive &&
-                              file.FileType.Equals(".m4a", StringComparison.OrdinalIgnoreCase)
-                                  ? "audio/mp4" : null;
+            var contentType = delivery == CastDelivery.Progressive
+                ? file.FileType.ToLowerInvariant() switch
+                {
+                    ".m4a" => "audio/mp4",
+                    ".mp3" => "audio/mpeg",
+                    _ => null
+                }
+                : null;
             return StartCast(profile, store, storeName, file, delivery, startSeconds, contentType: contentType);
         }
 

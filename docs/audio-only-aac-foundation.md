@@ -101,6 +101,13 @@ See [the machine-readable checkpoint](validation/audio-only-aac-foundation-windo
 
 ### MP3 work track added by the user (2026-10-18)
 
+**Current checkpoint (D104, 2026-10-19):** private MP3 framing/timeline inventory
+and native/packaged progressive CBR/VBR gates pass on the recorded Mac/Apple TV.
+The direct-delivery decision is complete for those stereo fixtures: no AAC
+fallback is demonstrated. Public/default admission and Screenbox routing remain
+separate; see [the scoped packaged record](mp3-uwp-gate.md). The D100-era planning
+text below is historical where this checkpoint supersedes its pending status.
+
 MP3 is now explicitly in the work plan. This adds planning scope only: D100's
 private factory remains FLAC/PCM-only, with no MP3 implementation, backend
 profile change or receiver observation.
