@@ -1,0 +1,329 @@
+{
+  "decision": "D101",
+  "date": "2026-10-19",
+  "timezone": "Asia/Tokyo",
+  "result": "PRIVATE_STANDALONE_FLAC_WAVE_OFFLINE_PASSED_NO_RECEIVER_GATE",
+  "base": {
+    "pr": 85,
+    "merge_commit": "23a030fe2b39e01daaabe5f2836502c30789814b",
+    "final_head": "d0392a201799a0a12a78afe895e1e33ef3809af1",
+    "passed_ci_checks": 17,
+    "ci_run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39130131090"
+  },
+  "branch": "codex/standalone-flac-wave",
+  "source_hashes": {
+    "src/standalone_audio.h": "9aabdd1428866e45c9996b08d061164b114395945755716229d64d859f2f2e15",
+    "src/standalone_audio.cpp": "b3fae7ab28f8c08a4a15d1766993e05f375efd3aa9289c0ee07ef90bda54702a",
+    "src/audio_decoder_source.h": "baef33c1f0616bf0a5b4f6e6ac7b7c1dfe6bb307700bcd7b8b98747f91fd3124",
+    "src/audio_decoder_source.cpp": "dfad2eda3826ecacb6fd4e0f9dfb7e5c881705837cc794a1a9425696dc40ff57",
+    "src/audio_delivery_policy.cpp": "b32e5f988027fd9254aa001dc02d226ccbe6b8b9e6db5acd731ec1651f3933cc",
+    "src/media_track_inventory.h": "ec54af85f55f221c1621ec1affb2f53e0d9f0799c3a1336c28d83a5b97eae7b1",
+    "src/stereo_aac_hls.h": "4e78b2f915fc4968395097bd19926a4952d5ceb07445d63d8e73b8698dfa910a",
+    "src/stereo_aac_hls.cpp": "bf22b6968695c6e2cb8cafdadc33868ecac9bb1966f0e8a4e18e2ede33e1c2f3",
+    "tests/standalone_audio_tests.cpp": "e48c78037d2e3c378853e4efcf33edeac8ee50916aa6ffb4069004b5fc2bdcd4",
+    "tools/audio-codec-spike/audio_only_hls_tests.cpp": "9b765c10bd0a59bb7b95ace401e81ed5db37e1e7be7fe26219dd6dbfc1c6b1a2",
+    "tools/audio-codec-spike/generate_standalone_audio_fixtures.py": "bdad91f6b83050f3e16888ce1e545ea0884071d61a9018c8a865b47acb6ac232",
+    "vcpkg-overlays/ports/ffmpeg/portfile.cmake": "5b23ea3b02bd79c5347ca5743bbf12a652f186a0a78b3522c877f3cc9b181d19",
+    "vcpkg-overlays/ports/ffmpeg/vcpkg.json": "d4d79199def6f7a9a36f23b42a2642e09583ab800a523ea8a779bc10b1b5f7ed"
+  },
+  "input_subset": {
+    "flac": "Native fLaC, known positive STREAMINFO samples, 16/24-bit, 8..192 kHz, supported native speaker map; bounded metadata and seek point shape",
+    "wave": "Little-endian RIFF/RF64, signed PCM16/24/32 or IEEE float32/64, mono/stereo or explicit supported WAVEFORMATEXTENSIBLE layout",
+    "source_identity": 1,
+    "duration": "Native source frames/clock rounded once to 48 kHz, positive and below seven days; bounded decoded tail must hit EOF exactly",
+    "existing_mp4_mov": "Retained private unedited FLAC/PCM path; public/default admission unchanged"
+  },
+  "probe_bounds": {
+    "maximum_source_bytes": 1099511627776,
+    "maximum_headers": 4096,
+    "maximum_flac_metadata_bytes": 16777216,
+    "maximum_seek_points": 65536,
+    "maximum_requested_header_bytes": 134217728,
+    "maximum_callbacks": 1048576,
+    "maximum_callback_capacity": 65536,
+    "scope": "Standalone header probe; MP4/MKV fallback adds four signature bytes before the legacy probe budget"
+  },
+  "tests": {
+    "native_static": {
+      "passed": 41,
+      "failed": 0,
+      "seconds": 45.91
+    },
+    "native_shared": {
+      "passed": 42,
+      "failed": 0,
+      "seconds": 50.23
+    },
+    "desktop_codec": {
+      "passed": 16,
+      "failed": 0,
+      "seconds": 71.66
+    },
+    "final_input_checks_after_protocol_naming_and_rf64_sentinel": {
+      "static_passed": 1,
+      "shared_passed": 1,
+      "codec_passed": 2,
+      "codec_seconds": 5.16
+    },
+    "private_uwp": "Build and five x64 AppContainer/app-CRT binary inspections passed; no new packaged runtime gate",
+    "clang_format": "TOUCHED_FILES_FORMATTED_DRY_RUN_WERROR_PASSED",
+    "git_diff_check": "PASSED"
+  },
+  "sparse_rf64": {
+    "advertised_audio_bytes": 5368709120,
+    "expected_source_frames": 1342177280,
+    "authored_header_bytes": 92,
+    "fact_count": "0xffffffff sentinel resolves to ds64 sampleCount",
+    "reads": "Header-only callbacks, each at most seven bytes in the test; no payload allocation/scan",
+    "scope": "Native parser scaling only, not long-file conversion or quota proof"
+  },
+  "codec_profile": {
+    "dependency": "FFmpeg",
+    "version": "9.0.2",
+    "overlay_port_version": 5,
+    "source_tag": "n9.0.2",
+    "license": "LGPL version 2.1 or later",
+    "change": "Only flac demuxer added to existing mov,matroska,wav; four-library/network-disabled/GPL-disabled/nonfree-disabled profile retained",
+    "new_decoder_encoder_patch_or_linked_dependency": false,
+    "published": false,
+    "desktop_dll_hashes": {
+      "avformat-63.dll": "50425759bccee068330918c9850dafbe74387c9640db3a897b0b79cddd78e457",
+      "avcodec-63.dll": "5e9d578d4efe3decef801c77601f2a054340256f28d930df202473849a9b97e4",
+      "avutil-61.dll": "9b87c59c63d5621c9de22095b47404acc8859f91beef73294c9dfd8b1fc2b1b5",
+      "swresample-7.dll": "0cc8a75bb40483e514918934f68ddc91ab83383539e94dc41263d2ed226e75fa"
+    },
+    "uwp_dll_hashes": {
+      "avformat-63.dll": "a23ef3f50df514824ebe20a60a5116905d7896634a82f71e8769e30d71d5af64",
+      "avcodec-63.dll": "30bab6b813e6482141869236f35d755d103e0d246b21d4df5e477d60a6ad908b",
+      "avutil-61.dll": "9f982824c5ca4e0adfca8fbb298e2dbc8c947c47aeb8d261d05247f794ec464a",
+      "swresample-7.dll": "3b26932403509bf88ece276d0fa7f9f3c9d3019dcea34126a58c216e2cc9f159"
+    }
+  },
+  "owned_fixture_provenance": {
+    "license": "Apache-2.0 original repository-generated tones and metadata",
+    "generator": "generate_standalone_audio_fixtures.py",
+    "development_tool": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+    "files": [
+      {
+        "file": "flac48.flac",
+        "original_tones": {
+          "channels": 2,
+          "rate": 48000,
+          "frames": 624144,
+          "frequencies_hz": [
+            173,
+            227
+          ],
+          "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+        },
+        "output_channels": 2,
+        "bytes": 340280,
+        "sha256": "d081a923f23d4d41a45e365fdf9f669e50295bd899dc9bc1335733aba6ebe172"
+      },
+      {
+        "file": "flac441.flac",
+        "original_tones": {
+          "channels": 2,
+          "rate": 44100,
+          "frames": 573432,
+          "frequencies_hz": [
+            173,
+            227
+          ],
+          "sha256": "24ffec906b231477c8480d206ca51923b04cb4df900728edeb774d6d9336985d"
+        },
+        "output_channels": 2,
+        "bytes": 311926,
+        "sha256": "be175f4e5cd1fa895109bc75f59fbf8e18193d85f63789abb0e73bf63c864f0c"
+      },
+      {
+        "file": "flac51.flac",
+        "original_tones": {
+          "channels": 6,
+          "rate": 48000,
+          "frames": 144144,
+          "frequencies_hz": [
+            310,
+            470,
+            630,
+            80,
+            790,
+            950
+          ],
+          "sha256": "6851721e804cbf46ba8244658757d7fbc96272a1da491675a9e70528c9335085"
+        },
+        "output_channels": 6,
+        "bytes": 241085,
+        "sha256": "b05bc23c1f95693e1eb472a4fe1f5a8b011d7a0d640a18f1027a03917c7040f8"
+      },
+      {
+        "file": "pcm16.wav",
+        "original_tones": {
+          "channels": 2,
+          "rate": 48000,
+          "frames": 624144,
+          "frequencies_hz": [
+            173,
+            227
+          ],
+          "sha256": "6a0b8e55bb7e328e3928800cfecc566cb25d3eedff00c9d33b61783fba5fa552"
+        },
+        "output_channels": 2,
+        "bytes": 2496654,
+        "sha256": "ec57e9002a12781255f4ac5953f105184d18d56dc7ad27158f5407122827787d"
+      },
+      {
+        "file": "pcm24-51.wav",
+        "original_tones": {
+          "channels": 6,
+          "rate": 48000,
+          "frames": 144144,
+          "frequencies_hz": [
+            310,
+            470,
+            630,
+            80,
+            790,
+            950
+          ],
+          "sha256": "6851721e804cbf46ba8244658757d7fbc96272a1da491675a9e70528c9335085"
+        },
+        "output_channels": 6,
+        "bytes": 2594694,
+        "sha256": "6b8a1634b8b1edb5bfac62d21dd363477964bca590ba2a536c301035c4cc455d"
+      },
+      {
+        "file": "pcm32.wav",
+        "original_tones": {
+          "channels": 2,
+          "rate": 48000,
+          "frames": 144144,
+          "frequencies_hz": [
+            173,
+            227
+          ],
+          "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+        },
+        "output_channels": 2,
+        "bytes": 1153254,
+        "sha256": "a8b0b52fd53751ebe585717aa9b2e44b293c4e402fc5606696b1d68481a73ddd"
+      },
+      {
+        "file": "float32.wav",
+        "original_tones": {
+          "channels": 2,
+          "rate": 48000,
+          "frames": 144144,
+          "frequencies_hz": [
+            173,
+            227
+          ],
+          "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+        },
+        "output_channels": 2,
+        "bytes": 1153266,
+        "sha256": "5318650281a7544a0f94100475e1969b95dd8e9bf5705070e53712c657bf7f17"
+      },
+      {
+        "file": "float64.wav",
+        "original_tones": {
+          "channels": 2,
+          "rate": 48000,
+          "frames": 144144,
+          "frequencies_hz": [
+            173,
+            227
+          ],
+          "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+        },
+        "output_channels": 2,
+        "bytes": 2306418,
+        "sha256": "ff0adb89a34c6314b501dbb8d76116658ae55f87f87a03b2c83f78c1c0734a3d"
+      },
+      {
+        "file": "mono441.wav",
+        "original_tones": {
+          "channels": 2,
+          "rate": 44100,
+          "frames": 132432,
+          "frequencies_hz": [
+            173,
+            227
+          ],
+          "sha256": "52490554d400ac83feb37951db303f598f8c5898cdb32762a45a82b25bc5c3bb"
+        },
+        "output_channels": 1,
+        "bytes": 264942,
+        "sha256": "b5b4288e7763345cc1d11171764a8b116b071dec2e49d7a33e12970f8ed4b816"
+      },
+      {
+        "file": "rf64.wav",
+        "original_tones": {
+          "channels": 2,
+          "rate": 48000,
+          "frames": 144144,
+          "frequencies_hz": [
+            173,
+            227
+          ],
+          "sha256": "d557f533eec73e8d95e7a1afe0d4416ea8fe6003f77afe1ed0d870baa269f1dc"
+        },
+        "output_channels": 2,
+        "bytes": 576690,
+        "sha256": "1ed98338178f56b3d5b6522978a31b97269010453750e510eccbc317b8d23941"
+      },
+      {
+        "file": "seektable.flac",
+        "derived_from": "flac48.flac",
+        "seek_points": 1,
+        "bytes": 340302,
+        "sha256": "0806f787a603713a1cc1a34d6d12715f20fab4e9d48d62ed285cd08902b5a8e6"
+      },
+      {
+        "file": "too-long.flac",
+        "derived_from": "flac48.flac",
+        "declared_frame_delta": 1024,
+        "bytes": 340280,
+        "sha256": "3bcd34f8e19e61a86cb202f133ab5d40362b30c3a9c3e9d5b9d249a161b32128"
+      },
+      {
+        "file": "too-short.flac",
+        "derived_from": "flac48.flac",
+        "declared_frame_delta": -1024,
+        "bytes": 340280,
+        "sha256": "d204edc059922b9cab8a09185327cc845425f00277617c93f419c9f157b00eab"
+      },
+      {
+        "file": "oddchunk.wav",
+        "derived_from": "rf64.wav",
+        "odd_unknown_chunk_bytes": 3,
+        "bytes": 576666,
+        "sha256": "75d4bbccf7bb0dd42dfad9e6eccbc92c7935ac2527e8759d26a15c2768b0a760"
+      }
+    ]
+  },
+  "observations": [
+    "Independent MOV/AAC output decoding and literal stereo frame counts for FLAC 48/44.1 kHz, FLAC 5.1, WAVE PCM16/24/32, float32/64, mono 44.1 kHz, RF64 and odd chunk padding",
+    "Cold final fragment, backward reads, repeat byte identity and exact-once cache cleanup retained",
+    "Declared FLAC total frames plus/minus 1024 refuse at bounded decoded tail/EOF check",
+    "Native malformed sizes, codec packing, GUID, layout, seek coordinates, chunk count, short reads and cancellation checks pass",
+    "Existing public/default decoder inventory remains MP4/MKV-only; automatic audio plan explicitly excludes standalone containers"
+  ],
+  "public_api_automatic_route_or_screenbox_changes": false,
+  "receiver_observations": [],
+  "app_installed": false,
+  "package_or_release_published": false,
+  "limits": [
+    "No public automatic audio-only integration or new receiver/UWP-runtime/Screenbox validation",
+    "FLAC pictures/ID3 prefix/unknown duration/unsupported speaker positions outside subset; no whole-file MD5 verification",
+    "Compressed WAVE/PCM8/reduced valid bits/RIFX/W64/multiple data/unknown RF64 counts/extra RF64 size tables outside subset",
+    "No sustained long-file conversion or cache-quota gate; existing quota unchanged"
+  ],
+  "next": [
+    "Ogg Opus/Vorbis inventory/timeline/seek/trim rules",
+    "MP3 input/direct playback on Mac/Apple TV before an evidence-based AAC fallback decision",
+    "Edited MP4/Matroska audio-only admission",
+    "Automatic policy/public integration with explicit stereo permission",
+    "Native and brokered UWP receiver gates, then Screenbox integration"
+  ]
+}

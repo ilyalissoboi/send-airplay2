@@ -61,6 +61,8 @@ struct DecodedAudioWindow {
  * per window, channels 1..8. Resampling phase periods above 8192 input samples
  * are refused. Both cancellation pointers in MediaReadContext must be valid.
  * A failed window invalidates the object; discard it and any tentative output.
+ * Standalone FLAC/WAVE requires allow_standalone_audio=true and native header
+ * validation; the default source probe remains MP4/Matroska-only.
  * Known native layouts and the documented AAC/Dolby/DTS-core/FLAC/Opus/Vorbis/
  * PCM/TrueHD source matrix only. Layout/rate/format changes,
  * discontinuities, protected/unknown inputs and complex edits are refused.
@@ -113,15 +115,17 @@ public:
     [[nodiscard]] bool requires_start_rebuild() const noexcept;
     [[nodiscard]] static std::unique_ptr<AudioDecoderSource>
     open(const MediaSource& source, const MediaReadContext& context,
-         std::optional<std::uint64_t> explicit_track_id = {},
-         bool canonical_matroska_clock = false);
-    /** Selected unedited progressive MP4/MOV audio duration on the 48-kHz clock.
+         std::optional<std::uint64_t> explicit_track_id = {}, bool canonical_matroska_clock = false,
+         bool allow_standalone_audio = false);
+    /** Selected audio-only duration on the 48-kHz clock. Standalone FLAC/WAVE
+     * uses its native probe metadata; MP4/MOV uses the unedited packet index.
      * Reads the native packet index under the caller's operation budgets; no PCM
      * decoding or FFmpeg duration estimate. Requires zero-based contiguous samples,
-     * no edit list, positive duration <=7 days. Matroska and edited inputs refuse.
+     * no edit list, positive duration <=7 days. Standalone duration is <7 days.
+     * Matroska and edited inputs refuse; FLAC end/coverage needs decoding checks.
      * Serialized like read_window; callbacks end on return and exceptions propagate.
      */
-    [[nodiscard]] std::uint64_t unedited_mp4_duration_samples(const MediaReadContext& context);
+    [[nodiscard]] std::uint64_t audio_only_duration_samples(const MediaReadContext& context);
     ~AudioDecoderSource();
     AudioDecoderSource(const AudioDecoderSource&) = delete;
     AudioDecoderSource& operator=(const AudioDecoderSource&) = delete;

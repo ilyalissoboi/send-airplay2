@@ -150,11 +150,31 @@ void check_selection_and_failure(const std::filesystem::path& directory,
 
 int main(int argc, char** argv) {
     try {
-        expect(argc == 3, "audio-only and existing expanded fixture directories required");
+        expect(argc == 4, "audio-only and existing expanded fixture directories required");
         const std::filesystem::path directory(argv[1]);
         check_rendition(directory / "flac-stereo.mp4", 3, 624144);
         check_rendition(directory / "flac-44100.mp4", 3, 624144);
         check_rendition(directory / "pcm-51.mov", 1, 144144);
+        const std::filesystem::path standalone(argv[3]);
+        for (const auto* name : {"flac48.flac", "flac441.flac", "pcm16.wav", "seektable.flac"}) {
+            check_rendition(standalone / name, 3, 624144);
+        }
+        for (const auto* name : {"flac51.flac", "pcm24-51.wav", "pcm32.wav", "float32.wav",
+                                 "float64.wav", "mono441.wav", "rf64.wav", "oddchunk.wav"}) {
+            check_rendition(standalone / name, 1, 144144);
+        }
+        {
+            sap2_test::Context legacy_context;
+            sap2_test::Source standalone_source(standalone / "pcm16.wav");
+            try {
+                (void)AudioDecoderSource::open(standalone_source.callbacks(), legacy_context.value);
+                throw std::runtime_error(
+                    "default decoder probe unexpectedly admitted standalone WAVE");
+            } catch (const RemuxException&) { /* Opt-in is required by the private owner. */
+            }
+        }
+        expect_refusal(standalone / "too-long.flac", AudioDecodeFailure::malformed);
+        expect_refusal(standalone / "too-short.flac", AudioDecodeFailure::malformed);
         check_selection_and_failure(directory, argv[2]);
         std::cout << "Audio-only admission, cancellation and terminal failure checks passed\n";
         return 0;

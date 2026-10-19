@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-18 (Asia/Tokyo). PRs #12-#84 are merged. `main` contains
+Checkpoint: 2026-10-19 (Asia/Tokyo). PRs #12-#85 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,6 +23,23 @@ queue below; do not resume completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D101 standalone FLAC/WAVE private input slice (2026-10-19).** Native #85
+is merged as `23a030f`, with all 17 final-head checks passed at `d0392a2` in
+[run 39130131090](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39130131090).
+The user authorizes the next input slice. A private content probe admits bounded
+native FLAC and RIFF/RF64 WAVE, supplies source identity/sample count/layout,
+and drives the existing audio-only AAC owner. Tail/EOF and seek-coverage checks
+refuse inconsistent duration or truncation. The pinned FFmpeg 9.0.2 overlay adds
+only FLAC demuxing (port version 5); WAV was already enabled, and source/license
+provenance is recorded. Existing public/default video probes, automatic policy,
+packages and Screenbox do not gain standalone admission. Owned offline tests
+cover decoded output, native malformed-input bounds and sparse five-GiB RF64;
+no new receiver gate is claimed. Static/shared CTests pass 41/42 and codec
+CTests 16; final focused checks and UWP compilation/binary inspection pass.
+Read [the subset and next gates](standalone-flac-wave.md).
+Ogg Opus/Vorbis and the user-requested MP3 input/direct-playback/fallback work
+remain planned. No release or hardware/user deferral changes.
 
 **D100 private audio-only AAC foundation (2026-10-18).** After native #84
 merged as `b9af011` (all 17 checks passed at `64c3595` in
@@ -1071,18 +1088,21 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    merged as `b9af011` with all 17 checks passed at `64c3595`. Preserve original
    1.0.0.13/aff57b6f evidence separately; no full matrix repeat or further focused
    manual check is pending. Read screenbox-audio-video-dimensions.md.
-4. **D100 private audio-only foundation implemented; review/CI next.** The
-   authorized slice adds a private FLAC/PCM-in-unedited-MP4/MOV AAC HLS path,
-   independent of video. Read audio-only-aac-foundation.md and inspect the actual
-   open PR head. Continue its codex/audio-only-aac-foundation branch while open;
-   ask before merging. Static/shared CTests pass 40/41, codec CTests 15, and the
-   private UWP library compiles. No new receiver observation or public routing.
-5. **Following slices:** validated input timelines/container support (including
-   native FLAC and WAV, then Ogg Opus/Vorbis, plus the MP3 input/direct-playback
-   work track and evidence-based AAC fallback decision); automatic copy/conversion policy
-   and public integration with explicit stereo permission; native/packaged
-   receiver gates, then Screenbox routing/queue checks. Existing decoder coverage
-   inside MP4/MKV does not prove standalone support. Keep these gates separate.
+4. **D100 complete; native #85 merged as `23a030f`.** All 17 checks pass at
+   final head `d0392a2`. Its private unedited MP4/MOV FLAC/PCM foundation and
+   user-requested MP3 work-plan addition are merged; prior offline evidence stays
+   scoped to that code/profile, without new receiver claims.
+5. **D101 private standalone FLAC/WAVE implemented; review/CI next.** Continue
+   codex/standalone-flac-wave while its PR is open, inspecting actual head first.
+   Read standalone-flac-wave.md and its evidence. Native metadata, RF64 bounds,
+   decoded end/coverage and the one-demuxer codec-profile expansion are private;
+   public automatic routing, packages and Screenbox are unchanged. Ask before
+   merging. Do not repeat D99 or start uncoordinated casts.
+6. **Following slices:** Ogg Opus/Vorbis input/timeline rules; MP3 bounded input
+   and direct playback on Mac/Apple TV before deciding AAC fallback; edited MP4/
+   Matroska audio-only admission; automatic copy/conversion with explicit stereo
+   permission and public integration; native/packaged receiver gates, then
+   Screenbox routing/queue checks. Keep these gates separate.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1313,21 +1333,17 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md, HANDOFF.md, design.md, receiver-validation.md and
-> CONTINUATION.md. Native #84 merged as b9af011 with all 17 final-head checks
-> passed at 64c3595. D99 and its focused Mac dimension checks are complete; do
-> not repeat them. The user authorized D100, the private audio-only AAC foundation.
-> Read audio-only-aac-foundation.md and inspect the actual open PR head/review/CI
-> before writing. Continue codex/audio-only-aac-foundation while its PR is open;
-> otherwise use a fresh branch from main. The new private factory admits only
-> covered FLAC/PCM in unedited progressive MP4/MOV with no video tracks, derives
-> duration from the native audio packet index and reuses lazy AAC/cache/Stop.
-> Public automatic routing/API/packages, pinned dependencies and Screenbox are
-> unchanged. Static/shared CTests pass 40/41, codec CTests 15 and private UWP
-> compilation passes; these are not new receiver observations. Standalone
-> FLAC/Ogg/WAV, edited/MKA timelines and automatic policy/public integration
-> remain ordered follow-ups. MP3 input support and Mac/Apple TV direct-playback
-> validation are now explicitly in the user-requested plan; decide AAC fallback
-> only from those results. No MP3 implementation or interoperability is claimed.
-> No new app install, release or hardware gate starts here. Preserve speaker/discrete-surround/Chromecast and remote-Stop deferrals.
-> Use written manual confirmation, not Computer Use, for any future visual UI
-> gate. Ask before merging or publishing.
+> CONTINUATION.md. Native #85 merged as 23a030f with all 17 final-head checks
+> passed at d0392a2. D101 adds private native FLAC/RIFF/RF64 WAVE input,
+> metadata-derived duration/layout and decoded tail/seek-coverage checks, reusing
+> audio-only AAC HLS. Read standalone-flac-wave.md and inspect the actual open PR
+> head/review/CI before writing. Continue codex/standalone-flac-wave while open;
+> otherwise start fresh from main. FFmpeg remains pinned 9.0.2 with the same
+> source/license and four-library network-disabled profile; port version 5 adds
+> only the FLAC demuxer. Public default/automatic routes, packages and Screenbox
+> are unchanged; no new receiver or sustained long-file gate is claimed. Ogg
+> Opus/Vorbis and MP3 input/direct-playback/fallback remain planned. Do not repeat
+> D99, install apps, publish or start hardware checks without the relevant gate.
+> Preserve speaker/discrete-surround/Chromecast and remote-Stop deferrals. Use
+> written manual confirmation, not Computer Use, for visual UI gates. Ask before
+> merging or publishing.
