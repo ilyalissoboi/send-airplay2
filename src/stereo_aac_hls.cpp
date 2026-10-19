@@ -510,6 +510,7 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open_impl(MediaSource source, AacFra
     const auto& selected = inventory.tracks.at(selection.track_index);
     if (audio_only) {
         require((inventory.container == SourceContainer::mp4 ||
+                 inventory.container == SourceContainer::matroska ||
                  is_standalone_audio(inventory.container)) &&
                     std::none_of(inventory.tracks.begin(), inventory.tracks.end(),
                                  [](const SourceTrack& track) {
@@ -529,17 +530,22 @@ std::unique_ptr<StereoAacHls> StereoAacHls::open_impl(MediaSource source, AacFra
     RemuxedHls presentation;
     if (audio_only) {
         const auto duration = impl->decoder->audio_only_duration_samples(context);
-        impl->require_complete_audio = is_standalone_audio(inventory.container);
+        impl->require_complete_audio = is_standalone_audio(inventory.container) ||
+                                       inventory.container == SourceContainer::matroska ||
+                                       !selected.edits.empty();
         if (impl->require_complete_audio) {
+            require(duration < maximum_movie_samples, AudioDecodeFailure::too_large,
+                    "audio-only end probe needs one sample within the seven-day window bound");
             // Validate the declared tail with one extra output frame. This bounded
-            // window must hit EOF exactly, not clip hidden audio or pad truncation.
+            // window must cover the audible end exactly. Edited MP4 intentionally
+            // reports presentation EOF while excluding later encoded source media.
             const auto tail_samples = std::min<std::uint64_t>(duration, stereo_aac_frame_samples);
             const auto tail = impl->decoder->read_window(
                 duration - tail_samples, static_cast<std::uint32_t>(tail_samples + 1), context);
             require(tail.channels != 0 && tail.samples.size() / tail.channels == tail_samples &&
                         tail.eof,
                     AudioDecodeFailure::malformed,
-                    "standalone audio declared end disagrees with decoded tail");
+                    "audio-only declared end disagrees with decoded tail");
         }
         impl->boundaries = plan_stereo_aac_boundaries({0, duration});
         presentation.segment_count = impl->boundaries.size() - 1;

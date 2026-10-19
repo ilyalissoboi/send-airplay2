@@ -135,7 +135,8 @@ elseif(BUILD_TESTING)
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/audio-only"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/expanded-decoder"
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/standalone-audio"
-    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/ogg-audio")
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/ogg-audio"
+    "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/audio-timelines")
   set_tests_properties(audio_only_hls PROPERTIES TIMEOUT 60)
   add_executable(sap2_expanded_hls_tests expanded_hls_tests.cpp)
   target_link_libraries(sap2_expanded_hls_tests PRIVATE sap2_audio_decoder ${FFMPEG_LIBRARIES})

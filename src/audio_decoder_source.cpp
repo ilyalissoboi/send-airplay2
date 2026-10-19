@@ -115,7 +115,7 @@ struct Reader {
     std::uint64_t requested_bytes = 0;
     std::size_t calls = 0;
     const MediaReadContext* context = nullptr;
-    std::exception_ptr error;
+    std::exception_ptr error{};
     static constexpr std::size_t header_cache_bytes = 1024;
     static constexpr std::size_t large_packet_header_page_bytes = 256;
     struct HeaderPage {
@@ -750,6 +750,10 @@ struct AudioDecoderSource::Impl {
     std::size_t anchor_begin = 0;
     std::uint64_t indexed_packet_count = 0;
     std::int64_t indexed_end_position = 0;
+    std::optional<std::int64_t> indexed_audible_end;
+    bool indexed_audible_contiguous = true;
+    std::uint32_t movie_timescale = 0;
+    std::optional<std::uint64_t> audio_only_mp4_end;
     std::int64_t index_delay = 0;
     std::int64_t index_precision = 0;
     std::int64_t index_presentation_limit = 0;
@@ -944,6 +948,11 @@ struct AudioDecoderSource::Impl {
                 }
                 audio_anchors.push_back({cursor, position, indexed_packet_count, previous});
             }
+            const auto audible_begin = position + analysis.packet.skip;
+            const auto audible_end = position + analysis.packet.samples - analysis.packet.discard;
+            indexed_audible_contiguous &=
+                first ? audible_begin == 0 : audible_begin == *indexed_audible_end;
+            indexed_audible_end = audible_end;
             position += analysis.packet.samples;
             previous = packet;
             ++indexed_packet_count;
@@ -1593,6 +1602,7 @@ AudioDecoderSource::open(const MediaSource& source, const MediaReadContext& cont
     auto impl = std::make_unique<Impl>(snapshot, size);
     impl->selected = inventory.tracks[selection.track_index];
     impl->container = inventory.container;
+    impl->movie_timescale = inventory.movie_timescale;
     impl->cadence.enabled =
         canonical_matroska_clock && inventory.container == SourceContainer::matroska;
     validate_timeline(impl->selected, inventory.container);
@@ -1617,27 +1627,32 @@ std::uint64_t AudioDecoderSource::audio_only_duration_samples(const MediaReadCon
         impl_->reader.check();
         return frames / rate * output_rate + (frames % rate * output_rate + rate / 2) / rate;
     }
-    require(impl_->usable && impl_->container == SourceContainer::mp4 &&
-                impl_->selected.edits.empty(),
-            AudioDecodeFailure::unsupported, "audio-only duration requires unedited MP4 audio");
+    require(impl_->usable, AudioDecodeFailure::unsupported, "audio-only decoder is unusable");
     Operation operation(impl_->reader, context);
+    if (impl_->container == SourceContainer::matroska) {
+        require((impl_->selected.codec == "A_FLAC" ||
+                 impl_->selected.codec.compare(0, 6, "A_PCM/") == 0) &&
+                    impl_->indexed_audible_contiguous && impl_->indexed_audible_end &&
+                    *impl_->indexed_audible_end > 0,
+                AudioDecodeFailure::unsupported,
+                "audio-only Matroska requires contiguous zero-based indexed FLAC or PCM");
+        const auto samples = av_rescale_q(*impl_->indexed_audible_end,
+                                          AVRational{1, impl_->codec->sample_rate}, output_clock);
+        require(samples > 0 && static_cast<std::uint64_t>(samples) <= maximum_presentation_samples,
+                AudioDecodeFailure::too_large, "audio-only Matroska duration exceeds bounds");
+        impl_->reader.check();
+        return static_cast<std::uint64_t>(samples);
+    }
+    require(impl_->container == SourceContainer::mp4, AudioDecodeFailure::unsupported,
+            "audio-only container duration is unavailable");
     const auto audio =
         read_mp4_source_audio(impl_->header_reader(), impl_->reader.size, impl_->selected.id);
-    validate_mp4_audio_index(audio);
-    require(audio.samples.front().decode_time == 0 && audio.edits.empty(),
-            AudioDecodeFailure::unsupported, "audio-only MP4 requires a zero origin and no edits");
-    const auto& last = audio.samples.back();
-    constexpr std::uint64_t maximum_seconds = maximum_presentation_samples / output_rate;
-    const auto maximum_ticks = maximum_seconds * audio.timescale;
-    require(last.decode_time <= maximum_ticks && last.duration <= maximum_ticks - last.decode_time,
-            AudioDecodeFailure::too_large, "audio-only MP4 duration exceeds seven days");
-    const auto ticks = last.decode_time + last.duration;
-    // Split whole seconds from the remainder before rounding once to 48 kHz.
-    // Even a UINT32_MAX track timescale cannot overflow the remainder product.
-    const auto samples =
-        (ticks / audio.timescale) * output_rate +
-        ((ticks % audio.timescale) * output_rate + audio.timescale / 2) / audio.timescale;
-    require(samples > 0, AudioDecodeFailure::unsupported, "audio-only MP4 duration is empty");
+    const auto samples = mp4_audio_presentation_samples(audio, impl_->movie_timescale);
+    if (!audio.edits.empty()) {
+        // The edit intentionally excludes encoded source before/after its media
+        // interval. Limit the presentation, not the underlying packet payload.
+        impl_->audio_only_mp4_end = samples;
+    }
     impl_->reader.check();
     return samples;
 }
@@ -1657,10 +1672,21 @@ DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, s
                 AudioDecodeFailure::unsupported,
                 "coarse Matroska window exceeds bounded start reconstruction");
         Operation operation(impl_->reader, context);
-        const auto latest_initial_sample = impl_->seek(first_sample);
         DecodedAudioWindow window;
         window.source_track_id = impl_->selected.id;
         window.first_sample = first_sample;
+        if (impl_->audio_only_mp4_end) {
+            if (first_sample >= *impl_->audio_only_mp4_end) {
+                window.channels = static_cast<std::uint32_t>(impl_->codec->ch_layout.nb_channels);
+                window.channel_mask = impl_->codec->ch_layout.u.mask;
+                window.eof = true;
+                impl_->reader.check();
+                return window;
+            }
+            count = static_cast<std::uint32_t>(
+                std::min<std::uint64_t>(count, *impl_->audio_only_mp4_end - first_sample));
+        }
+        const auto latest_initial_sample = impl_->seek(first_sample);
         WindowDecoder decoder(*impl_->codec, *impl_->format->streams[impl_->stream_index],
                               impl_->reader, impl_->input_format, impl_->cadence, window, count,
                               impl_->container == SourceContainer::mp4 &&
@@ -1700,6 +1726,10 @@ DecodedAudioWindow AudioDecoderSource::read_window(std::uint64_t first_sample, s
             });
         } else {
             decoder.run(*impl_->format);
+        }
+        if (impl_->audio_only_mp4_end && first_sample + count == *impl_->audio_only_mp4_end &&
+            window.channels != 0 && window.samples.size() / window.channels == count) {
+            window.eof = true;
         }
         impl_->reader.check();
         return window;

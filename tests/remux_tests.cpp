@@ -835,6 +835,57 @@ void source_audio_timeline_tests() {
     });
 }
 
+void audio_only_presentation_duration_tests() {
+    group = "audio-only MP4 presentation duration";
+    Mp4Track audio;
+    audio.kind = TrackKind::audio;
+    audio.timescale = 48000;
+    Mp4Sample sample;
+    sample.size = 1;
+    sample.duration = 48000;
+    audio.samples.push_back(sample);
+    check(mp4_audio_presentation_samples(audio, 0) == 48000,
+          "unedited one-second source needs no movie clock");
+    audio.edits = {{1, -1, 1, 0}, {1, 0, 1, 0}};
+    check(mp4_audio_presentation_samples(audio, 96000) == 1,
+          "two half-sample edit spans round once, not individually");
+    audio.edits = {{1, 0, 1, 0}};
+    expect_failure(RemuxFailure::unsupported, "sub-half-sample presentation rounds empty",
+                   [&] { (void)mp4_audio_presentation_samples(audio, 144000); });
+    audio.edits = {{std::numeric_limits<std::uint64_t>::max(), -1, 1, 0}, {1, 0, 1, 0}};
+    expect_failure(RemuxFailure::unsupported, "empty plus media edit sum overflow",
+                   [&] { (void)mp4_audio_presentation_samples(audio, 48000); });
+    audio.edits = {{48000, 1, 1, 0}};
+    expect_failure(RemuxFailure::unsupported, "edit exceeds source by one tick",
+                   [&] { (void)mp4_audio_presentation_samples(audio, 48000); });
+    audio.edits = {{2, 47999, 1, 0}};
+    expect_failure(RemuxFailure::unsupported, "fractional end requires source coverage",
+                   [&] { (void)mp4_audio_presentation_samples(audio, 64000); });
+    std::size_t refusal_index = 0;
+    for (const auto& edits :
+         {std::vector<Mp4Edit>{{0, 0, 1, 0}}, std::vector<Mp4Edit>{{1, 0, 0, 0}},
+          std::vector<Mp4Edit>{{1, 0, 1, 1}}, std::vector<Mp4Edit>{{1, -1, 1, 0}},
+          std::vector<Mp4Edit>{{1, 0, 1, 0}, {1, 0, 1, 0}}}) {
+        audio.edits = edits;
+        expect_failure(RemuxFailure::unsupported,
+                       "zero/complex/non-unit edit case " + std::to_string(++refusal_index),
+                       [&] { (void)mp4_audio_presentation_samples(audio, 48000); });
+    }
+    audio.edits.clear();
+    audio.timescale = 1;
+    audio.samples.front().duration = 604800;
+    check(mp4_audio_presentation_samples(audio, 1) == 29030400000ULL,
+          "literal seven-day boundary is admitted");
+    ++audio.samples.front().duration;
+    expect_failure(RemuxFailure::unsupported, "source past seven days",
+                   [&] { (void)mp4_audio_presentation_samples(audio, 1); });
+    audio.timescale = std::numeric_limits<std::uint32_t>::max();
+    audio.samples.front().duration = std::numeric_limits<std::uint32_t>::max();
+    audio.edits = {{std::numeric_limits<std::uint32_t>::max(), 0, 1, 0}};
+    check(mp4_audio_presentation_samples(audio, std::numeric_limits<std::uint32_t>::max()) == 48000,
+          "maximum 32-bit clock cross-products retain one-second duration");
+}
+
 int main() {
     try {
         demux_tests();
@@ -849,6 +900,7 @@ int main() {
         source_inventory_bounds_tests();
         source_probe_io_tests();
         source_audio_timeline_tests();
+        audio_only_presentation_duration_tests();
         selected_copy_edit_tests();
     } catch (const std::exception& error) {
         std::cerr << "FAIL [" << group << "]: test infrastructure exception: " << error.what()

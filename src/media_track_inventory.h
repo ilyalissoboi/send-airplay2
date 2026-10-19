@@ -94,6 +94,16 @@ struct Mp4AudioSeek {
 /// Validate once before seek planning; read_mp4_source_audio() calls this.
 /// Requires nonempty audio, positive durations and contiguous increasing decode times.
 void validate_mp4_audio_index(const Mp4Track& audio);
+/** Return the selected MP4 audio presentation length at 48 kHz, rounded once.
+ * Requires a contiguous zero-based packet index and a positive duration <=7 days.
+ * Admits no edits, or one finite unit-rate media edit optionally preceded by one
+ * empty edit. The entire media interval must fit the indexed source; empty edit
+ * time contributes silence. Checks rational coverage before rounding the output.
+ * @throws RemuxException for unsupported edits/bounds, invalid_argument for an
+ * invalid packet index. No decoding, callbacks or host duration estimates.
+ */
+[[nodiscard]] std::uint64_t mp4_audio_presentation_samples(const Mp4Track& audio,
+                                                           std::uint32_t movie_timescale);
 /** Translate presentation nanoseconds through zero or one unit-rate media edit,
  * optionally preceded by one empty edit, and choose the packet at/before the
  * target minus caller-provided decoder preroll (in track ticks). Preserves packet

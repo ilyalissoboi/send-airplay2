@@ -1,6 +1,6 @@
 # Separate-session development handoff
 
-Checkpoint: 2026-10-19 (Asia/Tokyo). PRs #12-#88 are merged. `main` contains
+Checkpoint: 2026-10-19 (Asia/Tokyo). PRs #12-#89 are merged. `main` contains
 the experimental C API version 5, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -23,6 +23,19 @@ queue below; do not resume completed slices.
 Read `AGENTS.md`, then [HANDOFF.md](HANDOFF.md), [design.md](design.md) and
 [receiver-validation.md](receiver-validation.md). This note is a focused restart
 guide; the master handoff and dated artifacts preserve the longer history.
+
+**D105 private edited/container audio-only offline gate complete (2026-10-19).**
+Native #89 merged as e4d1a28; all 17 checks passed at final head 3e59f9c in
+[run 39204589746](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39204589746).
+The user authorizes the next slice. Private FLAC/PCM admission now uses checked
+finite MP4 edits or zero-based contiguous Matroska packet clocks/trim. Edited
+MP4 windows clip at the intentional presentation boundary; video/default decoder
+behavior stays separate. Owned offline tests cover source phase, endpoint,
+seeks and refusal/cleanup, including a fractional 44.1-kHz edit offset. Static/
+shared CTests pass 43/44 and codec CTests 17. Both UWP builds/binary checks,
+strict Clang and formatting pass. Implementation 6b81756 adds no public policy/
+API, codec-profile, package, Screenbox or receiver changes. Read
+[the scope and remaining gates](audio-only-container-timelines.md).
 
 **D104 packaged MP3 gate passed (2026-10-19).** Native #88 merged as
 be5ae92, with all 17 checks passed at final head 552ebca in
@@ -1158,14 +1171,18 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    with Mac consent cancellation and unchanged versions. Nine sources release
    once and loaded executable/crypto hashes match. Direct audio/mpeg is feasible;
    no AAC fallback is demonstrated. No publication or automatic eligibility.
-8. **D104 complete: packaged brokered-source MP3 gate.** Continue
-   codex/mp3-uwp-gate while its PR is open, inspecting actual head first. Read
+8. **D104 complete; #89 merged as e4d1a28.** All 17 checks pass at 3e59f9c. Read
    mp3-uwp-gate.md. Implementation b098646/MSIX 0.1.32.0 passes both receivers'
    CBR/VBR nonzero start, controls/natural end/separate Stop and Mac consent
    cancellation. Nine sources release once; five actual AppContainer/module
    captures match. Both negative scripts pass. No further D104 manual check.
-9. **Next: edited MP4/Matroska audio-only admission.** Following slices:
-   automatic delivery with
+9. **D105 complete: private edited MP4/Matroska audio-only admission.** Continue
+   codex/audio-only-container-timelines while its PR is open; inspect actual head.
+   Read audio-only-container-timelines.md. Static/shared suites pass 43/44, codec
+   17/17; UWP compile/binary checks and strict Clang/format checks pass. Runtime
+   implementation 6b81756 and the final fractional-offset regression have offline
+   evidence only. No new app/receiver gate or publication.
+10. **Next: finite public automatic audio-only delivery/reporting.** Retain
    explicit stereo permission/public reporting, broader native/packaged receiver
    gates, then Screenbox routing/queue checks. Larger/chained Ogg needs separate
    design/evidence. Preserve completed gates and hardware/user deferrals.
@@ -1399,14 +1416,14 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. Native #88 merged as be5ae92, all 17 checks passed at 552ebca.
-> D104 is the active packaged brokered-source MP3 gate; inspect
-> codex/mp3-uwp-gate actual PR/head before writing. Read mp3-uwp-gate.md.
-> Native D103 suites pass 43/44 and progressive CBR/VBR audio/mpeg
-> controls/end/Stop pass on both receivers, with Mac consent cancellation and
-> unchanged macOS 26.7.1/tvOS 26.6. D104 packaged checks now pass for implementation
-> b098646/MSIX 0.1.32.0: nine sources release once and five runtime captures match.
-> No further D104 manual check. Review/merge before the next edited-input slice.
+> documents. Native #89 merged as e4d1a28, all 17 checks passed at 3e59f9c.
+> D105 adds private edited MP4 and indexed Matroska FLAC/PCM audio-only timelines;
+> inspect codex/audio-only-container-timelines actual PR/head before writing. Read
+> audio-only-container-timelines.md for current validation and the finite subset.
+> Offline suites pass 43/44/17; UWP compile/static checks, strict Clang and format
+> checks pass. Public automatic audio-only delivery/reporting is next after merge.
+> D104's packaged MP3 gate is complete; no further manual check is pending.
+> D105 is offline only. Review/merge before public audio-only delivery integration.
 > Default/public/AAC/automatic routes, codec profile, packages and Screenbox stay
 > unchanged. Direct playback passed; no AAC fallback is currently justified.
 > Preserve all hardware/user deferrals, use written manual confirmation for UI,
