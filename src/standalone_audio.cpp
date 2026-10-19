@@ -312,7 +312,9 @@ MediaTrackInventory flac_inventory(HeaderReader& reader) {
             require(track.audio_bit_depth == 16 || track.audio_bit_depth == 24,
                     RemuxFailure::unsupported, "FLAC bit depth outside standalone subset");
             constexpr std::array<std::uint64_t, 8> layouts{4, 3, 7, 0x33, 0x37, 0x3f, 0x70f, 0x63f};
-            track.audio_channel_mask = layouts.at(track.audio_channels - 1);
+            // STREAMINFO's three-bit channel field guarantees a count in 1..8.
+            track.audio_channel_mask =
+                layouts.at(static_cast<std::size_t>(track.audio_channels - 1));
         } else if (type == 3) {
             require(!found_seek && length % flac_seek_point_bytes == 0 &&
                         length / flac_seek_point_bytes <= maximum_seek_points,
