@@ -88,7 +88,7 @@ public:
     [[nodiscard]] static std::unique_ptr<StereoAacHls>
     open(MediaSource source, AacFragmentStore store, std::uint64_t quota_bytes,
          const MediaReadContext& context, std::optional<std::uint64_t> selected_id = {});
-    /** Private audio-only foundation; does not change public automatic routing.
+    /** Audio-only builder used by the explicit Apple Audio v1 public profile.
      * Admits progressive MP4/MOV with a finite unit-rate media edit optionally
      * preceded by empty edit silence, indexed zero-based Matroska FLAC/PCM,
      * or the bounded standalone FLAC/WAVE/Ogg

@@ -95,7 +95,7 @@ static int create_result(const sap2_cast_options* options) {
 
 static void version_and_names(void) {
     check(sap2_playback_api_version() == SAP2_PLAYBACK_API_VERSION, "runtime version");
-    check(SAP2_PLAYBACK_API_VERSION == 5, "automatic delivery is version 5");
+    check(SAP2_PLAYBACK_API_VERSION == 6, "finite audio-only profile is version 6");
     check(strcmp(sap2_result_name(SAP2_ERROR_MEDIA_UNSUPPORTED), "media_unsupported") == 0 &&
               strcmp(sap2_result_name(SAP2_ERROR_MEDIA_MALFORMED), "media_malformed") == 0,
           "remux result names");

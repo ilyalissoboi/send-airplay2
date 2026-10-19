@@ -1295,38 +1295,53 @@ void production_selection_tests() {
 
 void automatic_copy_controller_tests(const std::filesystem::path& policy) {
     group = "automatic copied presentation lifecycle";
-    for (const bool natural_end : {false, true}) {
-        auto probe = std::make_shared<ConversionProbe>();
-        auto settings = conversion_settings(probe);
-        settings.delivery = CastDelivery::automatic_audio_hls;
-        settings.audio_track_id = 42;
-        settings.cache_quota_bytes = 0;
-        FakeReceiver receiver({});
-        auto dependencies = fake_receiver_dependencies(receiver);
-        dependencies.after_session_start = [&] {
-            check(probe->clears == 0, "copy never takes cache during startup");
-        };
-        CastController controller(
-            settings,
-            open_file_media_source(policy / "aac-48000-2.mp4", std::make_shared<FileReadStats>()),
-            dependencies);
-        check(controller.start() == CastResult::ok, "automatic copy starts without backend/quota");
-        const auto active = controller.snapshot();
-        check(active.audio_decision && active.audio_decision->action == AudioDeliveryAction::copy &&
-                  active.audio_decision->source_id == 42 &&
-                  active.audio_decision->output_channels == 2,
-              "automatic copy publishes original identity and output before active playback");
-        if (natural_end) {
-            receiver.push_state("Ended");
-            check(eventually([&] { return controller.snapshot().media_cleaned_up; }),
-                  "automatic copy natural EOF drains media without host Stop");
+    for (const bool progressive : {false, true}) {
+        for (const bool natural_end : {false, true}) {
+            auto probe = std::make_shared<ConversionProbe>();
+            auto settings = conversion_settings(probe);
+            settings.delivery = CastDelivery::automatic_audio_hls;
+            settings.audio_track_id = progressive ? 1 : 42;
+            settings.audio_profile = progressive ? AudioDeliveryProfile::apple_audio_v1
+                                                 : AudioDeliveryProfile::apple_hls_v1;
+            settings.cache_quota_bytes = 0;
+            FakeReceiver receiver({});
+            auto dependencies = fake_receiver_dependencies(receiver);
+            dependencies.after_session_start = [&] {
+                check(probe->clears == 0, "copy never takes cache during startup");
+            };
+            CastController controller(
+                settings,
+                open_file_media_source(progressive ? policy.parent_path() / "audio-only" / "aac.mp4"
+                                                   : policy / "aac-48000-2.mp4",
+                                       std::make_shared<FileReadStats>()),
+                dependencies);
+            check(controller.start() == CastResult::ok,
+                  "automatic copy starts without backend/quota");
+            check(ends_with(receiver.inserted_media_url(),
+                            progressive ? "/audio.m4a" : "/index.m3u8"),
+                  "automatic entry URL follows the prepared progressive or HLS resource");
+            const auto active = controller.snapshot();
+            check(active.audio_decision &&
+                      active.audio_decision->action == (progressive
+                                                            ? AudioDeliveryAction::progressive
+                                                            : AudioDeliveryAction::copy) &&
+                      active.audio_decision->source_id == (progressive ? 1U : 42U) &&
+                      active.audio_decision->profile == settings.audio_profile &&
+                      active.audio_decision->output_channels == 2,
+                  "automatic copy publishes original identity and output before active playback");
+            if (natural_end) {
+                receiver.push_state("Ended");
+                check(eventually([&] { return controller.snapshot().media_cleaned_up; }),
+                      "automatic copy natural EOF drains media without host Stop");
+            }
+            controller.stop();
+            controller.stop();
+            const auto stopped = controller.snapshot();
+            check(stopped.audio_decision &&
+                      stopped.audio_decision->source_id == (progressive ? 1U : 42U) &&
+                      stopped.media_cleaned_up && probe->clears == 0,
+                  "copy Stop/EOF retain decision and never clear unused conversion storage");
         }
-        controller.stop();
-        controller.stop();
-        const auto stopped = controller.snapshot();
-        check(stopped.audio_decision && stopped.audio_decision->source_id == 42 &&
-                  stopped.media_cleaned_up && probe->clears == 0,
-              "copy Stop/EOF retain decision and never clear unused conversion storage");
     }
     auto probe = std::make_shared<ConversionProbe>();
     auto settings = conversion_settings(probe);

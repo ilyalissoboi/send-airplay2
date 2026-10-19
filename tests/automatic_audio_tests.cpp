@@ -5,6 +5,7 @@
 #include "../tools/audio-codec-spike/hls_test_support.h"
 #endif
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -465,11 +466,178 @@ void conversion_failure(const std::filesystem::path& path) {
 }
 
 #endif
+void audio_only_progressive_checks(const std::filesystem::path& fixtures) {
+    const auto mp3 = fixtures.parent_path().parent_path() / "mp3-probe" / "fixtures";
+    for (const auto& path :
+         {fixtures / "audio-only" / "aac.mp4", mp3 / "cbr48.mp3", mp3 / "vbr441.mp3"}) {
+        Source source(path);
+        Store store;
+        Context context;
+        for (const auto permission : {AudioConversionPermission::allow_stereo,
+                                      AudioConversionPermission::preserve_original}) {
+            auto media = PreparedAutomaticMedia::open(
+                source.callbacks(), store.callbacks(), 0, context.value,
+                AudioDeliveryProfile::apple_audio_v1, permission);
+            const auto& plan = media->decision();
+            expect(plan.profile == AudioDeliveryProfile::apple_audio_v1 &&
+                       plan.action == AudioDeliveryAction::progressive &&
+                       plan.reason == AudioDeliveryReason::profile_progressive &&
+                       plan.output_channels == 2 && plan.source_id == 1,
+                   path.filename().string() + ": progressive decision with either permission");
+            const auto& presentation = media->presentation();
+            expect(presentation.resources.size() == 1 && presentation.segment_count == 0 &&
+                       media->authoring_flags() == 0,
+                   "progressive route has one original resource, no HLS/authoring estimates");
+            const auto& original = resource(presentation, presentation.playlist_name);
+            expect(original.content_type ==
+                           (path.extension() == ".mp3" ? "audio/mpeg" : "audio/mp4") &&
+                       read(original, context.value) == source.bytes,
+                   path.filename().string() + ": exact original bytes and inferred MIME");
+            media->stop();
+            media->stop();
+            expect(store.seals == 0 && store.reads == 0 && store.clears == 0,
+                   "progressive Stop never takes an offered conversion store");
+        }
+        expect(source.size_calls == 2, "one immutable host size per automatic preparation");
+    }
+}
+void audio_only_conversion_checks(const std::filesystem::path& fixtures) {
+    const std::vector<std::pair<std::filesystem::path, std::size_t>> converted{
+        {fixtures / "audio-only" / "flac-stereo.mp4", 624144},
+        {fixtures / "audio-only" / "pcm-51.mov", 144144},
+        {fixtures / "standalone-audio" / "flac48.flac", 624144},
+        {fixtures / "standalone-audio" / "pcm16.wav", 624144},
+        {fixtures / "ogg-audio" / "opus48.opus", 624144},
+        {fixtures / "ogg-audio" / "vorbis441.ogg", 624144},
+        {fixtures / "audio-timelines" / "pcm-edit.mov", 108000},
+        {fixtures / "audio-timelines" / "flac-edit441.mp4", 108000},
+        {fixtures / "audio-timelines" / "pcm-trim.mka", 143904}};
+    for (const auto& fixture : converted) {
+        Source source(fixture.first);
+        Store store;
+        Context context;
+        const auto scenario = fixture.first.filename().string();
+        const auto open = [&](AudioConversionPermission permission) {
+            return PreparedAutomaticMedia::open(source.callbacks(), store.callbacks(), 16ULL << 20,
+                                                context.value, AudioDeliveryProfile::apple_audio_v1,
+                                                permission);
+        };
+        refusal(MediaPreparationFailure::unsupported, scenario + ": preservation",
+                [&] { (void)open(AudioConversionPermission::preserve_original); });
+        expect(store.clears == 0 && store.seals == 0,
+               "preservation refuses before store ownership");
+#ifdef SAP2_HAS_STEREO_AAC
+        auto media = open(AudioConversionPermission::allow_stereo);
+        expect(media->decision().profile == AudioDeliveryProfile::apple_audio_v1 &&
+                   media->decision().action == AudioDeliveryAction::stereo_aac &&
+                   media->decision().output_channels == 2,
+               scenario + ": stereo AAC decision");
+        const auto& presentation = media->presentation();
+        expect(presentation.video_boundaries_48khz.empty(), "audio profile has no video timeline");
+        Bytes combined = read(resource(presentation, "audio-init.mp4"), context.value);
+        for (std::size_t index = 0; index < presentation.segment_count; ++index) {
+            const auto fragment =
+                read(resource(presentation, "a" + std::to_string(index) + ".m4s"), context.value);
+            combined.insert(combined.end(), fragment.begin(), fragment.end());
+        }
+        const auto decoded = sap2_test::MovieDecoder(combined).decode();
+        expect(decoded.size() == fixture.second * 2,
+               scenario + ": literal independently decoded stereo endpoint, actual=" +
+                   std::to_string(decoded.size() / 2));
+        media->stop();
+        media->stop();
+        expect(store.clears == 1 && store.fragments.empty(),
+               scenario + ": one joined store cleanup");
+#else
+        refusal(MediaPreparationFailure::backend_unavailable, scenario + ": codec-free",
+                [&] { (void)open(AudioConversionPermission::allow_stereo); });
+        expect(store.clears == 0, "missing backend never accepts cache ownership");
+#endif
+    }
+}
+void audio_only_refusal_checks(const std::filesystem::path& fixtures) {
+    Source video(fixtures / "audio-policy" / "aac-48000-2.mp4");
+    Store store;
+    Context context;
+    refusal(MediaPreparationFailure::unsupported, "audio profile refuses a video container", [&] {
+        (void)PreparedAutomaticMedia::open(video.callbacks(), store.callbacks(), 0, context.value,
+                                           AudioDeliveryProfile::apple_audio_v1,
+                                           AudioConversionPermission::allow_stereo);
+    });
+    expect(store.clears == 0, "video refusal precedes store ownership");
+    Source protected_audio(fixtures / "audio-only" / "aac.mp4");
+    const std::array<std::uint8_t, 4> plain_entry{'m', 'p', '4', 'a'},
+        protected_entry{'e', 'n', 'c', 'a'};
+    const auto entry = std::search(protected_audio.bytes.begin(), protected_audio.bytes.end(),
+                                   plain_entry.begin(), plain_entry.end());
+    expect(entry != protected_audio.bytes.end(), "owned AAC sample entry exists");
+    std::copy(protected_entry.begin(), protected_entry.end(), entry);
+    refusal(
+        MediaPreparationFailure::unsupported, "protected audio never routes progressively", [&] {
+            (void)PreparedAutomaticMedia::open(protected_audio.callbacks(), store.callbacks(), 0,
+                                               context.value, AudioDeliveryProfile::apple_audio_v1,
+                                               AudioConversionPermission::allow_stereo);
+        });
+    Source multiple(fixtures / "audio-only" / "multiple-flac.mp4");
+    refusal(
+        MediaPreparationFailure::selection_required, "audio-only original identity ambiguity", [&] {
+            (void)PreparedAutomaticMedia::open(multiple.callbacks(), store.callbacks(), 0,
+                                               context.value, AudioDeliveryProfile::apple_audio_v1,
+                                               AudioConversionPermission::allow_stereo);
+        });
+    const auto mp3 = fixtures.parent_path().parent_path() / "mp3-probe" / "fixtures";
+    for (const auto& fixture : {mp3 / "mono24.mp3", fixtures / "ogg-audio" / "chained.opus"}) {
+        Source source(fixture);
+        refusal(MediaPreparationFailure::unsupported,
+                fixture.filename().string() + ": finite subset", [&] {
+                    (void)PreparedAutomaticMedia::open(source.callbacks(), store.callbacks(), 0,
+                                                       context.value,
+                                                       AudioDeliveryProfile::apple_audio_v1,
+                                                       AudioConversionPermission::allow_stereo);
+                });
+    }
+    Source source(mp3 / "cbr48.mp3");
+    source.bytes.pop_back();
+    refusal(MediaPreparationFailure::malformed, "truncated MP3 never retries conversion", [&] {
+        (void)PreparedAutomaticMedia::open(source.callbacks(), store.callbacks(), 0, context.value,
+                                           AudioDeliveryProfile::apple_audio_v1,
+                                           AudioConversionPermission::allow_stereo);
+    });
+    context.value.deadline = std::chrono::steady_clock::now();
+    refusal(MediaPreparationFailure::timeout, "audio-only absolute preparation deadline", [&] {
+        (void)PreparedAutomaticMedia::open(source.callbacks(), store.callbacks(), 0, context.value,
+                                           AudioDeliveryProfile::apple_audio_v1,
+                                           AudioConversionPermission::allow_stereo);
+    });
+    expect(store.clears == 0 && store.seals == 0, "all pre-route refusals leave store unused");
+#ifdef SAP2_HAS_STEREO_AAC
+    Context fresh;
+    Source flac(fixtures / "audio-only" / "flac-stereo.mp4");
+    store.fail_seal = true;
+    auto media = PreparedAutomaticMedia::open(flac.callbacks(), store.callbacks(), 16ULL << 20,
+                                              fresh.value, AudioDeliveryProfile::apple_audio_v1,
+                                              AudioConversionPermission::allow_stereo);
+    bool failed = false;
+    try {
+        (void)read(resource(media->presentation(), "a0.m4s"), fresh.value);
+    } catch (const std::exception&) {
+        failed = true;
+    }
+    expect(failed && media->failure() == StereoAacHlsFailure::cache_error &&
+               media->decision().action == AudioDeliveryAction::stereo_aac,
+           "audio-only cache failure is terminal with no progressive retry");
+    media->stop();
+    expect(store.clears == 1, "failed audio-only worker joins and clears once");
+#endif
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
         expect(argc == 4, "policy, decoder and expanded fixture directories");
         const std::filesystem::path policy(argv[1]), decoder(argv[2]), expanded(argv[3]);
+        audio_only_progressive_checks(policy.parent_path());
+        audio_only_conversion_checks(policy.parent_path());
+        audio_only_refusal_checks(policy.parent_path());
         for (const auto* codec : {"aac", "ac3", "eac3"}) {
             for (const auto rate : {44100, 48000}) {
                 for (const auto channels : {1, 2, 6}) {

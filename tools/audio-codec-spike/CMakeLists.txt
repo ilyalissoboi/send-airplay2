@@ -21,6 +21,7 @@ set(sap2_decoder_root "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 # Private optional adapter: no FFmpeg dependency in the shipping playback target.
 add_library(sap2_audio_decoder STATIC
   "${sap2_decoder_root}/src/audio_delivery_policy.cpp"
+  "${sap2_decoder_root}/src/mp3_audio.cpp"
   "${sap2_decoder_root}/src/standalone_audio.cpp"
   "${sap2_decoder_root}/src/ogg_audio.cpp"
   "${sap2_decoder_root}/src/audio_decoder_source.cpp"

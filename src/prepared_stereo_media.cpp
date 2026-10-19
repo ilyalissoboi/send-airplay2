@@ -126,12 +126,19 @@ bool stereo_aac_available() noexcept {
     return false;
 #endif
 }
-std::unique_ptr<PreparedStereoMedia>
-prepare_stereo_media(MediaSource source, AacFragmentStore store, std::uint64_t quota,
-                     const MediaReadContext& context, std::optional<std::uint64_t> selected_id) {
-    CacheCleanup cleanup(std::move(store));
 #ifdef SAP2_HAS_STEREO_AAC
+namespace {
+std::unique_ptr<PreparedStereoMedia>
+prepare_stereo_media_impl(MediaSource source, AacFragmentStore store, std::uint64_t quota,
+                          const MediaReadContext& context, std::optional<std::uint64_t> selected_id,
+                          bool audio_only) {
+    CacheCleanup cleanup(std::move(store));
     try {
+        if (audio_only) {
+            auto media = StereoAacHls::open_audio_only(std::move(source), cleanup.release(), quota,
+                                                       context, selected_id);
+            return std::make_unique<ConvertedMedia>(std::move(media), selected_id.value());
+        }
         const auto inventory = probe_media_tracks(source, context);
         const auto selection = select_source_audio(inventory, selected_id);
         if (selection.status == AudioSelectionStatus::selection_required) {
@@ -176,7 +183,32 @@ prepare_stereo_media(MediaSource source, AacFragmentStore store, std::uint64_t q
                                                    : MediaPreparationFailure::cancelled)
                                             : MediaPreparationFailure::source_error);
     }
+}
+} // namespace
+#endif
+std::unique_ptr<PreparedStereoMedia>
+prepare_stereo_media(MediaSource source, AacFragmentStore store, std::uint64_t quota,
+                     const MediaReadContext& context, std::optional<std::uint64_t> selected_id) {
+#ifdef SAP2_HAS_STEREO_AAC
+    return prepare_stereo_media_impl(std::move(source), std::move(store), quota, context,
+                                     selected_id, false);
 #else
+    CacheCleanup cleanup(std::move(store));
+    (void)source;
+    (void)quota;
+    (void)context;
+    (void)selected_id;
+    throw MediaPreparationException(MediaPreparationFailure::backend_unavailable);
+#endif
+}
+std::unique_ptr<PreparedStereoMedia>
+prepare_audio_only_media(MediaSource source, AacFragmentStore store, std::uint64_t quota,
+                         const MediaReadContext& context, std::uint64_t selected_id) {
+#ifdef SAP2_HAS_STEREO_AAC
+    return prepare_stereo_media_impl(std::move(source), std::move(store), quota, context,
+                                     selected_id, true);
+#else
+    CacheCleanup cleanup(std::move(store));
     (void)source;
     (void)quota;
     (void)context;

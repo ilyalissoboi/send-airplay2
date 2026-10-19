@@ -259,6 +259,99 @@ void argument_and_layout_checks(const std::filesystem::path& policy) {
                output.known.action == 0xa5a5a5a5U,
            "truncated decision stays untouched");
 }
+void audio_only_public_checks(const std::filesystem::path& fixtures) {
+    const auto mp3 = fixtures.parent_path().parent_path() / "mp3-probe" / "fixtures";
+    const std::vector<std::pair<std::filesystem::path, std::uint32_t>> direct{
+        {fixtures / "audio-only" / "aac.mp4", SAP2_AUDIO_FAMILY_AAC},
+        {mp3 / "cbr48.mp3", SAP2_AUDIO_FAMILY_MP3},
+        {mp3 / "vbr441.mp3", SAP2_AUDIO_FAMILY_MP3}};
+    for (const auto& fixture : direct) {
+        Source source(fixture.first);
+        auto input = source.table();
+        Store store;
+        auto cache = store.table();
+        auto options = options_for();
+        options.profile = SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1;
+        options.fragment_store = &cache;
+        options.conversion_permission = SAP2_AUDIO_PRESERVE_ORIGINAL;
+        sap2_audio_decision decision{};
+        decision.struct_size = sizeof(decision);
+        expect(sap2_media_check_audio(&input, &options, nullptr, nullptr, &decision) == SAP2_OK &&
+                   decision.profile == 2 && decision.action == 4 && decision.reason == 4 &&
+                   decision.selected_audio_id == 1 && decision.source_family == fixture.second &&
+                   decision.output_family == fixture.second && decision.output_channels == 2,
+               fixture.first.filename().string() + ": literal API-6 progressive fields");
+        options.audio_track_id = 99;
+        expect(sap2_media_check_audio(&input, &options, nullptr, nullptr, &decision) ==
+                       SAP2_ERROR_AUDIO_TRACK_INVALID &&
+                   decision.action == 0,
+               "explicit absent audio-only identity refuses and clears stale output");
+        options.audio_track_id = 0;
+        source.cancel_on_read = true;
+        expect(sap2_media_check_audio(
+                   &input, &options, &source,
+                   [](void* value) { return static_cast<Source*>(value)->cancelled ? 1 : 0; },
+                   &decision) == SAP2_ERROR_CANCELLED &&
+                   decision.action == 0,
+               "audio-only cancellation propagates during borrowed reads");
+        source.cancel_on_read = false;
+        source.cancelled = false;
+        sap2_cast_options cast_options{};
+        sap2_cast_options_init_sized(&cast_options, sizeof(cast_options));
+        cast_options.receiver_address = "127.0.0.1";
+        cast_options.profile = "audio-only-unused";
+        cast_options.delivery = SAP2_DELIVERY_AUTOMATIC_AUDIO_HLS;
+        cast_options.audio_profile = SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1;
+        cast_options.fragment_store = &cache;
+        sap2_cast* cast = nullptr;
+        expect(sap2_cast_create(&cast_options, &input, &cast) == SAP2_OK,
+               "audio-only profile accepted at cast create");
+        sap2_cast_destroy(cast);
+        expect(source.releases == 1 && store.releases == 1 && store.clears == 0 &&
+                   store.seals == 0 && store.reads == 0,
+               "audio-only offline borrow/unstarted cast preserve unused storage ownership");
+    }
+    const std::vector<std::pair<std::filesystem::path, std::uint32_t>> converted{
+        {fixtures / "audio-only" / "flac-stereo.mp4", SAP2_AUDIO_FAMILY_FLAC},
+        {fixtures / "standalone-audio" / "pcm16.wav", SAP2_AUDIO_FAMILY_PCM},
+        {fixtures / "ogg-audio" / "opus48.opus", SAP2_AUDIO_FAMILY_OPUS},
+        {fixtures / "ogg-audio" / "vorbis441.ogg", SAP2_AUDIO_FAMILY_VORBIS},
+        {fixtures / "audio-timelines" / "pcm-trim.mka", SAP2_AUDIO_FAMILY_PCM}};
+    for (const auto& fixture : converted) {
+        Source source(fixture.first);
+        auto input = source.table();
+        Store store;
+        auto cache = store.table();
+        auto options = options_for();
+        options.profile = SAP2_AUDIO_PROFILE_APPLE_AUDIO_V1;
+        options.fragment_store = &cache;
+        options.cache_quota_bytes = 16ULL << 20;
+        options.conversion_permission = SAP2_AUDIO_PRESERVE_ORIGINAL;
+        sap2_audio_decision decision{};
+        decision.struct_size = sizeof(decision);
+        expect(sap2_media_check_audio(&input, &options, nullptr, nullptr, &decision) ==
+                       SAP2_ERROR_MEDIA_UNSUPPORTED &&
+                   store.clears == 0,
+               "audio-only preservation refuses before store acceptance");
+        options.conversion_permission = SAP2_AUDIO_ALLOW_STEREO;
+        options.fragment_store = nullptr;
+        expect(sap2_media_check_audio(&input, &options, nullptr, nullptr, &decision) ==
+                   (sap2_stereo_aac_available() ? SAP2_ERROR_MEDIA_CACHE : SAP2_ERROR_UNSUPPORTED),
+               "audio-only backend then storage refusal");
+        options.fragment_store = &cache;
+        const auto result = sap2_media_check_audio(&input, &options, nullptr, nullptr, &decision);
+        expect(result == (sap2_stereo_aac_available() ? SAP2_OK : SAP2_ERROR_UNSUPPORTED),
+               fixture.first.filename().string() + ": audio-only conversion preparation");
+        if (result == SAP2_OK) {
+            expect(decision.profile == 2 && decision.action == 3 && decision.reason == 3 &&
+                       decision.source_family == fixture.second && decision.output_family == 1 &&
+                       decision.output_channels == 2 && store.clears == 1,
+                   "audio-only converted reporting and accepted store cleanup");
+        }
+        expect(source.releases == 0 && store.releases == 0,
+               "offline audio-only conversion only borrows host contexts");
+    }
+}
 } // namespace
 int main(int argc, char** argv) {
     if (argc != 4) {
@@ -269,6 +362,7 @@ int main(int argc, char** argv) {
         conversion_checks(argv[2], argv[3]);
         refusal_checks(argv[1], argv[2]);
         argument_and_layout_checks(argv[1]);
+        audio_only_public_checks(std::filesystem::path(argv[1]).parent_path());
         std::cout << "automatic audio C API checks passed\n";
         return 0;
     } catch (const std::exception& error) {

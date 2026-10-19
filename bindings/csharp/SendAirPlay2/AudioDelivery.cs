@@ -10,6 +10,8 @@ namespace SendAirPlay2
     {
         /// <summary>The library's finite version-one Apple HLS video profile.</summary>
         AppleHlsV1 = 1,
+        /// <summary>Finite audio-only progressive or permitted stereo AAC HLS profile.</summary>
+        AppleAudioV1 = 2,
     }
     /// <summary>Whether automatic delivery may lose original surround/lossless audio.</summary>
     public enum AudioConversionPermission
@@ -28,6 +30,8 @@ namespace SendAirPlay2
         Copy = 2,
         /// <summary>Convert the selected original audio to stereo AAC.</summary>
         StereoAac = 3,
+        /// <summary>Serve the validated original audio file progressively.</summary>
+        Progressive = 4,
     }
     /// <summary>Fixed preparation reason, not receiver rejection.</summary>
     public enum AudioDeliveryReason
@@ -38,6 +42,8 @@ namespace SendAirPlay2
         ProfileCopy = 2,
         /// <summary>The profile requires conversion of this selected input.</summary>
         ProfileRequiresStereo = 3,
+        /// <summary>The profile admits the original progressive audio representation.</summary>
+        ProfileProgressive = 4,
     }
     /// <summary>Validated selected audio family.</summary>
     public enum AudioFamily
@@ -62,6 +68,8 @@ namespace SendAirPlay2
         Pcm = 8,
         /// <summary>TrueHD.</summary>
         TrueHd = 9,
+        /// <summary>Validated MPEG layer III subset.</summary>
+        Mp3 = 10,
     }
     /// <summary>Successful preparation decision; not full-file decode or receiver proof.</summary>
     public sealed class AudioDecision

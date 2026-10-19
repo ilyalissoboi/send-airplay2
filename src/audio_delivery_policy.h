@@ -6,15 +6,21 @@
 #include <optional>
 
 namespace send_airplay2::detail {
-enum class AudioDeliveryProfile { apple_hls_v1 };
-enum class AudioDeliveryAction { video_only, copy, stereo_aac };
-enum class AudioDeliveryReason { no_enabled_audio, profile_copy, profile_requires_stereo };
-enum class SourceAudioFamily { none, aac, ac3, eac3, dts, flac, opus, vorbis, pcm, truehd };
+enum class AudioDeliveryProfile { apple_hls_v1, apple_audio_v1 };
+enum class AudioDeliveryAction { video_only, copy, stereo_aac, progressive };
+enum class AudioDeliveryReason {
+    no_enabled_audio,
+    profile_copy,
+    profile_requires_stereo,
+    profile_progressive
+};
+enum class SourceAudioFamily { none, aac, ac3, eac3, dts, flac, opus, vorbis, pcm, truehd, mp3 };
 /** Metadata plan, not decoder or receiver proof. action/id are meaningful only
  * for selected/video_only selection status. Copy candidates must also pass the
  * selected native index and executable payload/configuration table below.
  */
 struct AudioDeliveryPlan {
+    AudioDeliveryProfile profile = AudioDeliveryProfile::apple_hls_v1;
     AudioSelectionStatus selection = AudioSelectionStatus::video_only;
     AudioDeliveryAction action = AudioDeliveryAction::video_only;
     AudioDeliveryReason reason = AudioDeliveryReason::no_enabled_audio;
