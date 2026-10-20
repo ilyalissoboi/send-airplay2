@@ -1,5 +1,19 @@
 # Design and implementation sequence
 
+**D112 opening-item review follow-up verified locally (2026-10-20).**
+The [Screenbox #17 review](https://github.com/ilyalissoboi/Screenbox/pull/17#discussion_r4324921353)
+found that Cast can be requested before VLC inserts the current item's tracks.
+Fix `23f708e8` shares bounded, cancellable metadata resolution between current and
+queued items, validates completion before the track snapshot and rechecks the
+request/player/item before local pause or native start. Independent descriptors
+are disposed; current display size is preserved with an opening-video fallback.
+Logic suites pass 142/176 ordinary/opt-in, including thirteen race/refusal cases.
+Both actual Release MSIX/payload checks pass (2/40 files). Read the
+[separate review evidence](validation/screenbox-api6-review-windows-2026-10-20.json).
+The 1.0.0.15 receiver gate below retains its original hashes; no new app is
+installed and no receiver/cancellation/codec matrix is repeated or newly claimed.
+Inspect actual final heads/CI of fork #17 and native #97; ask before merging.
+
 **D112 Screenbox API-6 focused gate passed (2026-10-20).**
 Native #96 merged as `b57981b`; all 17 checks passed at `98b4dc8`. The authorized
 [Screenbox PR #17](https://github.com/ilyalissoboi/Screenbox/pull/17), implementation

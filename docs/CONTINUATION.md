@@ -1,5 +1,19 @@
 # Separate-session development handoff
 
+**D112 opening-item review follow-up verified locally (2026-10-20).**
+The [Screenbox #17 review](https://github.com/ilyalissoboi/Screenbox/pull/17#discussion_r4324921353)
+found that Cast can be requested before VLC inserts the current item's tracks.
+Fix `23f708e8` shares bounded, cancellable metadata resolution between current and
+queued items, validates completion before the track snapshot and rechecks the
+request/player/item before local pause or native start. Independent descriptors
+are disposed; current display size is preserved with an opening-video fallback.
+Logic suites pass 142/176 ordinary/opt-in, including thirteen race/refusal cases.
+Both actual Release MSIX/payload checks pass (2/40 files). Read the
+[separate review evidence](validation/screenbox-api6-review-windows-2026-10-20.json).
+The 1.0.0.15 receiver gate below retains its original hashes; no new app is
+installed and no receiver/cancellation/codec matrix is repeated or newly claimed.
+Inspect actual final heads/CI of fork #17 and native #97; ask before merging.
+
 **D112 Screenbox API-6 focused gate passed (2026-10-20).**
 Native #96 merged as `b57981b`; all 17 checks passed at `98b4dc8`. The authorized
 [Screenbox PR #17](https://github.com/ilyalissoboi/Screenbox/pull/17), implementation
@@ -1316,6 +1330,10 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
     No further manual test. Review fork #17 and native evidence #97, inspecting
     their actual final heads/CI; ask before merging. Read
     screenbox-automatic-audio-only.md for the exact binary scope and limits.
+    Review follow-up 23f708e8 now resolves opening/current metadata through the
+    same cancellable path before classification/local mutation. New logic suites
+    142/176 and both MSIX/payload checks pass; the original manual record remains
+    unchanged for 1.0.0.15. See the separate screenbox-api6-review evidence JSON.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1556,5 +1574,9 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 > checks, four runtime captures and written MP3/FLAC/mixed-queue/rapid-Next/
 > transition-Stop observations pass on Mac/macOS 26.7.1 and Apple TV/tvOS 26.6.
 > Conversion is restored OFF, app open/paused and final owned cache is empty.
-> No further manual test is pending. Reuse unchanged cancellation/full codec
+> Review follow-up 23f708e8 fixes current-item classification during Opening.
+> Logic 142/176, thirteen new race/refusal cases and both MSIX/payload checks pass.
+> Read the separate screenbox-api6-review validation record. No new app is
+> installed or receiver result claimed for this fix; the original manual record
+> remains unchanged. Reuse unchanged cancellation/full codec
 > evidence, preserve ordinary ci.207 and all deferrals, and ask before merging.

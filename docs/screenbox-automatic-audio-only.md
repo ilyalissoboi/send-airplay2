@@ -13,6 +13,28 @@ The [approved publication/public downloads](audio-only-package-publication.md)
 are prerequisites already completed; no asset is republished or replaced here.
 Ordinary codec-free ci.207 remains unchanged.
 
+## PR #17 review follow-up: opening-item metadata
+
+[The current-item race](https://github.com/ilyalissoboi/Screenbox/pull/17#discussion_r4324921353)
+is fixed in fork `23f708e8`. A current item can expose an empty or partial VLC
+track array while Cast is already available. Current and queued opt-in items
+now share bounded, cancellable metadata resolution using an independently
+owned brokered descriptor as needed. Complete, nonempty inventories are reused;
+incomplete/empty parser output refuses. Stop, a player swap or an item change
+wins before the request pauses the local player or starts a native cast.
+Current VLC display size remains preferred; parsed display metadata provides
+an opening-video fallback. Descriptor/grant cleanup remains in `finally`.
+
+Regression logic suites pass 142/176 ordinary/opt-in, including thirteen new
+delayed-metadata/refusal/cancellation cases. The original manual gate below
+still belongs to its 1.0.0.15 executable/module hashes. This review follow-up
+does not install a new app or add receiver observations; packaged/CI checks are
+recorded separately from the historical playback gate. Both actual Release
+MSIX builds and pinned-payload inspections pass (2 ordinary DLLs, 40 opt-in
+native/source/notice files). Read [the separate review record](validation/screenbox-api6-review-windows-2026-10-20.json).
+The original receiver JSON remains unchanged. Inspect actual final PR-head CI
+separately; no new receiver observation is inferred from the review builds.
+
 ## Implemented boundary
 
 Opt-in local files use parsed track presence to choose AppleAudioV1 for audio
