@@ -1,5 +1,22 @@
 # Design and implementation sequence
 
+**D108 focused packaged automatic audio-only gate passed (2026-10-20).**
+[PR #93](https://github.com/ilyalissoboi/send-airplay2/pull/93), implementation
+`c868572`, records thirteen public preparation/cleanup checks over twelve owned,
+hash-verified brokered inputs plus three pre-file script refusals. Final enabled
+Native AOT UWP host 0.1.36.0 updates in place, preserving data/pairings/grants.
+Three actual AppContainer/executable/six-DLL captures match the inspected package.
+The user confirms converted-FLAC controls/seeks/natural end on Mac/macOS 26.7.1
+and Apple TV/tvOS 26.6, plus one Apple TV Stop without delayed restart; versions
+are unchanged. All sixteen offline/cast sources and stores release once with
+expected clear/removal/sibling behavior. Final cache children/sentinels are zero.
+Enabled UWP build/binary checks, zero-warning MSIX build and C# binding CTest pass.
+Inspect PR #93 final-head CI separately. Read [the evidence and limits](automatic-audio-only-uwp-gate.md).
+No further D108 manual check is pending; earlier lifecycle/format evidence was
+reused, with no cancellation or full listening-matrix repeat. After review/merge,
+Screenbox routing/queues and package/pin prerequisites are separate next work.
+Native/API/codec, Screenbox, quota, publication and all deferrals stay unchanged.
+
 **D107 native automatic audio-only receiver gate passed (2026-10-20).**
 [PR #92](https://github.com/ilyalissoboi/send-airplay2/pull/92) records 24 natural-end
 checks and two representative converted-FLAC Stops, confirmed by written user

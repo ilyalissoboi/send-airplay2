@@ -19,7 +19,9 @@ namespace SendAirPlay2.UwpHost
     /// <item><c>discover-model MODEL</c>: one scan; requires one receiver of that model.</item>
     /// <item><c>profile NAME</c>: selects a PasswordVault profile (script-token syntax).</item>
     /// <item><c>fixtures</c>: manually grants the folder containing the nine original receiver controls.</item>
-    /// <item><c>cast vault|builtin LABEL [remux|progressive|automatic|stereo] [start=SECONDS] [preserve] [type=audio/mp4|audio/mpeg|video/mp4]</c>:
+    /// <item><c>audio-fixtures</c>: manually grants the owned automatic audio-only fixture folder.</item>
+    /// <item><c>audio-checks</c>: offline public preparation/cleanup checks over those grants.</item>
+    /// <item><c>cast vault|builtin LABEL [remux|progressive|automatic|stereo] [audio-only] [start=SECONDS] [preserve] [type=audio/mp4|audio/mpeg|video/mp4]</c>:
     /// casts the remembered file; remux is the default. An explicit type requires progressive delivery.</item>
     /// <item><c>wait SECONDS</c>, <c>pause</c>, <c>play</c>, <c>seek SECONDS</c>, <c>status</c>, <c>stop</c>.</item>
     /// <item><c>wait-state STATE SECONDS</c>: until the receiver reports that PlaybackState.</item>
@@ -137,6 +139,10 @@ namespace SendAirPlay2.UwpHost
                     return true;
                 case "fixtures":
                     return await PickReceiverFixtures();
+                case "audio-fixtures":
+                    return words.Length == 1 && await PickAudioOnlyFixtures();
+                case "audio-checks":
+                    return words.Length == 1 && await CheckAudioOnlyFixtures();
                 case "cast":
                     return await ScriptCast(words);
                 case "wait":
@@ -185,6 +191,7 @@ namespace SendAirPlay2.UwpHost
             var delivery = CastDelivery.HlsRemux;
             var startSeconds = 0.0;
             var preserveAudio = false;
+            var audioOnly = false;
             string? contentType = null;
             for (var index = 3; index < words.Length; ++index)
             {
@@ -208,6 +215,10 @@ namespace SendAirPlay2.UwpHost
                 else if (option == "preserve")
                 {
                     preserveAudio = true;
+                }
+                else if (option == "audio-only")
+                {
+                    audioOnly = true;
                 }
                 else if (option == "type=audio/mp4")
                 {
@@ -233,6 +244,11 @@ namespace SendAirPlay2.UwpHost
                 Log("Script: preserve requires automatic delivery");
                 return false;
             }
+            if (audioOnly && delivery != CastDelivery.AutomaticAudioHls)
+            {
+                Log("Script: audio-only requires automatic delivery");
+                return false;
+            }
             if (contentType != null && delivery != CastDelivery.Progressive)
             {
                 Log("Script: explicit content type requires progressive delivery");
@@ -249,9 +265,9 @@ namespace SendAirPlay2.UwpHost
             Log("Script: file " + label + " is " + size + " bytes, type " + file.FileType.ToLowerInvariant());
             return words[1] == "vault"
                        ? await StartCast(ProfileBox.Text.Trim(), new PasswordVaultStore(), "PasswordVault", file,
-                                         delivery, startSeconds, preserveAudio, contentType)
+                                         delivery, startSeconds, preserveAudio, contentType, audioOnly)
                        : await StartCast(BuiltInProfileBox.Text.Trim(), null, "built-in", file, delivery,
-                                         startSeconds, preserveAudio, contentType);
+                                         startSeconds, preserveAudio, contentType, audioOnly);
         }
 
         /// <summary>Manually grants a folder of original D88 controls, remembering

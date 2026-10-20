@@ -79,7 +79,8 @@ namespace SendAirPlay2.UwpHost
                    (status.PositionSeconds.HasValue ? status.PositionSeconds.Value.ToString("F1") : "unknown") +
                    " failure=" + status.FailureChannel + "/" + status.FailureReason +
                    " cleaned=" + (status.CleanedUp ? "yes" : "no") +
-                   (status.AudioDecision is { } audio ? " audio_action=" + audio.Action +
+                   (status.AudioDecision is { } audio ? " audio_profile=" + audio.Profile +
+                    " audio_action=" + audio.Action + " audio_reason=" + audio.Reason +
                     " source_family=" + audio.SourceFamily + " output_family=" + audio.OutputFamily +
                     " selected_audio_id=" + audio.SelectedAudioId + " channels=" + audio.OutputChannels : string.Empty);
         }
@@ -319,7 +320,7 @@ namespace SendAirPlay2.UwpHost
         /// </summary>
         private Task<bool> StartCast(string profile, ICredentialStore? store, string storeName, StorageFile file,
                                      CastDelivery delivery, double startSeconds, bool preserveAudio = false,
-                                     string? contentType = null)
+                                     string? contentType = null, bool audioOnly = false)
         {
             // Reserve the single cast slot before any asynchronous work, so two quick
             // clicks cannot both start a cast (one of which Stop could never reach).
@@ -353,6 +354,7 @@ namespace SendAirPlay2.UwpHost
                         Profile = profile,
                         CredentialStore = store,
                         Delivery = delivery,
+                        AudioProfile = audioOnly ? AudioDeliveryProfile.AppleAudioV1 : AudioDeliveryProfile.AppleHlsV1,
                         ContentType = contentType,
                         StartPositionSeconds = startSeconds,
                         CacheQuotaBytes = converts ? 512ul * 1024 * 1024 : 0,

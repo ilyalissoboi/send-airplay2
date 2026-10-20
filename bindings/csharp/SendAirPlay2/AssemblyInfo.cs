@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("SendAirPlay2.Tests")]
 // The offline AppContainer harness verifies the same callback tables and owners.
 [assembly: InternalsVisibleTo("StereoRuntimeValidation")]
+[assembly: InternalsVisibleTo("SendAirPlay2.UwpHost")]
