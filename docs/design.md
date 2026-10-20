@@ -1,5 +1,24 @@
 # Design and implementation sequence
 
+**D113 Screenbox audio-only preview candidate prepared (2026-10-20).**
+Fork #17 merged as `b2b987d6` (all four checks at `2a001be1`); native #97 merged
+as `65dd17f` (all 17 at `6effcf1`). The user authorized release-candidate
+preparation. An isolated export of that exact fork main builds x64 Release
+preview `0.2.0-preview.1`, package `0.2.0.0`, with existing preview identity/data
+and public ci.330. All 176 release-source tests, exact assembly revision, all
+40 pinned payload files, dependency metadata and complete source/installer
+checksum coverage pass. Clean-main [run 39430175011](https://github.com/ilyalissoboi/Screenbox/actions/runs/39430175011)
+passes all four checks. The exact installer ZIP upgrades preview 0.1.0.0 in
+place; activation/AppContainer/executable checks pass, with Store/debug
+registrations unchanged. Installer ZIP SHA-256 is
+`63c3f25948520e5555f91121930391e697a230cf8de1dcc2020451c277e646a0`.
+Read [candidate evidence and publication boundary](screenbox-audio-only-preview-candidate.md).
+No tag/release/assets are published; separate explicit approval is required for
+these exact five assets and original target b2b987d6, then fresh public-download
+verification. Candidate notes are reviewable in the fork. This adds upgrade/
+process evidence, not a new receiver or visual observation. D112/review scopes,
+quota and hardware/user deferrals remain. Preserve retained candidate bytes.
+
 **D112 opening-item review follow-up verified locally (2026-10-20).**
 The [Screenbox #17 review](https://github.com/ilyalissoboi/Screenbox/pull/17#discussion_r4324921353)
 found that Cast can be requested before VLC inserts the current item's tracks.

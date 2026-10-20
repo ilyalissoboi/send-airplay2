@@ -1,5 +1,24 @@
 # Separate-session development handoff
 
+**D113 Screenbox audio-only preview candidate prepared (2026-10-20).**
+Fork #17 merged as `b2b987d6` (all four checks at `2a001be1`); native #97 merged
+as `65dd17f` (all 17 at `6effcf1`). The user authorized release-candidate
+preparation. An isolated export of that exact fork main builds x64 Release
+preview `0.2.0-preview.1`, package `0.2.0.0`, with existing preview identity/data
+and public ci.330. All 176 release-source tests, exact assembly revision, all
+40 pinned payload files, dependency metadata and complete source/installer
+checksum coverage pass. Clean-main [run 39430175011](https://github.com/ilyalissoboi/Screenbox/actions/runs/39430175011)
+passes all four checks. The exact installer ZIP upgrades preview 0.1.0.0 in
+place; activation/AppContainer/executable checks pass, with Store/debug
+registrations unchanged. Installer ZIP SHA-256 is
+`63c3f25948520e5555f91121930391e697a230cf8de1dcc2020451c277e646a0`.
+Read [candidate evidence and publication boundary](screenbox-audio-only-preview-candidate.md).
+No tag/release/assets are published; separate explicit approval is required for
+these exact five assets and original target b2b987d6, then fresh public-download
+verification. Candidate notes are reviewable in the fork. This adds upgrade/
+process evidence, not a new receiver or visual observation. D112/review scopes,
+quota and hardware/user deferrals remain. Preserve retained candidate bytes.
+
 **D112 opening-item review follow-up verified locally (2026-10-20).**
 The [Screenbox #17 review](https://github.com/ilyalissoboi/Screenbox/pull/17#discussion_r4324921353)
 found that Cast can be requested before VLC inserts the current item's tracks.
@@ -110,7 +129,7 @@ and brokered sources, then Screenbox routing/queues. No runtime/API, codec,
 package, Screenbox, quota or publication change is included. Speaker/RAOP,
 discrete-surround, Chromecast, remote-Stop and long-input deferrals remain.
 
-Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#96 are merged. `main` contains
+Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#97 are merged. `main` contains
 the experimental C API version 6, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -1321,19 +1340,19 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
     prerelease. The tag targets the original source 746c520; fresh unauthenticated
     package/checksum downloads match the reviewed bytes. Read
     audio-only-package-publication.md. Do not repeat publication or replace assets.
-16. **D112 focused Screenbox API-6 gate passed.** Fork PR #17, implementation
-    59d83910, pins ci.330 and selects per-item audio/video policy. Logic 142/163,
-    both actual MSIX/payload checks 2/40 and four actual AppContainer/executable/
-    six-DLL captures pass. User-confirmed MP3, FLAC refusal/conversion, natural
-    mixed queues, rapid Next and transition Stop pass on the recorded receivers.
-    Conversion restored OFF, app open/paused, final cache children/files zero.
-    No further manual test. Review fork #17 and native evidence #97, inspecting
-    their actual final heads/CI; ask before merging. Read
-    screenbox-automatic-audio-only.md for the exact binary scope and limits.
-    Review follow-up 23f708e8 now resolves opening/current metadata through the
-    same cancellable path before classification/local mutation. New logic suites
-    142/176 and both MSIX/payload checks pass; the original manual record remains
-    unchanged for 1.0.0.15. See the separate screenbox-api6-review evidence JSON.
+16. **D112 integration/review merged.** Fork #17 merged b2b987d6 with all four
+    checks at 2a001be1; native evidence #97 merged 65dd17f with all 17 at 6effcf1.
+    Original receiver observations and review regression evidence keep their
+    exact binary scopes. Read screenbox-automatic-audio-only.md.
+17. **D113 updated preview candidate prepared.** Exact fork b2b987d6 source,
+    clean-main CI run 39430175011 all four checks, 176 release-source logic tests,
+    MSIX/payload/dependency/source/checksum audits and actual preview upgrade/
+    activation checks pass. Five retained assets and exact notes are reviewable;
+    no publication is approved/performed. Read screenbox-audio-only-preview-candidate.md.
+18. **Next: review candidate evidence/notes and approve publication explicitly.**
+    Tag airplay-preview-0.2.0-preview.1 must target b2b987d6. Upload only the exact
+    retained five assets; do not regenerate bytes under this version or replace
+    previous assets. Verify fresh public downloads after publication.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1564,19 +1583,17 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. Native #96 merged as b57981b with all 17 checks at 98b4dc8. D111's
-> ci.330 publication/public downloads are complete; do not repeat publication.
-> D112's focused Screenbox API-6 gate passed in development 1.0.0.15. Read
-> screenbox-automatic-audio-only.md and its sanitized record. Review open fork
-> PR #17 on codex/airplay-api6-audio-routing and native evidence PR #97 on
-> codex/screenbox-api6-routing-evidence, inspecting their actual final heads/CI.
-> Follow current fork instructions before edits. Logic 142/163, both MSIX/payload
-> checks, four runtime captures and written MP3/FLAC/mixed-queue/rapid-Next/
-> transition-Stop observations pass on Mac/macOS 26.7.1 and Apple TV/tvOS 26.6.
-> Conversion is restored OFF, app open/paused and final owned cache is empty.
-> Review follow-up 23f708e8 fixes current-item classification during Opening.
-> Logic 142/176, thirteen new race/refusal cases and both MSIX/payload checks pass.
-> Read the separate screenbox-api6-review validation record. No new app is
-> installed or receiver result claimed for this fix; the original manual record
-> remains unchanged. Reuse unchanged cancellation/full codec
-> evidence, preserve ordinary ci.207 and all deferrals, and ask before merging.
+> documents. D112 fork #17/native #97 are merged as b2b987d6/65dd17f with all
+> four/17 checks passed. D113 prepares Screenbox AirPlay Preview 0.2.0-preview.1
+> from exact merged fork b2b987d68b844ef0e3f577cc0622d223a329adf9. Read
+> screenbox-audio-only-preview-candidate.md and its sanitized evidence, plus
+> the fork's candidate notes. Clean-main run 39430175011 passes all four checks;
+> 176 release-source tests, package/source/checksum and installer upgrade/launch
+> audits pass. Preview 0.2.0.0 is installed; Store/debug registrations remain
+> unchanged. This adds no receiver/visual observation. Five exact assets are
+> retained under build-review/d113/assets. Publication is not approved/performed;
+> obtain explicit approval, reuse it once given, publish only those retained
+> assets at tag airplay-preview-0.2.0-preview.1 targeting b2b987d6, then verify
+> fresh public downloads. Continue any open candidate/evidence PR branches and
+> inspect actual heads before writing. Preserve D112 scopes, quota and deferrals;
+> ask before merging. Do not republish earlier ci.330 or preview assets.
