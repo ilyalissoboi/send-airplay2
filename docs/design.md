@@ -1,5 +1,21 @@
 # Design and implementation sequence
 
+**D110 clean-main API 6 candidate prepared (2026-10-20).**
+After #94 merged as `746c520` (all 17 checks at `275ceaa`), main workflow
+[39399818931](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39399818931)
+built `SendAirPlay2.StereoAac 0.6.0-ci.330` from that exact source. All 17 main
+checks pass. The unchanged 21,355,553-byte archive has SHA-256
+`9567655c5c4f0183fddeaea9f497d869d28b79036d599cbf5d87f241e74eb3ad`.
+Independent source/six-DLL/UWP distribution/pinned-source/22-overlay/license
+audit and fresh API-6 consumer, managed/native copy, RID/direct/transitive
+refusals pass. Same-run default assets are comparison only; all three ordinary
+architectures pass static inspection. [Candidate evidence, notes and boundary](audio-only-package-candidate.md)
+are complete on `codex/api6-clean-main-candidate`; inspect its actual PR head/CI.
+No release/tag/assets or Screenbox pin changed. Publication requires separate
+explicit approval for these exact bytes/tag/target, then public-download
+verification before Screenbox updates. No new receiver/queue observation is
+claimed; D107/D108 retain their original binary scope. All deferrals remain.
+
 **D109 API 6 package readiness passed locally (2026-10-20).**
 The user authorizes package preparation after #93 merged as `ee968e9`; all 17
 checks passed at final head `f31227b`. [The readiness record](audio-only-package-readiness.md)
