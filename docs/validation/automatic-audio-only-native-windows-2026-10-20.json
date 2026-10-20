@@ -1,0 +1,265 @@
+{
+  "decision": "D107",
+  "date": "2026-10-20",
+  "timezone": "Asia/Tokyo",
+  "result": "PREPARED_OFFLINE_PASSED_RECEIVER_OBSERVATIONS_PENDING",
+  "base": {
+    "pr": 91,
+    "merge_commit": "d37824928b57279ebf64cd9c4700195d4a868388",
+    "final_head": "3daa9a10c42f2555bb4c88ab4a797cc7e4426da7",
+    "ci_checks_passed": 17,
+    "ci_run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39246535013"
+  },
+  "runtime": "Unchanged merged API 6 enabled x64 shared native C API host; rebuilt with native_changes=no",
+  "build_hashes": {
+    "airplay2-api-host.exe": "3f479d4eebd273d5529e1078339e4a17a1acb0fa774263c1eb82fb63339a3d7b",
+    "send_airplay2.dll": "11cb2ea37b73266bb6920f4a6581cadae5ba5ec0a8bf53ce03aaf14308660d07",
+    "libcrypto-3-x64.dll": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+    "botan-3.dll": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+    "avcodec-63.dll": "4647f7a9b560565a943f40529495a0b7baf092f2ad3506539fb0740b33ef0682",
+    "avformat-63.dll": "66f983889f580a1cf97c81656038d5e024838f76273587ce24954baafe558737",
+    "avutil-61.dll": "9b4832840ccc72d4842360b93c6d5bb5a46bad99abe4308637aa101e71b83a42",
+    "swresample-7.dll": "4b4ade761f1e1dd1cdb33e7568d3400fccd03ee856a45c2fd0ce11b5dcd9d1b8"
+  },
+  "loaded_cast_modules": "Not yet checked; no receiver cast has run",
+  "fixture_generator_sha256": "ba3eee9aabc30be6e70e0812e9280c289ccc31201b8dfc9cc767716d6f3f3a51",
+  "fixtures": {
+    "license": "Apache-2.0 original repository tone and edit authoring",
+    "generator": "tools/audio-only-probe/generate_automatic_fixtures.py",
+    "ffmpeg": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+    "ffprobe": "ffprobe version 9.0.2-full_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers",
+    "duration_seconds": 64,
+    "sample_rate": 48000,
+    "channels": 2,
+    "video_streams": 0,
+    "pulse": "0.75 s sound/0.25 s silence; 10 ms fades",
+    "markers": [
+      {
+        "start": 0,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start": 8,
+        "left_hz": 0,
+        "right_hz": 660
+      },
+      {
+        "start": 16,
+        "left_hz": 880,
+        "right_hz": 880
+      },
+      {
+        "start": 24,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start": 32,
+        "left_hz": 1100,
+        "right_hz": 1100
+      },
+      {
+        "start": 40,
+        "left_hz": 0,
+        "right_hz": 660
+      },
+      {
+        "start": 48,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start": 56,
+        "left_hz": 880,
+        "right_hz": 880
+      }
+    ],
+    "edited_pcm": "8 s initial silence, then source [8,64); marker clock unchanged after 8 s",
+    "files": [
+      {
+        "case": "wave",
+        "file": "pcm.wav",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288044,
+        "sha256": "2a615c09d1822d3d47061cb025e8026ee84039b697bd3af1656b70492fcca5ca"
+      },
+      {
+        "case": "aac",
+        "file": "aac.m4a",
+        "codec": "aac",
+        "action": 4,
+        "source_family": 1,
+        "selected_id": 1,
+        "bytes": 1211842,
+        "sha256": "b8ba1d395e63b847a8ac4b1a7d6574f113e9670e4ff8609dd30b31c0c218c61c"
+      },
+      {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      {
+        "case": "opus",
+        "file": "opus.ogg",
+        "codec": "opus",
+        "action": 3,
+        "source_family": 6,
+        "selected_id": 1,
+        "bytes": 1500766,
+        "sha256": "3241b721d3c41bce2db394e7244a3d18fbf17de6a89f34b23be53a5ecdcacb1e"
+      },
+      {
+        "case": "vorbis",
+        "file": "vorbis.ogg",
+        "codec": "vorbis",
+        "action": 3,
+        "source_family": 7,
+        "selected_id": 1,
+        "bytes": 174546,
+        "sha256": "984b676ab211c89e494e1d6354d39086ee03e41e32ac89961bb542c106863dd4"
+      },
+      {
+        "case": "mp4-flac",
+        "file": "flac.mp4",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 677878,
+        "sha256": "d461b10c6ca9d0e119e35b9408d1bb2918e8334516264d80f308dbe47ef3f2d9"
+      },
+      {
+        "case": "mov-pcm",
+        "file": "pcm.mov",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288705,
+        "sha256": "10051a301badb4fc19a25564c4b845b22ea159b2617402d4d8978c0a32fc9eb1"
+      },
+      {
+        "case": "mkv-flac",
+        "file": "flac.mka",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 680062,
+        "sha256": "8f5f008ab5c253517d4640dd7d64e1c745dabcbd2689ab264ac413e790e8be13"
+      },
+      {
+        "case": "mkv-pcm",
+        "file": "pcm.mka",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12309990,
+        "sha256": "4dc76143ed4637f35955387a32b08aed1a1a32d80075ff78113e2ca272e10674"
+      },
+      {
+        "case": "edited-pcm",
+        "file": "edited.mov",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288753,
+        "sha256": "473f7388f09082d61241d564c268ea7f898a1cf011653427868804e47aaa879b"
+      }
+    ]
+  },
+  "offline_preparation": [
+    {
+      "case": "wave",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=8 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "aac",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=4 reason=4 source_family=1 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "flac",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=5 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "opus",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=6 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "vorbis",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=7 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "mp4-flac",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=5 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "mov-pcm",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=8 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "mkv-flac",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=5 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "mkv-pcm",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=8 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "edited-pcm",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=8 output_family=1 channels=2",
+      "cache_entries_after": 0
+    }
+  ],
+  "discovery": {
+    "mac_recorded_model_unique": true,
+    "tv_recorded_model_unique": true,
+    "addresses_identifiers_names_recorded": false
+  },
+  "receiver_observations": "Pending availability/version confirmation; no cast or audible claim",
+  "no_changes": [
+    "C++ runtime/API",
+    "Codec profile/dependencies",
+    "Package installation",
+    "Screenbox",
+    "Quota",
+    "Publication"
+  ],
+  "deferrals": [
+    "Speakers/RAOP",
+    "Discrete surround",
+    "Chromecast hardware",
+    "User-deferred remote Stop classification",
+    "Separate long-input/cache-quota evaluation"
+  ]
+}

@@ -1,5 +1,20 @@
 # Design and implementation sequence
 
+**D107 native automatic audio-only gate prepared (2026-10-20).**
+Native #91 merged as d378249; all 17 checks passed at final head 3daa9a1 in
+[run 39246535013](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39246535013).
+The user authorizes the next native receiver gate. The unchanged merged API 6
+shared host is rebuilt; ten original 64-second AAC/FLAC/PCM/Ogg/container/edit
+fixtures pass public offline preparation with expected decisions and empty
+post-check cache. Existing MP3 fixtures retain their bytes/provenance. Discovery
+finds both recorded receiver models; availability/version and audible/prompt
+confirmation are pending. No D107 receiver cast has run yet. Read
+[the native plan and limits](automatic-audio-only-native-gate.md).
+Continue codex/audio-only-native-receiver-gate while its PR is open and inspect
+its actual head. Preserve saved pairings, written manual observations and all
+hardware/user deferrals. Packaged generated-HLS validation follows this native
+gate and review/merge; no package, Screenbox, codec-profile, quota or publication change.
+
 **D106 explicit automatic audio-only offline gate complete (2026-10-19).**
 Native #90 merged as `06e094c`; all 17 checks passed at final head `fec9448` in
 [run 39209440573](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39209440573).

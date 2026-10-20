@@ -1,5 +1,23 @@
 # Native audio-only URL feasibility probe
 
+The original D97 procedure below deliberately uses legacy progressive playback.
+API 6 separately adds the explicit Apple Audio v1 automatic profile; its current
+native receiver gate is described in
+[automatic-audio-only-native-gate.md](../../docs/automatic-audio-only-native-gate.md).
+Generate its owned AAC/FLAC/PCM/Ogg/container/edit marker matrix in a fresh directory:
+
+```powershell
+python tools/audio-only-probe/generate_automatic_fixtures.py build-review/automatic-audio-only-media
+```
+
+This reuses the same 64-second original PCM channel markers, existing Apache-2.0
+edit-box author and external development encoders. No generated media is committed.
+The manifest records input/output hashes and actual tool versions. The edited MOV
+has eight seconds of initial silence followed by source [8,64), so marker positions
+at/after eight seconds remain unchanged. MP3 checks reuse the separately committed
+CBR/VBR fixtures and their provenance. Use `--automatic-audio --audio-only` for this
+new gate; historical direct-playback evidence below does not validate conversion.
+
 Generate an original 64-second AAC-LC stereo M4A without a video track:
 
 ```powershell
@@ -23,8 +41,9 @@ build-static/Release/airplay2-api-host.exe --address RECEIVER_ADDRESS --profile 
 ```
 
 This uses progressive HTTP with the correct audio MIME type. Do not add
-`--remux`, `--automatic-audio` or a dummy video track. The current video-remux
-and automatic-audio paths still require video. Addresses and credential-profile
+`--remux`, `--automatic-audio` or a dummy video track. The original video-remux
+and default automatic video profile require video; API 6's explicit audio-only
+profile is separate. Addresses and credential-profile
 contents do not belong in committed results.
 
 The fixture pulses for 0.75 seconds with a 0.25-second gap each second. Its
