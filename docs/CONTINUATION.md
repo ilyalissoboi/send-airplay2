@@ -1,16 +1,18 @@
 # Separate-session development handoff
 
-**D109 API 6 package readiness in progress (2026-10-20).**
+**D109 API 6 package readiness passed locally (2026-10-20).**
 The user authorizes package preparation after #93 merged as `ee968e9`; all 17
-checks passed at final head `f31227b`. Read [the package corrections and ordered checkpoints](audio-only-package-readiness.md).
-The shipping README/consumer checks still described/exercised API 5. Both new
-package bases become `0.6.0`, matching the experimental API convention; the
-packer/workflow, finite audio-only descriptions and actual restored API-6
-consumer members are being updated. Local distribution/profile/consumer gates
-are pending. No new receiver checks, publication or Screenbox edits are included.
-A clean-main candidate follows review/merge of these packaging corrections;
-publication needs its separate approval. Existing published assets/pins, native/
-codec behavior, quota and all hardware/user deferrals remain unchanged.
+checks passed at final head `f31227b`. [The readiness record](audio-only-package-readiness.md)
+covers implementation `04a3559`: both new package bases `0.6.0`, finite audio-only
+shipping descriptions and actual restored API-6 consumer coverage. Local clean-
+branch packages pass thirteen profile controls, API-6 compile/six-DLL copy,
+RID/direct/transitive refusals, binding CTest and static source/license audit.
+The unchanged API-5 package fails the strengthened compile check as expected.
+These local x64 archives are validation inputs; no clean-main candidate or
+release is prepared/published yet. After review/merge, dispatch clean main,
+audit its exact artifact and prepare notes/checksum before publication approval.
+Screenbox pin/routing/queues follow separately. Existing published assets/pins,
+native/codec behavior, quota and all hardware/user deferrals remain unchanged.
 
 **D108 focused packaged automatic audio-only gate passed (2026-10-20).**
 [PR #93](https://github.com/ilyalissoboi/send-airplay2/pull/93), implementation
@@ -49,7 +51,7 @@ and brokered sources, then Screenbox routing/queues. No runtime/API, codec,
 package, Screenbox, quota or publication change is included. Speaker/RAOP,
 discrete-surround, Chromecast, remote-Stop and long-input deferrals remain.
 
-Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#92 are merged. `main` contains
+Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#93 are merged. `main` contains
 the experimental C API version 6, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -1247,8 +1249,17 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
     No further manual check. Read automatic-audio-only-uwp-gate.md and inspect
     actual-head CI. Earlier lifecycle/format evidence is reused without retesting
     cancellation or the full listening matrix.
-13. **Next after review/merge: Screenbox per-item routing/queues and package/pin
-    prerequisites**, preserving exact binary scopes and hardware/user deferrals.
+13. **D109 API 6 package readiness passed locally.** Continue the current PR on
+    `codex/audio-only-package-candidate`. Implementation 04a3559 updates both new
+    package bases to 0.6.0 and exercises actual restored API-6 members. Local x64
+    packs pass thirteen profile controls, fresh consumer/copy/RID/direct/transitive
+    checks, the old-API-5 negative control and source/license audit. No runtime,
+    receiver, Screenbox or published-asset change. Read audio-only-package-readiness.md.
+14. **After review/merge, prepare the clean-main candidate.** Dispatch main;
+    download/audit exact artifacts and prepare checksum/release notes before
+    publication approval. Local/PR validation packs are not publication candidates.
+15. **Then Screenbox per-item routing/queues and package/pin prerequisites**,
+    preserving exact binary scopes, earlier lifecycle coverage and all deferrals.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1479,15 +1490,15 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. PR #92 is merged; D107 native format checks passed. D108 focused
-> packaged automatic audio-only checks also passed: thirteen offline brokered
-> checks plus converted-FLAC natural end on both recorded receivers and Apple TV
-> Stop. Read automatic-audio-only-uwp-gate.md and its sanitized evidence. PR #93
-> is on codex/audio-only-uwp-focused-gate; inspect its actual head/CI before writing.
-> Final package 0.1.36.0 uses implementation c868572 and unchanged merged native
-> source 55f8ac9. Runtime AppContainer/executable/six-DLL hashes match; sixteen
-> source/store releases and empty final cache are verified. The app remains idle
-> and open; no further D108 manual check is pending. After review/merge, consider
-> Screenbox routing/queues and their package/pin prerequisites as separate work.
-> Reuse unchanged lifecycle/format evidence. No cancellation/full codec-matrix
-> repeat, release or quota change. Preserve deferrals and ask before merging.
+> documents. PR #93 is merged as ee968e9 with all 17 checks passed at f31227b;
+> D107/D108 receiver gates are complete. The user authorized the next package
+> preparation. D109 on codex/audio-only-package-candidate corrects API-5 shipping
+> descriptions/consumer coverage and aligns both new package bases with API 6
+> as 0.6.0. Implementation 04a3559 passes local package/profile/consumer/binding
+> checks and the old-API-5 negative control. Read audio-only-package-readiness.md
+> and its evidence; inspect the actual PR head/CI before writing. No clean-main
+> candidate or release is prepared yet. After review/merge, dispatch main, audit
+> its exact artifact, prepare notes/checksum, then request publication approval.
+> Screenbox routing/queues follow separately. Published ci.207/ci.294 and pins
+> remain unchanged. Reuse earlier lifecycle evidence; no manual cancellation or
+> full codec-matrix repeat. Preserve deferrals and ask before merging.

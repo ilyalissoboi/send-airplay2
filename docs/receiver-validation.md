@@ -1,16 +1,18 @@
 # Receiver validation record
 
-**D109 API 6 package readiness in progress (2026-10-20).**
+**D109 API 6 package readiness passed locally (2026-10-20).**
 The user authorizes package preparation after #93 merged as `ee968e9`; all 17
-checks passed at final head `f31227b`. Read [the package corrections and ordered checkpoints](audio-only-package-readiness.md).
-The shipping README/consumer checks still described/exercised API 5. Both new
-package bases become `0.6.0`, matching the experimental API convention; the
-packer/workflow, finite audio-only descriptions and actual restored API-6
-consumer members are being updated. Local distribution/profile/consumer gates
-are pending. No new receiver checks, publication or Screenbox edits are included.
-A clean-main candidate follows review/merge of these packaging corrections;
-publication needs its separate approval. Existing published assets/pins, native/
-codec behavior, quota and all hardware/user deferrals remain unchanged.
+checks passed at final head `f31227b`. [The readiness record](audio-only-package-readiness.md)
+covers implementation `04a3559`: both new package bases `0.6.0`, finite audio-only
+shipping descriptions and actual restored API-6 consumer coverage. Local clean-
+branch packages pass thirteen profile controls, API-6 compile/six-DLL copy,
+RID/direct/transitive refusals, binding CTest and static source/license audit.
+The unchanged API-5 package fails the strengthened compile check as expected.
+These local x64 archives are validation inputs; no clean-main candidate or
+release is prepared/published yet. After review/merge, dispatch clean main,
+audit its exact artifact and prepare notes/checksum before publication approval.
+Screenbox pin/routing/queues follow separately. Existing published assets/pins,
+native/codec behavior, quota and all hardware/user deferrals remain unchanged.
 
 **D108 focused packaged automatic audio-only gate passed (2026-10-20).**
 [PR #93](https://github.com/ilyalissoboi/send-airplay2/pull/93), implementation
