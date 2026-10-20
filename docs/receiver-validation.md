@@ -1,5 +1,16 @@
 # Receiver validation record
 
+**D108 focused packaged automatic audio-only gate in progress (2026-10-20).**
+The user authorizes the reduced UWP approach after #92 merged as `55f8ac9`.
+Read [the changed paths and exact scope](automatic-audio-only-uwp-gate.md).
+The host adds explicit AppleAudioV1 selection and automated brokered preparation/
+cleanup checks. The enabled UWP/native binary checks, package build and existing
+C# binding CTest pass. Registration, actual AppContainer/hash verification,
+automated granted-file checks, one converted-FLAC natural-end case per receiver
+and one Apple TV Stop are pending. Reuse earlier lifecycle/format evidence;
+no cancellation or full manual codec matrix repeat. Native/API/codec, Screenbox,
+quota, publication and all hardware/user deferrals stay unchanged.
+
 **D107 native automatic audio-only receiver gate passed (2026-10-20).**
 [PR #92](https://github.com/ilyalissoboi/send-airplay2/pull/92) records 24 natural-end
 checks and two representative converted-FLAC Stops, confirmed by written user

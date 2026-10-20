@@ -52,7 +52,7 @@ adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
 Switching variants keeps the app's data only as an in-place update, which
 Windows allows only to a higher version. Before building the other variant,
 raise its `Version` above the installed one (the committed manifests are
-0.1.32.0 and 0.1.33.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
+0.1.34.0 and 0.1.35.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
 0.1.4.0, D55 used 0.1.6.0, 0.1.8.0, 0.1.10.0 and 0.1.12.0, D57 0.1.14.0 and D61
 0.1.16.0, 0.1.18.0, 0.1.20.0 and 0.1.22.0).
 Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
@@ -71,8 +71,10 @@ and `#` comments are skipped:
 | `discover [NAME]` | One scan; fills the address (default: the form's receiver name) |
 | `discover-model MODEL` | One scan; fills the address only when exactly one receiver matches the model |
 | `profile NAME` | Sets the PasswordVault profile; NAME uses the same 1-32 character syntax as script names |
-| `cast vault\|builtin LABEL [remux\|progressive\|automatic\|stereo] [start=SECONDS] [preserve] [type=audio/mp4\|audio/mpeg\|video/mp4]` | Casts the remembered file; remux is the default. `preserve` requires automatic delivery and refuses conversion. Explicit MIME requires progressive delivery |
+| `cast vault\|builtin LABEL [remux\|progressive\|automatic\|stereo] [audio-only] [start=SECONDS] [preserve] [type=audio/mp4\|audio/mpeg\|video/mp4]` | Casts the remembered file; remux is the default. `audio-only` selects AppleAudioV1 and requires automatic delivery. `preserve` requires automatic delivery and refuses conversion. Explicit MIME requires progressive delivery |
 | `fixtures` | Opens a manual folder picker and remembers the nine original D88 receiver controls as `receiver-CODEC` |
+| `audio-fixtures` | Manually grants the twelve known owned D107 audio-only fixture names as `audioonly-CASE` |
+| `audio-checks` | Offline public AppleAudioV1 preparation over those grants: literal decisions, source borrowing, store/source cleanup, sibling preservation and FLAC permission refusal; hashes must match owned provenance |
 | `wait SECONDS` | Waits |
 | `pause`, `play`, `seek SECONDS`, `status`, `stop` | The button actions |
 | `wait-state STATE SECONDS` | Until the receiver reports that `PlaybackState` |
@@ -114,8 +116,8 @@ offline adapter. Example after manually remembering the fixture as `audio-only`:
 cast vault audio-only progressive type=audio/mp4
 ```
 
-The default capability manifest is version 0.1.32.0; the extra-server variant is
-0.1.33.0. D98 changes test-host options/diagnostics, not native audio policy,
+The default capability manifest is version 0.1.34.0; the extra-server variant is
+0.1.35.0. D98 changes test-host options/diagnostics, not native audio policy,
 Screenbox, audio-only HLS, transcoding or speaker transport. Receiver/package
 proof must be recorded separately from a successful build.
 
@@ -130,6 +132,12 @@ access. The [packaged MP3 gate](mp3-uwp-gate.md) passes on the two recorded
 receivers with MSIX 0.1.32.0: controls, natural end, separate Stop and applicable
 Mac consent cancellation. These test-host options do not expand native or
 Screenbox policy; see the record for exact source/binary bytes and limits.
+
+D108 adds script-only `automatic audio-only`, the two owned-fixture commands
+above and fixed-field profile/reason diagnostics. It uses the existing brokered
+source and TemporaryFolder cache, including the unchanged casting quota. Its
+[focused gate](automatic-audio-only-uwp-gate.md) distinguishes preparation checks
+from observed playback; earlier direct AAC/MP3 and native format gates are reused.
 
 Found while adding it: under Native AOT, `args is CommandLineActivatedEventArgs`
 was false for a command-line activation; testing `ActivationKind` and the
