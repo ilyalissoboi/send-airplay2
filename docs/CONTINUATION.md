@@ -1,5 +1,22 @@
 # Separate-session development handoff
 
+**D112 Screenbox API-6 integration in progress (2026-10-20).**
+Native #96 merged as `b57981b`; all 17 checks passed at `98b4dc8`. The user
+authorized the next slice. [Screenbox PR #17](https://github.com/ilyalissoboi/Screenbox/pull/17),
+implementation `59d83910`, pins public opt-in `0.6.0-ci.330` and selects the
+explicit audio/video profile from each current/queued item's parsed tracks.
+Permission cannot overwrite policy; ordinary ci.207 and the default-off setting
+remain. Complete queued metadata, independent display size and Stop/supersession
+guards prevent carrying video/audio state between items. Logic suites pass
+142/163 ordinary/opt-in; both actual Release MSIX builds and pinned payload
+checks pass (2/40 files). Development 1.0.0.15 updates in place, preserving data.
+Its actual package/AppContainer/executable/six-DLL capture matches ci.330.
+Focused written Mac/Apple TV checks are pending; no receiver success is claimed
+yet. Read [the scope and gate](screenbox-automatic-audio-only.md). Reuse unchanged
+consent-cancellation/full codec evidence. Native/codec behavior, quota,
+publication and all hardware/user deferrals remain unchanged. Continue the open
+fork branch/PR and inspect its actual head before editing.
+
 **D111 API 6 prerelease published and public downloads verified (2026-10-20).**
 After #95 merged as `a7f8202` (all 17 checks at `c2d1526`), the user explicitly
 approved publishing the exact D110 candidate. [SendAirPlay2.StereoAac 0.6.0-ci.330](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330)
@@ -74,7 +91,7 @@ and brokered sources, then Screenbox routing/queues. No runtime/API, codec,
 package, Screenbox, quota or publication change is included. Speaker/RAOP,
 discrete-surround, Chromecast, remote-Stop and long-input deferrals remain.
 
-Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#95 are merged. `main` contains
+Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#96 are merged. `main` contains
 the experimental C API version 6, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -1285,10 +1302,14 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
     prerelease. The tag targets the original source 746c520; fresh unauthenticated
     package/checksum downloads match the reviewed bytes. Read
     audio-only-package-publication.md. Do not repeat publication or replace assets.
-16. **Next: separate Screenbox API-6 pin and explicit per-item audio/video routing**,
-    followed by focused mixed-queue checks. Inspect current fork instructions;
-    preserve ordinary ci.207, user stereo-conversion defaults, exact binary scopes,
-    earlier lifecycle coverage and all deferrals.
+16. **D112 Screenbox API-6 integration in progress in fork PR #17.** Implementation
+    59d83910 pins public ci.330, selects per-item audio/video policy and preserves
+    ordinary ci.207. Logic 142/163, both actual MSIX/payload checks 2/40 and actual
+    AppContainer/executable/six-DLL verification pass. Development 1.0.0.15 is
+    installed with data preserved. Focused written receiver/routing/queue checks
+    are pending; no unchanged consent or full codec matrix is repeated. Continue
+    the open PR on codex/airplay-api6-audio-routing and inspect its actual head.
+    Read screenbox-automatic-audio-only.md before claiming the gate complete.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1519,16 +1540,14 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. PR #95 merged as a7f8202 with all 17 checks at c2d1526. D111 records
-> the approved publication of SendAirPlay2.StereoAac 0.6.0-ci.330 and independent
-> unauthenticated public package/checksum downloads matching the reviewed bytes.
-> Read audio-only-package-publication.md and its evidence. The tag resolves to
-> original source 746c520e17d812102a14ba4edae47a81239c4c81. Do not republish,
-> regenerate bytes under this version or ask for publication approval again.
-> Continue an open publication-evidence PR on codex/api6-candidate-publication,
-> inspecting its actual head/CI first. The next separate slice is Screenbox's
-> API-6 opt-in package pin, explicit per-item audio/video policy routing and
-> focused mixed-queue checks; read the fork's current instructions before edits.
-> Ordinary ci.207 and opt-in ci.294 pins are still unchanged. D107/D108 receiver
-> scopes remain tied to their exact binaries. Reuse unchanged cancellation and
-> full codec listening evidence. Preserve all deferrals and ask before merging.
+> documents. Native #96 merged as b57981b with all 17 checks at 98b4dc8. D111's
+> ci.330 publication/public downloads are complete; do not repeat publication.
+> D112 implements the authorized Screenbox integration in open fork PR #17 on
+> codex/airplay-api6-audio-routing, implementation 59d83910. Inspect its actual
+> head/CI and current fork instructions before edits. Read
+> screenbox-automatic-audio-only.md and its sanitized evidence. Logic 142/163,
+> both MSIX/payload checks and loaded AppContainer/executable/six-DLL verification
+> pass. Development 1.0.0.15 is installed with data preserved. Focused written
+> Mac/Apple TV checks are pending; collect actual user observations before marking
+> them passed. Do not repeat unchanged consent/full codec matrices. Preserve
+> ordinary ci.207, the default-off preference, all deferrals, and ask before merging.

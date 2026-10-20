@@ -1,5 +1,22 @@
 # Receiver validation record
 
+**D112 Screenbox API-6 integration in progress (2026-10-20).**
+Native #96 merged as `b57981b`; all 17 checks passed at `98b4dc8`. The user
+authorized the next slice. [Screenbox PR #17](https://github.com/ilyalissoboi/Screenbox/pull/17),
+implementation `59d83910`, pins public opt-in `0.6.0-ci.330` and selects the
+explicit audio/video profile from each current/queued item's parsed tracks.
+Permission cannot overwrite policy; ordinary ci.207 and the default-off setting
+remain. Complete queued metadata, independent display size and Stop/supersession
+guards prevent carrying video/audio state between items. Logic suites pass
+142/163 ordinary/opt-in; both actual Release MSIX builds and pinned payload
+checks pass (2/40 files). Development 1.0.0.15 updates in place, preserving data.
+Its actual package/AppContainer/executable/six-DLL capture matches ci.330.
+Focused written Mac/Apple TV checks are pending; no receiver success is claimed
+yet. Read [the scope and gate](screenbox-automatic-audio-only.md). Reuse unchanged
+consent-cancellation/full codec evidence. Native/codec behavior, quota,
+publication and all hardware/user deferrals remain unchanged. Continue the open
+fork branch/PR and inspect its actual head before editing.
+
 **D111 API 6 prerelease published and public downloads verified (2026-10-20).**
 After #95 merged as `a7f8202` (all 17 checks at `c2d1526`), the user explicitly
 approved publishing the exact D110 candidate. [SendAirPlay2.StereoAac 0.6.0-ci.330](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330)
