@@ -263,7 +263,7 @@ macOS 26.7.1/tvOS 26.6 remain unchanged. AAC copy with conversion off passes on
 both receivers: start near 45 seconds, sync/channel pattern, pause/resume, both
 seeks, Stop closure and local paused handoff. DTS refuses with conversion off on
 the Mac; enabling conversion passes those same controls on both receivers. Both
-pass natural AAC â†’ converted DTS â†’ AAC queue advance, rapid Next twice to the
+pass natural AAC → converted DTS → AAC queue advance, rapid Next twice to the
 third clip and Stop during a transition, with local paused/responsive handoff and
 no delayed restart. Each 250-ms cache sampling window observes at most one
 directory/430,412 bytes and ends at zero, with independent final count zero;
@@ -1631,7 +1631,7 @@ the library has no `ADVAPI32` import and no Botan DLL. In the running app the
 | Host build | Native result | Observer |
 | --- | --- | --- |
 | 0.1.6.0, first UWP-built library | Loads; built-in store probe `unsupported`; discover ok; cast starts in about 1.8 s; pause, play, seek 60 and seek 10 ok; **every Stop ends the process** (`0xc0000409` in `ucrtbase!abort`, Application Error 1000) | Initial attempt failed while the receiver was asleep; after waking it, video played, controls worked and the TV returned Home after Stop; the app closed after Stop |
-| 0.1.8.0, RelWithDebInfo plus the host's abort trace | Stack resolved with the linker map: `sap2_cast_stop` â†’ `CastController::stop` â†’ `MediaServer::Impl::stop` â†’ `asio::thread_pool::join` â†’ `std::terminate` (Asio `winapp_thread`) | The app closed after Stop |
+| 0.1.8.0, RelWithDebInfo plus the host's abort trace | Stack resolved with the linker map: `sap2_cast_stop` → `CastController::stop` → `MediaServer::Impl::stop` → `asio::thread_pool::join` → `std::terminate` (Asio `winapp_thread`) | The app closed after Stop |
 | 0.1.10.0, Release with the media server's own reader pool | Cast, pause, play, seek 60, seek 10; Stop in about 80 ms with `cleaned=yes`, source released; a second cast and Stop in the same process; no Application Error | Video and audio normal; app stayed open after both Stops; Home after Stop |
 | 0.1.12.0, ended casts free the host's slot | Remote Home ended the cast (`connection_lost`, UrlEvents/Disconnected); slot released 24 ms later; next Cast started without Stop; Stop cleaned up | Second cast started; app stayed open; video and audio normal; Home after Stop |
 
@@ -1961,16 +1961,16 @@ seek did not: the Mac answered `/command` `seek` (with or without
 ControlCenter and the AirPlay/Core Media subsystems) during run D (seeks to 60
 and 90 s, stop). Our seek arrived (a 216-byte request answered 200) with no
 player activity, whereas `setRate` logged `playerairplay_setRateCommon` and the
-Mac's own on-screen seek logged `itemfig_setCurrentTimeâ€¦`. The log also showed
+Mac's own on-screen seek logged `itemfig_setCurrentTime…`. The log also showed
 the remote-control rejection as "Setup session failed: kUnsupportedErr" for
-the remote-only session, consent as "Asking delegate â€¦ for permission to
+the remote-only session, consent as "Asking delegate … for permission to
 proceed for client "send-airplay2"", and our `stop` as a pause, with the item
 removed only when our session closed. Strings the user extracted from the
 Mac's shared library cache (`grep -F insertPlayQueueItem`, 4 KB around each
 hit; used as facts only) show the receiver `APRKMediaPlayer`: it dispatches
 `/command` dictionaries by `type` (`unhandledURL`, `playbackInfo`,
 `setProperty`, `insertPlayQueueItem`, `removePlayQueueItem`, `setRate`,
-`seek`, `streamingKey`, `stop`, â€¦), and its seek handler logs "Sender seek to
+`seek`, `streamingKey`, `stop`, …), and its seek handler logs "Sender seek to
 time is %f for item %@" and "Cannot add pending seekID for item %@, UUID %@".
 It also keeps a permission grant period and timer. Our seek named no item.
 

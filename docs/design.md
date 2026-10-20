@@ -557,7 +557,7 @@ D65 completed an initial controlled Mac consent study; its
 [evidence and limits](macos-receiver-consent.md) do not justify a sender change.
 The user selected D66, "Forget this AirPlay device" in Screenbox: remove only
 the selected local pairing, offer Pair on success and retain paired state on
-storage failure. Logic, x64 packaged build and forget â†’ pair â†’ cast UI validation
+storage failure. Logic, x64 packaged build and forget → pair → cast UI validation
 passed for the recorded Mac, with loaded binaries verified; fork PR #10 merged
 as `8bfd3dd9`. D65 evidence PR #42 merged as `8a40ec3`. Other-device preservation was checked through
 paired UI state, not a new Apple TV cast; no Chromecast playback regression is claimed.

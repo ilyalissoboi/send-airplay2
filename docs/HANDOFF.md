@@ -388,7 +388,7 @@ macOS 26.7.1/tvOS 26.6 remain unchanged. Accepted AAC retry and AAC-copy control
 pass on both receivers, including synchronization/channel pattern, start near
 45 seconds, pause/resume, both seeks, Stop closure and local paused handoff.
 Off-permission DTS refusal passes on the Mac; converted DTS controls pass on both.
-Both receivers pass natural AAC â†’ converted DTS â†’ AAC queue advance, rapid Next
+Both receivers pass natural AAC → converted DTS → AAC queue advance, rapid Next
 supersession and Stop during a transition, with local paused/no delayed restart.
 Both 250-ms cache samples observe at most one directory/430,412 bytes and finish
 at zero; the independent final count is zero. The final process hashes are
@@ -1024,7 +1024,7 @@ target-only/idempotent local removal, failure feedback and busy/selection guards
 are implemented; 96/96 logic tests and the VS 2026 MSBuild x64 package pass.
 Initial development version 1.0.0.3 was registered in place, preserving app data/pairings;
 the source manifest was restored. The running executable and native/crypto
-module hashes match the extracted MSIX. Computer Use verified Forget â†’ Pair,
+module hashes match the extracted MSIX. Computer Use verified Forget → Pair,
 another Apple TV's paired actions retained, Forget hidden for Chromecast and
 during active casting, restored Cast after user re-pairing, and local paused
 handoff after Stop. The user confirmed normal Mac video/audio, pause/resume and
