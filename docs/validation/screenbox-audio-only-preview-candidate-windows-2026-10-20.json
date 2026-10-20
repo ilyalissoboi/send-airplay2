@@ -1,0 +1,163 @@
+{
+  "decision": "D113",
+  "date": "2026-10-20",
+  "timezone": "Asia/Tokyo",
+  "result": "SCREENBOX_AUDIO_ONLY_PREVIEW_CANDIDATE_PREPARED",
+  "authorization": "User authorized preparation of an updated Screenbox release candidate after both D112 PRs merged. Publication is a separate approval checkpoint.",
+  "merged_prs": {
+    "screenbox": {
+      "pr": 17,
+      "merge": "b2b987d68b844ef0e3f577cc0622d223a329adf9",
+      "final_head": "2a001be1560fb8f8b16f2c0c4aff80953e0b4441",
+      "passed_checks": 4
+    },
+    "native": {
+      "pr": 97,
+      "merge": "65dd17f508220860bdaff4b73eca23f4b82be538",
+      "final_head": "6effcf16fd6fe211d2e84f8fd24579d5b9ea9347",
+      "passed_checks": 17
+    }
+  },
+  "clean_main_ci": {
+    "run": 39430175011,
+    "url": "https://github.com/ilyalissoboi/Screenbox/actions/runs/39430175011",
+    "head": "b2b987d68b844ef0e3f577cc0622d223a329adf9",
+    "event": "workflow_dispatch",
+    "status": "completed",
+    "conclusion": "success",
+    "passed_checks": [
+      "airplay-stereo-aac",
+      "build",
+      "test",
+      "xaml-lint"
+    ]
+  },
+  "build": {
+    "version": "0.2.0-preview.1",
+    "package_version": "0.2.0.0",
+    "tag": "airplay-preview-0.2.0-preview.1",
+    "source_commit": "b2b987d68b844ef0e3f577cc0622d223a329adf9",
+    "identity": "ilyalissoboi.Screenbox.AirPlayPreview",
+    "publisher": "CN=ilyalissoboi, OID.2.25.311729368913984317654407730594956997722=1",
+    "configuration": "Release",
+    "architecture": "x64",
+    "signed": false,
+    "airplay_stereo_aac": true,
+    "sentry_dsn": "empty",
+    "package_pin": "SendAirPlay2.StereoAac 0.6.0-ci.330",
+    "package_sha256": "9567655c5c4f0183fddeaea9f497d869d28b79036d599cbf5d87f241e74eb3ad",
+    "source_archive": "Screenbox-AirPlay-Preview-0.2.0-preview.1-source.zip",
+    "source_sha256": "aed7985b140a9e47e930906129d7cdc6bbd30e1d1dd9b8a337a2e9c728aee06e",
+    "msix_sha256": "6412a3b2d99cf0bb4c58301bb3000463a047acdce57c03e80cd9d478f36d15a6",
+    "executable_sha256": "1beca1835d8dcb09e22ad4a1de15d32265f1420d03905a7d09a1f795414dfc4c",
+    "packaging_changes": [
+      "Screenbox.csproj version/copyright",
+      "Manifest preview identity/version/display labels",
+      "Added BUILDING-PREVIEW.md"
+    ],
+    "revision_stamp": "Explicit SourceRevisionId; EnableSourceControlManagerQueries=false; assembly informational version verified",
+    "checks": {
+      "logic_tests": "176 passed; zero failed/skipped",
+      "release_msix_build": "PASS",
+      "pinned_native_source_notice_files": 40,
+      "manifest_unsigned_identity": "PASS",
+      "x64_framework_dependencies": [
+        {
+          "name": "Microsoft.UI.Xaml.2.8",
+          "version": "8.2501.31001.0",
+          "filename": "Microsoft.UI.Xaml.2.8.appx",
+          "sha256": "1421dba0b7f1da87e6ad52e17c25d38bcd2159bd7f91c85034cfa837238abaaa"
+        },
+        {
+          "name": "Microsoft.VCLibs.140.00",
+          "version": "14.0.33519.0",
+          "filename": "Microsoft.VCLibs.x64.14.00.appx",
+          "sha256": "9c17b521f9d690a1f504da5108ed6eec5669eb3a8fd1331eef43e40d84e74283"
+        }
+      ],
+      "receiver_observation": "No new preview receiver observation; D112 development results retain their original binary scope"
+    }
+  },
+  "assets": [
+    {
+      "name": "BUILD-INFO.json",
+      "bytes": 2092,
+      "sha256": "714187a3b2cfc16454a527bcf5c2e202a630112c653385de9cc0398cfd7f2a61"
+    },
+    {
+      "name": "INSTALL.md",
+      "bytes": 3135,
+      "sha256": "8b65bb28f9e3e5eb4c4bd57b5e965ec667de1bfb351ccd8adff0a91a0de5f53d"
+    },
+    {
+      "name": "Screenbox-AirPlay-Preview-0.2.0-preview.1-source.zip",
+      "bytes": 13990405,
+      "sha256": "aed7985b140a9e47e930906129d7cdc6bbd30e1d1dd9b8a337a2e9c728aee06e"
+    },
+    {
+      "name": "Screenbox-AirPlay-Preview-0.2.0-preview.1-x64.zip",
+      "bytes": 81425296,
+      "sha256": "63c3f25948520e5555f91121930391e697a230cf8de1dcc2020451c277e646a0"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 398,
+      "sha256": "db30bc2ae3c84ca2415cfad6cbbce9464a7340e11b0e9461f2dac9e909e8f825"
+    }
+  ],
+  "checks": {
+    "isolated_release_source_logic": "176 passed; zero failed/skipped",
+    "source_archive": "Exact merged tracked files with only Screenbox.csproj and manifest packaging metadata changed, plus BUILDING-PREVIEW.md",
+    "checksums": "All five assets and every installer file verified; no hash self-reference",
+    "source_license_notices_empty_dsn": "PASS",
+    "no_pdb_signing_key_or_certificate_in_installer": true,
+    "exact_revision_in_assembly_info": true
+  },
+  "installer_smoke": {
+    "status": "PASS",
+    "method": "Exact installer ZIP contents; elevated in-place Add-AppxPackage -AllowUnsigned",
+    "before_version": "0.1.0.0",
+    "version": "0.2.0.0",
+    "preview_identity_preserved": true,
+    "app_data_reset_performed": false,
+    "store_and_debug_registrations_unchanged": true
+  },
+  "launch_smoke": {
+    "status": "PASS",
+    "version": "0.2.0.0",
+    "package_identity_verified": true,
+    "appcontainer": true,
+    "process_alive_after_seconds": 5,
+    "executable_sha256": "1beca1835d8dcb09e22ad4a1de15d32265f1420d03905a7d09a1f795414dfc4c",
+    "executable_matches_inspected_msix": true,
+    "visual_observation": false,
+    "receiver_observation": false
+  },
+  "publication": {
+    "approved": false,
+    "published": false,
+    "tag": "airplay-preview-0.2.0-preview.1",
+    "target_commit": "b2b987d68b844ef0e3f577cc0622d223a329adf9",
+    "release_notes": "Screenbox/docs/releases/airplay-preview-0.2.0-preview.1.md",
+    "candidate_bytes_retained": true,
+    "existing_release_assets_replaced": false,
+    "next": "Review exact candidate, notes and hashes; obtain explicit approval before GitHub prerelease publication, then verify fresh public downloads."
+  },
+  "scope": {
+    "new_receiver_observation": false,
+    "development_receiver_evidence": "D112 1.0.0.15 and review-fix records keep their exact binary scopes.",
+    "preview_installed_version": "0.2.0.0",
+    "store_debug_registrations_unchanged": true,
+    "native_package_or_codec_changed": false,
+    "quota_bytes": 536870912,
+    "store_winget_or_nuget_publication": false
+  },
+  "deferrals": [
+    "Speaker/RAOP",
+    "Discrete converted surround",
+    "Chromecast hardware",
+    "User-deferred remote Stop classification",
+    "Long-input/cache-quota evaluation",
+    "Gapless/sample-exact playback"
+  ]
+}
