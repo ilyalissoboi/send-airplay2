@@ -2,7 +2,7 @@
   "decision": "D112",
   "date": "2026-10-20",
   "timezone": "Asia/Tokyo",
-  "result": "SCREENBOX_API6_OFFLINE_PASSED_MANUAL_PENDING",
+  "result": "SCREENBOX_API6_FOCUSED_RECEIVER_GATE_PASSED",
   "native_base": {
     "pr": 96,
     "merge_commit": "b57981b8e034f9bc67d3515fca675b65bebe59d2",
@@ -47,7 +47,109 @@
     },
     "loaded_runtime_captures": [
       {
+        "label": "after-controls",
+        "version": "1.0.0.15",
+        "appcontainer": true,
+        "package_identity_verified": true,
+        "executable_sha256": "717266665b3c6529e2167472502544dafea3a7ba3e97f138d1c5c55ca0e8abac",
+        "six_modules_match": true,
+        "modules": [
+          {
+            "name": "send_airplay2.dll",
+            "sha256": "f50172875c7769d689eca4661d3222eef74442e0128ba2cfa1343abd6cb5279e"
+          },
+          {
+            "name": "libcrypto-3-x64.dll",
+            "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+          },
+          {
+            "name": "avcodec-63.dll",
+            "sha256": "32e2c5946f83423f46375bc9064e56425010b967b0aee263abc5d9e1c8ba6eba"
+          },
+          {
+            "name": "avformat-63.dll",
+            "sha256": "70b2e9e7a24a5aecf812f8484c0fe13598e14b2c27abe1319d878a5a8a9a8f02"
+          },
+          {
+            "name": "avutil-61.dll",
+            "sha256": "207f9e00599267d9ae6b78e5d26062591bccfe89a0ea703f34c27518b5d390cd"
+          },
+          {
+            "name": "swresample-7.dll",
+            "sha256": "fdddfd264fd0704a966b5d08aa6bc2fe67558baaf65f5679fed7ac0b9a3a57fb"
+          }
+        ]
+      },
+      {
+        "label": "after-queue",
+        "version": "1.0.0.15",
+        "appcontainer": true,
+        "package_identity_verified": true,
+        "executable_sha256": "717266665b3c6529e2167472502544dafea3a7ba3e97f138d1c5c55ca0e8abac",
+        "six_modules_match": true,
+        "modules": [
+          {
+            "name": "send_airplay2.dll",
+            "sha256": "f50172875c7769d689eca4661d3222eef74442e0128ba2cfa1343abd6cb5279e"
+          },
+          {
+            "name": "libcrypto-3-x64.dll",
+            "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+          },
+          {
+            "name": "avcodec-63.dll",
+            "sha256": "32e2c5946f83423f46375bc9064e56425010b967b0aee263abc5d9e1c8ba6eba"
+          },
+          {
+            "name": "avformat-63.dll",
+            "sha256": "70b2e9e7a24a5aecf812f8484c0fe13598e14b2c27abe1319d878a5a8a9a8f02"
+          },
+          {
+            "name": "avutil-61.dll",
+            "sha256": "207f9e00599267d9ae6b78e5d26062591bccfe89a0ea703f34c27518b5d390cd"
+          },
+          {
+            "name": "swresample-7.dll",
+            "sha256": "fdddfd264fd0704a966b5d08aa6bc2fe67558baaf65f5679fed7ac0b9a3a57fb"
+          }
+        ]
+      },
+      {
         "label": "before",
+        "version": "1.0.0.15",
+        "appcontainer": true,
+        "package_identity_verified": true,
+        "executable_sha256": "717266665b3c6529e2167472502544dafea3a7ba3e97f138d1c5c55ca0e8abac",
+        "six_modules_match": true,
+        "modules": [
+          {
+            "name": "send_airplay2.dll",
+            "sha256": "f50172875c7769d689eca4661d3222eef74442e0128ba2cfa1343abd6cb5279e"
+          },
+          {
+            "name": "libcrypto-3-x64.dll",
+            "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+          },
+          {
+            "name": "avcodec-63.dll",
+            "sha256": "32e2c5946f83423f46375bc9064e56425010b967b0aee263abc5d9e1c8ba6eba"
+          },
+          {
+            "name": "avformat-63.dll",
+            "sha256": "70b2e9e7a24a5aecf812f8484c0fe13598e14b2c27abe1319d878a5a8a9a8f02"
+          },
+          {
+            "name": "avutil-61.dll",
+            "sha256": "207f9e00599267d9ae6b78e5d26062591bccfe89a0ea703f34c27518b5d390cd"
+          },
+          {
+            "name": "swresample-7.dll",
+            "sha256": "fdddfd264fd0704a966b5d08aa6bc2fe67558baaf65f5679fed7ac0b9a3a57fb"
+          }
+        ]
+      },
+      {
+        "label": "final",
         "version": "1.0.0.15",
         "appcontainer": true,
         "package_identity_verified": true,
@@ -89,13 +191,22 @@
       "Apple TV/tvOS 26.6"
     ],
     "versions_unchanged_confirmed": true,
-    "mp3_conversion_off_controls_stop_both": "PENDING",
-    "flac_conversion_off_refusal_mac": "PENDING",
-    "flac_conversion_on_controls_both": "PENDING",
-    "mixed_queue_natural_advance_both": "PENDING",
-    "rapid_next_and_transition_stop_both": "PENDING",
+    "mp3_conversion_off_controls_stop_both": "PASS_USER_CONFIRMED",
+    "flac_conversion_off_refusal_mac": "PASS_USER_CONFIRMED",
+    "flac_conversion_on_controls_both": "PASS_USER_CONFIRMED",
+    "mixed_queue_natural_advance_both": "PASS_USER_CONFIRMED",
+    "rapid_next_and_transition_stop_both": "PASS_USER_CONFIRMED",
     "new_consent_cancellation_matrix": false,
-    "full_codec_listening_matrix": false
+    "full_codec_listening_matrix": false,
+    "first_observations": {
+      "mp3_both": "User confirmed start near eight seconds, audible RIGHT/BOTH markers, pause/resume, seek32/seek8 and Stop on both receivers, local paused and app responsive.",
+      "flac_permission_off_mac": "User confirmed format/conversion refusal, no receiver playback and local playback paused."
+    },
+    "converted_observation": "User confirmed native FLAC with conversion on: start near eight seconds, audible RIGHT/BOTH markers, pause/resume, seek32/seek8 and Stop on both receivers, local paused and app responsive.",
+    "queue_observations": {
+      "natural_advance": "User confirmed both receivers naturally advanced MP3 -> converted PCM MOV audio -> video -> AAC, with correct sound/video and local playback paused at queue end.",
+      "supersession_and_stop": "User confirmed rapid Next twice reached the third item video/sound on both receivers. Next followed immediately by Stop during transition closed playback without delayed restart, kept local playback paused and Screenbox responsive."
+    }
   },
   "owned_fixtures": [
     {
@@ -162,5 +273,35 @@
     "Chromecast hardware",
     "User-deferred remote Stop classification",
     "Long-input/cache-quota evaluation"
-  ]
+  ],
+  "final_state": {
+    "conversion_preference_restored_off": true,
+    "local_playback_paused": true,
+    "app_left_open": true,
+    "confirmation": "Written user report",
+    "runtime": "PASS_SAME_PACKAGE_APPCONTAINER_EXECUTABLE_AND_SIX_DLLS",
+    "cache": {
+      "owned_cache_children": 0,
+      "owned_cache_files": 0,
+      "inspected_after_user_confirmed_stop_and_pause": true,
+      "no_cleanup_mutation_performed": true
+    },
+    "further_manual_test_pending": false
+  },
+  "evidence_pr": 97,
+  "ci_at_manual_gate": {
+    "Screenbox": {
+      "head": "a51fa35132553b4e3f534fdb592d0087e630ff31",
+      "passed": 4,
+      "pending": 0,
+      "failed": []
+    },
+    "send-airplay2": {
+      "head": "863b65afd13138d9fcd3837a8926e19e72a1b5f7",
+      "passed": 12,
+      "pending": 4,
+      "failed": []
+    }
+  },
+  "ci_scope": "Snapshot at the manual gate, before the final evidence-only commits. Inspect actual final PR heads separately; these observations verify the local 1.0.0.15 binary hashes, not CI artifacts."
 }

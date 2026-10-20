@@ -48,34 +48,43 @@ source and notice files matching the exact pinned package. Existing translation,
 legacy migration and third-party trim warnings remain.
 
 Development 1.0.0.15 is registered in place with identity/data preserved, changing
-only the extracted manifest's version. Its actual package identity, AppContainer,
-executable and all six loaded DLL hashes match the inspected layout and ci.330.
+only the extracted manifest's version. Four actual package identity, AppContainer,
+executable and six loaded-DLL captures match the inspected layout and ci.330.
 Read [the sanitized evidence](validation/screenbox-api6-audio-only-windows-2026-10-20.json)
 for implementation, MSIX/executable/module and owned-fixture hashes. These local
 gates do not prove receiver behavior; PR-head CI must also be inspected separately.
 
-## Focused manual gate: pending
+## Focused manual gate: passed
 
-Written instructions target the changed app paths on Mac/macOS 26.7.1 and Apple
-TV/tvOS 26.6. No Computer Use visual confirmation is used.
+Written user observations cover development Screenbox 1.0.0.15 on Mac/macOS
+26.7.1 and Apple TV/tvOS 26.6, with versions unchanged. No Computer Use visual
+confirmation is used.
 
-1. MP3 with conversion off: nonzero start, audible markers, pause/resume,
-   forward/backward seeks, Stop and paused local handoff on both receivers.
-2. Native FLAC with conversion off: a format/conversion refusal, no receiver
-   playback and paused local handoff on the Mac.
-3. Native FLAC with conversion on: audible markers, controls/seeks, Stop and
-   paused local handoff on both receivers.
-4. MP3 → converted audio-only PCM MOV → video → AAC queue on both receivers:
-   natural advance with correct audio/video, final local pause, rapid Next and
-   Stop during transition without delayed restart.
+| Check | Observed result |
+| --- | --- |
+| MP3, conversion off, both receivers | Start near eight seconds, audible RIGHT/BOTH markers, pause/resume, seek32/seek8, Stop, local paused and app responsive: passed. |
+| Native FLAC, conversion off, Mac | Format/conversion refusal, no receiver playback and local paused: passed. |
+| Native FLAC, conversion on, both receivers | Start/markers, pause/resume, both seeks, Stop, local paused and app responsive: passed. |
+| MP3 → converted PCM MOV audio → video → AAC, both receivers | Natural advance with correct sound/video and final local pause: passed. The user could seek near each end and let it finish naturally. |
+| Rapid Next and transition Stop, both receivers | Next twice reached the third item's video/sound. Next then immediate Stop closed playback without delayed restart, local paused and app responsive: passed. |
 
-Fixtures are copies of existing hash-verified repository-owned tones/video;
-no private media is needed. No new receiver success is claimed until written
-observations arrive. Reuse earlier consent-cancellation and full codec matrix
-coverage rather than repeating unchanged paths. D107/D108 observations remain
-scoped to their original binaries.
+Fixtures are copies of existing hash-verified repository-owned tones/video; no
+private media is used. Four actual runtime captures before/during/after the gate
+verify the same package identity, AppContainer, executable and all six pinned
+ci.330 DLL hashes. The user restored conversion OFF and left the app open with
+local playback paused. Final owned cache directories/files are both zero;
+inspection performed no cleanup mutation. No further manual check is pending.
 
-Next, finish the focused gate, inspect actual PR-head CI and review/merge the
-fork and evidence PRs. No Screenbox release is created by this development gate.
-Speaker/RAOP, discrete converted surround, Chromecast hardware, user-deferred
-remote-Stop classification and long-input/cache-quota evaluation remain deferred.
+Earlier consent-cancellation and full codec-matrix coverage were reused; no
+unchanged listening matrix was repeated. D107/D108 observations retain their
+original runtime scopes. These new observations belong to the recorded local
+1.0.0.15 executable/module hashes; they do not verify separately built CI artifacts,
+all codec/container variants, gapless playback or long-input scaling.
+
+Review [fork PR #17](https://github.com/ilyalissoboi/Screenbox/pull/17) and
+[evidence PR #97](https://github.com/ilyalissoboi/send-airplay2/pull/97), inspecting
+their actual final heads and CI separately. CI captured at the manual gate is
+explicitly a pre-final-documentation snapshot in the record. Ask before merging.
+No Screenbox release is created by this gate. Speaker/RAOP, discrete converted
+surround, Chromecast hardware, user-deferred remote-Stop classification and
+long-input/cache-quota evaluation remain deferred.
