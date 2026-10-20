@@ -2,6 +2,42 @@
 
 Snapshot: 2026-10-20 (Asia/Tokyo). Audience: the next human developer or model.
 
+**D112 opening-item review follow-up verified locally (2026-10-20).**
+The [Screenbox #17 review](https://github.com/ilyalissoboi/Screenbox/pull/17#discussion_r4324921353)
+found that Cast can be requested before VLC inserts the current item's tracks.
+Fix `23f708e8` shares bounded, cancellable metadata resolution between current and
+queued items, validates completion before the track snapshot and rechecks the
+request/player/item before local pause or native start. Independent descriptors
+are disposed; current display size is preserved with an opening-video fallback.
+Logic suites pass 142/176 ordinary/opt-in, including thirteen race/refusal cases.
+Both actual Release MSIX/payload checks pass (2/40 files). Read the
+[separate review evidence](validation/screenbox-api6-review-windows-2026-10-20.json).
+The 1.0.0.15 receiver gate below retains its original hashes; no new app is
+installed and no receiver/cancellation/codec matrix is repeated or newly claimed.
+Inspect actual final heads/CI of fork #17 and native #97; ask before merging.
+
+**D112 Screenbox API-6 focused gate passed (2026-10-20).**
+Native #96 merged as `b57981b`; all 17 checks passed at `98b4dc8`. The authorized
+[Screenbox PR #17](https://github.com/ilyalissoboi/Screenbox/pull/17), implementation
+`59d83910`, pins public opt-in `0.6.0-ci.330` and independently selects the audio
+or video profile from each current/queued item's parsed tracks. Logic suites
+pass 142/163 ordinary/opt-in; both actual Release MSIX/payload checks pass (2/40
+files). Development 1.0.0.15 preserves identity/data; four actual package,
+AppContainer, executable and six-DLL captures match the inspected ci.330 layout.
+The user confirms MP3 controls/Stop with conversion off on both receivers, the
+Mac FLAC refusal with conversion off, converted-FLAC controls/Stop on both, and
+natural MP3 → converted PCM MOV audio → video → AAC queues on both. Rapid Next
+reaches the third video; transition Stop closes playback with no delayed restart,
+local paused and app responsive. macOS 26.7.1/tvOS 26.6 remain unchanged.
+Conversion is restored OFF; the app stays open/paused and final owned cache
+directories/files are zero without cleanup mutation. No further manual check is
+pending. [Native evidence PR #97](https://github.com/ilyalissoboi/send-airplay2/pull/97)
+and [the exact scope/record](screenbox-automatic-audio-only.md) separate local
+binary observations from actual PR-head CI; inspect final heads before merge.
+Ordinary ci.207, native/codec behavior, quota, publication and all deferrals
+remain unchanged. No unchanged consent/full-codec matrix was repeated. Review
+both PRs and ask before merging; no new release is created by this gate.
+
 **D111 API 6 prerelease published and public downloads verified (2026-10-20).**
 After #95 merged as `a7f8202` (all 17 checks at `c2d1526`), the user explicitly
 approved publishing the exact D110 candidate. [SendAirPlay2.StereoAac 0.6.0-ci.330](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330)
