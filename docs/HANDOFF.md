@@ -2,20 +2,24 @@
 
 Snapshot: 2026-10-20 (Asia/Tokyo). Audience: the next human developer or model.
 
-**D107 native automatic audio-only gate prepared (2026-10-20).**
-Native #91 merged as d378249; all 17 checks passed at final head 3daa9a1 in
-[run 39246535013](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39246535013).
-The user authorizes the next native receiver gate. The unchanged merged API 6
-shared host is rebuilt; ten original 64-second AAC/FLAC/PCM/Ogg/container/edit
-fixtures pass public offline preparation with expected decisions and empty
-post-check cache. Existing MP3 fixtures retain their bytes/provenance. Discovery
-finds both recorded receiver models; availability/version and audible/prompt
-confirmation are pending. No D107 receiver cast has run yet. Read
-[the native plan and limits](automatic-audio-only-native-gate.md).
-Continue codex/audio-only-native-receiver-gate while its PR is open and inspect
-its actual head. Preserve saved pairings, written manual observations and all
-hardware/user deferrals. Packaged generated-HLS validation follows this native
-gate and review/merge; no package, Screenbox, codec-profile, quota or publication change.
+**D107 native automatic audio-only testing PAUSED by the user (2026-10-20).**
+Draft PR #92 is open on codex/audio-only-native-receiver-gate. Its prepared head
+4cd545a passed all 17 CI checks; native runtime source remains merged d378249.
+The user confirms macOS 26.7.1/tvOS 26.6 unchanged. Seven completed checks pass
+by written observation: Mac converted-FLAC controls/natural end and Stop, Mac
+progressive AAC/CBR-MP3/VBR-MP3 controls/natural ends, and Apple TV converted-FLAC
+controls/natural end and Stop. Each of 11 attempts verified the executable/seven
+DLLs; every source released once, with zero failed reads and empty final cache.
+Keep the unconfirmed first cancellation and two no-prompt retries as nonqualifying.
+Mac WAVE was rejected with HTTP 400 after 15.4 s; the batch stopped, so seven
+following cases never ran. The later batch Yes reply is not eight PASS results.
+Read [the paused checkpoint and remaining cases](automatic-audio-only-native-gate.md).
+No native test host or cache entries remain. Do not start casts or test/CI runs
+until explicit resume; pending readiness questions are suspended. Save/retain
+all attempts. No further D107 cancellation retest is required: the user questioned
+redundant retesting, and unchanged lifecycle checks should be reused unless
+relevant code changes or a concrete regression warrants another manual check.
+Packaged/Screenbox gates and all hardware/user deferrals remain separate.
 
 **D106 explicit automatic audio-only offline gate complete (2026-10-19).**
 Native #90 merged as `06e094c`; all 17 checks passed at final head `fec9448` in
@@ -383,7 +387,7 @@ macOS 26.7.1/tvOS 26.6 remain unchanged. Accepted AAC retry and AAC-copy control
 pass on both receivers, including synchronization/channel pattern, start near
 45 seconds, pause/resume, both seeks, Stop closure and local paused handoff.
 Off-permission DTS refusal passes on the Mac; converted DTS controls pass on both.
-Both receivers pass natural AAC → converted DTS → AAC queue advance, rapid Next
+Both receivers pass natural AAC â†’ converted DTS â†’ AAC queue advance, rapid Next
 supersession and Stop during a transition, with local paused/no delayed restart.
 Both 250-ms cache samples observe at most one directory/430,412 bytes and finish
 at zero; the independent final count is zero. The final process hashes are
@@ -1019,7 +1023,7 @@ target-only/idempotent local removal, failure feedback and busy/selection guards
 are implemented; 96/96 logic tests and the VS 2026 MSBuild x64 package pass.
 Initial development version 1.0.0.3 was registered in place, preserving app data/pairings;
 the source manifest was restored. The running executable and native/crypto
-module hashes match the extracted MSIX. Computer Use verified Forget → Pair,
+module hashes match the extracted MSIX. Computer Use verified Forget â†’ Pair,
 another Apple TV's paired actions retained, Forget hidden for Chromecast and
 during active casting, restored Cast after user re-pairing, and local paused
 handoff after Stop. The user confirmed normal Mac video/audio, pause/resume and

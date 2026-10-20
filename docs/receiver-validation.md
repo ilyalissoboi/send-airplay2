@@ -1,19 +1,23 @@
 # Receiver validation record
 
-**D107 native automatic audio-only gate prepared (2026-10-20).**
-Native #91 merged as d378249; all 17 checks passed at final head 3daa9a1 in
-[run 39246535013](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39246535013).
-The user authorizes the next native receiver gate. The unchanged merged API 6
-shared host is rebuilt; ten original 64-second AAC/FLAC/PCM/Ogg/container/edit
-fixtures pass public offline preparation with expected decisions and empty
-post-check cache. Existing MP3 fixtures retain their bytes/provenance. Discovery
-finds both recorded receiver models; availability/version and audible/prompt
-confirmation are pending. No D107 receiver cast has run yet. Read
-[the native plan and limits](automatic-audio-only-native-gate.md).
-Continue codex/audio-only-native-receiver-gate while its PR is open and inspect
-its actual head. Preserve saved pairings, written manual observations and all
-hardware/user deferrals. Packaged generated-HLS validation follows this native
-gate and review/merge; no package, Screenbox, codec-profile, quota or publication change.
+**D107 native automatic audio-only testing PAUSED by the user (2026-10-20).**
+Draft PR #92 is open on codex/audio-only-native-receiver-gate. Its prepared head
+4cd545a passed all 17 CI checks; native runtime source remains merged d378249.
+The user confirms macOS 26.7.1/tvOS 26.6 unchanged. Seven completed checks pass
+by written observation: Mac converted-FLAC controls/natural end and Stop, Mac
+progressive AAC/CBR-MP3/VBR-MP3 controls/natural ends, and Apple TV converted-FLAC
+controls/natural end and Stop. Each of 11 attempts verified the executable/seven
+DLLs; every source released once, with zero failed reads and empty final cache.
+Keep the unconfirmed first cancellation and two no-prompt retries as nonqualifying.
+Mac WAVE was rejected with HTTP 400 after 15.4 s; the batch stopped, so seven
+following cases never ran. The later batch Yes reply is not eight PASS results.
+Read [the paused checkpoint and remaining cases](automatic-audio-only-native-gate.md).
+No native test host or cache entries remain. Do not start casts or test/CI runs
+until explicit resume; pending readiness questions are suspended. Save/retain
+all attempts. No further D107 cancellation retest is required: the user questioned
+redundant retesting, and unchanged lifecycle checks should be reused unless
+relevant code changes or a concrete regression warrants another manual check.
+Packaged/Screenbox gates and all hardware/user deferrals remain separate.
 
 **D106 explicit automatic audio-only offline gate complete (2026-10-19).**
 Native #90 merged as `06e094c`; all 17 checks passed at final head `fec9448` in
@@ -258,7 +262,7 @@ macOS 26.7.1/tvOS 26.6 remain unchanged. AAC copy with conversion off passes on
 both receivers: start near 45 seconds, sync/channel pattern, pause/resume, both
 seeks, Stop closure and local paused handoff. DTS refuses with conversion off on
 the Mac; enabling conversion passes those same controls on both receivers. Both
-pass natural AAC → converted DTS → AAC queue advance, rapid Next twice to the
+pass natural AAC â†’ converted DTS â†’ AAC queue advance, rapid Next twice to the
 third clip and Stop during a transition, with local paused/responsive handoff and
 no delayed restart. Each 250-ms cache sampling window observes at most one
 directory/430,412 bytes and ends at zero, with independent final count zero;
@@ -1626,7 +1630,7 @@ the library has no `ADVAPI32` import and no Botan DLL. In the running app the
 | Host build | Native result | Observer |
 | --- | --- | --- |
 | 0.1.6.0, first UWP-built library | Loads; built-in store probe `unsupported`; discover ok; cast starts in about 1.8 s; pause, play, seek 60 and seek 10 ok; **every Stop ends the process** (`0xc0000409` in `ucrtbase!abort`, Application Error 1000) | Initial attempt failed while the receiver was asleep; after waking it, video played, controls worked and the TV returned Home after Stop; the app closed after Stop |
-| 0.1.8.0, RelWithDebInfo plus the host's abort trace | Stack resolved with the linker map: `sap2_cast_stop` → `CastController::stop` → `MediaServer::Impl::stop` → `asio::thread_pool::join` → `std::terminate` (Asio `winapp_thread`) | The app closed after Stop |
+| 0.1.8.0, RelWithDebInfo plus the host's abort trace | Stack resolved with the linker map: `sap2_cast_stop` â†’ `CastController::stop` â†’ `MediaServer::Impl::stop` â†’ `asio::thread_pool::join` â†’ `std::terminate` (Asio `winapp_thread`) | The app closed after Stop |
 | 0.1.10.0, Release with the media server's own reader pool | Cast, pause, play, seek 60, seek 10; Stop in about 80 ms with `cleaned=yes`, source released; a second cast and Stop in the same process; no Application Error | Video and audio normal; app stayed open after both Stops; Home after Stop |
 | 0.1.12.0, ended casts free the host's slot | Remote Home ended the cast (`connection_lost`, UrlEvents/Disconnected); slot released 24 ms later; next Cast started without Stop; Stop cleaned up | Second cast started; app stayed open; video and audio normal; Home after Stop |
 
@@ -1956,16 +1960,16 @@ seek did not: the Mac answered `/command` `seek` (with or without
 ControlCenter and the AirPlay/Core Media subsystems) during run D (seeks to 60
 and 90 s, stop). Our seek arrived (a 216-byte request answered 200) with no
 player activity, whereas `setRate` logged `playerairplay_setRateCommon` and the
-Mac's own on-screen seek logged `itemfig_setCurrentTime…`. The log also showed
+Mac's own on-screen seek logged `itemfig_setCurrentTimeâ€¦`. The log also showed
 the remote-control rejection as "Setup session failed: kUnsupportedErr" for
-the remote-only session, consent as "Asking delegate … for permission to
+the remote-only session, consent as "Asking delegate â€¦ for permission to
 proceed for client "send-airplay2"", and our `stop` as a pause, with the item
 removed only when our session closed. Strings the user extracted from the
 Mac's shared library cache (`grep -F insertPlayQueueItem`, 4 KB around each
 hit; used as facts only) show the receiver `APRKMediaPlayer`: it dispatches
 `/command` dictionaries by `type` (`unhandledURL`, `playbackInfo`,
 `setProperty`, `insertPlayQueueItem`, `removePlayQueueItem`, `setRate`,
-`seek`, `streamingKey`, `stop`, …), and its seek handler logs "Sender seek to
+`seek`, `streamingKey`, `stop`, â€¦), and its seek handler logs "Sender seek to
 time is %f for item %@" and "Cannot add pending seekID for item %@, UUID %@".
 It also keeps a permission grant period and timer. Our seek named no item.
 

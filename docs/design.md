@@ -1,19 +1,23 @@
 # Design and implementation sequence
 
-**D107 native automatic audio-only gate prepared (2026-10-20).**
-Native #91 merged as d378249; all 17 checks passed at final head 3daa9a1 in
-[run 39246535013](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39246535013).
-The user authorizes the next native receiver gate. The unchanged merged API 6
-shared host is rebuilt; ten original 64-second AAC/FLAC/PCM/Ogg/container/edit
-fixtures pass public offline preparation with expected decisions and empty
-post-check cache. Existing MP3 fixtures retain their bytes/provenance. Discovery
-finds both recorded receiver models; availability/version and audible/prompt
-confirmation are pending. No D107 receiver cast has run yet. Read
-[the native plan and limits](automatic-audio-only-native-gate.md).
-Continue codex/audio-only-native-receiver-gate while its PR is open and inspect
-its actual head. Preserve saved pairings, written manual observations and all
-hardware/user deferrals. Packaged generated-HLS validation follows this native
-gate and review/merge; no package, Screenbox, codec-profile, quota or publication change.
+**D107 native automatic audio-only testing PAUSED by the user (2026-10-20).**
+Draft PR #92 is open on codex/audio-only-native-receiver-gate. Its prepared head
+4cd545a passed all 17 CI checks; native runtime source remains merged d378249.
+The user confirms macOS 26.7.1/tvOS 26.6 unchanged. Seven completed checks pass
+by written observation: Mac converted-FLAC controls/natural end and Stop, Mac
+progressive AAC/CBR-MP3/VBR-MP3 controls/natural ends, and Apple TV converted-FLAC
+controls/natural end and Stop. Each of 11 attempts verified the executable/seven
+DLLs; every source released once, with zero failed reads and empty final cache.
+Keep the unconfirmed first cancellation and two no-prompt retries as nonqualifying.
+Mac WAVE was rejected with HTTP 400 after 15.4 s; the batch stopped, so seven
+following cases never ran. The later batch Yes reply is not eight PASS results.
+Read [the paused checkpoint and remaining cases](automatic-audio-only-native-gate.md).
+No native test host or cache entries remain. Do not start casts or test/CI runs
+until explicit resume; pending readiness questions are suspended. Save/retain
+all attempts. No further D107 cancellation retest is required: the user questioned
+redundant retesting, and unchanged lifecycle checks should be reused unless
+relevant code changes or a concrete regression warrants another manual check.
+Packaged/Screenbox gates and all hardware/user deferrals remain separate.
 
 **D106 explicit automatic audio-only offline gate complete (2026-10-19).**
 Native #90 merged as `06e094c`; all 17 checks passed at final head `fec9448` in
@@ -552,7 +556,7 @@ D65 completed an initial controlled Mac consent study; its
 [evidence and limits](macos-receiver-consent.md) do not justify a sender change.
 The user selected D66, "Forget this AirPlay device" in Screenbox: remove only
 the selected local pairing, offer Pair on success and retain paired state on
-storage failure. Logic, x64 packaged build and forget → pair → cast UI validation
+storage failure. Logic, x64 packaged build and forget â†’ pair â†’ cast UI validation
 passed for the recorded Mac, with loaded binaries verified; fork PR #10 merged
 as `8bfd3dd9`. D65 evidence PR #42 merged as `8a40ec3`. Other-device preservation was checked through
 paired UI state, not a new Apple TV cast; no Chromecast playback regression is claimed.
