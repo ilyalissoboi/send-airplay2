@@ -78,10 +78,12 @@ See [the package contract](docs/opt-in-audio-runtime-package.md) and
 [verified publication](docs/validation/hdr-corrected-audio-publication-windows-2026-10-17.json). Neither package
 is on nuget.org. Audio-only speakers and discrete converted surround remain deferred.
 
-The API 6 [candidate `0.6.0-ci.330`](docs/audio-only-package-candidate.md) is
-prepared from clean main, with all CI and independent artifact/consumer checks
-passed. It awaits publication approval. The published `ci.294` package is API 5;
-the new audio-only profile is separate from that existing release and host pin.
+The API 6 **`SendAirPlay2.StereoAac 0.6.0-ci.330`** is now
+[published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330).
+All 17 clean-main checks and independent artifact/consumer checks passed;
+[fresh public package/checksum downloads match](docs/audio-only-package-publication.md)
+the reviewed bytes. It adds the finite explicit audio-only profile described
+above. Screenbox's opt-in pin remains API-5 ci.294 pending separate integration.
 
 [Recorded receiver checks](docs/automatic-audio-receiver-gate.md) cover native
 AAC copy/DTS conversion and packaged UWP nine-format playback on the recorded
