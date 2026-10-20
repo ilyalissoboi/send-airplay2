@@ -17,8 +17,10 @@ publish it, and how a host consumes it.
 **D109/API 6 preparation:** [the package readiness slice](audio-only-package-readiness.md)
 updates both new package version bases to `0.6.0`, the package descriptions and
 the independent consumer check. The published versions below are historical
-assets and remain unchanged. A reviewed clean-main candidate and publication
-follow separately; no Screenbox pin is changed by this preparation.
+assets and remain unchanged. The independently audited
+[clean-main API 6 candidate](audio-only-package-candidate.md), `0.6.0-ci.330`,
+is prepared with all 17 main checks passed and its exact checksum/release notes.
+Publication awaits separate approval; no Screenbox pin is changed by preparation.
 
 The existing package identity/profile remains codec-free. The separate
 `SendAirPlay2.StereoAac` package (API-5 version base `0.5.0`) adds the validated x64

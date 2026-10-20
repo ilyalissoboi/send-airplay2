@@ -78,6 +78,11 @@ See [the package contract](docs/opt-in-audio-runtime-package.md) and
 [verified publication](docs/validation/hdr-corrected-audio-publication-windows-2026-10-17.json). Neither package
 is on nuget.org. Audio-only speakers and discrete converted surround remain deferred.
 
+The API 6 [candidate `0.6.0-ci.330`](docs/audio-only-package-candidate.md) is
+prepared from clean main, with all CI and independent artifact/consumer checks
+passed. It awaits publication approval. The published `ci.294` package is API 5;
+the new audio-only profile is separate from that existing release and host pin.
+
 [Recorded receiver checks](docs/automatic-audio-receiver-gate.md) cover native
 AAC copy/DTS conversion and packaged UWP nine-format playback on the recorded
 MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6 from Windows x64, with applicable

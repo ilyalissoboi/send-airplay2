@@ -6,8 +6,11 @@ All 17 checks passed at its final head `f31227b`. The
 [native audio-only matrix](automatic-audio-only-native-gate.md) and
 [focused packaged integration gate](automatic-audio-only-uwp-gate.md) are complete.
 No additional receiver run is needed for this packaging slice.
-The current readiness branch is `codex/audio-only-package-candidate`; inspect
-its actual PR head/CI before continuing. Its local archives are not a release.
+Readiness [PR #94](https://github.com/ilyalissoboi/send-airplay2/pull/94) merged as
+`746c520`; all 17 checks passed at final head `275ceaa`. The subsequent
+[D110 clean-main candidate](audio-only-package-candidate.md) is prepared as
+`0.6.0-ci.330`, with publication still awaiting separate approval. The local
+archives in this D109 record are not the release candidate.
 
 ## Required corrections before a clean-main candidate
 

@@ -1,0 +1,248 @@
+{
+  "decision": "D110",
+  "date": "2026-10-20",
+  "timezone": "Asia/Tokyo",
+  "result": "CLEAN_MAIN_API6_CANDIDATE_PREPARED",
+  "base": {
+    "pr": 94,
+    "merge_commit": "746c520e17d812102a14ba4edae47a81239c4c81",
+    "final_head": "275ceaa679e1de3f832dd8027a216950f83c5a98",
+    "final_head_ci_checks_passed": 17
+  },
+  "main_run": {
+    "id": 39399818931,
+    "number": 330,
+    "source_commit": "746c520e17d812102a14ba4edae47a81239c4c81",
+    "event": "workflow_dispatch",
+    "url": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39399818931",
+    "status": "completed",
+    "conclusion": "success",
+    "checks_passed": 17,
+    "jobs": [
+      {
+        "name": "sanitizers",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "native (windows-latest, OFF)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "native (windows-latest, ON)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "audio-codec-spike (uwp, x64-uwp-codec-release)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "native (ubuntu-latest, ON)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "native (ubuntu-latest, OFF)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "audio-codec-spike (desktop, x64-windows-codec-release)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "uwp (arm64, ARM64, ARM64)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e-runner-contracts (windows-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e-runner-contracts (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "native (macos-latest, OFF)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "native (macos-latest, ON)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e-runner-contracts (macos-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "uwp (x86, Win32, x86)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "uwp (x64, x64, x64)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "nuget",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "package-consumer",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "candidate": {
+    "result": "PASS_STATIC_ARTIFACT_AUDIT",
+    "id": "SendAirPlay2.StereoAac",
+    "version": "0.6.0-ci.330",
+    "sha256": "9567655c5c4f0183fddeaea9f497d869d28b79036d599cbf5d87f241e74eb3ad",
+    "bytes": 21355553,
+    "binding_source": "746c520e17d812102a14ba4edae47a81239c4c81",
+    "native_source": "746c520e17d812102a14ba4edae47a81239c4c81",
+    "clean_build_info": true,
+    "modules": [
+      {
+        "name": "send_airplay2.dll",
+        "sha256": "f50172875c7769d689eca4661d3222eef74442e0128ba2cfa1343abd6cb5279e"
+      },
+      {
+        "name": "libcrypto-3-x64.dll",
+        "sha256": "2e9d06c93831d50dacb719298245af66f3f3d1df78fd853b2b2841a1bb8f9fcc"
+      },
+      {
+        "name": "avcodec-63.dll",
+        "sha256": "32e2c5946f83423f46375bc9064e56425010b967b0aee263abc5d9e1c8ba6eba"
+      },
+      {
+        "name": "avformat-63.dll",
+        "sha256": "70b2e9e7a24a5aecf812f8484c0fe13598e14b2c27abe1319d878a5a8a9a8f02"
+      },
+      {
+        "name": "avutil-61.dll",
+        "sha256": "207f9e00599267d9ae6b78e5d26062591bccfe89a0ea703f34c27518b5d390cd"
+      },
+      {
+        "name": "swresample-7.dll",
+        "sha256": "fdddfd264fd0704a966b5d08aa6bc2fe67558baaf65f5679fed7ac0b9a3a57fb"
+      }
+    ],
+    "source_archive_sha512": "21bf3fbcdfd2f41ea6edeab40433fecfe362b09ecaa177a652471b54f9357011b4f74dab18245ab1c26f1a473b94205490baecb42289afd2effd603cd0b22b59",
+    "exact_overlay_files": 22,
+    "overlay_match": "Exact installed SPDX SHA256; repository text equal after CRLF/LF normalization",
+    "overlay_files_with_line_ending_differences": 20,
+    "notice_sha256": "5febaf911cbf5a58c8bdca0be8907176d1e4b241c74c268b96abb24bcd5fd649",
+    "profile_sha256": "e490969e0d8059568fec46bc3f7315e4177f5a4037099a8d005488f4c4dbfb71"
+  },
+  "managed_binding_sha256": "72494cc22a44919bbfce21a117ec2bb65f4847ae26a549d798a843da75a93beb",
+  "packaged_readme_matches_selected_source": true,
+  "checksum_sidecar": {
+    "file": "SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg.sha256",
+    "sha256": "655a12480c59634e63a38420acdedbc493022c4f2c1079b518609b116e0ed49b",
+    "identifies_original_candidate": true
+  },
+  "codec_profile": {
+    "ffmpeg_version": "9.0.2",
+    "runtime_license": "LGPL-2.1-or-later",
+    "source_sha512": "21bf3fbcdfd2f41ea6edeab40433fecfe362b09ecaa177a652471b54f9357011b4f74dab18245ab1c26f1a473b94205490baecb42289afd2effd603cd0b22b59",
+    "vcpkg_revision": "434307da09bc05b2c86996dccc8b2351fc0d5d37",
+    "module_count": 4,
+    "demuxer_options": [
+      "'mov,matroska,wav,flac,ogg'"
+    ],
+    "encoder_options": [
+      "aac"
+    ],
+    "no_new_codec_or_dependency_change_in_this_slice": true
+  },
+  "fresh_consumer": {
+    "restored_archive_matches_candidate": true,
+    "fresh_restore_cache": true,
+    "api6_compile": true,
+    "six_native_copy_hashes_match": true,
+    "direct_and_transitive_profile_refusals": true,
+    "copied_managed_binding_matches_candidate": true,
+    "result": "PASS",
+    "consumer_or_native_runtime_executed": false,
+    "unsupported_rid_refusal": true,
+    "copied_managed_binding_sha256": "72494cc22a44919bbfce21a117ec2bb65f4847ae26a549d798a843da75a93beb"
+  },
+  "consumer_result_lines": [
+    "PASS: restored audio package compiles the API 6 audio-only contract and copies all six exact native DLLs",
+    "PASS: unsupported consumer architecture refused",
+    "PASS: default package is codec-free and mixed-profile references are refused",
+    "PASS: resolved transitive default profile is refused without a direct PackageReference",
+    "Package restore/build/copy checks passed; consumer executable was not run."
+  ],
+  "ci_package_profile_controls": {
+    "status": "PASS",
+    "ci_package_profile_controls_passed": 12,
+    "main_checks_passed": 17
+  },
+  "publication_collision_check": {
+    "existing_release": false,
+    "existing_remote_tag": false,
+    "tag": "nuget-stereo-aac-v0.6.0-ci.330",
+    "no_publication_action_performed": true
+  },
+  "same_run_default_comparison": {
+    "id": "SendAirPlay2",
+    "version": "0.6.0-ci.330",
+    "sha256": "49dc53a7a7019d85997c125a2b5bb2536d2262501f75528929ac490dbf1c2dbb",
+    "bytes": 7127293,
+    "source": "746c520e17d812102a14ba4edae47a81239c4c81",
+    "clean_binding_and_three_native_sources": true,
+    "verified_dll_hashes": 6,
+    "codec_free": true,
+    "publication_candidate": false
+  },
+  "default_static_architecture_inspection": {
+    "x64": "PASS",
+    "x86": "PASS",
+    "arm64": "PASS",
+    "codec_free": true
+  },
+  "publication": {
+    "approved": false,
+    "published": false,
+    "tag": "nuget-stereo-aac-v0.6.0-ci.330",
+    "target_commit": "746c520e17d812102a14ba4edae47a81239c4c81",
+    "assets": [
+      "SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg",
+      "SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg.sha256"
+    ],
+    "release_notes": "docs/releases/sendairplay2-stereo-aac-0.6.0-ci.330.md",
+    "nuget_org": false,
+    "screenbox_pin_changed": false,
+    "next": "Review the concrete candidate and obtain explicit publication approval; verify independent public download before any Screenbox pin update."
+  },
+  "receiver_scope": "D107/D108 development-runtime observations retain their original binary hashes; no new receiver/Screenbox observation for this exact archive.",
+  "unchanged": [
+    "Published ci.207/ci.294 assets",
+    "Screenbox pins/installation",
+    "Native runtime behavior",
+    "Codec/source/license adoption",
+    "Quota"
+  ],
+  "deferrals": [
+    "Speaker/RAOP",
+    "Discrete surround",
+    "Chromecast hardware",
+    "User-deferred remote Stop classification",
+    "Long-input/cache-quota evaluation"
+  ]
+}
