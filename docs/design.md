@@ -1,5 +1,17 @@
 # Design and implementation sequence
 
+**D109 API 6 package readiness in progress (2026-10-20).**
+The user authorizes package preparation after #93 merged as `ee968e9`; all 17
+checks passed at final head `f31227b`. Read [the package corrections and ordered checkpoints](audio-only-package-readiness.md).
+The shipping README/consumer checks still described/exercised API 5. Both new
+package bases become `0.6.0`, matching the experimental API convention; the
+packer/workflow, finite audio-only descriptions and actual restored API-6
+consumer members are being updated. Local distribution/profile/consumer gates
+are pending. No new receiver checks, publication or Screenbox edits are included.
+A clean-main candidate follows review/merge of these packaging corrections;
+publication needs its separate approval. Existing published assets/pins, native/
+codec behavior, quota and all hardware/user deferrals remain unchanged.
+
 **D108 focused packaged automatic audio-only gate passed (2026-10-20).**
 [PR #93](https://github.com/ilyalissoboi/send-airplay2/pull/93), implementation
 `c868572`, records thirteen public preparation/cleanup checks over twelve owned,

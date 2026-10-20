@@ -22,8 +22,9 @@
 # pack has a new version and NuGet's global package cache never serves a stale
 # copy. Relative paths are from the repository root.
 #
-# -StereoAac selects the separate SendAirPlay2.StereoAac identity (API-5 base
-# 0.5.0), initially x64 only. It requires a distribution build (private runtime
+# -StereoAac selects the separate SendAirPlay2.StereoAac identity, initially
+# x64 only. Both version bases follow the binding's experimental API version.
+# It requires a distribution build (private runtime
 # validation OFF), the matching FFmpeg share/prefix and checksum-pinned source
 # archive. Sources/patches/configuration/notices accompany the dynamic runtime.
 # Nothing here publishes a package or changes the codec-free default identity.
@@ -162,9 +163,7 @@ $notices = [ordered]@{
 
 # --- Version ---------------------------------------------------------------------
 if (-not $Version) {
-    $base = if ($StereoAac) { '0.5.0' } else {
-        ([xml](Get-Content $project -Raw)).SelectSingleNode('/Project/PropertyGroup/Version').InnerText
-    }
+    $base = ([xml](Get-Content $project -Raw)).SelectSingleNode('/Project/PropertyGroup/Version').InnerText
     if (-not $VersionSuffix) { $VersionSuffix = "local.$([DateTime]::UtcNow.ToString('yyyyMMddHHmmss'))" }
     $Version = "$base-$VersionSuffix"
 }
@@ -199,7 +198,7 @@ foreach ($entry in $entries) {
     }
 }
 if ($audioProfile) {
-    $info += 'Profile: stereo-aac (opt-in; 48-kHz stereo conversion, no audio-only transport)'
+    $info += 'Profile: stereo-aac (API 6; opt-in stereo AAC conversion; AppleAudioV1 progressive AAC/MP3 or audio-only AAC HLS; no RAOP/speaker transport)'
     $info += "FFmpeg source SHA-512 $($audioProfile.Record.source_sha512)"
     Copy-StereoAacPackageSources -Root $root -Stage $stage -Profile $audioProfile
     New-Item -ItemType Directory -Force (Join-Path $stage 'buildTransitive') | Out-Null

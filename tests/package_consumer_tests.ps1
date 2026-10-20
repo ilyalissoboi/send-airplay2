@@ -33,7 +33,36 @@ try {
     $prefix = '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><RuntimeIdentifier>win-x64</RuntimeIdentifier></PropertyGroup><ItemGroup>'
     $suffix = '</ItemGroup></Project>'
     [IO.File]::WriteAllText($project, $prefix + $references + $suffix)
-    [IO.File]::WriteAllText((Join-Path $work 'Program.cs'), 'using SendAirPlay2; var options = new CastOptions { Delivery = CastDelivery.AutomaticAudioHls, ConversionPermission = AudioConversionPermission.AllowStereo }; System.Console.WriteLine(options.Delivery);')
+    # Compile the actual API 6 contract from the restored assembly. These members
+    # are absent in API 5; compiling only AutomaticAudioHls would miss stale binding
+    # assets. Never execute this consumer or load its UWP native runtime here.
+    $consumer = @'
+using System;
+using SendAirPlay2;
+
+internal static class Program
+{
+    private static AudioDecision CheckOriginalAudio(MediaSource source) =>
+        AudioDelivery.Check(source, TimeSpan.FromSeconds(30),
+            permission: AudioConversionPermission.PreserveOriginal,
+            profile: AudioDeliveryProfile.AppleAudioV1);
+
+    private static void Main()
+    {
+        var options = new CastOptions
+        {
+            Delivery = CastDelivery.AutomaticAudioHls,
+            AudioProfile = AudioDeliveryProfile.AppleAudioV1,
+            ConversionPermission = AudioConversionPermission.AllowStereo
+        };
+        AudioDeliveryAction action = AudioDeliveryAction.Progressive;
+        AudioDeliveryReason reason = AudioDeliveryReason.ProfileProgressive;
+        AudioFamily family = AudioFamily.Mp3;
+        Console.WriteLine($"{options.AudioProfile} {action} {reason} {family}");
+    }
+}
+'@
+    [IO.File]::WriteAllText((Join-Path $work 'Program.cs'), $consumer)
     $build = & dotnet build $project -c Release --nologo "-p:RestoreAdditionalProjectSources=$feed" 2>&1 | Out-String
     [IO.File]::WriteAllText((Join-Path $work 'audio-build.txt'), $build)
     if ($LASTEXITCODE -ne 0) { throw "Audio consumer build failed: $build" }
@@ -46,7 +75,7 @@ try {
         $copied = Join-Path $work "bin/Release/net10.0/win-x64/$name"
         if ((Get-FileHash -LiteralPath $copied).Hash -ne $packaged) { throw "Consumer runtime mismatch: $name" }
     }
-    Write-Host 'PASS: restored audio package compiles against API 5 and copies all six exact native DLLs'
+    Write-Host 'PASS: restored audio package compiles the API 6 audio-only contract and copies all six exact native DLLs'
     $build = & dotnet build $project -c Release --nologo '-p:RuntimeIdentifier=win-arm64' "-p:RestoreAdditionalProjectSources=$feed" 2>&1 | Out-String
     if ($LASTEXITCODE -eq 0 -or -not $build.Contains('only win-x64 native runtime assets')) {
         throw "Missing-architecture consumer must fail clearly: $build"

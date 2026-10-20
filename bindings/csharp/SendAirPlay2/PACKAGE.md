@@ -1,12 +1,23 @@
 # SendAirPlay2
 
-Experimental native AirPlay 2 video sender for UWP and .NET hosts on Windows:
+Experimental API 6 AirPlay 2 media sender for UWP and .NET hosts on Windows:
 receiver discovery, PIN pairing into a host credential store, casting a local
 file (directly, or remuxed to HLS from MP4/MOV or MKV without transcoding) and
 playback control.
 
-The API is not frozen. Receiver testing covers one Apple TV 4K (tvOS 26.6) from
-Windows 11 hosts, including a packaged UWP app with Native AOT.
+The explicit `AudioDeliveryProfile.AppleAudioV1` also admits the finite validated
+stereo AAC/M4A and CBR/VBR MP3 subsets as original progressive audio. Select
+`CastDelivery.AutomaticAudioHls` with that profile for content-based preparation;
+the historical delivery name also covers progressive results. This package is
+codec-free: inputs requiring AAC conversion refuse with backend unavailable
+after the permission check. Use the separate `SendAirPlay2.StereoAac` profile
+instead for covered conversion; the two identities cannot be mixed.
+
+The API is not frozen. Match the API 6 binding and native assets from one package.
+Recorded development-runtime receiver checks cover one MacBook Pro/macOS 26.7.1
+and Apple TV/tvOS 26.6 from Windows x64, including packaged UWP/Native AOT.
+Those observations have their own binary scope; they do not establish playback
+of every newly built package or unsupported source/receiver combinations.
 
 ## Contents
 
