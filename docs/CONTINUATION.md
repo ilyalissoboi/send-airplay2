@@ -1,20 +1,27 @@
 # Separate-session development handoff
 
-**D110 clean-main API 6 candidate prepared (2026-10-20).**
-After #94 merged as `746c520` (all 17 checks at `275ceaa`), main workflow
-[39399818931](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39399818931)
-built `SendAirPlay2.StereoAac 0.6.0-ci.330` from that exact source. All 17 main
-checks pass. The unchanged 21,355,553-byte archive has SHA-256
+**D111 API 6 prerelease published and public downloads verified (2026-10-20).**
+After #95 merged as `a7f8202` (all 17 checks at `c2d1526`), the user explicitly
+approved publishing the exact D110 candidate. [SendAirPlay2.StereoAac 0.6.0-ci.330](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330)
+is now a GitHub prerelease. Its tag resolves to the original build source
+`746c520e17d812102a14ba4edae47a81239c4c81`, not the later documentation merge.
+Fresh unauthenticated public downloads of the unchanged 21,355,553-byte package
+and checksum match the reviewed hashes; the package SHA-256 is
 `9567655c5c4f0183fddeaea9f497d869d28b79036d599cbf5d87f241e74eb3ad`.
-Independent source/six-DLL/UWP distribution/pinned-source/22-overlay/license
-audit and fresh API-6 consumer, managed/native copy, RID/direct/transitive
-refusals pass. Same-run default assets are comparison only; all three ordinary
-architectures pass static inspection. [Candidate evidence, notes and boundary](audio-only-package-candidate.md)
-are complete on `codex/api6-clean-main-candidate`; inspect its actual PR head/CI.
-No release/tag/assets or Screenbox pin changed. Publication requires separate
-explicit approval for these exact bytes/tag/target, then public-download
-verification before Screenbox updates. No new receiver/queue observation is
-claimed; D107/D108 retain their original binary scope. All deferrals remain.
+Read [publication evidence and next work](audio-only-package-publication.md).
+Publication is complete and authorized; do not repeat it or ask again. No
+Screenbox pin/installation or new receiver observation is included. Next is a
+separate Screenbox API-6 pin, explicit per-item profile routing and focused queue
+checks, after reading that repository's instructions. Reuse unchanged lifecycle
+and codec evidence. All hardware/user deferrals and quota remain unchanged.
+
+**D110 preparation history (2026-10-20).**
+Clean-main [run 39399818931](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39399818931)
+from `746c520` passed all 17 checks. Independent source/six-DLL/UWP distribution/
+pinned-source/22-overlay/license and fresh API-6 consumer/copy/refusal audits
+passed for the exact ci.330 bytes. Same-run ordinary assets remain comparison
+only. [Preparation evidence](audio-only-package-candidate.md) remains historical;
+D111 above records the subsequently approved publication and public verification.
 
 **D109 API 6 package readiness passed locally (2026-10-20).**
 The user authorizes package preparation after #93 merged as `ee968e9`; all 17
@@ -67,7 +74,7 @@ and brokered sources, then Screenbox routing/queues. No runtime/API, codec,
 package, Screenbox, quota or publication change is included. Speaker/RAOP,
 discrete-surround, Chromecast, remote-Stop and long-input deferrals remain.
 
-Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#94 are merged. `main` contains
+Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#95 are merged. `main` contains
 the experimental C API version 6, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -1271,17 +1278,17 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
     packs pass thirteen profile controls, fresh consumer/copy/RID/direct/transitive
     checks, the old-API-5 negative control and source/license audit. No runtime,
     receiver, Screenbox or published-asset change. Read audio-only-package-readiness.md.
-14. **D110 clean-main candidate prepared.** Main run 39399818931/330 from 746c520
-    passed all 17 checks. Exact opt-in 0.6.0-ci.330 archive/checksum, source/license/
-    six-DLL audit and fresh managed/native consumer/copy/refusals pass. Continue
-    the candidate evidence PR on codex/api6-clean-main-candidate; inspect its head/CI.
-    Read audio-only-package-candidate.md for the exact hash/assets/target/notes.
-15. **Next: publication approval for that concrete candidate**, then independent
-    public-download verification. No release/tag/assets have been created.
-    Preserve archive bytes; do not regenerate under ci.330 or publish same-run
-    default comparison assets. Reuse an explicit approval once given.
-16. **Then Screenbox per-item routing/queues and package/pin prerequisites**,
-    preserving exact binary scopes, earlier lifecycle coverage and all deferrals.
+14. **D110 candidate preparation merged in #95 as a7f8202.** All 17 checks
+    passed at final head c2d1526. Main run 39399818931/330 from 746c520 and the
+    artifact/source/license/consumer checks passed. Read audio-only-package-candidate.md.
+15. **D111 approved publication complete.** Opt-in 0.6.0-ci.330 is a GitHub
+    prerelease. The tag targets the original source 746c520; fresh unauthenticated
+    package/checksum downloads match the reviewed bytes. Read
+    audio-only-package-publication.md. Do not repeat publication or replace assets.
+16. **Next: separate Screenbox API-6 pin and explicit per-item audio/video routing**,
+    followed by focused mixed-queue checks. Inspect current fork instructions;
+    preserve ordinary ci.207, user stereo-conversion defaults, exact binary scopes,
+    earlier lifecycle coverage and all deferrals.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1512,17 +1519,16 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. PR #94 is merged as 746c520 with all 17 checks at 275ceaa. The user
-> authorized package preparation; D110 now has the exact clean-main candidate
-> SendAirPlay2.StereoAac 0.6.0-ci.330 from main run 39399818931, all 17 checks green.
-> Read audio-only-package-candidate.md and its evidence. Candidate archive/checksum
-> remain under build-review/d110/feed with hash 9567655c...e74eb3ad; never regenerate
-> under this version. Source/tag target is 746c520e17d812102a14ba4edae47a81239c4c81.
-> Inspect the actual PR head/CI on codex/api6-clean-main-candidate before writing.
-> Artifact/source/license and fresh consumer/API-6/managed/six-DLL/RID/profile
-> checks pass; the exact release notes are prepared. No publication is approved
-> or performed yet. Obtain explicit approval for this concrete release, reuse it
-> once given, create only the opt-in tag/package/checksum, then verify a fresh
-> public download before Screenbox updates. Existing ci.207/ci.294/pins remain
-> unchanged. D107/D108 receiver scopes are historical for their exact binaries;
-> no repeat manual tests are needed here. Preserve deferrals and ask before merging.
+> documents. PR #95 merged as a7f8202 with all 17 checks at c2d1526. D111 records
+> the approved publication of SendAirPlay2.StereoAac 0.6.0-ci.330 and independent
+> unauthenticated public package/checksum downloads matching the reviewed bytes.
+> Read audio-only-package-publication.md and its evidence. The tag resolves to
+> original source 746c520e17d812102a14ba4edae47a81239c4c81. Do not republish,
+> regenerate bytes under this version or ask for publication approval again.
+> Continue an open publication-evidence PR on codex/api6-candidate-publication,
+> inspecting its actual head/CI first. The next separate slice is Screenbox's
+> API-6 opt-in package pin, explicit per-item audio/video policy routing and
+> focused mixed-queue checks; read the fork's current instructions before edits.
+> Ordinary ci.207 and opt-in ci.294 pins are still unchanged. D107/D108 receiver
+> scopes remain tied to their exact binaries. Reuse unchanged cancellation and
+> full codec listening evidence. Preserve all deferrals and ask before merging.

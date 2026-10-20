@@ -1,20 +1,27 @@
 # Receiver validation record
 
-**D110 clean-main API 6 candidate prepared (2026-10-20).**
-After #94 merged as `746c520` (all 17 checks at `275ceaa`), main workflow
-[39399818931](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39399818931)
-built `SendAirPlay2.StereoAac 0.6.0-ci.330` from that exact source. All 17 main
-checks pass. The unchanged 21,355,553-byte archive has SHA-256
+**D111 API 6 prerelease published and public downloads verified (2026-10-20).**
+After #95 merged as `a7f8202` (all 17 checks at `c2d1526`), the user explicitly
+approved publishing the exact D110 candidate. [SendAirPlay2.StereoAac 0.6.0-ci.330](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330)
+is now a GitHub prerelease. Its tag resolves to the original build source
+`746c520e17d812102a14ba4edae47a81239c4c81`, not the later documentation merge.
+Fresh unauthenticated public downloads of the unchanged 21,355,553-byte package
+and checksum match the reviewed hashes; the package SHA-256 is
 `9567655c5c4f0183fddeaea9f497d869d28b79036d599cbf5d87f241e74eb3ad`.
-Independent source/six-DLL/UWP distribution/pinned-source/22-overlay/license
-audit and fresh API-6 consumer, managed/native copy, RID/direct/transitive
-refusals pass. Same-run default assets are comparison only; all three ordinary
-architectures pass static inspection. [Candidate evidence, notes and boundary](audio-only-package-candidate.md)
-are complete on `codex/api6-clean-main-candidate`; inspect its actual PR head/CI.
-No release/tag/assets or Screenbox pin changed. Publication requires separate
-explicit approval for these exact bytes/tag/target, then public-download
-verification before Screenbox updates. No new receiver/queue observation is
-claimed; D107/D108 retain their original binary scope. All deferrals remain.
+Read [publication evidence and next work](audio-only-package-publication.md).
+Publication is complete and authorized; do not repeat it or ask again. No
+Screenbox pin/installation or new receiver observation is included. Next is a
+separate Screenbox API-6 pin, explicit per-item profile routing and focused queue
+checks, after reading that repository's instructions. Reuse unchanged lifecycle
+and codec evidence. All hardware/user deferrals and quota remain unchanged.
+
+**D110 preparation history (2026-10-20).**
+Clean-main [run 39399818931](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39399818931)
+from `746c520` passed all 17 checks. Independent source/six-DLL/UWP distribution/
+pinned-source/22-overlay/license and fresh API-6 consumer/copy/refusal audits
+passed for the exact ci.330 bytes. Same-run ordinary assets remain comparison
+only. [Preparation evidence](audio-only-package-candidate.md) remains historical;
+D111 above records the subsequently approved publication and public verification.
 
 **D109 API 6 package readiness passed locally (2026-10-20).**
 The user authorizes package preparation after #93 merged as `ee968e9`; all 17

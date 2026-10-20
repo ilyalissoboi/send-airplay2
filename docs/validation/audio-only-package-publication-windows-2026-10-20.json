@@ -1,0 +1,74 @@
+{
+  "decision": "D111",
+  "date": "2026-10-20",
+  "timezone": "Asia/Tokyo",
+  "result": "PUBLISHED_AND_PUBLIC_DOWNLOAD_VERIFIED",
+  "approval": {
+    "explicit": true,
+    "scope": "User approved the exact ci.330 prerelease, reviewed release notes, original package and checksum after PR #95 merged."
+  },
+  "preparation": {
+    "pr": 95,
+    "merge_commit": "a7f82024bc54d72ac4fbc387687aed1bbb43e80e",
+    "final_head": "c2d1526ec20974dc88446fc8876e4ab39181f5d3",
+    "final_head_ci_checks_passed": 17,
+    "main_run": 39399818931,
+    "main_run_checks_passed": 17,
+    "evidence": "audio-only-package-candidate-windows-2026-10-20.json"
+  },
+  "release": {
+    "id": 418301463,
+    "url": "https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330",
+    "tag": "nuget-stereo-aac-v0.6.0-ci.330",
+    "resolved_tag_target": "746c520e17d812102a14ba4edae47a81239c4c81",
+    "tag_object_type": "commit",
+    "prerelease": true,
+    "draft": false,
+    "published_at": "2026-10-20T11:03:22Z",
+    "asset_count": 2,
+    "notes_file": "docs/releases/sendairplay2-stereo-aac-0.6.0-ci.330.md",
+    "body_matches_reviewed_notes": true
+  },
+  "public_download": {
+    "result": "PASS",
+    "method": "Fresh Invoke-WebRequest downloads from public GitHub asset URLs, without credentials or Authorization headers; not authenticated gh release download.",
+    "assets": [
+      {
+        "name": "SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg",
+        "url": "https://github.com/ilyalissoboi/send-airplay2/releases/download/nuget-stereo-aac-v0.6.0-ci.330/SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg",
+        "bytes": 21355553,
+        "sha256": "9567655c5c4f0183fddeaea9f497d869d28b79036d599cbf5d87f241e74eb3ad",
+        "github_asset_id": 659083340,
+        "github_digest": "sha256:9567655c5c4f0183fddeaea9f497d869d28b79036d599cbf5d87f241e74eb3ad"
+      },
+      {
+        "name": "SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg.sha256",
+        "url": "https://github.com/ilyalissoboi/send-airplay2/releases/download/nuget-stereo-aac-v0.6.0-ci.330/SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg.sha256",
+        "bytes": 108,
+        "sha256": "655a12480c59634e63a38420acdedbc493022c4f2c1079b518609b116e0ed49b",
+        "github_asset_id": 659083345,
+        "github_digest": "sha256:655a12480c59634e63a38420acdedbc493022c4f2c1079b518609b116e0ed49b"
+      }
+    ],
+    "original_package_bytes_unchanged": true,
+    "checksum_sidecar_bytes_unchanged": true,
+    "github_asset_digests_match": true
+  },
+  "scope": {
+    "new_receiver_observation": false,
+    "receiver_evidence": "D107/D108 development-runtime observations retain their original binary scope.",
+    "screenbox_pin_changed": false,
+    "nuget_org": false,
+    "store_release": false,
+    "same_run_codec_free_package_published": false,
+    "previous_ci207_ci294_assets_replaced": false
+  },
+  "next": "Separate Screenbox API-6 package pin, explicit per-item audio/video policy routing and focused mixed-queue verification; inspect that repository instructions first.",
+  "deferrals": [
+    "Speaker/RAOP",
+    "Discrete surround",
+    "Chromecast hardware",
+    "User-deferred remote Stop classification",
+    "Long-input/cache-quota evaluation"
+  ]
+}

@@ -19,8 +19,11 @@ updates both new package version bases to `0.6.0`, the package descriptions and
 the independent consumer check. The published versions below are historical
 assets and remain unchanged. The independently audited
 [clean-main API 6 candidate](audio-only-package-candidate.md), `0.6.0-ci.330`,
-is prepared with all 17 main checks passed and its exact checksum/release notes.
-Publication awaits separate approval; no Screenbox pin is changed by preparation.
+passed all 17 main checks and is now an approved
+[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330).
+[Fresh unauthenticated public downloads](audio-only-package-publication.md)
+match the exact package/checksum bytes. Its tag targets `746c520`; Screenbox's
+opt-in pin remains ci.294 until a separate API-6 integration slice.
 
 The existing package identity/profile remains codec-free. The separate
 `SendAirPlay2.StereoAac` package (API-5 version base `0.5.0`) adds the validated x64

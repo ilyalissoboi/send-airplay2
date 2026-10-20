@@ -1,5 +1,10 @@
 # D110: clean-main API 6 package candidate
 
+**Historical preparation record.** PR #95 merged as `a7f8202`, with all 17
+checks passed at final head `c2d1526`. The user subsequently approved publication;
+[D111 records the completed release and public-download verification](audio-only-package-publication.md).
+The preparation-time publication boundary and JSON below are preserved as history.
+
 2026-10-20 (Asia/Tokyo). The authorized package preparation continues after
 [PR #94](https://github.com/ilyalissoboi/send-airplay2/pull/94) merged as
 `746c520e17d812102a14ba4edae47a81239c4c81`. All 17 checks passed at final head
@@ -11,7 +16,7 @@ are not used as the publication candidate.
 
 Clean-main [workflow run 39399818931](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39399818931),
 run number 330, is a `workflow_dispatch` on the exact merged commit above. It
-will produce `SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg` in the separate
+produced `SendAirPlay2.StereoAac.0.6.0-ci.330.nupkg` in the separate
 `nuget-stereo-aac-x64` artifact. The same-run codec-free package is a comparison
 input for the consumer profile-conflict check, not an additional release candidate.
 
@@ -59,7 +64,7 @@ binary scope; static package/consumer checks add no receiver, Screenbox queue,
 gapless/sample-exact or long-input playback claim. No repeat cancellation/full
 codec listening matrix is needed for this package-only slice.
 
-## Publication boundary
+## Publication boundary at preparation time
 
 After preparation is reviewable and complete, publication needs separate explicit
 approval for the exact package/version/hash and target commit. Use the distinct
