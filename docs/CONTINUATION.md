@@ -1,23 +1,24 @@
 # Separate-session development handoff
 
-**D107 native automatic audio-only testing PAUSED by the user (2026-10-20).**
-Draft PR #92 is open on codex/audio-only-native-receiver-gate. Its prepared head
-4cd545a passed all 17 CI checks; native runtime source remains merged d378249.
-The user confirms macOS 26.7.1/tvOS 26.6 unchanged. Seven completed checks pass
-by written observation: Mac converted-FLAC controls/natural end and Stop, Mac
-progressive AAC/CBR-MP3/VBR-MP3 controls/natural ends, and Apple TV converted-FLAC
-controls/natural end and Stop. Each of 11 attempts verified the executable/seven
-DLLs; every source released once, with zero failed reads and empty final cache.
-Keep the unconfirmed first cancellation and two no-prompt retries as nonqualifying.
-Mac WAVE was rejected with HTTP 400 after 15.4 s; the batch stopped, so seven
-following cases never ran. The later batch Yes reply is not eight PASS results.
-Read [the paused checkpoint and remaining cases](automatic-audio-only-native-gate.md).
-No native test host or cache entries remain. Do not start casts or test/CI runs
-until explicit resume; pending readiness questions are suspended. Save/retain
-all attempts. No further D107 cancellation retest is required: the user questioned
-redundant retesting, and unchanged lifecycle checks should be reused unless
-relevant code changes or a concrete regression warrants another manual check.
-Packaged/Screenbox gates and all hardware/user deferrals remain separate.
+**D107 native automatic audio-only receiver gate passed (2026-10-20).**
+[PR #92](https://github.com/ilyalissoboi/send-airplay2/pull/92) records 24 natural-end
+checks and two representative converted-FLAC Stops, confirmed by written user
+observation on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6. The user resumed
+the paused run; only the 19 missing format/timeline checks were completed. Native
+source remains merged `d378249`; test checkpoints `4cd545a` and `a3ff5bd` used
+identical verified host/seven-DLL hashes. All 30 attempts, including four retained
+failed/nonqualifying attempts, released their source once with zero failed reads
+and empty post-run cache. The final test-host process/cache counts are zero.
+The original WAVE rejection and three nonqualifying consent attempts remain
+explicit; they are not passes. No fresh pending-consent cancellation is claimed.
+The user questioned redundant cancellation checks: reuse unchanged lifecycle
+evidence, repeating manual cancellation only for relevant code changes or a
+concrete defect. Read [the complete scope and evidence](automatic-audio-only-native-gate.md).
+The prepared head `4cd545a` passed all 17 CI checks; inspect the final PR head
+separately. Next, after review/merge, validate packaged automatic audio-only HLS
+and brokered sources, then Screenbox routing/queues. No runtime/API, codec,
+package, Screenbox, quota or publication change is included. Speaker/RAOP,
+discrete-surround, Chromecast, remote-Stop and long-input deferrals remain.
 
 Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#91 are merged. `main` contains
 the experimental C API version 6, C# binding, packaged UWP host and native
@@ -1203,11 +1204,12 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    evidence only. No new app/receiver gate or publication.
 10. **D106 complete; #91 merged as d378249.** All 17 final-head checks passed
     at 3daa9a1. Read automatic-audio-only.md for the explicit API 6 finite profile.
-11. **D107 PAUSED by user: native automatic audio-only receiver gate.** Draft #92.
-    Seven completed cases have written PASS observations; Mac WAVE rejection and
-    nonqualifying cancellation attempts are retained. Remaining format/timeline
-    cases are unrun. Read automatic-audio-only-native-gate.md. No testing until
-    explicit resume; do not repeat unchanged cancellation checks for each pass.
+11. **D107 native automatic audio-only receiver gate passed.** PR #92 records
+    24 natural-end cases and two converted-FLAC Stops on both recorded receivers.
+    The user resumed and confirmed all 19 missing checks; all 30 attempts and
+    four failed/nonqualifying histories remain. Final host/cache counts are zero.
+    Read automatic-audio-only-native-gate.md. Inspect final-head CI separately;
+    reuse unchanged lifecycle evidence instead of repeating cancellation each pass.
 12. **Next: packaged generated audio-only HLS receiver gate**, then Screenbox
     per-item routing/queues. Preserve exact binary/host scopes, written observations,
     completed direct AAC/MP3 evidence and all hardware/user deferrals.
@@ -1441,16 +1443,14 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. D107 testing is explicitly PAUSED by the user. Do not start casts,
-> tests or CI until explicit resume. Draft #92 is open; inspect its actual head
-> before writing. Read automatic-audio-only-native-gate.md and its evidence.
-> Seven native observed cases passed on unchanged macOS 26.7.1/tvOS 26.6; runtime
-> source is unchanged from merged d378249. Mac WAVE rejected at 15.4 s, aborting
-> the eight-case batch; seven cases never ran despite a later batch Yes reply.
-> Preserve all attempts. Two cancellation retries had no prompt and did not fire
-> cancellation. No more D107 cancellation retests; reuse unchanged lifecycle
-> evidence unless relevant code changes or a concrete defect warrants a check.
-> No running native host/cache remains. On resume, coordinate remaining formats
-> and refresh the unchanged build stamp before casts; use saved pairings and
-> written observations. Packaged/Screenbox gates stay later. No release/pin/
-> codec-profile/quota change; preserve all deferrals and ask before merging.
+> documents. D107 native automatic audio-only receiver checks passed: 24 natural
+> ends and two representative Stops on macOS 26.7.1/tvOS 26.6. PR #92 records
+> unchanged d378249 native source with identical binary hashes at initial/resumed
+> checkpoints. Inspect its actual head/CI before writing. Read
+> automatic-audio-only-native-gate.md and its evidence, including four retained
+> failed/nonqualifying attempts. No host/cache remains. The next slice, after
+> review/merge, is packaged automatic audio-only HLS/brokered-source verification,
+> followed by Screenbox routing/queues. Reuse unchanged lifecycle evidence;
+> repeat manual cancellation only for relevant changes or a concrete defect.
+> Use saved pairings and written observations. No release/pin/codec-profile/quota
+> change; preserve all deferrals and ask before merging.

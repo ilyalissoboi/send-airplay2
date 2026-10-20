@@ -1,23 +1,24 @@
 # Design and implementation sequence
 
-**D107 native automatic audio-only testing PAUSED by the user (2026-10-20).**
-Draft PR #92 is open on codex/audio-only-native-receiver-gate. Its prepared head
-4cd545a passed all 17 CI checks; native runtime source remains merged d378249.
-The user confirms macOS 26.7.1/tvOS 26.6 unchanged. Seven completed checks pass
-by written observation: Mac converted-FLAC controls/natural end and Stop, Mac
-progressive AAC/CBR-MP3/VBR-MP3 controls/natural ends, and Apple TV converted-FLAC
-controls/natural end and Stop. Each of 11 attempts verified the executable/seven
-DLLs; every source released once, with zero failed reads and empty final cache.
-Keep the unconfirmed first cancellation and two no-prompt retries as nonqualifying.
-Mac WAVE was rejected with HTTP 400 after 15.4 s; the batch stopped, so seven
-following cases never ran. The later batch Yes reply is not eight PASS results.
-Read [the paused checkpoint and remaining cases](automatic-audio-only-native-gate.md).
-No native test host or cache entries remain. Do not start casts or test/CI runs
-until explicit resume; pending readiness questions are suspended. Save/retain
-all attempts. No further D107 cancellation retest is required: the user questioned
-redundant retesting, and unchanged lifecycle checks should be reused unless
-relevant code changes or a concrete regression warrants another manual check.
-Packaged/Screenbox gates and all hardware/user deferrals remain separate.
+**D107 native automatic audio-only receiver gate passed (2026-10-20).**
+[PR #92](https://github.com/ilyalissoboi/send-airplay2/pull/92) records 24 natural-end
+checks and two representative converted-FLAC Stops, confirmed by written user
+observation on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6. The user resumed
+the paused run; only the 19 missing format/timeline checks were completed. Native
+source remains merged `d378249`; test checkpoints `4cd545a` and `a3ff5bd` used
+identical verified host/seven-DLL hashes. All 30 attempts, including four retained
+failed/nonqualifying attempts, released their source once with zero failed reads
+and empty post-run cache. The final test-host process/cache counts are zero.
+The original WAVE rejection and three nonqualifying consent attempts remain
+explicit; they are not passes. No fresh pending-consent cancellation is claimed.
+The user questioned redundant cancellation checks: reuse unchanged lifecycle
+evidence, repeating manual cancellation only for relevant code changes or a
+concrete defect. Read [the complete scope and evidence](automatic-audio-only-native-gate.md).
+The prepared head `4cd545a` passed all 17 CI checks; inspect the final PR head
+separately. Next, after review/merge, validate packaged automatic audio-only HLS
+and brokered sources, then Screenbox routing/queues. No runtime/API, codec,
+package, Screenbox, quota or publication change is included. Speaker/RAOP,
+discrete-surround, Chromecast, remote-Stop and long-input deferrals remain.
 
 **D106 explicit automatic audio-only offline gate complete (2026-10-19).**
 Native #90 merged as `06e094c`; all 17 checks passed at final head `fec9448` in
