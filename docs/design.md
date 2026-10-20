@@ -1,6 +1,20 @@
 # Design and implementation sequence
 
-**D113 Screenbox audio-only preview candidate prepared (2026-10-20).**
+**D114 Screenbox audio-only preview published (2026-10-21).**
+After fork #18/native #98 merged as `200d7bfa`/`3089508` (all 17 native checks
+at `2f065b4`; fork docs-only checks skipped by paths), the user explicitly
+instructed publication. [Screenbox AirPlay Preview 0.2.0-preview.1](https://github.com/ilyalissoboi/Screenbox/releases/tag/airplay-preview-0.2.0-preview.1)
+is public with the exact five D113 assets and reviewed notes. Its tag resolves
+to original build source `b2b987d6`, not either documentation merge. Fresh
+unauthenticated downloads of every asset match reviewed sizes/SHA-256 hashes;
+the installer ZIP remains `63c3f25948520e5555f91121930391e697a230cf8de1dcc2020451c277e646a0`.
+Read [publication evidence](screenbox-audio-only-preview-publication.md).
+Approval/publication are complete; do not repeat them, regenerate these bytes
+or replace prior assets. No new build, installation, visual or receiver test
+is included. D112/D113 scopes, ci.330, quota and all hardware/user deferrals
+remain unchanged. Choose later development scope separately.
+
+**D113 preparation history (2026-10-20; publication completed in D114 above).**
 Fork #17 merged as `b2b987d6` (all four checks at `2a001be1`); native #97 merged
 as `65dd17f` (all 17 at `6effcf1`). The user authorized release-candidate
 preparation. An isolated export of that exact fork main builds x64 Release

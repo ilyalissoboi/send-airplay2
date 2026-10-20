@@ -5,7 +5,9 @@ Screenbox #17 merged as `b2b987d68b844ef0e3f577cc0622d223a329adf9` and native
 #97 merged as `65dd17f508220860bdaff4b73eca23f4b82be538`. All four/17 checks
 passed at final heads `2a001be1`/`6effcf1` respectively.
 
-**Screenbox AirPlay Preview 0.2.0-preview.1 is prepared, not published.**
+**Historical preparation record.** The candidate was explicitly approved and
+[published on 2026-10-21](screenbox-audio-only-preview-publication.md); all five
+public downloads match these retained bytes. The preparation-time JSON remains unchanged.
 [Fork PR #18](https://github.com/ilyalissoboi/Screenbox/pull/18) contains the
 reviewable candidate details and proposed publication-ready release notes.
 The [sanitized record](validation/screenbox-audio-only-preview-candidate-windows-2026-10-20.json)
@@ -61,14 +63,13 @@ there is no new visual or receiver observation.
 | INSTALL.md | 3,135 | `8b65bb28f9e3e5eb4c4bd57b5e965ec667de1bfb351ccd8adff0a91a0de5f53d` |
 | SHA256SUMS.txt | 398 | `db30bc2ae3c84ca2415cfad6cbbce9464a7340e11b0e9461f2dac9e909e8f825` |
 
-These original bytes are retained under ignored validation storage. No release,
-tag or assets have been created; publication requires separate explicit approval
-of this concrete candidate. Use tag `airplay-preview-0.2.0-preview.1` targeting
+These original bytes were retained under ignored validation storage and are now
+published with explicit approval. Tag `airplay-preview-0.2.0-preview.1` targets
 `b2b987d68b844ef0e3f577cc0622d223a329adf9`, not a later documentation commit.
-Publish only the retained five assets with the reviewed notes, then verify fresh
-unauthenticated public downloads. Do not regenerate bytes under this version or
-replace earlier ci.330/preview assets. Review the candidate/evidence PRs and ask
-before merging. No Store, winget or nuget.org publication is included.
+The [D114 publication record](screenbox-audio-only-preview-publication.md) verifies
+the exact five assets, reviewed notes and fresh unauthenticated downloads.
+Do not regenerate bytes under this version or replace earlier ci.330/preview
+assets. No Store, winget or nuget.org publication is included.
 
 [D112 receiver evidence and its review follow-up](screenbox-automatic-audio-only.md)
 retain their original development-runtime hashes. This candidate adds no new

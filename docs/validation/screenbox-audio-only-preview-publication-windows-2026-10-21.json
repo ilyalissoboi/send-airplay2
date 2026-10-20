@@ -1,0 +1,112 @@
+{
+  "date": "2026-10-21",
+  "timezone": "Asia/Tokyo",
+  "release_id": 418990083,
+  "release_url": "https://github.com/ilyalissoboi/Screenbox/releases/tag/airplay-preview-0.2.0-preview.1",
+  "published_at": "2026-10-20T23:45:57Z",
+  "tag": "airplay-preview-0.2.0-preview.1",
+  "resolved_commit": "b2b987d68b844ef0e3f577cc0622d223a329adf9",
+  "prerelease": true,
+  "draft": false,
+  "reviewed_notes_match": true,
+  "authorization": "User explicitly instructed: Publish release",
+  "verification": "Fresh urllib HTTPS downloads with no Authorization header or credentials",
+  "assets": [
+    {
+      "name": "BUILD-INFO.json",
+      "bytes": 2092,
+      "sha256": "714187a3b2cfc16454a527bcf5c2e202a630112c653385de9cc0398cfd7f2a61",
+      "asset_id": 660809602,
+      "url": "https://github.com/ilyalissoboi/Screenbox/releases/download/airplay-preview-0.2.0-preview.1/BUILD-INFO.json",
+      "http_status": 200,
+      "fresh_unauthenticated_download": true,
+      "matches_reviewed_candidate": true
+    },
+    {
+      "name": "INSTALL.md",
+      "bytes": 3135,
+      "sha256": "8b65bb28f9e3e5eb4c4bd57b5e965ec667de1bfb351ccd8adff0a91a0de5f53d",
+      "asset_id": 660809601,
+      "url": "https://github.com/ilyalissoboi/Screenbox/releases/download/airplay-preview-0.2.0-preview.1/INSTALL.md",
+      "http_status": 200,
+      "fresh_unauthenticated_download": true,
+      "matches_reviewed_candidate": true
+    },
+    {
+      "name": "Screenbox-AirPlay-Preview-0.2.0-preview.1-source.zip",
+      "bytes": 13990405,
+      "sha256": "aed7985b140a9e47e930906129d7cdc6bbd30e1d1dd9b8a337a2e9c728aee06e",
+      "asset_id": 660809600,
+      "url": "https://github.com/ilyalissoboi/Screenbox/releases/download/airplay-preview-0.2.0-preview.1/Screenbox-AirPlay-Preview-0.2.0-preview.1-source.zip",
+      "http_status": 200,
+      "fresh_unauthenticated_download": true,
+      "matches_reviewed_candidate": true
+    },
+    {
+      "name": "Screenbox-AirPlay-Preview-0.2.0-preview.1-x64.zip",
+      "bytes": 81425296,
+      "sha256": "63c3f25948520e5555f91121930391e697a230cf8de1dcc2020451c277e646a0",
+      "asset_id": 660809603,
+      "url": "https://github.com/ilyalissoboi/Screenbox/releases/download/airplay-preview-0.2.0-preview.1/Screenbox-AirPlay-Preview-0.2.0-preview.1-x64.zip",
+      "http_status": 200,
+      "fresh_unauthenticated_download": true,
+      "matches_reviewed_candidate": true
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 398,
+      "sha256": "db30bc2ae3c84ca2415cfad6cbbce9464a7340e11b0e9461f2dac9e909e8f825",
+      "asset_id": 660809598,
+      "url": "https://github.com/ilyalissoboi/Screenbox/releases/download/airplay-preview-0.2.0-preview.1/SHA256SUMS.txt",
+      "http_status": 200,
+      "fresh_unauthenticated_download": true,
+      "matches_reviewed_candidate": true
+    }
+  ],
+  "scope": "Publication/download verification only; no new build, installation or receiver observation",
+  "decision": "D114",
+  "result": "PUBLISHED_AND_PUBLIC_DOWNLOAD_VERIFIED",
+  "preparation": {
+    "screenbox_pr": 18,
+    "screenbox_merge": "200d7bfaf03fc05593b91311e27b70479a06ff47",
+    "screenbox_final_head": "7de326bb4b81eec2376898b30e96cfb72c2d4406",
+    "screenbox_pr_checks": "Docs-only paths ignored; no checks reported",
+    "native_pr": 98,
+    "native_merge": "3089508e0827511d712b471c8efd7fd8d98f582d",
+    "native_final_head": "2f065b4656504fd154f1f7ca1cec34db02f60e7c",
+    "native_final_head_checks_passed": 17,
+    "original_build_source": "b2b987d68b844ef0e3f577cc0622d223a329adf9",
+    "clean_main_run": 39430175011,
+    "clean_main_checks_passed": 4,
+    "candidate_evidence": "screenbox-audio-only-preview-candidate-windows-2026-10-20.json"
+  },
+  "notes": {
+    "file": "docs/releases/airplay-preview-0.2.0-preview.1.md",
+    "reviewed_blob": "afd78e2c0658f385b57b28870c8c9da8b1aeda5b",
+    "screenbox_review_thread": "PRRT_kwDOVBM36s6uWdlH",
+    "resolved": true
+  },
+  "unchanged": {
+    "candidate_assets": true,
+    "previous_release_assets": true,
+    "library_pin": "SendAirPlay2.StereoAac 0.6.0-ci.330",
+    "cache_quota_bytes": 536870912,
+    "runtime_code": true,
+    "app_installations": true
+  },
+  "new_receiver_observation": false,
+  "new_visual_observation": false,
+  "other_publication": {
+    "store": false,
+    "winget": false,
+    "nuget_org": false
+  },
+  "next": "Publication complete; choose any later development scope separately and preserve existing hardware/user deferrals.",
+  "deferrals": [
+    "Speaker/RAOP",
+    "Discrete converted surround",
+    "Chromecast hardware",
+    "User-deferred remote Stop classification",
+    "Long-input/cache-quota evaluation"
+  ]
+}

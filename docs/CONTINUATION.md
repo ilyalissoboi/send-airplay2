@@ -1,6 +1,20 @@
 # Separate-session development handoff
 
-**D113 Screenbox audio-only preview candidate prepared (2026-10-20).**
+**D114 Screenbox audio-only preview published (2026-10-21).**
+After fork #18/native #98 merged as `200d7bfa`/`3089508` (all 17 native checks
+at `2f065b4`; fork docs-only checks skipped by paths), the user explicitly
+instructed publication. [Screenbox AirPlay Preview 0.2.0-preview.1](https://github.com/ilyalissoboi/Screenbox/releases/tag/airplay-preview-0.2.0-preview.1)
+is public with the exact five D113 assets and reviewed notes. Its tag resolves
+to original build source `b2b987d6`, not either documentation merge. Fresh
+unauthenticated downloads of every asset match reviewed sizes/SHA-256 hashes;
+the installer ZIP remains `63c3f25948520e5555f91121930391e697a230cf8de1dcc2020451c277e646a0`.
+Read [publication evidence](screenbox-audio-only-preview-publication.md).
+Approval/publication are complete; do not repeat them, regenerate these bytes
+or replace prior assets. No new build, installation, visual or receiver test
+is included. D112/D113 scopes, ci.330, quota and all hardware/user deferrals
+remain unchanged. Choose later development scope separately.
+
+**D113 preparation history (2026-10-20; publication completed in D114 above).**
 Fork #17 merged as `b2b987d6` (all four checks at `2a001be1`); native #97 merged
 as `65dd17f` (all 17 at `6effcf1`). The user authorized release-candidate
 preparation. An isolated export of that exact fork main builds x64 Release
@@ -1344,15 +1358,13 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
     checks at 2a001be1; native evidence #97 merged 65dd17f with all 17 at 6effcf1.
     Original receiver observations and review regression evidence keep their
     exact binary scopes. Read screenbox-automatic-audio-only.md.
-17. **D113 updated preview candidate prepared.** Exact fork b2b987d6 source,
-    clean-main CI run 39430175011 all four checks, 176 release-source logic tests,
-    MSIX/payload/dependency/source/checksum audits and actual preview upgrade/
-    activation checks pass. Five retained assets and exact notes are reviewable;
-    no publication is approved/performed. Read screenbox-audio-only-preview-candidate.md.
-18. **Next: review candidate evidence/notes and approve publication explicitly.**
-    Tag airplay-preview-0.2.0-preview.1 must target b2b987d6. Upload only the exact
-    retained five assets; do not regenerate bytes under this version or replace
-    previous assets. Verify fresh public downloads after publication.
+17. **D114 updated preview publication complete.** Fork #18/native #98 merged;
+    the user explicitly approved publication of the retained D113 candidate.
+    Screenbox AirPlay Preview 0.2.0-preview.1 is public at original build source
+    b2b987d6. All five fresh unauthenticated downloads match reviewed hashes/sizes.
+    Read screenbox-audio-only-preview-publication.md and its sanitized evidence.
+    Do not rebuild, republish or request approval again for this completed release.
+    Choose later development scope separately; preserve quota and all deferrals.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1583,17 +1595,15 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. D112 fork #17/native #97 are merged as b2b987d6/65dd17f with all
-> four/17 checks passed. D113 prepares Screenbox AirPlay Preview 0.2.0-preview.1
-> from exact merged fork b2b987d68b844ef0e3f577cc0622d223a329adf9. Read
-> screenbox-audio-only-preview-candidate.md and its sanitized evidence, plus
-> the fork's candidate notes. Clean-main run 39430175011 passes all four checks;
-> 176 release-source tests, package/source/checksum and installer upgrade/launch
-> audits pass. Preview 0.2.0.0 is installed; Store/debug registrations remain
-> unchanged. This adds no receiver/visual observation. Five exact assets are
-> retained under build-review/d113/assets. Publication is not approved/performed;
-> obtain explicit approval, reuse it once given, publish only those retained
-> assets at tag airplay-preview-0.2.0-preview.1 targeting b2b987d6, then verify
-> fresh public downloads. Continue any open candidate/evidence PR branches and
-> inspect actual heads before writing. Preserve D112 scopes, quota and deferrals;
-> ask before merging. Do not republish earlier ci.330 or preview assets.
+> documents. D114 published the explicitly approved Screenbox AirPlay Preview
+> 0.2.0-preview.1 after fork #18/native #98 merged as 200d7bfa/3089508. All 17
+> native checks passed; the fork candidate PR was docs-only with no checks.
+> Original source b2b987d6 has four clean-main checks and 176 release-source tests.
+> Read screenbox-audio-only-preview-publication.md and its sanitized evidence.
+> All five fresh unauthenticated public downloads match unchanged D113 assets;
+> the tag resolves to b2b987d68b844ef0e3f577cc0622d223a329adf9. Publication and
+> approval are complete; do not repeat or replace assets. This adds no new build,
+> app installation, visual or receiver observation. Preserve D112/D113 evidence,
+> ci.330, quota and hardware/user deferrals; select later scope separately.
+> Inspect actual open PR heads before writing, use fresh origin/main branches
+> otherwise, and ask before merging. Reuse unchanged lifecycle/codec evidence.
