@@ -1,15 +1,21 @@
 # Separate-session development handoff
 
-**D108 focused packaged automatic audio-only gate in progress (2026-10-20).**
-The user authorizes the reduced UWP approach after #92 merged as `55f8ac9`.
-Read [the changed paths and exact scope](automatic-audio-only-uwp-gate.md).
-The host adds explicit AppleAudioV1 selection and automated brokered preparation/
-cleanup checks. The enabled UWP/native binary checks, package build and existing
-C# binding CTest pass. Registration, actual AppContainer/hash verification,
-automated granted-file checks, one converted-FLAC natural-end case per receiver
-and one Apple TV Stop are pending. Reuse earlier lifecycle/format evidence;
-no cancellation or full manual codec matrix repeat. Native/API/codec, Screenbox,
-quota, publication and all hardware/user deferrals stay unchanged.
+**D108 focused packaged automatic audio-only gate passed (2026-10-20).**
+[PR #93](https://github.com/ilyalissoboi/send-airplay2/pull/93), implementation
+`c868572`, records thirteen public preparation/cleanup checks over twelve owned,
+hash-verified brokered inputs plus three pre-file script refusals. Final enabled
+Native AOT UWP host 0.1.36.0 updates in place, preserving data/pairings/grants.
+Three actual AppContainer/executable/six-DLL captures match the inspected package.
+The user confirms converted-FLAC controls/seeks/natural end on Mac/macOS 26.7.1
+and Apple TV/tvOS 26.6, plus one Apple TV Stop without delayed restart; versions
+are unchanged. All sixteen offline/cast sources and stores release once with
+expected clear/removal/sibling behavior. Final cache children/sentinels are zero.
+Enabled UWP build/binary checks, zero-warning MSIX build and C# binding CTest pass.
+Inspect PR #93 final-head CI separately. Read [the evidence and limits](automatic-audio-only-uwp-gate.md).
+No further D108 manual check is pending; earlier lifecycle/format evidence was
+reused, with no cancellation or full listening-matrix repeat. After review/merge,
+Screenbox routing/queues and package/pin prerequisites are separate next work.
+Native/API/codec, Screenbox, quota, publication and all deferrals stay unchanged.
 
 **D107 native automatic audio-only receiver gate passed (2026-10-20).**
 [PR #92](https://github.com/ilyalissoboi/send-airplay2/pull/92) records 24 natural-end
@@ -31,7 +37,7 @@ and brokered sources, then Screenbox routing/queues. No runtime/API, codec,
 package, Screenbox, quota or publication change is included. Speaker/RAOP,
 discrete-surround, Chromecast, remote-Stop and long-input deferrals remain.
 
-Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#91 are merged. `main` contains
+Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#92 are merged. `main` contains
 the experimental C API version 6, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
@@ -1221,9 +1227,16 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
     four failed/nonqualifying histories remain. Final host/cache counts are zero.
     Read automatic-audio-only-native-gate.md. Inspect final-head CI separately;
     reuse unchanged lifecycle evidence instead of repeating cancellation each pass.
-12. **Next: packaged generated audio-only HLS receiver gate**, then Screenbox
-    per-item routing/queues. Preserve exact binary/host scopes, written observations,
-    completed direct AAC/MP3 evidence and all hardware/user deferrals.
+12. **D108 focused packaged automatic audio-only gate passed.** PR #93 records
+    thirteen automated brokered preparation/cleanup checks, three invalid-option
+    refusals, one converted-FLAC natural end on each receiver and one Apple TV
+    Stop. All sixteen source/store instances release once; final cache is empty.
+    Actual 0.1.36.0 AppContainer/executable/six-DLL hashes match in three captures.
+    No further manual check. Read automatic-audio-only-uwp-gate.md and inspect
+    actual-head CI. Earlier lifecycle/format evidence is reused without retesting
+    cancellation or the full listening matrix.
+13. **Next after review/merge: Screenbox per-item routing/queues and package/pin
+    prerequisites**, preserving exact binary scopes and hardware/user deferrals.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1454,14 +1467,15 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. D107 native automatic audio-only receiver checks passed: 24 natural
-> ends and two representative Stops on macOS 26.7.1/tvOS 26.6. PR #92 records
-> unchanged d378249 native source with identical binary hashes at initial/resumed
-> checkpoints. Inspect its actual head/CI before writing. Read
-> automatic-audio-only-native-gate.md and its evidence, including four retained
-> failed/nonqualifying attempts. No host/cache remains. The next slice, after
-> review/merge, is packaged automatic audio-only HLS/brokered-source verification,
-> followed by Screenbox routing/queues. Reuse unchanged lifecycle evidence;
-> repeat manual cancellation only for relevant changes or a concrete defect.
-> Use saved pairings and written observations. No release/pin/codec-profile/quota
-> change; preserve all deferrals and ask before merging.
+> documents. PR #92 is merged; D107 native format checks passed. D108 focused
+> packaged automatic audio-only checks also passed: thirteen offline brokered
+> checks plus converted-FLAC natural end on both recorded receivers and Apple TV
+> Stop. Read automatic-audio-only-uwp-gate.md and its sanitized evidence. PR #93
+> is on codex/audio-only-uwp-focused-gate; inspect its actual head/CI before writing.
+> Final package 0.1.36.0 uses implementation c868572 and unchanged merged native
+> source 55f8ac9. Runtime AppContainer/executable/six-DLL hashes match; sixteen
+> source/store releases and empty final cache are verified. The app remains idle
+> and open; no further D108 manual check is pending. After review/merge, consider
+> Screenbox routing/queues and their package/pin prerequisites as separate work.
+> Reuse unchanged lifecycle/format evidence. No cancellation/full codec-matrix
+> repeat, release or quota change. Preserve deferrals and ask before merging.
