@@ -1,28 +1,27 @@
 # Separate-session development handoff
 
-**D106 explicit automatic audio-only offline gate complete (2026-10-19).**
-Native #90 merged as `06e094c`; all 17 checks passed at final head `fec9448` in
-[run 39209440573](https://github.com/ilyalissoboi/send-airplay2/actions/runs/39209440573).
-The user authorizes the next slice. API 6 adds the explicit Apple Audio v1 profile,
-progressive action/reason and MP3 family, preserving structure sizes, older
-prefixes/defaults and the video profile. Content-based finite admission serves
-original stereo AAC/M4A/MP3 progressively or converts covered FLAC/PCM/Ogg
-Opus/Vorbis through the existing audio-only AAC owner with stereo permission,
-backend and bounded host storage. Public check/cast reporting, CLI and C# binding
-are connected. Read [the exact subset and remaining gates](automatic-audio-only.md).
-Implementation 46321d0 passes static/shared/enabled suites 43/44/45 and codec 17;
-strict Clang, formatting and both x64 UWP compile/binary gates pass. Initial
-x86 UWP CI exposed a narrowing warning in the now-common FLAC probe; 0245f49
-uses its proven 1..8 channel bound for an explicit index conversion. Strict x64/
-i686 Clang and repeated static/shared suites 43/44 pass. Inspect PR #91 final-head
-CI separately. There is no new receiver/app observation, codec-profile,
-package, Screenbox, quota or publication change. Native/packaged generated audio-only
-HLS receiver gates follow review/merge before Screenbox routing/queues. All
-hardware/user deferrals remain. Continue `codex/automatic-audio-only-delivery`
-while its PR is open and inspect its actual head before writing.
+**D107 native automatic audio-only receiver gate passed (2026-10-20).**
+[PR #92](https://github.com/ilyalissoboi/send-airplay2/pull/92) records 24 natural-end
+checks and two representative converted-FLAC Stops, confirmed by written user
+observation on MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6. The user resumed
+the paused run; only the 19 missing format/timeline checks were completed. Native
+source remains merged `d378249`; test checkpoints `4cd545a` and `a3ff5bd` used
+identical verified host/seven-DLL hashes. All 30 attempts, including four retained
+failed/nonqualifying attempts, released their source once with zero failed reads
+and empty post-run cache. The final test-host process/cache counts are zero.
+The original WAVE rejection and three nonqualifying consent attempts remain
+explicit; they are not passes. No fresh pending-consent cancellation is claimed.
+The user questioned redundant cancellation checks: reuse unchanged lifecycle
+evidence, repeating manual cancellation only for relevant code changes or a
+concrete defect. Read [the complete scope and evidence](automatic-audio-only-native-gate.md).
+The prepared head `4cd545a` passed all 17 CI checks; inspect the final PR head
+separately. Next, after review/merge, validate packaged automatic audio-only HLS
+and brokered sources, then Screenbox routing/queues. No runtime/API, codec,
+package, Screenbox, quota or publication change is included. Speaker/RAOP,
+discrete-surround, Chromecast, remote-Stop and long-input deferrals remain.
 
-Checkpoint: 2026-10-19 (Asia/Tokyo). PRs #12-#90 are merged. `main` contains
-the experimental C API version 5, C# binding, packaged UWP host and native
+Checkpoint: 2026-10-20 (Asia/Tokyo). PRs #12-#91 are merged. `main` contains
+the experimental C API version 6, C# binding, packaged UWP host and native
 builds, Windows/macOS/Linux credential stores, wake before play, MP4/MKV HLS
 remux with text subtitles and indexed MKV startup, and D62's URL controls
 fallback for receivers that reject remote-control SETUP. The Screenbox fork
@@ -1203,15 +1202,17 @@ The current queue follows [D99's recorded result](screenbox-audio-files.md):
    17/17; UWP compile/binary checks and strict Clang/format checks pass. Runtime
    implementation 6b81756 and the final fractional-offset regression have offline
    evidence only. No new app/receiver gate or publication.
-10. **D106 offline gate complete: finite public automatic audio-only delivery/reporting.**
-   Continue codex/automatic-audio-only-delivery while its PR is open; inspect actual
-   head. Read automatic-audio-only.md for API 6, the explicit profile and finite
-   progressive/conversion table. Offline suites pass 43/44/45/17; both UWP compile/binary gates pass.
-   Inspect actual-head CI before review/merge.
-11. **Next: native then packaged generated audio-only HLS receiver gates.**
-   Preserve explicit stereo permission, public reporting, exact binary/host scope
-   and written observer checkpoints. Then Screenbox per-item routing/queue checks.
-   Larger/chained Ogg needs separate design/evidence; preserve all deferrals.
+10. **D106 complete; #91 merged as d378249.** All 17 final-head checks passed
+    at 3daa9a1. Read automatic-audio-only.md for the explicit API 6 finite profile.
+11. **D107 native automatic audio-only receiver gate passed.** PR #92 records
+    24 natural-end cases and two converted-FLAC Stops on both recorded receivers.
+    The user resumed and confirmed all 19 missing checks; all 30 attempts and
+    four failed/nonqualifying histories remain. Final host/cache counts are zero.
+    Read automatic-audio-only-native-gate.md. Inspect final-head CI separately;
+    reuse unchanged lifecycle evidence instead of repeating cancellation each pass.
+12. **Next: packaged generated audio-only HLS receiver gate**, then Screenbox
+    per-item routing/queues. Preserve exact binary/host scopes, written observations,
+    completed direct AAC/MP3 evidence and all hardware/user deferrals.
 
 No new publication starts here. Preserve speaker/discrete-surround/Chromecast
 hardware deferrals and user-deferred remote-Stop classification. Long-input/
@@ -1442,16 +1443,14 @@ exact code/binary, host/firmware and observer scope recorded separately from CI.
 ## Suggested opening prompt for the next session
 
 > Continue from AGENTS.md and the four handoff/design/validation/continuation
-> documents. Native #90 merged as 06e094c, all 17 checks passed at fec9448.
-> D106 implements the explicit Apple Audio v1 profile in API 6 with unchanged
-> structure sizes/defaults and existing video behavior. Read automatic-audio-only.md.
-> Inspect codex/automatic-audio-only-delivery actual PR/head before writing.
-> Progressive stereo AAC/MP3 and permitted finite FLAC/PCM/Ogg conversion have
-> public check/cast reporting, binding and CLI integration. Offline suites pass
-> 43/44/45/17; both UWP compile/binary gates pass. Inspect actual-head CI, then
-> review/merge. New native and packaged generated
-> audio-only HLS receiver gates precede Screenbox per-item/queue integration.
-> D104's packaged MP3 and earlier AAC direct gates are complete and separate;
-> D105/D106 add no new receiver observation. No release/pin/profile/quota change.
-> Preserve all hardware/user deferrals, use written manual confirmation for UI,
-> and ask before merging or publishing.
+> documents. D107 native automatic audio-only receiver checks passed: 24 natural
+> ends and two representative Stops on macOS 26.7.1/tvOS 26.6. PR #92 records
+> unchanged d378249 native source with identical binary hashes at initial/resumed
+> checkpoints. Inspect its actual head/CI before writing. Read
+> automatic-audio-only-native-gate.md and its evidence, including four retained
+> failed/nonqualifying attempts. No host/cache remains. The next slice, after
+> review/merge, is packaged automatic audio-only HLS/brokered-source verification,
+> followed by Screenbox routing/queues. Reuse unchanged lifecycle evidence;
+> repeat manual cancellation only for relevant changes or a concrete defect.
+> Use saved pairings and written observations. No release/pin/codec-profile/quota
+> change; preserve all deferrals and ask before merging.

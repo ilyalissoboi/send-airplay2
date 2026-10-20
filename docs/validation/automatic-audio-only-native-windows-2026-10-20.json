@@ -1,0 +1,3905 @@
+{
+  "decision": "D107",
+  "date": "2026-10-20",
+  "timezone": "Asia/Tokyo",
+  "result": "NATIVE_AUTOMATIC_AUDIO_ONLY_RECEIVER_GATE_PASSED",
+  "base": {
+    "pr": 91,
+    "merge_commit": "d37824928b57279ebf64cd9c4700195d4a868388",
+    "final_head": "3daa9a10c42f2555bb4c88ab4a797cc7e4426da7",
+    "ci_checks_passed": 17,
+    "ci_run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39246535013"
+  },
+  "runtime": "Unchanged merged API 6 enabled x64 shared native C API host; rebuilt with native_changes=no",
+  "build_hashes": {
+    "airplay2-api-host.exe": "3f479d4eebd273d5529e1078339e4a17a1acb0fa774263c1eb82fb63339a3d7b",
+    "send_airplay2.dll": "11cb2ea37b73266bb6920f4a6581cadae5ba5ec0a8bf53ce03aaf14308660d07",
+    "libcrypto-3-x64.dll": "016b69ff67dde5074aea78b15b55a186ddce3054c59b25e0b0f634b7374f87e5",
+    "botan-3.dll": "cbae71477baee2d9e4a7d5ba030489a18787cc97ab823007f16760c18e5d9bda",
+    "avcodec-63.dll": "4647f7a9b560565a943f40529495a0b7baf092f2ad3506539fb0740b33ef0682",
+    "avformat-63.dll": "66f983889f580a1cf97c81656038d5e024838f76273587ce24954baafe558737",
+    "avutil-61.dll": "9b4832840ccc72d4842360b93c6d5bb5a46bad99abe4308637aa101e71b83a42",
+    "swresample-7.dll": "4b4ade761f1e1dd1cdb33e7568d3400fccd03ee856a45c2fd0ce11b5dcd9d1b8"
+  },
+  "loaded_cast_modules": "All 30 attempts verified the actual executable and seven DLL paths/hashes against the common build ledger; paths omitted.",
+  "fixture_generator_sha256": "ba3eee9aabc30be6e70e0812e9280c289ccc31201b8dfc9cc767716d6f3f3a51",
+  "fixtures": {
+    "license": "Apache-2.0 original repository tone and edit authoring",
+    "generator": "tools/audio-only-probe/generate_automatic_fixtures.py",
+    "ffmpeg": "ffmpeg version N-109979-g81bc7bc52 Copyright (c) 2000-2023 the FFmpeg developers",
+    "ffprobe": "ffprobe version 9.0.2-full_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers",
+    "duration_seconds": 64,
+    "sample_rate": 48000,
+    "channels": 2,
+    "video_streams": 0,
+    "pulse": "0.75 s sound/0.25 s silence; 10 ms fades",
+    "markers": [
+      {
+        "start": 0,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start": 8,
+        "left_hz": 0,
+        "right_hz": 660
+      },
+      {
+        "start": 16,
+        "left_hz": 880,
+        "right_hz": 880
+      },
+      {
+        "start": 24,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start": 32,
+        "left_hz": 1100,
+        "right_hz": 1100
+      },
+      {
+        "start": 40,
+        "left_hz": 0,
+        "right_hz": 660
+      },
+      {
+        "start": 48,
+        "left_hz": 440,
+        "right_hz": 0
+      },
+      {
+        "start": 56,
+        "left_hz": 880,
+        "right_hz": 880
+      }
+    ],
+    "edited_pcm": "8 s initial silence, then source [8,64); marker clock unchanged after 8 s",
+    "files": [
+      {
+        "case": "wave",
+        "file": "pcm.wav",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288044,
+        "sha256": "2a615c09d1822d3d47061cb025e8026ee84039b697bd3af1656b70492fcca5ca"
+      },
+      {
+        "case": "aac",
+        "file": "aac.m4a",
+        "codec": "aac",
+        "action": 4,
+        "source_family": 1,
+        "selected_id": 1,
+        "bytes": 1211842,
+        "sha256": "b8ba1d395e63b847a8ac4b1a7d6574f113e9670e4ff8609dd30b31c0c218c61c"
+      },
+      {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      {
+        "case": "opus",
+        "file": "opus.ogg",
+        "codec": "opus",
+        "action": 3,
+        "source_family": 6,
+        "selected_id": 1,
+        "bytes": 1500766,
+        "sha256": "3241b721d3c41bce2db394e7244a3d18fbf17de6a89f34b23be53a5ecdcacb1e"
+      },
+      {
+        "case": "vorbis",
+        "file": "vorbis.ogg",
+        "codec": "vorbis",
+        "action": 3,
+        "source_family": 7,
+        "selected_id": 1,
+        "bytes": 174546,
+        "sha256": "984b676ab211c89e494e1d6354d39086ee03e41e32ac89961bb542c106863dd4"
+      },
+      {
+        "case": "mp4-flac",
+        "file": "flac.mp4",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 677878,
+        "sha256": "d461b10c6ca9d0e119e35b9408d1bb2918e8334516264d80f308dbe47ef3f2d9"
+      },
+      {
+        "case": "mov-pcm",
+        "file": "pcm.mov",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288705,
+        "sha256": "10051a301badb4fc19a25564c4b845b22ea159b2617402d4d8978c0a32fc9eb1"
+      },
+      {
+        "case": "mkv-flac",
+        "file": "flac.mka",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 680062,
+        "sha256": "8f5f008ab5c253517d4640dd7d64e1c745dabcbd2689ab264ac413e790e8be13"
+      },
+      {
+        "case": "mkv-pcm",
+        "file": "pcm.mka",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12309990,
+        "sha256": "4dc76143ed4637f35955387a32b08aed1a1a32d80075ff78113e2ca272e10674"
+      },
+      {
+        "case": "edited-pcm",
+        "file": "edited.mov",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288753,
+        "sha256": "473f7388f09082d61241d564c268ea7f898a1cf011653427868804e47aaa879b"
+      }
+    ]
+  },
+  "offline_preparation": [
+    {
+      "case": "wave",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=8 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "aac",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=4 reason=4 source_family=1 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "flac",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=5 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "opus",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=6 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "vorbis",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=7 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "mp4-flac",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=5 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "mov-pcm",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=8 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "mkv-flac",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=5 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "mkv-pcm",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=8 output_family=1 channels=2",
+      "cache_entries_after": 0
+    },
+    {
+      "case": "edited-pcm",
+      "exit_code": 0,
+      "decision": "Audio check: ok selected_audio_id=1 action=3 reason=3 source_family=8 output_family=1 channels=2",
+      "cache_entries_after": 0
+    }
+  ],
+  "discovery": {
+    "mac_recorded_model_unique": true,
+    "tv_recorded_model_unique": true,
+    "addresses_identifiers_names_recorded": false
+  },
+  "receiver_observations": "All 24 natural cases and two representative Stops confirmed by user.",
+  "no_changes": [
+    "C++ runtime/API",
+    "Codec profile/dependencies",
+    "Package installation",
+    "Screenbox",
+    "Quota",
+    "Publication"
+  ],
+  "deferrals": [
+    "Speakers/RAOP",
+    "Discrete surround",
+    "Chromecast hardware",
+    "User-deferred remote Stop classification",
+    "Separate long-input/cache-quota evaluation"
+  ],
+  "runtime_test_checkpoint": {
+    "initial": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+    "resumed": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+    "native_source": "d37824928b57279ebf64cd9c4700195d4a868388",
+    "native_changes": false,
+    "identical_binary_hashes_across_checkpoints": true
+  },
+  "receiver_versions": {
+    "both_available": true,
+    "macos": "26.7.1",
+    "tvos": "26.6",
+    "versions_explicitly_unchanged": true,
+    "source": "User availability reply"
+  },
+  "observer_record": {
+    "availability": {
+      "both_available": true,
+      "macos": "26.7.1",
+      "tvos": "26.6",
+      "versions_explicitly_unchanged": true,
+      "source": "User availability reply"
+    },
+    "observations": {
+      "mac-flac-cancel": {
+        "result": "UNCONFIRMED_RETRY_REQUESTED",
+        "user_reply": "Retry attempt"
+      },
+      "mac-flac-natural": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "covers": "Audible RIGHT nonzero start, pause/resume, seek32 higher BOTH, seek8 RIGHT and natural end"
+      },
+      "mac-flac-cancel-retry1": {
+        "result": "NOT_A_PENDING_CONSENT_CANCELLATION",
+        "user_reply": "No prompt appeared.",
+        "reason": "Sender started before timer; stop_fired=no"
+      },
+      "mac-flac-cancel-retry2": {
+        "result": "NOT_A_PENDING_CONSENT_CANCELLATION",
+        "user_reply": "No prompt appeared.",
+        "reason": "Sender started before timer; stop_fired=no"
+      },
+      "tv-flac-natural": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      },
+      "tv-flac-stop": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      },
+      "mac-flac-stop": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      },
+      "mac-aac-natural": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      },
+      "mac-cbr-natural": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      },
+      "mac-vbr-natural": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      },
+      "mac-conversion-matrix-batch": {
+        "user_reply": "Yes",
+        "result": "NOT_ACCEPTED_AS_EIGHT_PASSES",
+        "reason": "Sender aborted after the first WAVE rejection; seven later cases never started. Preserve the reply separately without inferring playback."
+      },
+      "mac-wave-natural-retry1": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "mac-opus-natural": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "mac-vorbis-natural": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "mac-mp4-flac-natural": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "mac-mov-pcm-natural": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "mac-mkv-flac-natural": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "mac-mkv-pcm-natural": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "mac-edited-pcm-natural": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-remaining-batch-initial-reply": {
+        "user_reply": "Yes",
+        "result": "EARLY_BATCH_REPLY",
+        "scope": "Received while the sender sequence was active. Do not infer observations for later unrun cases; final confirmation will cover those."
+      },
+      "tv-aac-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-cbr-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-vbr-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-wave-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-opus-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-vorbis-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-mp4-flac-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-mov-pcm-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-mkv-flac-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-mkv-pcm-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      },
+      "tv-edited-pcm-natural": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    "manual_test_policy": {
+      "source": "User questioned redundant cancellation retesting; assistant acknowledged it was unnecessary here",
+      "decision": "No more cancellation retests in D107. Reuse earlier lifecycle evidence; repeat only for relevant lifecycle/routing/ownership changes or a concrete defect. Do not repeat unchanged cancellation with every pass."
+    },
+    "state": "COMPLETED_NATIVE_GATE",
+    "resume": "User explicitly requested missing tests; completed cases and cancellation checks are not repeated."
+  },
+  "attempts": [
+    {
+      "receiver": "mac",
+      "case": "aac",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "aac",
+        "file": "aac.m4a",
+        "codec": "aac",
+        "action": 4,
+        "source_family": 1,
+        "selected_id": 1,
+        "bytes": 1211842,
+        "sha256": "b8ba1d395e63b847a8ac4b1a7d6574f113e9670e4ff8609dd30b31c0c218c61c"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T05:27:03.997660+00:00",
+      "observations": [
+        {
+          "seconds": 1.734,
+          "line": "Start: ok audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 2.828,
+          "command": "status"
+        },
+        {
+          "seconds": 2.844,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 5.797,
+          "command": "pause"
+        },
+        {
+          "seconds": 5.812,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 5.922,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 8.765,
+          "command": "play"
+        },
+        {
+          "seconds": 8.797,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.797,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 8.812,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.781,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 11.812,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.75,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 15.797,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.734,
+          "command": "status"
+        },
+        {
+          "seconds": 19.75,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 21.828,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 21.859,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.812,
+          "command": "status"
+        },
+        {
+          "seconds": 24.828,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 28.015,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.015,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.031,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.265,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=0 reads=38 bytes=1250249 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.281,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-aac-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "cbr",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "file": "cbr48.mp3",
+        "sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b",
+        "action": 4,
+        "source_family": 10,
+        "selected_id": 1
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T05:27:37.405387+00:00",
+      "observations": [
+        {
+          "seconds": 4.297,
+          "line": "Start: ok audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 5.297,
+          "command": "status"
+        },
+        {
+          "seconds": 5.313,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 8.375,
+          "command": "pause"
+        },
+        {
+          "seconds": 8.406,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.453,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 11.297,
+          "command": "play"
+        },
+        {
+          "seconds": 11.375,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 11.375,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 11.391,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 14.391,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 14.469,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 18.297,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 18.328,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 22.375,
+          "command": "status"
+        },
+        {
+          "seconds": 22.391,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=12.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 24.359,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 24.422,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 27.297,
+          "command": "status"
+        },
+        {
+          "seconds": 27.313,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=60.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 30.719,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 30.719,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 30.734,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 30.984,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=0 reads=5369 bytes=1634073 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 30.984,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-cbr-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "edited-pcm",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "edited-pcm",
+        "file": "edited.mov",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288753,
+        "sha256": "473f7388f09082d61241d564c268ea7f898a1cf011653427868804e47aaa879b"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:30:27.059168+00:00",
+      "observations": [
+        {
+          "seconds": 1.875,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 2.891,
+          "command": "status"
+        },
+        {
+          "seconds": 2.907,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=8.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 5.875,
+          "command": "pause"
+        },
+        {
+          "seconds": 5.891,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 5.891,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 8.969,
+          "command": "play"
+        },
+        {
+          "seconds": 9.0,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.0,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.016,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.969,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 11.985,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.938,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.032,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.891,
+          "command": "status"
+        },
+        {
+          "seconds": 19.907,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 21.875,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 21.907,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.875,
+          "command": "status"
+        },
+        {
+          "seconds": 24.907,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.094,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.094,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.094,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.36,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=562 bytes=17190312 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.36,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-edited-pcm-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "flac",
+      "mode": "cancel",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      "start_position": 0,
+      "started_utc": "2026-10-20T05:24:12.765774+00:00",
+      "observations": [
+        {
+          "seconds": 1.891,
+          "line": "Cancel: start=ok start_ms=1866 stop_fired=no"
+        },
+        {
+          "seconds": 1.891,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=playing end=sender_stop owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=65 bytes=1236482 failed_reads=0 releases=1"
+        }
+      ],
+      "exit_code": 1,
+      "elapsed_seconds": 1.891,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-flac-cancel-retry1",
+      "written_observation": {
+        "result": "NOT_A_PENDING_CONSENT_CANCELLATION",
+        "user_reply": "No prompt appeared.",
+        "reason": "Sender started before timer; stop_fired=no"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "flac",
+      "mode": "cancel",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      "start_position": 0,
+      "started_utc": "2026-10-20T05:26:13.238329+00:00",
+      "observations": [
+        {
+          "seconds": 4.172,
+          "line": "Cancel: start=ok start_ms=4087 stop_fired=no"
+        },
+        {
+          "seconds": 4.172,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=playing end=sender_stop owned=yes position=1.1 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=74 bytes=1531394 failed_reads=0 releases=1"
+        }
+      ],
+      "exit_code": 1,
+      "elapsed_seconds": 4.172,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-flac-cancel-retry2",
+      "written_observation": {
+        "result": "NOT_A_PENDING_CONSENT_CANCELLATION",
+        "user_reply": "No prompt appeared.",
+        "reason": "Sender started before timer; stop_fired=no"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "flac",
+      "mode": "cancel",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      "start_position": 0,
+      "started_utc": "2026-10-20T05:22:48.882219+00:00",
+      "observations": [
+        {
+          "seconds": 5.141,
+          "line": "Cancel: start=cancelled start_ms=5088 stop_fired=yes"
+        },
+        {
+          "seconds": 5.141,
+          "line": "Summary: api_version=6 linkage=shared start=cancelled audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=start_failed state=none end=none owned=no position=unknown duration=unknown rate=unknown failure=none/none cleaned=no media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=40 bytes=417282 failed_reads=0 releases=1"
+        }
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.141,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-flac-cancel",
+      "written_observation": {
+        "result": "UNCONFIRMED_RETRY_REQUESTED",
+        "user_reply": "Retry attempt"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "flac",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T05:23:13.582934+00:00",
+      "observations": [
+        {
+          "seconds": 1.984,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.031,
+          "command": "status"
+        },
+        {
+          "seconds": 3.046,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.0,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.015,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 6.031,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 8.984,
+          "command": "play"
+        },
+        {
+          "seconds": 9.0,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.015,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.031,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.984,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.015,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.062,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.203,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.031,
+          "command": "status"
+        },
+        {
+          "seconds": 20.046,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.7 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.015,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.046,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.0,
+          "command": "status"
+        },
+        {
+          "seconds": 25.015,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.234,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.234,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.25,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.5,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=83 bytes=1808165 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.5,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-flac-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "covers": "Audible RIGHT nonzero start, pause/resume, seek32 higher BOTH, seek8 RIGHT and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "flac",
+      "mode": "stop",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      "start_position": 0,
+      "started_utc": "2026-10-20T05:26:45.652415+00:00",
+      "observations": [
+        {
+          "seconds": 1.953,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 2.969,
+          "command": "status"
+        },
+        {
+          "seconds": 2.984,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 10.016,
+          "command": "stop"
+        },
+        {
+          "seconds": 10.125,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 10.125,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 10.172,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=paused end=sender_stop owned=yes position=9.2 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=83 bytes=1808165 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "post_stop_observation_window_seconds": 3,
+      "elapsed_seconds": 13.172,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-flac-stop",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "mkv-flac",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "mkv-flac",
+        "file": "flac.mka",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 680062,
+        "sha256": "8f5f008ab5c253517d4640dd7d64e1c745dabcbd2689ab264ac413e790e8be13"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:29:08.522747+00:00",
+      "observations": [
+        {
+          "seconds": 2.469,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.469,
+          "command": "status"
+        },
+        {
+          "seconds": 3.485,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=8.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.563,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.594,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 6.594,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 9.547,
+          "command": "play"
+        },
+        {
+          "seconds": 9.625,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.641,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.656,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.5,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.578,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.516,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.594,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.531,
+          "command": "status"
+        },
+        {
+          "seconds": 20.547,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.516,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.547,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.516,
+          "command": "status"
+        },
+        {
+          "seconds": 25.531,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.719,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.719,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.719,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.969,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=5383 bytes=2350774 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.969,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-mkv-flac-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "mkv-pcm",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "mkv-pcm",
+        "file": "pcm.mka",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12309990,
+        "sha256": "4dc76143ed4637f35955387a32b08aed1a1a32d80075ff78113e2ca272e10674"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:29:42.631338+00:00",
+      "observations": [
+        {
+          "seconds": 12.812,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 13.828,
+          "command": "status"
+        },
+        {
+          "seconds": 13.843,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=8.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 16.906,
+          "command": "pause"
+        },
+        {
+          "seconds": 16.937,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.937,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 19.906,
+          "command": "play"
+        },
+        {
+          "seconds": 19.921,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.921,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 19.953,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 22.843,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 22.875,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 26.812,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 26.906,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 30.843,
+          "command": "status"
+        },
+        {
+          "seconds": 30.859,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 32.828,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 32.953,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 35.906,
+          "command": "status"
+        },
+        {
+          "seconds": 35.921,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 39.031,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 39.031,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 39.031,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 39.281,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=27830 bytes=27450821 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 39.296,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-mkv-pcm-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "mov-pcm",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "mov-pcm",
+        "file": "pcm.mov",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288705,
+        "sha256": "10051a301badb4fc19a25564c4b845b22ea159b2617402d4d8978c0a32fc9eb1"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:28:34.949191+00:00",
+      "observations": [
+        {
+          "seconds": 2.0,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.094,
+          "command": "status"
+        },
+        {
+          "seconds": 3.109,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.063,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.078,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 6.094,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 9.063,
+          "command": "play"
+        },
+        {
+          "seconds": 9.125,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.141,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.156,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.0,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.078,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.016,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.063,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.016,
+          "command": "status"
+        },
+        {
+          "seconds": 20.031,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.0,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.016,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.0,
+          "command": "status"
+        },
+        {
+          "seconds": 25.016,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.188,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.188,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.203,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.453,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=638 bytes=19680248 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.453,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-mov-pcm-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "mp4-flac",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "mp4-flac",
+        "file": "flac.mp4",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 677878,
+        "sha256": "d461b10c6ca9d0e119e35b9408d1bb2918e8334516264d80f308dbe47ef3f2d9"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:27:46.320363+00:00",
+      "observations": [
+        {
+          "seconds": 16.938,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 17.953,
+          "command": "status"
+        },
+        {
+          "seconds": 17.969,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=8.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 20.938,
+          "command": "pause"
+        },
+        {
+          "seconds": 21.047,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 21.047,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 24.0,
+          "command": "play"
+        },
+        {
+          "seconds": 24.031,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.031,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 24.047,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 27.0,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 27.016,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 30.953,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 31.109,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 34.938,
+          "command": "status"
+        },
+        {
+          "seconds": 34.953,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 37.031,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 37.063,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 40.016,
+          "command": "status"
+        },
+        {
+          "seconds": 40.031,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 43.219,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 43.219,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 43.234,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 43.484,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=79 bytes=1386874 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 43.484,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-mp4-flac-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "opus",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "opus",
+        "file": "opus.ogg",
+        "codec": "opus",
+        "action": 3,
+        "source_family": 6,
+        "selected_id": 1,
+        "bytes": 1500766,
+        "sha256": "3241b721d3c41bce2db394e7244a3d18fbf17de6a89f34b23be53a5ecdcacb1e"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:26:38.846710+00:00",
+      "observations": [
+        {
+          "seconds": 2.063,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.157,
+          "command": "status"
+        },
+        {
+          "seconds": 3.172,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.125,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.203,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 6.219,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 9.063,
+          "command": "play"
+        },
+        {
+          "seconds": 9.094,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.094,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.11,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.063,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.094,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.141,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.172,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.11,
+          "command": "status"
+        },
+        {
+          "seconds": 20.125,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.094,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.11,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.078,
+          "command": "status"
+        },
+        {
+          "seconds": 25.094,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.297,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.297,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.297,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.547,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=961 bytes=10677748 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.547,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-opus-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "vbr",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "file": "vbr441.mp3",
+        "sha256": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa",
+        "action": 4,
+        "source_family": 10,
+        "selected_id": 1
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T05:28:13.510986+00:00",
+      "observations": [
+        {
+          "seconds": 1.579,
+          "line": "Start: ok audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 2.672,
+          "command": "status"
+        },
+        {
+          "seconds": 2.688,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=9.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 5.672,
+          "command": "pause"
+        },
+        {
+          "seconds": 5.704,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 5.704,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 8.579,
+          "command": "play"
+        },
+        {
+          "seconds": 8.594,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.61,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 8.625,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.594,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 11.625,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.672,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 15.813,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.657,
+          "command": "status"
+        },
+        {
+          "seconds": 19.672,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=11.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 21.641,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 21.75,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.594,
+          "command": "status"
+        },
+        {
+          "seconds": 24.61,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=60.7 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 27.954,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 27.954,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 27.969,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.219,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=0 reads=4916 bytes=356793 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.219,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-vbr-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "vorbis",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "vorbis",
+        "file": "vorbis.ogg",
+        "codec": "vorbis",
+        "action": 3,
+        "source_family": 7,
+        "selected_id": 1,
+        "bytes": 174546,
+        "sha256": "984b676ab211c89e494e1d6354d39086ee03e41e32ac89961bb542c106863dd4"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:27:12.535076+00:00",
+      "observations": [
+        {
+          "seconds": 2.14,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.156,
+          "command": "status"
+        },
+        {
+          "seconds": 3.172,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=8.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.14,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.172,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 6.172,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 9.234,
+          "command": "play"
+        },
+        {
+          "seconds": 9.25,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.265,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.281,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.234,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.453,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.172,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.203,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.187,
+          "command": "status"
+        },
+        {
+          "seconds": 20.203,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.172,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.203,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.172,
+          "command": "status"
+        },
+        {
+          "seconds": 25.187,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.39,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.39,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.39,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.64,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=832 bytes=1745765 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.656,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-vorbis-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "wave",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "wave",
+        "file": "pcm.wav",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288044,
+        "sha256": "2a615c09d1822d3d47061cb025e8026ee84039b697bd3af1656b70492fcca5ca"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:26:03.138007+00:00",
+      "observations": [
+        {
+          "seconds": 3.921,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 4.921,
+          "command": "status"
+        },
+        {
+          "seconds": 4.937,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=8.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 8.0,
+          "command": "pause"
+        },
+        {
+          "seconds": 8.015,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.031,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 10.984,
+          "command": "play"
+        },
+        {
+          "seconds": 11.0,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 11.0,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 11.015,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 13.984,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 14.0,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 17.937,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 17.984,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 21.921,
+          "command": "status"
+        },
+        {
+          "seconds": 21.937,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.8 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 24.015,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 24.109,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 26.953,
+          "command": "status"
+        },
+        {
+          "seconds": 26.968,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.7 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 30.265,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 30.265,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 30.281,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 30.531,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=660 bytes=20917443 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 30.531,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-wave-natural-retry1",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Everything worked as expected",
+        "source": "Reply after all eight resumed Mac checks completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "mac",
+      "case": "wave",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "wave",
+        "file": "pcm.wav",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288044,
+        "sha256": "2a615c09d1822d3d47061cb025e8026ee84039b697bd3af1656b70492fcca5ca"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T05:29:12.667762+00:00",
+      "observations": [
+        {
+          "seconds": 15.39,
+          "line": "Start: receiver_rejected status=400 audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=start_failed state=none end=none owned=no position=unknown duration=unknown rate=unknown failure=none/none cleaned=no media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 15.39,
+          "line": "Summary: api_version=6 linkage=shared start=receiver_rejected audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=start_failed state=none end=none owned=no position=unknown duration=unknown rate=unknown failure=none/none cleaned=no media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=104 bytes=2719427 failed_reads=0 releases=1"
+        }
+      ],
+      "exit_code": 1,
+      "elapsed_seconds": 15.406,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "mac-wave-natural",
+      "written_observation": {
+        "result": "PENDING"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "aac",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "aac",
+        "file": "aac.m4a",
+        "codec": "aac",
+        "action": 4,
+        "source_family": 1,
+        "selected_id": 1,
+        "bytes": 1211842,
+        "sha256": "b8ba1d395e63b847a8ac4b1a7d6574f113e9670e4ff8609dd30b31c0c218c61c"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:31:35.556383+00:00",
+      "observations": [
+        {
+          "seconds": 6.907,
+          "line": "Start: ok audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.2 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 8.0,
+          "command": "status"
+        },
+        {
+          "seconds": 8.016,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 10.969,
+          "command": "pause"
+        },
+        {
+          "seconds": 11.047,
+          "line": "Control: State: paused"
+        },
+        {
+          "seconds": 13.922,
+          "command": "play"
+        },
+        {
+          "seconds": 13.969,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 13.969,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 14.016,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 16.969,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 17.032,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.985,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 21.047,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.907,
+          "command": "status"
+        },
+        {
+          "seconds": 24.922,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.5 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 26.907,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 26.985,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 29.938,
+          "command": "status"
+        },
+        {
+          "seconds": 29.954,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 33.313,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 33.313,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 33.313,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 33.563,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=4 audio_reason=4 source_family=1 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=0 reads=38 bytes=1250249 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 33.563,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-aac-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "cbr",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "file": "cbr48.mp3",
+        "sha256": "0bff1ee84bad0912e13237239decd1e8238cc6e556211dfa23f0f43057110e8b",
+        "action": 4,
+        "source_family": 10,
+        "selected_id": 1
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:32:14.262227+00:00",
+      "observations": [
+        {
+          "seconds": 1.875,
+          "line": "Start: ok audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 2.968,
+          "command": "status"
+        },
+        {
+          "seconds": 2.984,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 5.937,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.0,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 6.015,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.875,
+          "command": "play"
+        },
+        {
+          "seconds": 8.921,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.921,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 8.968,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.937,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.0,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.953,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.015,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.953,
+          "command": "status"
+        },
+        {
+          "seconds": 19.968,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 21.937,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.015,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.968,
+          "command": "status"
+        },
+        {
+          "seconds": 24.984,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 28.343,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.343,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.359,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.609,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=0 reads=5369 bytes=1634073 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.609,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-cbr-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "edited-pcm",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "edited-pcm",
+        "file": "edited.mov",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288753,
+        "sha256": "473f7388f09082d61241d564c268ea7f898a1cf011653427868804e47aaa879b"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:37:18.847477+00:00",
+      "observations": [
+        {
+          "seconds": 1.906,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.0,
+          "command": "status"
+        },
+        {
+          "seconds": 3.015,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 5.968,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.047,
+          "line": "Control: okState: paused"
+        },
+        {
+          "seconds": 9.0,
+          "command": "play"
+        },
+        {
+          "seconds": 9.047,
+          "line": "Control: okState: loading"
+        },
+        {
+          "seconds": 9.093,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.953,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.015,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.984,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.047,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.984,
+          "command": "status"
+        },
+        {
+          "seconds": 20.0,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 21.968,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.031,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.984,
+          "command": "status"
+        },
+        {
+          "seconds": 25.0,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.375,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.375,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.39,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.64,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=562 bytes=17190312 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.64,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-edited-pcm-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "flac",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T05:24:35.219785+00:00",
+      "observations": [
+        {
+          "seconds": 7.078,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 8.125,
+          "command": "status"
+        },
+        {
+          "seconds": 8.141,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 11.094,
+          "command": "pause"
+        },
+        {
+          "seconds": 11.172,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 11.172,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 14.125,
+          "command": "play"
+        },
+        {
+          "seconds": 14.188,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 14.188,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 14.235,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 17.11,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 17.188,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 21.125,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 21.188,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.125,
+          "command": "status"
+        },
+        {
+          "seconds": 25.141,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 27.11,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 27.188,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 30.141,
+          "command": "status"
+        },
+        {
+          "seconds": 30.156,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 33.547,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 33.547,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 33.547,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 33.797,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=83 bytes=1808165 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 33.797,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-flac-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "flac",
+      "mode": "stop",
+      "profile": 2,
+      "runtime_source_commit": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+      "expected_decision": {
+        "case": "flac",
+        "file": "native.flac",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 682764,
+        "sha256": "8efb85056cb3fc19e632e935936eb60144677031395b9a7764fed4263e1f942a"
+      },
+      "start_position": 0,
+      "started_utc": "2026-10-20T05:25:29.192447+00:00",
+      "observations": [
+        {
+          "seconds": 2.234,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=0.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.328,
+          "command": "status"
+        },
+        {
+          "seconds": 3.344,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 10.234,
+          "command": "stop"
+        },
+        {
+          "seconds": 10.312,
+          "line": "State: pausedControl:"
+        },
+        {
+          "seconds": 10.672,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=paused end=sender_stop owned=yes position=9.4 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=83 bytes=1808165 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "post_stop_observation_window_seconds": 3,
+      "elapsed_seconds": 13.672,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-flac-stop",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes",
+        "scope": "The completed check described in the matching user prompt; sender record exists"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "mkv-flac",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "mkv-flac",
+        "file": "flac.mka",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 680062,
+        "sha256": "8f5f008ab5c253517d4640dd7d64e1c745dabcbd2689ab264ac413e790e8be13"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:36:11.083630+00:00",
+      "observations": [
+        {
+          "seconds": 1.938,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=0.9 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.016,
+          "command": "status"
+        },
+        {
+          "seconds": 3.031,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 5.984,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.063,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 6.063,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.016,
+          "command": "play"
+        },
+        {
+          "seconds": 9.063,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.063,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.125,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.969,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.031,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.969,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.031,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.0,
+          "command": "status"
+        },
+        {
+          "seconds": 20.016,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.0,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.078,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.031,
+          "command": "status"
+        },
+        {
+          "seconds": 25.047,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.453,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.453,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.469,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.719,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=5383 bytes=2350774 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.719,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-mkv-flac-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "mkv-pcm",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "mkv-pcm",
+        "file": "pcm.mka",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12309990,
+        "sha256": "4dc76143ed4637f35955387a32b08aed1a1a32d80075ff78113e2ca272e10674"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:36:44.924811+00:00",
+      "observations": [
+        {
+          "seconds": 2.015,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.062,
+          "command": "status"
+        },
+        {
+          "seconds": 3.078,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.047,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.109,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 6.109,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.062,
+          "command": "play"
+        },
+        {
+          "seconds": 9.109,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.125,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.156,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.109,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.25,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.109,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.156,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.109,
+          "command": "status"
+        },
+        {
+          "seconds": 20.125,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.5 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.109,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.172,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.047,
+          "command": "status"
+        },
+        {
+          "seconds": 25.062,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.5 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.531,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.531,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.531,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.797,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=27830 bytes=27450821 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.797,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-mkv-pcm-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "mov-pcm",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "mov-pcm",
+        "file": "pcm.mov",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288705,
+        "sha256": "10051a301badb4fc19a25564c4b845b22ea159b2617402d4d8978c0a32fc9eb1"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:35:37.192031+00:00",
+      "observations": [
+        {
+          "seconds": 2.047,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.141,
+          "command": "status"
+        },
+        {
+          "seconds": 3.157,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.11,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.172,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 6.172,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.125,
+          "command": "play"
+        },
+        {
+          "seconds": 9.188,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.188,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.235,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.11,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.172,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.141,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.204,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.141,
+          "command": "status"
+        },
+        {
+          "seconds": 20.141,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.11,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.172,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.125,
+          "command": "status"
+        },
+        {
+          "seconds": 25.141,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.516,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.516,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.516,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.766,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=638 bytes=19680248 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.766,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-mov-pcm-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "mp4-flac",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "mp4-flac",
+        "file": "flac.mp4",
+        "codec": "flac",
+        "action": 3,
+        "source_family": 5,
+        "selected_id": 1,
+        "bytes": 677878,
+        "sha256": "d461b10c6ca9d0e119e35b9408d1bb2918e8334516264d80f308dbe47ef3f2d9"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:35:03.449610+00:00",
+      "observations": [
+        {
+          "seconds": 1.922,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.0,
+          "command": "status"
+        },
+        {
+          "seconds": 3.016,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 5.969,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.016,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 6.016,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.984,
+          "command": "play"
+        },
+        {
+          "seconds": 9.047,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.047,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.109,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.969,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.016,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.969,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.016,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.969,
+          "command": "status"
+        },
+        {
+          "seconds": 19.969,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 21.953,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.0,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.969,
+          "command": "status"
+        },
+        {
+          "seconds": 24.984,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.344,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.344,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.359,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.609,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=5 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=79 bytes=1386874 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.609,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-mp4-flac-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "opus",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "opus",
+        "file": "opus.ogg",
+        "codec": "opus",
+        "action": 3,
+        "source_family": 6,
+        "selected_id": 1,
+        "bytes": 1500766,
+        "sha256": "3241b721d3c41bce2db394e7244a3d18fbf17de6a89f34b23be53a5ecdcacb1e"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:33:55.370459+00:00",
+      "observations": [
+        {
+          "seconds": 2.078,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.094,
+          "command": "status"
+        },
+        {
+          "seconds": 3.109,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.172,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.234,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 6.234,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.078,
+          "command": "play"
+        },
+        {
+          "seconds": 9.141,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.141,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.172,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.141,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.219,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.156,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.203,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.156,
+          "command": "status"
+        },
+        {
+          "seconds": 20.172,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.141,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.203,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.156,
+          "command": "status"
+        },
+        {
+          "seconds": 25.172,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.547,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.547,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.562,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.812,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=6 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=961 bytes=10677748 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.828,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-opus-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "vbr",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "file": "vbr441.mp3",
+        "sha256": "ce99b2a922332c82920f5dbf4ac5c338a56bb47de3fc184b53c62a678b1ccafa",
+        "action": 4,
+        "source_family": 10,
+        "selected_id": 1
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:32:48.002722+00:00",
+      "observations": [
+        {
+          "seconds": 1.781,
+          "line": "Start: ok audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 2.875,
+          "command": "status"
+        },
+        {
+          "seconds": 2.891,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=2.2 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 5.844,
+          "command": "pause"
+        },
+        {
+          "seconds": 5.906,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 5.906,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.859,
+          "command": "play"
+        },
+        {
+          "seconds": 8.922,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 8.922,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 8.953,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 11.797,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 11.859,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 15.812,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 15.859,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 19.797,
+          "command": "status"
+        },
+        {
+          "seconds": 19.812,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 21.781,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 21.828,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 24.797,
+          "command": "status"
+        },
+        {
+          "seconds": 24.812,
+          "line": "Status: audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=0"
+        },
+        {
+          "seconds": 28.187,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.187,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.187,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.437,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=4 audio_reason=4 source_family=10 output_family=10 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=0 reads=4918 bytes=512857 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.437,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-vbr-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "vorbis",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "vorbis",
+        "file": "vorbis.ogg",
+        "codec": "vorbis",
+        "action": 3,
+        "source_family": 7,
+        "selected_id": 1,
+        "bytes": 174546,
+        "sha256": "984b676ab211c89e494e1d6354d39086ee03e41e32ac89961bb542c106863dd4"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:34:29.316787+00:00",
+      "observations": [
+        {
+          "seconds": 2.25,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.282,
+          "command": "status"
+        },
+        {
+          "seconds": 3.297,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.282,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.344,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 6.36,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.344,
+          "command": "play"
+        },
+        {
+          "seconds": 9.391,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.391,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.438,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.297,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.344,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.313,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.375,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.25,
+          "command": "status"
+        },
+        {
+          "seconds": 20.266,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.5 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.344,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.391,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.344,
+          "command": "status"
+        },
+        {
+          "seconds": 25.36,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.75,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.75,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.75,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 29.0,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=7 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=832 bytes=1745765 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 29.0,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-vorbis-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    },
+    {
+      "receiver": "tv",
+      "case": "wave",
+      "mode": "natural",
+      "profile": 2,
+      "runtime_source_commit": "a3ff5bd56d33fc640d87d1730f6d475977110b92",
+      "expected_decision": {
+        "case": "wave",
+        "file": "pcm.wav",
+        "codec": "pcm_s16le",
+        "action": 3,
+        "source_family": 8,
+        "selected_id": 1,
+        "bytes": 12288044,
+        "sha256": "2a615c09d1822d3d47061cb025e8026ee84039b697bd3af1656b70492fcca5ca"
+      },
+      "start_position": 8,
+      "started_utc": "2026-10-20T06:33:21.568332+00:00",
+      "observations": [
+        {
+          "seconds": 2.0,
+          "line": "Start: ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=1.0 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 3.063,
+          "command": "status"
+        },
+        {
+          "seconds": 3.078,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=2.1 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 6.031,
+          "command": "pause"
+        },
+        {
+          "seconds": 6.094,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 6.094,
+          "line": "State: paused"
+        },
+        {
+          "seconds": 9.047,
+          "command": "play"
+        },
+        {
+          "seconds": 9.125,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 9.125,
+          "line": "State: loading"
+        },
+        {
+          "seconds": 9.172,
+          "line": "State: playing"
+        },
+        {
+          "seconds": 12.016,
+          "command": "seek 32"
+        },
+        {
+          "seconds": 12.078,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 16.031,
+          "command": "seek 8"
+        },
+        {
+          "seconds": 16.156,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 20.094,
+          "command": "status"
+        },
+        {
+          "seconds": 20.109,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=11.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 22.0,
+          "command": "seek 58"
+        },
+        {
+          "seconds": 22.063,
+          "line": "Control: ok"
+        },
+        {
+          "seconds": 25.016,
+          "command": "status"
+        },
+        {
+          "seconds": 25.031,
+          "line": "Status: audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=active state=playing end=none owned=yes position=60.6 duration=64.0 rate=1.0 failure=none/none cleaned=no media_failure=0 media_cleaned=0 selected_audio_id=1 authoring_flags=1"
+        },
+        {
+          "seconds": 28.406,
+          "line": "State: ended"
+        },
+        {
+          "seconds": 28.406,
+          "line": "End: media_end failure=none/none"
+        },
+        {
+          "seconds": 28.422,
+          "line": "Session ended; cleaning up."
+        },
+        {
+          "seconds": 28.672,
+          "line": "Summary: api_version=6 linkage=shared start=ok audio_action=3 audio_reason=3 source_family=8 output_family=1 channels=2 phase=stopped state=ended end=media_end owned=yes position=64.0 duration=64.0 rate=1.0 failure=none/none cleaned=yes media_failure=0 media_cleaned=1 selected_audio_id=1 authoring_flags=1 reads=660 bytes=20917443 failed_reads=0 releases=1"
+        }
+      ],
+      "decision_matches": true,
+      "exit_code": 0,
+      "elapsed_seconds": 28.672,
+      "cache_entries_after": 0,
+      "module_count": 8,
+      "module_hashes_match_build_ledger": true,
+      "record_id": "tv-wave-natural",
+      "written_observation": {
+        "result": "PASS",
+        "user_reply": "Yes; final confirmation: All passed",
+        "source": "Initial batch reply plus final confirmation after all eleven Apple TV cases completed",
+        "scope": "Audible RIGHT nonzero start, pause/resume, forward/backward markers and natural end"
+      }
+    }
+  ],
+  "passed_observed_cases": [
+    "mac-aac-natural",
+    "mac-cbr-natural",
+    "mac-edited-pcm-natural",
+    "mac-flac-natural",
+    "mac-flac-stop",
+    "mac-mkv-flac-natural",
+    "mac-mkv-pcm-natural",
+    "mac-mov-pcm-natural",
+    "mac-mp4-flac-natural",
+    "mac-opus-natural",
+    "mac-vbr-natural",
+    "mac-vorbis-natural",
+    "mac-wave-natural-retry1",
+    "tv-aac-natural",
+    "tv-cbr-natural",
+    "tv-edited-pcm-natural",
+    "tv-flac-natural",
+    "tv-flac-stop",
+    "tv-mkv-flac-natural",
+    "tv-mkv-pcm-natural",
+    "tv-mov-pcm-natural",
+    "tv-mp4-flac-natural",
+    "tv-opus-natural",
+    "tv-vbr-natural",
+    "tv-vorbis-natural",
+    "tv-wave-natural"
+  ],
+  "failed_or_nonqualifying_attempts": {
+    "mac-flac-cancel": "Sender cancellation fired; observer requested retry, so prompt closure unconfirmed",
+    "mac-flac-cancel-retry1": "No prompt; started in 1866 ms before timer, stop_fired=no",
+    "mac-flac-cancel-retry2": "No prompt; started in 4087 ms before timer, stop_fired=no",
+    "mac-wave-natural": "Receiver HTTP 400 at 15.39 s, before active playback; no source/media read failure. Consent timeout is consistent with timing, not proven cause."
+  },
+  "cancellation_gate": "No further D107 repeat required after user scope correction; historical lifecycle evidence retained. Current attempts do not establish fresh pending-consent closure.",
+  "stop_snapshot": {
+    "test_host_processes": 0,
+    "cache_entries": 0,
+    "source": "Live inspection after final Apple TV sender run ended"
+  },
+  "remaining_observations_or_runs": [],
+  "resume": "The user explicitly requested repeating missing tests; only unfinished cases resumed, no cancellation retests.",
+  "host": {
+    "os": "Microsoft Windows 10.0.26200",
+    "architecture": "X64"
+  },
+  "ci_checkpoint": {
+    "head": "4cd545a45b111b0a4f210d120ff6b5f5b9b808ea",
+    "passed_checks": 17,
+    "run": "https://github.com/ilyalissoboi/send-airplay2/actions/runs/39364170075",
+    "scope": "Prepared PR head; final documentation/evidence head must be inspected separately"
+  },
+  "measurement_limits": [
+    "Bounded 64-second owned markers with seeks, not full-duration sustained playback",
+    "Early position snapshots may be near 1-2 seconds despite requested start 8; audible marker observations are separate, not sample-exact proof",
+    "CLI source-release count and physical cache emptiness do not expose generated-store callback counts",
+    "No new pending-consent cancellation pass; prior lifecycle evidence reused after user scope correction",
+    "Native Windows x64 only; packaged UWP, brokered-source and Screenbox gates remain separate"
+  ],
+  "counts": {
+    "attempts": 30,
+    "observed_natural_end_passes": 24,
+    "observed_stop_passes": 2,
+    "failed_or_nonqualifying_attempts": 4,
+    "resumed_missing_cases": 19
+  }
+}
