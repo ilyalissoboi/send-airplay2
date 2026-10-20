@@ -25,8 +25,8 @@ survives. The caller then releases each borrowed source exactly once. A separate
 FLAC preserve-original refusal checks unused-store cleanup. Actual granted-file
 hashes must match the external owned-fixture provenance before accepting results.
 
-The enabled x64 Native AOT package advances the default manifest to 0.1.34.0
-(alternate-server manifest 0.1.35.0). Register in place with identity, app data,
+The enabled x64 Native AOT package advances the default manifest to 0.1.36.0
+(alternate-server manifest 0.1.37.0). Register in place with identity, app data,
 PasswordVault pairings and existing grants preserved. Verify the actual MSIX,
 AppContainer token, executable and all six native DLL paths/hashes. The runtime
 is merged API 6 with the existing FFmpeg 9.0.2 port-6 profile; no native C++ or

@@ -52,7 +52,7 @@ adds `internetClientServer` (build with `/p:InternetServerCapability=true`).
 Switching variants keeps the app's data only as an in-place update, which
 Windows allows only to a higher version. Before building the other variant,
 raise its `Version` above the installed one (the committed manifests are
-0.1.34.0 and 0.1.35.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
+0.1.36.0 and 0.1.37.0; the D53 runs used 0.1.0.0, 0.1.1.0 and 0.1.2.0, D54 used
 0.1.4.0, D55 used 0.1.6.0, 0.1.8.0, 0.1.10.0 and 0.1.12.0, D57 0.1.14.0 and D61
 0.1.16.0, 0.1.18.0, 0.1.20.0 and 0.1.22.0).
 Alternatively, `Add-AppxPackage -Register` with `-ForceUpdateFromAnyVersion`
@@ -116,8 +116,8 @@ offline adapter. Example after manually remembering the fixture as `audio-only`:
 cast vault audio-only progressive type=audio/mp4
 ```
 
-The default capability manifest is version 0.1.34.0; the extra-server variant is
-0.1.35.0. D98 changes test-host options/diagnostics, not native audio policy,
+The default capability manifest is version 0.1.36.0; the extra-server variant is
+0.1.37.0. D98 changes test-host options/diagnostics, not native audio policy,
 Screenbox, audio-only HLS, transcoding or speaker transport. Receiver/package
 proof must be recorded separately from a successful build.
 

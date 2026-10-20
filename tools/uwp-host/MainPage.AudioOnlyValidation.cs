@@ -13,21 +13,21 @@ public sealed partial class MainPage
 {
     // Literal expectations for D107's owned fixtures, independent of the native
     // decision being checked. These commands are development-test automation.
-    private sealed record AudioOnlyCase(string Label, string File, uint Action, uint Family);
+    private sealed record AudioOnlyCase(string Label, string File, uint Action, uint Family, uint OutputFamily);
     private static readonly AudioOnlyCase[] AudioOnlyCases =
     [
-        new("aac", "aac.m4a", 4, 1),
-        new("cbr", "cbr48.mp3", 4, 10),
-        new("vbr", "vbr441.mp3", 4, 10),
-        new("flac", "native.flac", 3, 5),
-        new("wave", "pcm.wav", 3, 8),
-        new("opus", "opus.ogg", 3, 6),
-        new("vorbis", "vorbis.ogg", 3, 7),
-        new("mp4-flac", "flac.mp4", 3, 5),
-        new("mov-pcm", "pcm.mov", 3, 8),
-        new("mkv-flac", "flac.mka", 3, 5),
-        new("mkv-pcm", "pcm.mka", 3, 8),
-        new("edited-pcm", "edited.mov", 3, 8),
+        new("aac", "aac.m4a", 4, 1, 1),
+        new("cbr", "cbr48.mp3", 4, 10, 10),
+        new("vbr", "vbr441.mp3", 4, 10, 10),
+        new("flac", "native.flac", 3, 5, 1),
+        new("wave", "pcm.wav", 3, 8, 1),
+        new("opus", "opus.ogg", 3, 6, 1),
+        new("vorbis", "vorbis.ogg", 3, 7, 1),
+        new("mp4-flac", "flac.mp4", 3, 5, 1),
+        new("mov-pcm", "pcm.mov", 3, 8, 1),
+        new("mkv-flac", "flac.mka", 3, 5, 1),
+        new("mkv-pcm", "pcm.mka", 3, 8, 1),
+        new("edited-pcm", "edited.mov", 3, 8, 1),
     ];
 
     /// <summary>Grants only the known owned filenames from a manually chosen
@@ -123,7 +123,7 @@ public sealed partial class MainPage
             {
                 RequireAudio(decision != null && (uint)decision.Profile == 2 &&
                     (uint)decision.Action == item.Action && (uint)decision.Reason == item.Action &&
-                    (uint)decision.SourceFamily == item.Family && (uint)decision.OutputFamily == 1 &&
+                    (uint)decision.SourceFamily == item.Family && (uint)decision.OutputFamily == item.OutputFamily &&
                     decision.OutputChannels == 2 && decision.SelectedAudioId == 1, "literal decision");
             }
             RequireAudio(!source.IsReleased && source.ReadCalls > 0, "borrowed source");
