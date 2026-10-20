@@ -2,6 +2,20 @@
 
 Snapshot: 2026-10-20 (Asia/Tokyo). Audience: the next human developer or model.
 
+**D109 API 6 package readiness passed locally (2026-10-20).**
+The user authorizes package preparation after #93 merged as `ee968e9`; all 17
+checks passed at final head `f31227b`. [The readiness record](audio-only-package-readiness.md)
+covers implementation `04a3559`: both new package bases `0.6.0`, finite audio-only
+shipping descriptions and actual restored API-6 consumer coverage. Local clean-
+branch packages pass thirteen profile controls, API-6 compile/six-DLL copy,
+RID/direct/transitive refusals, binding CTest and static source/license audit.
+The unchanged API-5 package fails the strengthened compile check as expected.
+These local x64 archives are validation inputs; no clean-main candidate or
+release is prepared/published yet. After review/merge, dispatch clean main,
+audit its exact artifact and prepare notes/checksum before publication approval.
+Screenbox pin/routing/queues follow separately. Existing published assets/pins,
+native/codec behavior, quota and all hardware/user deferrals remain unchanged.
+
 **D108 focused packaged automatic audio-only gate passed (2026-10-20).**
 [PR #93](https://github.com/ilyalissoboi/send-airplay2/pull/93), implementation
 `c868572`, records thirteen public preparation/cleanup checks over twelve owned,

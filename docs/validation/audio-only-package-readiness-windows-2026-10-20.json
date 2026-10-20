@@ -1,0 +1,159 @@
+{
+  "decision": "D109",
+  "date": "2026-10-20",
+  "timezone": "Asia/Tokyo",
+  "result": "API6_PACKAGE_READINESS_PASSED",
+  "source_commit": "04a355933609d5d0ac1073af405ae1fb8dc0be6c",
+  "base": {
+    "pr": 93,
+    "merge_commit": "ee968e9878d5b0295c3f4e7e5378a1a8eef77a48",
+    "final_head": "f31227b8e5f06564481b45fb18eb2bf95edeba7d",
+    "final_head_ci_checks_passed": 17
+  },
+  "new_version_base": "0.6.0",
+  "source_tree_clean_at_pack": true,
+  "native_changes": false,
+  "native_source_commit": "ee968e9878d5b0295c3f4e7e5378a1a8eef77a48",
+  "enabled_distribution": {
+    "private_runtime_validation": false,
+    "uwp_binary_checks": "PASS",
+    "five_dependency_hashes_match_D108": true,
+    "artifact_audit": {
+      "result": "PASS_STATIC_ARTIFACT_AUDIT",
+      "id": "SendAirPlay2.StereoAac",
+      "version": "0.6.0-d109.api6.1",
+      "sha256": "745f435a0a4cbc5dacaf0694cb3cb9fe53697df3e7badab6af22602627d1c29e",
+      "bytes": 21355826,
+      "binding_source": "04a355933609d5d0ac1073af405ae1fb8dc0be6c",
+      "native_source": "ee968e9878d5b0295c3f4e7e5378a1a8eef77a48",
+      "clean_build_info": true,
+      "modules": [
+        {
+          "name": "send_airplay2.dll",
+          "sha256": "88960a3d24c5394bb23f5b7998a4a741deae707efcb70cc987a4db4fca8e95ad"
+        },
+        {
+          "name": "libcrypto-3-x64.dll",
+          "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc"
+        },
+        {
+          "name": "avcodec-63.dll",
+          "sha256": "d59924ce092ba55cbf80278c21607fc6bef56d346900306de424b6b358be56de"
+        },
+        {
+          "name": "avformat-63.dll",
+          "sha256": "8960883ff2bb390b3b9f1c5b755d31306a2ef2d2ff6f3be927e03689ba1ecf28"
+        },
+        {
+          "name": "avutil-61.dll",
+          "sha256": "cc3998327239978df5128ebb604ab2e18dbb6345ed880cc2fbda7a1ebb12aeb6"
+        },
+        {
+          "name": "swresample-7.dll",
+          "sha256": "bbd763035ef1686d8169aa8c169d1497798e15c4f98ab7ca78b542d04eeebf65"
+        }
+      ],
+      "source_archive_sha512": "21bf3fbcdfd2f41ea6edeab40433fecfe362b09ecaa177a652471b54f9357011b4f74dab18245ab1c26f1a473b94205490baecb42289afd2effd603cd0b22b59",
+      "exact_overlay_files": 22,
+      "overlay_match": "Exact installed SPDX SHA256; repository text equal after CRLF/LF normalization",
+      "overlay_files_with_line_ending_differences": 0,
+      "notice_sha256": "5febaf911cbf5a58c8bdca0be8907176d1e4b241c74c268b96abb24bcd5fd649",
+      "profile_sha256": "9ffea9109e9c9951e62a38ad70452cb216cc3802e8d1e1b5055f306b2f04eb64",
+      "artifact_scope": "Local clean-branch validation input; not a clean-main publication candidate"
+    }
+  },
+  "default_comparison": {
+    "id": "SendAirPlay2",
+    "version": "0.6.0-d109.api6.1",
+    "architectures": [
+      "x64"
+    ],
+    "source_commit": "04a355933609d5d0ac1073af405ae1fb8dc0be6c",
+    "native_source_commit": "ee968e9878d5b0295c3f4e7e5378a1a8eef77a48",
+    "codec_free": true,
+    "sha256": "6b8da724fdfc901b0469e9d20db8f27ce0435b29fc06a83bb0c8e2c2febc21bd",
+    "bytes": 2568352,
+    "modules": [
+      {
+        "name": "send_airplay2.dll",
+        "sha256": "78aead9655598644f91b825e363bcb224c5037de73fc08e2628c0bbe97884252"
+      },
+      {
+        "name": "libcrypto-3-x64.dll",
+        "sha256": "c36c06b7d45f283044f255ec60de5fa0d256d1f2c3441787b5746a92a0a486bc"
+      }
+    ]
+  },
+  "local_checks": {
+    "profile_controls": {
+      "passed": 13,
+      "lines": [
+        "PASS: complete pinned runtime/profile/source",
+        "PASS: missing avcodec-63.dll",
+        "PASS: missing avformat-63.dll",
+        "PASS: missing avutil-61.dll",
+        "PASS: missing swresample-7.dll",
+        "PASS: missing notice",
+        "PASS: source archive mismatch",
+        "PASS: runtime/prefix mismatch",
+        "PASS: overlay provenance mismatch",
+        "PASS: GPL-enabled configuration",
+        "PASS: codec-free profile refuses codec-enabled runtime",
+        "PASS: distribution refuses private development exports",
+        "PASS: opt-in profile refuses codec-free core even with staged codec DLLs",
+        "Package profile controls passed; no modified DLL was loaded."
+      ]
+    },
+    "consumer": {
+      "passed": 4,
+      "lines": [
+        "PASS: restored audio package compiles the API 6 audio-only contract and copies all six exact native DLLs",
+        "PASS: unsupported consumer architecture refused",
+        "PASS: default package is codec-free and mixed-profile references are refused",
+        "PASS: resolved transitive default profile is refused without a direct PackageReference",
+        "Package restore/build/copy checks passed; consumer executable was not run."
+      ]
+    },
+    "binding_ctest": {
+      "passed": 1,
+      "total": 1,
+      "seconds": 4.97
+    },
+    "old_api5_negative": {
+      "version": "0.5.0-ci.294",
+      "result": "EXPECTED_COMPILE_REFUSAL",
+      "missing_members": [
+        "AppleAudioV1",
+        "Progressive",
+        "ProfileProgressive",
+        "Mp3"
+      ],
+      "compiler_code": "CS0117",
+      "consumer_or_native_runtime_executed": false
+    }
+  },
+  "helper_correction": "Reused local artifact-audit helper initially resolved one parent too few after moving to a nested folder; corrected before the successful audit. Package bytes unchanged.",
+  "ci_scope": "Actual PR-head CI is separate; merged baseline/local results do not establish it.",
+  "candidate_status": {
+    "local_validation_only": true,
+    "clean_main_candidate_prepared": false,
+    "release_tag_or_assets_created": false,
+    "publication_approval_requested": false,
+    "next": "Review/merge packaging corrections; dispatch clean main; download/audit exact artifact and prepare notes/checksum before requesting publication approval."
+  },
+  "receiver_scope": "No new cast or consumer executable run. D107/D108 receiver observations remain tied to their original binary hashes.",
+  "unchanged": [
+    "Published ci.207/ci.294 assets and Screenbox pins",
+    "Native C++/public API behavior",
+    "Codec/dependency profile and source/license",
+    "Screenbox installation",
+    "Quota"
+  ],
+  "deferrals": [
+    "Speaker/RAOP",
+    "Discrete surround",
+    "Chromecast hardware",
+    "User-deferred remote Stop classification",
+    "Long-input/cache-quota evaluation"
+  ]
+}

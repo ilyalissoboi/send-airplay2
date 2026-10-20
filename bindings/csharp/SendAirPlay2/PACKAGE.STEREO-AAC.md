@@ -1,10 +1,13 @@
 # SendAirPlay2.StereoAac
 
-Opt-in experimental Windows x64 UWP runtime for video casting with automatic
-audio selection: eligible AAC-LC/AC-3/E-AC-3 is copied, and the validated
-DTS-core/FLAC/Opus/Vorbis/PCM/TrueHD subset converts to 48-kHz stereo AAC.
-Video is copied. This does not add audio-only AirPlay transport or discrete
-converted surround. The API is experimental (version 5).
+Opt-in experimental API 6 Windows x64 UWP runtime for video and finite audio-only
+casting. `AudioDeliveryProfile.AppleHlsV1` copies video and eligible selected
+AAC-LC/AC-3/E-AC-3, or converts the validated video-track
+DTS-core/FLAC/Opus/Vorbis/PCM/TrueHD subset to 48-kHz stereo AAC.
+`AudioDeliveryProfile.AppleAudioV1` selects original progressive AAC/M4A or MP3,
+or converts covered audio-only inputs to stereo AAC HLS. Profiles are explicit;
+they are not selected from receiver discovery or a failed cast. Speaker/RAOP
+transport and discrete converted surround are not included.
 
 Reference this package **instead of** `SendAirPlay2`. Both contain the same
 `SendAirPlay2` C# namespace/assembly. The original codec-free package and its
@@ -12,12 +15,28 @@ published versions remain separate. Dependencies must also select the same profi
 mixed direct or transitive profiles are rejected during asset resolution. This first
 profile includes only `win-x64`.
 
-The host must use `CastDelivery.AutomaticAudioHls`, provide an
-`AacFragmentStore` and quota, and supply brokered media callbacks and its
-`ICredentialStore` in UWP. Delivery still defaults to progressive. Use a
+The host selects `CastDelivery.AutomaticAudioHls` and the matching `AudioProfile`,
+and supplies brokered media callbacks and its `ICredentialStore` in UWP.
+Conversion requires `AudioConversionPermission.AllowStereo`, a dedicated
+`AacFragmentStore` and a finite positive quota. Preserve-original refuses required
+conversion; it does not try another representation or track. Progressive
+AAC/MP3 requires no encoder/store/quota and works with either permission. Delivery
+still defaults to progressive, and the automatic profile defaults to the video
+profile. Use a
 RID-specific UWP build, the app C runtime framework, and the network capabilities
 documented in the repository. Do not infer support for arbitrary files from a
 decoder name or the finite Apple HLS delivery table.
+
+The initial AppleAudioV1 table admits validated single-track, unprotected stereo
+44.1/48-kHz AAC-LC in MP4/M4A and stereo 44.1/48-kHz CBR/VBR MP3 progressively.
+Conversion covers the finite native FLAC/PCM WAVE, FLAC/PCM MP4/MOV or canonical
+indexed Matroska, and single-stream Ogg Opus/Vorbis subsets. Checked presentation
+edits/trim are required; Ogg has a 64-MiB scan limit. Video tracks, raw ADTS,
+protected/unvalidated inputs and audio-only DTS/AC-3/E-AC-3/TrueHD refuse under
+this initial profile. Read `docs/automatic-audio-only.md` for exact bounds.
+`AudioDelivery.Check(..., profile: AudioDeliveryProfile.AppleAudioV1)` prepares
+and reports the decision without a receiver; successful preparation alone is not
+full-file decoding or interoperability proof.
 
 `AUDIO-PROFILE.json` records exact codec hashes/configuration and source archive
 checksum. `BUILD-INFO.txt` identifies core/binding source and all native hashes.
@@ -30,7 +49,11 @@ the runtime uses no external codec libraries, GPL/nonfree/version-3 additions,
 network protocols or command-line programs. Runtime DLLs remain separate for
 replacement/relinking. This package is not a Store certification result.
 
-Recorded short-media receiver checks cover one MacBook Pro/macOS 26.7.1 and
-Apple TV/tvOS 26.6 from Windows x64. They do not establish whole-film throughput
-or additional receiver/architecture support. See `docs/automatic-audio-receiver-gate.md`
+Recorded short-media development-runtime checks cover one MacBook Pro/macOS 26.7.1
+and Apple TV/tvOS 26.6 from Windows x64. The native audio-only format matrix and
+focused packaged converted-FLAC checks pass; these observations belong to their
+recorded binary hashes, not every newly built package. They do not establish
+whole-file throughput, gapless/sample-exact playback or additional receivers.
+See `docs/automatic-audio-only-native-gate.md`,
+`docs/automatic-audio-only-uwp-gate.md`, `docs/automatic-audio-receiver-gate.md`
 and `docs/nuget-package.md` in the repository for exact results and limits.

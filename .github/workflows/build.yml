@@ -259,7 +259,7 @@ jobs:
           merge-multiple: true
       - name: Restore, build and verify mutually exclusive package profiles
         shell: pwsh
-        run: ./tests/package_consumer_tests.ps1 -PackagesDirectory build-ci-consumer-feed -AudioVersion '0.5.0-ci.${{ github.run_number }}' -DefaultVersion '0.3.0-ci.${{ github.run_number }}'
+        run: ./tests/package_consumer_tests.ps1 -PackagesDirectory build-ci-consumer-feed -AudioVersion '0.6.0-ci.${{ github.run_number }}' -DefaultVersion '0.6.0-ci.${{ github.run_number }}'
   sanitizers:
     runs-on: ubuntu-latest
     steps:

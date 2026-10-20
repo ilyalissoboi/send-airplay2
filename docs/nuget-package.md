@@ -14,6 +14,12 @@ publish it, and how a host consumes it.
 
 ## Opt-in stereo AAC runtime (D89)
 
+**D109/API 6 preparation:** [the package readiness slice](audio-only-package-readiness.md)
+updates both new package version bases to `0.6.0`, the package descriptions and
+the independent consumer check. The published versions below are historical
+assets and remain unchanged. A reviewed clean-main candidate and publication
+follow separately; no Screenbox pin is changed by this preparation.
+
 The existing package identity/profile remains codec-free. The separate
 `SendAirPlay2.StereoAac` package (API-5 version base `0.5.0`) adds the validated x64
 UWP codec runtime only when `pack_nuget.ps1 -StereoAac` is requested. Reference
@@ -34,8 +40,8 @@ HEVC HDR declaration fix missing from ci.282. All 17 clean-main checks and local
 artifact/fresh consumer checks pass. The user approved its publication after
 PR #76 merged; [public package/checksum verification](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)
 matches the unchanged candidate. The tag targets `72e73ea`. Screenbox's ordinary
-pin remains ci.207 and its merged opt-in profile pins ci.282; the opt-in pin
-update is a separate next slice. No nuget.org publication is included.
+pin remains ci.207 and its merged opt-in profile now pins ci.294 after the
+recorded D94 update. No nuget.org publication is included.
 
 ## Contents
 
@@ -57,10 +63,12 @@ Botan linked in, no Credential Manager. A host must use a RID-specific build
 (`win-x64`, `win-x86`, `win-arm64`) so NuGet copies them next to the app, and
 supply its own `ICredentialStore`. The package has no NuGet dependencies.
 
-**Versions** follow the C interface: `0.3.x` is `SAP2_PLAYBACK_API_VERSION` 3.
-A local pack is `0.3.0-local.<UTC yyyyMMddHHmmss>` and a CI pack
-`0.3.0-ci.<run number>`, so a host never restores a stale copy of an earlier
-pack from NuGet's global package cache under the same version.
+**New versions** follow the experimental C interface: API 6 uses `0.6.0` for
+both identities. A local pack is `0.6.0-local.<UTC yyyyMMddHHmmss>` and a CI pack
+`0.6.0-ci.<run number>`. Both bases come from the binding project, so a host does
+not restore stale bytes from NuGet's global package cache under a reused version.
+Published API-3 codec-free `0.3.0-ci.207` and API-5 opt-in `0.5.0-ci.294` remain
+immutable; the version-base change does not update existing host pins.
 
 ## Packing locally
 
@@ -92,7 +100,7 @@ Build the UWP libraries first (one configured tree per architecture,
 
 The `uwp` job keeps each architecture's native libraries and notice files as
 an artifact, and the `nuget` job packs all three into `nuget-package`
-(`0.3.0-ci.<run number>`), kept for 14 days. CI itself publishes nothing.
+(`0.6.0-ci.<run number>`), kept for 14 days. CI itself publishes nothing.
 
 ## GitHub prereleases (for the Screenbox fork)
 

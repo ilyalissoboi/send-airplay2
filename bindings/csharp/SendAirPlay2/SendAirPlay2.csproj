@@ -10,8 +10,8 @@
     <AssemblyName>SendAirPlay2</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- Follows the C interface: 0.3 is SAP2_PLAYBACK_API_VERSION 3. -->
-    <Version>0.3.0</Version>
+    <!-- Follows the experimental C interface: 0.6 is API version 6. -->
+    <Version>0.6.0</Version>
   </PropertyGroup>
 
   <!-- NuGet package (scripts/pack_nuget.ps1, docs/nuget-package.md). The script
@@ -21,7 +21,7 @@
   <PropertyGroup>
     <PackageId>SendAirPlay2</PackageId>
     <Authors>send-airplay2 contributors</Authors>
-    <Description>Experimental native AirPlay 2 video sender for UWP and .NET hosts: discovery, PIN pairing, casting local files (direct or remuxed to HLS) and playback control. C# binding plus UWP-built native libraries.</Description>
+    <Description>Experimental API 6 AirPlay 2 media sender for UWP and .NET hosts: discovery, PIN pairing, video remux, finite audio-only delivery and playback control. C# binding plus UWP-built native libraries; conversion support depends on the selected package profile.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/ilyalissoboi/send-airplay2</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ilyalissoboi/send-airplay2</RepositoryUrl>
