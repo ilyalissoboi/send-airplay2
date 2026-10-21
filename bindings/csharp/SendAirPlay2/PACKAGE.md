@@ -14,7 +14,7 @@ after the permission check. Use the separate `SendAirPlay2.StereoAac` profile
 instead for covered conversion; the two identities cannot be mixed.
 
 The API is not frozen. Match the API 6 binding and native assets from one package.
-Recorded development-runtime receiver checks cover one MacBook Pro/macOS 26.7.1
+Recorded receiver checks cover one MacBook Pro/macOS 26.7.1
 and Apple TV/tvOS 26.6 from Windows x64, including packaged UWP/Native AOT.
 Those observations have their own binary scope; they do not establish playback
 of every newly built package or unsupported source/receiver combinations.

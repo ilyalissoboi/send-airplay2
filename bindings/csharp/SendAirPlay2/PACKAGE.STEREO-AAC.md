@@ -49,11 +49,7 @@ the runtime uses no external codec libraries, GPL/nonfree/version-3 additions,
 network protocols or command-line programs. Runtime DLLs remain separate for
 replacement/relinking. This package is not a Store certification result.
 
-Recorded short-media development-runtime checks cover one MacBook Pro/macOS 26.7.1
-and Apple TV/tvOS 26.6 from Windows x64. The native audio-only format matrix and
-focused packaged converted-FLAC checks pass; these observations belong to their
-recorded binary hashes, not every newly built package. They do not establish
-whole-file throughput, gapless/sample-exact playback or additional receivers.
-See `docs/automatic-audio-only-native-gate.md`,
-`docs/automatic-audio-only-uwp-gate.md`, `docs/automatic-audio-receiver-gate.md`
-and `docs/nuget-package.md` in the repository for exact results and limits.
+See `docs/receiver-validation.md` for the recorded host/receiver scope and
+`docs/audio-transcoding.md` for finite video-track input and resource limits.
+Preparation or package-build success does not establish full-file throughput,
+gapless playback or compatibility with an additional receiver.

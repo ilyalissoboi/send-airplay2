@@ -1,511 +1,110 @@
-# Dependencies and reference provenance
-
-**D92 HEVC metadata (2026-10-16):** the bounded SPS VUI reader and HDR HLS
-declaration are original Apache-2.0 code from ITU-T H.265 syntax and existing
-ISO BMFF framing, with no external parser copied or dependency added. An
-independently encoded original test-pattern SPS and owned syntax fixtures cover
-the correction. The development FFmpeg/libx265 encoder is not redistributed or
-linked into the runtime. See [the investigation and provenance](hevc-hdr-range.md).
-
-**D89 distribution staging (2026-10-16):** the opt-in x64 package reuses the
-already adopted FFmpeg 9.0.2 profile and original Apache-2.0 adapters; no new
-codec dependency/implementation is added. The staged DLLs must match the selected
-installed prefix, its SPDX port checksums must match this repository's exact
-overlay, and the included original source archive must match the recorded
-SHA-512 below. The separate package carries that archive, overlay/patches,
-manifest/triplet, installed records/configuration, vcpkg MIT notice and FFmpeg
-notices/rebuild instructions. Runtime libraries remain dynamic. No package
-publication, new license audit or Store certification is claimed. See
-[the packaging contract](opt-in-audio-runtime-package.md).
-
-**D82 provenance (2026-10-14):** selected-copy policy, descriptor bounds and the
-restricted Dolby BSI presence guard are original Apache-2.0 code, extending the
-existing ISO BMFF/ETSI TS 102 366 native readers. The pinned FFmpeg 9.0.2
-`libavcodec/ac3_parser.c` was inspected only as a field-layout cross-check; no
-implementation is copied or dependency/profile added. Twenty owned table/video/
-subtitle fixtures use the development-only native AAC/AC-3/E-AC-3 encoders, with
-source/command/input/output hashes in `fixtures/audio-policy/provenance.json`.
-No downloaded media/executable or external codec implementation is adopted.
-
-**D81 reuse (2026-10-14):** streaming native EBML scans and sparse anchors are
-original Apache-2.0 code. Codec reconstruction reuses the pinned FFmpeg parser
-API already adopted in D80; no dependency/profile/source copy is added. The new
-Opus silence fixture uses the development-only FFmpeg 9.0.2 native encoder, with
-command/input/output provenance in its fixture manifest. Nothing is downloaded
-or shipped by the fixture generator.
-
-The project remains Apache-2.0. Record revisions and licensing here before
-incorporating external code or adding dependencies.
-
-## Automatic audio expansion research (D76)
-
-**D80 reuse (2026-10-14):** compressed indexing calls the already adopted
-FFmpeg 9.0.2 public parser API. Inspection of pinned `flac_parser.c`,
-`opus/parser.c`, `vorbis_parser.c` and `mlp_parser.c` establishes the bounded
-prefix/complete-packet and major-sync duration behavior recorded in
-[the index contract](matroska-compressed-index.md). Runtime component versions
-must match the build headers before relying on prefix analysis. No implementation
-is copied, profile flag changed or dependency added; the existing LGPL notices
-and original Apache-2.0 adapter/fixture provenance remain applicable.
-
-**D77 adoption record (2026-10-14):** the authorized private decoder increment
-extends the existing pinned FFmpeg 9.0.2 overlay with native FLAC, Opus, Vorbis,
-TrueHD and signed 16/24/32-bit / float 32/64-bit PCM decoders (little/big endian).
-The source archive/hash and vcpkg revision below remain fixed. Before changing
-the profile, the pinned `flacdec.c`, `opus/dec.c`, `vorbisdec.c`, `mlpdec.c` and
-PCM decoder sources and configuration dependencies were inspected; their notices
-are LGPL-2.1-or-later. No external codec library or copied implementation is
-adopted. Add only their native parsers (`flac`, `opus`, `vorbis`, `mlp`) alongside
-the existing parsers. Retain network/GPL/nonfree/version3/program/accelerator
-disabling, dynamic four-library linkage and the native AAC encoder. Build/runtime
-verification and fixture evidence must be recorded before claiming support.
-The generator uses the locally installed FFmpeg CLI only to encode original
-synthetic input; record its version/configuration, commands and output hashes.
-The executable is not incorporated or distributed. The core remains Apache-2.0.
-
-[The expanded plan](automatic-audio-transcoding-plan.md) references Apple's HLS
-authoring requirements, Matroska's codec mappings and the pinned FFmpeg 9.0.2
-codec registry. No third-party code, codec profile change or dependency is adopted
-by this documentation slice. Native decoder registration is research evidence;
-verify exact configuration dependencies/licenses, minimal build flags and fixture
-generators/hashes before implementing the new families. Preserve the core's
-Apache-2.0 license and the adopted LGPL profile's redistribution notices.
-
-## Integrated runtime validation (D75)
-
-The offline AppContainer harness, TemporaryFolder adapter and optional private
-validation hook are original Apache-2.0 code. They reuse the already adopted
-FFmpeg 9.0.2 LGPL profile and project-owned D71 fixtures; no dependency or copied
-implementation is added. The local development package carries the exact
-FFmpeg/OpenSSL/Botan/Boost/vcpkg notices and the existing FFmpeg overlay/profile
-record. This is local testing, not package publication or a new distribution profile.
-
-## Stereo AAC readiness (D72)
-
-D74's explicitly enabled playback integration reuses the same pinned FFmpeg
-9.0.2 LGPL profile (avformat/avcodec/avutil/swresample, network/GPL/nonfree disabled).
-The optional runtime, API/cache adapters and host implementations are original
-Apache-2.0 code. Default builds retain no codec dependency. No new implementation
-or dependency is copied/adopted, and no package publication is included; optional
-redistribution must retain the existing codec notices/profile and runtime DLLs.
-
-D73's authoring calculator, estimate provenance and long-segment policy are
-original Apache-2.0 code. Rate formulas are written from RFC 8216 sections 4.1
-and 4.3.4.2 and Apple's published authoring requirements, not copied from an
-implementation. Existing owned fixtures and the pinned optional LGPL codec
-profile are reused; no dependency or third-party implementation is added.
-
-The user's 2026-10-13 Proceed continues the merged D71 private builder with
-bounded long-GOP audio planning, terminal failure reporting and offline scaling
-checks before public integration. All additions are original Apache-2.0 code,
-reusing the pinned LGPL FFmpeg profile and existing original compressed fixtures.
-No new dependency or third-party implementation is adopted. The virtual long
-movie uses project-authored ISO BMFF tables and repeats owned encoded packets;
-it is synthetic read-at evidence, not a real-file or receiver interoperability test.
-Any additional encoded fixture records its generator, tool profile and hashes.
-
-## Stereo AAC rendition (D71)
-
-The user's 2026-10-13 Proceed authorizes stereo downmix/AAC encoding, separate
-HLS audio resources and bounded generation/cache after merged PR #50. This reuses
-the same pinned FFmpeg 9.0.2 LGPL profile and original D68 downmix policy; no new
-third-party implementation, encoder dependency or executable is adopted. Native
-fMP4/playlist/cache code remains original Apache-2.0. The codec backend stays
-optional and separate from published playback packages until the public/packaged gate.
-
-Before implementation, Apple's [HLS authoring specification](https://developer.apple.com/streaming/hls-authoring-specification-for-apple-devices.html)
-and the pinned AAC encoder/public codec timestamp contracts were inspected on
-2026-10-13: continuous fragment decode times, separate audio declaration, matching
-VOD time ranges and correct priming/padding are validation requirements, not
-interoperability claims. Existing original channel tones are extended for bounded
-encoder-epoch tests; generation arguments and media hashes remain recorded.
-
-## Native decoder adapter (D70)
-
-The user's 2026-10-13 Proceed authorizes selected-stream decoding and compressed
-input seek/timestamp validation before HLS generation. It reuses the optional
-FFmpeg 9.0.2 LGPL profile recorded below; the shipping playback library does not
-link or load that backend in this increment. The adapter and tests are original
-Apache-2.0 code, using public libavformat/libavcodec/libswresample APIs.
-
-Before implementation, the pinned `n9.0.2` `libavformat/mov.c` and
-`libavformat/matroskadec.c` sources and public AVStream/demuxing contracts were
-inspected. MOV exposes `tkhd.track_ID` in AVStream.id and applies edits; Matroska
-does not expose TrackNumber there and subtracts CodecDelay from packet timestamps.
-The project-owned overlay patch `0054-matroska-track-number.patch` exports the
-original TrackNumber as reserved stream metadata, avoiding ordinal/name matching.
-It modifies the existing LGPL FFmpeg source; retain it with the source/configuration
-and notices on redistribution. No third-party source is copied into the adapter.
-The patch preserves the full unsigned identity as hexadecimal text and prevents
-file-authored tags, including case variants, from overriding that reserved key.
-
-References: [AVStream](https://ffmpeg.org/doxygen/trunk/structAVStream.html) and
-[demuxing](https://ffmpeg.org/doxygen/trunk/group__lavf__decoding.html), inspected
-2026-10-13. The pinned source, rather than changing trunk docs, determines this
-backend's format-specific behavior. New compressed test media is synthesized
-locally from original channel tones with a development-only FFmpeg executable;
-its generator, arguments and hashes are recorded alongside the fixtures.
-
-## Native source inventory (D69)
-
-D69's native source inventory adds no dependency or copied implementation.
-Matroska SeekPreRoll (`0x56BB`), CodecDelay sign/units and deprecated
-TrackTimestampScale/TrackOffset behavior were verified against the official
-[Matroska element specification](https://www.matroska.org/technical/elements.html)
-on 2026-10-12, alongside RFC 9559. Only format facts are used; no RFC code
-components or third-party implementation were copied. The inventory, selection,
-clock arithmetic and synthetic fixtures are original Apache-2.0 code.
-
-## Optional FFmpeg codec spike (D68)
-
-The authorized stereo-AAC codec/packaging spike uses FFmpeg **9.0.2**, from
-tag `n9.0.2`. The optional overlay starts from the MIT-licensed FFmpeg port and
-patches in pinned vcpkg `434307da09bc05b2c86996dccc8b2351fc0d5d37`; the existing
-`vcpkg-overlays/LICENSE-vcpkg.txt` retains that notice. The curated port pins
-the release archive SHA-512 to
-`21bf3fbcdfd2f41ea6edeab40433fecfe362b09ecaa177a652471b54f9357011b4f74dab18245ab1c26f1a473b94205490baecb42289afd2effd603cd0b22b59`.
-No FFmpeg implementation source is copied into tracked project code.
-The project adds `0053-wav-guid-dependency.patch` to the upstream Makefile:
-WAV demuxing links the shared Wave64 GUID constants even when the Wave64
-demuxer is disabled. Without it the x64 UWP link fails on `ff_w64_guid_data`.
-This does not enable Wave64 input. The CMake finder/wrapper in the overlay are
-original Apache-2.0 project files; upstream's separate BSD finder is not copied.
-
-The spike restricts the port to `avformat`, `avcodec`, `avutil` and
-`swresample`, with GPL, nonfree, version-3 additions, programs, network and
-hardware acceleration disabled. Intended decoders are AAC, AC-3, E-AC-3,
-DTS (`dca`) and fixture PCM; the output encoder is native AAC. Runtime
-configuration/license checks must verify the actual build. FFmpeg is an
-optional dependency of the development probe, not of the existing casting
-library or published `ci.207` package. The core remains Apache-2.0.
-
-The configured build is intended to use LGPL-2.1-or-later dynamic libraries.
-Retain the exact source, vcpkg patches/build configuration and FFmpeg's notices
-with any redistributed probe package; consult
-[upstream licensing guidance](https://ffmpeg.org/legal.html). A build/configuration
-check does not replace distribution compliance. The locally installed GPL
-`ffmpeg.exe` may generate project-owned test media as a development tool only;
-its binary/source is not incorporated or redistributed. Generated fixtures must
-record their generator, command and hashes separately. DTS-HD profile support
-requires a suitable fixture; do not infer it from decoder registration alone.
-
-## OpenSSL
-
-The pairing/transport foundation links `OpenSSL::Crypto` (OpenSSL 3.5 or newer)
-through CMake's `FindOpenSSL`; TLS/`libssl` is not used. ChaCha20-Poly1305 and
-HKDF-SHA512 use OpenSSL EVP APIs; the project does not implement these primitives.
-The peer-verification slice also uses EVP X25519 key agreement and pure Ed25519
-signatures, with fresh ephemeral seeds from `RAND_priv_bytes`. No new dependency
-was introduced by that slice. PIN development now adds Botan key validation to
-the shared signature-verification adapter; see below.
-OpenSSL 3 is Apache-2.0: [upstream license](https://openssl-library.org/source/license/).
-Redistributors must retain its license/notices alongside the native library.
-No OpenSSL source is copied into the tracked repository.
-
-The private codecs are not called by public discovery/range APIs. A historical local
-Windows Release `dumpbin /dependents` check showed that unused crypto sections
-were removed from `send_airplay2.dll`, while `control_tests.exe` imports
-`libcrypto-3-x64.dll`. The peer-verification tests also exercise libcrypto and
-Botan key validation.
-Thus these slices require OpenSSL at build time and exercise
-it in the codec test executable; runtime packaging for a public authenticated
-session still needs proof once that path calls these codecs. The public media
-server now calls OpenSSL's RNG for bearer URLs, so a shared build using that API
-does require the libcrypto runtime; the media tests exercise this DLL loading on
-Windows. This does not establish packaged/UWP runtime loading.
-
-The Windows reproducible package manifest pins vcpkg at
-`434307da09bc05b2c86996dccc8b2351fc0d5d37`, whose OpenSSL port resolves 3.6.5.
-vcpkg is an MIT-licensed build tool, not a runtime component. Its port records
-the upstream release archive checksum and packaging patches. The ignored local
-checkout is `build-tools/vcpkg`. Native Unix builds can use the host's maintained
-OpenSSL package. Keep the dependency on a supported release; 3.5 is the upstream
-LTS series, while the pinned 3.6 series requires an update before its November
-2026 end of support. [Upstream release lifecycle](https://openssl-library.org/source/)
-
-## Linux libsecret (D59)
-
-Linux builds use the system **libsecret** (`libsecret-1` 0.19 or later, found
-through pkg-config; for example Debian/Ubuntu `libsecret-1-dev`) for the built-in
-credential store, when present. It is optional: without it, or with
-`-DSAP2_SECRET_SERVICE=OFF`, the store reports unsupported. It is not built
-through vcpkg; the library links the system shared library dynamically.
-libsecret is licensed LGPL-2.1-or-later, and it pulls in GLib (LGPL-2.1-or-later)
-at run time. Redistributors shipping these libraries must meet the LGPL terms
-for them (dynamic linking, source availability for the LGPL parts). No libsecret
-source is copied; see
-[credential-storage.md](credential-storage.md#linux-secret-service-d59). CI
-also installs GNOME Keyring and `libsecret-tools` for tests only.
-
-## macOS Security framework (D58)
-
-The macOS built-in credential store uses the system Security and CoreFoundation
-frameworks (`-framework Security -framework CoreFoundation`), which ship with
-macOS. No package, source or license file is added; see
-[credential-storage.md](credential-storage.md#macos-login-keychain-d58).
-
-## UWP builds: Botan overlay port (D55)
-
-`vcpkg-overlays/ports/botan` copies vcpkg's MIT-licensed `botan` port files
-from the pinned vcpkg commit `434307da09bc05b2c86996dccc8b2351fc0d5d37` and
-changes them only for UWP targets: static linkage, Botan's `--os=uwp`, a
-minimized module set (`ffi`, `srp6`, `sha2_64`, `system_rng`, `ed25519`) and no
-`botan-cli`. vcpkg's copyright and MIT permission notice is reproduced in
-[`vcpkg-overlays/LICENSE-vcpkg.txt`](../vcpkg-overlays/LICENSE-vcpkg.txt)
-(vcpkg's `LICENSE.txt` at that commit, unchanged); the repository's Apache-2.0
-license does not cover those files. Botan's source and version are unchanged
-(3.12.0, BSD-2-Clause); only UWP builds pass the overlay. See [uwp-native-build.md](uwp-native-build.md).
-Those builds also use vcpkg's community `x64-uwp` triplet for OpenSSL and Boost.
-
-## Botan SRP and key validation
-
-The PIN-pairing slice selects Botan 3.12.0 through its C FFI (`ffi`, `srp6`,
-`sha2_64`, `system_rng`, `ed25519` modules), pinned by the existing vcpkg baseline. The core
-remains C++17 and includes only Botan's C-compatible `ffi.h`; Botan's own build
-requires C++20. SRP-6a arithmetic uses the maintained backend, not in-tree modular
-arithmetic or OpenSSL's deprecated SRP API. OpenSSL continues to provide HAP
-SHA512 transcript hashing, HKDF, AEAD and Ed25519.
-Before verifying Ed25519 signatures, the adapter enforces canonical public-key
-encoding and excludes the identity, then uses Botan's public-key check for
-curve/prime-order subgroup membership. OpenSSL signature verification alone
-can accept trivial forgeries with weak public keys. Inspected Botan's
-`src/lib/pubkey/ed25519/ed25519_key.cpp` and `src/lib/ffi/ffi_pkey.cpp` for
-validation/FFI error semantics; no curve arithmetic was copied or implemented.
-
-Botan is [BSD-2-Clause licensed](https://github.com/randombit/botan/blob/3.12.0/license.txt).
-Redistributions must include its license/notices and the applicable native runtime.
-No Botan implementation source is copied into the repository. Inspected release
-3.12.0: `src/lib/ffi/ffi_srp6.cpp`, `src/lib/misc/srp6/srp6.cpp`, `src/lib/ffi/ffi.h`
-and its generated CMake target template. The C agreement API returns a padded raw
-shared integer, not HAP's SHA512 session key; the adapter must normalize/hash it
-and verify proofs. [SRP API](https://botan.randombit.net/handbook/api_ref/srp.html).
-
-Alternatives investigated but not adopted: OpenSSL SRP (deprecated since 3.0,
-no replacement); libimobiledevice's Stanford-derived SHA512 client (permissive
-license, but inspected code has unchecked allocation/arithmetic returns and
-non-constant-time proof comparison requiring broader hardening). That candidate
-was inspected at `fa0f79190142bc309307967c058f89c1b36eb6b8`, not copied or linked.
-Windows UWP/Android packaging and hardware interoperability remain validation
-gates (UWP: built through the overlay port above and receiver-tested in D55);
-vcpkg's curated Botan port excludes the UWP triplet, so a packaged-host proof must
-resolve that integration constraint before Screenbox work.
-
-## Boost HTTP media serving
-
-The media-server slice uses Boost.Beast for HTTP/1 parsing/serialization and
-Boost.Asio for socket operations, timers and bounded worker execution. The user
-explicitly selected Boost instead of an in-tree HTTP implementation. Boost 1.92.0
-is selected by the existing vcpkg baseline; the `boost-beast` and `boost-asio`
-ports record upstream `boost-1.92.0` archive hashes. Header-only `Boost::beast` and
-`Boost::asio` targets are private: Boost types do not appear in the public API.
-The core remains C++17.
-
-Boost uses the [Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt).
-Keep applicable license/copyright notices when redistributing dependency sources.
-The project retains Apache-2.0. No upstream example or implementation source is
-copied into tracked project code. Consulted upstream parser/header-limit,
-HTTP serialization and Asio asynchronous I/O interfaces; media callbacks, range
-policy and lifecycle logic are original project code. The vcpkg ports may install
-additional Boost modules; no stackful coroutine, TLS or Boost filesystem API is
-used. Android/UWP builds and hardware media serving remain separate gates.
-
-## Protocol research
-
-Inspected pyatv revision `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`:
-
-- `pyatv/auth/hap_session.py`: control record shape and incremental framing.
-- `pyatv/support/chacha20.py`: independent directional counters and nonce layout.
-- `pyatv/auth/hap_tlv8.py`: pairing tags and fragment encoding.
-- `pyatv/auth/hap_srp.py`: pair-verification transcript order, HKDF labels and
-  named nonces, reinspected for the peer-verification and PIN/SRP slices.
-- `pyatv/protocols/airplay/auth/hap.py`: AirPlay pair-verify message sequence.
-  Its unchecked final response is not adopted: this project requires HTTP 200,
-  state M4 and no error before releasing connection keys.
-  Pair-setup also requires HTTP 200/state M2/M4/M6, a verified server SRP proof
-  and a verified accessory signature before accepting credentials.
-- `pyatv/protocols/airplay/server_auth.py`: candidate M4 state acknowledgement
-  and sender/receiver control-key direction. Its omitted controller verification
-  is not used as a cryptographic test oracle.
-
-Session channel keys (event channel and data streams) follow the same pyatv
-revision: `pyatv/protocols/airplay/ap2_session.py` (blob
-`aa5f1408f11d91a8be7545e9f706f28d2cde1424`) and
-`pyatv/protocols/raop/protocols/airplayv2.py` (blob
-`3d61a34e00559554477cd2ff97d9c337a9e7ccff`) give the salts and infos.
-`pyatv/auth/hap_channel.py` (blob `1cf14fe1ef4964b3582fc46fc7574b333a2823a7`)
-gives the `(salt, output_info, input_info)` order, from which the reversed
-event-channel direction follows. Only these label strings are used, as
-protocol constants.
-
-The session's event-channel reply and NTP timing responder follow the same
-revision:
-
-- `pyatv/protocols/airplay/channels.py` (blob
-  `a5730293f53e62df54df5c5a4c7f713d3a49d917`): the event reply fields
-  (`200 OK`, `Content-Length: 0`, `Audio-Latency: 0`, with `Server` and `CSeq`
-  echoed).
-- `pyatv/protocols/raop/packets.py` (blob
-  `2ff08f27917ee326a767aa0dae65d3cd5d02d88b`): the 32-byte big-endian timing
-  packet layout.
-- `pyatv/protocols/raop/protocols/__init__.py` (blob
-  `fbaefd44609807200fd2ef367bfd0df01b443b7e`): the reply fields (type 0xd3,
-  sequence 7, the reference time echoing the request's send time).
-- `pyatv/protocols/raop/timing.py` (blob
-  `91516688de86d263ef873743a91f692f2edd830c`): the NTP epoch offset and
-  microsecond fraction.
-
-Only these layouts and constants are used.
-
-The minimal native remote-control session reuses the existing original
-authentication, event and SETUP code. The pinned MIT `ap2_session.py` reference
-above was reinspected on 2026-10-07 before implementation. It orders remote
-SETUP/event, RECORD and data-stream SETUP; the first native H5 experiment omits
-the latter two to test the SETUP/event contribution. No source was copied or
-dependency added. That minimum is an engineering experiment, not a validated
-replacement for the reference's complete remote-control/MRP sequence.
-
-Session message shapes (`session_messages.*`) follow these sources; only body
-keys, fixed identifiers, header names and version strings are used:
-
-- `pyatv/protocols/raop/protocols/airplayv2.py` at the same pyatv revision: the
-  base SETUP body.
-- `pyatv/protocols/airplay/ap2_session.py` (blob
-  `aa5f1408f11d91a8be7545e9f706f28d2cde1424`): the remote-control-only SETUP
-  and the data-stream SETUP.
-- `pyatv/support/rtsp.py` (blob `56d7c6ed4a50ea38294a6180ecf4ce119a3a4cd6`):
-  the DACP-ID, Active-Remote and Client-Instance headers, `AirPlay/550.10`,
-  and plist bodies serialized with sorted keys.
-- The unmerged fix `robkochman/pyatv@8144c77c6cecbed4f9ba2adb5a350ad86a8f6604`
-  (MIT), `pyatv/protocols/raop/protocols/airplayv2.py` (blob
-  `c4358ede5a0685fffe6bd7ec0817a190af4190f6`): `sessionCorrelationUUID`, the
-  URL control stream, the `/command` envelope, commands and headers, and the
-  `AirPlay/870.14.1` agent.
-
-pyatv is MIT licensed. It is a reference only; no implementation source was
-copied or linked. Tests use independently generated, synthetic inputs; no receiver
-credentials or captured private transcripts are committed. These references
-describe a candidate protocol path, not interoperability on the user's receiver.
-
-ChaCha20-Poly1305 test data comes from
-[RFC 8439 section 2.8.2](https://www.rfc-editor.org/rfc/rfc8439.html#section-2.8.2).
-The test records vector provenance at the point of use. Additional control-record
-and HKDF fixtures are generated by a separate Python `cryptography`/HMAC oracle
-using public synthetic keys, with generation instructions recorded
-in `tests/fixtures/README.md`.
-The Python AEAD API can share an OpenSSL backend; independence here refers to the
-framing/fixture generator. The RFC known answer independently checks AEAD bytes.
-
-Peer-verification primitive vectors use [RFC 7748 section 6.1](https://www.rfc-editor.org/rfc/rfc7748.html#section-6.1)
-and [RFC 8032 section 7.1](https://www.rfc-editor.org/rfc/rfc8032.html#section-7.1).
-OpenSSL API contracts were checked against its [X25519](https://docs.openssl.org/3.5/man7/EVP_KEYEXCH-X25519/)
-and [Ed25519](https://docs.openssl.org/3.5/man7/EVP_SIGNATURE-ED25519/) documentation.
-
-The receiver-transport slice adds no dependency or copied implementation source.
-Its native sockets, framing and lifecycle are in-tree Apache-2.0 code. Updated
-pyatv reference blob/license provenance and RFC framing inputs are recorded in
-[receiver-transport.md](receiver-transport.md).
-
-The credential-storage/CLI slice adds original Apache-2.0 host code and Windows
-OS `Advapi32` credential/token APIs, without a new third-party implementation or
-runtime dependency. The existing RFC 8032 public-key vector is reused in synthetic
-storage tests. Primary Windows API contracts and the trusted-store boundary are
-recorded in [credential-storage.md](credential-storage.md).
-
-The M6 compatibility fix adds no dependency or copied implementation. It accepts
-one bounded opaque type-17 field based on live sanitized TLV headers. References
-were re-inspected at pyatv revision `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`:
-
-- `pyatv/auth/hap_tlv8.py`, blob `c34e222f1879061c5dcb81a472b5548177dd15be`:
-  names type 17 `Name`.
-- `pyatv/auth/hap_srp.py`, blob `3453bfd1096c483c267a607d2ec29cbd4af4a1dc`:
-  distinguishes metadata from the required ID/key/signature transcript.
-- `pyatv/protocols/airplay/server_auth.py`, blob
-  `9351273fc3707edaa06592a03b86f82340d4c85b`: commented M6 example includes
-  optional type-17 receiver information. This is reference evidence, not proof
-  of its contents on the user's receiver.
-- MIT `LICENSE.md`, blob `c27c9705f92fb19e805a82225f6f9ab5c17966f3`.
-
-The project does not adopt the reference's skipped authentication checks. Server
-SRP proof, AEAD, strong accessory key and Ed25519 signature remain mandatory.
-Metadata is ignored and erased; no OPACK decoder or general extension tolerance
-is introduced. See [synthetic fixture provenance](../tests/fixtures/README.md).
-
-The noninteractive E2E runner uses Python 3.10+ standard-library subprocess,
-threading, sockets, JSON and hashing APIs as a developer tool. It adds no native
-runtime/build dependency or copied implementation. Offline tests use original
-public synthetic fixtures; live reports contain constructed sanitized facts only.
-See [runner contracts](e2e-runner.md) and [hardware evidence](receiver-validation.md).
-
-## Native MRP controls (D29/D31)
-
-Before implementation, the MIT protocol references were reinspected at
-`postlund/pyatv@b277a4c8222ecdcbaab8a24e3e713ca44765adb4` on 2026-10-07:
-`airplay/channels.py`, `airplay/ap2_session.py`, `mrp/protocol.py`,
-`mrp/messages.py`, `mrp/player_state.py` and `mrp/protobuf/*.proto` under
-`pyatv/protocols`. The repository's MIT `LICENSE.md` was also inspected.
-These supply wire field numbers, enum values, data-frame layout, channel labels
-and the handshake sequence. They are reverse-engineered protocol evidence.
-The native bounded wire/message codec and session are original Apache-2.0 code;
-no third-party implementation or schema source is vendored or linked.
-Synthetic fixtures use the pinned pyatv generated messages with Python protobuf
-as an independent developer-only oracle; no new native dependency is added.
-The pinned `airplay/__init__.py`, `airplay/mrp_connection.py`,
-`auth/hap_channel.py` and `auth/hap_session.py` were subsequently inspected for
-the tunnel, remote feedback and record bounds. The reference receives records
-using their two-byte lengths without enforcing the outgoing 1024-byte chunk
-size. Native MRP adds an explicit 16-KiB receive budget after observing a
-2363-byte advertised receiver record; control/event defaults remain 1024.
-
-URL event duration conversion follows Apple's [CMTime rational time contract](https://developer.apple.com/documentation/coremedia/cmtime-api)
-and [dictionary keys](https://developer.apple.com/documentation/coremedia/cmtime-dictionary-keys),
-inspected 2026-10-07. Only field/flag facts are used; no Apple implementation
-is copied and no Core Media runtime dependency is introduced.
-
-## URL controls wire names (D62)
-
-The URL `/command` controls used when a receiver refuses remote control take
-their wire names from [DiPlay](https://github.com/shihabal3amri/DiPlay)
-(GPL-3.0), a CarPlay receiver that documents and handles what an Apple sender
-sends: `docs/BYD_NAVIGATION.md` and `VideoInCar.kt` / `CarPlayVideo.kt` at
-`main` (`VideoInCar.kt` last changed in `e59f6025b3183a5b26563937501bad3fd40b7f92`),
-read 2026-10-10. Used facts only: the command types `seek` and `stop`, a seek's
-root `time` as a CMTime dictionary, and `kind`/`messageID` on requests. No
-GPL code or text was copied; the builders are original, and their fixtures
-come from Python `plistlib`, independently of both.
-
-The seek's `item: {uuid}` comes from the macOS receiver itself: the user
-extracted printable strings near `insertPlayQueueItem` from their Mac's dyld
-shared cache (macOS AirPlay 960.13.25) and captured its unified log. Used as
-facts only (message type names, the item lookup in "Sender seek to time is %f
-for item %@"); no Apple code or binary is copied or redistributed, and the raw
-extracts are not committed.
-
-## pyatv remote-Stop source audit (D41)
-
-On 2026-10-07, we inspected pinned upstream `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`
-and tvOS reference fork `8144c77c6cecbed4f9ba2adb5a350ad86a8f6604` URL players,
-event channels, inherited HAP disconnect handler, HTTP connection behavior,
-MRP transport/feedback and AirPlay player tests. Both MIT license files were
-verified against blob `c27c9705f92fb19e805a82225f6f9ab5c17966f3`.
-Reference files remain ignored; no source was vendored or new dependency added.
-Twenty exact source/license blobs and six isolated offline observations are
-recorded in the [artifact](validation/pyatv-stop-source-audit-2026-10-07.json).
-The [analysis](pyatv-stop-reference.md) distinguishes the upstream polling
-heuristic, fork event-waiter gap and MRP transport callbacks from receiver intent.
-
-## C# binding build (D52)
-
-The C# binding and its test runner ([csharp-binding.md](csharp-binding.md)) are
-original Apache-2.0 code with no `PackageReference`. Building them uses the .NET
-SDK's implicit reference packages, restored from nuget.org: `NETStandard.Library`
-(MIT) for the `netstandard2.0` library and the `Microsoft.NETCore.App.Ref`
-targeting pack (MIT) for the `net8.0` runner. These are compile-time reference
-assemblies only; nothing from them is copied into the repository or shipped with
-the native library. Hosts bring their own .NET runtime.
-
-The NuGet package ([nuget-package.md](nuget-package.md)) is packed with the
-same SDK (`dotnet pack`) and adds no dependency. It ships the UWP-built
-`send_airplay2.dll` and OpenSSL's `libcrypto` per architecture, with
-`THIRD-PARTY-NOTICES.txt` reproducing the `copyright` files of the vcpkg
-`openssl`, `botan` and `boost-asio` ports that built them (Apache-2.0,
-BSD-2-Clause, BSL-1.0), as those licenses ask of binary redistribution.
+# Dependency licenses and source provenance
+
+The core, bindings, native protocol adapters and fixture authorship use
+Apache-2.0. Keep [LICENSE](../LICENSE) and the separate notices for dependencies
+and adapted build tooling. Record revisions and licenses before adding external
+implementations or changing the codec profile.
+
+## Runtime and build dependencies
+
+| Component | Use | License / source |
+| --- | --- | --- |
+| OpenSSL 3.5+ | EVP crypto, private randomness, HKDF, X25519, Ed25519, AEAD; `libcrypto`, not TLS `libssl` | [Apache-2.0](https://openssl-library.org/source/license/) |
+| Botan 3.12+ | C FFI SRP-6a and Ed25519 key validation | [BSD-2-Clause](https://github.com/randombit/botan/blob/3.12.0/license.txt) |
+| Boost 1.92+ | Beast HTTP and Asio I/O; implementation-private headers | [BSL-1.0](https://www.boost.org/LICENSE_1_0.txt) |
+| libsecret 0.19+ | Optional Linux Secret Service adapter | [LGPL-2.1-or-later](https://gitlab.gnome.org/GNOME/libsecret); system shared library |
+| Security/CoreFoundation | macOS login-keychain adapter | System frameworks |
+| FFmpeg 9.0.2 | Optional dynamic audio decoding, resampling and AAC encoding | Restricted LGPL-2.1-or-later profile below |
+
+The vcpkg manifest baseline is `434307da09bc05b2c86996dccc8b2351fc0d5d37`.
+Adapted port files retain the vcpkg MIT notice in
+[LICENSE-vcpkg.txt](../vcpkg-overlays/LICENSE-vcpkg.txt). The Botan overlay
+changes UWP linkage/target/modules, not Botan implementation source. No Botan,
+OpenSSL or Boost implementation is copied into project source files.
+
+The C# binding has no PackageReference. Its .NET SDK reference packs are build
+inputs; hosts provide the runtime. Test/generation tools such as Python,
+cryptography, protobuf and an FFmpeg executable are separate from native runtime
+dependencies and must not be bundled incidentally.
+
+## Optional FFmpeg profile
+
+The [overlay](../vcpkg-overlays/ports/ffmpeg) starts from the pinned MIT vcpkg
+port and pins `ffmpeg/ffmpeg` tag `n9.0.2`, archive SHA-512:
+
+```text
+21bf3fbcdfd2f41ea6edeab40433fecfe362b09ecaa177a652471b54f9357011b4f74dab18245ab1c26f1a473b94205490baecb42289afd2effd603cd0b22b59
+```
+
+Only dynamic avformat, avcodec, avutil and swresample are used. The curated
+configuration disables GPL, nonfree, version-3 additions, programs, network,
+external codec libraries and accelerators. Native decoders cover the admitted
+AAC/AC-3/E-AC-3/DTS-core/FLAC/Opus/Vorbis/TrueHD and PCM configurations; output
+uses native AAC. Runtime component versions/configuration must match build headers.
+The overlay's allowed feature set is narrower than the upstream port's catalog.
+
+Project-specific patches include `0053-wav-guid-dependency.patch` for WAV's
+shared GUID symbols without enabling Wave64 demuxing, and
+`0054-matroska-track-number.patch` to expose original TrackNumber securely to the
+adapter. The overlay's remaining pinned patches are retained as build inputs.
+The native wrappers and adapters are original project code; FFmpeg modifications
+retain their upstream license.
+
+Redistributed codec packages include original source archive, exact overlay and
+patches, manifest/triplet, installed configuration/SPDX records, license notices
+and rebuild instructions. `AUDIO-PROFILE.json` records hashes/configuration; the
+four DLLs remain separate. See the packaged
+[source instructions](../bindings/csharp/SendAirPlay2/FFMPEG-SOURCE.md) and
+[FFmpeg licensing guidance](https://ffmpeg.org/legal.html). A passing build or
+binary check is not a complete distribution or Store certification audit.
+
+## Protocol research provenance
+
+Protocol facts were researched from MIT-licensed
+[`postlund/pyatv`](https://github.com/postlund/pyatv/tree/b277a4c8222ecdcbaab8a24e3e713ca44765adb4)
+at `b277a4c8222ecdcbaab8a24e3e713ca44765adb4`, and the URL-playback reference
+fork `robkochman/pyatv@8144c77c6cecbed4f9ba2adb5a350ad86a8f6604`.
+The verified MIT license blob is `c27c9705f92fb19e805a82225f6f9ab5c17966f3`.
+
+- `auth/hap_session.py`, `support/chacha20.py`, `auth/hap_tlv8.py` and
+  `auth/hap_srp.py`: record layouts, nonce directions, TLV fields, transcripts
+  and HKDF labels.
+- `protocols/airplay/auth/hap.py`, `server_auth.py`: pairing/verification shape.
+  The native implementation additionally requires authenticated server proofs,
+  strong accessory keys, signatures and final state/status validation.
+- `protocols/airplay/ap2_session.py`, `channels.py`, `mrp_connection.py`,
+  `auth/hap_channel.py`, `protocols/raop/packets.py` and timing/protocol modules:
+  SETUP order, event/data channel labels, event replies and timing layouts.
+- `protocols/mrp/protocol.py`, `messages.py`, `player_state.py` and protobuf
+  schemas: field numbers/enums, message framing and control correlation.
+  Project codecs are original; reference-generated messages are only fixture oracles.
+- The reference fork's `protocols/raop/protocols/airplayv2.py`: URL queue/command
+  envelopes, headers and correlation fields.
+
+Only protocol facts/layouts/constants are used; no pyatv implementation or schema
+source is linked or vendored. Its polling/closure behavior is not treated as
+proof of receiver intent.
+
+URL fallback wire names `seek`/`stop` and CMTime request fields were cross-checked
+against GPL-3.0 [DiPlay](https://github.com/shihabal3amri/DiPlay), including
+`VideoInCar.kt` revision `e59f6025b3183a5b26563937501bad3fd40b7f92` and its
+documentation. No GPL code/text was copied. The item-UUID requirement was
+confirmed from receiver behavior/message-name research; no Apple binaries or
+private log captures are redistributed.
+
+## Specifications and independent fixtures
+
+Native readers/codecs use format facts from RFC 6762/6763 (mDNS/DNS-SD), RFC
+9110/9112 (HTTP), RFC 8216 (HLS), RFC 9559 and Matroska element/codec mappings,
+ISO BMFF, ETSI TS 102 366 and ITU-T H.265 SPS VUI syntax. No external container
+parser implementation is copied. HEVC range tests combine original encoded
+test-pattern metadata and hand-authored bounded syntax fixtures.
+
+Crypto known answers come from RFC 8439 section 2.8.2, RFC 7748 section 6.1 and
+RFC 8032 section 7.1. Independent Python integer/hash/AEAD/plist/protobuf oracles
+generate public synthetic transcripts. See [fixture provenance](../tests/fixtures/README.md).
+
+Encoded audio/video fixtures are repository-authored signals with generator,
+tool configuration and hashes in adjacent provenance manifests. An external
+encoder used to generate a fixture is not a redistributed runtime component.
+Keep those manifests and literal vectors when refactoring tests.

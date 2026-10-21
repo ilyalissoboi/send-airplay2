@@ -1,15 +1,11 @@
-# Discovery and diagnostic CLI
+# Receiver discovery
 
-Implemented slice: bounded synchronous mDNS/DNS-SD discovery of
-`_airplay._tcp.local.` and `_raop._tcp.local.`. No pairing, authentication or
-playback is performed. The API in `include/send_airplay2/discovery.h` is
-experimental C++17; shared-library users need a compatible compiler/runtime.
-A versioned C snapshot interface exists since D54 (below); cancellation and event
-callbacks remain future work.
-
-C hosts and bindings use [`receivers.h`](../include/send_airplay2/receivers.h)
-(D54), a snapshot list over this scanner; see
-[public-api.md](public-api.md#receiver-discovery-d54).
+The C++ scanner performs a bounded synchronous mDNS/DNS-SD scan. C and C# hosts
+use the snapshot API in [receivers.h](../include/send_airplay2/receivers.h).
+`sap2_discover` returns an owned list with copied metadata; free it using the
+matching list function. Discovery touches no credentials and proves no playback
+capability. Continuous events/cancellation and IPv6-only discovery are separate
+work. See [public API](public-api.md).
 
 ## Architecture and provenance
 
@@ -91,7 +87,7 @@ negative/NSEC caching and responder behavior are not implemented. The scheduler
 caps remembered interface/question combinations at 8192.
 
 Interfaces refresh once per second. Only one IPv4 address per interface is used.
-This first adapter does not send IPv6 multicast queries and will not discover
+The adapter does not send IPv6 multicast queries and will not discover
 IPv6-only LANs. AAAA records in IPv4 responses are still reported; link-local
 addresses include an interface scope. VPNs, multicast filtering, firewall policy,
 an exclusive UDP 5353 listener and network isolation can prevent discovery.
@@ -118,48 +114,3 @@ of display encoding. Human-readable output also escapes untrusted strings.
 Diagnostics include device identifiers, LAN addresses and public advertised TXT
 data. Review and sanitize output before sharing it. No pairing secrets or
 credentials are obtained by discovery.
-
-## Validation status
-
-The C++ readability pass in PR #2 adds `.clang-format`, named DNS wire constants,
-separate scheduling/resolution/output helpers, API ownership/error documentation,
-and explicit non-copyable native resource owners. The JSON schema and discovery
-policy remain unchanged. Windows static/shared tests include valid UTF-8 display
-and exact preservation of malformed UTF-8 bytes alongside binary TXT values.
-All six platform configurations and Linux ASan/UBSan passed at readability
-commit `23f8ff08a12431fc0aba95a21aaf881aa7458674`
-([CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37420816897)).
-
-On 2026-10-06, Windows 11 x64 / MSVC 19.51 static and shared Release builds passed
-the six CTest targets. Synthetic tests cover truncation/compression bounds,
-TXT semantics, feature masks, identity merging, interface isolation, resolution,
-updates, RRSet/grace handling, TTL/goodbyes and cache caps, plus 10,000 deterministic
-parser mutations. CLI help, invalid timeout handling and JSON/readable output
-(binary TXT, large feature masks and terminal controls) are tested.
-The six Windows/Linux/macOS static/shared CI configurations plus Linux
-ASan/UBSan also passed at implementation commit
-`48189897ba167b44c3da7c6e4a7857bf28120498`:
-[CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37419114646).
-Only Windows has local receiver discovery observations; CI is not receiver
-interoperability evidence for the other platforms.
-
-A 10-second Windows LAN scan outside the execution sandbox received three
-responses, rejected none and resolved a `Mac14,2` receiver with both AirPlay and
-RAOP services merged by matching identity, plus IPv4 and IPv6 addresses.
-No Apple TV appeared in that first scan. After the user confirmed the Apple TV
-was available as "Living room" from another Mac on the same LAN, a fresh
-15-second Windows scan received four responses, rejected none, and resolved both
-that Apple TV and the Mac. The receiver's actual displayed name was "Living Room",
-model TXT was `AppleTV14,1`, and `osvers`/`ov` advertised `26.6`. AirPlay and RAOP
-merged into one device, each on port 7000, with one IPv4 address and four IPv6
-addresses (including a scoped link-local address). Features decoded to
-`0x3c177fde4a7fdfd5`; no `pw` field was advertised, so password and pairing
-requirements remain unknown. No receiver identifiers, public keys or LAN addresses
-from these scans are stored in this record.
-
-At the time of these discovery scans, no exact tvOS build was established; `srcvers=960.13.1` is an advertised AirPlay
-software version, not a verified tvOS build. No Mac firmware/build was established
-and no pairing/playback was attempted. An earlier sandboxed scan received zero
-responses. These are discovery observations only; all playback acceptance gates
-were pending at that slice. Later pairing, build/access settings and reference/native
-playback results are recorded in [receiver-validation.md](receiver-validation.md).

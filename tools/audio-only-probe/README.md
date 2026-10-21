@@ -1,67 +1,45 @@
-# Native audio-only URL feasibility probe
+# Audio-only test fixtures
 
-The original D97 procedure below deliberately uses legacy progressive playback.
-API 6 separately adds the explicit Apple Audio v1 automatic profile; its current
-native receiver gate is described in
-[automatic-audio-only-native-gate.md](../../docs/automatic-audio-only-native-gate.md).
-Generate its owned AAC/FLAC/PCM/Ogg/container/edit marker matrix in a fresh directory:
+These generators create repository-authored 64-second pulsed channel markers.
+They use Python's standard library and external FFmpeg/ffprobe tools; those
+executables are fixture-generation tools, not library runtime dependencies.
 
-```powershell
-python tools/audio-only-probe/generate_automatic_fixtures.py build-review/automatic-audio-only-media
+```sh
+python tools/audio-only-probe/generate_fixture.py build-audio-fixtures/aac
+python tools/audio-only-probe/generate_automatic_fixtures.py build-audio-fixtures/automatic
 ```
 
-This reuses the same 64-second original PCM channel markers, existing Apache-2.0
-edit-box author and external development encoders. No generated media is committed.
-The manifest records input/output hashes and actual tool versions. The edited MOV
-has eight seconds of initial silence followed by source [8,64), so marker positions
-at/after eight seconds remain unchanged. MP3 checks reuse the separately committed
-CBR/VBR fixtures and their provenance. Use `--automatic-audio --audio-only` for this
-new gate; historical direct-playback evidence below does not validate conversion.
+Use fresh output directories. Generators refuse to overwrite media and record
+actual tool versions, input/output hashes and stream validation. The automatic
+matrix covers owned AAC/FLAC/PCM/Ogg/container/edit cases. Generated output should
+not be committed as a machine-specific test run. Original fixture authoring is
+Apache-2.0; no private media is needed.
 
-Generate an original 64-second AAC-LC stereo M4A without a video track:
+Each second contains 0.75 seconds of tone and a 0.25-second gap. Eight-second
+intervals are LEFT 440 Hz, RIGHT 660 Hz, BOTH 880 Hz, LEFT 440 Hz, BOTH 1100 Hz,
+RIGHT 660 Hz, LEFT 440 Hz and BOTH 880 Hz. Short fades avoid abrupt edges.
+The edited MOV uses initial silence and an offset source interval so markers
+at/after eight seconds retain their intended presentation positions.
 
-```powershell
-python tools/audio-only-probe/generate_fixture.py build-review/audio-only-fixture
-```
+## Receiver checks
 
-FFmpeg and ffprobe must be on PATH. They are external development tools, not
-new library dependencies. The Python generator uses only its standard library.
-It refuses to replace existing media, writes an original 48-kHz PCM source,
-encodes AAC-LC at 192 kbit/s with faststart, verifies exactly one audio stream
-and no video, and records tool versions and hashes in `fixture.json`.
-Generated artifacts should stay outside committed source. No private media is
-needed. The original generator/test signal follows the repository Apache-2.0
-license; no third-party fixture material is copied.
-
-Build the existing `airplay2-api-host` with CMake, pair the intended receiver
-through the existing credential flow if needed, and run:
+Build `airplay2-api-host` and pair the intended receiver using its store. Legacy
+progressive AAC uses an explicit MIME without a dummy video or video remux:
 
 ```powershell
-build-static/Release/airplay2-api-host.exe --address RECEIVER_ADDRESS --profile SAVED_PROFILE --file build-review/audio-only-fixture/audio-only-tones.m4a --content-type audio/mp4 --start-timeout-ms 30000
+build/Release/airplay2-api-host.exe --address 192.0.2.10 --profile living-room --file build-audio-fixtures/aac/audio-only-tones.m4a --content-type audio/mp4 --start-position 8
 ```
 
-This uses progressive HTTP with the correct audio MIME type. Do not add
-`--remux`, `--automatic-audio` or a dummy video track. The original video-remux
-and default automatic video profile require video; API 6's explicit audio-only
-profile is separate. Addresses and credential-profile
-contents do not belong in committed results.
+For automatic admission use `--automatic-audio --audio-only` and, for conversion,
+a complete store/quota configuration described by the host's command help and
+the [audio-only profile](../../docs/automatic-audio-only.md).
 
-The fixture pulses for 0.75 seconds with a 0.25-second gap each second. Its
-eight-second intervals are left 440 Hz, right 660 Hz, both 880 Hz, left 440 Hz,
-both 1100 Hz, right 660 Hz, left 440 Hz and both 880 Hz. There are short fades
-to avoid hard edges. The generator does not change receiver volume.
+Observe RIGHT near eight seconds, pause/resume, `seek 32` (higher BOTH), `seek 8`
+(RIGHT), then `seek 58` and natural end. Use a separate from-zero cast for Stop.
+Record source/binary/fixture hashes and firmware separately from observations.
+Only repeat pending-consent cancellation when changed code or a defect warrants
+it; grant reuse is not a pending-prompt pass.
 
-For the controls check, send `status`, `pause`, `play`, `seek 32`, `seek 8`,
-then `seek 58` and allow natural end. A separate run should receive `stop`
-after eight seconds. For Mac pending-consent cancellation, leave the consent
-prompt unanswered and use `--cancel-after-ms 5000` on a separate run. Grant
-reuse may suppress a later prompt; record whether cancellation actually happened
-while consent was pending. Observe audibility and controls on each identified
-receiver; sender `playing` is not proof of sound.
-
-Record runtime/fixture hashes, source commit, receiver model/firmware, user
-observations, control/end statuses and source release/cleanup counters separately.
-Keep all failed attempts. This is an Apple TV/Mac URL-audio feasibility probe,
-not HomePod/RAOP transport validation, automatic audio-file transcoding or a
-Screenbox audio-file feature. Use written manual instructions; no Computer Use
-visual confirmation is needed.
+See [manual validation](../../docs/manual-validation.md) for reporting and privacy.
+These checks validate the selected Mac/Apple TV URL route, not speaker/RAOP
+transport or gapless playback.

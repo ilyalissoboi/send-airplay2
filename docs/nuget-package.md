@@ -1,198 +1,79 @@
-# NuGet package (Screenbox step 3)
+# Packages and releases
 
-Status: **`nuget-v0.3.0-ci.207` is published as a GitHub prerelease;
-not on nuget.org (2026-10-11).** Its public-download hash is verified, and
-[Screenbox fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) pins
-that version and hash. That PR merged as `31013d5e`; the fork's `main` now
-restores `ci.207`. Development Screenbox 1.0.0.2's running native/crypto DLL
-hashes match the published package. Final Mac receiver checks passed by user
-report for this recorded MacBook Pro/macOS/Windows x64 combination.
-The user chose GitHub releases over a machine-local package source, which CI
-cannot reach. nuget.org publishing is still pending, and is needed before an
-upstream Screenbox PR. This document covers the package, how to pack and
-publish it, and how a host consumes it.
+The source builds two mutually exclusive package profiles with the same
+`SendAirPlay2` namespace/assembly. Current source uses API/version base `0.6.0`.
+Published packages keep their original tagged source and are distributed through
+[GitHub Releases](https://github.com/ilyalissoboi/send-airplay2/releases), not nuget.org.
 
-## Opt-in stereo AAC runtime (D89)
+| Profile | Current published reference | Native scope |
+| --- | --- | --- |
+| `SendAirPlay2` | [0.3.0-ci.207](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207), API 3 | Codec-free UWP x64/x86/ARM64 |
+| `SendAirPlay2.StereoAac` | [0.6.0-ci.330](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330), API 6 | UWP x64 with optional codec runtime |
 
-**D109/API 6 preparation:** [the package readiness slice](audio-only-package-readiness.md)
-updates both new package version bases to `0.6.0`, the package descriptions and
-the independent consumer check. The published versions below are historical
-assets and remain unchanged. The independently audited
-[clean-main API 6 candidate](audio-only-package-candidate.md), `0.6.0-ci.330`,
-passed all 17 main checks and is now an approved
-[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330).
-[Fresh unauthenticated public downloads](audio-only-package-publication.md)
-match the exact package/checksum bytes. Its tag targets `746c520`; Screenbox's
-opt-in pin remains ci.294 until a separate API-6 integration slice.
+Reference one profile, including transitive dependencies. Mixed profiles are
+rejected during asset resolution. Match managed/native files from the same
+package; an API-6 source binding cannot use the older published API-3 runtime.
 
-The existing package identity/profile remains codec-free. The separate
-`SendAirPlay2.StereoAac` package (API-5 version base `0.5.0`) adds the validated x64
-UWP codec runtime only when `pack_nuget.ps1 -StereoAac` is requested. Reference
-one profile, not both. It includes all six DLLs, matching notices and the exact
-FFmpeg source archive/overlay/configuration records. The opt-in profile is now a
-[GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294);
-published codec-free `ci.207` and Screenbox remain unchanged. Read
-[the contract, commands and validation](opt-in-audio-runtime-package.md).
-The clean-main [D90 candidate](opt-in-audio-release-candidate.md), `0.5.0-ci.282`,
-passes all 17 main CI checks and local artifact/consumer validation. Its exact
-hash, release notes and [approved publication/public-download evidence](validation/opt-in-audio-publication-windows-2026-10-16.json)
-are recorded separately. The published tag targets `e6acba1`; the public package
-and sidecar match the approved bytes. Its tag prefix is `nuget-stereo-aac-v`,
-distinct from the codec-free package's `nuget-v` prefix.
+## Contents and consumption
 
-The [D93 ci.294 release](hdr-corrected-audio-candidate.md) includes the merged
-HEVC HDR declaration fix missing from ci.282. All 17 clean-main checks and local
-artifact/fresh consumer checks pass. The user approved its publication after
-PR #76 merged; [public package/checksum verification](validation/hdr-corrected-audio-publication-windows-2026-10-17.json)
-matches the unchanged candidate. The tag targets `72e73ea`. Screenbox's ordinary
-pin remains ci.207 and its merged opt-in profile now pins ci.294 after the
-recorded D94 update. No nuget.org publication is included.
+Packages contain `lib/netstandard2.0/SendAirPlay2.dll`, XML documentation,
+RID-specific `runtimes/win-<arch>/native` files, Apache-2.0 license,
+`THIRD-PARTY-NOTICES.txt` and `BUILD-INFO.txt`. The native runtime is built for
+AppContainer/app CRT; hosts supply a credential store and network capabilities.
 
-## Contents
+The codec profile adds four dynamic FFmpeg DLLs, `AUDIO-PROFILE.json` and
+`source/ffmpeg` with the original source archive, exact overlay/patches,
+manifest/triplet, notices and installed port records. Keep these with redistribution.
+It supports only `win-x64`; unsupported RIDs must fail rather than omit libraries.
 
-`SendAirPlay2.<version>.nupkg`:
+Download the exact `.nupkg` and checksum from its release, verify SHA-256, and add
+the containing directory to your application's package sources. CI must download
+and verify the same version rather than depend on another machine's feed. Use a
+RID-specific application build so native assets copy to the output. See
+[C# integration](csharp-binding.md) and [UWP requirements](uwp-host.md).
 
-| Path | What |
-| --- | --- |
-| `lib/netstandard2.0/SendAirPlay2.dll`, `.xml` | The [C# binding](csharp-binding.md) and its documentation |
-| `runtimes/win-x64/native/` | `send_airplay2.dll`, `libcrypto-3-x64.dll` |
-| `runtimes/win-x86/native/` | `send_airplay2.dll`, `libcrypto-3.dll` |
-| `runtimes/win-arm64/native/` | `send_airplay2.dll`, `libcrypto-3-arm64.dll` |
-| `THIRD-PARTY-NOTICES.txt` | OpenSSL (Apache-2.0), Botan (BSD-2-Clause), Boost (BSL-1.0), from the vcpkg ports that built them |
-| `LICENSE.txt`, `README.md` | Apache-2.0; the package readme (`bindings/csharp/SendAirPlay2/PACKAGE.md`) |
-| `BUILD-INFO.txt` | Version, the binding's source commit (marked if the tree had uncommitted changes), architectures, each native library's source commit and SHA-256 |
+## Build packages
 
-The native libraries are the UWP builds ([uwp-native-build.md](uwp-native-build.md)):
-AppContainer, the app C runtime from the `Microsoft.VCLibs.140.00` framework,
-Botan linked in, no Credential Manager. A host must use a RID-specific build
-(`win-x64`, `win-x86`, `win-arm64`) so NuGet copies them next to the app, and
-supply its own `ICredentialStore`. The package has no NuGet dependencies.
-
-**New versions** follow the experimental C interface: API 6 uses `0.6.0` for
-both identities. A local pack is `0.6.0-local.<UTC yyyyMMddHHmmss>` and a CI pack
-`0.6.0-ci.<run number>`. Both bases come from the binding project, so a host does
-not restore stale bytes from NuGet's global package cache under a reused version.
-Published API-3 codec-free `0.3.0-ci.207` and API-5 opt-in `0.5.0-ci.294` remain
-immutable; the version-base change does not update existing host pins.
-
-## Packing locally
-
-Build the UWP libraries first (one configured tree per architecture,
-[uwp-native-build.md](uwp-native-build.md)), then:
+Build [UWP libraries](uwp-native-build.md) first, one tree per architecture:
 
 ```powershell
 ./scripts/pack_nuget.ps1 -Native 'x64=build-uwp/Release','x86=build-uwp-x86/Release','arm64=build-uwp-arm64/Release' -Build
 ```
 
-- `-Native` lists `arch=directory` entries; leave out an architecture that was
-  not built. The script warns that an app built for a missing architecture
-  cannot cast. ARM64 needs Visual Studio's ARM64 build tools.
-- `-Build` rebuilds each tree with CMake first. Every directory must pass
-  `check_uwp_binaries.ps1`.
-- **Provenance:** the build writes `send_airplay2.source.txt` beside the
-  library (`cmake/write_source_stamp.cmake`: the commit at link time, and
-  whether native sources had uncommitted changes). The script refuses a library
-  without a stamp, one built from uncommitted native changes, or one whose
-  commit's native sources (`src`, `include`, `CMakeLists.txt`, `cmake`,
-  `vcpkg.json`, `vcpkg-overlays`) differ from `HEAD`; rebuild it with `-Build`.
-- The notices come from the vcpkg share directory recorded in the first tree's
-  `CMakeCache.txt`; `-VcpkgShare` overrides it.
-- `-OutputDirectory` defaults to `packages-local` (ignored by git); `-Version`
-  or `-VersionSuffix` override the version.
-- Needs the .NET SDK (`dotnet pack`) and Visual Studio's `dumpbin`.
+Omit architectures not built; applications targeting them cannot cast. For the
+enabled x64 profile, use a matching conversion build with
+`SAP2_RUNTIME_VALIDATION=OFF`:
 
-## CI
-
-The `uwp` job keeps each architecture's native libraries and notice files as
-an artifact, and the `nuget` job packs all three into `nuget-package`
-(`0.6.0-ci.<run number>`), kept for 14 days. CI itself publishes nothing.
-
-## GitHub prereleases (for the Screenbox fork)
-
-Until nuget.org publishing, the Screenbox fork's CI cannot reach a local feed,
-so the user chose GitHub prereleases on this repository as the package's
-source (2026-10-10):
-
-1. Run the workflow on `main` (`gh workflow run build.yml --ref main`), so
-   `BUILD-INFO.txt` names a commit on `main`.
-2. Download that run's `nuget-package` artifact and check its
-   `BUILD-INFO.txt` (commit and the three architectures).
-3. With the user's approval for each one, create a prerelease tagged
-   `nuget-v<version>` on that commit, with the `.nupkg` as its asset.
-
-The fork pins the version in `Screenbox.Core.csproj`, and a script there
-downloads that release asset into its feed folder before restore.
-
-## Consuming from a local feed or a prerelease
-
-A host adds the output folder as a package source next to nuget.org and
-references the exact version:
-
-```xml
-<!-- nuget.config -->
-<add key="send-airplay2-local" value="..\send-airplay2\packages-local" />
+```powershell
+./scripts/pack_nuget.ps1 -StereoAac -Native 'x64=build-audio-uwp/Release' `
+  -FfmpegSourceArchive 'build-tools/vcpkg/downloads/ffmpeg-ffmpeg-n9.0.2.tar.gz'
 ```
 
-```xml
-<PackageReference Include="SendAirPlay2" Version="0.3.0-local.20261009162323" />
-```
+The script checks UWP imports/architecture, native source stamps and matching
+source inputs. It rejects dirty/stale native implementations and private runtime
+validation exports. Codec staging also checks installed DLL hashes, exact overlay
+SPDX checksums and the source archive SHA-512. `-FfmpegShare`/`-VcpkgShare` select
+matching notice directories when inference is inappropriate.
 
-A machine without that folder, such as a CI runner, cannot restore the
-package; the Screenbox fork fills its feed folder from the GitHub prerelease
-instead, and a developer can copy a fresh local pack into the same folder.
+`-OutputDirectory` selects the feed directory. Version overrides must be unique;
+the default generated suffix and CI run suffix avoid reusing cached package bytes.
+The source stamp and BUILD-INFO identify the actual build, not a later docs commit.
 
-## Notices
+## Release procedure
 
-Apps that redistribute the native libraries must keep the notices: the
-package's `THIRD-PARTY-NOTICES.txt` covers OpenSSL, Botan and Boost
-([dependencies.md](dependencies.md)). The package adds no dependency to the
-library; packing uses only the .NET SDK.
+1. Run the workflow on the intended `main` commit using workflow_dispatch.
+   Inspect all checks and select the correct artifact/profile from that run.
+   CI creates artifacts; it does not publish releases.
+2. Verify package source stamps, ABI/version, RID/native file hashes, notices,
+   codec source/configuration and independent consumer restore/build/refusal checks.
+3. Prepare exact notes/checksums for those retained bytes. Obtain maintainer
+   approval for publication; do not rebuild under an already reviewed version.
+4. Create a prerelease tag targeting the actual build source: `nuget-v<version>`
+   for the codec-free package or `nuget-stereo-aac-v<version>` for the codec profile.
+5. Verify the public tag and fresh unauthenticated asset downloads against the
+   retained sizes/hashes. Do not overwrite an earlier release's assets.
 
-## Results (2026-10-10)
-
-- A local pack from `c8feb27` plus this change with x64 and x86 (this machine
-  has no ARM64 build tools) produced the layout above; both architectures
-  passed the UWP binary checks, and `csharp_binding_tests` still passes with
-  the binding's pack properties.
-- The CI pack with all three architectures: a `workflow_dispatch` run on
-  `main` at `aa10119` (run 196) packed x64, x86 and ARM64, each built from
-  that commit. The user approved publishing it as the prerelease
-  `nuget-v0.3.0-ci.196` (SHA-256 `f9454330...2bb2c`); the public download
-  matched.
-- Screenbox restores it from that prerelease, in its CI and locally (fork
-  PR #2). Its x64 app output carries the package's `send_airplay2.dll`, and
-  the fork cast with it on the recorded receiver (fork PRs #3-#6).
-
-Not covered: nuget.org publishing, package signing, an ARM64 pack on this
-machine, and ARM64 or x86 builds of the host app.
-
-## Published Mac update (D64, 2026-10-11)
-
-PR #39 merged as main `2829242335280419a97b080ae2098d90f8a55b18`; its final
-head `811c022` passed all 14 checks. Main workflow run
-[38107556167](https://github.com/ilyalissoboi/send-airplay2/actions/runs/38107556167)
-produced `SendAirPlay2.0.3.0-ci.207.nupkg`, SHA-256
-`e52affdf9f79e20dcd00b59380c9949d1f9b11d1339307f8a2b86ad14e1ffa4d`.
-It includes D62 URL controls and D63 explicit HLS EOF handling plus the
-event-channel closure race fix. The prior `ci.203` candidate lacks D63 and
-was excluded from this update.
-
-The binding and all three native source stamps name that clean main commit;
-all six DLL payload hashes match `BUILD-INFO.txt`. Package layout, license and
-dependency notices, and extracted x64/x86/ARM64 UWP binary checks passed.
-Screenbox's prepared pin restored this exact artifact; VS 2026 MSBuild produced
-an x64 MSIX with matching native/crypto DLL hashes and its 86 logic tests passed.
-All 14 main CI jobs passed. The user approved publication, and
-[ci.207 is published](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207)
-with its tag pointing to the exact main commit. Both the public download and a
-fresh `Get-AirPlayPackage.ps1` download match the package hash above.
-[Fork PR #8](https://github.com/ilyalissoboi/Screenbox/pull/8) merged as `31013d5e` with the pins.
-The matching development layout is registered as private version 1.0.0.2;
-loaded native/crypto DLL hashes match the package. The user subsequently
-reported all final Screenbox Mac checks passed: cancellation/recovery,
-video/audio near 45 seconds, pause/resume, forward/backward seeks, Stop/local
-paused handoff and natural queue advance. This is a separate receiver observation,
-not a result inferred from the package/build checks; no automated cast log or
-exact timings were captured. Its scope is one MacBook Pro (`Mac14,10`, macOS
-26.7.1) from this Windows x64 development app.
-Record: [D64 package verification](validation/nuget-macos-package-windows-2026-10-11.json).
+Record release identity and validation in the PR/release rather than committing
+machine-specific package staging logs. Package checks are not receiver playback
+or Store certification. The separate Screenbox repository owns its player builds,
+package pins and release process.
