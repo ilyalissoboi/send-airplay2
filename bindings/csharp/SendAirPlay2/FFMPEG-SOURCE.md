@@ -16,9 +16,9 @@ To rebuild the x64 UWP codec runtime on Windows with Visual Studio C++/UWP tools
 4. Run `vcpkg install --x-manifest-root=BUILD --triplet=x64-uwp-codec-release
    --overlay-triplets=THIS_DIRECTORY --overlay-ports=THIS_DIRECTORY/overlay`,
    replacing the two directory placeholders with absolute paths.
-5. Compare configuration flags with `AUDIO-PROFILE.json`. Toolchain/install
-   paths are machine-specific; preserve the dynamic app runtime, component,
-   encoder/decoder and disabled GPL/nonfree/version-3/network/program settings.
+5. Compare configuration flags with `AUDIO-PROFILE.json`. Preserve the dynamic
+   app runtime, component, encoder/decoder and disabled
+   GPL/nonfree/version-3/network/program settings.
 
 The four runtime DLLs stay separate from the core DLL and can be replaced with
 compatible rebuilt libraries. This provides source/build inputs, not a claim

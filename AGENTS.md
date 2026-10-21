@@ -1,55 +1,46 @@
-# Continuation instructions
+# Repository instructions
 
-Start with [docs/HANDOFF.md](docs/HANDOFF.md), then read
-[docs/design.md](docs/design.md) and [docs/receiver-validation.md](docs/receiver-validation.md).
-They preserve the user scope, decisions, evidence, current status and next steps.
-For the separate-session checkpoint and ordered work queue, also read
-[docs/CONTINUATION.md](docs/CONTINUATION.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/README.md](docs/README.md)
+before changing the project. Use [docs/design.md](docs/design.md) for architecture,
+the public headers for callable contracts, and
+[docs/receiver-validation.md](docs/receiver-validation.md) for compatibility limits.
 
-- If a PR for the current slice is open, continue on its branch and inspect its
-  actual head before writing. Otherwise start a fresh branch from `origin/main`
-  and open its own PR; ask before merging. The API is experimental; native-only
-  G1 passed for one recorded receiver/host. Use the current handoff rather than
-  assuming that casting code is absent.
-- Keep user requirements, engineering proposals and tested behavior distinct.
-  Update the handoff when making a material decision or reaching a validation gate.
-- Build/test using CMake and CTest as described in README.md. Unit/CI success is
-  not receiver interoperability. Keep receiver/firmware results explicit.
-- Preserve the existing Apache-2.0 license. Record source/license provenance before
-  adding third-party implementations or dependencies.
-- Inspect current Screenbox repository instructions before editing that project;
-  its packaged UWP build and testing requirements differ from this native library.
+- Inspect the current repository and actual PR head before editing. Continue an
+  existing PR only when it covers the requested change; otherwise start a fresh
+  `codex/` branch from `origin/main`. Open a focused PR and ask before merging.
+- Keep implemented behavior, proposals and receiver observations distinct. Update
+  the maintained component guide when changing a contract; do not add session
+  journals, personal environment instructions or duplicated checkpoint histories.
+- Build and test using CMake/CTest as described in [docs/building.md](docs/building.md).
+  Unit and CI success do not establish receiver interoperability. Repeat manual
+  checks for changed behavior or concrete defects, reusing unaffected evidence.
+- Preserve Apache-2.0 and record third-party source/license provenance before
+  adding implementations or dependencies. Retain required notices and source
+  material for the optional FFmpeg runtime.
+- Inspect the separate Screenbox repository's instructions before editing it.
+  Its packaged UWP build and testing requirements differ from this library.
+- Keep credentials, PINs, private media, bearer URLs, receiver identifiers and
+  personal filesystem paths out of committed documentation and reports.
 
-## C++ readability requirements
+## C++ readability
 
-Apply these requirements to every C++ change, including tests, before finalizing
-a PR. Make readability part of implementation, not a separate cleanup
-left for the reviewer.
+Apply these requirements to every C++ change, including tests:
 
-- Follow the repository `.clang-format` file. Format touched C++ headers/sources
-  and verify them with `clang-format --dry-run --Werror <touched files>`; also run
-  `git diff --check`. Preserve platform-sensitive include order.
-- Use descriptive names that match actual behavior. A function that constructs a
-  nonce from a counter must not suggest that it advances the counter. Name
-  protocol sizes/limits and use named calculations for non-obvious offsets and
-  bounds; explain units, byte order and layout when they matter.
-- Keep functions focused on a coherent responsibility. Split mixed test scenarios
-  into named groups and extract helpers when they clarify intent. Avoid arbitrary
-  function-length rules or abstractions that hide authentication, state transitions,
-  counter advancement or cleanup order.
-- Use C++17 idioms, direct includes for used standard facilities, and RAII for
-  resource/secret ownership. Declare copy/move behavior explicitly for ownership
-  guards when duplication would violate their contract or create unwanted secret
-  copies. Preserve cleanup on allocation, backend and authentication failures.
-- Document callable contracts and non-obvious invariants with Doxygen-style
-  comments where appropriate: ownership/lifetime, bounds, threading, exceptions,
-  cancellation, partial input/output and failure state. Explain why protocol and
-  security rules exist; do not narrate obvious statements or log secrets.
-- Make test failures identify the scenario and useful non-secret context (such as
-  a split offset or mutation index). Name fixture layout calculations. Preserve
-  independent known-answer bytes and literal protocol boundary expectations rather
-  than deriving expected results from the implementation being tested.
-- Keep readability refactors behavior-preserving. Retain fixture data and existing
-  coverage, run the applicable CMake/CTest static/shared checks described in README,
-  and inspect CI for the actual PR head. Update the handoff for material decisions
-  or validation gates; do not turn unit/CI success into an interoperability claim.
+- Follow `.clang-format`; format touched files and verify with
+  `clang-format --dry-run --Werror <files>` and `git diff --check`. Preserve
+  platform-sensitive include order.
+- Use descriptive names, named protocol sizes and clear offset calculations.
+  Explain units, byte order and layouts when they matter.
+- Keep functions focused. Extract helpers that clarify state transitions,
+  authentication and cleanup; avoid abstractions that conceal those operations.
+- Use C++17, direct includes and RAII. Explicitly disable copy/move operations
+  where duplication would violate resource or secret ownership. Preserve cleanup
+  after allocation, authentication and backend failures.
+- Document ownership, lifetime, bounds, threading, exceptions, cancellation and
+  partial input/output with Doxygen-style comments where appropriate. Explain
+  protocol/security invariants without logging secrets or narrating obvious code.
+- Make test failures identify their scenario and useful non-secret context.
+  Preserve independent fixture bytes and literal boundary expectations.
+- Keep readability refactors behavior-preserving and run the applicable static,
+  shared and enabled-codec checks. Inspect CI for the actual final PR head and
+  report pending or missing checks accurately.

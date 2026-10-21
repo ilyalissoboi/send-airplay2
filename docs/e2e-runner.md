@@ -10,7 +10,7 @@ From the repository root, replace the documentation IP with the receiver's
 numeric address from discovery:
 
 ```powershell
-python scripts/run_e2e.py --cli build-pairing-static/Release/airplay2-cli.exe --address 192.0.2.10 --port 7000 --profile living-room-test --report build-e2e/report.json
+python scripts/run_e2e.py --cli build/Release/airplay2-cli.exe --address 192.0.2.10 --port 7000 --profile living-room-test --report build-e2e/report.json
 ```
 
 Use the shared-build executable to validate that deployment too. For IPv6, pass
@@ -59,7 +59,7 @@ The primary `--profile` is never deleted. To test deletion, first manually pair
 a **separate disposable profile**, then explicitly select it:
 
 ```powershell
-python scripts/run_e2e.py --cli build-pairing-static/Release/airplay2-cli.exe --address 192.0.2.10 --profile living-room-test --forget-disposable-profile e2e-disposable
+python scripts/run_e2e.py --cli build/Release/airplay2-cli.exe --address 192.0.2.10 --profile living-room-test --forget-disposable-profile e2e-disposable
 ```
 
 The runner verifies that disposable profile, deletes its local credentials,
@@ -108,18 +108,8 @@ Run offline runner tests with `python tests/e2e_runner_tests.py`. They use origi
 public synthetic subprocess fixtures and real ephemeral loopback faults. CI runs
 these contracts on Windows/Linux/macOS, alongside the existing native static/
 shared/sanitizer matrix. CI never accesses hardware or application credentials.
-No third-party implementation or dependency was added.
 
-Live static/shared results and sanitized artifacts are recorded in
-[receiver-validation.md](receiver-validation.md). PIN enrollment, wrong PIN,
-physical-console cancellation/echo restoration, host/receiver reboot, receiver
-revocation, real departure/interface changes and live IPv6 require separate
-validation. Playback, media serving and packaged-host proofs still need
-implementation; this runner cannot claim them as tested.
-
-At portable source commit `650a0440a72d5e263bcca3fa8e6aa623cd628a7f`, all native/
-sanitizer/offline runner jobs passed in the
-[PR CI run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37454270222)
-and [push run](https://github.com/ilyalissoboi/send-airplay2/actions/runs/37454265231).
-Verify the actual final PR head after documentation updates. The committed live
-reports identify the tested Windows binaries and runner bytes separately.
+The runner tests authentication and fault recovery, not playback. Hardware
+observations, packaged file access and media controls require the separate
+[manual procedure](manual-validation.md). Attach sanitized test reports to the
+relevant issue or PR rather than adding machine-specific run journals to this guide.

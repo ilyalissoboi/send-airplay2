@@ -1,230 +1,104 @@
 # send-airplay2
 
-A native C++17 library for casting local media files to AirPlay 2 receivers
-such as the Apple TV. It discovers receivers, pairs with them by PIN, serves the
-media over HTTP from the sending device and controls playback. It has a C API, a
-C# binding and a development CLI.
+A C++17 library for casting unprotected media files to AirPlay receivers such
+as Apple TV and the macOS AirPlay Receiver. It discovers receivers, pairs by
+PIN, serves media over HTTP and controls playback. The project provides an
+experimental C API, a C# binding and command-line tools.
 
-> **Experimental.** The API is not frozen. Receiver testing so far covers one
-> Apple TV 4K (tvOS 26.6) from a Windows 11 x64 host, as a desktop app and as a
-> packaged UWP app, and one MacBook Pro's AirPlay Receiver from the CLI, C API,
-> packaged UWP host and x64 Screenbox. Other
-> receivers, firmware versions and host platforms are untested. See
-> [what has been tested](#tested-so-far).
+## Capabilities
 
-## What it does
+- mDNS/DNS-SD discovery and PIN pairing with persistent credentials.
+- Progressive file delivery, or on-demand MP4/MOV/Matroska remux to fragmented
+  MP4 HLS with H.264/HEVC video, supported audio and text subtitles.
+- Optional conversion of selected unsupported video audio to 48-kHz stereo
+  AAC while copying the video. The finite input table includes DTS-core, FLAC,
+  Opus, Vorbis, PCM and TrueHD configurations.
+- An explicit audio-only profile: validated stereo AAC/M4A and CBR/VBR MP3
+  play progressively; covered FLAC/PCM/Ogg inputs can convert to stereo AAC HLS.
+- Play, pause, seek, status, cancellation and ordered session cleanup.
+- Built-in credential stores for Windows desktop, macOS and Linux, plus host
+  callbacks for packaged apps and other storage providers.
 
-- **Discovery:** an mDNS/DNS-SD scan for AirPlay receivers on the local network.
-- **Pairing:** PIN pairing and reconnects with saved credentials. Credentials
-  are kept in Windows Credential Manager, the macOS login keychain or the Linux
-  Secret Service, or in a store the host app provides.
-- **Playback:** casts an unprotected file through a private, receiver-only
-  HTTP server, with play, pause, seek, status and stop, and cleans up when the
-  media ends or the receiver stops.
-- **HLS remux:** turns an MP4/MOV or MKV file into HLS on the fly, without
-  re-encoding. Supported codecs are H.264 or HEVC video and AAC, AC-3 or E-AC-3
-  audio. Text subtitles become selectable WebVTT tracks: SubRip, WebVTT and ASS
-  from MKV files, and tx3g or WebVTT from MP4 files. A ready-made HLS playlist
-  can also be cast as is.
+The API is experimental and not frozen. A codec name alone does not establish
+input support: see the [video audio policy](docs/audio-transcoding.md) and
+[audio-only admission table](docs/automatic-audio-only.md).
 
-The current source preserves HEVC SPS PQ/HLG range signaling in the HLS master.
-This fixes a recorded Mac grey-screen startup failure with HDR10 video and
-converted DTS audio. Published `0.5.0-ci.294` includes the fix; the prior
-`ci.282` package predates it. See [the scoped investigation](docs/hevc-hdr-range.md).
+Receiver observations cover Apple TV 4K/tvOS 26.6 and MacBook Pro/macOS 26.7.1
+from Windows 11 x64, including packaged UWP hosts. CI builds other host platforms;
+that does not establish receiver interoperability. See
+[compatibility and limits](docs/receiver-validation.md).
 
-Not in scope: DRM-protected media, screen mirroring, system audio capture,
-multiroom audio and general video transcoding.
+DRM, screen mirroring, system-audio capture, audio-only speakers/RAOP transport,
+multiroom and general video transcoding are outside the implemented scope.
+Converted audio is stereo; surround preservation is future work.
 
-Optional [automatic audio delivery (API 5)](docs/automatic-audio-public.md) copies
-eligible AAC-LC/AC-3/E-AC-3 or converts the covered DTS-core, FLAC, Opus, Vorbis,
-PCM and TrueHD subset to 48-kHz stereo AAC while copying video. This is a finite
-delivery profile, not support for every stream with those codec names. Conversion
-requires an enabled codec backend, explicit stereo permission and host-owned
-per-cast storage with a finite quota. Native builds keep `SAP2_STEREO_AAC` OFF
-by default, and delivery still defaults to progressive.
+## Build and test
 
-AAC/M4A audio-only progressive playback has separate recorded
-[native](docs/audio-only-url-probe.md), [packaged UWP](docs/audio-only-uwp-gate.md)
-and [Screenbox](docs/screenbox-audio-files.md) gates. The next
-[private audio-only AAC foundation](docs/audio-only-aac-foundation.md) is tested
-only offline with unedited FLAC/PCM MP4/MOV input. The next private
-[standalone FLAC/WAVE slice](docs/standalone-flac-wave.md) extends that foundation
-with bounded native input and decoded-end checks. The private
-[Ogg Opus/Vorbis slice](docs/standalone-ogg-audio.md) adds a bounded single-stream
-CRC/granule probe and offline seek/trim checks. The private
-[edited MP4/Matroska timeline slice](docs/audio-only-container-timelines.md) adds
-checked FLAC/PCM edits, packet-derived audible ends and decoded coverage.
-The explicit
-[Apple Audio v1 profile (API 6)](docs/automatic-audio-only.md) connects their finite
-subset to automatic delivery: original stereo AAC/M4A or MP3 progressively,
-and permitted conversion of covered FLAC/PCM/Ogg Opus/Vorbis to stereo AAC HLS.
-Its finite subset passes the [native format gate](docs/automatic-audio-only-native-gate.md)
-and [focused packaged UWP gate](docs/automatic-audio-only-uwp-gate.md) on the recorded
-Mac/Apple TV; broader Screenbox routing remains separate.
-The [private MP3 inventory and native probe](docs/mp3-input-probe.md)
-cover bounded MPEG layer-III framing/timeline metadata and user-confirmed direct
-progressive CBR/VBR playback on both recorded receivers. No AAC fallback is
-justified by those cases. The separate [packaged UWP MP3 gate](docs/mp3-uwp-gate.md)
-also passes brokered CBR/VBR controls, natural end, Stop and Mac consent cancellation.
-Screenbox automatic audio-only/MP3 routing remains separate from these library gates.
-
-The separate x64 UWP package **`SendAirPlay2.StereoAac 0.5.0-ci.294`** is
-[published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.294).
-It includes the enabled codec runtime, sources and notices. Reference it instead
-of the codec-free `SendAirPlay2` package; mixed direct/transitive profiles are
-rejected. Ordinary Screenbox builds retain codec-free `0.3.0-ci.207`; its merged
-experimental x64 profile pins stereo-AAC `ci.294`.
-See [the package contract](docs/opt-in-audio-runtime-package.md) and
-[verified publication](docs/validation/hdr-corrected-audio-publication-windows-2026-10-17.json). Neither package
-is on nuget.org. Audio-only speakers and discrete converted surround remain deferred.
-
-The API 6 **`SendAirPlay2.StereoAac 0.6.0-ci.330`** is now
-[published as a GitHub prerelease](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.6.0-ci.330).
-All 17 clean-main checks and independent artifact/consumer checks passed;
-[fresh public package/checksum downloads match](docs/audio-only-package-publication.md)
-the reviewed bytes. It adds the finite explicit audio-only profile described
-above. Screenbox's opt-in pin remains API-5 ci.294 pending separate integration.
-
-[Recorded receiver checks](docs/automatic-audio-receiver-gate.md) cover native
-AAC copy/DTS conversion and packaged UWP nine-format playback on the recorded
-MacBook Pro/macOS 26.7.1 and Apple TV/tvOS 26.6 from Windows x64, with applicable
-controls, Stop/cancellation and cleanup observations. Separately,
-[bounded DTS seek checks](docs/matroska-dts-bounded-seek.md) let one brokered
-input complete first/middle/last fragment samples in 138/314/64 ms with identical
-cached repeats and unchanged read limits. These observations do not establish
-sustained whole-film throughput, playback of the newly published binary bytes or
-Screenbox automatic-audio queue behavior; see the records for exact scope and retries.
-
-## Build
-
-You need CMake 3.20+, a C++17 compiler and these development packages:
-
-- OpenSSL 3.5+
-- Botan 3.12+ with the modules ffi, srp6, sha2_64, system_rng and ed25519.
-  Building Botan itself requires C++20.
-- Boost 1.92+ Beast and Asio headers, with their CMake package configs.
+Install CMake 3.20+, a C++17 toolchain, OpenSSL 3.5+, Botan 3.12+ and Boost 1.92+.
+Botan's own build requires C++20. With dependencies available to CMake:
 
 ```sh
-cmake -S . -B build -DBUILD_TESTING=ON
+cmake -S . -B build -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-- **Shared library:** add `-DBUILD_SHARED_LIBS=ON`. CI builds and tests both
-  static and shared libraries on Windows, Linux and macOS.
-- **Pinned dependencies:** pass
-  `-DCMAKE_TOOLCHAIN_FILE=build-tools/vcpkg/scripts/buildsystems/vcpkg.cmake`
-  after checking out vcpkg at `434307da09bc05b2c86996dccc8b2351fc0d5d37` in
-  `build-tools/vcpkg` and bootstrapping it.
-- **Linux:** install `libsecret-1-dev` for the Secret Service credential store.
-  Its tests need an unlocked keyring on the session bus and skip without one; CI
-  uses `tests/with_test_keyring.sh` to provide it.
-- **UWP:** see [docs/uwp-native-build.md](docs/uwp-native-build.md).
-- **Android:** not built or tested yet.
+Add `-DBUILD_SHARED_LIBS=ON` for a shared library. Audio conversion defaults OFF;
+enabling it requires the restricted FFmpeg profile and additional CMake options.
+The [build guide](docs/building.md) covers pinned vcpkg dependencies, optional
+conversion, platform requirements and tests. See the separate
+[UWP build guide](docs/uwp-native-build.md) for AppContainer libraries.
 
-Redistributed builds must ship the OpenSSL and Botan runtimes and their license
-notices. See [dependency provenance](docs/dependencies.md).
+## Try the CLI
 
-## Try it with the CLI
-
-The CLI is a development tool, and pairing needs an interactive Windows console.
-Commands are shown with Windows paths; replace `192.0.2.10` with your
-receiver's address.
+These examples use the executable location from a Visual Studio Release build.
+Other generators normally place it directly in the build directory. Replace the
+documentation address with the numeric address reported by discovery. The CLI's
+PIN prompt currently requires an interactive Windows console.
 
 ```powershell
-# 1. Find receivers (same LAN; allow UDP 5353 for the CLI in the firewall).
 build/Release/airplay2-cli.exe discover
-
-# 2. Pair once; enter the PIN shown on the TV. Saved as profile "living-room".
 build/Release/airplay2-cli.exe pair --address 192.0.2.10 --profile living-room
-
-# 3. Cast a file. While it plays, type status, pause, play, seek SECONDS or stop.
-build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room --file C:\media\clip.mp4
-
-# Cast an MKV, or an MP4 with subtitles, through the built-in HLS remux.
-build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room --file C:\media\film.mkv --remux
+build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room --file clip.mp4
+build/Release/airplay2-cli.exe cast --address 192.0.2.10 --profile living-room --file clip.mkv --remux
 ```
 
-| Command | Purpose |
+During playback, enter `status`, `pause`, `play`, `seek SECONDS` or `stop`.
+Run the CLI without arguments for its complete command and option list.
+`airplay2-api-host` exercises the same workflow through the C API.
+
+## Embed the library
+
+| Interface | Entry point |
 | --- | --- |
-| `discover`, `pair`, `verify`, `forget` | Find receivers and manage saved credentials |
-| `cast --file PATH [--remux]` | Play a file directly, or remuxed to HLS |
-| `cast --hls PLAYLIST.m3u8` | Play a ready-made HLS presentation |
-| `serve`, `remux` | Serve a file without playback, or write the remuxed HLS files to a folder |
+| Playback and media callbacks | [playback.h](include/send_airplay2/playback.h), [API guide](docs/public-api.md) |
+| Pairing and trusted storage | [pairing.h](include/send_airplay2/pairing.h), [credentials.h](include/send_airplay2/credentials.h) |
+| Receiver discovery | [receivers.h](include/send_airplay2/receivers.h), [discovery guide](docs/discovery.md) |
+| C# binding | [bindings/csharp](bindings/csharp), [binding guide](docs/csharp-binding.md) |
+| Packaged example | [UWP test host](docs/uwp-host.md) |
 
-Run `airplay2-cli` with no arguments for every option. `airplay2-api-host`
-runs the same casts through the public C API only.
+Current source implements API 6. Published packages are distributed as
+[GitHub prereleases](https://github.com/ilyalissoboi/send-airplay2/releases),
+not through nuget.org. `SendAirPlay2.StereoAac 0.6.0-ci.330` contains the API-6
+x64 UWP codec runtime; the older codec-free `SendAirPlay2 0.3.0-ci.207` is API 3.
+Do not mix a binding from one API version with another package's native files.
+See [packaging and consumption](docs/nuget-package.md).
 
-## Use it as a library
+The separate [Screenbox fork](https://github.com/ilyalissoboi/Screenbox) provides
+a player integration and downloadable AirPlay preview builds. Its UI, build and
+release instructions belong to that repository.
 
-| Interface | Location |
-| --- | --- |
-| Playback (C) | [`playback.h`](include/send_airplay2/playback.h): cast from a host read callback, with controls and status. Set `delivery` to `SAP2_DELIVERY_HLS_REMUX` for the HLS remux |
-| Pairing and credentials (C) | [`pairing.h`](include/send_airplay2/pairing.h), [`credentials.h`](include/send_airplay2/credentials.h) |
-| Discovery (C) | [`receivers.h`](include/send_airplay2/receivers.h) |
-| C# (.NET Standard 2.0) | [`bindings/csharp`](bindings/csharp); see [the binding notes](docs/csharp-binding.md) |
-| Codec-free NuGet package (binding + UWP native libraries) | `SendAirPlay2 0.3.0-ci.207`, published as [GitHub prerelease `nuget-v0.3.0-ci.207`](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-v0.3.0-ci.207); includes Mac controls and explicit HLS EOF handling. See [package notes](docs/nuget-package.md) |
-| Opt-in stereo AAC NuGet package (binding + x64 UWP codec runtime) | `SendAirPlay2.StereoAac 0.5.0-ci.282`, published as [GitHub prerelease `nuget-stereo-aac-v0.5.0-ci.282`](https://github.com/ilyalissoboi/send-airplay2/releases/tag/nuget-stereo-aac-v0.5.0-ci.282); includes sources/notices. See [the contract](docs/opt-in-audio-runtime-package.md). Neither package is on nuget.org |
-| Packaged UWP example | [`tools/uwp-host`](tools/uwp-host); see [its notes](docs/uwp-host.md) |
+## Contribute
 
-The contracts and the version policy are in [docs/public-api.md](docs/public-api.md).
-
-## Tested so far
-
-Receiver: Apple TV 4K (AppleTV14,1), tvOS 26.6 (23L773). Host: Windows 11 x64.
-
-**Passed, as observed by a user at the TV:**
-- pairing, then reconnecting with the saved credentials
-- playback of video and audio, pause, play and seek, including seeking past
-  4 GiB, and starting at a chosen position
-- the end of the media, and returning to the Home screen afterwards
-- pulling the Ethernet cable during playback: the cast ends and cleans up, and
-  a new cast works once the cable is back. The interrupted cast does not
-  reconnect or resume.
-- the C API, the C# binding and the packaged UWP app
-- HLS remux of MP4 and MKV files: H.264, HEVC, AAC, AC-3 and E-AC-3, a
-  1 h 54 min film, and text subtitles in sync, with italics
-
-**Open:**
-- When the receiver's remote stops playback, the session is still reported as
-  a lost connection.
-- Playback used to pause occasionally at startup. This was seen while the
-  receiver was waking from sleep, and waking it before play most likely fixed
-  it; watch for a recurrence on an awake receiver.
-- Linux, macOS and Android hosts have not cast to a receiver.
-
-**Mac as receiver** (MacBook Pro, Mac14,10, AirPlay Receiver set to "Anyone on
-the same network"; macOS 26.7.1, Windows x64 sender):
-- Pairing and casts can require acceptance on the Mac. Recent consent can be
-  reused, but repeat casts can prompt again; exact grant lifetime/key are not
-  established. See [the consent investigation](docs/macos-receiver-consent.md).
-  Pair with `--timeout-ms 60000` so there is time to answer.
-- Passed: playback of video and audio, pause, play, seek, starting at a
-  chosen position, status, the end of the media, and stop. The Mac has no
-  remote-control session, so the library falls back to the URL session's own
-  controls. The C API, packaged UWP host, HLS remux and final published-package
-  Screenbox controls/Stop/natural queue advance also passed for this recorded
-  receiver/host; Screenbox results are by user report with loaded DLLs verified.
-
-Passing unit tests and CI does not show compatibility with any receiver. Each
-receiver result is listed in [docs/receiver-validation.md](docs/receiver-validation.md),
-with the raw records in [docs/validation](docs/validation).
-
-## Documentation
-
-- **Start here to continue development:** [docs/HANDOFF.md](docs/HANDOFF.md)
-  (history, decisions and current state) and
-  [docs/CONTINUATION.md](docs/CONTINUATION.md) (the work queue).
-- **Design:** [design.md](docs/design.md), [session-design.md](docs/session-design.md),
-  [hls.md](docs/hls.md), [media-server.md](docs/media-server.md) and
-  [mrp-controls.md](docs/mrp-controls.md).
-- **Protocol pieces:** [discovery](docs/discovery.md),
-  [PIN pairing](docs/pin-pairing.md), [peer verification](docs/peer-verification.md),
-  [receiver transport](docs/receiver-transport.md) and
-  [credential storage](docs/credential-storage.md).
+Start with [CONTRIBUTING.md](CONTRIBUTING.md), the
+[documentation index](docs/README.md) and [architecture](docs/design.md).
+The [roadmap](docs/roadmap.md) distinguishes unfinished work from implemented
+features. Report receiver failures with sanitized reproduction steps and the
+receiver model/firmware; do not include pairing secrets or private media URLs.
 
 ## License
 
-Apache-2.0 (see [LICENSE](LICENSE)). No third-party implementation source is
-copied into the repository. The library links OpenSSL `libcrypto`
-(Apache-2.0), Botan (BSD-2-Clause) and Boost (BSL-1.0).
+The core and binding use [Apache-2.0](LICENSE). Dependency licenses and source
+provenance are documented in [dependencies.md](docs/dependencies.md).
+The optional dynamically linked FFmpeg runtime has separate LGPL notices and
+source/build-material requirements; preserve them when redistributing it.

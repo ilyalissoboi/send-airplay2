@@ -1,107 +1,68 @@
-# C# binding (D52)
+# C# binding
 
-**D106 update:** the development binding now requires API 6 and exposes the explicit Apple Audio v1 profile and progressive/MP3 decisions. See [the finite contract](automatic-audio-only.md). Published packages/pins are unchanged; earlier version notes below are historical.
+`bindings/csharp/SendAirPlay2` targets `netstandard2.0` and wraps API 6 without
+NuGet dependencies. It supports modern .NET and UWP hosts; deployment must
+provide a matching native library and its dependencies. Released older bindings
+retain their own API requirement.
 
-**D83 update:** the development binding requires API 5 and adds
-`CastDelivery.AutomaticAudioHls`, profile/preservation options,
-`CastStatus.AudioDecision` and `AudioDelivery.Check()` without receiver access.
-Read [the automatic integration contract](automatic-audio-public.md), including
-borrowed source and unused/accepted managed cache ownership. Published `ci.207`
-remains unchanged; the D74/API-4 note below is historical.
-
-**D74 update:** the development binding targets API 4 and adds
-`CastDelivery.StereoAacHls`, original audio track selection, `MediaTracks.Probe`,
-`AacFragmentStore`/`FileAacFragmentStore`, and conversion status. Read
-[the integration contract](stereo-aac-playback.md) for ownership, opt-in builds
-and validation limits. Published `ci.207` remains the API 3 package; these new
-bindings require a matching API 4 development library.
-
-Status: **implemented, experimental, offline-tested only.** Snapshot 2026-10-08
-(Asia/Tokyo). Step 2a of D49 ([credential-interface.md](credential-interface.md)):
-a C# binding over the experimental C interface. The packaged UWP test app (step
-2b) is a separate PR. No receiver has been cast to or paired through this binding
-yet; its native calls are the ones D48 and D51 tested from C.
-
-## Layout
-
-| Path | Purpose |
+| Native API | Managed entry point |
 | --- | --- |
-| `bindings/csharp/SendAirPlay2/` | `netstandard2.0` library, no package dependencies, so UWP (.NET Native) and modern .NET hosts can share it |
-| `bindings/csharp/SendAirPlay2.Tests/` | `net8.0` console test runner (`RollForward=Major`) with native-library path and owned-fixture root arguments |
+| `sap2_cast_*` | `Cast`: Create, Start, GetStatus, WaitForChange, Play, Pause, Seek, StopPlayback, Stop, Dispose |
+| `sap2_cast_options` | `CastOptions` |
+| `sap2_media_source` | `MediaSource`, `FileMediaSource` |
+| `sap2_credential_store` | `ICredentialStore` |
+| Pairing / removal | `Pairing.Pair`, `Pairing.ForgetProfile` |
+| Discovery | `Receivers.Discover` returning independent `Receiver` copies |
+| Track inventory | `MediaTracks.Probe` |
+| Offline audio preparation | `AudioDelivery.Check` |
+| Conversion store | `AacFragmentStore`, `FileAacFragmentStore` |
 
-The library loads `send_airplay2` (`send_airplay2.dll`, `libsend_airplay2.so` or
-`.dylib`) by the platform's normal rules; a host can redirect that with
-`NativeLibrary.SetDllImportResolver`, as the tests do.
+The library resolves `send_airplay2` using platform loading rules. A modern .NET
+host can use `NativeLibrary.SetDllImportResolver`; the shared-library tests show
+how. UWP deployment needs [AppContainer binaries](uwp-native-build.md), a
+RID-specific build and a host credential store.
 
-## API
+## Delivery options
 
-| C | C# |
-| --- | --- |
-| `sap2_cast_*` | `Cast` (`IDisposable`): `Create`, `Start`, `GetStatus`, `WaitForChange`, `Play`, `Pause`, `Seek`, `StopPlayback` (MRP stop), `Stop` (local teardown), `Dispose` |
-| `sap2_cast_options` | `CastOptions`, including `CredentialStore` and `Delivery` (`CastDelivery.Progressive`/`HlsRemux`, API version 3) |
-| `sap2_media_source` | abstract `MediaSource` (`Size`, `Read`, `OnReleased`); `FileMediaSource` for desktop files |
-| `sap2_credential_store` | `ICredentialStore` (`Load`, `SaveNew`, `Erase`) |
-| `sap2_pair`, `sap2_forget_profile` | `Pairing.Pair(PairOptions, PinReader)`, `Pairing.ForgetProfile` |
-| `sap2_discover`, `sap2_receiver_list_*` (D54) | `Receivers.Discover(TimeSpan)` returning `Receiver` copies (`Id`, `Name`, `GetNameBytes()`, `Model`, `Address`, `Port`, `PasswordRequired`, nullable `Features`); the native list is freed before it returns |
-| `sap2_cast_status` | `CastStatus` with nullable scalars |
-| `SAP2_*` results | `ResultCode`; failures throw `SendAirPlay2Exception` with fixed text only |
+Select `CastDelivery.AutomaticAudioHls` and an explicit `AudioProfile`:
+`AudioDeliveryProfile.AppleHlsV1` for video or `AppleAudioV1` for audio-only input.
+`CastStatus.AudioDecision` reports the successful route. The audio-only profile
+can deliver original AAC/MP3 progressively despite the delivery enum's name.
 
-## Ownership, lifetime and threading
+Use `AudioConversionPermission.PreserveOriginal` to refuse required conversion,
+or `AllowStereo` with an enabled codec runtime, per-cast fragment store and
+positive quota. Conversion permission does not choose the audio/video profile.
+See [video policy](audio-transcoding.md) and [audio-only policy](automatic-audio-only.md).
 
-These follow the C contracts (public-api.md, credentials.h, pairing.h):
+## Ownership and callbacks
 
-- **Callback delegates live as long as the library may call them.** A cast's
-  delegates (media source and credential store) are held by its `SafeHandle`
-  and dropped only after `sap2_cast_destroy` returns, including when an
-  undisposed cast is destroyed by its finalizer. Pairing and removal keep theirs
-  alive until the native call returns.
-- **Destroy waits for in-flight calls.** Every cast call passes the `SafeHandle`,
-  so P/Invoke reference counting delays destroy until other calls return.
-- **A media source is released exactly once:** when its cast is disposed, or at
-  once if `Cast.Create` fails for any reason before the native create succeeds
-  (a missing or older native library, invalid options, a throwing `Size`); the C
-  library never took ownership then.
-- **Exceptions never reach native code.** A throwing `Read` fails that request;
-  a throwing store reports Unavailable; a throwing PIN reader cancels.
-- **Secrets in managed memory cannot be wiped reliably.** The binding clears its
-  temporary record and PIN arrays after each call; host copies are the host's
-  responsibility. The PIN reader receives a `char[]`, not a `string`, so it can be
-  cleared.
-- **Size-aware initialization.** Options are initialized with
-  `sap2_cast_options_init_sized` and `sap2_pair_options_init` using the binding's
-  struct sizes; a library older than API version 2 is refused with
-  `NotSupportedException`.
-- Callbacks run on library threads (media reads) or on the calling thread (store
-  and PIN) and must not call back into the library for the operation that
-  invoked them.
+`Cast` owns a SafeHandle. Callback delegates and their contexts stay rooted until
+native destroy returns, including finalizer cleanup. P/Invoke SafeHandle reference
+counting delays destroy while another managed call is in flight. Dispose promptly
+instead of relying on finalization.
 
-## Validation
+The binding releases a media source once, both when native ownership transfers
+and later ends, and when managed/native create fails before transfer. Exceptions
+never cross native callbacks: a throwing read fails that request, a throwing
+store reports unavailable, and a throwing PIN reader cancels. Use the native
+[threading and lifetime contracts](public-api.md) when implementing adapters.
 
-`csharp_binding_tests` runs in CTest on shared builds when `dotnet --list-sdks`
-reports an SDK of version 8 or later (option `SAP2_DOTNET_TESTS`, default on);
-an older SDK alone skips it. It builds into the CMake build tree.
-Windows 11 x64, MSVC Release: static 29/29 (the C# test needs the shared library),
-shared 30/30. The runner covers:
+Offline `AudioDelivery.Check` borrows callbacks, whereas successful `Cast.Create`
+transfers their native lifetime. Unused automatic-delivery stores receive no
+clear callbacks but still release at cast disposal. Host adapters should remove
+their own empty reservations without touching another cast's storage.
 
-- runtime API version and version 2 result names;
-- struct sizes and field offsets, checked through the native initializers
-  (size read back, defaults on the expected fields);
-- source ownership: release once on a failed native create, on a managed
-  failure before it (a throwing `Size`), on dispose, and for `FileMediaSource`
-  (stream closed);
-- callback lifetime: a store and source referenced only by the cast still work
-  after forced collections, and an undisposed cast is destroyed by its finalizer.
-  Removing the `SafeHandle` keep-alive makes the runtime fail fast with a
-  callback on a collected delegate;
-- a cast with a host store: absent, unavailable, throwing and malformed stores;
-- profile removal, including an absent profile in the built-in store;
-- pairing refusals: invalid options, a malformed existing record and an
-  unreachable receiver, with no PIN request and no save;
-- discovery (D54): the `sap2_receiver_info` layout size and duration refusals
-  (zero, negative, above the maximum). No scan runs in CTest.
+PIN readers receive a mutable `char[]`; temporary PIN/record arrays are cleared.
+Managed strings and host-held copies cannot be reliably erased by the binding.
+Never log credentials or persist them in ordinary application settings.
 
-Receiver use through C# is covered by the packaged UWP test host (D53,
-[uwp-host.md](uwp-host.md)): Native AOT loading, PasswordVault pairing, a
-`StorageFile` source, casts and controls all passed on one Apple TV and Windows
-host, and `Receivers.Discover` found that receiver inside the AppContainer (D54). Not covered: classic .NET Native, and the binding in a desktop .NET app
-against a receiver.
+## Tests and example
+
+The CMake shared build runs `csharp_binding_tests` when .NET SDK 8+ is available
+and `SAP2_DOTNET_TESTS` is enabled. It checks ABI layout, version/default mapping,
+callbacks across garbage collections, exactly-once release, refusal paths and
+automatic delivery. These are offline tests.
+
+The [packaged UWP host](uwp-host.md) demonstrates `PasswordVault`, brokered
+`StorageFile` input, discovery and controls. The [package guide](nuget-package.md)
+describes native asset copying and the two mutually exclusive package profiles.

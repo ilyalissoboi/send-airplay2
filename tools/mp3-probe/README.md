@@ -1,50 +1,44 @@
-# Private MP3 inventory and direct-playback fixtures
+# MP3 inventory and direct-playback fixtures
 
-The callback-only parser is separate from public/default format inventory and
-automatic conversion. Build the offline tool and native tests with normal CMake:
+The callback-based probe reports MPEG layer-III framing and timeline metadata.
+Build it and its offline tests with ordinary CMake:
 
-~~~powershell
-cmake --build build-static --config Release --target airplay2-mp3-probe mp3_audio_tests
-ctest --test-dir build-static -C Release -R '^mp3_audio_tests$' --output-on-failure
-build-static/Release/airplay2-mp3-probe.exe tools/mp3-probe/fixtures/cbr48.mp3
-~~~
+```powershell
+cmake --build build --config Release --target airplay2-mp3-probe mp3_audio_tests
+ctest --test-dir build -C Release -R '^mp3_audio_tests$' --output-on-failure
+build/Release/airplay2-mp3-probe.exe tools/mp3-probe/fixtures/cbr48.mp3
+```
 
-Output contains rate, channels, physical audio-frame count, coded samples,
-Xing/Info presence, observed bitrate variation, locator count and metadata-derived
-audible samples (or unknown). It omits the input path and metadata labels.
-This inspection does not prove compressed-payload integrity or receiver support.
-Locators require reservoir/decoder history before decoding; they are not byte
-offsets for standalone HTTP slices.
+Output includes rate/channels, frame/coded-sample counts, Xing/Info presence,
+bitrate variation, locators and known audible samples. It omits the input path
+and metadata labels. Framing does not prove compressed-payload integrity or
+receiver compatibility. Locators require decoder/reservoir history; they are
+not standalone HTTP slice offsets.
 
-The committed fixtures contain original repository-authored tones. Regenerate
-with Python and an external development FFmpeg containing libmp3lame:
+The committed fixtures contain original tones. Regenerate deliberately with
+Python and an external FFmpeg build providing libmp3lame:
 
-~~~powershell
+```sh
 python tools/mp3-probe/generate_fixtures.py
-~~~
+```
 
-The generator reuses D97's tone authoring, independently decodes each output,
-and records actual tool version, encoder options, sample counts and hashes in
-provenance.json. Low-rate mono Info-tag CRC repair and the retained invalid file
-are explicit in that manifest; encoded audio/trim are unchanged. No encoder or
-third-party media ships with the library.
+The generator independently decodes outputs and records actual tool version,
+options, sample counts and hashes in `fixtures/provenance.json`. Its low-rate
+mono Info-tag CRC repair and retained invalid control are explicit there.
+No MP3 encoder or third-party media ships with the native library.
 
-For a coordinated receiver check, use the existing codec-free C API host:
+## Direct receiver playback
 
-~~~powershell
-build-static/Release/airplay2-api-host.exe --address RECEIVER_ADDRESS --profile SAVED_PROFILE --file tools/mp3-probe/fixtures/cbr48.mp3 --content-type audio/mpeg --start-position 8 --start-timeout-ms 30000
-~~~
+```powershell
+build/Release/airplay2-api-host.exe --address 192.0.2.10 --profile living-room --file tools/mp3-probe/fixtures/cbr48.mp3 --content-type audio/mpeg --start-position 8
+```
 
-Repeat with vbr441.mp3. Do not enable remux/automatic audio or a dummy video.
-Both stereo clips are 64 seconds, with eight-second LEFT 440 Hz, RIGHT 660 Hz,
-BOTH 880 Hz, LEFT 440 Hz, BOTH 1100 Hz, RIGHT 660 Hz, LEFT 440 Hz, BOTH 880 Hz
-intervals. Tones pulse for 0.75 seconds, followed by 0.25 seconds silence.
-Send status/pause/play, seek 32, seek 8, then seek 58 and allow natural end.
-A separate run starts from zero and receives Stop after eight seconds. Mac
-pending-consent cancellation is a separate run with --cancel-after-ms 5000 and
-the prompt unanswered. Require written listening/prompt observations; telemetry
-alone is not an audible result. No volume setting is changed.
+Repeat with `vbr441.mp3`. This deliberately tests original progressive bytes,
+without remux, conversion or dummy video. API 6 also admits the finite validated
+MP3 subset through [Apple Audio v1](../../docs/automatic-audio-only.md).
 
-Keep native, packaged brokered-source and Screenbox queue gates separate.
-Record exact source/binary/fixture hashes and receiver OS. Do not commit receiver
-addresses, identifiers, saved credentials, PINs or bearer URLs.
+Both stereo fixtures have the 64-second LEFT/RIGHT/BOTH marker sequence described
+in the [audio fixture guide](../audio-only-probe/README.md). Verify pause/resume,
+seek32 higher BOTH, seek8 RIGHT, natural end after seek58, and a separate Stop.
+Follow [manual validation](../../docs/manual-validation.md); distinguish native,
+packaged brokered-source and player-queue results.
